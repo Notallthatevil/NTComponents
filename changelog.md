@@ -1,3 +1,10 @@
+## [1.23.1](https://github.com/Notallthatevil/NTComponents/compare/v1.23.0...v1.23.1) (2026-02-20)
+
+
+### Bug Fixes
+
+* **ci:** add dotnet workload restore to NuGet deploy ([1a45329](https://github.com/Notallthatevil/NTComponents/commit/1a4532993d82eefb87fe441eb6ab7ab97d03dd02))
+
 # [1.23.0](https://github.com/Notallthatevil/NTComponents/compare/v1.22.0...v1.23.0) (2026-02-20)
 
 
