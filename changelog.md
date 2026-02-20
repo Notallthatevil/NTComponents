@@ -1,3 +1,10 @@
+# [1.23.0](https://github.com/Notallthatevil/NTComponents/compare/v1.22.0...v1.23.0) (2026-02-20)
+
+
+### Features
+
+* **tabview:** add alignment and header gap customization ([8c49779](https://github.com/Notallthatevil/NTComponents/commit/8c49779d9f867c8373cb9da5f8d37879295b448b))
+
 # [1.22.0](https://github.com/Notallthatevil/NTComponents/compare/v1.21.0...v1.22.0) (2026-02-20)
 
 
