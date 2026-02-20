@@ -1,3 +1,10 @@
+## [1.24.1](https://github.com/Notallthatevil/NTComponents/compare/v1.24.0...v1.24.1) (2026-02-20)
+
+
+### Bug Fixes
+
+* **grid:** add flexible cell text alignment and styling ([0d5cbfd](https://github.com/Notallthatevil/NTComponents/commit/0d5cbfd5b4343471fe1814bca7508869850dc502))
+
 # [1.24.0](https://github.com/Notallthatevil/NTComponents/compare/v1.23.1...v1.24.0) (2026-02-20)
 
 
