@@ -50,11 +50,10 @@
                     height: inherit;
                     max-height: inherit;
 
-                    * {
-                        height: inherit;
-                        max-height: inherit;
-                        min-height: unset;
-                        margin: 0;
+                    .nt-cell-container{
+                        height:inherit;
+                        max-height:inherit;
+                        overflow:inherit;
                     }
                 }
             }
