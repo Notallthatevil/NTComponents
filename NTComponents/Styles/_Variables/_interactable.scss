@@ -1,4 +1,4 @@
-﻿@use '_colors.scss' as colors;
+@use '_colors.scss' as colors;
 
 @mixin tnt-disabled {
     &.tnt-disabled {
@@ -74,7 +74,7 @@
         }
 
         @if $tint-color != null {
-            &:hover, &:active {
+            &:hover, &:active, &:focus {
                 &:before {
                     background-color: #{$tint-color};
                     opacity: 0.3;

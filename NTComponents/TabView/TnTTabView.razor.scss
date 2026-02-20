@@ -1,10 +1,11 @@
-﻿@use '../Styles/_Variables/_colors.scss' as colors;
+@use '../Styles/_Variables/_colors.scss' as colors;
 @use '../Styles/_Variables/_typescale.scss' as typescale;
 @use '../Styles/_Variables/_interactable.scss' as interactable;
 
 $header-bg-color: var(--tnt-tab-header-background-color);
 $header-text-color: var(--tnt-tab-header-text-color);
 $header-tint-color: var(--tnt-tab-header-tint-color);
+$header-border-height: var(--tnt-tab-view-header-border-size, 1px);
 
 .tnt-tab-view {
     display: block;
@@ -14,20 +15,21 @@ $header-tint-color: var(--tnt-tab-header-tint-color);
 
     & > .tnt-tab-view-header {
         vertical-align: bottom;
-        position: sticky;
-        border-bottom: 1px solid colors.$tnt-color-outline;
+        border-bottom: $header-border-height solid colors.$tnt-color-outline;
         margin: 0 8px;
         white-space: nowrap;
-        overflow-x: auto;
         z-index: 10;
+        position: relative;
 
         .tnt-tab-view-header-buttons {
             display: table;
             margin: 0 auto;
             height: 100%;
+            display: flex;
+            flex-direction: row;
+            gap: var(--tnt-tab-view-header-button-gap-size);
 
             .tnt-tab-view-button {
-                height: 48px;
                 display: inline-flex;
                 appearance: none;
                 border: none;
@@ -59,11 +61,6 @@ $header-tint-color: var(--tnt-tab-header-tint-color);
                     pointer-events: none;
                     opacity: 0.5;
                 }
-
-                &:focus {
-                    outline: 1px solid colors.$tnt-color-outline;
-                    outline-offset: -4px;
-                }
             }
         }
 
@@ -78,18 +75,39 @@ $header-tint-color: var(--tnt-tab-header-tint-color);
         }
     }
 
+
     &.tnt-tab-view-secondary {
         .tnt-tab-view-header {
             .tnt-tab-view-header-buttons {
 
                 .tnt-tab-view-button {
-                    padding-top: 24px;
+                    padding-top: 8px;
                 }
             }
 
             .tnt-tab-view-active-indicator {
-                height: 2px;
+                height: $header-border-height;
+                min-height: 2px;
+                bottom: calc(-1 * var(--tnt-tab-view-header-border-size, 1px))
             }
+        }
+    }
+
+    &.tnt-tab-view-alignment-center {
+        & > .tnt-tab-view-header .tnt-tab-view-header-buttons {
+            justify-content: center;
+        }
+    }
+
+    &.tnt-tab-view-alignment-end {
+        & > .tnt-tab-view-header .tnt-tab-view-header-buttons {
+            justify-content: flex-end;
+        }
+    }
+
+    &.tnt-tab-view-alignment-start {
+        & > .tnt-tab-view-header .tnt-tab-view-header-buttons {
+            justify-content: flex-start;
         }
     }
 }
