@@ -1,3 +1,11 @@
+# [1.22.0](https://github.com/Notallthatevil/NTComponents/compare/v1.21.0...v1.22.0) (2026-02-20)
+
+
+### Features
+
+* add line graph and tree map pages with interactive features ([91c8a41](https://github.com/Notallthatevil/NTComponents/commit/91c8a41dfac1e5ba4198713b99aff545aa9a758c))
+* add unit tests for NTChart and NTChartAnnotation components ([3dd237b](https://github.com/Notallthatevil/NTComponents/commit/3dd237bb465fec7b004d8a49330f4a514b967e5c))
+
 # [1.21.0](https://github.com/Notallthatevil/NTComponents/compare/v1.20.4...v1.21.0) (2026-02-14)
 
 
