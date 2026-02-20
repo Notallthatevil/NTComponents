@@ -45,6 +45,7 @@
 		<ProjectReference Include="..\NTComponents\NTComponents.csproj" />
 		<ProjectReference Include="..\NTComponents.AspNetCore\NTComponents.AspNetCore.csproj" />
 		<ProjectReference Include="..\NTComponents.Extensions\NTComponents.Extensions.csproj" />
+		<ProjectReference Include="..\Submodules\NTComponents.Charts\NTComponents.Charts\NTComponents.Charts.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
