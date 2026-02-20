@@ -1,0 +1,148 @@
+@page "/bubble-chart"
+@rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
+@using NTComponents
+@using NTComponents.Charts
+@using NTComponents.Charts.Core
+
+<div class="container py-4">
+    <h1>Bubble Physics Chart</h1>
+    <p class="lead">Drag and throw bubbles, watch them collide, and drill through hierarchy without child previews.</p>
+
+    <div class="card p-3 shadow-sm">
+        <h5 class="mb-2">Claims Bubble Pack Drilldown</h5>
+        <p class="text-muted mb-2">
+            Click any grouped bubble to drill in. Drag a bubble, throw it, and it will return toward center while
+            colliding
+            with neighbors.
+        </p>
+        <div style="height: 620px;">
+            <NTChart TData="BubbleClaimPoint" TitleOptions="@new("Claims Bubble Pack")"
+                     EnableHardwareAcceleration="true" DebugView="true">
+                <NTTooltip />
+                <NTLegend />
+                <NTBubblePackSeries TData="BubbleClaimPoint" Data="@_claims" Title="Claims" XValue="@(c => c.Customer)"
+                                    ValueSelector="@(c => c.Amount)" GroupSelector="@(c => c.Customer)" GroupLevelLabels="@_levelLabels"
+                                    Interactions="@ChartInteractions.All" ColorSelector="@ClaimsColor" DataLabelFormat="{0:N0}"
+                                    ShowLabels="true" ShowValuesInLabels="true" EnableDrilldown="true" ShowNavigation="true"
+                                    ShowDrillIndicator="true" MinBubbleRadius="18" MaxBubbleRadius="120" BubbleSpacing="2.5f"
+                                    TargetFillRatio="0.28f" CanvasPadding="12f" LabelPadding="14f" MinLabelFontSize="8"
+                                    MaxLabelFontSize="24" GravityStrength="3.2f" CollisionStrength="0.95f" VelocityDamping="0.93f"
+                                    EdgeBounce="0.32f" ThrowStrength="1f" PhysicsSubsteps="3">
+                    <NTBubblePackSeries TData="BubbleClaimPoint" XValue="@(c => c.ClassCode)"
+                                        ValueSelector="@(c => c.Amount)" GroupSelector="@(c => c.ClassCode)"
+                                        ColorSelector="@ClaimsColor" DataLabelFormat="{0:N0}" Interactions="@ChartInteractions.All"
+                                        ShowLabels="true" ShowValuesInLabels="false" MinBubbleRadius="14" MaxBubbleRadius="96"
+                                        MinLabelFontSize="7" MaxLabelFontSize="20">
+                        <NTBubblePackSeries TData="BubbleClaimPoint" XValue="@(c => c.Bucket)"
+                                            ValueSelector="@(c => c.Amount)" GroupSelector="@(c => c.Bucket)"
+                                            ColorSelector="@ClaimsColor" DataLabelFormat="{0:N0}" ShowLabels="true"
+                                            Interactions="@ChartInteractions.All" ShowValuesInLabels="false" MinBubbleRadius="12"
+                                            MaxBubbleRadius="80" MinLabelFontSize="6" MaxLabelFontSize="16" />
+                    </NTBubblePackSeries>
+                </NTBubblePackSeries>
+            </NTChart>
+        </div>
+    </div>
+</div>
+
+@code {
+    public record BubbleClaimPoint(string Region, string Customer, string ClassCode, string Bucket, decimal Amount);
+
+    private readonly IReadOnlyList<string> _levelLabels = ["Customer", "Class Code", "Bucket"];
+    private List<BubbleClaimPoint> _claims = [];
+
+    protected override void OnInitialized()
+    {
+        var customers = new[] {
+            "Atlas Logistics",
+            "Beacon Farms",
+            "Crescent Steel",
+            "Delta Transport",
+            "Evergreen Foods",
+            "Frontier Health",
+            "Granite Tech",
+            "Harbor Medical"
+        };
+
+        var classCodes = new[] { "3632", "5606", "8017", "8742", "9082" };
+        var buckets = new[] { "Medical", "Indemnity", "Expense", "Litigation" };
+        var regions = new[] { "North", "South", "West" };
+
+        var random = new Random(21);
+        var points = new List<BubbleClaimPoint>(320);
+
+        for (var customerIndex = 0; customerIndex < customers.Length; customerIndex++)
+        {
+            for (var classIndex = 0; classIndex < classCodes.Length; classIndex++)
+            {
+                var region = regions[(customerIndex + classIndex) % regions.Length];
+                for (var bucketIndex = 0; bucketIndex < buckets.Length; bucketIndex++)
+                {
+                    var repeats = 2 + random.Next(0, 3);
+                    for (var i = 0; i < repeats; i++)
+                    {
+                        var baseAmount = 1400m + (customerIndex * 480m) + (classIndex * 330m) + (bucketIndex * 290m);
+                        var jitter = (decimal)(random.NextDouble() * 1100d);
+                        points.Add(new BubbleClaimPoint(
+                            region,
+                            customers[customerIndex],
+                            classCodes[classIndex],
+                            buckets[bucketIndex],
+                            decimal.Round(baseAmount + jitter, 0)));
+                    }
+                }
+            }
+        }
+
+        _claims = points;
+    }
+
+    private static TnTColor ClaimsColor(BubbleColorContext<BubbleClaimPoint> context)
+    {
+        if (context.Depth == 0)
+        {
+            return context.Key switch
+            {
+                "Atlas Logistics" => TnTColor.Primary,
+                "Beacon Farms" => TnTColor.Secondary,
+                "Crescent Steel" => TnTColor.Tertiary,
+                "Delta Transport" => TnTColor.Success,
+                "Evergreen Foods" => TnTColor.Warning,
+                "Frontier Health" => TnTColor.Error,
+                "Granite Tech" => TnTColor.PrimaryFixed,
+                _ => TnTColor.SecondaryFixed
+            };
+        }
+
+        if (context.Depth == 1)
+        {
+            return context.Key switch
+            {
+                "3632" => TnTColor.PrimaryContainer,
+                "5606" => TnTColor.SecondaryContainer,
+                "8017" => TnTColor.TertiaryContainer,
+                "8742" => TnTColor.InversePrimary,
+                _ => TnTColor.SurfaceTint
+            };
+        }
+
+        if (context.Depth >= 2)
+        {
+            return context.Value switch
+            {
+                > 12000m => TnTColor.ErrorContainer,
+                > 8500m => TnTColor.Warning,
+                > 6000m => TnTColor.PrimaryFixedDim,
+                _ => context.Key switch
+                {
+                    "Medical" => TnTColor.ErrorContainer,
+                    "Indemnity" => TnTColor.PrimaryFixed,
+                    "Expense" => TnTColor.SecondaryFixed,
+                    _ => TnTColor.TertiaryFixed
+                }
+            };
+        }
+
+        return TnTColor.Primary;
+    }
+}

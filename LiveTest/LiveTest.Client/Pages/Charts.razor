@@ -1,23 +1,130 @@
-﻿@page "/charts"
-@rendermode InteractiveWebAssembly
+﻿@page "/pie-charts"
+@rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
+@using NTComponents
+@using NTComponents.Charts
+@using NTComponents.Charts.Core
+@using NTComponents.Charts.Core.Series
+
+<div class="container py-4">
+    <h1>Pie Charts</h1>
+    <p class="lead">Demonstrates in-slice labels with fit checks, hover explosion, and configurable donut inner radius.</p>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card p-3 shadow-sm">
+                <div class="row g-3 align-items-center">
+                    <div class="col-lg-3 col-md-6">
+                        <label class="form-label mb-1">Inner Radius: @(_innerRadius.ToString("0")) px</label>
+                        <input class="form-range" type="range" min="0" max="90" step="1" @bind="_innerRadius" />
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <label class="form-label mb-1">Explosion Distance: @(_explosionDistance.ToString("0")) px</label>
+                        <input class="form-range" type="range" min="0" max="30" step="1" @bind="_explosionDistance" />
+                    </div>
+                    <div class="col-lg-2 col-md-6">
+                        <div class="form-check form-switch mt-4">
+                            <input class="form-check-input" type="checkbox" id="explodeHoverSwitch" @bind="_explodeOnHover">
+                            <label class="form-check-label" for="explodeHoverSwitch">Explode On Hover</label>
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-md-6">
+                        <div class="form-check form-switch mt-4">
+                            <input class="form-check-input" type="checkbox" id="showLabelsSwitch" @bind="_showDataLabels">
+                            <label class="form-check-label" for="showLabelsSwitch">Show Labels</label>
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-md-12">
+                        <button class="btn btn-outline-primary mt-4 w-100" @onclick="ShuffleData">Shuffle Data</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card p-3 shadow-sm h-100">
+                <h5>Interactive Pie/Donut</h5>
+                <div style="height: 360px;">
+                    <NTChart TData="PiePoint" TitleOptions="@new("Traffic Sources")" EnableHardwareAcceleration="true" DebugView="true">
+                        <NTPieSeries TData="PiePoint"
+                                     Data="@_trafficSources"
+                                     Title="Sources"
+                                     XValue="@(p => p.Label)"
+                                     ValueSelector="@(p => p.Value)"
+                                     ShowDataLabels="@_showDataLabels"
+                                     ExplodeOnHover="@_explodeOnHover"
+                                     ExplosionDistance="@_explosionDistance"
+                                     InnerRadius="@_innerRadius" />
+                    </NTChart>
+                </div>
+                <small class="text-muted mt-2">Small slices automatically omit labels when text cannot fit within the slice.</small>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card p-3 shadow-sm h-100">
+                <h5>Label Fit Stress Test</h5>
+                <div style="height: 360px;">
+                    <NTChart TData="PiePoint" TitleOptions="@new("Many Tiny Segments")" EnableHardwareAcceleration="true" DebugView="true">
+                        <NTPieSeries TData="PiePoint"
+                                     Data="@_smallSlices"
+                                     Title="Distribution"
+                                     XValue="@(p => p.Label)"
+                                     ValueSelector="@(p => p.Value)"
+                                     ShowDataLabels="true"
+                                     ExplodeOnHover="@_explodeOnHover"
+                                     ExplosionDistance="@_explosionDistance"
+                                     InnerRadius="@_innerRadius" />
+                    </NTChart>
+                </div>
+                <small class="text-muted mt-2">Only labels with enough radial and arc space are rendered inside slices.</small>
+            </div>
+        </div>
+    </div>
+</div>
 
 @code {
-    record DataPoint(string Name, double Value);
+    public record PiePoint(string Label, decimal Value);
 
-    List<DataPoint> data = new()
-    {
-        new("A", 10),
-        new("B", 20),
-        new("C", 15),
-        new("D", 25)
-    };
+    private float _innerRadius = 44f;
+    private float _explosionDistance = 12f;
+    private bool _explodeOnHover = true;
+    private bool _showDataLabels = true;
+
+    private List<PiePoint> _trafficSources =
+    [
+        new("Organic", 3840m),
+        new("Direct", 2460m),
+        new("Social", 1510m),
+        new("Referral", 1120m),
+        new("Ads", 830m),
+        new("Other", 410m)
+    ];
+
+    private List<PiePoint> _smallSlices =
+    [
+        new("Core", 550m),
+        new("A", 100m),
+        new("B", 80m),
+        new("C", 60m),
+        new("D", 50m),
+        new("E", 40m),
+        new("F", 30m),
+        new("G", 30m),
+        new("H", 20m),
+        new("I", 20m),
+        new("J", 10m),
+        new("K", 10m)
+    ];
+
+    private void ShuffleData() {
+        _trafficSources = _trafficSources
+            .Select(item => {
+                var jitterPct = (decimal)((Random.Shared.NextDouble() * 0.20d) - 0.10d);
+                var next = item.Value + (item.Value * jitterPct);
+                return item with { Value = decimal.Round(Math.Max(1m, next), 0) };
+            })
+            .ToList();
+    }
 }
-
-<NTComponents.Charts.NTBarChart T="DataPoint"
-                                Data="data"
-                                YValueSelector="x => x.Value"
-                                XLabelSelector="x => x.Name"
-                                Title="Sample Bar Chart"
-                                XAxisLabel="Categories"
-                                YAxisLabel="Values"
-                                style="height:500px;width:500px" />

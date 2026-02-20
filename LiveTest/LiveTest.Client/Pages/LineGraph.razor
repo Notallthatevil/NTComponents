@@ -1,0 +1,450 @@
+@page "/line-graph"
+@rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
+@using NTComponents
+@using NTComponents.Charts
+@using NTComponents.Charts.Core
+@using NTComponents.Charts.Core.Axes
+@using NTComponents.Charts.Core.Series
+@using SkiaSharp
+
+<div class="container py-4">
+    <h1>Line Chart Demo</h1>
+    <p class="lead">Working examples for line series rendering, tooltips, axis behavior, and interactions.</p>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card p-3 shadow-sm">
+                <div class="d-flex gap-3 align-items-center flex-wrap">
+                    <div class="form-check form-switch mb-0">
+                        <input class="form-check-input" type="checkbox" @bind="_enableHardwareAcceleration"
+                               id="hwAccelCheck">
+                            <label class="form-check-label" for="hwAccelCheck">Enable Hardware Acceleration</label>
+                        </div>
+                        <button class="btn btn-sm btn-outline-primary" @onclick="RegenerateData">Regenerate Data</button>
+                        <button class="btn btn-sm btn-outline-secondary" @onclick="ResetInteractiveView">Reset
+                            Pan/Zoom</button>
+                            <select @bind="_legendPosition" class="form-select form-select-sm w-auto">
+                                <option value="@LegendPosition.Top">Legend Top</option>
+                                <option value="@LegendPosition.Bottom">Legend Bottom</option>
+                                <option value="@LegendPosition.Left">Legend Left</option>
+                                <option value="@LegendPosition.Right">Legend Right</option>
+                                <option value="@LegendPosition.Floating">Legend Floating</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <div class="card p-3 shadow-sm h-100">
+                        <h5>Basic Line + Tooltip</h5>
+                        <div style="height: 320px;">
+                            <NTChart TData="CartesianPoint" TitleOptions="@new("Basic Data")"
+                                     EnableHardwareAcceleration="@_enableHardwareAcceleration" DebugView="true">
+                                <NTXAxisOptions ValueSelector="@(p => p.X)" Title="Index" />
+                                <NTYAxisOptions ValueSelector="@(p => p.Y)" Title="Value" />
+
+                                <NTLineSeries TData="CartesianPoint" Data="@_basicData" Title="Series A" XValue="@(p => p.X)"
+                                              YValueSelector="@(p => p.Y)" Color="TnTColor.Primary" PointStyle="PointStyle.Filled"
+                                              PointSize="8" />
+
+                                <NTTooltip />
+                                <NTLegend Position="@_legendPosition" />
+                            </NTChart>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="card p-3 shadow-sm h-100">
+                        <h5>Comparison (Multiple Styles)</h5>
+                        <div style="height: 320px;">
+                            <NTChart TData="CartesianPoint" TitleOptions="@new("Comparison")"
+                                     EnableHardwareAcceleration="@_enableHardwareAcceleration" DebugView="true">
+                                <NTXAxisOptions ValueSelector="@(p => p.X)" Title="Index" />
+                                <NTYAxisOptions ValueSelector="@(p => p.Y)" Title="Value" />
+
+                                <NTLineSeries TData="CartesianPoint" Data="@_seriesA" Title="Straight" XValue="@(p => p.X)"
+                                              YValueSelector="@(p => p.Y)" Color="TnTColor.Primary"
+                                              Interpolation="LineInterpolation.Straight" LineStyle="LineStyle.Solid"
+                                              PointStyle="PointStyle.Filled" />
+
+                                <NTLineSeries TData="CartesianPoint" Data="@_seriesB" Title="Smoothed Dashed"
+                                              XValue="@(p => p.X)" YValueSelector="@(p => p.Y)" Color="TnTColor.Secondary"
+                                              Interpolation="LineInterpolation.Smoothed" LineStyle="LineStyle.Dashed"
+                                              PointStyle="PointStyle.Outlined" PointShape="PointShape.Diamond" />
+
+                                <NTTooltip />
+                                <NTLegend />
+                            </NTChart>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="card p-3 shadow-sm h-100">
+                        <h5>DateTime X Axis</h5>
+                        <div style="height: 320px;">
+                            <NTChart TData="TimePoint" TitleOptions="@new("Daily Trend")"
+                                     EnableHardwareAcceleration="@_enableHardwareAcceleration" DebugView="true">
+                                <NTXAxisOptions ValueSelector="@(p => p.Time)" Title="Date" />
+                                <NTYAxisOptions ValueSelector="@(p => p.Value)" Title="Amount" LabelFormat="{0:N0}" />
+
+                                <NTLineSeries TData="TimePoint" Data="@_timeSeries" Title="Daily" XValue="@(p => p.Time)"
+                                              YValueSelector="@(p => p.Value)" Color="TnTColor.Tertiary"
+                                              Interactions="@(ChartInteractions.XPan | ChartInteractions.YPan | ChartInteractions.XZoom | ChartInteractions.YZoom)"
+                                              Interpolation="LineInterpolation.Curved" PointStyle="PointStyle.Filled" PointSize="6" />
+
+                                <NTTooltip />
+                                <NTLegend />
+                            </NTChart>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <div class="card p-3 shadow-sm">
+                        <h5>20-Year Date LOD (Year -> Month -> Day)</h5>
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <label class="form-label mb-0">Aggregation</label>
+                            <select class="form-select form-select-sm w-auto" @bind="_timeLodAggregationMode">
+                                <option value="@AggregationMode.None">None</option>
+                                <option value="@AggregationMode.Average">Average</option>
+                                <option value="@AggregationMode.Sum">Sum</option>
+                                <option value="@AggregationMode.Min">Min</option>
+                                <option value="@AggregationMode.Max">Max</option>
+                                <option value="@AggregationMode.Median">Median</option>
+                            </select>
+                        </div>
+                        <div style="height: 360px;">
+                            <NTChart TData="TimePoint" TitleOptions="@new("20-Year Claim Volume Detail")"
+                                     EnableHardwareAcceleration="@_enableHardwareAcceleration" DebugView="true">
+                                <NTXAxisOptions ValueSelector="@(p => p.Time)" Title="Date" />
+                                <NTYAxisOptions ValueSelector="@(p => p.Value)" Title="Claim Count" LabelFormat="{0:N0}" />
+
+                                <NTLineSeries TData="TimePoint" Data="@_timeLodRaw" Title="Claims"
+                                              XValue="@(p => p.Time)" YValueSelector="@(p => p.Value)"
+                                              AggregationMode="@_timeLodAggregationMode"
+                                              Color="TnTColor.Info"
+                                              Interactions="@(ChartInteractions.All)"
+                                              Interpolation="LineInterpolation.Straight"
+                                              PointStyle="PointStyle.Filled" PointSize="5" />
+
+                                <NTTooltip />
+                                <NTLegend />
+                            </NTChart>
+                        </div>
+                        <small class="text-muted mt-2">
+                            Full source data contains daily values across 20 years. Zoom to switch axis formatting and point precision.
+                        </small>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="card p-3 shadow-sm h-100">
+                        <h5>Pan + Zoom (Interactive)</h5>
+                        <div style="height: 320px;">
+                            <NTChart @ref="_interactiveChart" TData="CartesianPoint" TitleOptions="@new("Interactive")"
+                                     EnableHardwareAcceleration="@_enableHardwareAcceleration" DebugView="true"
+                                     Annotations="@_interactiveAnnotations">
+                                <NTXAxisOptions ValueSelector="@(p => p.X)" Title="X" />
+                                <NTYAxisOptions ValueSelector="@(p => p.Y)" Title="Y" />
+
+                                <NTLineSeries TData="CartesianPoint" Data="@_interactiveData" Title="Zoomable"
+                                              XValue="@(p => p.X)" YValueSelector="@(p => p.Y)" Color="TnTColor.Success"
+                                              Interactions="@(ChartInteractions.XPan | ChartInteractions.YPan | ChartInteractions.XZoom | ChartInteractions.YZoom)"
+                                              PointStyle="PointStyle.None" StrokeWidth="2.5f" />
+
+                                <NTTooltip />
+                                <NTLegend />
+                            </NTChart>
+                        </div>
+                        <small class="text-muted mt-2">Use mouse wheel to zoom and drag to pan.</small>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="card p-3 shadow-sm h-100">
+                        <h5>All Annotation Types</h5>
+                        <div style="height: 320px;">
+                            <NTChart TData="CartesianPoint" TitleOptions="@new("Annotation Showcase")"
+                                     EnableHardwareAcceleration="@_enableHardwareAcceleration" DebugView="true"
+                                     Annotations="@_allAnnotationTypes">
+                                <NTXAxisOptions ValueSelector="@(p => p.X)" Title="X" />
+                                <NTYAxisOptions ValueSelector="@(p => p.Y)" Title="Y" />
+
+                                <NTLineSeries TData="CartesianPoint" Data="@_annotationDemoData" Title="Series"
+                                              XValue="@(p => p.X)" YValueSelector="@(p => p.Y)" Color="TnTColor.Primary"
+                                              PointStyle="PointStyle.None" StrokeWidth="2.5f" />
+
+                                <NTTooltip />
+                                <NTLegend />
+                            </NTChart>
+                        </div>
+                        <small class="text-muted mt-2">Includes X/Y lines, X/Y ranges, point, text, and custom annotation rendering.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+@code {
+    public record CartesianPoint(double X, decimal Y);
+    public record TimePoint(DateTime Time, decimal Value);
+
+    private NTChart<CartesianPoint>? _interactiveChart;
+    private bool _enableHardwareAcceleration = true;
+
+    private List<CartesianPoint> _basicData = [];
+    private List<CartesianPoint> _seriesA = [];
+    private List<CartesianPoint> _seriesB = [];
+    private List<CartesianPoint> _interactiveData = [];
+    private List<CartesianPoint> _annotationDemoData = [];
+    private List<NTChartAnnotation> _interactiveAnnotations = [];
+    private List<NTChartAnnotation> _allAnnotationTypes = [];
+    private List<TimePoint> _timeSeries = [];
+    private List<TimePoint> _timeLodRaw = [];
+    private AggregationMode _timeLodAggregationMode = AggregationMode.Average;
+
+    private LegendPosition _legendPosition = LegendPosition.Top;
+
+    protected override void OnInitialized()
+    {
+        RegenerateData();
+    }
+
+    private void RegenerateData()
+    {
+        _basicData = Enumerable.Range(1, 30)
+            .Select(i => new CartesianPoint(i, (decimal)(12 + (Math.Sin(i * 0.25) * 8) + Random.Shared.NextDouble() * 3)))
+            .ToList();
+
+        _seriesA = Enumerable.Range(1, 40)
+            .Select(i => new CartesianPoint(i, (decimal)(18 + (Math.Sin(i * 0.22) * 10) + (Math.Cos(i * 0.07) * 4))))
+            .ToList();
+
+        _seriesB = Enumerable.Range(1, 40)
+            .Select(i => new CartesianPoint(i, (decimal)(16 + (Math.Cos(i * 0.18) * 9) + (Math.Sin(i * 0.05) * 3))))
+            .ToList();
+
+        _interactiveData = Enumerable.Range(0, 400)
+            .Select(i =>
+            {
+                var x = i * 0.5;
+                var y = (decimal)((Math.Sin(x * 0.12) * 35) + (Math.Cos(x * 0.03) * 15) + 55);
+                return new CartesianPoint(x, y);
+            })
+            .ToList();
+
+        _annotationDemoData = Enumerable.Range(0, 260)
+            .Select(i =>
+            {
+                var x = i * 0.5;
+                var y = (decimal)(58 + (Math.Sin(x * 0.19) * 18) + (Math.Cos(x * 0.07) * 7));
+                return new CartesianPoint(x, y);
+            })
+            .ToList();
+
+        var start = DateTime.Today.AddDays(-29);
+        _timeSeries = Enumerable.Range(0, 30)
+            .Select(i => new TimePoint(start.AddDays(i), (decimal)(90 + (Math.Sin(i * 0.35) * 25) + Random.Shared.NextDouble() *
+10)))
+            .ToList();
+
+        BuildTimeLodData();
+        BuildInteractiveAnnotations();
+        BuildAllAnnotationTypesDemo();
+    }
+
+    private void ResetInteractiveView()
+    {
+        _interactiveChart?.ResetView();
+    }
+
+    private void BuildTimeLodData()
+    {
+        var endYear = DateTime.Today.Year - 1;
+        var startYear = endYear - 19;
+        var start = new DateTime(startYear, 1, 1);
+        var end = new DateTime(endYear, 12, 31);
+        var totalDays = (end - start).Days + 1;
+
+        _timeLodRaw = Enumerable.Range(0, totalDays)
+            .Select(i =>
+            {
+                var date = start.AddDays(i);
+                var yearIndex = date.Year - startYear;
+                var seasonal = Math.Sin((2 * Math.PI * date.DayOfYear) / 365.25) * 40d;
+                var longWave = Math.Cos((2 * Math.PI * i) / 1900d) * 22d;
+                var trend = yearIndex * 6.5d;
+                var value = 220d + seasonal + longWave + trend + (Random.Shared.NextDouble() * 10d);
+                return new TimePoint(date, (decimal)Math.Max(5d, value));
+            })
+            .ToList();
+
+    }
+
+    private void BuildInteractiveAnnotations()
+    {
+        if (_interactiveData.Count == 0) {
+            _interactiveAnnotations = [];
+            return;
+        }
+
+        var peak = _interactiveData.MaxBy(p => p.Y) ?? _interactiveData[0];
+        _interactiveAnnotations =
+        [
+            new NTChartAnnotation {
+                Type = NTChartAnnotationType.YLine,
+                Y = 80m,
+                Label = "Target 80",
+                StrokeColor = TnTColor.Warning,
+                DashLength = 5f,
+                Opacity = 0.9f
+            },
+            new NTChartAnnotation {
+                Type = NTChartAnnotationType.XRange,
+                X = 40d,
+                X2 = 80d,
+                Label = "Focus Window",
+                StrokeColor = TnTColor.Info,
+                FillColor = TnTColor.Info,
+                Opacity = 0.35f
+            },
+            new NTChartAnnotation {
+                Type = NTChartAnnotationType.Point,
+                X = peak.X,
+                Y = peak.Y,
+                Label = "Peak",
+                StrokeColor = TnTColor.Error,
+                FillColor = TnTColor.Error,
+                MarkerSize = 4f
+            },
+            new NTChartAnnotation {
+                Type = NTChartAnnotationType.Text,
+                X = 160d,
+                Y = 34m,
+                Label = "Drag + wheel to inspect",
+                StrokeColor = TnTColor.SurfaceVariant,
+                FillColor = TnTColor.SurfaceVariant,
+                TextColor = TnTColor.OnSurfaceVariant,
+                Opacity = 0.9f
+            }
+        ];
+    }
+
+    private void BuildAllAnnotationTypesDemo()
+    {
+        if (_annotationDemoData.Count == 0) {
+            _allAnnotationTypes = [];
+            return;
+        }
+
+        var peak = _annotationDemoData.MaxBy(p => p.Y) ?? _annotationDemoData[0];
+        _allAnnotationTypes =
+        [
+            new NTChartAnnotation {
+                Type = NTChartAnnotationType.XLine,
+                X = 24d,
+                Label = "X Line",
+                StrokeColor = TnTColor.Secondary,
+                DashLength = 4f
+            },
+            new NTChartAnnotation {
+                Type = NTChartAnnotationType.XRange,
+                X = 40d,
+                X2 = 62d,
+                Label = "X Range",
+                StrokeColor = TnTColor.Info,
+                FillColor = TnTColor.Info,
+                Opacity = 0.3f
+            },
+            new NTChartAnnotation {
+                Type = NTChartAnnotationType.YLine,
+                Y = 70m,
+                Label = "Y Line",
+                StrokeColor = TnTColor.Warning,
+                DashLength = 5f
+            },
+            new NTChartAnnotation {
+                Type = NTChartAnnotationType.YRange,
+                Y = 42m,
+                Y2 = 52m,
+                Label = "Y Range",
+                StrokeColor = TnTColor.Tertiary,
+                FillColor = TnTColor.Tertiary,
+                Opacity = 0.28f
+            },
+            new NTChartAnnotation {
+                Type = NTChartAnnotationType.Point,
+                X = peak.X,
+                Y = peak.Y,
+                Label = "Point",
+                StrokeColor = TnTColor.Error,
+                FillColor = TnTColor.Error,
+                MarkerSize = 4.5f
+            },
+            new NTChartAnnotation {
+                Type = NTChartAnnotationType.Text,
+                X = 95d,
+                Y = 31m,
+                Label = "Text annotation",
+                StrokeColor = TnTColor.SurfaceVariant,
+                FillColor = TnTColor.SurfaceVariant,
+                TextColor = TnTColor.OnSurfaceVariant,
+                Opacity = 0.95f
+            },
+            new NTChartAnnotation {
+                Type = NTChartAnnotationType.Custom,
+                X = 112d,
+                Y = 80m,
+                StrokeColor = TnTColor.Success,
+                Opacity = 0.95f,
+                CustomRenderer = RenderDiamondCustomAnnotation
+            }
+        ];
+    }
+
+    private static void RenderDiamondCustomAnnotation(NTChartAnnotationRenderContext context)
+    {
+        var x = context.ScaleX(context.Annotation.X);
+        var y = context.ScaleY(context.Annotation.Y, context.Annotation.UseSecondaryYAxis);
+        if (!x.HasValue || !y.HasValue) {
+            return;
+        }
+
+        var density = Math.Max(0.5f, context.Density);
+        var size = 9f * density;
+        var strokeColor = context.ResolveThemeColor(context.Annotation.StrokeColor);
+
+        using var fillPaint = new SKPaint {
+            IsAntialias = true,
+            Style = SKPaintStyle.Fill,
+            Color = strokeColor.WithAlpha(90)
+        };
+        using var strokePaint = new SKPaint {
+            IsAntialias = true,
+            Style = SKPaintStyle.Stroke,
+            Color = strokeColor.WithAlpha(230),
+            StrokeWidth = 1.8f * density
+        };
+        using var textPaint = new SKPaint {
+            IsAntialias = true,
+            Style = SKPaintStyle.Fill,
+            Color = strokeColor.WithAlpha(240)
+        };
+        using var font = new SKFont(SKTypeface.FromFamilyName("Roboto"), 10f * density);
+        using var path = new SKPath();
+
+        path.MoveTo(x.Value, y.Value - size);
+        path.LineTo(x.Value + size, y.Value);
+        path.LineTo(x.Value, y.Value + size);
+        path.LineTo(x.Value - size, y.Value);
+        path.Close();
+
+        context.Canvas.DrawPath(path, fillPaint);
+        context.Canvas.DrawPath(path, strokePaint);
+        context.Canvas.DrawLine(x.Value, y.Value + size, x.Value, y.Value + (22f * density), strokePaint);
+        context.Canvas.DrawText("Custom", x.Value, y.Value + (35f * density), SKTextAlign.Center, font, textPaint);
+    }
+}

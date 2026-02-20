@@ -1,0 +1,223 @@
+@page "/tree-map"
+@rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
+@using NTComponents
+@using NTComponents.Charts
+@using NTComponents.Charts.Core
+
+<div class="container py-4">
+    <h1>Tree Map</h1>
+    <p class="lead">Drill into grouped claim data, apply group color callbacks, and render multiple treemap datasets in
+        one chart.</p>
+
+        <div class="row g-4">
+            <div class="col-12">
+                <div class="card p-3 shadow-sm">
+                    <h5 class="mb-2">Hierarchical Drill-Down: Customers -> Class Codes -> Buckets</h5>
+                    <p class="text-muted mb-2">Click a grouped cell to zoom it to full canvas. Use the built-in back control
+                        in the chart header to move up levels.</p>
+                        <div style="height: 520px;">
+                            <NTChart TData="ClaimPoint" TitleOptions="@new("Claims Treemap Drill-Down")"
+                                     EnableHardwareAcceleration="true" DebugView="true">
+                                <NTTooltip />
+                                <NTLegend />
+                                <NTTreeMapSeries TData="ClaimPoint" Data="@_claims" Title="Claims" XValue="@(c => c.Customer)"
+                                                 ValueSelector="@(c => c.Amount)" GroupSelector="@(c => c.Customer)"
+                                                 GroupLevelLabels="@_claimLevelLabels" ColorSelector="@ClaimsColor" DataLabelFormat="{0:N0}"
+                                                 ShowLabels="true" ShowValuesInLabels="true" MinLabelWidth="38" MinLabelHeight="22"
+                                                 MinLabelFontSize="8" MaxLabelFontSize="34" ItemPadding="2">
+                                    <NTTreeMapSeries TData="ClaimPoint" XValue="@(c => c.ClassCode)"
+                                                     ValueSelector="@(c => c.Amount)" GroupSelector="@(c => c.ClassCode)"
+                                                     ColorSelector="@ClaimsColor" DataLabelFormat="{0:N0}" ShowLabels="true"
+                                                     ShowValuesInLabels="true" MinLabelFontSize="7" MaxLabelFontSize="22"
+                                                     ItemPadding="@(1.5f)">
+                                        <NTTreeMapSeries TData="ClaimPoint" XValue="@(c => c.Bucket)"
+                                                         ValueSelector="@(c => c.Amount)" GroupSelector="@(c => c.Bucket)"
+                                                         ColorSelector="@ClaimsColor" DataLabelFormat="{0:N0}" ShowLabels="true"
+                                                         ShowValuesInLabels="false" MinLabelFontSize="6" MaxLabelFontSize="16"
+                                                         ItemPadding="1" />
+                                    </NTTreeMapSeries>
+                                </NTTreeMapSeries>
+                            </NTChart>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <div class="card p-3 shadow-sm">
+                        <h5 class="mb-2">Multiple Treemap Series + Independent Color Schemes</h5>
+                        <p class="text-muted mb-2">Two datasets render together. Drill into either series to focus it. Each
+                            series uses its own <code>Func&lt;TreeMapColorContext&lt;TData&gt;, TnTColor&gt;</code>.</p>
+                            <div style="height: 500px;">
+                                <NTChart TData="ClaimPoint" TitleOptions="@new("Regional Claims")" EnableHardwareAcceleration="true"
+                                         DebugView="true">
+                                    <NTTooltip />
+                                    <NTLegend />
+                                    <NTTreeMapSeries TData="ClaimPoint" Data="@_northClaims" Title="North Region"
+                                                     XValue="@(c => c.Customer)" ValueSelector="@(c => c.Amount)"
+                                                     GroupSelector="@(c => c.Customer)" GroupLevelLabels="@_regionalLevelLabels"
+                                                     ColorSelector="@NorthRegionColor" DataLabelFormat="{0:N0}">
+                                        <NTTreeMapSeries TData="ClaimPoint" XValue="@(c => c.ClassCode)"
+                                                         ValueSelector="@(c => c.Amount)" GroupSelector="@(c => c.ClassCode)"
+                                                         ColorSelector="@NorthRegionColor" ShowValuesInLabels="false" MinLabelFontSize="6"
+                                                         MaxLabelFontSize="18" ItemPadding="@(1.5f)" />
+                                    </NTTreeMapSeries>
+
+                                    <NTTreeMapSeries TData="ClaimPoint" Data="@_southClaims" Title="South Region"
+                                                     XValue="@(c => c.Customer)" ValueSelector="@(c => c.Amount)"
+                                                     GroupSelector="@(c => c.Customer)" GroupLevelLabels="@_regionalLevelLabels"
+                                                     ColorSelector="@SouthRegionColor" DataLabelFormat="{0:N0}">
+                                        <NTTreeMapSeries TData="ClaimPoint" XValue="@(c => c.ClassCode)"
+                                                         ValueSelector="@(c => c.Amount)" GroupSelector="@(c => c.ClassCode)"
+                                                         ColorSelector="@SouthRegionColor" ShowValuesInLabels="false" MinLabelFontSize="6"
+                                                         MaxLabelFontSize="18" ItemPadding="@(1.5f)" />
+                                    </NTTreeMapSeries>
+                                </NTChart>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <div class="card p-3 shadow-sm">
+                        <h5 class="mb-2">Drilldown Only (Children Hidden)</h5>
+                        <p class="text-muted mb-2">Child treemaps exist and are clickable through drilldown, but child previews are not rendered inside parent cells.</p>
+                        <div style="height: 500px;">
+                            <NTChart TData="ClaimPoint" TitleOptions="@new("Claims Treemap (Hidden Child Previews)")"
+                                     EnableHardwareAcceleration="true" DebugView="true">
+                                <NTTooltip />
+                                <NTLegend />
+                                <NTTreeMapSeries TData="ClaimPoint" Data="@_claims" Title="Claims"
+                                                 XValue="@(c => c.Customer)" ValueSelector="@(c => c.Amount)"
+                                                 GroupSelector="@(c => c.Customer)" GroupLevelLabels="@_claimLevelLabels"
+                                                 ColorSelector="@ClaimsColor" DataLabelFormat="{0:N0}" ShowChildPreviews="false"
+                                                 ShowLabels="true" ShowValuesInLabels="true" MinLabelWidth="38" MinLabelHeight="22"
+                                                 MinLabelFontSize="8" MaxLabelFontSize="34" ItemPadding="2">
+                                    <NTTreeMapSeries TData="ClaimPoint" XValue="@(c => c.ClassCode)"
+                                                     ValueSelector="@(c => c.Amount)" GroupSelector="@(c => c.ClassCode)"
+                                                     ColorSelector="@ClaimsColor" DataLabelFormat="{0:N0}" ShowLabels="true"
+                                                     ShowValuesInLabels="true" MinLabelFontSize="7" MaxLabelFontSize="22"
+                                                     ItemPadding="@(1.5f)">
+                                        <NTTreeMapSeries TData="ClaimPoint" XValue="@(c => c.Bucket)"
+                                                         ValueSelector="@(c => c.Amount)" GroupSelector="@(c => c.Bucket)"
+                                                         ColorSelector="@ClaimsColor" DataLabelFormat="{0:N0}" ShowLabels="true"
+                                                         ShowValuesInLabels="false" MinLabelFontSize="6" MaxLabelFontSize="16"
+                                                         ItemPadding="1" />
+                                    </NTTreeMapSeries>
+                                </NTTreeMapSeries>
+                            </NTChart>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+@code {
+    public record ClaimPoint(string Region, string Customer, string ClassCode, string Bucket, decimal Amount);
+
+    private readonly IReadOnlyList<string> _claimLevelLabels = ["Customer", "Class Code", "Bucket"];
+    private readonly IReadOnlyList<string> _regionalLevelLabels = ["Customer", "Class Code"];
+
+    private List<ClaimPoint> _claims = [];
+    private List<ClaimPoint> _northClaims = [];
+    private List<ClaimPoint> _southClaims = [];
+
+    protected override void OnInitialized()
+    {
+        var customers = new[] {
+            "Atlas Logistics",
+            "Beacon Farms",
+            "Crescent Steel",
+            "Delta Transport",
+            "Evergreen Foods",
+            "Frontier Health"
+        };
+
+        var classCodes = new[] { "3632", "5606", "8017", "8742", "9082" };
+        var buckets = new[] { "Medical", "Indemnity", "Expense" };
+        var regions = new[] { "North", "South" };
+
+        var random = new Random(7);
+        var claims = new List<ClaimPoint>(220);
+
+        for (var customerIndex = 0; customerIndex < customers.Length; customerIndex++)
+        {
+            for (var classIndex = 0; classIndex < classCodes.Length; classIndex++)
+            {
+                var region = regions[(customerIndex + classIndex) % regions.Length];
+                for (var bucketIndex = 0; bucketIndex < buckets.Length; bucketIndex++)
+                {
+                    var repeats = 2 + random.Next(0, 3);
+                    for (var i = 0; i < repeats; i++)
+                    {
+                        var baseAmount = 1200m + (customerIndex * 420m) + (classIndex * 310m) + (bucketIndex * 260m);
+                        var jitter = (decimal)(random.NextDouble() * 950d);
+                        claims.Add(new ClaimPoint(
+                            region,
+                            customers[customerIndex],
+                            classCodes[classIndex],
+                            buckets[bucketIndex],
+                            decimal.Round(baseAmount + jitter, 0)));
+                    }
+                }
+            }
+        }
+
+        _claims = claims;
+        _northClaims = claims.Where(c => c.Region == "North").ToList();
+        _southClaims = claims.Where(c => c.Region == "South").ToList();
+    }
+
+    private static TnTColor ClaimsColor(TreeMapColorContext<ClaimPoint> context)
+    {
+        if (context.Depth == 0)
+        {
+            return context.Key switch
+            {
+                "Atlas Logistics" => TnTColor.Primary,
+                "Beacon Farms" => TnTColor.Secondary,
+                "Crescent Steel" => TnTColor.Tertiary,
+                "Delta Transport" => TnTColor.Success,
+                "Evergreen Foods" => TnTColor.Warning,
+                _ => TnTColor.Error
+            };
+        }
+
+        if (context.Depth == 1)
+        {
+            return context.Key switch
+            {
+                "3632" => TnTColor.PrimaryContainer,
+                "5606" => TnTColor.SecondaryContainer,
+                "8017" => TnTColor.TertiaryContainer,
+                "8742" => TnTColor.SurfaceTint,
+                _ => TnTColor.InversePrimary
+            };
+        }
+
+        return context.Key switch
+        {
+            "Medical" => TnTColor.ErrorContainer,
+            "Indemnity" => TnTColor.PrimaryFixed,
+            _ => TnTColor.SecondaryFixed
+        };
+    }
+
+    private static TnTColor NorthRegionColor(TreeMapColorContext<ClaimPoint> context)
+    {
+        if (context.Depth == 0)
+        {
+            return TnTColor.Primary;
+        }
+
+        return context.Depth == 1 ? TnTColor.PrimaryContainer : TnTColor.PrimaryFixed;
+    }
+
+    private static TnTColor SouthRegionColor(TreeMapColorContext<ClaimPoint> context)
+    {
+        if (context.Depth == 0)
+        {
+            return TnTColor.Tertiary;
+        }
+
+        return context.Depth == 1 ? TnTColor.TertiaryContainer : TnTColor.TertiaryFixed;
+    }
+}

@@ -1,0 +1,417 @@
+@page "/bar-graph"
+@rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
+@using NTComponents
+@using NTComponents.Charts
+@using NTComponents.Charts.Core
+@using NTComponents.Charts.Core.Axes
+@using NTComponents.Charts.Core.Series
+
+<div class="container py-4">
+    <h1>Bar Graph Demos</h1>
+    <p class="lead">Animated bars, dense spacing, and top-positioned value labels.</p>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card p-3 shadow-sm">
+                <div class="d-flex gap-3 align-items-center flex-wrap">
+                    <div class="form-check form-switch mb-0">
+                        <input class="form-check-input" type="checkbox" @bind="_enableHardwareAcceleration" id="barHwAccelCheck">
+                        <label class="form-check-label" for="barHwAccelCheck">Enable Hardware Acceleration</label>
+                    </div>
+                    <div class="btn-group btn-group-sm" role="group" aria-label="Orientation">
+                        <button type="button" class="btn @( _multiOrientation == NTChartOrientation.Vertical ? "btn-primary" : "btn-outline-primary")" @onclick="@(() => SetOrientation(NTChartOrientation.Vertical))">Vertical</button>
+                        <button type="button" class="btn @( _multiOrientation == NTChartOrientation.Horizontal ? "btn-primary" : "btn-outline-primary")" @onclick="@(() => SetOrientation(NTChartOrientation.Horizontal))">Horizontal</button>
+                    </div>
+                    <button class="btn btn-sm btn-outline-primary" @onclick="RegenerateData">Regenerate Data</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card p-3 shadow-sm h-100">
+                <h5>Quarterly Revenue</h5>
+                <div style="height: 360px;">
+                    <NTChart TData="BarPoint" TitleOptions="@new("Quarterly Revenue")" EnableHardwareAcceleration="@_enableHardwareAcceleration" DebugView="true">
+                        <NTXAxisOptions ValueSelector="@(p => p.Category)" Title="Quarter" />
+                        <NTYAxisOptions ValueSelector="@(p => p.Value)" Title="Revenue (K)" LabelFormat="{0:N0}" />
+
+                        <NTBarSeries TData="BarPoint"
+                                     Data="@_quarterly"
+                                     Title="Revenue"
+                                     XValue="@(p => p.Category)"
+                                     YValueSelector="@(p => p.Value)"
+                                     Color="TnTColor.Primary"
+                                     CornerRadius="5"
+                                     DataLabelFormat="{0:N0}" />
+
+                        <NTTooltip />
+                        <NTLegend />
+                    </NTChart>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card p-3 shadow-sm h-100">
+                <h5>Dense Categories</h5>
+                <div style="height: 360px;">
+                    <NTChart TData="BarPoint" TitleOptions="@new("Category Density")" EnableHardwareAcceleration="@_enableHardwareAcceleration" DebugView="true">
+                        <NTXAxisOptions ValueSelector="@(p => p.Category)" Title="Category" />
+                        <NTYAxisOptions ValueSelector="@(p => p.Value)" Title="Count" LabelFormat="{0:N0}" />
+
+                        <NTBarSeries TData="BarPoint"
+                                     Data="@_denseCategories"
+                                     Title="Counts"
+                                     XValue="@(p => p.Category)"
+                                     YValueSelector="@(p => p.Value)"
+                                     Color="TnTColor.Secondary"
+                                     CornerRadius="4"
+                                     DataLabelFormat="{0:N0}" />
+
+                        <NTTooltip />
+                        <NTLegend />
+                    </NTChart>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card p-3 shadow-sm h-100">
+                <h5>Multiple Bar Series</h5>
+                <div style="height: 360px;">
+                    <NTChart TData="MultiBarPoint" TitleOptions="@new("Plan vs Actual vs Forecast")" EnableHardwareAcceleration="@_enableHardwareAcceleration" DebugView="true">
+                        <NTXAxisOptions ValueSelector="@(p => p.Category)" Title="@(_multiOrientation == NTChartOrientation.Horizontal ? "Amount (K)" : "Month")" />
+                        <NTYAxisOptions ValueSelector="@(p => p.Plan)" Title="@(_multiOrientation == NTChartOrientation.Horizontal ? "Category Index" : "Amount (K)")" LabelFormat="{0:N0}" />
+
+                        <NTBarSeries TData="MultiBarPoint"
+                                     Data="@_multiSeries"
+                                     Title="Plan"
+                                     XValue="@(p => p.Category)"
+                                     YValueSelector="@(p => p.Plan)"
+                                     Orientation="@_multiOrientation"
+                                     Color="TnTColor.Primary"
+                                     CornerRadius="3"
+                                     DataLabelFormat="{0:N0}" />
+
+                        <NTBarSeries TData="MultiBarPoint"
+                                     Data="@_multiSeries"
+                                     Title="Actual"
+                                     XValue="@(p => p.Category)"
+                                     YValueSelector="@(p => p.Actual)"
+                                     Orientation="@_multiOrientation"
+                                     Color="TnTColor.Secondary"
+                                     CornerRadius="3"
+                                     DataLabelFormat="{0:N0}" />
+
+                        <NTBarSeries TData="MultiBarPoint"
+                                     Data="@_multiSeries"
+                                     Title="Forecast"
+                                     XValue="@(p => p.Category)"
+                                     YValueSelector="@(p => p.Forecast)"
+                                     Orientation="@_multiOrientation"
+                                     Color="TnTColor.Tertiary"
+                                     CornerRadius="3"
+                                     DataLabelFormat="{0:N0}" />
+
+                        <NTTooltip />
+                        <NTLegend />
+                    </NTChart>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card p-3 shadow-sm h-100">
+                <h5>Horizontal Bar Series</h5>
+                <div style="height: 360px;">
+                    <NTChart TData="BarPoint" TitleOptions="@new("Regional Performance")" EnableHardwareAcceleration="@_enableHardwareAcceleration" DebugView="true">
+                        <NTXAxisOptions ValueSelector="@(p => p.Category)" Title="Score" LabelFormat="{0:N0}" />
+                        <NTYAxisOptions ValueSelector="@(p => p.Value)" Title="Region" />
+
+                        <NTBarSeries TData="BarPoint"
+                                     Data="@_horizontalSeries"
+                                     Title="Performance"
+                                     XValue="@(p => p.Category)"
+                                     YValueSelector="@(p => p.Value)"
+                                     Orientation="NTChartOrientation.Horizontal"
+                                     Color="TnTColor.Primary"
+                                     CornerRadius="4"
+                                     DataLabelFormat="{0:N0}" />
+
+                        <NTTooltip />
+                        <NTLegend />
+                    </NTChart>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="card p-3 shadow-sm">
+                <h5>Positive and Negative Values</h5>
+                <div style="height: 340px;">
+                    <NTChart TData="BarPoint" TitleOptions="@new("Variance By Segment")" EnableHardwareAcceleration="@_enableHardwareAcceleration" DebugView="true">
+                        <NTXAxisOptions ValueSelector="@(p => p.Category)" Title="Segment" />
+                        <NTYAxisOptions ValueSelector="@(p => p.Value)" Title="Delta" LabelFormat="{0:N0}" />
+
+                        <NTBarSeries TData="BarPoint"
+                                     Data="@_variance"
+                                     Title="Delta"
+                                     XValue="@(p => p.Category)"
+                                     YValueSelector="@(p => p.Value)"
+                                     Color="TnTColor.Tertiary"
+                                     CornerRadius="4"
+                                     DataLabelFormat="{0:N0}" />
+
+                        <NTTooltip />
+                        <NTLegend />
+                    </NTChart>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="card p-3 shadow-sm">
+                <h5>Segmented Bars by Class Code</h5>
+                <p class="text-muted mb-2">Each customer bar is split into class-code segments. Segment colors are assigned independently with a callback.</p>
+                <div style="height: 360px;">
+                    <NTChart TData="ClaimSegmentBar" TitleOptions="@new("Claims by Customer and Class Code")" EnableHardwareAcceleration="@_enableHardwareAcceleration" DebugView="true">
+                        <NTXAxisOptions ValueSelector="@(p => p.Customer)" Title="Customer" />
+                        <NTYAxisOptions ValueSelector="@(p => p.TotalClaims)" Title="Claim Count" LabelFormat="{0:N0}" />
+
+                        <NTBarSeries TData="ClaimSegmentBar"
+                                     Data="@_claimsByCustomer"
+                                     Title="Claims"
+                                     XValue="@(p => p.Customer)"
+                                     YValueSelector="@(p => p.TotalClaims)"
+                                     SegmentSelector="GetClaimSegments"
+                                     SegmentColorSelector="GetClassCodeColor"
+                                     CornerRadius="4"
+                                     DataLabelFormat="{0:N0}" />
+
+                        <NTTooltip />
+                        <NTLegend />
+                    </NTChart>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card p-3 shadow-sm h-100">
+                <h5>Bar + Line (Shared Y Axis)</h5>
+                <div style="height: 340px;">
+                    <NTChart TData="ComboPoint" TitleOptions="@new("Units and Trend")" EnableHardwareAcceleration="@_enableHardwareAcceleration" DebugView="true">
+                        <NTXAxisOptions ValueSelector="@(p => p.Category)" Title="Period" />
+                        <NTYAxisOptions ValueSelector="@(p => p.Units)" Title="Units" LabelFormat="{0:N0}" />
+
+                        <NTBarSeries TData="ComboPoint"
+                                     Data="@_comboSharedAxis"
+                                     Title="Units"
+                                     XValue="@(p => p.Category)"
+                                     YValueSelector="@(p => p.Units)"
+                                     Color="TnTColor.Primary"
+                                     CornerRadius="4"
+                                     DataLabelFormat="{0:N0}" />
+
+                        <NTLineSeries TData="ComboPoint"
+                                      Data="@_comboSharedAxis"
+                                      Title="Target"
+                                      XValue="@(p => p.Category)"
+                                      YValueSelector="@(p => p.Target)"
+                                      Color="TnTColor.Secondary"
+                                      Interpolation="LineInterpolation.Smoothed"
+                                      PointStyle="PointStyle.Filled"
+                                      PointSize="6" />
+
+                        <NTTooltip />
+                        <NTLegend />
+                    </NTChart>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card p-3 shadow-sm h-100">
+                <h5>Bar + Line (Dual Y Axis)</h5>
+                <div style="height: 340px;">
+                    <NTChart TData="ComboPoint" TitleOptions="@new("Revenue and Conversion")" EnableHardwareAcceleration="@_enableHardwareAcceleration" DebugView="true">
+                        <NTXAxisOptions ValueSelector="@(p => p.Category)" Title="Campaign" />
+                        <NTYAxisOptions ValueSelector="@(p => p.Revenue)" Title="Revenue (K)" LabelFormat="{0:N0}" />
+                        <NTYAxisOptions ValueSelector="@(p => p.ConversionPct)" Title="Conversion (%)" LabelFormat="{0:N1}" />
+
+                        <NTBarSeries TData="ComboPoint"
+                                     Data="@_comboDualAxis"
+                                     Title="Revenue"
+                                     XValue="@(p => p.Category)"
+                                     YValueSelector="@(p => p.Revenue)"
+                                     Color="TnTColor.Tertiary"
+                                     CornerRadius="4"
+                                     DataLabelFormat="{0:N0}" />
+
+                        <NTLineSeries TData="ComboPoint"
+                                      Data="@_comboDualAxis"
+                                      Title="Conversion %"
+                                      XValue="@(p => p.Category)"
+                                      YValueSelector="@(p => p.ConversionPct)"
+                                      UseSecondaryYAxis="true"
+                                      Color="TnTColor.Secondary"
+                                      Interpolation="LineInterpolation.Straight"
+                                      PointStyle="PointStyle.Outlined"
+                                      PointShape="PointShape.Circle"
+                                      PointSize="7" />
+
+                        <NTTooltip />
+                        <NTLegend />
+                    </NTChart>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    public record BarPoint(string Category, decimal Value);
+    public record MultiBarPoint(string Category, decimal Plan, decimal Actual, decimal Forecast);
+    public record ComboPoint(string Category, decimal Units, decimal Target, decimal Revenue, decimal ConversionPct);
+    public record ClaimSegmentBar(string Customer, decimal TotalClaims, decimal Cc3632, decimal Cc5606, decimal Cc8017, decimal Cc8742);
+
+    private bool _enableHardwareAcceleration = true;
+    private NTChartOrientation _multiOrientation = NTChartOrientation.Vertical;
+    private List<BarPoint> _quarterly = [];
+    private List<BarPoint> _denseCategories = [];
+    private List<BarPoint> _horizontalSeries = [];
+    private List<BarPoint> _variance = [];
+    private List<MultiBarPoint> _multiSeries = [];
+    private List<ComboPoint> _comboSharedAxis = [];
+    private List<ComboPoint> _comboDualAxis = [];
+    private List<ClaimSegmentBar> _claimsByCustomer = [];
+
+    protected override void OnInitialized() {
+        RegenerateData();
+    }
+
+    private void RegenerateData() {
+        _quarterly =
+        [
+            new("Q1", 140 + Random.Shared.Next(0, 60)),
+            new("Q2", 120 + Random.Shared.Next(0, 80)),
+            new("Q3", 160 + Random.Shared.Next(0, 70)),
+            new("Q4", 180 + Random.Shared.Next(0, 90)),
+            new("Q5", 110 + Random.Shared.Next(0, 55)),
+            new("Q6", 170 + Random.Shared.Next(0, 85)),
+            new("Q7", 150 + Random.Shared.Next(0, 75)),
+            new("Q8", 190 + Random.Shared.Next(0, 95))
+        ];
+
+        _denseCategories = Enumerable.Range(1, 18)
+            .Select(i => new BarPoint($"C{i}", 15 + Random.Shared.Next(0, 95)))
+            .ToList();
+
+        _variance =
+        [
+            new("Alpha", 25 + Random.Shared.Next(0, 35)),
+            new("Beta", -10 - Random.Shared.Next(0, 20)),
+            new("Gamma", 8 + Random.Shared.Next(0, 28)),
+            new("Delta", -15 - Random.Shared.Next(0, 18)),
+            new("Epsilon", 18 + Random.Shared.Next(0, 26)),
+            new("Zeta", -6 - Random.Shared.Next(0, 22))
+        ];
+
+        _horizontalSeries =
+        [
+            new("North", 180 + Random.Shared.Next(0, 80)),
+            new("South", 140 + Random.Shared.Next(0, 85)),
+            new("East", 160 + Random.Shared.Next(0, 70)),
+            new("West", 150 + Random.Shared.Next(0, 90)),
+            new("Central", 170 + Random.Shared.Next(0, 75)),
+            new("Online", 210 + Random.Shared.Next(0, 65))
+        ];
+
+        _multiSeries =
+        [
+            CreateMulti("Jan"),
+            CreateMulti("Feb"),
+            CreateMulti("Mar"),
+            CreateMulti("Apr"),
+            CreateMulti("May"),
+            CreateMulti("Jun")
+        ];
+
+        _comboSharedAxis =
+        [
+            CreateCombo("W1"),
+            CreateCombo("W2"),
+            CreateCombo("W3"),
+            CreateCombo("W4"),
+            CreateCombo("W5"),
+            CreateCombo("W6")
+        ];
+
+        _comboDualAxis =
+        [
+            CreateCombo("A"),
+            CreateCombo("B"),
+            CreateCombo("C"),
+            CreateCombo("D"),
+            CreateCombo("E"),
+            CreateCombo("F")
+        ];
+
+        _claimsByCustomer =
+        [
+            CreateClaimBar("Atlas Logistics"),
+            CreateClaimBar("Beacon Farms"),
+            CreateClaimBar("Crescent Steel"),
+            CreateClaimBar("Delta Transport"),
+            CreateClaimBar("Evergreen Foods"),
+            CreateClaimBar("Frontier Health")
+        ];
+    }
+
+    private void SetOrientation(NTChartOrientation orientation) {
+        _multiOrientation = orientation;
+    }
+
+    private static MultiBarPoint CreateMulti(string month) {
+        var plan = 95 + Random.Shared.Next(0, 45);
+        var actual = plan + Random.Shared.Next(-22, 22);
+        var forecast = actual + Random.Shared.Next(-12, 18);
+        return new MultiBarPoint(month, plan, actual, forecast);
+    }
+
+    private static ComboPoint CreateCombo(string category) {
+        var units = 80 + Random.Shared.Next(0, 80);
+        var target = units + Random.Shared.Next(-20, 25);
+        var revenue = 140 + Random.Shared.Next(0, 140);
+        var conversion = 2.5m + (decimal)Random.Shared.NextDouble() * 5.5m;
+        return new ComboPoint(category, units, target, revenue, conversion);
+    }
+
+    private static ClaimSegmentBar CreateClaimBar(string customer) {
+        var c3632 = 12 + Random.Shared.Next(0, 18);
+        var c5606 = 8 + Random.Shared.Next(0, 14);
+        var c8017 = 6 + Random.Shared.Next(0, 12);
+        var c8742 = 4 + Random.Shared.Next(0, 10);
+        var total = c3632 + c5606 + c8017 + c8742;
+        return new ClaimSegmentBar(customer, total, c3632, c5606, c8017, c8742);
+    }
+
+    private static IEnumerable<NTBarSegment> GetClaimSegments(ClaimSegmentBar row) =>
+    [
+        new NTBarSegment { Label = "3632", Value = row.Cc3632 },
+        new NTBarSegment { Label = "5606", Value = row.Cc5606 },
+        new NTBarSegment { Label = "8017", Value = row.Cc8017 },
+        new NTBarSegment { Label = "8742", Value = row.Cc8742 }
+    ];
+
+    private static TnTColor GetClassCodeColor(NTBarSegmentColorContext<ClaimSegmentBar> context) {
+        return context.SegmentLabel switch {
+            "3632" => TnTColor.Primary,
+            "5606" => TnTColor.Secondary,
+            "8017" => TnTColor.Tertiary,
+            "8742" => TnTColor.Warning,
+            _ => TnTColor.PrimaryFixed
+        };
+    }
+}

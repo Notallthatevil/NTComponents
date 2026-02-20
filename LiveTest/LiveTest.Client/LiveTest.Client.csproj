@@ -8,9 +8,14 @@
     <StaticWebAssetProjectMode>Default</StaticWebAssetProjectMode>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <WasmBuildNative>true</WasmBuildNative>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\..\NTComponents.Extensions\NTComponents.Extensions.csproj" />
     <ProjectReference Include="..\..\NTComponents\NTComponents.csproj" />
+    <ProjectReference Include="..\..\Submodules\NTComponents.Charts\NTComponents.Charts\NTComponents.Charts.csproj" />
   </ItemGroup>
 
 </Project>
