@@ -1,3 +1,10 @@
+# [1.24.0](https://github.com/Notallthatevil/NTComponents/compare/v1.23.1...v1.24.0) (2026-02-20)
+
+
+### Features
+
+* **datagrid:** wrap cell content in container div ([bd0b181](https://github.com/Notallthatevil/NTComponents/commit/bd0b181a273dcb27660c4a23a256ed2100f7eda4))
+
 ## [1.23.1](https://github.com/Notallthatevil/NTComponents/compare/v1.23.0...v1.23.1) (2026-02-20)
 
 
