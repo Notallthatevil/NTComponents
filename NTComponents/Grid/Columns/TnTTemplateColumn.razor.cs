@@ -20,9 +20,6 @@ public partial class TnTTemplateColumn<[DynamicallyAccessedMembers(DynamicallyAc
     public RenderFragment<TGridItem> ChildContent { get; set; } = default!;
 
     /// <inheritdoc />
-    public override string? ElementClass { get; }
-
-    /// <inheritdoc />
     public override string? ElementStyle { get; }
 
     /// <inheritdoc />

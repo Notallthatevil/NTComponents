@@ -94,6 +94,7 @@ public partial class TnTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessed
         .AddVariable("tnt-data-grid-fg-color", TextColor)
         .AddVariable("tnt-data-grid-tint-color", TintColor)
         .AddVariable("tnt-data-grid-on-tint-color", OnTintColor)
+        .AddVariable("tnt-data-grid-row-height", $"{ItemSize}px")
         .Build();
 
     /// <summary>

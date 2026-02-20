@@ -27,9 +27,6 @@ public partial class TnTPropertyColumn<[DynamicallyAccessedMembers(DynamicallyAc
     public IComparer<TProp>? Comparer { get; set; }
 
     /// <inheritdoc />
-    public override string? ElementClass => throw new NotImplementedException();
-
-    /// <inheritdoc />
     public override string? ElementStyle => throw new NotImplementedException();
 
     /// <summary>

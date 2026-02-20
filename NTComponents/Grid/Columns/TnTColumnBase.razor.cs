@@ -18,6 +18,12 @@ namespace NTComponents.Grid.Columns;
 [CascadingTypeParameter(nameof(TGridItem))]
 [DebuggerDisplay("Title = {Title}, Order = {Order}, Sortable = {Sortable}, IsSortedOn = {IsSortedOn}")]
 public abstract partial class TnTColumnBase<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields)] TGridItem> : TnTComponentBase, ITnTComponentBase, IDisposable {
+    /// <inheritdoc />
+    public override string? ElementClass => CssClassBuilder.Create()
+        .AddFromAdditionalAttributes(AdditionalAttributes)
+        .AddClass("nt-grid-cell")
+        .AddTextAlign(TextAlign)
+        .Build();
 
     /// <summary>
     ///     Unique column ID assigned by the grid context.
