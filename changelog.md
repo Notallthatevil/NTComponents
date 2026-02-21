@@ -1,3 +1,10 @@
+## [1.24.2](https://github.com/Notallthatevil/NTComponents/compare/v1.24.1...v1.24.2) (2026-02-21)
+
+
+### Bug Fixes
+
+* update column cell class and attribute tests ([35f0fb8](https://github.com/Notallthatevil/NTComponents/commit/35f0fb883b87e427759ebc9dc5b8f9971afa17a8))
+
 ## [1.24.1](https://github.com/Notallthatevil/NTComponents/compare/v1.24.0...v1.24.1) (2026-02-20)
 
 
