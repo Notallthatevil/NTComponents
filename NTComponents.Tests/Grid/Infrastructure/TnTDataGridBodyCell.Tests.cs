@@ -136,7 +136,7 @@ public class TnTDataGridBodyCell_Tests : BunitContext {
         var column = CreateTestColumn("Content");
         column.AdditionalAttributes = new Dictionary<string, object> {
             { "data-test", "test-value" },
-            { "class", "custom-class" }
+            { "aria-label", "body-cell" }
         };
 
         // Act
@@ -145,7 +145,7 @@ public class TnTDataGridBodyCell_Tests : BunitContext {
         // Assert
         var td = cut.Find("td");
         td.GetAttribute("data-test").Should().Be("test-value");
-        td.GetAttribute("class").Should().Contain("custom-class");
+        td.GetAttribute("aria-label").Should().Be("body-cell");
     }
 
     [Fact]

@@ -23,14 +23,17 @@ public class TnTPropertyColumn_Tests : BunitContext {
     };
 
     [Fact]
-    public void ElementClass_ThrowsNotImplementedException() {
+    public void ElementClass_ContainsDefaultGridClasses() {
         // Arrange
         var gridContext = CreateMockGridContext();
         var column = CreateColumn<string>(x => x.Name, gridContext);
 
-        // Act & Assert
-        var act = () => _ = column.ElementClass;
-        act.Should().Throw<NotImplementedException>();
+        // Act
+        var result = column.ElementClass;
+
+        // Assert
+        result.Should().Contain("nt-grid-cell");
+        result.Should().Contain("tnt-components");
     }
 
     [Fact]

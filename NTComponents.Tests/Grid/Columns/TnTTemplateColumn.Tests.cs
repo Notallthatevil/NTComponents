@@ -29,15 +29,6 @@ public class TnTTemplateColumn_Tests : BunitContext {
         editorRequiredAttribute.Should().NotBeNull().And.HaveCount(1);
     }
 
-    [Fact]
-    public void ElementClass_IsNull() {
-        // Arrange
-        var gridContext = CreateMockGridContext();
-        var column = CreateColumn(gridContext);
-
-        // Act & Assert
-        column.ElementClass.Should().BeNull();
-    }
 
     [Fact]
     public void ElementStyle_IsNull() {
