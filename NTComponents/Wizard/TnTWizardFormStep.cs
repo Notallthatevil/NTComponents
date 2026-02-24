@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Rendering;
+using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Tracing;
@@ -114,6 +117,41 @@ public class TnTWizardFormStep : TnTWizardStepBase, ITnTWizardFormStep {
 
     /// <inheritdoc />
     private TnTForm _form = default!;
+
+    internal EditContext? EditContext => _form?.EditContext;
+
+    /// <summary>
+    ///     Performs a trim-safe required-field check without touching form edit context validation messages.
+    /// </summary>
+    /// <returns><c>true</c> when all required model fields contain values; otherwise <c>false</c>.</returns>
+    [UnconditionalSuppressMessage("Trimming", "IL2075", Justification = "Used only for UI affordance in wizard button state; runtime model metadata is available in component usage.")]
+    internal bool RequiredFieldsSatisfiedWithoutMessageEmission() {
+        var model = _form?.Model ?? Model;
+        if (model is null) {
+            return false;
+        }
+
+        foreach (var property in model.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)) {
+            if (property.GetIndexParameters().Length > 0 || !property.CanRead) {
+                continue;
+            }
+
+            if (!property.GetCustomAttributes<RequiredAttribute>(inherit: true).Any()) {
+                continue;
+            }
+
+            var value = property.GetValue(model);
+            if (value is null) {
+                return false;
+            }
+
+            if (value is string str && string.IsNullOrWhiteSpace(str)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
 
     /// <inheritdoc />
     public async Task<bool> FormValidAsync() {
