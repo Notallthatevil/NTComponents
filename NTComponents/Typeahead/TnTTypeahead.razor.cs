@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.JSInterop;
 using System.Linq.Expressions;
 using NTComponents.Core;
 
@@ -70,6 +71,9 @@ public partial class TnTTypeahead<TItem> {
     /// </summary>
     [Parameter]
     public EventCallback<TItem> ItemSelectedCallback { get; set; }
+
+    /// <inheritdoc />
+    public override string? JsModulePath => "./_content/NTComponents/Typeahead/TnTTypeahead.razor.js";
 
     /// <summary>
     ///     Function used to retrieve items based on the current search text.
@@ -193,16 +197,7 @@ public partial class TnTTypeahead<TItem> {
     private bool _searching;
     private string? _displayErrorMessage;
     private FieldIdentifier? _fieldIdentifier;
-
-    /// <inheritdoc />
-    public void Dispose() {
-        EditContext?.OnValidationStateChanged -= HandleValidationStateChanged;
-
-        _debouncer?.Dispose();
-        _debouncer = null!;
-
-        GC.SuppressFinalize(this);
-    }
+    private bool _managedResourcesDisposed;
 
     /// <inheritdoc />
     protected override void OnInitialized() {
@@ -229,6 +224,21 @@ public partial class TnTTypeahead<TItem> {
         }
 
         UpdateValidationState();
+    }
+
+    /// <inheritdoc />
+    protected override void Dispose(bool disposing) {
+        if (disposing) {
+            DisposeManagedResources();
+        }
+
+        base.Dispose(disposing);
+    }
+
+    /// <inheritdoc />
+    protected override async ValueTask DisposeAsyncCore() {
+        DisposeManagedResources();
+        await base.DisposeAsyncCore();
     }
 
     /// <summary>
@@ -324,6 +334,26 @@ public partial class TnTTypeahead<TItem> {
         UpdateValidationState();
     }
 
+    /// <summary>
+    /// Invoked from JavaScript to close the dropdown and reset its state asynchronously.
+    /// </summary>
+    /// <remarks>This method is intended to be called via JavaScript interop. It resets the dropdown's items
+    /// and state, ensuring the UI reflects the closed state. If the dropdown is already empty or certain conditions are
+    /// met, the method completes without making changes.</remarks>
+    /// <returns>A task that represents the asynchronous operation of closing the dropdown.</returns>
+    [JSInvokable]
+    public async Task CloseDropdownFromJs() {
+        if (!_items.Any() && (string.IsNullOrWhiteSpace(Value) || _searching || _itemSelected)) {
+            return;
+        }
+
+        _items = [];
+        _focusedItem = default;
+        _searching = false;
+        _itemSelected = true;
+        await InvokeAsync(StateHasChanged);
+    }
+
     private void UpdateValidationState() {
         var messages = _fieldIdentifier.HasValue
             ? EditContext?.GetValidationMessages(_fieldIdentifier.Value)
@@ -331,5 +361,18 @@ public partial class TnTTypeahead<TItem> {
 
         _displayErrorMessage = messages?.Any() == true ? ErrorMessage : null;
         InvokeAsync(StateHasChanged);
+    }
+
+    private void DisposeManagedResources() {
+        if (_managedResourcesDisposed) {
+            return;
+        }
+
+        EditContext?.OnValidationStateChanged -= HandleValidationStateChanged;
+
+        _debouncer?.Dispose();
+        _debouncer = null!;
+
+        _managedResourcesDisposed = true;
     }
 }

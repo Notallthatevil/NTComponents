@@ -47,6 +47,7 @@
         padding: 4px;
         max-height: 50vh;
         overflow: auto;
+        overscroll-behavior: contain;
         margin: 4px 4px 16px 4px;
         z-index: 200;
         position: absolute;
@@ -54,6 +55,14 @@
         border-radius: 8px;
         @include typescale.tnt-body-large;
         @include elevation.tnt-elevation(1, false);
+
+        &.tnt-typeahead-fixed {
+            position: fixed;
+            margin: 0;
+            z-index: 10000;
+            left: -9999px;
+            top: -9999px;
+        }
 
         ul {
             margin: 0;

@@ -14,12 +14,14 @@
     "testEnvironment": "jsdom",
     "roots": [
       "<rootDir>/NTComponents/Carousel/__tests__",
+      "<rootDir>/NTComponents/Tooltip/__tests__",
       "<rootDir>/NTComponents/Core/__tests__",
       "<rootDir>/NTComponents/Accordion/__tests__",
       "<rootDir>/NTComponents/Animation/__tests__",
       "<rootDir>/NTComponents/Editors/__tests__",
       "<rootDir>/NTComponents/TabView/__tests__",
       "<rootDir>/NTComponents/Theming/__tests__",
+      "<rootDir>/NTComponents/Typeahead/__tests__",
       "<rootDir>/NTComponents.Tests/wwwroot"
     ],
     "setupFiles": [
