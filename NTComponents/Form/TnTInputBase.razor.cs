@@ -240,6 +240,7 @@ public abstract partial class TnTInputBase<TInputType> : InputBase<TInputType>, 
         .AddVariable("tnt-input-text-color", TextColor.ToCssTnTColorVariable())
         .AddVariable("tnt-input-error-color", ErrorColor.ToCssTnTColorVariable())
         .AddVariable("tnt-input-character-length-color", CharacterLengthColor.ToCssTnTColorVariable())
+        .AddVariable("tnt-input-supporting-text-color", SupportingTextColor.ToCssTnTColorVariable())
         .Build();
 
     /// <inheritdoc />
@@ -306,6 +307,12 @@ public abstract partial class TnTInputBase<TInputType> : InputBase<TInputType>, 
     /// </summary>
     [Parameter]
     public string? SupportingText { get; set; }
+
+    /// <summary>
+    ///     Gets or sets the color of the supporting text. Defaults to <see cref="TnTColor.OnSurface" />.
+    /// </summary>
+    [Parameter]
+    public TnTColor SupportingTextColor { get; set; } = TnTColor.OnSurface;
 
     /// <summary>
     ///     Gets or sets the text color of the input.

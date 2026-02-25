@@ -5,6 +5,7 @@ $error-color: var(--tnt-input-error-color);
 $text-color: var(--tnt-input-text-color);
 $tint-color: var(--tnt-input-tint-color);
 $background-color: var(--tnt-input-background-color);
+$supporting-text-color: var(--tnt-input-supporting-text-color);
 
 @mixin tnt-label($grid-area: text) {
     .tnt-label {
@@ -51,7 +52,7 @@ $background-color: var(--tnt-input-background-color);
 
     input::placeholder,
     &::placeholder {
-        opacity: 0.5;
+        opacity: 0.8;
     }
 
     &::-webkit-autofill,
@@ -84,7 +85,7 @@ $background-color: var(--tnt-input-background-color);
         grid-area: supporting-text;
         width: 100%;
         text-wrap: wrap;
-        color: $text-color;
+        color: $supporting-text-color;
         padding-left: 16px;
         @include typescale.tnt-body-small;
     }
