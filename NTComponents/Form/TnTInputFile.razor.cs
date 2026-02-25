@@ -35,7 +35,6 @@ namespace NTComponents;
 /// <summary>
 ///     Provides a file input component for uploading files, supporting multiple modes and progress tracking.
 /// </summary>
-[Obsolete($"{nameof(TnTInputFile)} is deprecated and will be removed in a future release. Use {nameof(NTInputFile)} instead.")]
 public partial class TnTInputFile {
 
     /// <summary>
