@@ -44,11 +44,24 @@ $nt-button-group-first-child-suffix: ' .tnt-small-button-layer';
         gap: 2px;
         overflow: hidden;
 
-        ::deep .btn-group-btn:active {
-            border-radius: 2px !important;
+        ::deep {
+            .btn-group-btn:focus-visible {
+                outline: none;
 
-            .tnt-small-button-layer {
+                .tnt-small-button-layer {
+                    &:before {
+                        background-color: var(--tnt-button-tint-color) !important;
+                        opacity: 0.3 !important;
+                    }
+                }
+            }
+
+            .btn-group-btn:active {
                 border-radius: 2px !important;
+
+                .tnt-small-button-layer {
+                    border-radius: 2px !important;
+                }
             }
         }
 
