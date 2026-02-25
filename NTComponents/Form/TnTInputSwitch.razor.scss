@@ -5,9 +5,26 @@
 .tnt-input-container {
     display: grid;
     grid-template-areas: "container-input tooltip-icon" "supporting-text supporting-text";
-    grid-template-rows: auto auto;
     grid-template-columns: 1fr minmax(0, auto);
-    width:100%;
+    width: 100%;
+
+    &:has(.checkbox-appearance-default) {
+        grid-template-rows: auto auto;
+    }
+
+    &:has(.checkbox-appearance-span-and-flip) {
+        grid-template-rows: 32px auto;
+
+        .tnt-supporting-text {
+            position: relative;
+            top: -8px;
+            padding-left: 4px;
+        }
+
+        &:has(.tnt-start-icon) .tnt-supporting-text {
+            padding-left: 36px;
+        }
+    }
 
     @include base.supporting-text;
 
@@ -22,16 +39,23 @@
         grid-area: container-input;
         justify-self: start;
         grid-template-areas: "switch";
-        grid-template-columns: 52px;
-        grid-template-rows: 48px;
         display: inline-grid;
         box-sizing: border-box;
         -webkit-box-sizing: border-box;
         -moz-box-sizing: border-box;
         cursor: pointer;
-        min-width: 48px;
-        min-height: 48px;
         position: relative;
+
+        &.checkbox-appearnce-default {
+            min-width: 48px;
+            min-height: 48px;
+            grid-template-columns: 52px;
+            grid-template-rows: 48px;
+        }
+
+        &.checkbox-appearance-span-and-flip {
+            grid-template-columns: 100%;
+        }
 
         &:has(.tnt-start-icon):has(.tnt-end-icon) {
             grid-template-areas: "start-icon switch end-icon";
@@ -48,29 +72,77 @@
             grid-template-columns: 52px 24px;
         }
 
-        &:has(.tnt-start-icon):has(.tnt-end-icon):has(.tnt-label) {
+        &:has(.tnt-start-icon):has(.tnt-end-icon):has(.tnt-label).checkbox-appearance-default {
             grid-template-areas: "start-icon switch label pad1 end-icon";
             grid-template-columns: 24px 52px auto 12px 24px;
         }
 
-        &:has(.tnt-start-icon):not(:has(.tnt-end-icon)):has(.tnt-label) {
+        &:has(.tnt-start-icon):not(:has(.tnt-end-icon)):has(.tnt-label).checkbox-appearance-default {
             grid-template-areas: "start-icon switch label";
             grid-template-columns: 24px 52px auto;
         }
 
-        &:has(.tnt-end-icon):not(:has(.tnt-start-icon)):has(.tnt-label) {
+        &:has(.tnt-end-icon):not(:has(.tnt-start-icon)):has(.tnt-label).checkbox-appearance-default {
             grid-template-areas: "switch label pad1 end-icon";
             grid-template-columns: 52px auto 12px 24px;
         }
 
-        &:has(.tnt-label):not(:has(.tnt-start-icon)):not(:has(.tnt-end-icon)) {
+        &:has(.tnt-label):not(:has(.tnt-start-icon)):not(:has(.tnt-end-icon)).checkbox-appearance-default {
             grid-template-areas: "switch label";
             grid-template-columns: 52px auto;
         }
 
+        &:has(.tnt-start-icon):has(.tnt-end-icon):has(.tnt-label).checkbox-appearance-span-and-flip {
+            grid-template-areas: "start-icon pad2 label switch pad1 end-icon";
+            grid-template-columns: 24px 12px auto 52px 12px 24px;
+        }
+
+        &:has(.tnt-start-icon):not(:has(.tnt-end-icon)):has(.tnt-label).checkbox-appearance-span-and-flip {
+            grid-template-areas: "start-icon pad1 label switch";
+            grid-template-columns: 24px 12px auto 52px;
+        }
+
+        &:has(.tnt-end-icon):not(:has(.tnt-start-icon)):has(.tnt-label).checkbox-appearance-span-and-flip {
+            grid-template-areas: "label switch pad1 end-icon";
+            grid-template-columns: auto 52px 12px 24px;
+        }
+
+        &:has(.tnt-label):not(:has(.tnt-start-icon)):not(:has(.tnt-end-icon)).checkbox-appearance-span-and-flip {
+            grid-template-areas: "label switch";
+            grid-template-columns: auto 52px;
+        }
+
+        &.checkbox-appearance-default {
+            .tnt-label {
+                justify-self: center;
+            }
+        }
+
+        &.checkbox-appearance-span-and-flip {
+            grid-template-rows: 32px;
+            width: 100%;
+
+            .tnt-label {
+                justify-self: start;
+            }
+
+            .tnt-checkbox-overlay, &:before, &:after {
+                justify-self: end;
+            }
+
+            &:after {
+                position: relative;
+                right: 20px;
+            }
+
+            &:before {
+                position: relative;
+                right: 6px;
+            }
+        }
+
         .tnt-label {
             grid-area: label;
-            justify-self: center;
             align-self: center;
             color: base.$text-color;
 
@@ -198,6 +270,14 @@
                     color: base.$error-color;
                 }
             }
+        }
+    }
+
+    &:has(.tnt-form-compact) {
+        @include base.tnt-supporting-text-compact;
+
+        &:has(.checkbox-appearance-span-and-flip) {
+            grid-template-rows: 32px 16px;
         }
     }
 }

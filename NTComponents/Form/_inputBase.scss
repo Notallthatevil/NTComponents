@@ -299,43 +299,58 @@ $background-color: var(--tnt-input-background-color);
     }
 }
 
+@mixin tnt-supporting-text-compact {
+    .tnt-supporting-text {
+        font-size: 11px;
+        letter-spacing: 0.5px;
+        line-height:14px;
+        padding-top:2px;
+    }
+}
+
 @mixin tnt-form-compact($element: input) {
-    &.tnt-form-outlined {
-        grid-template-rows: 38px;
+    &:has(.tnt-form-compact) {
+        @include tnt-supporting-text-compact;
 
-        &:has(.tnt-label) {
-            &:has(input:not(:placeholder-shown)), &:has(input:focus), &:has(input:active), &.tnt-placeholder {
-                .tnt-label {
-                    transform: scale(0.75) translateY(-26px);
-                }
+        .tnt-input {
+            &.tnt-form-outlined {
+                grid-template-rows: 38px;
+
+                &:has(.tnt-label) {
+                    &:has(input:not(:placeholder-shown)), &:has(input:focus), &:has(input:active), &.tnt-placeholder {
+                        .tnt-label {
+                            transform: scale(0.75) translateY(-26px);
+                        }
 
 
-                &:has(.tnt-start-icon) {
-                    .tnt-label {
-                        transform: scale(0.75) translate(-50px,-26px);
+                        &:has(.tnt-start-icon) {
+                            .tnt-label {
+                                transform: scale(0.75) translate(-50px,-26px);
+                            }
+                        }
                     }
                 }
             }
-        }
-    }
 
-    &.tnt-form-filled {
-        grid-template-rows: 39px; // +1 from border-bottom
+            &.tnt-form-filled {
+                grid-template-rows: 39px; // +1 from border-bottom
 
-        &:has(.tnt-label) {
-            &:has(#{$element}:not(:placeholder-shown)), &:has(#{$element}:focus), &:has(#{$element}:active), &.tnt-placeholder {
-                .tnt-label {
-                    transform: scale(0.75) translateY(-14px);
+                &:has(.tnt-label) {
+                    &:has(#{$element}:not(:placeholder-shown)), &:has(#{$element}:focus), &:has(#{$element}:active), &.tnt-placeholder {
+                        .tnt-label {
+                            transform: scale(0.75) translateY(-14px);
+                        }
+                    }
                 }
             }
+
+            .tnt-label {
+                @include typescale.tnt-body-medium;
+            }
+
+            ::deep input {
+                @include typescale.tnt-body-medium;
+            }
         }
-    }
-
-    .tnt-label {
-        @include typescale.tnt-body-medium;
-    }
-
-    ::deep input {
-        @include typescale.tnt-body-medium;
     }
 }

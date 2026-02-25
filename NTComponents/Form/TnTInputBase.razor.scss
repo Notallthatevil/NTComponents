@@ -5,7 +5,7 @@
     grid-template-areas: "container-input container-input tooltip-icon" "supporting-text input-length tooltip-icon";
     grid-template-rows: auto auto;
     grid-template-columns: 1fr minmax(auto, 8ch) minmax(0, auto);
-    margin-bottom:4px;
+    margin-bottom: 4px;
 
     @include base.tnt-input-length;
     @include base.supporting-text;
@@ -81,9 +81,7 @@
         @include base.invalid;
         @include base.outlined;
         @include base.filled;
-
-        &.tnt-form-compact {
-            @include base.tnt-form-compact;
-        }
     }
+
+    @include base.tnt-form-compact;
 }

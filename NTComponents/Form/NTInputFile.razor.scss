@@ -110,7 +110,7 @@ $on-tint-color: var(--tnt-input-on-tint-color);
         }
 
         &.tnt-form-compact {
-            @include base.tnt-form-compact;
+
 
             ::deep input::file-selector-button {
                 height: 24px;
@@ -120,4 +120,6 @@ $on-tint-color: var(--tnt-input-on-tint-color);
             }
         }
     }
+
+    @include base.tnt-form-compact;
 }

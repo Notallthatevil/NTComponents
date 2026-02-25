@@ -280,9 +280,7 @@
                 }
             }
         }
-
-        &.tnt-form-compact {
-            @include base.tnt-form-compact(select);
-        }
     }
+
+    @include base.tnt-form-compact(select);
 }

@@ -149,21 +149,20 @@
 		</TnTRow>
 
 		<TnTRow>
-			<TnTColumn S="6">
-				<TnTInputCheckbox @bind-Value="@Input.Checkbox" Placeholder="@_placeholder" SupportingText="@_supportingText" Label="@(_e ? "My really long label that might wrap" : string.Empty)" StartIcon="@_startIcon" EndIcon="@_endIcon" Tooltip="@(_g? _tooltip : null)" />
+			<h3>
+				Alternate Switch Appearance
+			</h3>
+			<TnTColumn S="12">
+				<TnTInputCheckbox @bind-Value="@Input.Checkbox" Layout="NTComponents.Enums.CheckboxLayout.FlipAndSpan" Placeholder="@_placeholder" SupportingText="@_supportingText" Label="@_label" StartIcon="@_startIcon" EndIcon="@_endIcon" Tooltip="@(_g? _tooltip : null)" />
 			</TnTColumn>
 
-			<TnTColumn S="6">
-				<TnTInputSwitch @bind-Value="@Input.Switch" Placeholder="@_placeholder" SupportingText="@_supportingText" Label="@(_e ? "My really long label that might wrap" : string.Empty)" StartIcon="@_startIcon" EndIcon="@_endIcon" Tooltip="@(_g? _tooltip : null)" />
-			</TnTColumn>
-			<TnTColumn S="6">
-				<TnTInputCheckbox @bind-Value="@Input.Checkbox" Placeholder="@_placeholder" SupportingText="@_supportingText" Label="@(_e ? "My really long label that might wrap My really long label that might wrap My really long label that might wrap" : string.Empty)" StartIcon="@_startIcon" EndIcon="@_endIcon" Tooltip="@(_g? _tooltip : null)" />
+
+			<TnTColumn S="12">
+				<TnTInputSwitch @bind-Value="@Input.Switch" Layout="NTComponents.Enums.CheckboxLayout.FlipAndSpan" Placeholder="@_placeholder" SupportingText="@_supportingText" Label="@_label" StartIcon="@_startIcon" EndIcon="@_endIcon" Tooltip="@(_g? _tooltip : null)" />
 			</TnTColumn>
 
-			<TnTColumn S="6">
-				<TnTInputSwitch @bind-Value="@Input.Switch" Placeholder="@_placeholder" SupportingText="@_supportingText" Label="@(_e ? "My really long label that might wrap My really long label that might wrap My really long label that might wrap" : string.Empty)" StartIcon="@_startIcon" EndIcon="@_endIcon" Tooltip="@(_g? _tooltip : null)" />
-			</TnTColumn>
 		</TnTRow>
+
 		<TnTRow>
 			<h3>
 				Select @Input.Select @string.Join(", ", Input.Multi)
