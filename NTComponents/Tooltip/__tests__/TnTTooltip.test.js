@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @jest-environment jsdom
  */
 import { jest } from '@jest/globals';
@@ -23,8 +23,7 @@ describe('TnTTooltip custom HTML element', () => {
 
   const defineTooltip = () => {
     if (!customElements.get('tnt-tooltip')) {
-      // Re-import and define would happen automatically in the module
-      // For testing, we assume it's already defined
+      onLoad(null, null);
     }
   };
 
@@ -392,23 +391,22 @@ describe('TnTTooltip custom HTML element', () => {
       expect(pointerX).toBeLessThanOrEqual(92);
     });
 
-    test('updatePointer adds pointer-top class when tooltip above cursor', () => {
+    test('updatePointer does not add pointer-top class when tooltip above cursor', () => {
       const { tooltip } = createTooltipSetup();
-      
-      // Tooltip center (420) is above cursor (450)
+
+      // Tooltip center (420) is above cursor (450); default arrow at bottom points down toward cursor
       tooltip.updatePointer(200, 450, 100, 400, 100, 40);
-      
-      expect(tooltip.classList.contains('tnt-tooltip-pointer-top')).toBe(true);
+
+      expect(tooltip.classList.contains('tnt-tooltip-pointer-top')).toBe(false);
     });
 
-    test('updatePointer removes pointer-top class when tooltip below cursor', () => {
+    test('updatePointer adds pointer-top class when tooltip below cursor', () => {
       const { tooltip } = createTooltipSetup();
-      tooltip.classList.add('tnt-tooltip-pointer-top');
-      
-      // Tooltip center (420) is below cursor (300)
+
+      // Tooltip center (420) is below cursor (300); arrow moves to top and points up toward cursor
       tooltip.updatePointer(200, 300, 100, 400, 100, 40);
-      
-      expect(tooltip.classList.contains('tnt-tooltip-pointer-top')).toBe(false);
+
+      expect(tooltip.classList.contains('tnt-tooltip-pointer-top')).toBe(true);
     });
 
     test('updatePointer centers pointer when cursor is in middle', () => {

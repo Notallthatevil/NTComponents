@@ -63,6 +63,10 @@ function schedulePositionUpdate(element, event = null) {
         return;
     }
 
+    if (!element.isConnected) {
+        return;
+    }
+
     const dropdown = element.querySelector('.tnt-typeahead-content');
     if (event?.type === 'scroll' && dropdown && event.target === dropdown) {
         return;
