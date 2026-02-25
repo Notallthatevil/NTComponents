@@ -1,0 +1,50 @@
+@namespace NTComponents
+@using Microsoft.AspNetCore.Components.Forms
+
+<div class="tnt-input-container nt-input-file-container" style="@ElementStyle">
+	<label class="@ElementClass" title="@ElementTitle" lang="@ElementLang" id="@ElementId">
+		@if (RendererInfo.IsInteractive) {
+			<InputFile OnChange="OnFilesSelectedAsync" @attributes="InputAttributes" />
+		}
+		else {
+			<input type="file" @attributes="StaticInputAttributes" />
+		}
+
+		@if (!string.IsNullOrWhiteSpace(Label)) {
+			<span class="tnt-label">@Label</span>
+		}
+
+		@if (ShowUploadButton && RendererInfo.IsInteractive) {
+			<span class="nt-input-file-upload-button" @onclick:preventDefault="true" @onclick:stopPropagation="true">
+				<TnTButton Appearance="ButtonAppearance.Filled"
+						   ButtonSize="@UploadButtonSize"
+						   Type="ButtonType.Button"
+						   Disabled="@UploadButtonDisabled"
+						   OnClickCallback="OnUploadButtonClickedAsync">
+					<span>@UploadButtonText</span>
+				</TnTButton>
+			</span>
+		}
+
+		@if (ShowProgress && _fileProgressStates.Count > 0) {
+			<div class="tnt-input-progress">
+				<div class="nt-input-file-progress-list">
+					@foreach (var fileState in _fileProgressStates.OrderBy(i => i.Index)) {
+						<div class="nt-input-file-progress-item">
+							<div class="nt-input-file-progress-title">@fileState.Name</div>
+							<div class="nt-input-file-progress-subtitle">@fileState.Status</div>
+							<TnTProgressIndicator Appearance="ProgressAppearance.Linear"
+												  Value="@(fileState.IsIndeterminate ? null : fileState.Percentage)"
+												  Max="100"
+												  min="0" />
+						</div>
+					}
+				</div>
+			</div>
+		}
+	</label>
+
+	@if (!string.IsNullOrWhiteSpace(SupportingText)) {
+		<span class="tnt-supporting-text">@SupportingText</span>
+	}
+</div>

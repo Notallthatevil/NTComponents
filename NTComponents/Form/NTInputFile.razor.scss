@@ -1,0 +1,123 @@
+@use '_inputBase.scss' as base;
+@use '../Styles/_Variables/_typescale.scss' as typescale;
+
+$on-tint-color: var(--tnt-input-on-tint-color);
+
+.tnt-input-container.nt-input-file-container {
+    display: grid;
+    grid-template-areas: "container-input container-input" "supporting-text supporting-text";
+    grid-template-rows: auto auto;
+    grid-template-columns: 1fr auto;
+
+    @include base.supporting-text;
+
+    .tnt-input {
+        grid-area: container-input;
+        position: relative;
+        display: inline-grid;
+        width: 100%;
+        box-sizing: border-box;
+        -webkit-box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        grid-template-areas: "pad1 text pad2" "upload upload upload" "progress progress progress";
+        grid-template-columns: 16px 1fr 16px;
+        caret-color: base.$tint-color;
+        cursor: pointer;
+        color: base.$text-color;
+        transition: 250ms ease-in-out;
+
+        @include base.tnt-label;
+        @include base.disabled-and-readonly;
+        @include base.invalid;
+        @include base.outlined;
+        @include base.filled;
+
+        ::deep {
+            input {
+                @include base.default-input;
+                cursor: inherit;
+                z-index: 1;
+                display: block;
+                min-height: var(--nt-input-file-selector-height);
+
+                &::file-selector-button {
+                    appearance: none;
+                    border: none;
+                    outline: none;
+                    margin: 4px 8px 4px 0;
+                    height: var(--nt-input-file-selector-height);
+                    min-width: fit-content;
+                    border-radius: var(--nt-input-file-selector-radius);
+                    cursor: inherit;
+                    background-color: base.$tint-color;
+                    color: $on-tint-color;
+                    padding: 0 var(--nt-input-file-selector-padding-x);
+                    display: inline-flex;
+                    align-items: center;
+                    @include typescale.tnt-typescale(500, 14px, 20px, 0.1px);
+                    transition: border-radius 250ms ease-in-out, background-color 200ms ease-in-out;
+                }
+
+                &:hover::file-selector-button, &:focus::file-selector-button, &:focus-visible::file-selector-button {
+                    background-color: color-mix(in srgb, base.$tint-color 85%, black);
+                }
+
+                &:active::file-selector-button {
+                    border-radius: 8px;
+                }
+
+                &:disabled::file-selector-button {
+                    cursor: not-allowed;
+                    opacity: 0.6;
+                }
+            }
+        }
+
+        .nt-input-file-upload-button {
+            grid-area: upload;
+            padding: 8px 16px 0 16px;
+            justify-self: start;
+        }
+
+        .tnt-input-progress {
+            grid-area: progress;
+
+            .nt-input-file-progress-list {
+                display: grid;
+                gap: 8px;
+                padding: 8px 12px 12px 12px;
+            }
+
+            .nt-input-file-progress-item {
+                display: grid;
+                gap: 4px;
+            }
+
+            .nt-input-file-progress-title {
+                @include typescale.tnt-label-large;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .nt-input-file-progress-subtitle {
+                @include typescale.tnt-label-medium;
+                color: var(--tnt-color-on-surface-variant);
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+        }
+
+        &.tnt-form-compact {
+            @include base.tnt-form-compact;
+
+            ::deep input::file-selector-button {
+                height: 24px;
+                border-radius: 16px / 100%;
+                padding: 0 8px;
+                margin: 0 6px 0 0;
+            }
+        }
+    }
+}
