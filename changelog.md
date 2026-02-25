@@ -1,3 +1,10 @@
+## [1.25.1](https://github.com/Notallthatevil/NTComponents/compare/v1.25.0...v1.25.1) (2026-02-25)
+
+
+### Bug Fixes
+
+* **tooltip:** correct pointer direction tests and add DOM guard ([32974b3](https://github.com/Notallthatevil/NTComponents/commit/32974b3e8996ff75b7ad8c71dbdd91270f67fda7))
+
 # [1.25.0](https://github.com/Notallthatevil/NTComponents/compare/v1.24.2...v1.25.0) (2026-02-24)
 
 
