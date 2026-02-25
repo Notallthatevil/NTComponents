@@ -1,3 +1,18 @@
+# [1.25.0](https://github.com/Notallthatevil/NTComponents/compare/v1.24.2...v1.25.0) (2026-02-24)
+
+
+### Features
+
+* **typeahead:** add JS overlay for dropdown positioning ([7a1ad40](https://github.com/Notallthatevil/NTComponents/commit/7a1ad40f486b1615313a34f9c8e91693b423196b))
+* **wizard:** add visited step navigation and invalid form button modes ([bc6e6c3](https://github.com/Notallthatevil/NTComponents/commit/bc6e6c3b7deefe88b9056c413909a8ed6690a06e))
+
+## [1.24.2](https://github.com/Notallthatevil/NTComponents/compare/v1.24.1...v1.24.2) (2026-02-21)
+
+
+### Bug Fixes
+
+* update column cell class and attribute tests ([35f0fb8](https://github.com/Notallthatevil/NTComponents/commit/35f0fb883b87e427759ebc9dc5b8f9971afa17a8))
+
 ## [1.24.1](https://github.com/Notallthatevil/NTComponents/compare/v1.24.0...v1.24.1) (2026-02-20)
 
 

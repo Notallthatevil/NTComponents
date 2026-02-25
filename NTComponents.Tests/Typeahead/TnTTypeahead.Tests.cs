@@ -36,6 +36,11 @@ public class TnTTypeahead_Tests : BunitContext {
         rippleModule.SetupVoid("onLoad", _ => true);
         rippleModule.SetupVoid("onUpdate", _ => true);
         rippleModule.SetupVoid("onDispose", _ => true);
+
+        var typeaheadModule = JSInterop.SetupModule("./_content/NTComponents/Typeahead/TnTTypeahead.razor.js");
+        typeaheadModule.SetupVoid("onLoad", _ => true);
+        typeaheadModule.SetupVoid("onUpdate", _ => true);
+        typeaheadModule.SetupVoid("onDispose", _ => true);
     }
 
     [Fact]

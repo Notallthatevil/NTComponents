@@ -11,11 +11,19 @@ $wizard-medium-screen-up-plus: measurements.$medium-screen-up + 1px;
 @mixin horizontal-layout {
     grid-template-areas: "steps" "content" "buttons";
     grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr auto;
+    grid-template-rows: min-content min-content auto;
+
+    &.tnt-wizard-buttons-on-bottom {
+        grid-template-rows: auto 1fr auto;
+    }
 
     &:has(.tnt-wizard-title) {
         grid-template-areas: "title" "steps" "content" "buttons";
-        grid-template-rows: auto auto 1fr auto;
+        grid-template-rows: min-content min-content min-content auto;
+
+        &.tnt-wizard-buttons-on-bottom {
+            grid-template-rows: auto auto 1fr auto;
+        }
     }
 
     .tnt-wizard-steps {
@@ -26,7 +34,6 @@ $wizard-medium-screen-up-plus: measurements.$medium-screen-up + 1px;
         position: sticky;
         top: 0;
         background-color: inherit;
-
         z-index: 10;
 
         .tnt-wizard-step-indicator {
@@ -82,17 +89,26 @@ $wizard-medium-screen-up-plus: measurements.$medium-screen-up + 1px;
     position: relative;
     display: grid;
     grid-template-areas: "steps content" "steps buttons";
-    grid-template-columns: auto 1fr;
-    grid-template-rows: 1fr auto;
+    grid-template-columns: minmax(auto, 250px) 1fr;
+    grid-template-rows: min-content auto;
     width: 100%;
     box-sizing: border-box;
     height: 100%;
     background-color: inherit;
 
+    &.tnt-wizard-buttons-on-bottom {
+        grid-template-rows: 1fr auto;
+    }
+
     &:has(.tnt-wizard-title) {
         grid-template-areas: "title title" "steps content" "steps buttons";
-        grid-template-rows: auto 1fr auto;
+        grid-template-rows: min-content min-content auto;
+
+        &.tnt-wizard-buttons-on-bottom {
+            grid-template-rows: auto 1fr auto;
+        }
     }
+
 
     .tnt-wizard-title {
         grid-area: title;
@@ -117,6 +133,7 @@ $wizard-medium-screen-up-plus: measurements.$medium-screen-up + 1px;
             flex-direction: column;
             height: 100%;
             color: colors.$tnt-color-outline;
+            cursor: not-allowed;
 
             .tnt-wizard-step-title {
                 @include typescale.tnt-title-medium;
@@ -177,6 +194,7 @@ $wizard-medium-screen-up-plus: measurements.$medium-screen-up + 1px;
             }
 
             &.current-step {
+                cursor: pointer;
                 color: colors.$tnt-color-primary;
 
                 .tnt-wizard-step-title {
@@ -193,6 +211,7 @@ $wizard-medium-screen-up-plus: measurements.$medium-screen-up + 1px;
             }
 
             &.completed-step {
+                cursor: pointer;
                 color: colors.$tnt-color-secondary;
 
                 .tnt-wizard-step-title {
@@ -213,6 +232,10 @@ $wizard-medium-screen-up-plus: measurements.$medium-screen-up + 1px;
                     }
                 }
             }
+
+            &.next-step {
+                cursor: pointer;
+            }
         }
     }
 
@@ -224,7 +247,7 @@ $wizard-medium-screen-up-plus: measurements.$medium-screen-up + 1px;
 
     .tnt-wizard-buttons {
         grid-area: buttons;
-        align-self: center;
+        align-self: start;
         justify-self: end;
     }
 

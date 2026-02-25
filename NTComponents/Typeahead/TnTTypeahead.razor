@@ -4,8 +4,7 @@
 @using NTComponents.Interfaces
 @namespace NTComponents
 @typeparam TItem
-@inherits TnTComponentBase
-@implements IDisposable
+@inherits TnTPageScriptComponent<TnTTypeahead<TItem>>
 
 <div @attributes="AdditionalAttributes"
 	 class="@ElementClass"
@@ -61,3 +60,4 @@
 		</div>
 	}
 </div>
+@PageScript

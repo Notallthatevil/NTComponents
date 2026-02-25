@@ -11,7 +11,7 @@
     }
     <ol class="tnt-wizard-steps">
         @foreach (var (step, i) in _steps.Select((s, i) => new KeyValuePair<TnTWizardStepBase, int>(s, i))) {
-            <li class="@($"tnt-wizard-step-indicator{(_stepIndex == i ? " current-step" : string.Empty)}{(_stepIndex > i ? " completed-step" : string.Empty)}")">
+            <li class="@($"tnt-wizard-step-indicator{(_stepIndex == i ? " current-step" : string.Empty)}{(_stepIndex != i && IsStepVisited(i) ? " completed-step" : string.Empty)}{(IsImmediateNextStep(i) ? " next-step" : string.Empty)}")" @onclick="@(() => NavigateToStepAsync(i))">
                 <div class="tnt-wizard-step-title">
                     <span class="tnt-wizard-step-index">
                         @(i + 1)
@@ -43,12 +43,12 @@
             </TnTButton>
         }
         @if (_stepIndex + 1 == _steps.Count) {
-            <TnTButton OnClickCallback="@SubmitClickedAsync" BackgroundColor="TnTColor.Success" TextColor="TnTColor.OnSuccess" TintColor="TnTColor.SuccessContainer"  Disabled="@SubmitButtonDisabled">
+            <TnTButton OnClickCallback="@SubmitClickedAsync" BackgroundColor="TnTColor.Success" TextColor="TnTColor.OnSuccess" TintColor="TnTColor.SuccessContainer" class="@ProgressButtonInvalidClass" Disabled="@EffectiveSubmitButtonDisabled">
                 Submit
             </TnTButton>
         }
         else {
-            <TnTButton OnClickCallback="@NextStepAsync" Disabled="@NextButtonDisabled">
+            <TnTButton OnClickCallback="@NextStepAsync" class="@ProgressButtonInvalidClass" Disabled="@EffectiveNextButtonDisabled">
                 Next Step
                 <MaterialIcon Icon="@MaterialIcon.KeyboardArrowRight" />
             </TnTButton>
