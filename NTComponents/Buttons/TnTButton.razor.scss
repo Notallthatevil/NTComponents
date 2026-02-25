@@ -54,7 +54,13 @@ $on-tint-color: var(--tnt-button-on-tint-color);
             position: relative;
 
             &.tnt-disabled {
+                opacity: 1;
                 cursor: not-allowed;
+                color: color-mix(in srgb, #{$fg-color} 60%, transparent);
+
+                &.tnt-filled {
+                    background-color: color-mix(in srgb, #{$bg-color} 60%, transparent);
+                }
             }
         }
     }
@@ -84,6 +90,16 @@ $on-tint-color: var(--tnt-button-on-tint-color);
 
         @include textAlignments.tnt-text-alignments;
         @include interactable.tnt-disabled;
+
+        &.tnt-disabled {
+            opacity: 1;
+            color: color-mix(in srgb, #{$fg-color} 60%, transparent);
+
+            &.tnt-filled {
+                background-color: color-mix(in srgb, #{$bg-color} 60%, transparent);
+            }
+        }
+
         transition: 250ms ease-in-out;
     }
 
@@ -101,10 +117,10 @@ $on-tint-color: var(--tnt-button-on-tint-color);
         background-color: transparent;
 
         &.tnt-disabled {
-            opacity: 0.4;
+            color: color-mix(in srgb, #{$fg-color} 40%, transparent);
 
             &.tnt-size-xs .tnt-small-button-layer, &.tnt-size-s .tnt-small-button-layer {
-                opacity: 1;
+                color: color-mix(in srgb, #{$fg-color} 40%, transparent);
             }
         }
     }

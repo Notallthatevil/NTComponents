@@ -51,6 +51,12 @@ $on-tint-color: var(--tnt-button-on-tint-color);
         @include interactable.tnt-disabled;
         @include elevation.tnt-elevation(3);
 
+        &.tnt-disabled {
+            opacity: 1;
+            background-color: color-mix(in srgb, #{$bg-color} 60%, transparent);
+            color: color-mix(in srgb, #{$fg-color} 60%, transparent);
+        }
+
         &.tnt-size-xs, &.tnt-size-s {
             height: 56px;
             min-width: 56px;
