@@ -1,3 +1,11 @@
+# [1.26.0](https://github.com/Notallthatevil/NTComponents/compare/v1.25.1...v1.26.0) (2026-02-25)
+
+
+### Features
+
+* **inputfile:** add NTInputFile component and demos ([bd17334](https://github.com/Notallthatevil/NTComponents/commit/bd1733440cf574f0f1ce6e9288d28ae7b8d08b16))
+* **styles:** improve button group focus and active states ([997a72b](https://github.com/Notallthatevil/NTComponents/commit/997a72b91fbf97c7d290977378ba0b3ad3a7bb78))
+
 ## [1.25.1](https://github.com/Notallthatevil/NTComponents/compare/v1.25.0...v1.25.1) (2026-02-25)
 
 
