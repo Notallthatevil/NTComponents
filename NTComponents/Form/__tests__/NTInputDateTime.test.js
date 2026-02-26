@@ -2,9 +2,9 @@
  * @jest-environment jsdom
  */
 import { jest } from '@jest/globals';
-import { onDispose, onLoad, onUpdate } from '../TnTInputDateTime.razor.js';
+import { onDispose, onLoad, onUpdate } from '../NTInputDateTime.razor.js';
 
-describe('TnTInputDateTime picker behavior', () => {
+describe('NTInputDateTime picker behavior', () => {
     const fixedNow = new Date(2026, 2, 15, 14, 5, 9);
     let idCounter = 0;
 

@@ -4,13 +4,13 @@ using NTComponents.Interfaces;
 
 namespace NTComponents.Tests.Form;
 
-public class TnTInputDateTime_Tests : BunitContext {
+public class NTInputDateTime_Tests : BunitContext {
 
-    public TnTInputDateTime_Tests() {
+    public NTInputDateTime_Tests() {
         // Set renderer info for tests that use NET9_0_OR_GREATER features
         SetRendererInfo(new RendererInfo("WebAssembly", true));
 
-        var dateTimeModule = JSInterop.SetupModule("./_content/NTComponents/Form/TnTInputDateTime.razor.js");
+        var dateTimeModule = JSInterop.SetupModule("./_content/NTComponents/Form/NTInputDateTime.razor.js");
         dateTimeModule.SetupVoid("onLoad", _ => true);
         dateTimeModule.SetupVoid("onUpdate", _ => true);
         dateTimeModule.SetupVoid("onDispose", _ => true);
@@ -154,7 +154,7 @@ public class TnTInputDateTime_Tests : BunitContext {
     public void DateTime_Type_Renders_DateTime_Local_Input() {
         // Arrange & Act
         var model = new { TestValue = DateTime.Now };
-        var cut = Render<TnTInputDateTime<DateTime>>(parameters => {
+        var cut = Render<NTInputDateTime<DateTime>>(parameters => {
             parameters
                 .Add(p => p.ValueExpression, () => model.TestValue)
                 .Add(p => p.Value, model.TestValue);
@@ -185,7 +185,7 @@ public class TnTInputDateTime_Tests : BunitContext {
     public void DateTimeOffset_Type_Renders_DateTime_Local_Input() {
         // Arrange & Act
         var model = new { TestValue = DateTimeOffset.Now };
-        var cut = Render<TnTInputDateTime<DateTimeOffset>>(parameters => {
+        var cut = Render<NTInputDateTime<DateTimeOffset>>(parameters => {
             parameters
                 .Add(p => p.ValueExpression, () => model.TestValue)
                 .Add(p => p.Value, model.TestValue);
@@ -687,7 +687,7 @@ public class TnTInputDateTime_Tests : BunitContext {
     public void Throws_For_Unsupported_Type() {
         // Arrange & Act & Assert
         var model = new { TestValue = "" };
-        var act = () => Render<TnTInputDateTime<string>>(parameters => {
+        var act = () => Render<NTInputDateTime<string>>(parameters => {
             parameters
                 .Add(p => p.ValueExpression, () => model.TestValue)
                 .Add(p => p.Value, model.TestValue);
@@ -747,7 +747,7 @@ public class TnTInputDateTime_Tests : BunitContext {
         // Assert
         cut.Instance.DisableValidationMessage.Should().BeFalse();
         cut.Instance.ValueExpression.Should().NotBeNull();
-        cut.Instance.Should().BeOfType<TnTInputDateTime<DateTime?>>();
+        cut.Instance.Should().BeOfType<NTInputDateTime<DateTime?>>();
     }
 
     private TestDateOnlyModel CreateDateOnlyTestModel() => new();
@@ -758,9 +758,9 @@ public class TnTInputDateTime_Tests : BunitContext {
 
     private TestModelWithValidation CreateValidationTestModel() => new();
 
-    private IRenderedComponent<TnTInputDateTime<DateOnly?>> RenderInputDateOnly(TestDateOnlyModel? model = null, Action<ComponentParameterCollectionBuilder<TnTInputDateTime<DateOnly?>>>? configure = null) {
+    private IRenderedComponent<NTInputDateTime<DateOnly?>> RenderInputDateOnly(TestDateOnlyModel? model = null, Action<ComponentParameterCollectionBuilder<NTInputDateTime<DateOnly?>>>? configure = null) {
         model ??= CreateDateOnlyTestModel();
-        return Render<TnTInputDateTime<DateOnly?>>(parameters => {
+        return Render<NTInputDateTime<DateOnly?>>(parameters => {
             parameters
                 .Add(p => p.ValueExpression, () => model.TestValue)
                 .Add(p => p.Value, model.TestValue)
@@ -769,9 +769,9 @@ public class TnTInputDateTime_Tests : BunitContext {
         });
     }
 
-    private IRenderedComponent<TnTInputDateTime<DateTime?>> RenderInputDateTime(TestModel? model = null, Action<ComponentParameterCollectionBuilder<TnTInputDateTime<DateTime?>>>? configure = null) {
+    private IRenderedComponent<NTInputDateTime<DateTime?>> RenderInputDateTime(TestModel? model = null, Action<ComponentParameterCollectionBuilder<NTInputDateTime<DateTime?>>>? configure = null) {
         model ??= CreateTestModel();
-        return Render<TnTInputDateTime<DateTime?>>(parameters => {
+        return Render<NTInputDateTime<DateTime?>>(parameters => {
             parameters
                 .Add(p => p.ValueExpression, () => model.TestValue)
                 .Add(p => p.Value, model.TestValue)
@@ -780,9 +780,9 @@ public class TnTInputDateTime_Tests : BunitContext {
         });
     }
 
-    private IRenderedComponent<TnTInputDateTime<TimeOnly?>> RenderInputTimeOnly(TestTimeOnlyModel? model = null, Action<ComponentParameterCollectionBuilder<TnTInputDateTime<TimeOnly?>>>? configure = null) {
+    private IRenderedComponent<NTInputDateTime<TimeOnly?>> RenderInputTimeOnly(TestTimeOnlyModel? model = null, Action<ComponentParameterCollectionBuilder<NTInputDateTime<TimeOnly?>>>? configure = null) {
         model ??= CreateTimeOnlyTestModel();
-        return Render<TnTInputDateTime<TimeOnly?>>(parameters => {
+        return Render<NTInputDateTime<TimeOnly?>>(parameters => {
             parameters
                 .Add(p => p.ValueExpression, () => model.TestValue)
                 .Add(p => p.Value, model.TestValue)
@@ -791,8 +791,8 @@ public class TnTInputDateTime_Tests : BunitContext {
         });
     }
 
-    private IRenderedComponent<TnTInputDateTime<DateTime?>> RenderValidationInputDateTime(TestModelWithValidation model, Action<ComponentParameterCollectionBuilder<TnTInputDateTime<DateTime?>>>? configure = null) {
-        return Render<TnTInputDateTime<DateTime?>>(parameters => {
+    private IRenderedComponent<NTInputDateTime<DateTime?>> RenderValidationInputDateTime(TestModelWithValidation model, Action<ComponentParameterCollectionBuilder<NTInputDateTime<DateTime?>>>? configure = null) {
+        return Render<NTInputDateTime<DateTime?>>(parameters => {
             parameters
                 .Add(p => p.ValueExpression, () => model.TestValue)
                 .Add(p => p.Value, model.TestValue)
@@ -819,3 +819,4 @@ public class TnTInputDateTime_Tests : BunitContext {
         public TimeOnly? TestValue { get; set; }
     }
 }
+

@@ -13,7 +13,7 @@ namespace NTComponents;
 ///     A custom input component for handling various DateTime types.
 /// </summary>
 /// <typeparam name="DateTimeType">The type of the DateTime value.</typeparam>
-public partial class TnTInputDateTime<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] DateTimeType> : ITnTPageScriptComponent<TnTInputDateTime<DateTimeType>> {
+public partial class NTInputDateTime<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] DateTimeType> : ITnTPageScriptComponent<NTInputDateTime<DateTimeType>> {
 
     /// <summary>
     ///     Gets or sets a value indicating whether the Material picker is enabled.
@@ -171,7 +171,7 @@ public partial class TnTInputDateTime<[DynamicallyAccessedMembers(DynamicallyAcc
     /// <summary>
     ///     Gets the reference to the DotNet object associated with the component.
     /// </summary>
-    public DotNetObjectReference<TnTInputDateTime<DateTimeType>>? DotNetObjectRef { get; private set; }
+    public DotNetObjectReference<NTInputDateTime<DateTimeType>>? DotNetObjectRef { get; private set; }
 
     /// <summary>
     ///     Gets the reference to the isolated JavaScript module.
@@ -181,7 +181,7 @@ public partial class TnTInputDateTime<[DynamicallyAccessedMembers(DynamicallyAcc
     /// <summary>
     ///     Gets the path of the JavaScript module.
     /// </summary>
-    public string? JsModulePath => "./_content/NTComponents/Form/TnTInputDateTime.razor.js";
+    public string? JsModulePath => "./_content/NTComponents/Form/NTInputDateTime.razor.js";
 
     /// <summary>
     ///     Gets a value indicating whether a date panel should be rendered in the picker.
@@ -239,9 +239,9 @@ public partial class TnTInputDateTime<[DynamicallyAccessedMembers(DynamicallyAcc
     protected IJSRuntime JSRuntime { get; private set; } = default!;
 
     /// <summary>
-    ///     Initializes a new instance of the <see cref="TnTInputDateTime{DateTimeType}" /> class.
+    ///     Initializes a new instance of the <see cref="NTInputDateTime{DateTimeType}" /> class.
     /// </summary>
-    public TnTInputDateTime() => DotNetObjectRef = DotNetObjectReference.Create(this);
+    public NTInputDateTime() => DotNetObjectRef = DotNetObjectReference.Create(this);
 
     /// <inheritdoc />
     protected override string? FormatValueAsString(DateTimeType? value) {
