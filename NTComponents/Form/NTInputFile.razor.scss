@@ -1,15 +1,23 @@
 @use '_inputBase.scss' as base;
 @use '../Styles/_Variables/_typescale.scss' as typescale;
+@use '../Buttons/_buttonStyleMixins.scss' as buttonMixins;
 
-$on-tint-color: var(--tnt-input-on-tint-color);
+$action-bg-color: var(--nt-input-file-action-bg-color);
+$action-fg-color: var(--nt-input-file-action-fg-color);
 
 .tnt-input-container.nt-input-file-container {
     display: grid;
-    grid-template-areas: "container-input container-input" "supporting-text supporting-text";
+    grid-template-areas: "container-input container-input tooltip-icon" "supporting-text supporting-text tooltip-icon";
     grid-template-rows: auto auto;
-    grid-template-columns: 1fr auto;
+    grid-template-columns: 1fr auto minmax(0, auto);
+    margin-bottom: 4px;
 
     @include base.supporting-text;
+
+    .tnt-tooltip-icon {
+        grid-area: tooltip-icon;
+        padding: 0 4px;
+    }
 
     .tnt-input {
         grid-area: container-input;
@@ -19,18 +27,102 @@ $on-tint-color: var(--tnt-input-on-tint-color);
         box-sizing: border-box;
         -webkit-box-sizing: border-box;
         -moz-box-sizing: border-box;
-        grid-template-areas: "pad1 text pad2" "upload upload upload" "progress progress progress";
+        grid-template-areas: "pad1 text pad2" "progress progress progress";
         grid-template-columns: 16px 1fr 16px;
         caret-color: base.$tint-color;
         cursor: pointer;
         color: base.$text-color;
         transition: 250ms ease-in-out;
+        margin-top: 6px;
+
+        &:has(.nt-input-file-upload-button) {
+            grid-template-areas: "pad1 text upload-btn pad2" "progress progress progress progress";
+            grid-template-columns: 16px 1fr auto 16px;
+        }
+
+        &:has(.tnt-start-icon):has(.tnt-end-icon):not(:has(.nt-input-file-upload-button)) {
+            grid-template-areas: "pad1 start-icon pad2 text pad3 end-icon pad4" "progress progress progress progress progress progress progress";
+            grid-template-columns: 12px 24px 16px 1fr 16px 24px 12px;
+        }
+
+        &:has(.tnt-start-icon):not(:has(.tnt-end-icon)):not(:has(.nt-input-file-upload-button)) {
+            grid-template-areas: "pad1 start-icon pad2 text pad3" "progress progress progress progress progress";
+            grid-template-columns: 12px 24px 16px 1fr 16px;
+        }
+
+        &:has(.tnt-end-icon):not(:has(.tnt-start-icon)):not(:has(.nt-input-file-upload-button)) {
+            grid-template-areas: "pad1 text pad2 end-icon pad3" "progress progress progress progress progress";
+            grid-template-columns: 16px 1fr 16px 24px 12px;
+        }
+
+        &:has(.tnt-start-icon):has(.tnt-end-icon):has(.nt-input-file-upload-button) {
+            grid-template-areas: "pad1 start-icon pad2 text pad3 upload-btn pad4 end-icon pad5" "progress progress progress progress progress progress progress progress progress";
+            grid-template-columns: 12px 24px 16px 1fr 16px auto 12px 24px 16px;
+        }
+
+        &:has(.tnt-start-icon):not(:has(.tnt-end-icon)):has(.nt-input-file-upload-button) {
+            grid-template-areas: "pad1 start-icon pad2 text pad3 upload-btn pad4" "progress progress progress progress progress progress progress";
+            grid-template-columns: 12px 24px 16px 1fr 16px auto 16px;
+        }
+
+        &:has(.tnt-end-icon):not(:has(.tnt-start-icon)):has(.nt-input-file-upload-button) {
+            grid-template-areas: "pad1 text pad2 upload-btn pad3 end-icon pad4" "progress progress progress progress progress progress progress";
+            grid-template-columns: 16px 1fr 16px auto 12px 24px 16px;
+        }
 
         @include base.tnt-label;
         @include base.disabled-and-readonly;
         @include base.invalid;
         @include base.outlined;
         @include base.filled;
+
+        &.tnt-form-outlined:has(.tnt-label) {
+            .tnt-label {
+                transform-origin: left;
+                transform: scale(0.75) translateY(-38px);
+                background-color: base.$background-color;
+                padding: 0 4px;
+            }
+
+            &:has(.tnt-start-icon) {
+                .tnt-label {
+                    transform: scale(0.75) translate(-50px, -38px);
+                }
+            }
+
+            &.tnt-form-compact {
+                .tnt-label {
+                    transform: scale(0.75) translateY(-26px);
+                }
+
+                &:has(.tnt-start-icon) {
+                    .tnt-label {
+                        transform: scale(0.75) translate(-50px, -26px);
+                    }
+                }
+            }
+        }
+
+        &.tnt-form-filled:has(.tnt-label) {
+            .tnt-label {
+                transform-origin: left;
+                transform: scale(0.75) translateY(-24px);
+            }
+
+            &.tnt-form-compact {
+                .tnt-label {
+                    transform: scale(0.75) translateY(-14px);
+                }
+            }
+
+            ::deep input {
+                transform: translateY(8px);
+            }
+
+            .nt-input-file-upload-button {
+                transform: translateY(8px);
+            }
+        }
 
         ::deep {
             input {
@@ -49,17 +141,16 @@ $on-tint-color: var(--tnt-input-on-tint-color);
                     min-width: fit-content;
                     border-radius: var(--nt-input-file-selector-radius);
                     cursor: inherit;
-                    background-color: base.$tint-color;
-                    color: $on-tint-color;
+                    @include buttonMixins.tnt-button-filled-colors($action-bg-color, $action-fg-color);
                     padding: 0 var(--nt-input-file-selector-padding-x);
                     display: inline-flex;
                     align-items: center;
                     @include typescale.tnt-typescale(500, 14px, 20px, 0.1px);
-                    transition: border-radius 250ms ease-in-out, background-color 200ms ease-in-out;
+                    transition: border-radius 250ms ease-in-out, background-color 200ms ease-in-out, color 200ms ease-in-out, border-color 200ms ease-in-out;
                 }
 
                 &:hover::file-selector-button, &:focus::file-selector-button, &:focus-visible::file-selector-button {
-                    background-color: color-mix(in srgb, base.$tint-color 85%, black);
+                    @include buttonMixins.tnt-button-filled-hover($action-bg-color);
                 }
 
                 &:active::file-selector-button {
@@ -68,15 +159,37 @@ $on-tint-color: var(--tnt-input-on-tint-color);
 
                 &:disabled::file-selector-button {
                     cursor: not-allowed;
-                    opacity: 0.6;
+                    opacity: 1;
                 }
+            }
+
+            @include base.default-icon;
+        }
+
+        &.tnt-form-outlined {
+            ::deep input::file-selector-button {
+                @include buttonMixins.tnt-button-outlined-colors($action-fg-color);
+            }
+
+            ::deep input:hover::file-selector-button, ::deep input:focus::file-selector-button, ::deep input:focus-visible::file-selector-button {
+                @include buttonMixins.tnt-button-outlined-hover($action-fg-color);
+            }
+
+            ::deep input:disabled::file-selector-button {
+                @include buttonMixins.tnt-button-outlined-disabled-colors($action-fg-color);
+            }
+        }
+
+        &.tnt-form-filled {
+            ::deep input:disabled::file-selector-button {
+                @include buttonMixins.tnt-button-filled-disabled-colors($action-bg-color, $action-fg-color);
             }
         }
 
         .nt-input-file-upload-button {
-            grid-area: upload;
-            padding: 8px 16px 0 16px;
+            grid-area: upload-btn;
             justify-self: start;
+            align-self: center;
         }
 
         .tnt-input-progress {
@@ -110,7 +223,9 @@ $on-tint-color: var(--tnt-input-on-tint-color);
         }
 
         &.tnt-form-compact {
-
+            ::deep input {
+                min-height: 24px;
+            }
 
             ::deep input::file-selector-button {
                 height: 24px;
@@ -118,6 +233,7 @@ $on-tint-color: var(--tnt-input-on-tint-color);
                 padding: 0 8px;
                 margin: 0 6px 0 0;
             }
+
         }
     }
 

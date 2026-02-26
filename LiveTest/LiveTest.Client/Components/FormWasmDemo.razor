@@ -190,19 +190,19 @@
 			</h3>
 			<TnTColumn S="12">
 				<TnTInputRadioGroup @bind-Value="@Input.Radio" SupportingText="@_supportingText" Placeholder="@_placeholder" Label="@_label" StartIcon="@_startIcon" EndIcon="@_endIcon" Tooltip="@(_g? _tooltip : null)">
-					<TnTInputRadio TInputType="RadioEnum ?" Value="RadioEnum.One" Label="@RadioEnum.One.ToString()" StartIcon="@_startIcon" EndIcon="@_endIcon" />
-					<TnTInputRadio TInputType="RadioEnum ?" Value="RadioEnum.Two" Label="@RadioEnum.Two.ToString()" StartIcon="@_startIcon" EndIcon="@_endIcon" />
-					<TnTInputRadio TInputType="RadioEnum ?" Value="RadioEnum.Three" Label="@RadioEnum.Three.ToString()" StartIcon="@_startIcon" EndIcon="@_endIcon" />
-					<TnTInputRadio TInputType="RadioEnum ?" Value="RadioEnum.Four" Label="@RadioEnum.Four.ToString()" StartIcon="@_startIcon" EndIcon="@_endIcon" />
+					<TnTInputRadio TInputType="RadioEnum?" Value="RadioEnum.One" Label="@RadioEnum.One.ToString()" StartIcon="@_startIcon" EndIcon="@_endIcon" />
+					<TnTInputRadio TInputType="RadioEnum?" Value="RadioEnum.Two" Label="@RadioEnum.Two.ToString()" StartIcon="@_startIcon" EndIcon="@_endIcon" />
+					<TnTInputRadio TInputType="RadioEnum?" Value="RadioEnum.Three" Label="@RadioEnum.Three.ToString()" StartIcon="@_startIcon" EndIcon="@_endIcon" />
+					<TnTInputRadio TInputType="RadioEnum?" Value="RadioEnum.Four" Label="@RadioEnum.Four.ToString()" StartIcon="@_startIcon" EndIcon="@_endIcon" />
 				</TnTInputRadioGroup>
 			</TnTColumn>
 
 			<TnTColumn S="12">
 				<TnTInputRadioGroup @bind-Value="@Input.Radio" SupportingText="@_supportingText" Placeholder="@_placeholder" Label="@_label" StartIcon="@_startIcon" EndIcon="@_endIcon" LayoutDirection="LayoutDirection.Horizontal" Tooltip="@(_g? _tooltip : null)">
-					<TnTInputRadio TInputType="RadioEnum ?" Value="RadioEnum.One" Label="@RadioEnum.One.ToString()" StartIcon="@_startIcon" EndIcon="@_endIcon" />
-					<TnTInputRadio TInputType="RadioEnum ?" Value="RadioEnum.Two" Label="@RadioEnum.Two.ToString()" StartIcon="@_startIcon" EndIcon="@_endIcon" />
-					<TnTInputRadio TInputType="RadioEnum ?" Value="RadioEnum.Three" Label="@RadioEnum.Three.ToString()" StartIcon="@_startIcon" EndIcon="@_endIcon" />
-					<TnTInputRadio TInputType="RadioEnum ?" Value="RadioEnum.Four" Label="@RadioEnum.Four.ToString()" StartIcon="@_startIcon" EndIcon="@_endIcon" />
+					<TnTInputRadio TInputType="RadioEnum?" Value="RadioEnum.One" Label="@RadioEnum.One.ToString()" StartIcon="@_startIcon" EndIcon="@_endIcon" />
+					<TnTInputRadio TInputType="RadioEnum?" Value="RadioEnum.Two" Label="@RadioEnum.Two.ToString()" StartIcon="@_startIcon" EndIcon="@_endIcon" />
+					<TnTInputRadio TInputType="RadioEnum?" Value="RadioEnum.Three" Label="@RadioEnum.Three.ToString()" StartIcon="@_startIcon" EndIcon="@_endIcon" />
+					<TnTInputRadio TInputType="RadioEnum?" Value="RadioEnum.Four" Label="@RadioEnum.Four.ToString()" StartIcon="@_startIcon" EndIcon="@_endIcon" />
 				</TnTInputRadioGroup>
 			</TnTColumn>
 		</TnTRow>
@@ -223,14 +223,14 @@
 				Input File
 			</h3>
 			<TnTColumn S="4">
-				<TnTInputFile multiple Label="@_label" SupportingText="@_supportingText" StartIcon="@_startIcon" EndIcon="@_endIcon" Mode="@InputFileMode.Buffer" MaximumFileCount="5" Tooltip="@(_g? _tooltip : null)" />
+				<NTInputFile multiple Label="@_label" Appearance="_appearance" SupportingText="@_supportingText" StartIcon="@_startIcon" EndIcon="@_endIcon" MaximumFileCount="5" Tooltip="@(_g? _tooltip : null)" OnUploadButtonClick="@(()=>{})"/>
 			</TnTColumn>
 			<TnTColumn S="4">
-				<TnTInputFile multiple Label="@_label" SupportingText="@_supportingText" StartIcon="@_startIcon" EndIcon="@_endIcon" Mode="@InputFileMode.SaveToTemporaryFolder" MaximumFileCount="5" Tooltip="@(_g? _tooltip : null)" />
+				<NTInputFile multiple Label="@_label" Appearance="_appearance" SupportingText="@_supportingText" StartIcon="@_startIcon" EndIcon="@_endIcon" MaximumFileCount="5" Tooltip="@(_g? _tooltip : null)" OnUploadButtonClick="@(() => { })" />
 			</TnTColumn>
 
 			<TnTColumn S="4">
-				<TnTInputFile multiple Label="@_label" SupportingText="@_supportingText" StartIcon="@_startIcon" EndIcon="@_endIcon" Mode="@InputFileMode.Stream" MaximumFileCount="5" Tooltip="@(_g? _tooltip : null)" />
+				<NTInputFile multiple Label="@_label" Appearance="_appearance" SupportingText="@_supportingText" StartIcon="@_startIcon" EndIcon="@_endIcon" MaximumFileCount="5" Tooltip="@(_g? _tooltip : null)" OnUploadButtonClick="@(() => { })" />
 			</TnTColumn>
 		</TnTRow>
 
@@ -239,14 +239,22 @@
 				NTInputFile Demos (WebAssembly)
 			</h3>
 			<TnTColumn S="12">
-				<InputFileSseProgressDemo Title="WebAssembly Upload + SSE (.NET 9-compatible)" />
+				<InputFileSseProgressDemo Title="WebAssembly Upload + SSE (.NET 9-compatible)"
+										  Label="@_label"
+										  SupportingText="@_supportingText"
+										  StartIcon="@_startIcon"
+										  EndIcon="@_endIcon"
+										  Tooltip="@(_g ? _tooltip : null)" />
 			</TnTColumn>
-#if NET10_0_OR_GREATER
 			<TnTColumn S="12">
 				<InputFileSseProgressDemo Title="WebAssembly Upload + SSE (.NET 10 TypedResults)"
-										  UseDotNet10Sse="true" />
+										  UseDotNet10Sse="true"
+										  Label="@_label"
+										  SupportingText="@_supportingText"
+										  StartIcon="@_startIcon"
+										  EndIcon="@_endIcon"
+										  Tooltip="@(_g ? _tooltip : null)" />
 			</TnTColumn>
-#endif
 		</TnTRow>
 		<TnTRow>
 			<h3>

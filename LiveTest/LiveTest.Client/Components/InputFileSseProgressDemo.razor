@@ -13,8 +13,11 @@
         InteractiveWebAssembly mode. SSE mode: @SseModeLabel
     </p>
 
-    <NTInputFile Label="Pick file"
-                 SupportingText="Select a file and click Upload."
+    <NTInputFile Label="@Label"
+                 SupportingText="@SupportingText"
+                 StartIcon="@StartIcon"
+                 EndIcon="@EndIcon"
+                 Tooltip="@Tooltip"
                  MaximumFileCount="1"
                  MaximumFileSize="52428800"
                  ShowProgress="true"
@@ -35,6 +38,21 @@
 
     [Parameter]
     public bool UseDotNet10Sse { get; set; }
+
+    [Parameter]
+    public string? Label { get; set; } = "Pick file";
+
+    [Parameter]
+    public string? SupportingText { get; set; } = "Select a file and click Upload.";
+
+    [Parameter]
+    public TnTIcon? StartIcon { get; set; } = new MaterialIcon { Icon = MaterialIcon.SavedSearch };
+
+    [Parameter]
+    public TnTIcon? EndIcon { get; set; } = new MaterialIcon { Icon = MaterialIcon.QrCode };
+
+    [Parameter]
+    public RenderFragment? Tooltip { get; set; } = b => b.AddContent(0, "Uploads the selected file and streams server progress over SSE.");
 
     private static readonly JsonSerializerOptions _jsonOptions = new() {
         PropertyNameCaseInsensitive = true

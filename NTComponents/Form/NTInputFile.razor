@@ -3,6 +3,10 @@
 
 <div class="tnt-input-container nt-input-file-container" style="@ElementStyle">
 	<label class="@ElementClass" title="@ElementTitle" lang="@ElementLang" id="@ElementId">
+		@if (StartIcon is not null) {
+			@StartIcon.Render("tnt-start-icon")
+		}
+
 		@if (RendererInfo.IsInteractive) {
 			<InputFile OnChange="OnFilesSelectedAsync" @attributes="InputAttributes" />
 		}
@@ -16,18 +20,24 @@
 
 		@if (ShowUploadButton && RendererInfo.IsInteractive) {
 			<span class="nt-input-file-upload-button" @onclick:preventDefault="true" @onclick:stopPropagation="true">
-				<TnTButton Appearance="ButtonAppearance.Filled"
-						   ButtonSize="@UploadButtonSize"
+				<TnTButton Appearance="@UploadButtonAppearance"
+						   ButtonSize="@EffectiveUploadButtonSize"
 						   Type="ButtonType.Button"
 						   Disabled="@UploadButtonDisabled"
+						   BackgroundColor="@EffectiveUploadButtonBackgroundColor"
+						   TextColor="@EffectiveUploadButtonTextColor"
 						   OnClickCallback="OnUploadButtonClickedAsync">
 					<span>@UploadButtonText</span>
 				</TnTButton>
 			</span>
 		}
 
+		@if (EndIcon is not null) {
+			@EndIcon.Render("tnt-end-icon")
+		}
+
 		@if (ShowProgress && _fileProgressStates.Count > 0) {
-			<div class="tnt-input-progress">
+			<span class="tnt-input-progress">
 				<div class="nt-input-file-progress-list">
 					@foreach (var fileState in _fileProgressStates.OrderBy(i => i.Index)) {
 						<div class="nt-input-file-progress-item">
@@ -40,9 +50,13 @@
 						</div>
 					}
 				</div>
-			</div>
+			</span>
 		}
 	</label>
+
+	@if (Tooltip is not null) {
+		@TooltipIcon.Render()
+	}
 
 	@if (!string.IsNullOrWhiteSpace(SupportingText)) {
 		<span class="tnt-supporting-text">@SupportingText</span>

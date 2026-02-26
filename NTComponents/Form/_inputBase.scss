@@ -269,9 +269,21 @@ $supporting-text-color: var(--tnt-input-supporting-text-color);
                     transform: scale(0.75) translateY(-20px);
                 }
 
+                &:has(input[type=file]) {
+                    .tnt-label {
+                        transform: scale(0.75) translateY(-24px);
+                    }
+                }
+
                 &.tnt-form-compact {
                     .tnt-label {
                         transform: scale(0.75) translateY(-14px);
+                    }
+
+                    &:has(input[type=file]) {
+                        .tnt-label {
+                            transform: scale(0.75) translateY(-14px);
+                        }
                     }
                 }
             }

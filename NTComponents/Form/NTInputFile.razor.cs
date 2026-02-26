@@ -73,6 +73,12 @@ public partial class NTInputFile : IAsyncDisposable {
     public TnTColor ErrorColor { get; set; } = TnTColor.Error;
 
     /// <summary>
+    ///     Gets or sets the icon displayed at the end of the input.
+    /// </summary>
+    [Parameter]
+    public TnTIcon? EndIcon { get; set; }
+
+    /// <summary>
     ///     Indicates whether the picker is disabled.
     /// </summary>
     [Parameter]
@@ -83,6 +89,12 @@ public partial class NTInputFile : IAsyncDisposable {
     /// </summary>
     [Parameter]
     public string? Label { get; set; }
+
+    /// <summary>
+    ///     Gets or sets the icon displayed at the start of the input.
+    /// </summary>
+    [Parameter]
+    public TnTIcon? StartIcon { get; set; }
 
     /// <summary>
     ///     Maximum number of files allowed in a selection.
@@ -169,6 +181,18 @@ public partial class NTInputFile : IAsyncDisposable {
     public string? SupportingText { get; set; }
 
     /// <summary>
+    ///     The content to display as a tooltip for the component.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? Tooltip { get; set; }
+
+    /// <summary>
+    ///     The icon displayed alongside the tooltip text.
+    /// </summary>
+    [Parameter]
+    public TnTIcon TooltipIcon { get; set; } = MaterialIcon.Help;
+
+    /// <summary>
     ///     Gets or sets the text color for the input.
     /// </summary>
     [Parameter]
@@ -187,10 +211,34 @@ public partial class NTInputFile : IAsyncDisposable {
     public Size InputButtonSize { get; set; } = Size.Small;
 
     /// <summary>
-    ///     Gets or sets the upload button size.
+    ///     Gets or sets the upload button size. When not set, size follows the effective form appearance.
     /// </summary>
     [Parameter]
-    public Size UploadButtonSize { get; set; } = Size.Small;
+    public Size? UploadButtonSize { get; set; }
+
+    /// <summary>
+    ///     Gets or sets the upload button background color.
+    /// </summary>
+    [Parameter]
+    public TnTColor? UploadButtonBackgroundColor { get; set; }
+
+    /// <summary>
+    ///     Gets or sets the upload button text color.
+    /// </summary>
+    [Parameter]
+    public TnTColor? UploadButtonTextColor { get; set; }
+
+    private FormAppearance EffectiveAppearance => _tntForm?.Appearance ?? Appearance;
+
+    private TnTColor EffectiveUploadButtonBackgroundColor => UploadButtonBackgroundColor ?? TintColor;
+
+    private TnTColor EffectiveUploadButtonTextColor => UploadButtonTextColor ?? (UploadButtonAppearance == ButtonAppearance.Outlined ? EffectiveUploadButtonBackgroundColor : OnTintColor);
+
+    private Size EffectiveUploadButtonSize => UploadButtonSize ?? EffectiveAppearance switch {
+        FormAppearance.Outlined or FormAppearance.Filled => Size.Small,
+        FormAppearance.OutlinedCompact or FormAppearance.FilledCompact => Size.XS,
+        _ => Size.Medium
+    };
 
     /// <summary>
     ///     The upload button text.
@@ -224,6 +272,7 @@ public partial class NTInputFile : IAsyncDisposable {
         .AddFromAdditionalAttributes(AdditionalAttributes?.ToDictionary())
         .AddClass("tnt-input")
         .AddClass(GetAppearanceClass(_tntForm, Appearance))
+        .AddClass("tnt-placeholder", _pendingFiles.Count > 0)
         .AddDisabled(FieldDisabled || _isUploading)
         .Build();
 
@@ -233,6 +282,8 @@ public partial class NTInputFile : IAsyncDisposable {
         .AddVariable("tnt-input-background-color", BackgroundColor.ToCssTnTColorVariable())
         .AddVariable("tnt-input-text-color", TextColor.ToCssTnTColorVariable())
         .AddVariable("tnt-input-error-color", ErrorColor.ToCssTnTColorVariable())
+        .AddVariable("nt-input-file-action-bg-color", EffectiveUploadButtonBackgroundColor.ToCssTnTColorVariable())
+        .AddVariable("nt-input-file-action-fg-color", EffectiveUploadButtonTextColor.ToCssTnTColorVariable())
         .AddVariable("nt-input-file-selector-height", GetSelectorButtonHeight(InputButtonSize))
         .AddVariable("nt-input-file-selector-padding-x", GetSelectorButtonPaddingX(InputButtonSize))
         .AddVariable("nt-input-file-selector-radius", GetSelectorButtonBorderRadius(InputButtonSize))
@@ -285,7 +336,21 @@ public partial class NTInputFile : IAsyncDisposable {
 
     private bool ShowUploadButton => OnUploadButtonClick.HasDelegate;
 
+    private ButtonAppearance UploadButtonAppearance => EffectiveAppearance switch {
+        FormAppearance.Outlined or FormAppearance.OutlinedCompact => ButtonAppearance.Outlined,
+        FormAppearance.Filled or FormAppearance.FilledCompact => ButtonAppearance.Filled,
+        _ => ButtonAppearance.Filled
+    };
+
     private bool UploadButtonDisabled => _pendingFiles.Count == 0 || _isUploading || FieldDisabled || FieldReadonly;
+
+    /// <inheritdoc />
+    protected override void OnParametersSet() {
+        base.OnParametersSet();
+        TooltipIcon.Tooltip = Tooltip;
+        TooltipIcon.AdditionalClass = "tnt-tooltip-icon";
+        TooltipIcon.Size = IconSize.Small;
+    }
 
     /// <inheritdoc />
     public async ValueTask DisposeAsync() {
@@ -598,7 +663,6 @@ public partial class NTInputFile : IAsyncDisposable {
         if (effectiveAppearance is FormAppearance.FilledCompact or FormAppearance.OutlinedCompact) {
             appearanceClass += " tnt-form-compact";
         }
-
         return appearanceClass;
     }
 

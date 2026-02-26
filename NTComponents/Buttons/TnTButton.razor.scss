@@ -1,9 +1,9 @@
-@use '../Styles/_Variables/_colors.scss' as colors;
 @use '../Styles/_Variables/_measurements.scss' as measurements;
 @use '../Styles/_Variables/_textAlignments.scss' as textAlignments;
 @use '../Styles/_Variables/_typescale.scss' as typescale;
 @use '../Styles/_Variables/_interactable.scss' as interactable;
 @use '../Styles/_Variables/_elevation.scss' as elevation;
+@use '_buttonStyleMixins.scss' as buttonMixins;
 
 $bg-color: var(--tnt-button-bg-color);
 $fg-color: var(--tnt-button-fg-color);
@@ -38,7 +38,7 @@ $on-tint-color: var(--tnt-button-on-tint-color);
             color: $fg-color;
 
             &.tnt-filled {
-                background-color: $bg-color;
+                @include buttonMixins.tnt-button-filled-colors($bg-color, $fg-color);
             }
 
             @include typescale.tnt-typescale(500, 14px, 20px, 0.1px);
@@ -59,7 +59,7 @@ $on-tint-color: var(--tnt-button-on-tint-color);
                 color: color-mix(in srgb, #{$fg-color} 60%, transparent);
 
                 &.tnt-filled {
-                    background-color: color-mix(in srgb, #{$bg-color} 60%, transparent);
+                    @include buttonMixins.tnt-button-filled-disabled-colors($bg-color, $fg-color);
                 }
             }
         }
@@ -85,7 +85,7 @@ $on-tint-color: var(--tnt-button-on-tint-color);
         color: $fg-color;
 
         &.tnt-filled {
-            background-color: $bg-color;
+            @include buttonMixins.tnt-button-filled-colors($bg-color, $fg-color);
         }
 
         @include textAlignments.tnt-text-alignments;
@@ -96,7 +96,7 @@ $on-tint-color: var(--tnt-button-on-tint-color);
             color: color-mix(in srgb, #{$fg-color} 60%, transparent);
 
             &.tnt-filled {
-                background-color: color-mix(in srgb, #{$bg-color} 60%, transparent);
+                @include buttonMixins.tnt-button-filled-disabled-colors($bg-color, $fg-color);
             }
         }
 
@@ -131,7 +131,17 @@ $on-tint-color: var(--tnt-button-on-tint-color);
         &.tnt-size-m,
         &.tnt-size-l,
         &.tnt-size-xl {
-            outline: 1px solid colors.$tnt-color-outline-variant;
+            @include buttonMixins.tnt-button-outlined-colors($fg-color);
+        }
+
+        &.tnt-disabled {
+            &.tnt-size-xs .tnt-small-button-layer,
+            &.tnt-size-s .tnt-small-button-layer,
+            &.tnt-size-m,
+            &.tnt-size-l,
+            &.tnt-size-xl {
+                @include buttonMixins.tnt-button-outlined-disabled-colors($fg-color);
+            }
         }
     }
 
