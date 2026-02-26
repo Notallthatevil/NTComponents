@@ -1,0 +1,152 @@
+@namespace NTComponents
+@using Microsoft.AspNetCore.Components.Rendering
+@typeparam DateTimeType
+@inherits TnTInputBase<DateTimeType>
+
+@base.BuildRenderTree
+
+@if (UseMaterialPicker) {
+	<div id="@PickerPopupId"
+		 class="tnt-dtp-overlay tnt-dtp-mode-@PickerModeValue"
+		 data-tnt-dtp-picker="true"
+		 data-tnt-dtp-mode="@PickerModeValue"
+		 tabindex="-1"
+		 aria-hidden="true">
+		<div class="tnt-dtp-surface" data-tnt-dtp-surface tabindex="-1" role="dialog" aria-modal="false">
+			<div class="tnt-dtp-header">
+				<div class="tnt-dtp-headline" data-tnt-dtp-headline></div>
+				<div class="tnt-dtp-subhead" data-tnt-dtp-subhead></div>
+			</div>
+
+			<div class="tnt-dtp-content">
+				@if (ShowMonthPickerPanel) {
+					<div class="tnt-dtp-month-panel" data-tnt-dtp-month-panel>
+						<div class="tnt-dtp-calendar-nav">
+							<button type="button" class="tnt-dtp-nav-button" data-tnt-dtp-action="prev-year" aria-label="Previous year">
+								&#x2039;
+							</button>
+							<div class="tnt-dtp-month-label" data-tnt-dtp-year-label></div>
+							<button type="button" class="tnt-dtp-nav-button" data-tnt-dtp-action="next-year" aria-label="Next year">
+								&#x203A;
+							</button>
+						</div>
+						<div class="tnt-dtp-month-grid" data-tnt-dtp-month-grid>
+							@for (var monthIndex = 0; monthIndex < 12; monthIndex++) {
+								<button type="button" class="tnt-dtp-month-option" data-tnt-dtp-month-index="@monthIndex"></button>
+							}
+						</div>
+					</div>
+				}
+
+				@if (ShowDatePickerPanel) {
+					<div class="tnt-dtp-date-panel" data-tnt-dtp-date-panel>
+						<div class="tnt-dtp-calendar-nav">
+							<button type="button" class="tnt-dtp-nav-button" data-tnt-dtp-action="prev-month" aria-label="Previous month">
+								&#x2039;
+							</button>
+							<div class="tnt-dtp-month-label" data-tnt-dtp-month-label></div>
+							<button type="button" class="tnt-dtp-nav-button" data-tnt-dtp-action="next-month" aria-label="Next month">
+								&#x203A;
+							</button>
+						</div>
+						<div class="tnt-dtp-weekdays" aria-hidden="true">
+							<span>S</span>
+							<span>M</span>
+							<span>T</span>
+							<span>W</span>
+							<span>T</span>
+							<span>F</span>
+							<span>S</span>
+						</div>
+						<div class="tnt-dtp-day-grid" data-tnt-dtp-day-grid>
+							@for (var dayIndex = 0; dayIndex < 42; dayIndex++) {
+								<button type="button" class="tnt-dtp-day" data-tnt-dtp-day-index="@dayIndex"></button>
+							}
+						</div>
+					</div>
+				}
+
+				@if (ShowTimePickerPanel) {
+					<div class="tnt-dtp-time-panel" data-tnt-dtp-time-panel>
+						<div class="tnt-dtp-time-fields">
+							<div class="tnt-dtp-time-field">
+								<span>Hour</span>
+								<input type="number" min="1" max="12" step="1" data-tnt-dtp-hour />
+							</div>
+							<div class="tnt-dtp-time-field">
+								<span>Minute</span>
+								<input type="number" min="0" max="59" step="1" data-tnt-dtp-minute />
+							</div>
+							<div class="tnt-dtp-time-field">
+								<span>Second</span>
+								<input type="number" min="0" max="59" step="1" data-tnt-dtp-second />
+							</div>
+							<div class="tnt-dtp-meridiem-field" role="group" aria-label="AM or PM">
+								<button type="button" class="tnt-dtp-meridiem-button" data-tnt-dtp-action="set-am" data-tnt-dtp-meridiem="am" aria-pressed="false">AM</button>
+								<button type="button" class="tnt-dtp-meridiem-button" data-tnt-dtp-action="set-pm" data-tnt-dtp-meridiem="pm" aria-pressed="false">PM</button>
+							</div>
+						</div>
+					</div>
+				}
+			</div>
+
+			<div class="tnt-dtp-actions" data-tnt-dtp-actions>
+				@if (PickerActionButtons is not null) {
+					@PickerActionButtons
+				}
+				else {
+					<div class="tnt-dtp-action-group tnt-dtp-action-group-left">
+						@if (ShowPickerClearButton) {
+							<button type="button" class="@PickerClearButtonCssClass" data-tnt-dtp-action="clear">@PickerClearButtonText</button>
+						}
+						@if (UseTodayQuickAction) {
+							<button type="button" class="@PickerTodayButtonCssClass" data-tnt-dtp-action="today">@PickerTodayButtonText</button>
+						}
+						@if (UseNowQuickAction) {
+							<button type="button" class="@PickerNowButtonCssClass" data-tnt-dtp-action="now">@PickerNowButtonText</button>
+						}
+					</div>
+					<div class="tnt-dtp-action-group tnt-dtp-action-group-right">
+						<button type="button" class="@PickerCancelButtonCssClass" data-tnt-dtp-action="cancel">@PickerCancelButtonText</button>
+						<button type="button" class="@PickerConfirmButtonCssClass" data-tnt-dtp-action="confirm">@PickerConfirmButtonText</button>
+					</div>
+				}
+			</div>
+		</div>
+	</div>
+}
+
+@code {
+	protected override void RenderInputElement(RenderTreeBuilder __builder) {
+		<input type="@Type.ToInputTypeString()"
+			   @attributes="AdditionalAttributes"
+			   name="@ElementName"
+			   title="@FieldIdentifier.FieldName"
+			   autofocus="@AutoFocus"
+			   autocomplete="@AutoComplete"
+			   readonly="@FieldReadonly"
+			   placeholder="@(string.IsNullOrWhiteSpace(Placeholder) ? " " : Placeholder)"
+			   disabled="@FieldDisabled"
+			   required="@IsRequired()"
+			   minlength="@GetMinLength()"
+			   maxlength="@GetMaxLength()"
+			   min="@GetMinValue()"
+			   max="@GetMaxValue()"
+			   class="tnt-dtp-input"
+			   data-tnt-dtp-input="@(UseMaterialPicker ? "true" : null)"
+			   data-tnt-dtp-mode="@(UseMaterialPicker ? PickerModeValue : null)"
+			   data-tnt-dtp-target="@(UseMaterialPicker ? PickerPopupId : null)"
+			   data-tnt-dtp-open-on-focus="@(OpenPickerOnFocus ? "true" : "false")"
+			   data-tnt-dtp-disabled-dates="@(UseMaterialPicker ? DisabledDateValuesAttribute : null)"
+			   data-tnt-dtp-disabled-times="@(UseMaterialPicker ? DisabledTimeValuesAttribute : null)"
+			   aria-haspopup="@(UseMaterialPicker ? "dialog" : null)"
+			   aria-controls="@(UseMaterialPicker ? PickerPopupId : null)"
+			   onkeydown="NTComponents.formKeyDownSupportingTextHandler(event)"
+			   @bind-value:get="@CurrentValueAsString"
+			   @bind-value:set="(newValue) => OnInputAsync(newValue)"
+			   @bind-value:event="@(BindOnInput ? "oninput" : "onchange")"
+			   @onblur="@OnBlurAsync"
+			   @ref="Element" />
+
+	}
+}

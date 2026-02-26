@@ -22,6 +22,7 @@
       "<rootDir>/NTComponents/TabView/__tests__",
       "<rootDir>/NTComponents/Theming/__tests__",
       "<rootDir>/NTComponents/Typeahead/__tests__",
+      "<rootDir>/NTComponents/Form/__tests__",
       "<rootDir>/NTComponents.Tests/wwwroot"
     ],
     "setupFiles": [

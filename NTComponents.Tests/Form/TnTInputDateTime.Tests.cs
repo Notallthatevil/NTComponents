@@ -9,6 +9,11 @@ public class TnTInputDateTime_Tests : BunitContext {
     public TnTInputDateTime_Tests() {
         // Set renderer info for tests that use NET9_0_OR_GREATER features
         SetRendererInfo(new RendererInfo("WebAssembly", true));
+
+        var dateTimeModule = JSInterop.SetupModule("./_content/NTComponents/Form/TnTInputDateTime.razor.js");
+        dateTimeModule.SetupVoid("onLoad", _ => true);
+        dateTimeModule.SetupVoid("onUpdate", _ => true);
+        dateTimeModule.SetupVoid("onDispose", _ => true);
     }
 
     [Fact]
@@ -302,6 +307,139 @@ public class TnTInputDateTime_Tests : BunitContext {
         // Assert
         cut.Markup.Should().Contain("tnt-end-icon");
         cut.Markup.Should().Contain("search");
+    }
+
+    [Fact]
+    public void MaterialPicker_Is_Enabled_By_Default_For_DateTime() {
+        // Arrange & Act
+        var cut = RenderInputDateTime();
+
+        // Assert
+        cut.FindAll("[data-tnt-dtp-picker='true']").Should().HaveCount(1);
+        cut.Find("input").GetAttribute("data-tnt-dtp-input").Should().Be("true");
+    }
+
+    [Fact]
+    public void MaterialPicker_MonthOnly_Renders_Month_Dialog() {
+        // Arrange & Act
+        var cut = RenderInputDateOnly(configure: p => p.Add(c => c.MonthOnly, true));
+        var input = cut.Find("input");
+        var picker = cut.Find("[data-tnt-dtp-picker='true']");
+
+        // Assert
+        picker.GetAttribute("data-tnt-dtp-mode").Should().Be("month");
+        input.GetAttribute("data-tnt-dtp-mode").Should().Be("month");
+    }
+
+    [Fact]
+    public void MaterialPicker_Not_Rendered_When_Disabled() {
+        // Arrange & Act
+        var cut = RenderInputDateTime(configure: p => p.Add(c => c.EnableMaterialPicker, false));
+
+        // Assert
+        cut.FindAll("[data-tnt-dtp-picker='true']").Should().BeEmpty();
+        cut.Find("input").GetAttribute("data-tnt-dtp-input").Should().BeNull();
+    }
+
+    [Fact]
+    public void MaterialPicker_OpenOnFocus_Can_Be_Disabled() {
+        // Arrange & Act
+        var cut = RenderInputDateTime(configure: p => p.Add(c => c.OpenPickerOnFocus, false));
+        var input = cut.Find("input");
+
+        // Assert
+        input.GetAttribute("data-tnt-dtp-open-on-focus").Should().Be("false");
+    }
+
+    [Fact]
+    public void MaterialPicker_Button_Text_Is_Customizable() {
+        // Arrange & Act
+        var cut = RenderInputDateTime(configure: p => p
+            .Add(c => c.PickerCancelButtonText, "Dismiss")
+            .Add(c => c.PickerConfirmButtonText, "Apply")
+            .Add(c => c.PickerTodayButtonText, "Jump Today")
+            .Add(c => c.PickerNowButtonText, "Current Time")
+            .Add(c => c.PickerClearButtonText, "Reset"));
+
+        // Assert
+        cut.Markup.Should().Contain(">Dismiss<");
+        cut.Markup.Should().Contain(">Apply<");
+        cut.Markup.Should().Contain(">Current Time<");
+        cut.Markup.Should().Contain(">Reset<");
+        cut.Markup.Should().NotContain(">Jump Today<");
+    }
+
+    [Fact]
+    public void MaterialPicker_DateOnly_Shows_Custom_Today_Button_Text() {
+        // Arrange & Act
+        var cut = RenderInputDateOnly(configure: p => p
+            .Add(c => c.PickerTodayButtonText, "Jump Today")
+            .Add(c => c.PickerNowButtonText, "Current Time"));
+
+        // Assert
+        cut.Markup.Should().Contain(">Jump Today<");
+        cut.Markup.Should().NotContain(">Current Time<");
+    }
+
+    [Fact]
+    public void MaterialPicker_TimeOnly_Uses_12Hour_Fields_With_Meridiem_Buttons() {
+        // Arrange & Act
+        var cut = RenderInputTimeOnly();
+        var hourInput = cut.Find("[data-tnt-dtp-hour]");
+        var amButton = cut.Find("[data-tnt-dtp-action='set-am']");
+        var pmButton = cut.Find("[data-tnt-dtp-action='set-pm']");
+
+        // Assert
+        hourInput.GetAttribute("min").Should().Be("1");
+        hourInput.GetAttribute("max").Should().Be("12");
+        amButton.TextContent.Should().Be("AM");
+        pmButton.TextContent.Should().Be("PM");
+    }
+
+    [Fact]
+    public void MaterialPicker_MonthOnly_Shows_Now_And_Hides_Today() {
+        // Arrange & Act
+        var cut = RenderInputDateOnly(configure: p => p
+            .Add(c => c.MonthOnly, true)
+            .Add(c => c.PickerNowButtonText, "Current Month")
+            .Add(c => c.PickerTodayButtonText, "Current Day"));
+
+        // Assert
+        cut.Markup.Should().Contain(">Current Month<");
+        cut.Markup.Should().NotContain(">Current Day<");
+    }
+
+    [Fact]
+    public void MaterialPicker_Disabled_Date_And_Time_Values_Are_Emitted_As_Data_Attributes() {
+        // Arrange & Act
+        var cut = RenderInputDateTime(configure: p => p
+            .Add(c => c.DisabledDates, new[] { new DateOnly(2026, 2, 28), new DateOnly(2026, 3, 1) })
+            .Add(c => c.DisabledTimes, new[] { new TimeOnly(9, 30, 0), new TimeOnly(14, 45, 15) }));
+        var input = cut.Find("input");
+
+        // Assert
+        input.GetAttribute("data-tnt-dtp-disabled-dates").Should().Be("2026-02-28,2026-03-01");
+        input.GetAttribute("data-tnt-dtp-disabled-times").Should().Be("09:30:00,14:45:15");
+    }
+
+    [Fact]
+    public void MaterialPicker_Custom_Action_Buttons_Override_Default_Buttons() {
+        // Arrange
+        RenderFragment customButtons = builder => {
+            builder.OpenElement(0, "button");
+            builder.AddAttribute(1, "type", "button");
+            builder.AddAttribute(2, "data-tnt-dtp-action", "confirm");
+            builder.AddContent(3, "Commit");
+            builder.CloseElement();
+        };
+
+        // Act
+        var cut = RenderInputDateTime(configure: p => p.Add(c => c.PickerActionButtons, customButtons));
+
+        // Assert
+        cut.Markup.Should().Contain(">Commit<");
+        cut.Markup.Should().NotContain(">OK<");
+        cut.Markup.Should().NotContain(">Cancel<");
     }
 
     [Fact]

@@ -59,12 +59,15 @@
             input {
                 @include base.default-input;
 
-                &[type="date"], &[type="datetime-local"], &[type="month"], &[type="week"] {
-                    padding-left: 16px;
-                }
-
-                &[type="time"] {
-                    padding-left: 28px;
+                &::-webkit-calendar-picker-indicator,
+                &::-webkit-time-picker-indicator {
+                    display: none;
+                    opacity: 0;
+                    pointer-events: none;
+                    width: 0;
+                    min-width: 0;
+                    margin: 0;
+                    padding: 0;
                 }
 
                 &::-webkit-calendar-picker-indicator {
