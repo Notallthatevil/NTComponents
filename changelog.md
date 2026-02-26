@@ -1,3 +1,14 @@
+# [1.27.0](https://github.com/Notallthatevil/NTComponents/compare/v1.26.0...v1.27.0) (2026-02-26)
+
+
+### Features
+
+* **button:** improve disabled button styling for clarity ([b077da4](https://github.com/Notallthatevil/NTComponents/commit/b077da412d9433fcc4717f46b9d05dbd73921f55))
+* **form:** add Material-style picker to InputDateTime ([94e1bbe](https://github.com/Notallthatevil/NTComponents/commit/94e1bbef1638e8101bfb37231ece58423d50e662))
+* **input-file:** add icon and tooltip support to NTInputFile ([6b2e6e7](https://github.com/Notallthatevil/NTComponents/commit/6b2e6e7b18cf92b4d98471c2243688392ec2ceef))
+* **input:** add FlipAndSpan layout for checkbox/switch ([fcadcaf](https://github.com/Notallthatevil/NTComponents/commit/fcadcaf58fd55f7df431e1a356b49a317dbdd68a))
+* **input:** add SupportingTextColor parameter ([058bc8d](https://github.com/Notallthatevil/NTComponents/commit/058bc8dea6e141f71aabd1999627256326cf9854))
+
 # [1.26.0](https://github.com/Notallthatevil/NTComponents/compare/v1.25.1...v1.26.0) (2026-02-25)
 
 
