@@ -1,3 +1,10 @@
+# [1.28.0](https://github.com/Notallthatevil/NTComponents/compare/v1.27.0...v1.28.0) (2026-02-26)
+
+
+### Features
+
+* **input-date-time:** rename TnTInputDateTime to NTInputDateTime ([4e457bb](https://github.com/Notallthatevil/NTComponents/commit/4e457bbd60e8a9b75c463ee59569af88bb0f315c))
+
 # [1.27.0](https://github.com/Notallthatevil/NTComponents/compare/v1.26.0...v1.27.0) (2026-02-26)
 
 
