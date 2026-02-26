@@ -1,0 +1,83 @@
+@page "/documentation-model"
+@using NTComponents.GeneratedDocumentation
+@rendermode InteractiveAuto
+
+<h1>Generated Documentation Demo</h1>
+
+<p>Assembly: @GeneratedCodeDocumentation.Model.AssemblyName</p>
+<p>Total documented types: @GeneratedCodeDocumentation.Model.Types.Count</p>
+<p>Selected component: <code>@TargetComponentFullName</code></p>
+
+@if (_exampleType is null) {
+    <p>No documentation entry for <code>@TargetComponentFullName</code> was found.</p>
+}
+else {
+    <h2>Type</h2>
+    <p><strong>Name:</strong> @_exampleType.Name</p>
+    <p><strong>Full Name:</strong> @_exampleType.FullName</p>
+    <p><strong>Base Type:</strong> @(_exampleType.BaseTypeFullName.Length == 0 ? "(none)" : _exampleType.BaseTypeFullName)</p>
+    <p><strong>Kind:</strong> @_exampleType.Kind</p>
+    <p><strong>Summary:</strong> @_exampleType.Summary</p>
+
+    <h3>Type XML Documentation</h3>
+    <pre>@_exampleType.XmlDocumentation</pre>
+
+    <h3>Properties (@_exampleType.Properties.Count)</h3>
+    <ul style="display:flex;flex-direction:column;gap:8px;">
+        @foreach (var propertyDocumentation in _exampleType.Properties) {
+            <li>
+                <div><strong>Name:</strong> @propertyDocumentation.Name</div>
+                <div><strong>Signature:</strong> @propertyDocumentation.Signature</div>
+                <div><strong>Declaring Type:</strong> @propertyDocumentation.DeclaringTypeFullName</div>
+                <div><strong>From Base Type:</strong> @propertyDocumentation.IsFromBaseType</div>
+                <div><strong>Summary:</strong> @propertyDocumentation.Summary</div>
+                <details>
+                    <summary>XML Documentation</summary>
+                    <pre>@propertyDocumentation.XmlDocumentation</pre>
+                </details>
+            </li>
+        }
+    </ul>
+
+    <h3>Fields (@_exampleType.Fields.Count)</h3>
+    <ul style="display:flex;flex-direction:column;gap:8px;">
+        @foreach (var fieldDocumentation in _exampleType.Fields) {
+            <li>
+                <div><strong>Name:</strong> @fieldDocumentation.Name</div>
+                <div><strong>Signature:</strong> @fieldDocumentation.Signature</div>
+                <div><strong>Declaring Type:</strong> @fieldDocumentation.DeclaringTypeFullName</div>
+                <div><strong>From Base Type:</strong> @fieldDocumentation.IsFromBaseType</div>
+                <div><strong>Summary:</strong> @fieldDocumentation.Summary</div>
+                <details>
+                    <summary>XML Documentation</summary>
+                    <pre>@fieldDocumentation.XmlDocumentation</pre>
+                </details>
+            </li>
+        }
+    </ul>
+
+    <h3>Methods (@_exampleType.Methods.Count)</h3>
+    <ul style="display:flex;flex-direction:column;gap:8px;">
+        @foreach (var methodDocumentation in _exampleType.Methods) {
+            <li>
+                <div><strong>Name:</strong> @methodDocumentation.Name</div>
+                <div><strong>Signature:</strong> @methodDocumentation.Signature</div>
+                <div><strong>Declaring Type:</strong> @methodDocumentation.DeclaringTypeFullName</div>
+                <div><strong>From Base Type:</strong> @methodDocumentation.IsFromBaseType</div>
+                <div><strong>Summary:</strong> @methodDocumentation.Summary</div>
+                <details>
+                    <summary>XML Documentation</summary>
+                    <pre>@methodDocumentation.XmlDocumentation</pre>
+                </details>
+            </li>
+        }
+    </ul>
+}
+
+@code {
+    private const string TargetComponentFullName = "NTComponents.TnTButton";
+
+    private static readonly TypeDocumentation? _exampleType =
+        GeneratedCodeDocumentation.Model.Types.FirstOrDefault(
+            x => x.FullName.Equals(TargetComponentFullName, StringComparison.Ordinal));
+}

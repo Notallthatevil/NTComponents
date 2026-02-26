@@ -22,6 +22,7 @@
   <Project Path="AotCompatibility.TestApp/AotCompatibility.TestApp.csproj" Id="5fe8afae-706b-4160-a602-2463e8cec5fd" />
   <Project Path="LiveTest/LiveTest.Client/LiveTest.Client.csproj" />
   <Project Path="LiveTest/LiveTest/LiveTest.csproj" />
+  <Project Path="NTComponents.CodeDocumentation.Generator/NTComponents.CodeDocumentation.Generator.csproj" />
   <Project Path="NTComponents.AspNetCore/NTComponents.AspNetCore.csproj" />
   <Project Path="NTComponents.Extensions/NTComponents.Extensions.csproj" />
   <Project Path="NTComponents.Site/NTComponents.Site.csproj" />
