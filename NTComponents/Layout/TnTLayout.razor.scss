@@ -58,6 +58,28 @@
 
     transition: 250ms ease-in-out;
 
+    ::deep * {
+        scrollbar-gutter: stable both-edges;
+        scrollbar-width: thin;
+        scrollbar-color: color-mix(in srgb, var(--tnt-color-outline) 50%, transparent) transparent;
+    }
+
+    ::deep *::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+
+    ::deep *::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    ::deep *::-webkit-scrollbar-thumb {
+        background: color-mix(in srgb, var(--tnt-color-outline) 50%, transparent);
+        border-radius: 9999px;
+        border: 2px solid transparent;
+        background-clip: content-box;
+    }
+
 
     @media #{measurements.$medium-and-up} {
         &:not(:has(> .tnt-side-nav.tnt-side-nav-hide-on-large)) {
