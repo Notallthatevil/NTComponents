@@ -1,3 +1,16 @@
+# [1.29.0](https://github.com/Notallthatevil/NTComponents/compare/v1.28.0...v1.29.0) (2026-03-06)
+
+
+### Bug Fixes
+
+* **datagrid:** Fixed issue with data grid not showing updates immediately ([b34133c](https://github.com/Notallthatevil/NTComponents/commit/b34133c857a246ed654178941fdc81573470bf4f))
+
+
+### Features
+
+* **generator:** add Roslyn code documentation generator ([4cb9865](https://github.com/Notallthatevil/NTComponents/commit/4cb98654fe02fa2f418df116c6ca499d163a9e37))
+* **layout:** add custom scrollbar styling to TnTLayout ([cef2d46](https://github.com/Notallthatevil/NTComponents/commit/cef2d46c4556d6b3d4f92624a04dcc4c4300e32d))
+
 # [1.28.0](https://github.com/Notallthatevil/NTComponents/compare/v1.27.0...v1.28.0) (2026-02-26)
 
 
