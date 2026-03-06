@@ -12,7 +12,7 @@ namespace NTComponents;
 /// <summary>
 ///     Represents a customizable button component.
 /// </summary>
-public partial class TnTButton {
+public partial class TnTButton : TnTComponentBase {
 
     /// <inheritdoc />
     [Parameter]
