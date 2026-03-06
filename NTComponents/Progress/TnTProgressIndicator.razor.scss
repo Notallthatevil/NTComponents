@@ -1,4 +1,4 @@
-﻿@use '../Styles/_Variables/_colors.scss';
+@use '../Styles/_Variables/_colors.scss';
 
 progress.tnt-components {
     &.tnt-progress-linear {
@@ -116,7 +116,7 @@ progress.tnt-components {
             transform: scale(0.8);
         }
 
-        &.tnt-size-xl {
+        &.tnt-size-xs {
             width: 24px;
             height: 24px;
 
