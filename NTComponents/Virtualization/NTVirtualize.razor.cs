@@ -134,14 +134,10 @@ public partial class NTVirtualize<TItem>() : TnTPageScriptComponent<NTVirtualize
     }
 
     /// <summary>
-    ///     Asynchronously refreshes the underlying data without updating the user interface upon completion.
+    ///     Asynchronously refreshes the underlying data and re-renders the component when the refresh completes.
     /// </summary>
-    /// <remarks>
-    ///     Call this method when the data source needs to be updated in the background without immediately reflecting changes in the UI. Await the returned task to ensure the refresh completes before
-    ///     performing operations that depend on the updated data.
-    /// </remarks>
     /// <returns>A task that represents the asynchronous refresh operation.</returns>
-    public async Task RefreshDataAsync() => await RefreshDataCoreAsync(renderOnSuccess: false);
+    public async Task RefreshDataAsync() => await RefreshDataCoreAsync(renderOnSuccess: true);
 
     /// <inheritdoc />
     protected override async ValueTask DisposeAsyncCore() {

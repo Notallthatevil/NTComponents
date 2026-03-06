@@ -239,9 +239,9 @@ public partial class TnTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessed
     public async Task RefreshDataGridAsync(CancellationToken cancellationToken = default) {
         await ResolvePaginationResultsAsync(cancellationToken);
         if (!cancellationToken.IsCancellationRequested) {
-            await InvokeAsync(StateHasChanged);
             await (_body?.RefreshAsync() ?? Task.CompletedTask);
             await (_headerRow?.RefreshAsync() ?? Task.CompletedTask);
+            await InvokeAsync(StateHasChanged);
         }
     }
 

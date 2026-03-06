@@ -563,6 +563,70 @@ public class TnTDataGrid_Tests : BunitContext {
     }
 
     [Fact]
+    public async Task RefreshDataGridAsync_WithVirtualizedItemsProvider_RerendersUpdatedRowsImmediately() {
+        // Arrange
+        var items = _testItems
+            .Select(item => new TestGridItem {
+                Id = item.Id,
+                Name = item.Name,
+                Email = item.Email,
+                Amount = item.Amount,
+                CreatedDate = item.CreatedDate,
+                IsActive = item.IsActive
+            })
+            .ToList();
+        var providerCount = 0;
+
+        TnTGridItemsProvider<TestGridItem> provider = request => {
+            providerCount++;
+            var query = items.AsQueryable();
+            if (request.SortBy is not null) {
+                query = request.ApplySorting(query);
+            }
+
+            var resultItems = query
+                .Skip(request.StartIndex)
+                .Take(request.Count ?? items.Count)
+                .ToList();
+
+            return ValueTask.FromResult(new TnTItemsProviderResult<TestGridItem>(resultItems, items.Count));
+        };
+
+        var cut = RenderDataGrid(parameters => {
+            parameters.Add(p => p.ItemsProvider, provider);
+            parameters.Add(p => p.Virtualize, true);
+            parameters.Add(p => p.ChildContent, (RenderFragment)(builder => {
+                builder.OpenComponent<TestTemplateColumn<TestGridItem>>(0);
+                builder.AddAttribute(1, nameof(TestTemplateColumn<TestGridItem>.Title), "ID");
+                builder.AddAttribute(2, nameof(TestTemplateColumn<TestGridItem>.CellTemplate),
+                    (RenderFragment<TestGridItem>)(item => b => b.AddContent(0, item.Id)));
+                builder.CloseComponent();
+
+                builder.OpenComponent<TestTemplateColumn<TestGridItem>>(3);
+                builder.AddAttribute(4, nameof(TestTemplateColumn<TestGridItem>.Title), "Name");
+                builder.AddAttribute(5, nameof(TestTemplateColumn<TestGridItem>.CellTemplate),
+                    (RenderFragment<TestGridItem>)(item => b => b.AddContent(0, item.Name)));
+                builder.CloseComponent();
+            }));
+        });
+
+        var virtualize = cut.FindComponent<NTVirtualize<(int, TestGridItem)>>();
+
+        await cut.InvokeAsync(() => virtualize.Instance.LoadItems(0, 0, 0, 5));
+        virtualize.WaitForState(() => virtualize.Markup.Contains("Alice"), TimeSpan.FromSeconds(3));
+        var initialProviderCount = providerCount;
+
+        // Act
+        items.RemoveAll(item => item.Name == "Alice Brown");
+        await cut.InvokeAsync(() => cut.Instance.RefreshDataGridAsync(cancellationToken: Xunit.TestContext.Current.CancellationToken));
+
+        // Assert
+        virtualize.WaitForState(() => !virtualize.Markup.Contains("Alice"), TimeSpan.FromSeconds(3));
+        providerCount.Should().BeGreaterThan(initialProviderCount);
+        virtualize.Markup.Should().NotContain("Alice");
+    }
+
+    [Fact]
     public void Virtualize_WithPagination_ThrowsException() {
         // Arrange
         var pagination = new TnTPaginationState();

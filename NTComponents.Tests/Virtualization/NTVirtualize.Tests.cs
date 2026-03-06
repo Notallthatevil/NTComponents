@@ -151,7 +151,6 @@ public class NTVirtualize_Tests : BunitContext {
         // Act
         items = new List<string> { "New Item" };
         await cut.InvokeAsync(() => cut.Instance.RefreshDataAsync());
-        cut.Render();
 
         // Assert
         cut.WaitForState(() => cut.Markup.Contains("New Item"));
