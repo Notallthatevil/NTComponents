@@ -59,7 +59,6 @@
     transition: 250ms ease-in-out;
 
     ::deep * {
-        scrollbar-gutter: stable both-edges;
         scrollbar-width: thin;
         scrollbar-color: color-mix(in srgb, var(--tnt-color-outline) 50%, transparent) transparent;
     }
