@@ -1,3 +1,11 @@
+## [1.29.2](https://github.com/Notallthatevil/NTComponents/compare/v1.29.1...v1.29.2) (2026-03-10)
+
+
+### Bug Fixes
+
+* **toast:** add SSR support with auto-dismiss script ([4df3951](https://github.com/Notallthatevil/NTComponents/commit/4df39515a29e81d69d2d9b6f9ae6cd3b8f38e2b6))
+* **virtualize:** add tests and improve scroll metrics ([88f559a](https://github.com/Notallthatevil/NTComponents/commit/88f559a6545004eacd310c0d9f0540eccce37e50))
+
 ## [1.29.1](https://github.com/Notallthatevil/NTComponents/compare/v1.29.0...v1.29.1) (2026-03-06)
 
 
