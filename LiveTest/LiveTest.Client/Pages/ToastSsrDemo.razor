@@ -1,0 +1,14 @@
+@page "/toast-ssr-demo"
+@layout LiveTest.Client.Demos.ToastSsrDemoLayout
+@attribute [StreamRendering]
+@using NTComponents
+
+@inject ITnTToastService ToastService
+
+<TnTToast />
+
+@code {
+    protected override async Task OnInitializedAsync() {
+        await ToastService.ShowAsync("SSR Toast", "Auto-dismiss message", timeout: 3, showClose: true);
+    }
+}

@@ -1,7 +1,4 @@
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Rendering;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.JSInterop;
 using System.Collections.Concurrent;
 using NTComponents.Core;
 using NTComponents.Toast;
@@ -13,6 +10,11 @@ namespace NTComponents;
 ///     Represents a toast notification component that can display multiple toasts.
 /// </summary>
 public partial class TnTToast {
+    private const int _closeDelay = 250;
+    private const int _ssrCloseAnimationDelay = 500;
+
+    private const string SsrCloseOnClick =
+        "const toast = event.currentTarget.closest('.tnt-toast'); if (toast) { toast.classList.add('tnt-closing'); setTimeout(() => toast.remove(), 500); }";
 
     /// <summary>
     ///     Gets or sets the toast service used to manage toasts.
@@ -23,8 +25,6 @@ public partial class TnTToast {
     private readonly ConcurrentDictionary<ITnTToast, ToastMetadata> _toasts = new();
 
     private readonly CancellationTokenSource _tokenSource = new();
-
-    private const int _closeDelay = 250;
 
     /// <summary>
     ///     Disposes the resources used by the component.
@@ -70,6 +70,26 @@ public partial class TnTToast {
         _toasts.TryAdd(toast, new ToastMetadata() { CreatedTime = DateTimeOffset.Now, Task = null, Id = TnTComponentIdentifier.NewId() });
         await InvokeAsync(StateHasChanged);
 
+    }
+
+    private static string? GetSsrAutoDismissScript(ITnTToast toast, ToastMetadata metadata) {
+        if (toast.Timeout <= 0) {
+            return null;
+        }
+
+        var timeoutMilliseconds = (int)TimeSpan.FromSeconds(toast.Timeout).TotalMilliseconds;
+
+        return $$"""
+                 setTimeout(() => {
+                     const toast = document.querySelector('#{{metadata.Id}}');
+                     if (!toast) {
+                         return;
+                     }
+
+                     toast.classList.add('tnt-closing');
+                     setTimeout(() => toast.remove(), {{_ssrCloseAnimationDelay}});
+                 }, {{timeoutMilliseconds}});
+                 """;
     }
 
     private struct ToastMetadata {

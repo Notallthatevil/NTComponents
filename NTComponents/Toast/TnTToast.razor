@@ -8,7 +8,8 @@
         @foreach (var kv in _toasts.OrderBy(kv => kv.Value.CreatedTime).Take(5).ToArray()) {
             var metadata = kv.Value;
             var toast = kv.Key;
-            if (metadata.Task is null) {
+            var autoDismissScript = GetSsrAutoDismissScript(toast, metadata);
+            if (RendererInfo.IsInteractive && toast.Timeout > 0 && metadata.Task is null) {
                 _toasts[toast] = metadata with {
                     Task = Task.Run(async () => {
                         await Task.Delay((int)TimeSpan.FromSeconds(toast.Timeout).TotalMilliseconds);
@@ -21,14 +22,8 @@
                  class="@CssClassBuilder.Create().AddClass("tnt-toast").AddClass("tnt-closing", toast.Closing).Build()"
                  style="@CssStyleBuilder.Create().AddVariable("tnt-toast-background-color", toast.BackgroundColor).AddVariable("tnt-toast-text-color", toast.TextColor).AddVariable("timeout", $"{toast.Timeout}s", toast.Timeout > 0).Build()"
                  @key="toast">
-                @{
-        #if NET9_0_OR_GREATER
-                if(toast.Timeout > 0  && !RendererInfo.IsInteractive) {
-        <script type="text/javascript">
-            setTimeout(() => {{ document.querySelector('#{metadata.Id}').classList.add('tnt-closing'); setTimeout(() => document.querySelector('#{metadata.Id}').remove(), 500); }}, {toast.Timeout * 1000});
-        </script>
-                }
-        #endif
+                @if (autoDismissScript is not null) {
+                    <script type="text/javascript">@autoDismissScript</script>
                 }
 
                 <div class="tnt-toast-header">
@@ -37,18 +32,12 @@
                     </span>
 
                     @if (toast.ShowClose) {
-            #if NET9_0_OR_GREATER
-                        if(RendererInfo.IsInteractive) {
+                        if (RendererInfo.IsInteractive) {
                             <TnTImageButton Icon="@MaterialIcon.Close" TextColor="@TnTColor.Outline" BackgroundColor="@TnTColor.Transparent" OnClickCallback="@(() => _service.CloseAsync(toast))" />
                         }
                         else {
-                            <TnTImageButton Icon="@MaterialIcon.Close" TextColor="@TnTColor.Outline" BackgroundColor="@TnTColor.Transparent" onclick="(e => { e.target.closest('.tnt-toast').classList.add('tnt-closing'); setTimeout(() => e.target.closest('.tnt-toast').remove(), 500); })(arguments[0])" />
+                            <TnTImageButton Icon="@MaterialIcon.Close" TextColor="@TnTColor.Outline" BackgroundColor="@TnTColor.Transparent" onclick="@SsrCloseOnClick" />
                         }
-            #else
-            if(true){
-                            <TnTImageButton Icon="@MaterialIcon.Close" TextColor="@TnTColor.Outline" BackgroundColor="@TnTColor.Transparent" OnClickCallback="@(() => _service.CloseAsync(toast))" />
-            }
-            #endif
                     }
                 </div>
 
