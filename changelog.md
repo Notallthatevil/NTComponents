@@ -1,3 +1,10 @@
+## [1.29.1](https://github.com/Notallthatevil/NTComponents/compare/v1.29.0...v1.29.1) (2026-03-06)
+
+
+### Bug Fixes
+
+* **TnTLayout:** remove global scrollbar styling ([905d955](https://github.com/Notallthatevil/NTComponents/commit/905d955be588ca95e679dc495d76544c3c7ed48f))
+
 # [1.29.0](https://github.com/Notallthatevil/NTComponents/compare/v1.28.0...v1.29.0) (2026-03-06)
 
 
