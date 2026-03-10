@@ -108,7 +108,7 @@ export function init(dotNetRef, topSpacer, bottomSpacer, itemSize, overscanCount
             topSpacerTriggered = false;
         }
         const spacerSeparation = rangeBetweenSpacers.getBoundingClientRect().height;
-        const { scrollTop, containerSize } = getScrollMetrics(scrollContainer);
+        const { scrollTop, containerSize } = getScrollMetrics(scrollContainer, topSpacer);
         const { itemsBefore, visibleItemCapacity, unusedItemCapacity } = calculateItemDistribution(
             spacerSeparation,
             containerSize,
@@ -189,18 +189,20 @@ export function init(dotNetRef, topSpacer, bottomSpacer, itemSize, overscanCount
      * @param {HTMLElement} scrollContainer - The scroll container element.
      * @returns {object} An object containing scrollTop and containerSize.
      */
-    function getScrollMetrics(scrollContainer) {
+    function getScrollMetrics(scrollContainer, topSpacer) {
+        const topSpacerRect = topSpacer.getBoundingClientRect();
+
         if (scrollContainer) {
+            const scrollContainerRect = scrollContainer.getBoundingClientRect();
             return {
-                scrollTop: scrollContainer.scrollTop,
+                scrollTop: Math.max(0, scrollContainerRect.top - topSpacerRect.top),
                 containerSize: scrollContainer.clientHeight,
             };
         }
 
-        const documentElement = document.documentElement;
         return {
-            scrollTop: documentElement.scrollTop || document.body.scrollTop || 0,
-            containerSize: documentElement.clientHeight,
+            scrollTop: Math.max(0, -topSpacerRect.top),
+            containerSize: window.innerHeight || document.documentElement.clientHeight,
         };
     }
 }
@@ -216,11 +218,15 @@ function findClosestScrollContainer(element) {
 
     const style = getComputedStyle(element);
 
-    if (style.overflowY !== 'visible') {
+    if (isScrollableOverflow(style.overflowY) && element !== document.body && element !== document.documentElement) {
         return element;
     }
 
     return findClosestScrollContainer(element.parentElement);
+}
+
+function isScrollableOverflow(overflowY) {
+    return overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'overlay';
 }
 
 /**
