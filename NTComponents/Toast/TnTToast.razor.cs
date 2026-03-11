@@ -16,6 +16,28 @@ public partial class TnTToast {
     private const string SsrCloseOnClick =
         "const toast = event.currentTarget.closest('.tnt-toast'); if (toast) { toast.classList.add('tnt-closing'); setTimeout(() => toast.remove(), 500); }";
 
+    private static readonly string _ssrCloseButtonClass = CssClassBuilder.Create()
+        .AddClass("tnt-image-button")
+        .AddClass("tnt-size-s")
+        .AddClass("tnt-image-button-round")
+        .AddClass("tnt-button-tint-color")
+        .AddClass("tnt-interactable")
+        .Build() ?? string.Empty;
+
+    private static readonly string _ssrCloseButtonLayerClass = CssClassBuilder.Create()
+        .AddClass("tnt-small-button-layer")
+        .AddClass("tnt-size-s")
+        .AddClass("tnt-image-button-round")
+        .AddClass("tnt-button-tint-color")
+        .AddClass("tnt-interactable")
+        .Build() ?? string.Empty;
+
+    private static readonly string _ssrCloseButtonStyle = CssStyleBuilder.Create()
+        .AddVariable("tnt-button-bg-color", TnTColor.Transparent)
+        .AddVariable("tnt-button-fg-color", TnTColor.Outline)
+        .AddVariable("tnt-button-tint-color", TnTColor.SurfaceTint)
+        .Build() ?? string.Empty;
+
     /// <summary>
     ///     Gets or sets the toast service used to manage toasts.
     /// </summary>
@@ -40,6 +62,13 @@ public partial class TnTToast {
     /// <inheritdoc />
     protected override void OnInitialized() {
         base.OnInitialized();
+
+        if (_service is TnTToastService toastService) {
+            foreach (var toast in toastService.ActiveToasts) {
+                TrackToast(toast);
+            }
+        }
+
         _service.OnOpen += OnOpen;
         _service.OnClose += OnClose;
     }
@@ -67,9 +96,13 @@ public partial class TnTToast {
     /// <param name="toast">The toast to open.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
     private async Task OnOpen(ITnTToast toast) {
-        _toasts.TryAdd(toast, new ToastMetadata() { CreatedTime = DateTimeOffset.Now, Task = null, Id = TnTComponentIdentifier.NewId() });
+        TrackToast(toast);
         await InvokeAsync(StateHasChanged);
 
+    }
+
+    private void TrackToast(ITnTToast toast) {
+        _toasts.TryAdd(toast, new ToastMetadata() { CreatedTime = DateTimeOffset.Now, Task = null, Id = TnTComponentIdentifier.NewId() });
     }
 
     private static string? GetSsrAutoDismissScript(ITnTToast toast, ToastMetadata metadata) {

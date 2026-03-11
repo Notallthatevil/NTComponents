@@ -1,5 +1,6 @@
 using Microsoft.JSInterop;
 using NTComponents.Core;
+using System.Collections.Concurrent;
 
 namespace NTComponents.Toast;
 
@@ -7,22 +8,32 @@ namespace NTComponents.Toast;
 ///     Service for managing toast notifications.
 /// </summary>
 internal class TnTToastService : ITnTToastService {
+    private readonly ConcurrentDictionary<ITnTToast, byte> _activeToasts = new();
+
+    internal IReadOnlyCollection<ITnTToast> ActiveToasts => _activeToasts.Keys.ToArray();
 
     public event ITnTToastService.OnCloseCallback? OnClose;
 
     public event ITnTToastService.OnOpenCallback? OnOpen;
 
-    public async Task CloseAsync(ITnTToast toast) => await (OnClose?.Invoke(toast) ?? Task.CompletedTask);
+    public async Task CloseAsync(ITnTToast toast) {
+        _activeToasts.TryRemove(toast, out _);
+        await (OnClose?.Invoke(toast) ?? Task.CompletedTask);
+    }
 
-    public async Task ShowAsync(string title, string? message = null, int timeout = 10, bool showClose = true, TnTColor backgroundColor = TnTColor.SurfaceVariant, TnTColor textColor = TnTColor.OnSurfaceVariant) =>
-            await (OnOpen?.Invoke(new TnTToastImplementation() {
-                Timeout = timeout,
-                ShowClose = showClose,
-                Title = title,
-                Message = message,
-                BackgroundColor = backgroundColor,
-                TextColor = textColor
-            }) ?? Task.CompletedTask);
+    public async Task ShowAsync(string title, string? message = null, int timeout = 10, bool showClose = true, TnTColor backgroundColor = TnTColor.SurfaceVariant, TnTColor textColor = TnTColor.OnSurfaceVariant) {
+        var toast = new TnTToastImplementation() {
+            Timeout = timeout,
+            ShowClose = showClose,
+            Title = title,
+            Message = message,
+            BackgroundColor = backgroundColor,
+            TextColor = textColor
+        };
+
+        _activeToasts.TryAdd(toast, 0);
+        await (OnOpen?.Invoke(toast) ?? Task.CompletedTask);
+    }
 
     public async Task ShowErrorAsync(string title, string? message = null, int timeout = 10, bool showClose = true) =>
         await ShowAsync(title, message, timeout, showClose, TnTColor.ErrorContainer, TnTColor.Error);

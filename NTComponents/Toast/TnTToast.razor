@@ -20,10 +20,10 @@
 
             <div id="@metadata.Id"
                  class="@CssClassBuilder.Create().AddClass("tnt-toast").AddClass("tnt-closing", toast.Closing).Build()"
-                 style="@CssStyleBuilder.Create().AddVariable("tnt-toast-background-color", toast.BackgroundColor).AddVariable("tnt-toast-text-color", toast.TextColor).AddVariable("timeout", $"{toast.Timeout}s", toast.Timeout > 0).Build()"
+                style="@CssStyleBuilder.Create().AddVariable("tnt-toast-background-color", toast.BackgroundColor).AddVariable("tnt-toast-text-color", toast.TextColor).AddVariable("timeout", $"{toast.Timeout}s", toast.Timeout > 0).Build()"
                  @key="toast">
                 @if (autoDismissScript is not null) {
-                    <script type="text/javascript">@autoDismissScript</script>
+                    <script type="text/javascript">@((Microsoft.AspNetCore.Components.MarkupString)autoDismissScript)</script>
                 }
 
                 <div class="tnt-toast-header">
@@ -36,7 +36,14 @@
                             <TnTImageButton Icon="@MaterialIcon.Close" TextColor="@TnTColor.Outline" BackgroundColor="@TnTColor.Transparent" OnClickCallback="@(() => _service.CloseAsync(toast))" />
                         }
                         else {
-                            <TnTImageButton Icon="@MaterialIcon.Close" TextColor="@TnTColor.Outline" BackgroundColor="@TnTColor.Transparent" onclick="@SsrCloseOnClick" />
+                            <button class="@_ssrCloseButtonClass"
+                                    style="@_ssrCloseButtonStyle"
+                                    type="button"
+                                    onclick="@SsrCloseOnClick">
+                                <div class="@_ssrCloseButtonLayerClass">
+                                    @MaterialIcon.Close.Render()
+                                </div>
+                            </button>
                         }
                     }
                 </div>
