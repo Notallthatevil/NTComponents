@@ -303,6 +303,45 @@ public class TnTInputTextArea_Tests : BunitContext {
     }
 
     [Fact]
+    public void SizeByContent_Adds_FieldSizingStyle_To_TextArea() {
+        // Arrange & Act
+        var cut = RenderInputTextArea(configure: p => p.Add(c => c.SizeByContent, true));
+        var textArea = cut.Find("textarea");
+
+        // Assert
+        textArea.GetAttribute("style").Should().Contain("field-sizing:content");
+    }
+
+    [Fact]
+    public void SizeByContent_Does_Not_Add_FieldSizingStyle_To_Container() {
+        // Arrange & Act
+        var cut = RenderInputTextArea(configure: p => p.Add(c => c.SizeByContent, true));
+        var container = cut.Find(".tnt-input-container");
+
+        // Assert
+        container.GetAttribute("style").Should().NotContain("field-sizing:content");
+    }
+
+    [Fact]
+    public void SizeByContent_Preserves_Custom_Style_On_TextArea() {
+        // Arrange
+        var attrs = new Dictionary<string, object> { { "style", "margin:10px;" } };
+
+        // Act
+        var cut = RenderInputTextArea(configure: p => p
+            .Add(c => c.SizeByContent, true)
+            .Add(c => c.AdditionalAttributes, attrs));
+        var textArea = cut.Find("textarea");
+        var container = cut.Find(".tnt-input-container");
+
+        // Assert
+        textArea.GetAttribute("style").Should().Contain("margin:10px");
+        textArea.GetAttribute("style").Should().Contain("field-sizing:content");
+        container.GetAttribute("style").Should().Contain("margin:10px");
+        container.GetAttribute("style").Should().NotContain("field-sizing:content");
+    }
+
+    [Fact]
     public void MinLength_Attribute_Added_When_Set_In_Additional_Attributes() {
         // Arrange
         var attrs = new Dictionary<string, object> { { "minlength", "10" } };
