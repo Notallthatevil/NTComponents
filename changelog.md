@@ -1,3 +1,10 @@
+# [1.31.0](https://github.com/Notallthatevil/NTComponents/compare/v1.30.0...v1.31.0) (2026-03-12)
+
+
+### Features
+
+* **input-textarea:** add SizeByContent support ([20addce](https://github.com/Notallthatevil/NTComponents/commit/20addce9541f769018426ea907587e28faa70f0c))
+
 # [1.30.0](https://github.com/Notallthatevil/NTComponents/compare/v1.29.2...v1.30.0) (2026-03-11)
 
 
