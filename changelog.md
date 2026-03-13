@@ -1,3 +1,10 @@
+## [1.31.1](https://github.com/Notallthatevil/NTComponents/compare/v1.31.0...v1.31.1) (2026-03-13)
+
+
+### Bug Fixes
+
+* **virtualize:** handle max-height for scroll containers ([f4c44b1](https://github.com/Notallthatevil/NTComponents/commit/f4c44b1afd0e28417377eff2d7335519427eaea8))
+
 # [1.31.0](https://github.com/Notallthatevil/NTComponents/compare/v1.30.0...v1.31.0) (2026-03-12)
 
 
