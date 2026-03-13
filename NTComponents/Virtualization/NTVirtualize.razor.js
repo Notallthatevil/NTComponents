@@ -194,9 +194,24 @@ export function init(dotNetRef, topSpacer, bottomSpacer, itemSize, overscanCount
 
         if (scrollContainer) {
             const scrollContainerRect = scrollContainer.getBoundingClientRect();
+            let containerSize = scrollContainer.clientHeight;
+
+            // When the scroll container uses max-height instead of a fixed height, clientHeight
+            // reflects only the current content height, which may be smaller than max-height on
+            // initial load. This causes too few items to be requested, preventing the container
+            // from overflowing and subsequent intersection triggers from firing. Use the computed
+            // max-height when it exceeds clientHeight to ensure enough items are loaded initially.
+            const maxHeightStr = getComputedStyle(scrollContainer).maxHeight;
+            if (maxHeightStr && maxHeightStr !== 'none') {
+                const maxHeightPx = parseFloat(maxHeightStr);
+                if (!isNaN(maxHeightPx) && maxHeightPx > containerSize) {
+                    containerSize = maxHeightPx;
+                }
+            }
+
             return {
                 scrollTop: Math.max(0, scrollContainerRect.top - topSpacerRect.top),
-                containerSize: scrollContainer.clientHeight,
+                containerSize,
             };
         }
 

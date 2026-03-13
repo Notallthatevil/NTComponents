@@ -113,6 +113,29 @@ describe('NTVirtualize.init', () => {
             dispose: jest.fn(),
         };
 
-        return { topSpacer, bottomSpacer, dotNetRef };
+        return { topSpacer, bottomSpacer, dotNetRef, scrollAncestor };
     }
+
+    test('uses max-height of scroll container when content is shorter than max-height', () => {
+        // When a scroll container uses max-height, clientHeight only reflects actual content height
+        // on initial load (content is shorter than the max-height). This test verifies that the
+        // max-height is used instead so enough items are requested to cause overflow.
+        const { topSpacer, bottomSpacer, dotNetRef, scrollAncestor } = createVirtualizedElements('auto');
+        scrollAncestor.style.maxHeight = '400px';
+        Object.defineProperty(scrollAncestor, 'clientHeight', { configurable: true, value: 100 });
+
+        init(dotNetRef, topSpacer, bottomSpacer, 20, 1, 100);
+        updateRenderState(dotNetRef, 100, 0, 0);
+
+        intersectionObservers[0].callback([
+            { target: bottomSpacer, isIntersecting: true },
+        ]);
+
+        // containerSize should be 400 (max-height), not 100 (clientHeight)
+        // visibleItemCapacity = ceil(400/20) + 2*1 = 20 + 2 = 22
+        // itemsBefore = max(0, floor(0/20) - 1) = 0
+        // itemsAfter = max(0, 100 - 22 - 0) = 78
+        // bottomSpacerSize = 78 * 20 = 1560
+        expect(dotNetRef.invokeMethodAsync).toHaveBeenCalledWith('LoadItems', 0, 1560, 0, 22);
+    });
 });
