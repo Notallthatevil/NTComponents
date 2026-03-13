@@ -265,6 +265,7 @@ public partial class NTInputFile : IAsyncDisposable {
     private readonly List<Stream> _ownedStreams = [];
     private readonly List<IBrowserFile> _pendingFiles = [];
     private bool _isUploading;
+    private int _inputFileKey;
     private int _progressPercent;
     private string _progressTitle = string.Empty;
 
@@ -358,6 +359,22 @@ public partial class NTInputFile : IAsyncDisposable {
         GC.SuppressFinalize(this);
     }
 
+    /// <summary>
+    ///     Clears the current file selection, resets all progress indicators, and restores the
+    ///     file input to its empty state. Has no effect while an upload is in progress.
+    /// </summary>
+    public async Task ClearAsync() {
+        if (_isUploading) {
+            return;
+        }
+
+        _pendingFiles.Clear();
+        _fileProgressStates.Clear();
+        await DisposeOwnedStreamsAsync();
+        _inputFileKey++;
+        await InvokeAsync(StateHasChanged);
+    }
+
     private async Task OnFilesSelectedAsync(InputFileChangeEventArgs e) {
         if (_isUploading) {
             return;
@@ -412,6 +429,7 @@ public partial class NTInputFile : IAsyncDisposable {
 
             if (ClearSelectionAfterUpload && clearSelection) {
                 _pendingFiles.Clear();
+                _fileProgressStates.Clear();
             }
 
             await DisposeOwnedStreamsAsync();
