@@ -1,3 +1,10 @@
+## [1.31.2](https://github.com/Notallthatevil/NTComponents/compare/v1.31.1...v1.31.2) (2026-03-13)
+
+
+### Bug Fixes
+
+* **NTInputFile:** add ClearAsync to reset file input state ([df00c41](https://github.com/Notallthatevil/NTComponents/commit/df00c41d241df6efb49a12079ffd8fc562909882))
+
 ## [1.31.1](https://github.com/Notallthatevil/NTComponents/compare/v1.31.0...v1.31.1) (2026-03-13)
 
 
