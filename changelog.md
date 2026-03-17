@@ -1,3 +1,10 @@
+# [1.34.0](https://github.com/Notallthatevil/NTComponents/compare/v1.33.0...v1.34.0) (2026-03-17)
+
+
+### Features
+
+* enhance NTInputFile component with remove button support and update progress handling ([7a1cd19](https://github.com/Notallthatevil/NTComponents/commit/7a1cd193b090466cdfaa16d15137fc2793a194e1))
+
 # [1.33.0](https://github.com/Notallthatevil/NTComponents/compare/v1.32.0...v1.33.0) (2026-03-17)
 
 
