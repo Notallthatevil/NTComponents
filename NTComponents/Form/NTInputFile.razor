@@ -40,13 +40,21 @@
 			<span class="tnt-input-progress">
 				<div class="nt-input-file-progress-list">
 					@foreach (var fileState in _fileProgressStates.OrderBy(i => i.Index)) {
+						var progressDetails = CreateProgressDetails(fileState);
 						<div class="nt-input-file-progress-item">
-							<div class="nt-input-file-progress-title">@fileState.Name</div>
-							<div class="nt-input-file-progress-subtitle">@fileState.Status</div>
-							<TnTProgressIndicator Appearance="ProgressAppearance.Linear"
-												  Value="@(fileState.IsIndeterminate ? null : fileState.Percentage)"
-												  Max="100"
-												  min="0" />
+							@if (ProgressTemplate is not null) {
+								@ProgressTemplate(progressDetails)
+							}
+							else {
+								<div class="nt-input-file-progress-title">@progressDetails.Name</div>
+								<div class="nt-input-file-progress-subtitle">@progressDetails.Status</div>
+							}
+							@if (ShowProgressBar) {
+								<TnTProgressIndicator Appearance="ProgressAppearance.Linear"
+												      Value="@(progressDetails.IsIndeterminate ? null : progressDetails.Percentage)"
+												      Max="100"
+												      min="0" />
+							}
 						</div>
 					}
 				</div>

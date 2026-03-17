@@ -139,6 +139,12 @@ public partial class NTInputFile : IAsyncDisposable {
     public EventCallback<NTInputFileEventArgs> OnProgressChanged { get; set; }
 
     /// <summary>
+    ///     Gets or sets the template used to render each file progress item above the built-in progress bar.
+    /// </summary>
+    [Parameter]
+    public RenderFragment<NTInputFileProgressDetails>? ProgressTemplate { get; set; }
+
+    /// <summary>
     ///     Raised when users select files.
     /// </summary>
     [Parameter]
@@ -173,6 +179,12 @@ public partial class NTInputFile : IAsyncDisposable {
     /// </summary>
     [Parameter]
     public bool ShowProgress { get; set; } = true;
+
+    /// <summary>
+    ///     Shows the built-in progress bar for each file progress row.
+    /// </summary>
+    [Parameter]
+    public bool ShowProgressBar { get; set; } = true;
 
     /// <summary>
     ///     Supporting text below the control.
@@ -619,6 +631,15 @@ public partial class NTInputFile : IAsyncDisposable {
         });
     }
 
+    private static NTInputFileProgressDetails CreateProgressDetails(FileProgressState fileState) => new() {
+        Index = fileState.Index,
+        Name = fileState.Name,
+        Percentage = fileState.Percentage,
+        Size = fileState.Size,
+        Status = fileState.Status,
+        IsIndeterminate = fileState.IsIndeterminate
+    };
+
     private static void ApplyFinalFileStatus(FileProgressState fileState, bool isCancelled) {
         fileState.IsIndeterminate = false;
 
@@ -785,6 +806,42 @@ public sealed class NTInputFileEventArgs : EventArgs {
     ///     Progress-aware stream for the current file.
     /// </summary>
     public Stream? Stream { get; internal set; }
+}
+
+/// <summary>
+///     Represents the UI details for a file progress item in <see cref="NTInputFile" />.
+/// </summary>
+public readonly record struct NTInputFileProgressDetails {
+
+    /// <summary>
+    ///     Gets the index of the file in the current selection.
+    /// </summary>
+    public int Index { get; init; }
+
+    /// <summary>
+    ///     Gets a value indicating whether the progress bar should render as indeterminate.
+    /// </summary>
+    public bool IsIndeterminate { get; init; }
+
+    /// <summary>
+    ///     Gets the display name of the file.
+    /// </summary>
+    public string Name { get; init; }
+
+    /// <summary>
+    ///     Gets the current progress percentage.
+    /// </summary>
+    public int Percentage { get; init; }
+
+    /// <summary>
+    ///     Gets the file size in bytes.
+    /// </summary>
+    public long Size { get; init; }
+
+    /// <summary>
+    ///     Gets the current status text for the file.
+    /// </summary>
+    public string Status { get; init; }
 }
 
 /// <summary>
