@@ -1,3 +1,10 @@
+# [1.33.0](https://github.com/Notallthatevil/NTComponents/compare/v1.32.0...v1.33.0) (2026-03-17)
+
+
+### Features
+
+* add InputFileTemplateProgressDemo component and enhance NTInputFile with progress template support ([c38db07](https://github.com/Notallthatevil/NTComponents/commit/c38db0714e56194cd98002cdb0d2a096d83b90a4))
+
 # [1.32.0](https://github.com/Notallthatevil/NTComponents/compare/v1.31.2...v1.32.0) (2026-03-17)
 
 
