@@ -1,0 +1,69 @@
+@page "/textarea-form-test"
+@using Microsoft.AspNetCore.Components.Web
+@using NTComponents
+@inject IJSRuntime JS
+@rendermode @(new InteractiveServerRenderMode(false))
+
+<h3>Textarea Form Submission Test</h3>
+
+<div class="textarea-form-test" @onkeypress="HandleKeyPressAsync">
+    <div class="form-section">
+        <h4>Regular Text Input (Control Test)</h4>
+        <p>Pressing Enter here should reach the parent submit handler.</p>
+        <input type="text" placeholder="Regular input control" class="form-input" />
+    </div>
+
+    <div class="form-section">
+        <h4>TnTInputTextArea</h4>
+        <p>Pressing Enter here should create a newline and should not reach the parent submit handler.</p>
+        <TnTInputTextArea @bind-Value="_textValue"
+                          Label="Multiline input"
+                          Placeholder="Textarea under test" />
+    </div>
+</div>
+
+@if (_submitCount > 0) {
+    <div class="submit-count">Submit count: @_submitCount</div>
+}
+
+@code {
+    private int _submitCount;
+    private string? _textValue;
+
+    private async Task HandleKeyPressAsync(KeyboardEventArgs args) {
+        if (args.Key != "Enter") {
+            return;
+        }
+
+        _submitCount++;
+        await JS.InvokeVoidAsync("console.log", "Form submitted");
+    }
+}
+
+<style>
+    .textarea-form-test {
+        display: grid;
+        gap: 1.5rem;
+    }
+
+    .form-section {
+        padding: 1rem;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 1rem;
+    }
+
+    .submit-count {
+        padding: 0.75rem 1rem;
+        border-radius: 4px;
+        background: #d4edda;
+        color: #155724;
+    }
+</style>

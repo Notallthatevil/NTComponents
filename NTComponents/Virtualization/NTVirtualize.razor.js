@@ -252,7 +252,8 @@ function isScrollableOverflow(overflowY) {
 function getObserversMapEntry(dotNetRef) {
     const dotNetRefDispatcher = dotNetRef['_callDispatcher'];
     const dotNetRefId = dotNetRef['_id'];
-    dotNetRefDispatcher[dispatcherObserversByDotNetIdPropname] ??= {};
+    dotNetRefDispatcher[dispatcherObserversByDotNetIdPropname] =
+        dotNetRefDispatcher[dispatcherObserversByDotNetIdPropname] ?? {};
 
     return {
         observersByDotNetObjectId: dotNetRefDispatcher[dispatcherObserversByDotNetIdPropname],

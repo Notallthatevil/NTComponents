@@ -395,6 +395,13 @@ window.NTComponents = {
             event.stopPropagation();
         }
     },
+    stopEnterPropagation: (event) => {
+        if (event.key === 'Enter') {
+            // Preserve the default newline behavior while preventing parent handlers
+            // from treating Enter inside multiline inputs as a submit/navigation key.
+            event.stopPropagation();
+        }
+    },
     formKeyDownSupportingTextHandler: (event) => {
         const input = event.target;
         const container = input.closest('.tnt-input-container');

@@ -551,6 +551,37 @@ public class TnTInputTextArea_Tests : BunitContext {
     }
 
     [Fact]
+    public void TextArea_Keydown_Does_Not_Block_Enter_Key() {
+        // Arrange & Act
+        var cut = RenderInputTextArea();
+        var textArea = cut.Find("textarea");
+
+        // Assert
+        var onKeyDown = textArea.GetAttribute("onkeydown");
+        onKeyDown.Should().NotContain("NTComponents.stopEnter(event)");
+    }
+
+    [Fact]
+    public void TextArea_Keydown_Keeps_Supporting_Text_Handler() {
+        // Arrange & Act
+        var cut = RenderInputTextArea();
+        var textArea = cut.Find("textarea");
+
+        // Assert
+        textArea.GetAttribute("onkeydown").Should().Be("NTComponents.formKeyDownSupportingTextHandler(event)");
+    }
+
+    [Fact]
+    public void TextArea_Keypress_Stops_Enter_Propagation_Without_Using_StopEnter() {
+        // Arrange & Act
+        var cut = RenderInputTextArea();
+        var textArea = cut.Find("textarea");
+
+        // Assert
+        textArea.GetAttribute("onkeypress").Should().Be("NTComponents.stopEnterPropagation(event)");
+    }
+
+    [Fact]
     public void TextArea_Title_Attribute_Uses_Field_Name() {
         // Arrange & Act
         var cut = RenderInputTextArea();
