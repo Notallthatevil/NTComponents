@@ -14,7 +14,6 @@ public class NTInputFile_Tests : BunitContext {
     public async Task ProgressTemplate_Renders_Custom_Item_Content_And_Keeps_Progress_Bar() {
         // Arrange
         var cut = Render<NTInputFile>(parameters => parameters
-            .Add(component => component.ShowProgress, true)
             .Add(component => component.ProgressTemplate, details => builder => {
                 builder.OpenElement(0, "div");
                 builder.AddAttribute(1, "class", "custom-progress-item");
@@ -36,8 +35,7 @@ public class NTInputFile_Tests : BunitContext {
     [Fact]
     public async Task Without_ProgressTemplate_Renders_Default_File_Details() {
         // Arrange
-        var cut = Render<NTInputFile>(parameters => parameters
-            .Add(component => component.ShowProgress, true));
+        var cut = Render<NTInputFile>();
 
         await SeedProgressAsync(cut, new TestBrowserFile("status.txt", 128), "Processing");
 
@@ -51,7 +49,6 @@ public class NTInputFile_Tests : BunitContext {
     public async Task ShowProgressBar_False_Hides_Progress_Bar_And_Keeps_Item_Content() {
         // Arrange
         var cut = Render<NTInputFile>(parameters => parameters
-            .Add(component => component.ShowProgress, true)
             .Add(component => component.ShowProgressBar, false)
             .Add(component => component.ProgressTemplate, details => builder => {
                 builder.OpenElement(0, "div");
@@ -67,12 +64,35 @@ public class NTInputFile_Tests : BunitContext {
         cut.FindComponents<TnTProgressIndicator>().Should().BeEmpty();
     }
 
-    private static async Task SeedProgressAsync(IRenderedComponent<NTInputFile> cut, IBrowserFile file, string status) {
+    [Fact]
+    public async Task ShowRemoveButton_True_Removes_The_Selected_File_Row() {
+        // Arrange
+        var cut = Render<NTInputFile>(parameters => parameters
+            .Add(component => component.ShowRemoveButton, true));
+
+        await SeedProgressAsync(cut, [
+            new TestBrowserFile("first.txt", 100),
+            new TestBrowserFile("second.txt", 200)
+        ], "Ready to upload");
+
+        // Act
+        cut.FindAll(".nt-input-file-progress-remove .tnt-image-button").Should().HaveCount(2);
+        cut.FindAll(".nt-input-file-progress-remove .tnt-image-button")[0].Click();
+
+        // Assert
+        cut.FindAll(".nt-input-file-progress-item").Should().HaveCount(1);
+        cut.Find(".nt-input-file-progress-title").TextContent.Should().Be("second.txt");
+    }
+
+    private static Task SeedProgressAsync(IRenderedComponent<NTInputFile> cut, IBrowserFile file, string status)
+        => SeedProgressAsync(cut, [file], status);
+
+    private static async Task SeedProgressAsync(IRenderedComponent<NTInputFile> cut, IReadOnlyList<IBrowserFile> files, string status) {
         var initializeMethod = typeof(NTInputFile).GetMethod("InitializeFileProgressStatesAsync", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
         initializeMethod.Should().NotBeNull();
 
         await cut.InvokeAsync(async () => {
-            var task = (Task?)initializeMethod!.Invoke(cut.Instance, [new List<IBrowserFile> { file }, status]);
+            var task = (Task?)initializeMethod!.Invoke(cut.Instance, [files, status]);
             task.Should().NotBeNull();
             await task!;
         });

@@ -12,12 +12,17 @@
         <span>Show built-in progress bar</span>
     </label>
 
+    <label style="display:inline-flex; align-items:center; gap:8px; margin:0 0 12px 12px;">
+        <input type="checkbox" @bind="_showRemoveButton" />
+        <span>Show remove button</span>
+    </label>
+
     <NTInputFile Label="Pick file"
                  SupportingText="@_progressTitle"
                  MaximumFileCount="1"
                  MaximumFileSize="52428800"
-                 ShowProgress="true"
                  ShowProgressBar="@_showProgressBar"
+                 ShowRemoveButton="@_showRemoveButton"
                  InputButtonSize="Size.Small"
                  UploadButtonSize="Size.Small"
                  OnUploadButtonClick="OnUploadButtonClickAsync"
@@ -46,6 +51,7 @@
     private int _percent;
     private string _progressTitle = "Waiting for upload.";
     private bool _showProgressBar = true;
+    private bool _showRemoveButton = true;
     private string _status = "Waiting for upload.";
 
     private Task OnUploadButtonClickAsync(IReadOnlyList<IBrowserFile> _)

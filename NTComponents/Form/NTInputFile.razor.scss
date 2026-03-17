@@ -206,6 +206,17 @@ $action-fg-color: var(--nt-input-file-action-fg-color);
                 gap: 4px;
             }
 
+            .nt-input-file-progress-row {
+                display: grid;
+                grid-template-columns: minmax(0, 1fr) auto;
+                gap: 12px;
+                align-items: start;
+            }
+
+            .nt-input-file-progress-content {
+                min-width: 0;
+            }
+
             .nt-input-file-progress-title {
                 @include typescale.tnt-label-large;
                 overflow: hidden;
@@ -219,6 +230,10 @@ $action-fg-color: var(--nt-input-file-action-fg-color);
                 overflow: hidden;
                 text-overflow: ellipsis;
                 white-space: nowrap;
+            }
+
+            .nt-input-file-progress-remove {
+                align-self: start;
             }
         }
 

@@ -36,19 +36,37 @@
 			@EndIcon.Render("tnt-end-icon")
 		}
 
-		@if (ShowProgress && _fileProgressStates.Count > 0) {
+		@if (_fileProgressStates.Count > 0) {
 			<span class="tnt-input-progress">
 				<div class="nt-input-file-progress-list">
 					@foreach (var fileState in _fileProgressStates.OrderBy(i => i.Index)) {
 						var progressDetails = CreateProgressDetails(fileState);
 						<div class="nt-input-file-progress-item">
-							@if (ProgressTemplate is not null) {
-								@ProgressTemplate(progressDetails)
-							}
-							else {
-								<div class="nt-input-file-progress-title">@progressDetails.Name</div>
-								<div class="nt-input-file-progress-subtitle">@progressDetails.Status</div>
-							}
+							<div class="nt-input-file-progress-row">
+								<div class="nt-input-file-progress-content">
+									@if (ProgressTemplate is not null) {
+										@ProgressTemplate(progressDetails)
+									}
+									else {
+										<div class="nt-input-file-progress-title">@progressDetails.Name</div>
+										<div class="nt-input-file-progress-subtitle">@progressDetails.Status</div>
+									}
+									</div>
+									@if (ShowRemoveButton) {
+										<span class="nt-input-file-progress-remove">
+											<TnTImageButton Appearance="ButtonAppearance.Text"
+															ButtonSize="Size.XS"
+															Disabled="@(_isUploading || FieldDisabled || FieldReadonly)"
+															Icon="@MaterialIcon.Close"
+															TextColor="TnTColor.OnSurfaceVariant"
+															TintColor="TnTColor.Primary"
+															Type="ButtonType.Button"
+															ElementTitle="Remove file"
+															StopPropagation="true"
+															OnClickCallback="async _ => await RemoveFileAsync(progressDetails.Index)" />
+										</span>
+									}
+								</div>
 							@if (ShowProgressBar) {
 								<TnTProgressIndicator Appearance="ProgressAppearance.Linear"
 												      Value="@(progressDetails.IsIndeterminate ? null : progressDetails.Percentage)"

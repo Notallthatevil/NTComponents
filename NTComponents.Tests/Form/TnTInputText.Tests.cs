@@ -654,4 +654,5 @@ public class TnTInputText_Tests : BunitContext {
         [Required(ErrorMessage = "Test value is required")]
         public string? TestValue { get; set; }
     }
+
 }

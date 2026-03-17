@@ -175,16 +175,16 @@ public partial class NTInputFile : IAsyncDisposable {
     public bool ReadOnly { get; set; }
 
     /// <summary>
-    ///     Shows per-file progress rows.
-    /// </summary>
-    [Parameter]
-    public bool ShowProgress { get; set; } = true;
-
-    /// <summary>
     ///     Shows the built-in progress bar for each file progress row.
     /// </summary>
     [Parameter]
     public bool ShowProgressBar { get; set; } = true;
+
+    /// <summary>
+    ///     Shows the remove button for each displayed file row.
+    /// </summary>
+    [Parameter]
+    public bool ShowRemoveButton { get; set; }
 
     /// <summary>
     ///     Supporting text below the control.
@@ -384,6 +384,43 @@ public partial class NTInputFile : IAsyncDisposable {
         _fileProgressStates.Clear();
         await DisposeOwnedStreamsAsync();
         _inputFileKey++;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    /// <summary>
+    ///     Removes a displayed file from the current selection.
+    /// </summary>
+    /// <param name="index">The zero-based file index.</param>
+    public async Task RemoveFileAsync(int index) {
+        if (_isUploading || FieldDisabled || FieldReadonly) {
+            return;
+        }
+
+        if (index < 0 || index >= _fileProgressStates.Count) {
+            return;
+        }
+
+        if (index < _pendingFiles.Count) {
+            _pendingFiles.RemoveAt(index);
+        }
+
+        _fileProgressStates.RemoveAt(index);
+
+        for (var i = 0; i < _fileProgressStates.Count; i++) {
+            _fileProgressStates[i].Index = i;
+        }
+
+        if (_fileProgressStates.Count == 0) {
+            _progressPercent = 0;
+            _progressTitle = string.Empty;
+        }
+
+        _inputFileKey++;
+
+        if (OnSelectionChanged.HasDelegate) {
+            await OnSelectionChanged.InvokeAsync(_pendingFiles.ToArray());
+        }
+
         await InvokeAsync(StateHasChanged);
     }
 
@@ -733,7 +770,7 @@ public partial class NTInputFile : IAsyncDisposable {
     };
 
     private sealed class FileProgressState {
-        public required int Index { get; init; }
+        public required int Index { get; set; }
 
         public bool IsIndeterminate { get; set; }
 

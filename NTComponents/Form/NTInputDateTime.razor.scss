@@ -14,6 +14,24 @@
         padding-left: 0;
         padding-right: 0;
     }
+
+    &::-webkit-calendar-picker-indicator,
+    &::-webkit-time-picker-indicator {
+        display: none;
+        opacity: 0;
+        pointer-events: none;
+        width: 0;
+        min-width: 0;
+        margin: 0;
+        padding: 0;
+    }
+
+    &::-webkit-calendar-picker-indicator {
+        border-radius: 50%;
+        background-color: color-mix(in srgb, #ffffff 50%, colors.$tnt-color-surface-container-high);
+        left: 8px;
+        position: absolute;
+    }
 }
 
 .tnt-dtp-overlay {

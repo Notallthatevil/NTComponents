@@ -230,7 +230,7 @@ public abstract partial class TnTInputBase<TInputType> : InputBase<TInputType>, 
     public string? ElementLang { get; set; }
 
     /// <inheritdoc />
-    public string? ElementName => NameAttributeValue;
+    public string? ElementName => _resolvedElementName;
 
     /// <inheritdoc />
     public string? ElementStyle => CssStyleBuilder.Create()
@@ -344,6 +344,8 @@ public abstract partial class TnTInputBase<TInputType> : InputBase<TInputType>, 
     /// </summary>
     [CascadingParameter]
     private ITnTForm? _tntForm { get; set; }
+
+    private string? _resolvedElementName;
 
     /// <summary>
     ///     Sets the focus to the input element.
@@ -465,12 +467,128 @@ public abstract partial class TnTInputBase<TInputType> : InputBase<TInputType>, 
         TooltipIcon.AdditionalClass = "tnt-tooltip-icon";
         TooltipIcon.Size = IconSize.Small;
 
-        if (string.IsNullOrWhiteSpace(NameAttributeValue)) {
-            // Workaround, since for some reason NameValueAttribute is not being set when rendering in WebAssembly mode
-            var shouldGenerateName = typeof(InputBase<TInputType>).GetField("_shouldGenerateFieldNames", BindingFlags.Instance | BindingFlags.NonPublic);
-            shouldGenerateName?.SetValue(this, true);
+        _resolvedElementName = ResolveElementName();
+    }
+
+    private string? TryGetNameAttributeValue() {
+        try {
+            return NameAttributeValue;
+        }
+        catch (InvalidOperationException) {
+            // Some supported binding expressions cannot be formatted into a deterministic field name.
+            return null;
         }
     }
+
+    private string? ResolveElementName() {
+        var name = TryGetNameAttributeValue();
+        if (!string.IsNullOrWhiteSpace(name)) {
+            return name;
+        }
+
+        // Workaround, since for some reason NameValueAttribute is not being set when rendering in WebAssembly mode.
+        var shouldGenerateName = typeof(InputBase<TInputType>).GetField("_shouldGenerateFieldNames", BindingFlags.Instance | BindingFlags.NonPublic);
+        shouldGenerateName?.SetValue(this, true);
+
+        name = TryGetNameAttributeValue();
+        if (!string.IsNullOrWhiteSpace(name)) {
+            return name;
+        }
+
+        return BuildElementNameFromExpression(ValueExpression?.Body) ?? FieldIdentifier.FieldName;
+    }
+
+    private string? BuildElementNameFromExpression(Expression? expression) {
+        expression = UnwrapConvert(expression);
+        if (expression is null) {
+            return null;
+        }
+
+        return expression switch {
+            BinaryExpression { NodeType: ExpressionType.ArrayIndex } arrayIndex => CombineIndexedPath(BuildElementNameFromExpression(arrayIndex.Left), FormatIndexArgument(arrayIndex.Right)),
+            ConstantExpression => null,
+            IndexExpression indexExpression => CombineIndexedPath(BuildElementNameFromExpression(indexExpression.Object), FormatIndexArguments(indexExpression.Arguments)),
+            MemberExpression memberExpression => BuildMemberPath(memberExpression),
+            MethodCallExpression methodCallExpression when methodCallExpression.Method.Name == "get_Item" =>
+                CombineIndexedPath(BuildElementNameFromExpression(methodCallExpression.Object), FormatIndexArguments(methodCallExpression.Arguments)),
+            ParameterExpression parameterExpression => parameterExpression.Name,
+            _ => null
+        };
+    }
+
+    private string? BuildMemberPath(MemberExpression memberExpression) {
+        var parentExpression = UnwrapConvert(memberExpression.Expression);
+        if (parentExpression is null or ConstantExpression) {
+            return null;
+        }
+
+        if (parentExpression is MemberExpression parentMember && UnwrapConvert(parentMember.Expression) is ConstantExpression) {
+            return memberExpression.Member.Name;
+        }
+
+        var parentPath = BuildElementNameFromExpression(parentExpression);
+        return string.IsNullOrWhiteSpace(parentPath)
+            ? memberExpression.Member.Name
+            : $"{parentPath}.{memberExpression.Member.Name}";
+    }
+
+    private string? FormatIndexArguments(IEnumerable<Expression> arguments) {
+        var formattedArguments = arguments
+            .Select(FormatIndexArgument)
+            .Where(argument => !string.IsNullOrWhiteSpace(argument))
+            .ToArray();
+
+        return formattedArguments.Length == 0 ? null : string.Join(",", formattedArguments);
+    }
+
+    private string? FormatIndexArgument(Expression expression) {
+        var unwrappedExpression = UnwrapConvert(expression);
+        if (unwrappedExpression is null) {
+            return null;
+        }
+
+        if (TryEvaluateExpression(unwrappedExpression, out var value)) {
+            return value switch {
+                null => null,
+                IFormattable formattable => formattable.ToString(null, CultureInfo.InvariantCulture),
+                _ => value.ToString()
+            };
+        }
+
+        return BuildElementNameFromExpression(unwrappedExpression);
+    }
+
+    private static string? CombineIndexedPath(string? path, string? indexArgument) {
+        if (string.IsNullOrWhiteSpace(path)) {
+            return null;
+        }
+
+        return string.IsNullOrWhiteSpace(indexArgument)
+            ? path
+            : $"{path}[{indexArgument}]";
+    }
+
+    private static Expression? UnwrapConvert(Expression? expression) {
+        while (expression is UnaryExpression unaryExpression
+               && unaryExpression.NodeType is ExpressionType.Convert or ExpressionType.ConvertChecked) {
+            expression = unaryExpression.Operand;
+        }
+
+        return expression;
+    }
+
+    private static bool TryEvaluateExpression(Expression expression, out object? value) {
+        try {
+            var lambda = Expression.Lambda<Func<object?>>(Expression.Convert(expression, typeof(object)));
+            value = lambda.Compile().Invoke();
+            return true;
+        }
+        catch {
+            value = null;
+            return false;
+        }
+    }
+
 
     /// <summary>
     ///     Gets the custom attribute if it exists.
