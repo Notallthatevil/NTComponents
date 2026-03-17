@@ -1,3 +1,10 @@
+# [1.35.0](https://github.com/Notallthatevil/NTComponents/compare/v1.34.1...v1.35.0) (2026-03-17)
+
+
+### Features
+
+* **snackbar:** add snackbar service and component for notifications ([cd3f535](https://github.com/Notallthatevil/NTComponents/commit/cd3f5352737bdb61143919bc2f23e9f602f8e277))
+
 ## [1.34.1](https://github.com/Notallthatevil/NTComponents/compare/v1.34.0...v1.34.1) (2026-03-17)
 
 
