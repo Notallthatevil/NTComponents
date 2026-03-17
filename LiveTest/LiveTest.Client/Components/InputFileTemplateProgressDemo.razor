@@ -17,14 +17,16 @@
         <span>Show remove button</span>
     </label>
 
-    <NTInputFile Label="Pick file"
+    <NTInputFile Label="Pick files"
                  SupportingText="@_progressTitle"
-                 MaximumFileCount="1"
+                 MaximumFileCount="5"
                  MaximumFileSize="52428800"
                  ShowProgressBar="@_showProgressBar"
                  ShowRemoveButton="@_showRemoveButton"
+                 Multiple="true"
                  InputButtonSize="Size.Small"
                  UploadButtonSize="Size.Small"
+                 OnFileCountExceeded="OnFileCountExceededAsync"
                  OnUploadButtonClick="OnUploadButtonClickAsync"
                  OnUploadFile="OnUploadFileAsync"
                  OnProgressChanged="OnProgressChangedAsync">
@@ -56,6 +58,13 @@
 
     private Task OnUploadButtonClickAsync(IReadOnlyList<IBrowserFile> _)
         => Task.CompletedTask;
+
+    private Task OnFileCountExceededAsync(int fileCount) {
+        _status = $"Selected {fileCount} files, but this demo allows up to 5.";
+        _progressTitle = _status;
+        _percent = 0;
+        return InvokeAsync(StateHasChanged);
+    }
 
     private async Task OnUploadFileAsync(NTInputFileEventArgs args) {
         if (args.Stream is null) {

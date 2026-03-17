@@ -65,7 +65,7 @@ public class NTInputFile_Tests : BunitContext {
     }
 
     [Fact]
-    public async Task ShowRemoveButton_True_Removes_The_Selected_File_Row() {
+    public async Task ShowRemoveButton_True_Close_Button_Removes_The_Selected_File_Row() {
         // Arrange
         var cut = Render<NTInputFile>(parameters => parameters
             .Add(component => component.ShowRemoveButton, true));
@@ -76,12 +76,42 @@ public class NTInputFile_Tests : BunitContext {
         ], "Ready to upload");
 
         // Act
-        cut.FindAll(".nt-input-file-progress-remove .tnt-image-button").Should().HaveCount(2);
-        cut.FindAll(".nt-input-file-progress-remove .tnt-image-button")[0].Click();
+        var closeButtons = cut.FindAll("button[title='Remove file']");
+        closeButtons.Should().HaveCount(2);
+        closeButtons[0].Click();
 
         // Assert
         cut.FindAll(".nt-input-file-progress-item").Should().HaveCount(1);
         cut.Find(".nt-input-file-progress-title").TextContent.Should().Be("second.txt");
+        cut.FindAll("button[title='Remove file']").Should().HaveCount(1);
+    }
+
+    [Fact]
+    public async Task ShowRemoveButton_True_With_Multiple_Files_Removes_The_Clicked_File() {
+        // Arrange
+        var cut = Render<NTInputFile>(parameters => parameters
+            .Add(component => component.ShowRemoveButton, true)
+            .Add(component => component.Multiple, true)
+            .Add(component => component.MaximumFileCount, 3));
+
+        await SeedProgressAsync(cut, [
+            new TestBrowserFile("first.txt", 100),
+            new TestBrowserFile("second.txt", 200),
+            new TestBrowserFile("third.txt", 300)
+        ], "Ready to upload");
+
+        // Act
+        var closeButtons = cut.FindAll("button[title='Remove file']");
+        closeButtons.Should().HaveCount(3);
+        closeButtons[1].Click();
+
+        // Assert
+        var remainingTitles = cut.FindAll(".nt-input-file-progress-title")
+            .Select(element => element.TextContent)
+            .ToArray();
+
+        remainingTitles.Should().Equal("first.txt", "third.txt");
+        cut.FindAll("button[title='Remove file']").Should().HaveCount(2);
     }
 
     private static Task SeedProgressAsync(IRenderedComponent<NTInputFile> cut, IBrowserFile file, string status)
