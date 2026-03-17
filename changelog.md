@@ -1,3 +1,10 @@
+## [1.34.1](https://github.com/Notallthatevil/NTComponents/compare/v1.34.0...v1.34.1) (2026-03-17)
+
+
+### Bug Fixes
+
+* **text-area:** fixed regression that caused enter to no longer work in text area. ([8a5b3ce](https://github.com/Notallthatevil/NTComponents/commit/8a5b3ce0d95f14ca08b360228aa86a72e2b1db41))
+
 # [1.34.0](https://github.com/Notallthatevil/NTComponents/compare/v1.33.0...v1.34.0) (2026-03-17)
 
 
