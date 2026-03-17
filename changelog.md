@@ -1,3 +1,10 @@
+# [1.32.0](https://github.com/Notallthatevil/NTComponents/compare/v1.31.2...v1.32.0) (2026-03-17)
+
+
+### Features
+
+* add NTInputSelect component with searchable options ([ba8ae5b](https://github.com/Notallthatevil/NTComponents/commit/ba8ae5b5d8191ae52efa428ea860176a46c1af87))
+
 ## [1.31.2](https://github.com/Notallthatevil/NTComponents/compare/v1.31.1...v1.31.2) (2026-03-13)
 
 
