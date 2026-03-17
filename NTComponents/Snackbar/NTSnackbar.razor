@@ -1,0 +1,75 @@
+@namespace NTComponents
+@using NTComponents.Core
+@using NTComponents.Snackbar
+@implements IDisposable
+
+@if (_displaySnackbars.Count > 0) {
+    <div class="@ContainerClass">
+        @for (var i = 0; i < _displaySnackbars.Count; i++) {
+            var snackbar = _displaySnackbars[i];
+            var metadata = GetMetadata(snackbar);
+            var isFrontSnackbar = i == 0;
+            var autoDismissScript = isFrontSnackbar && !RendererInfo.IsInteractive ? GetSsrAutoDismissScript(snackbar, metadata) : null;
+
+            <div class="@GetStackItemClass(i)"
+                 style="@GetStackItemStyle(i)"
+                 @key="snackbar">
+                <div id="@metadata.Id"
+                     class="@GetSnackbarAttributesClass(snackbar)"
+                     style="@GetSnackbarAttributesStyle(snackbar)"
+                     role="@(isFrontSnackbar ? "status" : null)"
+                     aria-live="@(isFrontSnackbar ? "polite" : null)"
+                     aria-atomic="@(isFrontSnackbar ? "true" : null)"
+                     aria-hidden="@(isFrontSnackbar ? null : "true")">
+                    @if (autoDismissScript is not null) {
+                        <script type="text/javascript">@((Microsoft.AspNetCore.Components.MarkupString)autoDismissScript)</script>
+                    }
+
+                    <div class="nt-snackbar-message">
+                        @snackbar.Message
+                    </div>
+
+                    @if (isFrontSnackbar && (snackbar.HasAction || snackbar.ShowClose)) {
+                        <div class="nt-snackbar-actions">
+                            @if (snackbar.HasAction) {
+                                @if (RendererInfo.IsInteractive) {
+                                    <button class="nt-snackbar-action tnt-interactable"
+                                            type="button"
+                                            @onclick="() => OnActionAsync(snackbar)">
+                                        @snackbar.ActionLabel
+                                    </button>
+                                }
+                                else {
+                                    <button class="nt-snackbar-action tnt-disabled"
+                                            type="button"
+                                            disabled>
+                                        @snackbar.ActionLabel
+                                    </button>
+                                }
+                            }
+
+                            @if (snackbar.ShowClose) {
+                                @if (RendererInfo.IsInteractive) {
+                                    <button class="nt-snackbar-close tnt-interactable"
+                                            type="button"
+                                            aria-label="Dismiss notification"
+                                            @onclick="() => _service.CloseAsync(snackbar)">
+                                        @MaterialIcon.Close.Render()
+                                    </button>
+                                }
+                                else {
+                                    <button class="nt-snackbar-close tnt-interactable"
+                                            type="button"
+                                            aria-label="Dismiss notification"
+                                            onclick="@SsrCloseOnClick">
+                                        @MaterialIcon.Close.Render()
+                                    </button>
+                                }
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}

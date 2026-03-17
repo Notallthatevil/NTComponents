@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using NTComponents;
 using NTComponents.Dialog;
+using NTComponents.Snackbar;
 using NTComponents.Storage;
 using NTComponents.Toast;
 
@@ -22,6 +23,7 @@ public static class TnTServicesExt {
 //        services.AddSassCompiler();
 //#endif
         return services.AddScoped<ITnTDialogService, TnTDialogService>()
+             .AddScoped<INTSnackbarService, NTSnackbarService>()
              .AddScoped<ITnTToastService, TnTToastService>()
              .AddScoped<ISessionStorageService, SessionStorageService>()
              .AddScoped<ILocalStorageService, LocalStorageService>();
