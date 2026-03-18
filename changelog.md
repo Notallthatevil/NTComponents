@@ -1,3 +1,10 @@
+# [1.36.0](https://github.com/Notallthatevil/NTComponents/compare/v1.35.0...v1.36.0) (2026-03-18)
+
+
+### Features
+
+* **input-file:** implement file removal functionality and enhance tests ([4e7a58d](https://github.com/Notallthatevil/NTComponents/commit/4e7a58d6253b13d949f5dba6dc1dc2d6d438f324))
+
 # [1.35.0](https://github.com/Notallthatevil/NTComponents/compare/v1.34.1...v1.35.0) (2026-03-17)
 
 
