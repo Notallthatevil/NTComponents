@@ -1,3 +1,10 @@
+# [1.38.0](https://github.com/Notallthatevil/NTComponents/compare/v1.37.0...v1.38.0) (2026-03-18)
+
+
+### Features
+
+* **NTInputFile:** add file selection state restoration ([07d353f](https://github.com/Notallthatevil/NTComponents/commit/07d353f3f6cb280f0429a968d9bd348fafdcb54e))
+
 # [1.37.0](https://github.com/Notallthatevil/NTComponents/compare/v1.36.1...v1.37.0) (2026-03-18)
 
 
