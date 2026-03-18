@@ -1,3 +1,10 @@
+## [1.36.1](https://github.com/Notallthatevil/NTComponents/compare/v1.36.0...v1.36.1) (2026-03-18)
+
+
+### Bug Fixes
+
+* **NTInputFile:** simplify JS module load logic ([8de0c1a](https://github.com/Notallthatevil/NTComponents/commit/8de0c1a4eb203caf9ebb052c91bc89313fe3c472))
+
 # [1.36.0](https://github.com/Notallthatevil/NTComponents/compare/v1.35.0...v1.36.0) (2026-03-18)
 
 
