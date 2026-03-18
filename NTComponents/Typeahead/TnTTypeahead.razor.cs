@@ -255,7 +255,9 @@ public partial class TnTTypeahead<TItem> {
         await ItemSelectedCallback.InvokeAsync(item);
 
         EditContext?.Validate();
-
+        if (_fieldIdentifier.HasValue) {
+            EditContext?.NotifyFieldChanged(_fieldIdentifier.Value);
+        }
         if (RefocusAfterSelect) {
             await _inputBox.SetFocusAsync();
         }
