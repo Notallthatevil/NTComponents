@@ -7,19 +7,26 @@ function getFileInput(container) {
     return input instanceof HTMLInputElement ? input : null;
 }
 
-export function removeSelectedFile(container, removedIndex) {
+export function removeSelectedFile(container, fileIndex) {
     const input = getFileInput(container);
     const files = input?.files;
 
-    if (!input || !files || removedIndex < 0 || removedIndex >= files.length || typeof DataTransfer === 'undefined') {
+    if (!input || !files || typeof DataTransfer === 'undefined' || !Number.isInteger(fileIndex)) {
         return;
     }
 
     const dataTransfer = new DataTransfer();
+    let removed = false;
     for (let i = 0; i < files.length; i += 1) {
-        if (i !== removedIndex) {
-            dataTransfer.items.add(files[i]);
+        if (!removed && i === fileIndex) {
+            removed = true;
+            continue;
         }
+        dataTransfer.items.add(files[i]);
+    }
+
+    if (!removed) {
+        return;
     }
 
     input.files = dataTransfer.files;

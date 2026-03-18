@@ -121,6 +121,40 @@ public class NTInputFile_Tests : BunitContext {
     }
 
     [Fact]
+    public async Task ShowRemoveButton_True_With_Duplicate_File_Names_Removes_The_Clicked_File() {
+        // Arrange
+        var cut = Render<NTInputFile>(parameters => parameters
+            .Add(component => component.ShowRemoveButton, true)
+            .Add(component => component.Multiple, true)
+            .Add(component => component.MaximumFileCount, 3)
+            .Add(component => component.ProgressTemplate, details => builder => {
+                builder.OpenElement(0, "div");
+                builder.AddAttribute(1, "class", "file-row");
+                builder.AddContent(2, $"{details.Name}|{details.Size}");
+                builder.CloseElement();
+            }));
+
+        await SeedProgressAsync(cut, [
+            new TestBrowserFile("duplicate.txt", 100),
+            new TestBrowserFile("duplicate.txt", 200),
+            new TestBrowserFile("third.txt", 300)
+        ], "Ready to upload");
+
+        // Act
+        var closeButtons = cut.FindAll("button[title='Remove file']");
+        closeButtons.Should().HaveCount(3);
+        closeButtons[1].Click();
+
+        // Assert
+        var remainingRows = cut.FindAll(".file-row")
+            .Select(element => element.TextContent)
+            .ToArray();
+
+        remainingRows.Should().Equal("duplicate.txt|100", "third.txt|300");
+        cut.FindAll("button[title='Remove file']").Should().HaveCount(2);
+    }
+
+    [Fact]
     public async Task RemoveFileAsync_Synchronizes_The_Native_File_Input_With_The_Removed_Index() {
         // Arrange
         var cut = Render<NTInputFile>(parameters => parameters
@@ -128,14 +162,16 @@ public class NTInputFile_Tests : BunitContext {
             .Add(component => component.Multiple, true)
             .Add(component => component.MaximumFileCount, 3));
 
-        await SeedSelectionAsync(cut, [
+        var files = new[] {
             new TestBrowserFile("first.txt", 100),
             new TestBrowserFile("second.txt", 200),
             new TestBrowserFile("third.txt", 300)
-        ], "Ready to upload");
+        };
+
+        await SeedSelectionAsync(cut, files, "Ready to upload");
 
         // Act
-        await cut.InvokeAsync(() => cut.Instance.RemoveFileAsync(1));
+        await cut.InvokeAsync(() => cut.Instance.RemoveFileAsync(files[1]));
 
         // Assert
         var invocation = JSInterop.Invocations.LastOrDefault(i => i.Identifier == "removeSelectedFile");

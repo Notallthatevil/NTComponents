@@ -275,7 +275,7 @@ public partial class NTInputFile : IAsyncDisposable {
     private const string ResourceNoUploadHandler = "No upload handler";
     private const string MaxSizeErrorMessage = "The maximum size allowed is reached";
 
-    private readonly List<FileProgressState> _fileProgressStates = [];
+    private readonly HashSet<FileProgressState> _fileProgressStates = [];
     private readonly List<Stream> _ownedStreams = [];
     private readonly List<IBrowserFile> _pendingFiles = [];
     private ElementReference _inputElementContainer;
@@ -420,26 +420,21 @@ public partial class NTInputFile : IAsyncDisposable {
     /// <summary>
     ///     Removes a displayed file from the current selection.
     /// </summary>
-    /// <param name="index">The zero-based file index.</param>
-    public async Task RemoveFileAsync(int index) {
+    /// <param name="file">The file to remove.</param>
+    public async Task RemoveFileAsync(IBrowserFile file) {
         if (_isUploading || FieldDisabled || FieldReadonly) {
             return;
         }
 
-        if (index < 0 || index >= _fileProgressStates.Count) {
+        if (!_pendingFiles.Contains(file)) {
             return;
         }
 
-        if (index < _pendingFiles.Count) {
-            _pendingFiles.RemoveAt(index);
-        }
+        var fileIndex = _pendingFiles.IndexOf(file);
+        _pendingFiles.Remove(file);
+        _fileProgressStates.RemoveWhere(s => s.BrowserFile == file);
 
-        _fileProgressStates.RemoveAt(index);
-        await RemoveSelectedFileFromNativeInputAsync(index);
-
-        for (var i = 0; i < _fileProgressStates.Count; i++) {
-            _fileProgressStates[i].Index = i;
-        }
+        await RemoveSelectedFileFromNativeInputAsync(fileIndex);
 
         if (_fileProgressStates.Count == 0) {
             _progressPercent = 0;
@@ -447,7 +442,7 @@ public partial class NTInputFile : IAsyncDisposable {
         }
 
         if (OnSelectionChanged.HasDelegate) {
-            await OnSelectionChanged.InvokeAsync(_pendingFiles.ToArray());
+            await OnSelectionChanged.InvokeAsync(_pendingFiles);
         }
 
         await InvokeAsync(StateHasChanged);
@@ -535,7 +530,8 @@ public partial class NTInputFile : IAsyncDisposable {
 
         for (var fileNumber = 0; fileNumber < files.Count; fileNumber++) {
             var file = files[fileNumber];
-            var fileState = _fileProgressStates[fileNumber];
+            var fileState = _fileProgressStates.FirstOrDefault(s => s.BrowserFile == file);
+            if (fileState is null) continue;
 
             var fileDetails = new NTInputFileEventArgs {
                 AllFiles = allFilesSummary,
@@ -623,11 +619,13 @@ public partial class NTInputFile : IAsyncDisposable {
     private Task InitializeFileProgressStatesAsync(IReadOnlyList<IBrowserFile> files, string initialStatus) {
         return InvokeAsync(() => {
             _fileProgressStates.Clear();
+            _pendingFiles.Clear();
+            _pendingFiles.AddRange(files);
 
             for (var i = 0; i < files.Count; i++) {
                 var file = files[i];
                 _fileProgressStates.Add(new FileProgressState {
-                    Index = i,
+                    BrowserFile = file,
                     Name = file.Name,
                     Size = file.Size,
                     Percentage = 0,
@@ -698,7 +696,7 @@ public partial class NTInputFile : IAsyncDisposable {
     }
 
     private static NTInputFileProgressDetails CreateProgressDetails(FileProgressState fileState) => new() {
-        Index = fileState.Index,
+        BrowserFile = fileState.BrowserFile,
         Name = fileState.Name,
         Percentage = fileState.Percentage,
         Size = fileState.Size,
@@ -754,13 +752,13 @@ public partial class NTInputFile : IAsyncDisposable {
         }
     }
 
-    private async Task RemoveSelectedFileFromNativeInputAsync(int index) {
+    private async Task RemoveSelectedFileFromNativeInputAsync(int fileIndex) {
         if (!RendererInfo.IsInteractive || _jsModule is null) {
             return;
         }
 
         try {
-            await _jsModule.InvokeVoidAsync("removeSelectedFile", _inputElementContainer, index);
+            await _jsModule.InvokeVoidAsync("removeSelectedFile", _inputElementContainer, fileIndex);
         }
         catch (JSDisconnectedException) {
             // JS runtime was disconnected, safe to ignore while removing a selected file.
@@ -812,7 +810,7 @@ public partial class NTInputFile : IAsyncDisposable {
     };
 
     private sealed class FileProgressState {
-        public required int Index { get; set; }
+        public required IBrowserFile BrowserFile { get; init; }
 
         public bool IsIndeterminate { get; set; }
 
@@ -893,9 +891,9 @@ public sealed class NTInputFileEventArgs : EventArgs {
 public readonly record struct NTInputFileProgressDetails {
 
     /// <summary>
-    ///     Gets the index of the file in the current selection.
+    ///     Gets the corresponding browser file.
     /// </summary>
-    public int Index { get; init; }
+    public IBrowserFile BrowserFile { get; init; }
 
     /// <summary>
     ///     Gets a value indicating whether the progress bar should render as indeterminate.

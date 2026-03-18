@@ -127,4 +127,30 @@ describe('NTInputFile removeSelectedFile', () => {
         expect(fixture.getFileNames()).toEqual(['first.txt', 'second.txt']);
         expect(fixture.getAssignmentCount()).toBe(0);
     });
+
+    test('removes the correct file when multiple selected files share the same name', () => {
+        const container = document.createElement('span');
+        const input = document.createElement('input');
+        input.type = 'file';
+
+        const first = new File(['a'], 'duplicate.txt', { type: 'text/plain' });
+        const second = new File(['b'], 'duplicate.txt', { type: 'text/plain' });
+        const third = new File(['c'], 'third.txt', { type: 'text/plain' });
+        let currentFiles = createFileList([first, second, third]);
+
+        Object.defineProperty(input, 'files', {
+            configurable: true,
+            get: () => currentFiles,
+            set: value => {
+                currentFiles = value;
+            },
+        });
+
+        container.appendChild(input);
+        document.body.appendChild(container);
+
+        removeSelectedFile(container, 1);
+
+        expect(Array.from(currentFiles, file => file.name)).toEqual(['duplicate.txt', 'third.txt']);
+    });
 });

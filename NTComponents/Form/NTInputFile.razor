@@ -41,7 +41,9 @@
 		@if (_fileProgressStates.Count > 0) {
 			<span class="tnt-input-progress">
 				<div class="nt-input-file-progress-list">
-					@foreach (var fileState in _fileProgressStates.OrderBy(i => i.Index)) {
+					@foreach (var file in _pendingFiles) {
+						var fileState = _fileProgressStates.FirstOrDefault(x => x.BrowserFile == file);
+						if (fileState is null) continue;
 						var progressDetails = CreateProgressDetails(fileState);
 						<div class="nt-input-file-progress-item">
 							<div class="nt-input-file-progress-row">
@@ -65,7 +67,7 @@
 															Type="ButtonType.Button"
 															ElementTitle="Remove file"
 															StopPropagation="true"
-															OnClickCallback="async _ => await RemoveFileAsync(progressDetails.Index)" />
+															OnClickCallback="async _ => await RemoveFileAsync(file)" />
 										</span>
 									}
 								</div>
