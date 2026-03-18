@@ -104,6 +104,12 @@ public partial class TnTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessed
     public Func<TGridItem, object> ItemKey { get; set; } = x => x!;
 
     /// <summary>
+    ///  If set, only allows the sortable column to be toggled between ascending and descending, preventing a "no sort" state. Only applies when <see cref="AllowMultiSort"/> is <code>false</code>.
+    ///  </summary>
+    [Parameter]
+    public bool DisableSortToggleToNone { get; set; }
+
+    /// <summary>
     ///     The queryable source of data for the grid.
     /// </summary>
     [Parameter]
@@ -320,7 +326,7 @@ public partial class TnTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessed
         await base.OnAfterRenderAsync(firstRender);
 
         if (firstRender) {
-            if(Pagination is not null && ItemsProvider is not null) {
+            if (Pagination is not null && ItemsProvider is not null) {
                 await RefreshDataGridAsync();
             }
         }

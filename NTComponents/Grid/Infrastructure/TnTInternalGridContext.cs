@@ -145,11 +145,11 @@ internal sealed class TnTInternalGridContext<[DynamicallyAccessedMembers(Dynamic
         }
         else {
             if (_sortingDirections.TryGetValue(column.ColumnId, out var direction)) {
-                if (direction == column.InitialSortDirection) {
+                if (direction == column.InitialSortDirection || Grid.DisableSortToggleToNone) {
                     var newDirection = direction == SortDirection.Ascending ? SortDirection.Descending : SortDirection.Ascending;
                     _sortingDirections.Clear();
                     _sortingDirections[column.ColumnId] = newDirection;
-                    column.SortBy?.FlipDirections = true;
+                    column.SortBy?.FlipDirections = newDirection != column.InitialSortDirection;
                     SortBy = column.SortBy;
                 }
                 else {

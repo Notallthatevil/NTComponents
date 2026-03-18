@@ -589,6 +589,58 @@ public class TnTInternalGridContext_Tests : BunitContext {
     }
 
     [Fact]
+    public void SortByColumn_SingleSortMode_WithDisableSortToggleToNone_ThirdClickRestoresAscendingSort() {
+        // Arrange
+        var grid = CreateDataGrid();
+        grid.Items = _testItems.AsQueryable();
+        grid.AllowMultiSort = false;
+        grid.DisableSortToggleToNone = true;
+        var context = new TnTInternalGridContext<TestGridItem>(grid);
+        var column = new TestTemplateColumn<TestGridItem> {
+            SortBy = TnTGridSort<TestGridItem>.ByAscending(x => x.Name),
+            InitialSortDirection = SortDirection.Ascending
+        };
+        context.RegisterColumn(column);
+
+        // Act
+        context.SortByColumn(column); // First click - Ascending
+        context.SortByColumn(column); // Second click - Descending
+        context.SortByColumn(column); // Third click - should return to Ascending
+
+        // Assert
+        context.ColumnIsSortedOn(column).Should().Be(SortDirection.Ascending);
+        context.SortBy.Should().NotBeNull();
+        column.SortBy!.FlipDirections.Should().BeFalse();
+        context.Items.Should().BeInAscendingOrder(x => x.Name);
+    }
+
+    [Fact]
+    public void SortByColumn_SingleSortMode_WithDisableSortToggleToNone_ThirdClickRestoresDescendingSort() {
+        // Arrange
+        var grid = CreateDataGrid();
+        grid.Items = _testItems.AsQueryable();
+        grid.AllowMultiSort = false;
+        grid.DisableSortToggleToNone = true;
+        var context = new TnTInternalGridContext<TestGridItem>(grid);
+        var column = new TestTemplateColumn<TestGridItem> {
+            SortBy = TnTGridSort<TestGridItem>.ByDescending(x => x.Id),
+            InitialSortDirection = SortDirection.Descending
+        };
+        context.RegisterColumn(column);
+
+        // Act
+        context.SortByColumn(column); // First click - Descending
+        context.SortByColumn(column); // Second click - Ascending
+        context.SortByColumn(column); // Third click - should return to Descending
+
+        // Assert
+        context.ColumnIsSortedOn(column).Should().Be(SortDirection.Descending);
+        context.SortBy.Should().NotBeNull();
+        column.SortBy!.FlipDirections.Should().BeFalse();
+        context.Items.Should().BeInDescendingOrder(x => x.Id);
+    }
+
+    [Fact]
     public void SortByColumn_SingleSortMode_SwitchingColumns_RemovesPreviousSort() {
         // Arrange
         var grid = CreateDataGrid();
