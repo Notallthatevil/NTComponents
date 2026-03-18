@@ -7,6 +7,24 @@ function getFileInput(container) {
     return input instanceof HTMLInputElement ? input : null;
 }
 
+export function restoreFileNames(container, files) {
+    const input = getFileInput(container);
+
+    if (!input || typeof DataTransfer === 'undefined' || !Array.isArray(files) || files.length === 0) {
+        return;
+    }
+
+    const dataTransfer = new DataTransfer();
+    for (const file of files) {
+        dataTransfer.items.add(new File([], file.name, {
+            type: file.type ?? '',
+            lastModified: file.lastModified ?? Date.now()
+        }));
+    }
+
+    input.files = dataTransfer.files;
+}
+
 export function removeSelectedFile(container, fileIndex) {
     const input = getFileInput(container);
     const files = input?.files;

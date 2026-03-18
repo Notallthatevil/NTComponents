@@ -153,6 +153,14 @@ public partial class NTInputFile : IAsyncDisposable {
     public EventCallback<IReadOnlyList<IBrowserFile>> OnSelectionChanged { get; set; }
 
     /// <summary>
+    ///     Gets or sets the previously captured file selection to restore when the component remounts
+    ///     (for example, when navigating between wizard steps). Bind this to the same field that
+    ///     <see cref="OnSelectionChanged" /> writes to so the display stays in sync.
+    /// </summary>
+    [Parameter]
+    public IReadOnlyList<IBrowserFile>? SelectedFiles { get; set; }
+
+    /// <summary>
     ///     Raised when upload button is clicked with current selected files.
     /// </summary>
     [Parameter]
@@ -282,6 +290,7 @@ public partial class NTInputFile : IAsyncDisposable {
     private bool _isUploading;
     private int _inputFileKey;
     private IJSObjectReference? _jsModule;
+    private bool _needsNativeInputRestore;
     private int _progressPercent;
     private string _progressTitle = string.Empty;
 
@@ -370,6 +379,21 @@ public partial class NTInputFile : IAsyncDisposable {
         TooltipIcon.Tooltip = Tooltip;
         TooltipIcon.AdditionalClass = "tnt-tooltip-icon";
         TooltipIcon.Size = IconSize.Small;
+
+        if (SelectedFiles is { Count: > 0 } && _pendingFiles.Count == 0 && !_isUploading) {
+            _pendingFiles.AddRange(SelectedFiles);
+            foreach (var file in SelectedFiles) {
+                _fileProgressStates.Add(new FileProgressState {
+                    BrowserFile = file,
+                    Name = file.Name,
+                    Size = file.Size,
+                    Percentage = 0,
+                    Status = ResourceReadyToUpload,
+                    IsIndeterminate = false
+                });
+            }
+            _needsNativeInputRestore = true;
+        }
     }
 
     /// <inheritdoc />
@@ -382,6 +406,11 @@ public partial class NTInputFile : IAsyncDisposable {
             }
             catch (JSDisconnectedException) {
                 // JS runtime was disconnected, safe to ignore during render.
+            }
+
+            if (_needsNativeInputRestore) {
+                _needsNativeInputRestore = false;
+                await RestoreNativeFileNamesAsync();
             }
         }
     }
@@ -762,6 +791,25 @@ public partial class NTInputFile : IAsyncDisposable {
         }
         catch (JSDisconnectedException) {
             // JS runtime was disconnected, safe to ignore while removing a selected file.
+        }
+    }
+
+    private async Task RestoreNativeFileNamesAsync() {
+        if (_jsModule is null || _pendingFiles.Count == 0 || !RendererInfo.IsInteractive) {
+            return;
+        }
+
+        try {
+            var fileInfos = _pendingFiles.Select(f => new {
+                name = f.Name,
+                type = f.ContentType,
+                lastModified = f.LastModified.ToUnixTimeMilliseconds()
+            }).ToArray();
+
+            await _jsModule.InvokeVoidAsync("restoreFileNames", _inputElementContainer, fileInfos);
+        }
+        catch (JSDisconnectedException) {
+            // JS runtime was disconnected, safe to ignore while restoring file names.
         }
     }
 

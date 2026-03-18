@@ -1,9 +1,12 @@
 @page "/Wizard"
 @using System.ComponentModel.DataAnnotations
+@using LiveTest.Client.Components
 @using NTComponents
 @rendermode InteractiveAuto
 <br />
 <br />
+<br />
+<InputFileWizardDemo />
 <br />
 <TnTInputSelect @bind-Value="_layoutDirection" Label="Appearance" Placeholder="Select appearance">
     @foreach (var appearance in Enum.GetValues<LayoutDirection>()) {
