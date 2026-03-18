@@ -376,15 +376,13 @@ public partial class NTInputFile : IAsyncDisposable {
     protected override async Task OnAfterRenderAsync(bool firstRender) {
         await base.OnAfterRenderAsync(firstRender);
 
-        if (!firstRender || !RendererInfo.IsInteractive) {
-            return;
-        }
-
-        try {
-            _jsModule = await JSRuntime.ImportIsolatedJs(this, JsModulePath);
-        }
-        catch (JSDisconnectedException) {
-            // JS runtime was disconnected, safe to ignore during render.
+        if (firstRender) {
+            try {
+                _jsModule = await JSRuntime.ImportIsolatedJs(this, JsModulePath);
+            }
+            catch (JSDisconnectedException) {
+                // JS runtime was disconnected, safe to ignore during render.
+            }
         }
     }
 
