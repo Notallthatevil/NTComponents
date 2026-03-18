@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.JSInterop;
 using NTComponents.Core;
 using NTComponents.Ext;
 using NTComponents.Interfaces;
@@ -11,6 +12,7 @@ namespace NTComponents;
 ///     A staged file-upload component that separates file selection from upload processing.
 /// </summary>
 public partial class NTInputFile : IAsyncDisposable {
+    private const string JsModulePath = "./_content/NTComponents/Form/NTInputFile.razor.js";
 
     /// <summary>
     ///     The accepted MIME types or extensions, for example ".pdf,.docx".
@@ -276,8 +278,10 @@ public partial class NTInputFile : IAsyncDisposable {
     private readonly List<FileProgressState> _fileProgressStates = [];
     private readonly List<Stream> _ownedStreams = [];
     private readonly List<IBrowserFile> _pendingFiles = [];
+    private ElementReference _inputElementContainer;
     private bool _isUploading;
     private int _inputFileKey;
+    private IJSObjectReference? _jsModule;
     private int _progressPercent;
     private string _progressTitle = string.Empty;
 
@@ -308,6 +312,9 @@ public partial class NTInputFile : IAsyncDisposable {
 
     [CascadingParameter]
     private ITnTForm? _tntForm { get; set; }
+
+    [Inject]
+    private IJSRuntime JSRuntime { get; set; } = default!;
 
     private IReadOnlyDictionary<string, object> InputAttributes => BuildInputAttributes(useSsrNameFallback: false);
 
@@ -366,8 +373,33 @@ public partial class NTInputFile : IAsyncDisposable {
     }
 
     /// <inheritdoc />
+    protected override async Task OnAfterRenderAsync(bool firstRender) {
+        await base.OnAfterRenderAsync(firstRender);
+
+        if (!firstRender || !RendererInfo.IsInteractive) {
+            return;
+        }
+
+        try {
+            _jsModule = await JSRuntime.ImportIsolatedJs(this, JsModulePath);
+        }
+        catch (JSDisconnectedException) {
+            // JS runtime was disconnected, safe to ignore during render.
+        }
+    }
+
+    /// <inheritdoc />
     public async ValueTask DisposeAsync() {
         await DisposeOwnedStreamsAsync().ConfigureAwait(false);
+        if (_jsModule is not null) {
+            try {
+                await _jsModule.DisposeAsync().ConfigureAwait(false);
+            }
+            catch (JSDisconnectedException) {
+                // JS runtime was disconnected, safe to ignore during disposal.
+            }
+            _jsModule = null;
+        }
         GC.SuppressFinalize(this);
     }
 
@@ -405,6 +437,7 @@ public partial class NTInputFile : IAsyncDisposable {
         }
 
         _fileProgressStates.RemoveAt(index);
+        await RemoveSelectedFileFromNativeInputAsync(index);
 
         for (var i = 0; i < _fileProgressStates.Count; i++) {
             _fileProgressStates[i].Index = i;
@@ -414,8 +447,6 @@ public partial class NTInputFile : IAsyncDisposable {
             _progressPercent = 0;
             _progressTitle = string.Empty;
         }
-
-        _inputFileKey++;
 
         if (OnSelectionChanged.HasDelegate) {
             await OnSelectionChanged.InvokeAsync(_pendingFiles.ToArray());
@@ -722,6 +753,19 @@ public partial class NTInputFile : IAsyncDisposable {
             catch (ObjectDisposedException) {
                 // Stream was already disposed by consumer code.
             }
+        }
+    }
+
+    private async Task RemoveSelectedFileFromNativeInputAsync(int index) {
+        if (!RendererInfo.IsInteractive || _jsModule is null) {
+            return;
+        }
+
+        try {
+            await _jsModule.InvokeVoidAsync("removeSelectedFile", _inputElementContainer, index);
+        }
+        catch (JSDisconnectedException) {
+            // JS runtime was disconnected, safe to ignore while removing a selected file.
         }
     }
 

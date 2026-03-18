@@ -1,13 +1,19 @@
 using Bunit;
+using Bunit.JSInterop;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.AspNetCore.Components.Rendering;
 
 namespace NTComponents.Tests.Form;
 
 public class NTInputFile_Tests : BunitContext {
+    private const string JsModulePath = "./_content/NTComponents/Form/NTInputFile.razor.js";
 
     public NTInputFile_Tests() {
         SetRendererInfo(new RendererInfo("WebAssembly", true));
+
+        var module = JSInterop.SetupModule(JsModulePath);
+        module.SetupVoid("removeSelectedFile", _ => true).SetVoidResult();
     }
 
     [Fact]
@@ -114,6 +120,56 @@ public class NTInputFile_Tests : BunitContext {
         cut.FindAll("button[title='Remove file']").Should().HaveCount(2);
     }
 
+    [Fact]
+    public async Task RemoveFileAsync_Synchronizes_The_Native_File_Input_With_The_Removed_Index() {
+        // Arrange
+        var cut = Render<NTInputFile>(parameters => parameters
+            .Add(component => component.ShowRemoveButton, true)
+            .Add(component => component.Multiple, true)
+            .Add(component => component.MaximumFileCount, 3));
+
+        await SeedSelectionAsync(cut, [
+            new TestBrowserFile("first.txt", 100),
+            new TestBrowserFile("second.txt", 200),
+            new TestBrowserFile("third.txt", 300)
+        ], "Ready to upload");
+
+        // Act
+        await cut.InvokeAsync(() => cut.Instance.RemoveFileAsync(1));
+
+        // Assert
+        var invocation = JSInterop.Invocations.LastOrDefault(i => i.Identifier == "removeSelectedFile");
+        invocation.Should().NotBeNull();
+        invocation!.Arguments.Should().HaveCount(2);
+        invocation.Arguments[1].Should().Be(1);
+    }
+
+    [Fact]
+    public async Task RemoveButton_Still_Works_When_OnSelectionChanged_Updates_Parent_State() {
+        // Arrange
+        var host = Render<SelectionChangedHost>();
+        var inputFile = host.FindComponent<NTInputFile>();
+
+        await SeedSelectionAsync(inputFile, [
+            new TestBrowserFile("first.txt", 100),
+            new TestBrowserFile("second.txt", 200),
+            new TestBrowserFile("third.txt", 300)
+        ], "Ready to upload");
+
+        // Act
+        host.FindAll("button[title='Remove file']").Should().HaveCount(3);
+        host.FindAll("button[title='Remove file']")[1].Click();
+
+        // Assert
+        var remainingTitles = host.FindAll(".nt-input-file-progress-title")
+            .Select(element => element.TextContent)
+            .ToArray();
+
+        remainingTitles.Should().Equal("first.txt", "third.txt");
+        host.Find("#selected-count").TextContent.Should().Be("2");
+        host.Find("#selected-names").TextContent.Should().Be("first.txt|third.txt");
+    }
+
     private static Task SeedProgressAsync(IRenderedComponent<NTInputFile> cut, IBrowserFile file, string status)
         => SeedProgressAsync(cut, [file], status);
 
@@ -126,6 +182,46 @@ public class NTInputFile_Tests : BunitContext {
             task.Should().NotBeNull();
             await task!;
         });
+    }
+
+    private static async Task SeedSelectionAsync(IRenderedComponent<NTInputFile> cut, IReadOnlyList<IBrowserFile> files, string status) {
+        var pendingFilesField = typeof(NTInputFile).GetField("_pendingFiles", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        pendingFilesField.Should().NotBeNull();
+
+        var pendingFiles = pendingFilesField!.GetValue(cut.Instance).Should().BeAssignableTo<List<IBrowserFile>>().Subject;
+        pendingFiles.Clear();
+        pendingFiles.AddRange(files);
+
+        await SeedProgressAsync(cut, files, status);
+    }
+
+    private sealed class SelectionChangedHost : ComponentBase {
+        private IReadOnlyList<IBrowserFile> _selectedFiles = Array.Empty<IBrowserFile>();
+
+        private Task HandleSelectionChangedAsync(IReadOnlyList<IBrowserFile> files) {
+            _selectedFiles = files.ToArray();
+            StateHasChanged();
+            return Task.CompletedTask;
+        }
+
+        protected override void BuildRenderTree(RenderTreeBuilder builder) {
+            builder.OpenComponent<NTInputFile>(0);
+            builder.AddAttribute(1, nameof(NTInputFile.ShowRemoveButton), true);
+            builder.AddAttribute(2, nameof(NTInputFile.Multiple), true);
+            builder.AddAttribute(3, nameof(NTInputFile.MaximumFileCount), 3);
+            builder.AddAttribute(4, nameof(NTInputFile.OnSelectionChanged), EventCallback.Factory.Create<IReadOnlyList<IBrowserFile>>(this, HandleSelectionChangedAsync));
+            builder.CloseComponent();
+
+            builder.OpenElement(10, "div");
+            builder.AddAttribute(11, "id", "selected-count");
+            builder.AddContent(12, _selectedFiles.Count);
+            builder.CloseElement();
+
+            builder.OpenElement(20, "div");
+            builder.AddAttribute(21, "id", "selected-names");
+            builder.AddContent(22, string.Join("|", _selectedFiles.Select(file => file.Name)));
+            builder.CloseElement();
+        }
     }
 
     private sealed class TestBrowserFile : IBrowserFile {

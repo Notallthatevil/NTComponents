@@ -8,7 +8,9 @@
 		}
 
 		@if (RendererInfo.IsInteractive) {
-			<InputFile @key="_inputFileKey" OnChange="OnFilesSelectedAsync" @attributes="InputAttributes" />
+			<span class="nt-input-element-container" @ref="_inputElementContainer">
+				<InputFile @key="_inputFileKey" OnChange="OnFilesSelectedAsync" @attributes="InputAttributes" />
+			</span>
 		}
 		else {
 			<input type="file" @attributes="StaticInputAttributes" />

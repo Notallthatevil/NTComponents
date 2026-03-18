@@ -34,6 +34,10 @@ $action-fg-color: var(--nt-input-file-action-fg-color);
         color: base.$text-color;
         transition: 250ms ease-in-out;
         margin-top: 6px;
+        
+        .nt-input-element-container{
+            grid-area: text;
+        }
 
         &:has(.nt-input-file-upload-button) {
             grid-template-areas: "pad1 text upload-btn pad2" "progress progress progress progress";
