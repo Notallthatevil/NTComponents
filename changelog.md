@@ -1,3 +1,15 @@
+# [1.37.0](https://github.com/Notallthatevil/NTComponents/compare/v1.36.1...v1.37.0) (2026-03-18)
+
+
+### Bug Fixes
+
+* **input-file:** remove files by reference, not index ([c7a7e80](https://github.com/Notallthatevil/NTComponents/commit/c7a7e80d20345b400729ea6b0641266b35e560cf))
+
+
+### Features
+
+* **datagrid:** add DisableSortToggleToNone for sort behavior ([3a938c5](https://github.com/Notallthatevil/NTComponents/commit/3a938c54a3be354240065ddd1b1f21557b3315dd))
+
 ## [1.36.1](https://github.com/Notallthatevil/NTComponents/compare/v1.36.0...v1.36.1) (2026-03-18)
 
 
