@@ -1,3 +1,10 @@
+## [1.38.1](https://github.com/Notallthatevil/NTComponents/compare/v1.38.0...v1.38.1) (2026-03-18)
+
+
+### Bug Fixes
+
+* **typeahead:** notify field change only if identifier set ([6e5f872](https://github.com/Notallthatevil/NTComponents/commit/6e5f872a34dedd17fff0066f8f9b147386253a1d))
+
 # [1.38.0](https://github.com/Notallthatevil/NTComponents/compare/v1.37.0...v1.38.0) (2026-03-18)
 
 
