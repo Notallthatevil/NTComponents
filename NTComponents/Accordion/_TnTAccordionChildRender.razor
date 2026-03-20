@@ -7,21 +7,38 @@
      lang="@Child.ElementLang"
      title="@Child.ElementTitle"
      name="@Child.ElementName"
-     disabled="@Child.Disabled"
+     data-accordion-child="true"
+     data-accordion-child-id="@Child._elementId"
      @key="Child._elementId">
-    <h3 onclick="NTComponents.toggleAccordionHeader(event)"
-        class="@CssClassBuilder.Create().AddRipple().AddClass("tnt-interactable").AddDisabled(Child.Disabled).Build()"
-        style="@CssStyleBuilder.Create().AddVariable("tnt-accordion-child-header-bg-color", Child.HeaderBodyColor ?? _parent.HeaderBodyColor).AddVariable("tnt-accordion-child-header-fg-color", Child.HeaderTextColor ?? _parent.HeaderTextColor).AddVariable("tnt-accordion-child-header-tint-color", Child.HeaderTintColor ?? _parent.HeaderTintColor).Build()"
-        data-permanent>
-        @Child.Label
-        @if(Child.EnableRipple) {
-            <TnTRippleEffect />
-        }
-        <MaterialIcon Icon="@MaterialIcon.ArrowDropDown" />
+    <h3 class="tnt-accordion-child-heading">
+        <button type="button"
+                id="@Child.HeaderElementId"
+                class="@CssClassBuilder.Create().AddRipple().AddClass("tnt-interactable").AddDisabled(Child.Disabled).Build()"
+                style="@CssStyleBuilder.Create().AddVariable("tnt-accordion-child-header-bg-color", Child.HeaderBodyColor ?? _parent.HeaderBodyColor).AddVariable("tnt-accordion-child-header-fg-color", Child.HeaderTextColor ?? _parent.HeaderTextColor).AddVariable("tnt-accordion-child-header-tint-color", Child.HeaderTintColor ?? _parent.HeaderTintColor).Build()"
+                data-permanent
+                data-accordion-header="true"
+                data-accordion-child-id="@Child._elementId"
+                aria-expanded="@(Child._open == true ? "true" : "false")"
+                aria-controls="@Child.ContentElementId"
+                disabled="@Child.Disabled"
+                onclick="NTComponents.toggleAccordionHeader(event)">
+            <span class="tnt-accordion-child-label">
+                @Child.Label
+            </span>
+            @if (Child.EnableRipple) {
+                <TnTRippleEffect />
+            }
+            <MaterialIcon Icon="@MaterialIcon.ArrowDropDown" />
+        </button>
     </h3>
 
-    <div class="@CssClassBuilder.Create().AddClass("tnt-expanded", Child._open).Build()">
-        @if (!RendererInfo.IsInteractive || !Child.RemoveContentOnClose || (RendererInfo.IsInteractive && Child._open)) {
+    <div id="@Child.ContentElementId"
+         class="@CssClassBuilder.Create().AddClass("tnt-expanded", Child._open == true).AddClass("tnt-collapsed", Child._open == false).Build()"
+         data-accordion-content="true"
+         role="region"
+         aria-labelledby="@Child.HeaderElementId"
+         aria-hidden="@(Child._open == true ? "false" : "true")">
+        @if (!Child.RemoveContentOnClose || Child._open != false) {
             @Child.ChildContent
         }
     </div>

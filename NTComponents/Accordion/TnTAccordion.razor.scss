@@ -1,4 +1,4 @@
-﻿@use '../Styles/_Variables/_colors.scss' as colors;
+@use '../Styles/_Variables/_colors.scss' as colors;
 @use '../Styles/_Variables/_interactable.scss' as interactable;
 
 $header-bg-color: var(--tnt-accordion-child-header-bg-color);
@@ -12,18 +12,22 @@ $content-text-color: var(--tnt-accordion-child-content-fg-color);
     margin: 8px;
 
     .tnt-accordion-child {
-        border-radius: inherit;
+        border-radius: 0;
         background-color: $content-bg-color;
         color: $content-text-color;
+        overflow: hidden;
 
         & > h3:first-child {
-            border-radius: inherit;
+            margin: 0;
+        }
+
+        & > h3:first-child > button {
+            border-radius: 0;
             user-select: none;
             border-bottom: 1px solid colors.$tnt-color-outline;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin: 0;
             padding: 0 8px;
             box-sizing: border-box;
             transition: border-radius 250ms linear;
@@ -32,8 +36,18 @@ $content-text-color: var(--tnt-accordion-child-content-fg-color);
             top: 0;
             background-color: $header-bg-color;
             color: $header-text-color;
+            width: 100%;
+            border-inline: 0;
+            border-top: 0;
+            text-align: left;
+            font: inherit;
+            cursor: pointer;
             @include interactable.tnt-interactable($header-tint-color, null, false);
             @include interactable.tnt-disabled;
+
+            .tnt-accordion-child-label {
+                flex: 1 1 auto;
+            }
 
             .tnt-icon {
                 padding: 8px;
@@ -44,7 +58,7 @@ $content-text-color: var(--tnt-accordion-child-content-fg-color);
         }
 
         &:has(.tnt-accordion) {
-            .tnt-accordion-child > h3:first-child {
+            .tnt-accordion-child > h3:first-child > button {
                 z-index: 101;
             }
         }
@@ -52,6 +66,7 @@ $content-text-color: var(--tnt-accordion-child-content-fg-color);
         & > div:last-child {
             overflow: auto;
             max-height: 80vh;
+            border-radius: 0;
 
             &.tnt-collapsed {
                 animation: 250ms ease-in-out forwards closeAccordion;
@@ -71,30 +86,43 @@ $content-text-color: var(--tnt-accordion-child-content-fg-color);
             }
         }
 
-        &:has(.tnt-expanded) {
-            & > h3 > .tnt-icon {
+        &:first-child {
+            border-start-start-radius: 8px;
+            border-start-end-radius: 8px;
+
+            & > h3:first-child > button {
+                border-start-start-radius: inherit;
+                border-start-end-radius: inherit;
+            }
+        }
+
+        &:last-child {
+            border-end-start-radius: 8px;
+            border-end-end-radius: 8px;
+
+            & > h3:first-child > button {
+                border-end-start-radius: inherit;
+                border-end-end-radius: inherit;
+            }
+
+            & > div:last-child {
+                border-end-start-radius: inherit;
+                border-end-end-radius: inherit;
+            }
+        }
+
+        &:has(> div:last-child.tnt-expanded) {
+            & > h3 > button > .tnt-icon {
                 transform: rotateZ(180deg);
             }
         }
-    }
 
-    & > div:last-child {
-        border-end-start-radius: 8px;
-        border-end-end-radius: 8px;
-    }
-
-    &:has(.tnt-accordion-child:last-child > .tnt-expanded) {
-        & > div:last-child {
-            & > h3 {
+        &:last-child:has(> div:last-child.tnt-expanded) {
+            & > h3 > button {
                 border-end-start-radius: 0;
                 border-end-end-radius: 0;
             }
         }
-    }
-
-    & > div:first-child {
-        border-start-start-radius: 8px;
-        border-start-end-radius: 8px;
     }
 }
 

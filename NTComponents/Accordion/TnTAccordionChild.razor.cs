@@ -1,8 +1,5 @@
 using Microsoft.AspNetCore.Components;
-using Microsoft.JSInterop;
-using System.Runtime.InteropServices;
 using NTComponents.Core;
-using NTComponents.Interfaces;
 
 namespace NTComponents;
 
@@ -118,10 +115,9 @@ public partial class TnTAccordionChild {
 
     internal int _elementId = int.MinValue;
 
-    internal bool _open;
-
-    [Inject]
-    private IJSRuntime _jsRuntime { get; set; } = default!;
+    internal bool? _open;
+    internal string ContentElementId => $"{ComponentIdentifier}-content";
+    internal string HeaderElementId => $"{ComponentIdentifier}-header";
 
     [CascadingParameter]
     private TnTAccordion _parent { get; set; } = default!;
@@ -129,7 +125,7 @@ public partial class TnTAccordionChild {
     /// <summary>
     ///     Closes the accordion child asynchronously.
     /// </summary>
-    public async Task CloseAsync() => await _jsRuntime.InvokeVoidAsync("NTComponents.addHidden", Element);
+    public async Task CloseAsync() => await _parent.SetAsClosed(_elementId);
 
     /// <inheritdoc />
     public void Dispose() {
@@ -142,21 +138,10 @@ public partial class TnTAccordionChild {
         base.OnInitialized();
         _parent.RegisterChild(this);
         if (_parent.AllowOpenByDefault && OpenByDefault) {
-            if (_parent.LimitToOneExpanded) {
-                if (!_parent._foundExpanded) {
-                    _open = true;
-                    _parent._foundExpanded = true; // mark first expanded
-                }
-                else {
-                    _open = false; // enforce single open
-                }
-            }
-            else {
-                _open = true; // no limit, allow
-            }
+            _open = !_parent.LimitToOneExpanded || _parent.TryReserveDefaultOpen();
         }
         else {
-            _open = false;
+            _open = null;
         }
     }
 }

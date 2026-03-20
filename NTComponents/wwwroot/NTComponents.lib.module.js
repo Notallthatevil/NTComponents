@@ -158,6 +158,76 @@ const isModifierKey = (event) => {
         )
 };
 
+const getAccordionChildContent = (accordion, child) => {
+    return accordion?.getChildContent?.(child)
+        ?? child?.querySelector?.(':scope > [data-accordion-content="true"]')
+        ?? child?.querySelector?.(':scope > div:last-child')
+        ?? child?.lastElementChild
+        ?? null;
+};
+
+const getAccordionChildHeader = (accordion, child) => {
+    return accordion?.getChildHeader?.(child)
+        ?? child?.querySelector?.(':scope > h3 > [data-accordion-header="true"]')
+        ?? child?.querySelector?.(':scope > h3')
+        ?? child?.firstElementChild
+        ?? null;
+};
+
+const clearPendingAccordionAriaHidden = (content) => {
+    if (content?.accordionAriaHiddenHandler) {
+        content.removeEventListener('animationend', content.accordionAriaHiddenHandler);
+        content.accordionAriaHiddenHandler = undefined;
+    }
+};
+
+const scheduleAccordionAriaHidden = (content) => {
+    if (!content) {
+        return;
+    }
+
+    clearPendingAccordionAriaHidden(content);
+    const onAnimationEnd = () => {
+        if (content.classList.contains('tnt-collapsed') && !content.classList.contains('tnt-expanded')) {
+            content.setAttribute('aria-hidden', 'true');
+        }
+
+        clearPendingAccordionAriaHidden(content);
+    };
+
+    content.accordionAriaHiddenHandler = onAnimationEnd;
+    content.addEventListener('animationend', onAnimationEnd, { once: true });
+};
+
+const resetAccordionElement = (accordion) => {
+    if (!accordion) {
+        return;
+    }
+
+    if (typeof accordion.resetChildren === 'function') {
+        accordion.resetChildren();
+        return;
+    }
+
+    accordion.querySelectorAll(':scope > [data-accordion-child="true"], :scope > .tnt-accordion-child')
+        .forEach((child) => {
+            const content = getAccordionChildContent(accordion, child);
+            const header = getAccordionChildHeader(accordion, child);
+            if (!content) {
+                return;
+            }
+
+            content.classList.remove('tnt-expanded');
+            content.classList.remove('tnt-collapsed');
+            content.setAttribute('aria-hidden', 'true');
+            header?.setAttribute('aria-expanded', 'false');
+
+            child.querySelectorAll('tnt-accordion').forEach((nestedAccordion) => {
+                resetAccordionElement(nestedAccordion);
+            });
+        });
+};
+
 
 window.NTComponents = {
     customAttribute: "tntid",
@@ -320,40 +390,104 @@ window.NTComponents = {
         });
     },
     toggleAccordionHeader: (e) => {
-        const target = e.target;
-        const accordion = target.closest('tnt-accordion');
-        const content = e.target.parentElement.lastElementChild;
-        if (accordion) {
-            if (accordion.limitToOneExpanded() && !content.classList.contains('tnt-expanded')) {
-                accordion.closeChildren(target.parentElement);
+        const header = e.currentTarget
+            ?? e.target?.closest?.('[data-accordion-header="true"]')
+            ?? e.target?.closest?.('button, h3');
+        const child = header?.closest?.('[data-accordion-child="true"]')
+            ?? header?.closest?.('.tnt-accordion-child')
+            ?? header?.parentElement;
+        const accordion = child?.closest?.('tnt-accordion');
+        const getChildContent = (candidateChild) => getAccordionChildContent(accordion, candidateChild);
+        const syncChildAccessibility = (candidateChild, expanded) => {
+            const candidateContent = getChildContent(candidateChild);
+            const candidateHeader = getAccordionChildHeader(accordion, candidateChild);
+            if (candidateContent) {
+                clearPendingAccordionAriaHidden(candidateContent);
+                candidateContent.setAttribute('aria-hidden', expanded ? 'false' : 'true');
             }
-            if (content.classList.contains('tnt-expanded')) {
-                content.classList.remove('tnt-expanded');
-                content.classList.add('tnt-collapsed');
+            if (candidateHeader) {
+                candidateHeader.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+            }
+        };
+        const setExpandedState = (candidateChild, expanded) => {
+            if (typeof accordion?.setExpandedState === 'function') {
+                accordion.setExpandedState(candidateChild, expanded);
+                return;
+            }
 
-                const nestedAccordion = content.querySelectorAll('tnt-accordion');
-                nestedAccordion.forEach((accordion) => {
-                    accordion.resetChildren();
+            const candidateContent = getChildContent(candidateChild);
+            if (!candidateContent) {
+                return;
+            }
+
+            clearPendingAccordionAriaHidden(candidateContent);
+            if (!expanded) {
+                candidateContent.style.setProperty('--content-height', `${candidateContent.scrollHeight}px`);
+            }
+            candidateContent.classList.toggle('tnt-expanded', expanded);
+            candidateContent.classList.toggle('tnt-collapsed', !expanded);
+            const candidateHeader = getAccordionChildHeader(accordion, candidateChild);
+            candidateHeader?.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+            candidateContent.setAttribute('aria-hidden', 'false');
+            if (!expanded) {
+                scheduleAccordionAriaHidden(candidateContent);
+            }
+        };
+        const closeChildren = (excludeChild) => {
+            if (typeof accordion?.closeChildren === 'function') {
+                accordion.closeChildren(excludeChild);
+                return;
+            }
+
+            accordion?.querySelectorAll?.(':scope > [data-accordion-child="true"], :scope > .tnt-accordion-child')
+                ?.forEach((candidateChild) => {
+                    if (candidateChild === excludeChild) {
+                        return;
+                    }
+
+                    const candidateContent = getChildContent(candidateChild);
+                    if (candidateContent?.classList.contains('tnt-expanded')) {
+                        setExpandedState(candidateChild, false);
+                    }
                 });
-            }
-            else {
-                content.classList.remove('tnt-collapsed');
-                content.classList.add('tnt-expanded');
-            }
-            accordion.updateChild(content);
-            if (accordion.dotNetRef) {
-                let elementKey = target.parentElement.getAttribute('element-key');
-                if (!elementKey) {
-                    elementKey = target.getAttribute('element-key');
-                }
+        };
+        const updateChild = (candidateContent) => {
+            accordion?.updateChild?.(candidateContent);
+        };
+        const resetNestedAccordions = (candidateContent) => {
+            const nestedAccordions = candidateContent?.querySelectorAll?.('tnt-accordion');
+            nestedAccordions?.forEach((nested) => {
+                resetAccordionElement(nested);
+            });
+        };
+        const limitToOneExpanded = typeof accordion?.limitToOneExpanded === 'function'
+            ? accordion.limitToOneExpanded()
+            : accordion?.classList?.contains('tnt-limit-one-expanded');
+        const content = child ? getChildContent(child) : null;
 
-                if (elementKey) {
-                    if (accordion.lastElementChild.classList.contains('tnt-expanded')) {
-                        accordion.dotNetRef.invokeMethodAsync("SetAsOpened", parseInt(elementKey));
-                    }
-                    else {
-                        accordion.dotNetRef.invokeMethodAsync("SetAsClosed", parseInt(elementKey));
-                    }
+        if (!header || !child || !accordion || !content || header.disabled) {
+            return;
+        }
+
+        const isExpanded = content.classList.contains('tnt-expanded');
+        if (limitToOneExpanded && !isExpanded) {
+            closeChildren(child);
+        }
+
+        setExpandedState(child, !isExpanded);
+
+        if (isExpanded) {
+            resetNestedAccordions(content);
+        }
+
+        updateChild(content);
+
+        if (accordion.dotNetRef) {
+            const childId = child.getAttribute('data-accordion-child-id') ?? header.getAttribute('data-accordion-child-id');
+            if (childId) {
+                const childIdNumber = parseInt(childId, 10);
+                if (!Number.isNaN(childIdNumber)) {
+                    accordion.dotNetRef.invokeMethodAsync(isExpanded ? "SetAsClosed" : "SetAsOpened", childIdNumber);
                 }
             }
         }

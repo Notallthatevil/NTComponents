@@ -15,7 +15,6 @@ public class TnTAccordion_Tests : BunitContext {
         module.SetupVoid("onUpdate", _ => true).SetVoidResult();
         module.SetupVoid("onDispose", _ => true).SetVoidResult();
         RippleTestingUtility.SetupRippleEffectModule(this);
-        JSInterop.SetupVoid("NTComponents.addHidden", _ => true).SetVoidResult();
     }
 
     [Fact]
@@ -60,21 +59,63 @@ public class TnTAccordion_Tests : BunitContext {
     }
 
     [Fact]
-    public async Task LimitToOneExpanded_CloseAllAsync_Invoked_On_Second_Open() {
+    public void Initially_Closed_Child_Does_Not_Render_Collapsed_Class() {
+        // Arrange / Act
+        var cut = Render<TnTAccordion>(p => p.AddChildContent(Children(
+            Child(b => b.AddAttribute(1, "Label", "A")))));
+
+        // Assert
+        var button = cut.Find("button[data-accordion-header='true']");
+        var content = cut.Find("[data-accordion-content='true']");
+        button.GetAttribute("aria-expanded").Should().Be("false");
+        content.ClassList.Should().NotContain("tnt-collapsed");
+        content.ClassList.Should().NotContain("tnt-expanded");
+        content.GetAttribute("aria-hidden").Should().Be("true");
+    }
+
+    [Fact]
+    public void Initially_Closed_RemoveContentOnClose_Keeps_Content_In_Dom() {
+        // Arrange / Act
+        var cut = Render<TnTAccordion>(p => p.AddChildContent(Children(
+            Child(b => {
+                b.AddAttribute(1, "Label", "A");
+                b.AddAttribute(2, nameof(TnTAccordionChild.RemoveContentOnClose), true);
+                b.AddAttribute(3, nameof(TnTAccordionChild.ChildContent), (RenderFragment)(contentBuilder => contentBuilder.AddContent(0, "Body")));
+            }))));
+
+        // Assert
+        cut.Find("[data-accordion-content='true']").TextContent.Should().Contain("Body");
+    }
+
+    [Fact]
+    public async Task LimitToOneExpanded_Opening_Second_Child_Closes_First_And_Invokes_Callbacks() {
         // Arrange
+        var opened = 0;
+        var closed = 0;
         var cut = Render<TnTAccordion>(p => p.Add(c => c.LimitToOneExpanded, true)
             .AddChildContent(Children(
-                Child(b => { b.AddAttribute(1, "Label", "A"); b.AddAttribute(2, "OpenByDefault", true); }),
-                Child(b => { b.AddAttribute(1, "Label", "B"); })
+                Child(b => {
+                    b.AddAttribute(1, "Label", "A");
+                    b.AddAttribute(2, "OpenByDefault", true);
+                    b.AddAttribute(3, nameof(TnTAccordionChild.OnCloseCallback), EventCallback.Factory.Create(this, () => closed++));
+                }),
+                Child(b => {
+                    b.AddAttribute(1, "Label", "B");
+                    b.AddAttribute(2, nameof(TnTAccordionChild.OnOpenCallback), EventCallback.Factory.Create(this, () => opened++));
+                })
             )));
         var second = cut.FindComponents<TnTAccordionChild>().Last().Instance;
-        var secondId = (int)typeof(TnTAccordionChild).GetField("_elementId", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(second)!;
-        var initial = JSInterop.Invocations.Count(i => i.Identifier == "NTComponents.addHidden");
+
         // Act
-        await cut.Instance.SetAsOpened(secondId);
+        await cut.Instance.SetAsOpened(GetChildElementId(second));
         cut.Render();
+
         // Assert
-        JSInterop.Invocations.Count(i => i.Identifier == "NTComponents.addHidden").Should().BeGreaterThan(initial);
+        cut.FindAll("[data-accordion-content='true'].tnt-expanded").Should().HaveCount(1);
+        cut.Markup.Should().Contain("aria-expanded=\"false\"");
+        cut.Markup.Should().Contain("aria-expanded=\"true\"");
+        opened.Should().Be(1);
+        closed.Should().Be(1);
     }
 
     [Fact]
@@ -142,15 +183,29 @@ public class TnTAccordion_Tests : BunitContext {
     }
 
     [Fact]
+    public void Renders_Button_Header_With_Aria_Wiring() {
+        // Arrange / Act
+        var cut = Render<TnTAccordion>(p => p.AddChildContent(Children(
+            Child(b => { b.AddAttribute(1, "Label", "A"); b.AddAttribute(2, "OpenByDefault", true); }))));
+
+        // Assert
+        var button = cut.Find("button[data-accordion-header='true']");
+        var content = cut.Find("[data-accordion-content='true']");
+        button.GetAttribute("aria-controls").Should().Be(content.Id);
+        button.GetAttribute("aria-expanded").Should().Be("true");
+        content.GetAttribute("aria-labelledby").Should().Be(button.Id);
+        content.GetAttribute("aria-hidden").Should().Be("false");
+    }
+
+    [Fact]
     public async Task SetAsClosed_Does_Not_Invoke_OnClose_When_Already_Closed() {
         // Arrange
         var closed = 0;
         var cut = Render<TnTAccordion>(p => p.AddChildContent(Children(
             Child(b => { b.AddAttribute(1, "Label", "A"); b.AddAttribute(2, nameof(TnTAccordionChild.OnCloseCallback), EventCallback.Factory.Create(this, () => closed++)); }))));
         var child = cut.FindComponents<TnTAccordionChild>().Single().Instance;
-        var elementId = (int)typeof(TnTAccordionChild).GetField("_elementId", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(child)!;
         // Act
-        await cut.Instance.SetAsClosed(elementId);
+        await cut.Instance.SetAsClosed(GetChildElementId(child));
         cut.Render();
         // Assert
         closed.Should().Be(0);
@@ -163,9 +218,8 @@ public class TnTAccordion_Tests : BunitContext {
         var cut = Render<TnTAccordion>(p => p.AddChildContent(Children(
             Child(b => { b.AddAttribute(1, "Label", "A"); b.AddAttribute(2, "OpenByDefault", true); b.AddAttribute(3, nameof(TnTAccordionChild.OnCloseCallback), EventCallback.Factory.Create(this, () => closed++)); }))));
         var child = cut.FindComponents<TnTAccordionChild>().Single().Instance;
-        var elementId = (int)typeof(TnTAccordionChild).GetField("_elementId", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(child)!;
         // Act
-        await cut.Instance.SetAsClosed(elementId);
+        await cut.Instance.SetAsClosed(GetChildElementId(child));
         cut.Render();
         // Assert
         closed.Should().Be(1);
@@ -178,9 +232,8 @@ public class TnTAccordion_Tests : BunitContext {
         var cut = Render<TnTAccordion>(p => p.AddChildContent(Children(
             Child(b => { b.AddAttribute(1, "Label", "A"); b.AddAttribute(2, "OpenByDefault", true); b.AddAttribute(3, nameof(TnTAccordionChild.OnOpenCallback), EventCallback.Factory.Create(this, () => opened++)); }))));
         var child = cut.FindComponents<TnTAccordionChild>().Single().Instance;
-        var elementId = (int)typeof(TnTAccordionChild).GetField("_elementId", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(child)!;
         // Act
-        await cut.Instance.SetAsOpened(elementId);
+        await cut.Instance.SetAsOpened(GetChildElementId(child));
         cut.Render();
         // Assert
         opened.Should().Be(0);
@@ -193,13 +246,15 @@ public class TnTAccordion_Tests : BunitContext {
         var cut = Render<TnTAccordion>(p => p.AddChildContent(Children(
             Child(b => { b.AddAttribute(1, "Label", "A"); b.AddAttribute(2, nameof(TnTAccordionChild.OnOpenCallback), EventCallback.Factory.Create(this, () => opened++)); }))));
         var child = cut.FindComponents<TnTAccordionChild>().Single().Instance;
-        var elementId = (int)typeof(TnTAccordionChild).GetField("_elementId", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(child)!;
         // Act
-        await cut.Instance.SetAsOpened(elementId);
+        await cut.Instance.SetAsOpened(GetChildElementId(child));
         cut.Render();
         // Assert
         opened.Should().Be(1);
     }
+
+    private static int GetChildElementId(TnTAccordionChild child) =>
+        (int)typeof(TnTAccordionChild).GetField("_elementId", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(child)!;
 
     private static Action<RenderTreeBuilder> Child(Action<RenderTreeBuilder> a) => b => { b.OpenComponent<TnTAccordionChild>(0); a(b); b.CloseComponent(); };
 

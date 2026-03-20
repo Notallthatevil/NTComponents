@@ -37,12 +37,30 @@ describe('TnTAccordion web component', () => {
   function createChild({ expanded = false } = {}) {
     const wrapper = document.createElement('div');
     wrapper.classList.add('tnt-accordion-child');
+    wrapper.setAttribute('data-accordion-child', 'true');
+    wrapper.setAttribute('data-accordion-child-id', '42');
     const header = document.createElement('h3');
+    const button = document.createElement('button');
+    button.setAttribute('data-accordion-header', 'true');
+    button.setAttribute('data-accordion-child-id', '42');
     const content = document.createElement('div');
+    content.setAttribute('data-accordion-content', 'true');
     if (expanded) content.classList.add('tnt-expanded');
+    header.appendChild(button);
     wrapper.appendChild(header);
     wrapper.appendChild(content);
-    return { wrapper, content };
+    return { wrapper, button, content };
+  }
+
+  function createLegacyChild({ expanded = false } = {}) {
+    const wrapper = document.createElement('div');
+    wrapper.classList.add('tnt-accordion-child');
+    const heading = document.createElement('h3');
+    const content = document.createElement('div');
+    content.classList.add(expanded ? 'tnt-expanded' : 'tnt-collapsed');
+    wrapper.appendChild(heading);
+    wrapper.appendChild(content);
+    return { wrapper, heading, content };
   }
 
   test('onLoad registers custom element only once', () => {
@@ -88,7 +106,7 @@ describe('TnTAccordion web component', () => {
     acc.update();
     expect(content.style.getPropertyValue('--content-height')).toBe('250px');
     expect(content.resizeObserver).toBeDefined();
-    expect(content.mutationObserer).toBeDefined();
+    expect(content.mutationObserver).toBeDefined();
   });
 
   test('updateChild clears inline height when collapsed', () => {
@@ -111,10 +129,29 @@ describe('TnTAccordion web component', () => {
     expect(first.content.classList.contains('tnt-collapsed')).toBe(true);
   });
 
+  test('setExpandedState supports legacy child markup after upgrade', () => {
+    const acc = createAccordion({ limitOne: true });
+    const first = createLegacyChild({ expanded: true });
+    const second = createLegacyChild({ expanded: false });
+    acc.appendChild(first.wrapper);
+    acc.appendChild(second.wrapper);
+    acc.update();
+
+    acc.closeChildren(second.wrapper);
+    acc.setExpandedState(second.wrapper, true);
+
+    expect(first.content.classList.contains('tnt-expanded')).toBe(false);
+    expect(first.content.classList.contains('tnt-collapsed')).toBe(true);
+    expect(second.content.classList.contains('tnt-expanded')).toBe(true);
+    expect(second.content.classList.contains('tnt-collapsed')).toBe(false);
+  });
+
   test('resetChildren removes expanded/collapsed classes and recurses', () => {
     const acc = createAccordion();
     const child = createChild({ expanded: true });
     const nestedAcc = createAccordion();
+    const nestedChild = createChild({ expanded: true });
+    nestedAcc.appendChild(nestedChild.wrapper);
     child.content.appendChild(nestedAcc);
     acc.appendChild(child.wrapper);
     acc.update();
@@ -122,6 +159,43 @@ describe('TnTAccordion web component', () => {
     acc.resetChildren();
     expect(child.content.classList.contains('tnt-expanded')).toBe(false);
     expect(child.content.classList.contains('tnt-collapsed')).toBe(false);
+    expect(nestedChild.content.classList.contains('tnt-expanded')).toBe(false);
+    expect(nestedChild.content.classList.contains('tnt-collapsed')).toBe(false);
+  });
+
+  test('resetChildren supports legacy child markup', () => {
+    const acc = createAccordion();
+    const child = createLegacyChild({ expanded: true });
+    acc.appendChild(child.wrapper);
+    acc.update();
+    acc.resetChildren();
+    expect(child.content.classList.contains('tnt-expanded')).toBe(false);
+    expect(child.content.classList.contains('tnt-collapsed')).toBe(false);
+  });
+
+  test('update syncs aria state from expanded content', () => {
+    const acc = createAccordion();
+    const { wrapper, button, content } = createChild({ expanded: true });
+    acc.appendChild(wrapper);
+    acc.update();
+    expect(button.getAttribute('aria-expanded')).toBe('true');
+    expect(content.getAttribute('aria-hidden')).toBe('false');
+  });
+
+  test('closeChildren updates aria state for collapsed siblings', () => {
+    const acc = createAccordion({ limitOne: true });
+    const first = createChild({ expanded: true });
+    const second = createChild({ expanded: true });
+    Object.defineProperty(first.content, 'scrollHeight', { value: 180, configurable: true });
+    acc.appendChild(first.wrapper);
+    acc.appendChild(second.wrapper);
+    acc.update();
+    acc.closeChildren(second.wrapper);
+    expect(first.button.getAttribute('aria-expanded')).toBe('false');
+    expect(first.content.getAttribute('aria-hidden')).toBe('false');
+    expect(first.content.style.getPropertyValue('--content-height')).toBe('180px');
+    first.content.dispatchEvent(new Event('animationend'));
+    expect(first.content.getAttribute('aria-hidden')).toBe('true');
   });
 
   test('limitToOneExpanded reflects CSS class', () => {

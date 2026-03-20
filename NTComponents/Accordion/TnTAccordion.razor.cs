@@ -75,11 +75,6 @@ public partial class TnTAccordion() {
     internal bool AllowOpenByDefault => _parentAccordion is null;
 
     /// <summary>
-    /// Used internally to track whether an expanded child has been found.
-    /// </summary>
-    internal bool _foundExpanded;
-
-    /// <summary>
     /// Gets or sets the parent accordion.
     /// </summary>
     [CascadingParameter]
@@ -94,8 +89,12 @@ public partial class TnTAccordion() {
     /// <returns>A task that represents the asynchronous operation.</returns>
     public async Task CloseAllAsync() {
         foreach (var (_, child) in _children) {
-            await child.CloseAsync();
+            if (child._open == true) {
+                await CloseChildAsync(child);
+            }
         }
+
+        await InvokeAsync(StateHasChanged);
     }
 
     /// <summary>
@@ -130,13 +129,18 @@ public partial class TnTAccordion() {
     /// <param name="elementId">The element ID of the child accordion item to open.</param>
     [JSInvokable]
     public async Task SetAsOpened(int elementId) {
-        if (_children.TryGetValue(elementId, out var child) && child?._open == false) {
+        if (_children.TryGetValue(elementId, out var child) && child?._open != true) {
             if (LimitToOneExpanded) {
-                await CloseAllAsync();
+                foreach (var sibling in _children.Values) {
+                    if (!ReferenceEquals(sibling, child) && sibling._open == true) {
+                        await CloseChildAsync(sibling);
+                    }
+                }
             }
-            child._open = true;
-            await child.OnOpenCallback.InvokeAsync();
+            child?._open = true;
+            await (child?.OnOpenCallback.InvokeAsync() ?? Task.CompletedTask);
         }
+
         await InvokeAsync(StateHasChanged);
     }
 
@@ -147,12 +151,22 @@ public partial class TnTAccordion() {
     [JSInvokable]
     public async Task SetAsClosed(int elementId) {
         if (_children.TryGetValue(elementId, out var child) && child?._open == true) {
-            if (LimitToOneExpanded) {
-                await CloseAllAsync();
-            }
-            child._open = false;
-            await child.OnCloseCallback.InvokeAsync();
+            await CloseChildAsync(child);
         }
+
         await InvokeAsync(StateHasChanged);
+    }
+
+    internal bool TryReserveDefaultOpen() {
+        if (!LimitToOneExpanded) {
+            return true;
+        }
+
+        return !_children.Values.Any(child => child._open == true);
+    }
+
+    private static async Task CloseChildAsync(TnTAccordionChild child) {
+        child._open = false;
+        await child.OnCloseCallback.InvokeAsync();
     }
 }
