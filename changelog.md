@@ -1,3 +1,10 @@
+## [1.38.2](https://github.com/Notallthatevil/NTComponents/compare/v1.38.1...v1.38.2) (2026-03-19)
+
+
+### Bug Fixes
+
+* **styles:** improve TnTNavLink SCSS consistency and flexibility ([dfa02ab](https://github.com/Notallthatevil/NTComponents/commit/dfa02abbb9bc878b6db1153605ba39028dae6d5f))
+
 ## [1.38.1](https://github.com/Notallthatevil/NTComponents/compare/v1.38.0...v1.38.1) (2026-03-18)
 
 
