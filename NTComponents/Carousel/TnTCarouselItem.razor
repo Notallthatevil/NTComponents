@@ -6,7 +6,17 @@
 @code {
     internal void RenderItem(RenderTreeBuilder __builder) {
         <tnt-carousel-item @attributes="@AdditionalAttributes" class="@($"tnt-carousel-item {(_hero ? " tnt-carousel-hero" : null)}")">
-            <div class="@ElementClass" style="@ElementStyle" id="@ElementId" title="@ElementTitle" @ref="Element" lang="@ElementLang" @onclick="@OnClickCallback">
+            <div class="@ElementClass"
+                 style="@ElementStyle"
+                 id="@ElementId"
+                 title="@ElementTitle"
+                 role="@(OnClickCallback.HasDelegate ? "button" : null)"
+                 tabindex="@(OnClickCallback.HasDelegate ? "0" : null)"
+                 aria-label="@(OnClickCallback.HasDelegate ? (AriaLabel ?? ElementTitle) : null)"
+                 @ref="Element"
+                 lang="@ElementLang"
+                 @onclick="@OnClickCallback"
+                 @onkeydown="HandleKeyDownAsync">
                 @ChildContent
                 @if (OnClickCallback.HasDelegate && EnableRipple) {
                     <TnTRippleEffect />

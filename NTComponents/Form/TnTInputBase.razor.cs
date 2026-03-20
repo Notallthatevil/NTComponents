@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Components.Web;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
 using NTComponents.Core;
@@ -345,7 +346,49 @@ public abstract partial class TnTInputBase<TInputType> : InputBase<TInputType>, 
     [CascadingParameter]
     private ITnTForm? _tntForm { get; set; }
 
+    /// <summary>
+    ///     Unique prefix used to generate stable accessibility-related element IDs for the input.
+    /// </summary>
+    protected string AccessibilityIdPrefix { get; } = TnTComponentIdentifier.NewId();
     private string? _resolvedElementName;
+
+    /// <summary>
+    ///     Gets the IDs of helper elements that should be referenced by the input's <c>aria-describedby</c> attribute.
+    /// </summary>
+    protected string? InputDescribedBy {
+        get {
+            List<string> ids = [];
+            if (HasSupportingTextOrValidation) {
+                ids.Add(SupportingTextElementId);
+            }
+
+            if (ShowInputLength && GetMaxLength() > 0) {
+                ids.Add(InputLengthElementId);
+            }
+
+            return ids.Count == 0 ? null : string.Join(" ", ids);
+        }
+    }
+
+    /// <summary>
+    ///     Gets the DOM ID used for the input length indicator.
+    /// </summary>
+    protected string InputLengthElementId => $"{AccessibilityIdPrefix}-length";
+
+    /// <summary>
+    ///     Gets a value indicating whether the input is currently in an error state.
+    /// </summary>
+    protected bool HasErrorState => !string.IsNullOrWhiteSpace(ErrorMessage) || EditContext?.GetValidationMessages(FieldIdentifier).Any() == true;
+
+    /// <summary>
+    ///     Gets a value indicating whether the input has supporting text or validation content to announce.
+    /// </summary>
+    protected bool HasSupportingTextOrValidation => !string.IsNullOrWhiteSpace(SupportingText) || !string.IsNullOrWhiteSpace(ErrorMessage) || (EditContext is not null && !DisableValidationMessage && ValueExpression is not null);
+
+    /// <summary>
+    ///     Gets the DOM ID used for supporting text and validation content.
+    /// </summary>
+    protected string SupportingTextElementId => $"{AccessibilityIdPrefix}-supporting-text";
 
     /// <summary>
     ///     Sets the focus to the input element.

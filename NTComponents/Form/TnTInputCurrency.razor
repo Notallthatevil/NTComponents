@@ -20,6 +20,8 @@
                maxlength="@GetMaxLength()"
                min="@GetMinValue()"
                max="@GetMaxValue()"
+               aria-invalid="@(HasErrorState ? "true" : "false")"
+               aria-describedby="@InputDescribedBy"
                onkeydown="NTComponents.enforceCurrencyFormat(event); NTComponents.formKeyDownSupportingTextHandler(event)"
                onkeyup="NTComponents.formatToCurrency(event)"
                cultureCode="@CultureCode"

@@ -421,6 +421,30 @@ public class TnTWizard_Tests : BunitContext {
     }
 
     [Fact]
+    public void Step_Indicators_Render_Accessibility_Attributes() {
+        // Arrange & Act
+        var cut = Render<TnTWizard>(p => p.AddChildContent(builder => {
+            builder.OpenComponent<TnTWizardStep>(0);
+            builder.AddComponentParameter(10, "Title", "Step 1");
+            builder.AddComponentParameter(20, "ChildContent", (RenderFragment)(b => b.AddContent(0, "Content 1")));
+            builder.CloseComponent();
+
+            builder.OpenComponent<TnTWizardStep>(30);
+            builder.AddComponentParameter(40, "Title", "Step 2");
+            builder.AddComponentParameter(50, "ChildContent", (RenderFragment)(b => b.AddContent(0, "Content 2")));
+            builder.CloseComponent();
+        }));
+
+        var stepIndicators = cut.FindAll("li.tnt-wizard-step-indicator");
+
+        // Assert
+        stepIndicators[0].GetAttribute("role").Should().Be("button");
+        stepIndicators[0].GetAttribute("tabindex").Should().Be("0");
+        stepIndicators[0].GetAttribute("aria-current").Should().Be("step");
+        stepIndicators[1].GetAttribute("aria-disabled").Should().Be("false");
+    }
+
+    [Fact]
     public void Step_Content_Renders() {
         // Arrange & Act
         var cut = Render<TnTWizard>(p => p.AddChildContent<TnTWizardStep>(step => step

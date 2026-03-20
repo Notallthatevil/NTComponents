@@ -28,18 +28,30 @@
 					  StartIcon="@MaterialIcon.Search"
 					  Tooltip="@Tooltip"
 					  TooltipIcon="@TooltipIcon"
+					  role="combobox"
+					  aria-autocomplete="list"
+					  aria-expanded="@(IsDropdownVisible ? "true" : "false")"
+					  aria-controls="@ListboxElementId"
+					  aria-activedescendant="@FocusedOptionId"
 					  @onkeyup="SelectOrShiftFocusAsync"
 					  SupportingText="@SupportingText"
 					  ErrorMessage="@_displayErrorMessage"
 					  @ref="_inputBox" />
 		<TnTProgressIndicator Show="@_searching" ProgressColor="ProgressColor" Size="Size.Small" />
 	</span>
-	@if (_items.Any() || (!_items.Any() && !string.IsNullOrWhiteSpace(Value) && !_searching && !_itemSelected)) {
+	@if (IsDropdownVisible) {
 		<div class="tnt-typeahead-content">
 			@if (_items.Any()) {
-				<ul class="tnt-typeahead-list">
-					@foreach (var item in _items) {
-						<li class="@($"tnt-typeahead-list-item{(item!.Equals(_focusedItem) ? " tnt-focused" : string.Empty)}")" tabindex="-1" @onclick="(() => ItemSelectedAsync(item))">
+				<ul class="tnt-typeahead-list" id="@ListboxElementId" role="listbox">
+					@foreach (var pair in _items.Select((item, index) => new { item, index })) {
+						var item = pair.item;
+						var index = pair.index;
+						<li id="@($"{ComponentIdentifier}-option-{index}")"
+							role="option"
+							aria-selected="@(item!.Equals(_focusedItem) ? "true" : "false")"
+							class="@($"tnt-typeahead-list-item{(item!.Equals(_focusedItem) ? " tnt-focused" : string.Empty)}")"
+							tabindex="-1"
+							@onclick="(() => ItemSelectedAsync(item))">
 							@if (ResultTemplate is not null) {
 								@ResultTemplate(item)
 							}

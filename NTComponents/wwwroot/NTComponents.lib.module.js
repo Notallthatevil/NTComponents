@@ -507,15 +507,34 @@ window.NTComponents = {
         }
     },
     toggleSideNavGroup: (event) => {
-        const toggler = event.target.parentElement.querySelector('.tnt-side-nav-menu-group-toggler');
+        const header = event.currentTarget ?? event.target?.closest?.('.tnt-side-nav-menu-group-label');
+        const fallbackContainer = event.target?.parentElement;
+        const group = header?.closest?.('.tnt-side-nav-menu-group') ?? header?.parentElement ?? fallbackContainer;
+        if (!group || header?.getAttribute('aria-disabled') === 'true') {
+            return;
+        }
+
+        const toggler = group?.querySelector('.tnt-side-nav-menu-group-toggler');
+        const content = group?.querySelector('.tnt-side-nav-menu-group-content');
+        const headerElement = header ?? group?.querySelector?.('.tnt-side-nav-menu-group-label');
 
         if (toggler && toggler.classList) {
             if (toggler.classList.contains('tnt-toggle')) {
                 toggler.classList.remove('tnt-toggle');
+                headerElement?.setAttribute('aria-expanded', 'false');
+                content?.setAttribute('aria-hidden', 'true');
             }
             else {
                 toggler.classList.add('tnt-toggle');
+                headerElement?.setAttribute('aria-expanded', 'true');
+                content?.setAttribute('aria-hidden', 'false');
             }
+        }
+    },
+    toggleSideNavGroupOnKeyDown: (event) => {
+        if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
+            event.preventDefault();
+            NTComponents.toggleSideNavGroup(event);
         }
     },
     stopEnter: (event) => {

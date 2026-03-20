@@ -337,6 +337,16 @@ public class TnTThemeToggle_Tests : BunitContext {
     }
 
     [Fact]
+    public void Select_Has_Accessible_Label() {
+        // Arrange & Act
+        var cut = RenderThemeToggle();
+
+        // Assert
+        var select = cut.Find("select.tnt-theme-select");
+        select.GetAttribute("aria-label").Should().Be("Select theme and contrast");
+    }
+
+    [Fact]
     public void Theme_Dark_HasCorrectValue() {
         // Assert
         ((int)Theme.Dark).Should().Be(2);

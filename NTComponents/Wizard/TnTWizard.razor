@@ -11,7 +11,13 @@
     }
     <ol class="tnt-wizard-steps">
         @foreach (var (step, i) in _steps.Select((s, i) => new KeyValuePair<TnTWizardStepBase, int>(s, i))) {
-            <li class="@($"tnt-wizard-step-indicator{(_stepIndex == i ? " current-step" : string.Empty)}{(_stepIndex != i && IsStepVisited(i) ? " completed-step" : string.Empty)}{(IsImmediateNextStep(i) ? " next-step" : string.Empty)}")" @onclick="@(() => NavigateToStepAsync(i))">
+            <li class="@($"tnt-wizard-step-indicator{(_stepIndex == i ? " current-step" : string.Empty)}{(_stepIndex != i && IsStepVisited(i) ? " completed-step" : string.Empty)}{(IsImmediateNextStep(i) ? " next-step" : string.Empty)}")"
+                role="button"
+                tabindex="@(CanNavigateToStep(i) ? "0" : "-1")"
+                aria-disabled="@(CanNavigateToStep(i) ? "false" : "true")"
+                aria-current="@(_stepIndex == i ? "step" : null)"
+                @onclick="@(() => NavigateToStepAsync(i))"
+                @onkeydown="@(args => HandleStepKeyDownAsync(args, i))">
                 <div class="tnt-wizard-step-title">
                     <span class="tnt-wizard-step-index">
                         @(i + 1)

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web;
 using System.Diagnostics.CodeAnalysis;
 using NTComponents.Core;
 
@@ -41,4 +42,12 @@ public partial class TnTDataGridBodyRow<[DynamicallyAccessedMembers(DynamicallyA
         .AddClass("tnt-stripped", Context.DataGridAppearance.HasFlag(DataGridAppearance.Stripped))
         .AddClass(RowClass is not null ? RowClass(Item) : null!, RowClass is not null)
         .Build();
+
+    private Task HandleKeyDownAsync(KeyboardEventArgs args) {
+        if (Context.RowClickCallback.HasDelegate && (args.Key == "Enter" || args.Key == " " || args.Key == "Spacebar")) {
+            return Context.RowClickCallback.InvokeAsync(Item);
+        }
+
+        return Task.CompletedTask;
+    }
 }

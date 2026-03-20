@@ -76,6 +76,24 @@ public class TnTSideNavMenuGroup_Tests : BunitContext {
     }
 
     [Fact]
+    public void Group_Label_Has_Accessibility_Attributes() {
+        // Arrange & Act
+        var cut = Render<TnTSideNavMenuGroup>(p => p
+            .Add(c => c.Label, "Test")
+            .Add(c => c.ExpandByDefault, false));
+
+        var label = cut.Find("div.tnt-side-nav-menu-group-label");
+        var content = cut.Find("div.tnt-side-nav-menu-group-content");
+
+        // Assert
+        label.GetAttribute("role").Should().Be("button");
+        label.GetAttribute("tabindex").Should().Be("0");
+        label.GetAttribute("aria-expanded").Should().Be("false");
+        label.GetAttribute("aria-controls").Should().Be(content.Id);
+        content.GetAttribute("aria-hidden").Should().Be("true");
+    }
+
+    [Fact]
     public void Custom_BackgroundColor_Variable_In_Style() {
         // Arrange & Act
         var cut = Render<TnTSideNavMenuGroup>(p => p
@@ -232,6 +250,16 @@ public class TnTSideNavMenuGroup_Tests : BunitContext {
         // Assert
         cut.Find("div.tnt-side-nav-menu-group-label").GetAttribute("class")!.Should().NotContain("tnt-ripple");
         cut.Markup.Should().NotContain("TnTRippleEffect");
+    }
+
+    [Fact]
+    public void Keyboard_Handler_Is_Attached() {
+        // Arrange & Act
+        var cut = Render<TnTSideNavMenuGroup>(p => p.Add(c => c.Label, "Test"));
+
+        // Assert
+        cut.Find("div.tnt-side-nav-menu-group-label").GetAttribute("onkeydown")!
+            .Should().Be("NTComponents.toggleSideNavGroupOnKeyDown(event)");
     }
 
     [Fact]

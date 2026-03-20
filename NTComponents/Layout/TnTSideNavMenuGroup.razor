@@ -13,7 +13,14 @@ title="@ElementTitle"
 autofocus="@AutoFocus"
 @ref="Element">
     <div class="@ElementClass"
-         onclick="NTComponents.toggleSideNavGroup(event)">
+         role="button"
+         tabindex="@(Disabled ? "-1" : "0")"
+         aria-disabled="@(Disabled ? "true" : "false")"
+         aria-expanded="@(ExpandByDefault ? "true" : "false")"
+         aria-controls="@ContentElementId"
+         aria-label="@ToggleElementLabel"
+         onclick="NTComponents.toggleSideNavGroup(event)"
+         onkeydown="NTComponents.toggleSideNavGroupOnKeyDown(event)">
     <span class="tnt-side-nav-menu-group-label-content">
     @Icon?.Render()
         @Label
@@ -24,7 +31,7 @@ autofocus="@AutoFocus"
     }
 </div>
 
-<div class="tnt-side-nav-menu-group-content">
+<div class="tnt-side-nav-menu-group-content" id="@ContentElementId" aria-hidden="@(ExpandByDefault ? "false" : "true")">
  @ChildContent
     </div>
 

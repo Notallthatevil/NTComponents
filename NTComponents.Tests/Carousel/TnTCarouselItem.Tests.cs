@@ -139,6 +139,28 @@ public class TnTCarouselItem_Tests : BunitContext {
     }
 
     [Fact]
+    public void Clickable_Item_Renders_Button_Semantics() {
+        // Arrange
+        RenderFragment items = b => {
+            b.OpenComponent<TnTCarouselItem>(0);
+            b.AddAttribute(1, nameof(TnTCarouselItem.Order), 1);
+            b.AddAttribute(2, nameof(TnTCarouselItem.OnClickCallback), EventCallback.Factory.Create(this, (Action)(() => { })));
+            b.AddAttribute(3, nameof(TnTCarouselItem.AriaLabel), "Open featured slide");
+            b.AddAttribute(4, nameof(TnTCarouselItem.ChildContent), (RenderFragment)(c => c.AddContent(0, "Clickable")));
+            b.CloseComponent();
+        };
+
+        // Act
+        var cut = Render<TnTCarousel>(p => p.AddChildContent(items));
+        var div = cut.Find("div.tnt-carousel-item-content");
+
+        // Assert
+        div.GetAttribute("role").Should().Be("button");
+        div.GetAttribute("tabindex").Should().Be("0");
+        div.GetAttribute("aria-label").Should().Be("Open featured slide");
+    }
+
+    [Fact]
     public void Ripple_Disabled_Removes_Ripple_Component() {
         // Arrange
         RenderFragment items = b => {

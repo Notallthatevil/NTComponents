@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
+using System.Collections.Generic;
 using System.Linq.Expressions;
 using NTComponents.Core;
 
@@ -198,6 +199,19 @@ public partial class TnTTypeahead<TItem> {
     private string? _displayErrorMessage;
     private FieldIdentifier? _fieldIdentifier;
     private bool _managedResourcesDisposed;
+    private string? FocusedOptionId {
+        get {
+            if (_focusedItem is null) {
+                return null;
+            }
+
+            var focusedIndex = _items.ToList().FindIndex(item => EqualityComparer<TItem>.Default.Equals(item, _focusedItem));
+            return focusedIndex >= 0 ? $"{ComponentIdentifier}-option-{focusedIndex}" : null;
+        }
+    }
+
+    private bool IsDropdownVisible => _items.Any() || (!_items.Any() && !string.IsNullOrWhiteSpace(Value) && !_searching && !_itemSelected);
+    private string ListboxElementId => $"{ComponentIdentifier}-listbox";
 
     /// <inheritdoc />
     protected override void OnInitialized() {

@@ -7,16 +7,23 @@
 	<CascadingValue Value="this" IsFixed="true">
 		<DeferRendering>
 			<div class="@(CssClassBuilder.Create().AddClass("tnt-tab-view-header").AddFilled().AddForegroundColor(HeaderTextColor).AddBackgroundColor(HeaderBackgroundColor).Build())">
-				<span class="tnt-tab-view-header-buttons">
+				<span class="tnt-tab-view-header-buttons" id="@TabListElementId" role="tablist" aria-orientation="horizontal">
 
 					@foreach (var pair in _tabChildren.Select((child, index) => new { child, index })) {
 						var child = pair.child;
 						var index = pair.index;
+						var isSelected = index == InitialActiveIndex;
 						<button type="button"
 								title="@child.ElementTitle"
-								class="@(CssClassBuilder.Create().AddClass("tnt-tab-view-button").AddClass("tnt-interactable").AddRipple().AddDisabled(child.Disabled).Build())"
+								id="@child.HeaderElementId"
+								role="tab"
+								aria-selected="@(isSelected ? "true" : "false")"
+								aria-controls="@child.PanelDomId"
+								tabindex="@(isSelected ? "0" : "-1")"
+								class="@(CssClassBuilder.Create().AddClass("tnt-tab-view-button").AddClass("tnt-active", isSelected).AddClass("tnt-interactable").AddRipple().AddDisabled(child.Disabled).Build())"
 								style="@(CssStyleBuilder.Create().AddVariable("tnt-tab-header-background-color", HeaderBackgroundColor).AddVariable("tnt-tab-header-text-color", HeaderTextColor).AddVariable("tnt-tab-header-tint-color", HeaderTintColor).Build())"
 								disabled="@(child.Disabled ? true : null)"
+								data-tab-index="@index"
 								@key="index">
 							@if (Appearance == TabViewAppearance.Primary) {
 								@child.Icon?.Render()

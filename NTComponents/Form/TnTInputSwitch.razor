@@ -26,8 +26,8 @@
 		@TooltipIcon.Render()
 	}
 
-	@if (!string.IsNullOrWhiteSpace(SupportingText) || (EditContext is not null && !DisableValidationMessage && ValueExpression is not null)) {
-		<span class="tnt-supporting-text">
+	@if (HasSupportingTextOrValidation) {
+		<span class="tnt-supporting-text" id="@SupportingTextElementId">
 			@if (EditContext is not null && !DisableValidationMessage && ValueExpression is not null) {
 				<ValidationMessage TValue="@bool" For="@ValueExpression" class="tnt-components tnt-validation-message" />
 			}
@@ -36,7 +36,7 @@
 	}
 
 	@if (GetMaxLength() > 0 && RendererInfo.IsInteractive && ShowInputLength) {
-		<span class="tnt-input-length">
+		<span class="tnt-input-length" id="@InputLengthElementId">
 			@if (!RendererInfo.IsInteractive) {
 				<text>@(CurrentValueAsString?.Length ?? 0)/@(GetMaxLength())</text>
 			}
@@ -59,6 +59,8 @@
 			   maxlength="@GetMaxLength()"
 			   min="@GetMinValue()"
 			   max="@GetMaxValue()"
+			   aria-invalid="@(HasErrorState ? "true" : "false")"
+			   aria-describedby="@InputDescribedBy"
 			   value="@bool.TrueString"
 			   checked="@BindConverter.FormatValue(CurrentValue)"
 			   @onchange="@OnChangeAsync"

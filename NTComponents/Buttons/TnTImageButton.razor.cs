@@ -9,6 +9,12 @@ namespace NTComponents;
 /// </summary>
 public partial class TnTImageButton {
 
+    /// <summary>
+    ///     Provides an explicit accessible name for the button when it does not contain visible text.
+    /// </summary>
+    [Parameter]
+    public string? AriaLabel { get; set; }
+
     /// <inheritdoc />
     [Parameter]
     public virtual ButtonAppearance Appearance { get; set; }
@@ -125,6 +131,11 @@ public partial class TnTImageButton {
     /// </summary>
     [Parameter]
     public ButtonType Type { get; set; }
+
+    internal string? AccessibleLabel =>
+        AdditionalAttributes?.ContainsKey("aria-label") == true || AdditionalAttributes?.ContainsKey("aria-labelledby") == true
+            ? null
+            : AriaLabel ?? ElementTitle;
 
     /// <inheritdoc />
     protected override void OnParametersSet() {

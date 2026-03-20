@@ -12,7 +12,7 @@
 		 data-tnt-dtp-mode="@PickerModeValue"
 		 tabindex="-1"
 		 aria-hidden="true">
-		<div class="tnt-dtp-surface" data-tnt-dtp-surface tabindex="-1" role="dialog" aria-modal="false">
+		<div class="tnt-dtp-surface" data-tnt-dtp-surface tabindex="-1" role="dialog" aria-modal="true" aria-label="@((Label ?? Placeholder ?? FieldIdentifier.FieldName) + " picker")">
 			<div class="tnt-dtp-header">
 				<div class="tnt-dtp-headline" data-tnt-dtp-headline></div>
 				<div class="tnt-dtp-subhead" data-tnt-dtp-subhead></div>
@@ -141,6 +141,8 @@
 			   data-tnt-dtp-disabled-times="@(UseMaterialPicker ? DisabledTimeValuesAttribute : null)"
 			   aria-haspopup="@(UseMaterialPicker ? "dialog" : null)"
 			   aria-controls="@(UseMaterialPicker ? PickerPopupId : null)"
+			   aria-invalid="@(HasErrorState ? "true" : "false")"
+			   aria-describedby="@InputDescribedBy"
 			   onkeydown="NTComponents.formKeyDownSupportingTextHandler(event)"
 			   @bind-value:get="@CurrentValueAsString"
 			   @bind-value:set="(newValue) => OnInputAsync(newValue)"

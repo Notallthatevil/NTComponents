@@ -14,6 +14,7 @@
     @if (!HideDateControls) {
         <div class="date-controls">
             <TnTImageButton Icon="@MaterialIcon.ChevronLeft"
+                            AriaLabel="Previous period"
                             OnClickCallback="PreviousPage"
                             TextColor="@TextColor"
                             class="prev-button" />
@@ -24,6 +25,7 @@
                 TODAY
             </TnTButton>
             <TnTImageButton Icon="@MaterialIcon.ChevronRight"
+                            AriaLabel="Next period"
                             OnClickCallback="NextPage"
                             TextColor="@TextColor"
                             class="next-button" />

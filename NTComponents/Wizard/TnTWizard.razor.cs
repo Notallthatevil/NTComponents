@@ -282,6 +282,14 @@ public partial class TnTWizard : TnTComponentBase, IDisposable {
         }
     }
 
+    private bool CanNavigateToStep(int stepIndex) => stepIndex == _stepIndex || IsImmediateNextStep(stepIndex) || IsStepVisited(stepIndex);
+
+    private async Task HandleStepKeyDownAsync(KeyboardEventArgs args, int stepIndex) {
+        if (args.Key == "Enter" || args.Key == " " || args.Key == "Spacebar") {
+            await NavigateToStepAsync(stepIndex);
+        }
+    }
+
     private bool IsStepVisited(int stepIndex) {
         var step = _steps.ElementAtOrDefault(stepIndex);
         return step is not null && _visitedStepIds.Contains(step._internalId);

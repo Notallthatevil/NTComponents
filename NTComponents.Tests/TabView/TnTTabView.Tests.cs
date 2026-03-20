@@ -302,6 +302,30 @@ public class TnTTabView_Tests : BunitContext {
     }
 
     [Fact]
+    public void TabView_Renders_Tab_And_Tabpanel_Aria_Wiring() {
+        // Arrange & Act
+        var cut = RenderTabViewWithTabs();
+
+        // Assert
+        var tabList = cut.Find("[role='tablist']");
+        var tabs = cut.FindAll("[role='tab']");
+        var panels = cut.FindAll("[role='tabpanel']");
+
+        tabList.GetAttribute("aria-orientation").Should().Be("horizontal");
+        tabs.Should().HaveCount(3);
+        panels.Should().HaveCount(3);
+
+        tabs[0].GetAttribute("aria-selected").Should().Be("true");
+        tabs[0].GetAttribute("tabindex").Should().Be("0");
+        tabs[1].GetAttribute("aria-selected").Should().Be("false");
+        tabs[1].GetAttribute("tabindex").Should().Be("-1");
+
+        panels[0].GetAttribute("aria-labelledby").Should().Be(tabs[0].Id);
+        panels[0].HasAttribute("hidden").Should().BeFalse();
+        panels[1].HasAttribute("hidden").Should().BeTrue();
+    }
+
+    [Fact]
     public void TabButtons_WithDisabledTab_ShowsDisabledState() {
         // Arrange & Act
         var cut = RenderTabViewWithDisabledTab();

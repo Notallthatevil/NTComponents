@@ -38,50 +38,116 @@ export class TnTTabView extends HTMLElement {
         this.tabViews = [];
         this.querySelectorAll('.tnt-tab-child').forEach((element, index) => {
             this.tabViews.push(element);
-            if ((this.activeIndex === -1 || this.activeIndex === index) && !element.classList.contains('tnt-disabled')) {
-                this.activeIndex = index;
-                if (!element.classList.contains('tnt-active')) {
-                    element.classList.add('tnt-active');
-                }
-            }
-            else {
-                element.classList.remove('tnt-active');
-            }
         });
 
-        let self = this;
+        const headerButtons = this.getHeaderButtons();
+        const firstEnabledIndex = this.findNextEnabledIndex(-1, 1);
+        if (firstEnabledIndex === -1) {
+            this.activeIndex = -1;
+        } else if (this.activeIndex === -1 || this.isTabDisabled(this.activeIndex, headerButtons)) {
+            this.activeIndex = firstEnabledIndex;
+        }
 
-        this.querySelectorAll(':scope > .tnt-tab-view-header > .tnt-tab-view-header-buttons > .tnt-tab-view-button').forEach((button, index) => {
-            function setActiveTab(e) {
-                if (self) {
-                    const headerButtons = self.querySelectorAll(":scope > .tnt-tab-view-header > .tnt-tab-view-header-buttons > .tnt-tab-view-button");
-                    headerButtons.forEach(btn => {
-                        if (btn.classList.contains('tnt-active')) {
-                            btn.classList.remove('tnt-active');
-                        }
-                    });
-
-                    e.target.classList.add('tnt-active');
-
-                    if (index >= 0 && self.tabViews.length > index) {
-                        if (self.tabViews[self.activeIndex].classList.contains('tnt-active')) {
-                            self.tabViews[self.activeIndex].classList.remove('tnt-active');
-                        }
-
-                        if (!self.tabViews[index].classList.contains('tnt-active')) {
-                            self.tabViews[index].classList.add('tnt-active');
-                        }
-
-                        self.activeIndex = index;
-                        self.updateActiveIndicator();
-                    }
-                }
+        headerButtons.forEach((button, index) => {
+            if (button._tntTabClickHandler) {
+                button.removeEventListener('click', button._tntTabClickHandler);
+            }
+            if (button._tntTabKeydownHandler) {
+                button.removeEventListener('keydown', button._tntTabKeydownHandler);
             }
 
-            button.addEventListener('click', setActiveTab);
+            button._tntTabClickHandler = () => this.activateTab(index, true);
+            button._tntTabKeydownHandler = (event) => this.handleHeaderKeyDown(event, index);
+
+            button.addEventListener('click', button._tntTabClickHandler);
+            button.addEventListener('keydown', button._tntTabKeydownHandler);
         });
 
+        this.activateTab(this.activeIndex, false);
         this.updateActiveIndicator();
+    }
+
+    getHeaderButtons() {
+        return Array.from(this.querySelectorAll(':scope > .tnt-tab-view-header > .tnt-tab-view-header-buttons > .tnt-tab-view-button'));
+    }
+
+    isTabDisabled(index, headerButtons = null) {
+        const buttons = headerButtons ?? this.getHeaderButtons();
+        const button = buttons[index];
+        if (button?.disabled || button?.getAttribute('aria-disabled') === 'true') {
+            return true;
+        }
+
+        return this.tabViews[index]?.classList.contains('tnt-disabled') ?? false;
+    }
+
+    findNextEnabledIndex(startIndex, direction) {
+        const headerButtons = this.getHeaderButtons();
+        const tabCount = Math.max(headerButtons.length, this.tabViews.length);
+        if (tabCount === 0) {
+            return -1;
+        }
+
+        let index = startIndex;
+        for (let count = 0; count < tabCount; count++) {
+            index = (index + direction + tabCount) % tabCount;
+            if (!this.isTabDisabled(index, headerButtons)) {
+                return index;
+            }
+        }
+
+        return -1;
+    }
+
+    activateTab(index, focusButton) {
+        const headerButtons = this.getHeaderButtons();
+        if (index < 0 || index >= this.tabViews.length || this.isTabDisabled(index, headerButtons)) {
+            return;
+        }
+
+        headerButtons.forEach((button, buttonIndex) => {
+            const selected = buttonIndex === index;
+            button.classList.toggle('tnt-active', selected);
+            button.setAttribute('aria-selected', selected ? 'true' : 'false');
+            button.setAttribute('tabindex', selected ? '0' : '-1');
+        });
+
+        this.tabViews.forEach((panel, panelIndex) => {
+            const selected = panelIndex === index;
+            panel.classList.toggle('tnt-active', selected);
+            panel.hidden = !selected;
+        });
+
+        this.activeIndex = index;
+        if (focusButton) {
+            headerButtons[index]?.focus();
+        }
+        this.updateActiveIndicator();
+    }
+
+    handleHeaderKeyDown(event, index) {
+        let nextIndex = -1;
+
+        if (event.key === 'ArrowRight') {
+            nextIndex = this.findNextEnabledIndex(index, 1);
+        } else if (event.key === 'ArrowLeft') {
+            nextIndex = this.findNextEnabledIndex(index, -1);
+        } else if (event.key === 'Home') {
+            nextIndex = this.findNextEnabledIndex(-1, 1);
+        } else if (event.key === 'End') {
+            nextIndex = this.findNextEnabledIndex(0, -1);
+        } else if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            this.activateTab(index, true);
+            return;
+        } else {
+            return;
+        }
+
+        event.preventDefault();
+        if (nextIndex !== -1) {
+            this.activateTab(nextIndex, true);
+        }
     }
 
     getActiveHeader() {

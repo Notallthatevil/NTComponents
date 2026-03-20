@@ -9,8 +9,8 @@
     @ChildContent
 
     <tnt-carousel @attributes="AdditionalAttributes" class="@ElementClass" style="@ElementStyle" tnt-auto-play-interval="@AutoPlayInterval" tnt-allow-dragging="@AllowDragging" @ref="Element">
-        <TnTImageButton class="tnt-carousel-button tnt-carousel-prev-button" Icon="@MaterialIcon.ChevronLeft" />
-        <TnTImageButton class="tnt-carousel-button tnt-carousel-next-button" Icon="@MaterialIcon.ChevronRight" />
+        <TnTImageButton class="tnt-carousel-button tnt-carousel-prev-button" Icon="@MaterialIcon.ChevronLeft" AriaLabel="Previous slide" />
+        <TnTImageButton class="tnt-carousel-button tnt-carousel-next-button" Icon="@MaterialIcon.ChevronRight" AriaLabel="Next slide" />
         <div class="tnt-carousel-viewport">
             @foreach (var item in _carouselItems) {
                 @item.RenderItem

@@ -21,6 +21,8 @@
                    maxlength="@GetMaxLength()"
                    min="@GetMinValue()"
                    max="@GetMaxValue()"
+                   aria-invalid="@(HasErrorState ? "true" : "false")"
+                   aria-describedby="@InputDescribedBy"
                    onkeydown="NTComponents.enforcePhoneFormat(event); NTComponents.formKeyDownSupportingTextHandler(event)"
                    onkeyup="NTComponents.formatToPhone(event)"
                    @bind-value:get="@CurrentValueAsString"

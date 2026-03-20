@@ -37,6 +37,7 @@ describe('TnTTooltip custom HTML element', () => {
     
     // Create tooltip element
     const tooltip = document.createElement('tnt-tooltip');
+    tooltip.id = `tooltip-${Math.random().toString(36).slice(2)}`;
     tooltip.style.setProperty('--tnt-tooltip-show-delay', '500');
     tooltip.style.setProperty('--tnt-tooltip-hide-delay', '200');
     parent.appendChild(tooltip);
@@ -64,6 +65,8 @@ describe('TnTTooltip custom HTML element', () => {
       expect(addEventListenerSpy).toHaveBeenCalledWith('mouseenter', expect.any(Function));
       expect(addEventListenerSpy).toHaveBeenCalledWith('mouseleave', expect.any(Function));
       expect(addEventListenerSpy).toHaveBeenCalledWith('mousemove', expect.any(Function));
+      expect(addEventListenerSpy).toHaveBeenCalledWith('focusin', expect.any(Function));
+      expect(addEventListenerSpy).toHaveBeenCalledWith('focusout', expect.any(Function));
     });
 
     test('initialize sets initial off-screen position', () => {
@@ -89,6 +92,16 @@ describe('TnTTooltip custom HTML element', () => {
       
       expect(() => tooltip.initialize()).not.toThrow();
     });
+
+    test('initialize appends tooltip id to existing aria-describedby tokens', () => {
+      const { parent, tooltip } = createTooltipSetup();
+      parent.setAttribute('aria-describedby', 'existing-help');
+
+      tooltip.initialize();
+
+      expect(parent.getAttribute('aria-describedby')).toContain('existing-help');
+      expect(parent.getAttribute('aria-describedby')).toContain(tooltip.id);
+    });
   });
 
   describe('Cleanup', () => {
@@ -103,6 +116,8 @@ describe('TnTTooltip custom HTML element', () => {
       expect(removeEventListenerSpy).toHaveBeenCalledWith('mouseenter', expect.any(Function));
       expect(removeEventListenerSpy).toHaveBeenCalledWith('mouseleave', expect.any(Function));
       expect(removeEventListenerSpy).toHaveBeenCalledWith('mousemove', expect.any(Function));
+      expect(removeEventListenerSpy).toHaveBeenCalledWith('focusin', expect.any(Function));
+      expect(removeEventListenerSpy).toHaveBeenCalledWith('focusout', expect.any(Function));
     });
 
     test('disconnectedCallback clears pending timeouts', () => {
@@ -124,6 +139,16 @@ describe('TnTTooltip custom HTML element', () => {
       const tooltip = document.createElement('tnt-tooltip');
       
       expect(() => tooltip.dispose()).not.toThrow();
+    });
+
+    test('dispose removes only this tooltip id from aria-describedby', () => {
+      const { parent, tooltip } = createTooltipSetup();
+      tooltip.initialize();
+      parent.setAttribute('aria-describedby', `${tooltip.id} later-added-help`);
+
+      tooltip.dispose();
+
+      expect(parent.getAttribute('aria-describedby')).toBe('later-added-help');
     });
   });
 
@@ -201,6 +226,18 @@ describe('TnTTooltip custom HTML element', () => {
       
       expect(updatePositionSpy).toHaveBeenCalledWith(100, 200);
     });
+
+    test('onFocusOut ignores focus moving within the same parent', () => {
+      const { parent, tooltip } = createTooltipSetup();
+      const nextFocusedElement = document.createElement('button');
+      parent.appendChild(nextFocusedElement);
+
+      const onMouseLeaveSpy = jest.spyOn(tooltip, 'onMouseLeave');
+
+      tooltip.onFocusOut({ relatedTarget: nextFocusedElement });
+
+      expect(onMouseLeaveSpy).not.toHaveBeenCalled();
+    });
   });
 
   describe('Show/Hide', () => {
@@ -216,6 +253,15 @@ describe('TnTTooltip custom HTML element', () => {
       expect(tooltip.isVisible).toBe(true);
       expect(tooltip.classList.contains('tnt-tooltip-visible')).toBe(true);
       expect(updatePositionSpy).toHaveBeenCalledWith(100, 200);
+    });
+
+    test('show from focus uses anchor positioning', () => {
+      const { tooltip } = createTooltipSetup();
+      const updatePositionFromAnchorSpy = jest.spyOn(tooltip, 'updatePositionFromAnchor');
+
+      tooltip.show(true);
+
+      expect(updatePositionFromAnchorSpy).toHaveBeenCalled();
     });
 
     test('show does not double-show', () => {

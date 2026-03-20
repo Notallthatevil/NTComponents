@@ -4,12 +4,16 @@
 @implements IDisposable
 
 <div @attributes="AdditionalAttributes"
-     class="@ElementClass"
+     class="@CssClassBuilder.Create(ElementClass ?? string.Empty).AddClass("tnt-active", _context.IsTabSelected(this)).Build()"
      style="@ElementStyle"
      title="@ElementTitle"
-     id="@ElementId"
+     id="@PanelDomId"
      lang="@ElementLang"
      name="@ElementName"
+     role="tabpanel"
+     aria-labelledby="@HeaderElementId"
+     hidden="@(!_context.IsTabSelected(this))"
+     tabindex="0"
      @ref="Element">
     @ChildContent
 </div>

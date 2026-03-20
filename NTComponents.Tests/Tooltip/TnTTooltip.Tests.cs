@@ -266,6 +266,18 @@ public class TnTTooltip_Tests : BunitContext {
     }
 
     [Fact]
+    public void Tooltip_Renders_Tooltip_Role_And_Initial_Hidden_State() {
+        // Arrange & Act
+        var cut = RenderTooltip();
+
+        // Assert
+        var tooltip = cut.Find(".tnt-tooltip");
+        tooltip.GetAttribute("role").Should().Be("tooltip");
+        tooltip.GetAttribute("aria-hidden").Should().Be("true");
+        tooltip.Id.Should().NotBeNullOrWhiteSpace();
+    }
+
+    [Fact]
     public void MultipleTooltips_CanBePlacedInDifferentContainers() {
         // Arrange & Act
         var cut = Render<Fragment>(parameters => parameters

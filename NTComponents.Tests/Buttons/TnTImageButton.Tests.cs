@@ -103,6 +103,15 @@ public class TnTImageButton_Tests : BunitContext {
     }
 
     [Fact]
+    public void AriaLabel_Renders_Accessible_Name() {
+        // Arrange & Act
+        var cut = Render<TnTImageButton>(p => p.Add(c => c.Icon, SampleIcon).Add(c => c.AriaLabel, "Open menu"));
+
+        // Assert
+        cut.Find("button").GetAttribute("aria-label").Should().Be("Open menu");
+    }
+
+    [Fact]
     public void Disabled_Adds_Disabled_Class() {
         // Arrange & Act
         var cut = Render<TnTImageButton>(p => p.Add(c => c.Icon, SampleIcon).Add(c => c.Disabled, true));

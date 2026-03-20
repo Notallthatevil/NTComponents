@@ -23,6 +23,13 @@
 					   disabled="@FieldDisabled"
 					   required="@IsRequired()"
 					   data-require-selection="@((IsRequired() && !AllowFreeform) ? "true" : "false")"
+					   role="combobox"
+					   aria-autocomplete="list"
+					   aria-expanded="@(_isOpen ? "true" : "false")"
+					   aria-controls="@($"{AccessibilityIdPrefix}-listbox")"
+					   aria-activedescendant="@(_focusedOptionIndex >= 0 ? $"{AccessibilityIdPrefix}-option-{_focusedOptionIndex}" : null)"
+					   aria-invalid="@(HasErrorState ? "true" : "false")"
+					   aria-describedby="@InputDescribedBy"
 					   class="tnt-input-select-search-input"
 					   value="@_searchText"
 					   @oninput="OnInputChangedAsync"
@@ -47,10 +54,13 @@
 			@if (_isOpen) {
 				<div class="tnt-input-select-search-content">
 					@if (_filteredOptions.Count > 0) {
-						<ul class="tnt-input-select-search-list">
+						<ul class="tnt-input-select-search-list" id="@($"{AccessibilityIdPrefix}-listbox")" role="listbox">
 							@for (var index = 0; index < _filteredOptions.Count; index++) {
 								var option = _filteredOptions[index];
-								<li class="@(index == _focusedOptionIndex ? "tnt-input-select-search-list-item tnt-focused" : "tnt-input-select-search-list-item")"
+								<li id="@($"{AccessibilityIdPrefix}-option-{index}")"
+									role="option"
+									aria-selected="@(index == _focusedOptionIndex ? "true" : "false")"
+									class="@(index == _focusedOptionIndex ? "tnt-input-select-search-list-item tnt-focused" : "tnt-input-select-search-list-item")"
 									tabindex="-1"
 									@onmousedown:preventDefault="true"
 									@onclick="(() => SelectOptionAsync(option))">

@@ -72,6 +72,10 @@ public partial class TnTTabChild {
     [CascadingParameter]
     private TnTTabView _context { get; set; } = default!;
 
+    internal string HeaderElementId => $"{ComponentIdentifier}-tab";
+    internal string PanelDomId => ElementId ?? PanelElementId;
+    internal string PanelElementId => $"{ComponentIdentifier}-panel";
+
     /// <summary>
     ///     Disposes the tab child and removes it from the parent context.
     /// </summary>

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web;
 using NTComponents.Core;
 
 namespace NTComponents;
@@ -17,6 +18,12 @@ public partial class TnTCarouselItem {
     /// </summary>
     [Parameter]
     public string? BackgroundImageSrc { get; set; }
+
+    /// <summary>
+    ///     Optional accessible name applied when the carousel item is clickable.
+    /// </summary>
+    [Parameter]
+    public string? AriaLabel { get; set; }
 
     /// <summary>
     ///     The content to render inside the carousel item. This parameter is required.
@@ -95,5 +102,13 @@ public partial class TnTCarouselItem {
         }
 
         _carousel.AddChild(this);
+    }
+
+    private Task HandleKeyDownAsync(KeyboardEventArgs args) {
+        if (OnClickCallback.HasDelegate && (args.Key == "Enter" || args.Key == " " || args.Key == "Spacebar")) {
+            return OnClickCallback.InvokeAsync();
+        }
+
+        return Task.CompletedTask;
     }
 }

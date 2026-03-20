@@ -7,6 +7,7 @@ namespace NTComponents;
 ///     Represents a tooltip component that displays contextual information when users hover over or focus on an element.
 /// </summary>
 public partial class TnTTooltip : TnTPageScriptComponent<TnTTooltip> {
+    internal string ResolvedElementId => ElementId ?? $"{ComponentIdentifier}-tooltip";
 
     /// <summary>
     ///     The background color of the component.

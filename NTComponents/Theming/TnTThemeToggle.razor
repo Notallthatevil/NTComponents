@@ -15,7 +15,7 @@
         data-permanent
     style="@(Hide ? "display:none" :null)">
         <span class="tnt-icon material-symbols-outlined tnt-theme-toggle-icon"></span>
-        <select title="Select Theme and Contrast" class="tnt-theme-select">
+        <select title="Select Theme and Contrast" aria-label="Select theme and contrast" class="tnt-theme-select">
             @{
                 var showBothOptions = AllowThemeSelection && AllowContrastSelection;
                 var showThemeOnly = AllowThemeSelection && !AllowContrastSelection;

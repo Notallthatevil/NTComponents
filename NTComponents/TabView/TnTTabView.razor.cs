@@ -105,11 +105,20 @@ public partial class TnTTabView {
     /// <param name="tabChild">The child tab to add.</param>
     public void AddTabChild(TnTTabChild tabChild) => _tabChildren.Add(tabChild);
 
+    internal int InitialActiveIndex => _tabChildren.FindIndex(child => !child.Disabled);
+
+    internal string TabListElementId => $"{ComponentIdentifier}-tablist";
+
     /// <summary>
     ///     Removes a child tab from the tab view.
     /// </summary>
     /// <param name="tabChild">The child to remove</param>
     public void RemoveTabChild(TnTTabChild tabChild) => _tabChildren.Remove(tabChild);
+
+    internal bool IsTabSelected(TnTTabChild tabChild) {
+        var activeIndex = InitialActiveIndex;
+        return activeIndex >= 0 && _tabChildren.IndexOf(tabChild) == activeIndex;
+    }
 }
 
 /// <summary>

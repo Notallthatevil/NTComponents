@@ -1,5 +1,5 @@
 ﻿@typeparam TGridItem
 @inherits TnTDataGridCell<TGridItem>
-<th @attributes="Column.AdditionalAttributes" class="@ElementClass" style="@ElementStyle">
+<th @attributes="Column.AdditionalAttributes" class="@ElementClass" style="@ElementStyle" aria-sort="@Column.AriaSort">
     @Column.RenderHeaderContent
 </th> 

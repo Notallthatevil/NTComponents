@@ -10,6 +10,12 @@ namespace NTComponents;
 public partial class TnTFabButton {
 
     /// <summary>
+    ///     Provides an explicit accessible name for the button when it does not contain visible text.
+    /// </summary>
+    [Parameter]
+    public string? AriaLabel { get; set; }
+
+    /// <summary>
     ///    The container that the button is inside of.
     /// </summary>
     [CascadingParameter]
@@ -102,4 +108,9 @@ public partial class TnTFabButton {
     /// </summary>
     [Parameter]
     public ButtonType Type { get; set; }
+
+    internal string? AccessibleLabel =>
+        AdditionalAttributes?.ContainsKey("aria-label") == true || AdditionalAttributes?.ContainsKey("aria-labelledby") == true
+            ? null
+            : AriaLabel ?? ElementTitle;
 }

@@ -5,6 +5,8 @@
 <tr @attributes="AdditionalAttributes"
     class="@_elementClass"
     @onclick="@(Context.RowClickCallback.HasDelegate ? () => Context.RowClickCallback.InvokeAsync(Item) : null!)"
+    tabindex="@(Context.RowClickCallback.HasDelegate ? "0" : null)"
+    @onkeydown="HandleKeyDownAsync"
     @key="Context.ItemKey.Invoke(Item)" style="@($"height: {Context.Grid.ItemSize}px;max-height:{Context.Grid.ItemSize}px")">
     @foreach (var column in Context.Columns) {
         <TnTDataGridBodyCell TGridItem="@TGridItem" Column="@column" Item="@Item" />

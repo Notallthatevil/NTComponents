@@ -20,7 +20,10 @@
 
             <div id="@metadata.Id"
                  class="@CssClassBuilder.Create().AddClass("tnt-toast").AddClass("tnt-closing", toast.Closing).Build()"
-                style="@CssStyleBuilder.Create().AddVariable("tnt-toast-background-color", toast.BackgroundColor).AddVariable("tnt-toast-text-color", toast.TextColor).AddVariable("timeout", $"{toast.Timeout}s", toast.Timeout > 0).Build()"
+                 style="@CssStyleBuilder.Create().AddVariable("tnt-toast-background-color", toast.BackgroundColor).AddVariable("tnt-toast-text-color", toast.TextColor).AddVariable("timeout", $"{toast.Timeout}s", toast.Timeout > 0).Build()"
+                 role="status"
+                 aria-live="polite"
+                 aria-atomic="true"
                  @key="toast">
                 @if (autoDismissScript is not null) {
                     <script type="text/javascript">@((Microsoft.AspNetCore.Components.MarkupString)autoDismissScript)</script>
@@ -33,12 +36,13 @@
 
                     @if (toast.ShowClose) {
                         if (RendererInfo.IsInteractive) {
-                            <TnTImageButton Icon="@MaterialIcon.Close" TextColor="@TnTColor.Outline" BackgroundColor="@TnTColor.Transparent" OnClickCallback="@(() => _service.CloseAsync(toast))" />
+                            <TnTImageButton Icon="@MaterialIcon.Close" AriaLabel="Dismiss notification" TextColor="@TnTColor.Outline" BackgroundColor="@TnTColor.Transparent" OnClickCallback="@(() => _service.CloseAsync(toast))" />
                         }
                         else {
                             <button class="@_ssrCloseButtonClass"
                                     style="@_ssrCloseButtonStyle"
                                     type="button"
+                                    aria-label="Dismiss notification"
                                     onclick="@SsrCloseOnClick">
                                 <div class="@_ssrCloseButtonLayerClass">
                                     @MaterialIcon.Close.Render()

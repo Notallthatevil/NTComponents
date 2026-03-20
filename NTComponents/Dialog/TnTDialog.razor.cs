@@ -152,6 +152,7 @@ public partial class TnTDialog {
                         builder.AddComponentParameter(51, nameof(TnTImageButton.Appearance), ButtonAppearance.Text);
                         builder.AddComponentParameter(52, nameof(TnTImageButton.TextColor), dialog.Options.TextColor);
                         builder.AddComponentParameter(53, nameof(TnTImageButton.ButtonSize), Size.XS);
+                        builder.AddComponentParameter(54, nameof(TnTImageButton.AriaLabel), "Close dialog");
                         builder.AddComponentParameter(60, nameof(TnTImageButton.OnClickCallback), EventCallback.Factory.Create<MouseEventArgs>(this, dialog.CloseAsync));
                         builder.CloseComponent();
                     }

@@ -18,7 +18,12 @@
 			@HeaderCellItemTemplate(this)
 		}
 		else {
-			<div class="@_headerClass" @onclick="@(Sortable? SortAsync : null!)">
+			<div class="@_headerClass"
+                 role="@(Sortable ? "button" : null)"
+                 tabindex="@(Sortable ? "0" : null)"
+                 aria-label="@(Sortable ? SortActionLabel : null)"
+                 @onclick="@(Sortable? SortAsync : null!)"
+                 @onkeydown="@(Sortable ? HandleSortKeyDownAsync : null!)">
 				<span class="tnt-column-header-title">
 					@Title
 				</span>

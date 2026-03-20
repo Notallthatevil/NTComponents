@@ -159,6 +159,23 @@ public class TnTToast_Tests : BunitContext {
     }
 
     [Fact]
+    public async Task Toast_Renders_Live_Region_Attributes() {
+        // Arrange
+        var cut = RenderToastComponent();
+        var service = Services.GetRequiredService<ITnTToastService>();
+
+        // Act
+        await service.ShowAsync("Test Title", "Test Message");
+        cut.Render();
+
+        // Assert
+        var toastElement = cut.Find(".tnt-toast");
+        toastElement.GetAttribute("role").Should().Be("status");
+        toastElement.GetAttribute("aria-live").Should().Be("polite");
+        toastElement.GetAttribute("aria-atomic").Should().Be("true");
+    }
+
+    [Fact]
     public async Task ShowErrorAsync_CreatesErrorToast() {
         // Arrange
         var cut = RenderToastComponent();

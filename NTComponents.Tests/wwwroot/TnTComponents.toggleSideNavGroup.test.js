@@ -56,4 +56,28 @@ describe('NTComponents.toggleSideNavGroup', () => {
 
       expect(() => NTComponents.toggleSideNavGroup(event)).not.toThrow();
    });
+
+   test('does not toggle disabled side nav groups', () => {
+      const group = document.createElement('div');
+      group.className = 'tnt-side-nav-menu-group';
+
+      const header = document.createElement('div');
+      header.className = 'tnt-side-nav-menu-group-label';
+      header.setAttribute('aria-disabled', 'true');
+      group.appendChild(header);
+
+      const toggler = document.createElement('div');
+      toggler.className = 'tnt-side-nav-menu-group-toggler';
+      group.appendChild(toggler);
+
+      document.body.appendChild(group);
+
+      const event = new Event('click');
+      Object.defineProperty(event, 'currentTarget', { value: header, configurable: true });
+      Object.defineProperty(event, 'target', { value: header, configurable: true });
+
+      NTComponents.toggleSideNavGroup(event);
+
+      expect(toggler.classList.contains('tnt-toggle')).toBe(false);
+   });
 });

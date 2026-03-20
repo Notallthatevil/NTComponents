@@ -81,6 +81,10 @@ public partial class TnTSideNavMenuGroup {
     [Parameter]
     public TnTColor? OnTintColor { get; set; }
 
+    internal string ContentElementId => $"{ComponentIdentifier}-content";
+
+    internal string ToggleElementLabel => string.IsNullOrWhiteSpace(ElementTitle) ? $"Toggle {Label}" : ElementTitle!;
+
     /// <inheritdoc />
     [Parameter]
     public TextAlign? TextAlignment { get; set; }

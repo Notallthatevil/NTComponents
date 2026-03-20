@@ -26,7 +26,7 @@
     }
 
     @if (CloseButtonClicked.HasDelegate) {
-        <TnTImageButton OnClickCallback="CloseButtonClicked" Icon="@MaterialIcon.Close" BackgroundColor="TnTColor.Transparent" TextColor="@(Value? OnTintColor : TextColor)" TintColor="TintColor" OnTintColor="OnTintColor" ButtonSize="Size.XS" />
+        <TnTImageButton OnClickCallback="CloseButtonClicked" Icon="@MaterialIcon.Close" AriaLabel="Remove chip" BackgroundColor="TnTColor.Transparent" TextColor="@(Value? OnTintColor : TextColor)" TintColor="TintColor" OnTintColor="OnTintColor" ButtonSize="Size.XS" />
     }
 
     @if (EnableRipple) {

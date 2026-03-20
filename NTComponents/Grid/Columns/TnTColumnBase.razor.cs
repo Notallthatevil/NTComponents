@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
+using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.Web.Virtualization;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -144,6 +145,14 @@ public abstract partial class TnTColumnBase<[DynamicallyAccessedMembers(Dynamica
     /// </summary>
     private int? _sortIndex => Context.GetSortIndex(this);
 
+    internal string? AriaSort => IsSortedOn switch {
+        SortDirection.Ascending => "ascending",
+        SortDirection.Descending => "descending",
+        _ => Sortable ? "none" : null
+    };
+
+    internal string SortActionLabel => !string.IsNullOrWhiteSpace(Title) ? $"Sort by {Title}" : "Sort column";
+
     /// <summary>
     ///     Disposes the column and unregisters it from the grid context.
     /// </summary>
@@ -165,6 +174,12 @@ public abstract partial class TnTColumnBase<[DynamicallyAccessedMembers(Dynamica
     public async Task SortAsync() {
         Context.SortByColumn(this);
         await Context.RefreshAsync();
+    }
+
+    internal async Task HandleSortKeyDownAsync(KeyboardEventArgs args) {
+        if (Sortable && (args.Key == "Enter" || args.Key == " " || args.Key == "Spacebar")) {
+            await SortAsync();
+        }
     }
 
     /// <summary>

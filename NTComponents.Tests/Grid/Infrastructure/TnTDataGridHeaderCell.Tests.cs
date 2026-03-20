@@ -136,6 +136,22 @@ public class TnTDataGridHeaderCell_Tests : BunitContext {
     }
 
     [Fact]
+    public void Sortable_Header_Renders_Aria_Sort() {
+        // Arrange
+        var column = new TestTemplateColumn<TestGridItem> {
+            Sortable = true,
+            Title = "Name"
+        };
+
+        // Act
+        var cut = RenderHeaderCellWithColumn(column);
+
+        // Assert
+        var th = cut.Find("th");
+        th.GetAttribute("aria-sort").Should().Be("none");
+    }
+
+    [Fact]
     public void Renders_WithAdditionalAttributeClasses() {
         // Arrange
         var column = CreateTestColumn("Header");
