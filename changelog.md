@@ -1,3 +1,10 @@
+## [1.38.3](https://github.com/Notallthatevil/NTComponents/compare/v1.38.2...v1.38.3) (2026-03-20)
+
+
+### Bug Fixes
+
+* **accordion:** correct content rendering logic and add test ([7a92aca](https://github.com/Notallthatevil/NTComponents/commit/7a92aca111798f00542702631684c589f2cb3b9c))
+
 ## [1.38.2](https://github.com/Notallthatevil/NTComponents/compare/v1.38.1...v1.38.2) (2026-03-19)
 
 
