@@ -1,3 +1,10 @@
+## [1.38.4](https://github.com/Notallthatevil/NTComponents/compare/v1.38.3...v1.38.4) (2026-03-20)
+
+
+### Bug Fixes
+
+* **wizard:** add HideStepsInsteadOfRemovingFromDom option ([7625e65](https://github.com/Notallthatevil/NTComponents/commit/7625e650c8f4406f4e2e0e5910e4bd0982b1c902))
+
 ## [1.38.3](https://github.com/Notallthatevil/NTComponents/compare/v1.38.2...v1.38.3) (2026-03-20)
 
 
