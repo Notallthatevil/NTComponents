@@ -14,7 +14,10 @@
     }
 </TnTInputSelect>
 
-<NTComponents.TnTWizard Title="Wizard" LayoutDirection="@_layoutDirection">
+<NTComponents.TnTWizard Title="Wizard" LayoutDirection="@_layoutDirection" HideStepsInsteadOfRemovingFromDom="true">
+       <NTComponents.TnTWizardFormStep Model="@_model2" Title="Step 2">
+        <TnTInputNumeric @bind-Value="_model2.Age" Label="Age" Placeholder="Enter your age" />
+    </NTComponents.TnTWizardFormStep>
     <NTComponents.TnTWizardFormStep Model="@_model1" Title="Step 1" SubTitle="My subtitle" Icon="@MaterialIcon.Search">
         <TnTInputText @bind-Value="_model1.Name" Label="Name" Placeholder="Enter your name" />
         <TnTInputText @bind-Value="_model1.Name" Label="Name" Placeholder="Enter your name" />
@@ -90,9 +93,7 @@
         <TnTInputText @bind-Value="_model1.Name" Label="Name" Placeholder="Enter your name" />
         <TnTInputText @bind-Value="_model1.Name" Label="Name" Placeholder="Enter your name" />
     </NTComponents.TnTWizardFormStep>
-    <NTComponents.TnTWizardFormStep Model="@_model2" Title="Step 2">
-        <TnTInputNumeric @bind-Value="_model2.Age" Label="Age" Placeholder="Enter your age" />
-    </NTComponents.TnTWizardFormStep>
+
 
     <NTComponents.TnTWizardStep Title="Step 3">
         I am just content

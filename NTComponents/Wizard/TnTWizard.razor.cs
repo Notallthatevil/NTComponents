@@ -92,6 +92,12 @@ public partial class TnTWizard : TnTComponentBase, IDisposable {
     public string? Title { get; set; }
 
     /// <summary>
+    /// If set, steps are instead rendered with display:none instead of being removed from the DOM. This is useful if you don't want to lose the internal state of steps when navigating between them, but it can have performance implications if you have a lot of complex steps.
+    /// </summary>
+    [Parameter]
+    public bool HideStepsInsteadOfRemovingFromDom { get; set; }
+
+    /// <summary>
     ///     Gets the current step in the wizard.
     /// </summary>
     private TnTWizardStepBase? _currentStep => _steps.ElementAtOrDefault(_stepIndex);
