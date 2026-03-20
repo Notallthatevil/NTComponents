@@ -9,7 +9,7 @@
         The file selection is restored automatically via <code>SelectedFiles</code>.
     </p>
 
-    <TnTWizard Title="File Upload Wizard">
+    <TnTWizard Title="File Upload Wizard" HideStepsInsteadOfRemovingFromDom="true">
         <TnTWizardFormStep Model="@_step1" Title="Step 1" SubTitle="Your details">
             <TnTInputText @bind-Value="_step1.Name" Label="Your name" Placeholder="Enter your name" />
         </TnTWizardFormStep>
@@ -19,7 +19,6 @@
                          Multiple="true"
                          MaximumFileCount="5"
                          ShowRemoveButton="true"
-                         SelectedFiles="@_selectedFiles"
                          OnSelectionChanged="files => _selectedFiles = files" />
         </TnTWizardStep>
 

@@ -30,18 +30,24 @@
 	</ol>
 	@if (HideStepsInsteadOfRemovingFromDom) {
 		@foreach (var step in _steps) {
-			@if (step == _currentStep) {
-				@RenderCurrentStep
-			}
-			else {
-				<div class="tnt-wizard-hidden-step" style="display:none;">
+			var stepClass = step == _currentStep ? "tnt-wizard-current-step" : "tnt-wizard-hidden-step";
+			var hiddenStyle = step == _currentStep ? string.Empty : "display:none;";
+			<div @key="step" class="@stepClass" style="@hiddenStyle">
+				@if (step is not null) {
 					@step.Render()
-				</div>
-			}
+				}
+			</div>
 		}
 	}
 	else {
-		@RenderCurrentStep
+		<div class="tnt-wizard-content" @onkeypress="HandleKeyPressAsync">
+			@if (_currentStep is not null) {
+				@_currentStep.Render()
+			}
+			else {
+				<text>No step provided</text>
+			}
+		</div>
 	}
 	<div class="tnt-wizard-buttons">
 		@if (_stepIndex > 0) {
@@ -66,17 +72,3 @@
 		@ChildContent
 	</CascadingValue>
 </div>
-
-
-@code {
-	private void RenderCurrentStep(RenderTreeBuilder __builder) {
-		<div class="tnt-wizard-content" @onkeypress="HandleKeyPressAsync">
-			@if (_currentStep is not null) {
-				@_currentStep.Render()
-			}
-			else {
-				<text>No step provided</text>
-			}
-		</div>
-	}
-}
