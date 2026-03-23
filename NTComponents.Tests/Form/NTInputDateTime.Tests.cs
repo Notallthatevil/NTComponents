@@ -313,10 +313,15 @@ public class NTInputDateTime_Tests : BunitContext {
     public void MaterialPicker_Is_Enabled_By_Default_For_DateTime() {
         // Arrange & Act
         var cut = RenderInputDateTime();
+        var input = cut.Find("input");
+        var trigger = cut.Find("[data-tnt-dtp-trigger='true']");
 
         // Assert
         cut.FindAll("[data-tnt-dtp-picker='true']").Should().HaveCount(1);
-        cut.Find("input").GetAttribute("data-tnt-dtp-input").Should().Be("true");
+        input.GetAttribute("data-tnt-dtp-input").Should().Be("true");
+        input.GetAttribute("data-tnt-dtp-open-on-focus").Should().Be("false");
+        trigger.GetAttribute("tabindex").Should().Be("-1");
+        trigger.TextContent.Should().Contain("calendar_month");
     }
 
     [Fact]
@@ -334,11 +339,12 @@ public class NTInputDateTime_Tests : BunitContext {
     [Fact]
     public void MaterialPicker_Not_Rendered_When_Disabled() {
         // Arrange & Act
-        var cut = RenderInputDateTime(configure: p => p.Add(c => c.EnableMaterialPicker, false));
+        var cut = RenderInputDateTime(configure: p => p.Add(c => c.EnableCustomPicker, false));
 
         // Assert
         cut.FindAll("[data-tnt-dtp-picker='true']").Should().BeEmpty();
         cut.Find("input").GetAttribute("data-tnt-dtp-input").Should().BeNull();
+        cut.FindAll("[data-tnt-dtp-trigger='true']").Should().BeEmpty();
     }
 
     [Fact]

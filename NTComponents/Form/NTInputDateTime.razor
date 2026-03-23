@@ -3,9 +3,11 @@
 @typeparam DateTimeType
 @inherits TnTInputBase<DateTimeType>
 
-@base.BuildRenderTree
+<div class="nt-input-date-time-container">
+	@base.BuildRenderTree
+</div>
 
-@if (UseMaterialPicker) {
+@if (UseCustomPicker) {
 	<div id="@PickerPopupId"
 		 class="tnt-dtp-overlay tnt-dtp-mode-@PickerModeValue"
 		 data-tnt-dtp-picker="true"
@@ -133,20 +135,33 @@
 			   min="@GetMinValue()"
 			   max="@GetMaxValue()"
 			   class="tnt-dtp-input"
-			   data-tnt-dtp-input="@(UseMaterialPicker ? "true" : null)"
-			   data-tnt-dtp-mode="@(UseMaterialPicker ? PickerModeValue : null)"
-			   data-tnt-dtp-target="@(UseMaterialPicker ? PickerPopupId : null)"
-			   data-tnt-dtp-open-on-focus="@(OpenPickerOnFocus ? "true" : "false")"
-			   data-tnt-dtp-disabled-dates="@(UseMaterialPicker ? DisabledDateValuesAttribute : null)"
-			   data-tnt-dtp-disabled-times="@(UseMaterialPicker ? DisabledTimeValuesAttribute : null)"
-			   aria-haspopup="@(UseMaterialPicker ? "dialog" : null)"
-			   aria-controls="@(UseMaterialPicker ? PickerPopupId : null)"
+			   data-tnt-dtp-input="@(UseCustomPicker ? "true" : null)"
+			   data-tnt-dtp-mode="@(UseCustomPicker ? PickerModeValue : null)"
+			   data-tnt-dtp-target="@(UseCustomPicker ? PickerPopupId : null)"
+			   data-tnt-dtp-open-on-focus="@(UseCustomPicker ? "false" : null)"
+			   data-tnt-dtp-disabled-dates="@(UseCustomPicker ? DisabledDateValuesAttribute : null)"
+			   data-tnt-dtp-disabled-times="@(UseCustomPicker ? DisabledTimeValuesAttribute : null)"
+			   aria-haspopup="@(UseCustomPicker ? "dialog" : null)"
+			   aria-controls="@(UseCustomPicker ? PickerPopupId : null)"
 			   onkeydown="NTComponents.formKeyDownSupportingTextHandler(event)"
 			   @bind-value:get="@CurrentValueAsString"
 			   @bind-value:set="(newValue) => OnInputAsync(newValue)"
 			   @bind-value:event="@(BindOnInput ? "oninput" : "onchange")"
 			   @onblur="@OnBlurAsync"
 			   @ref="Element" />
+
+		@if (UseCustomPicker) {
+			<button type="button"
+					class="tnt-dtp-trigger"
+					data-tnt-dtp-trigger="true"
+					aria-controls="@PickerPopupId"
+					aria-label="@PickerTriggerAriaLabel"
+					tabindex="-1"
+					disabled="@FieldDisabled"
+					@onmousedown:preventDefault="true">
+				@MaterialIcon.CalendarMonth.Render("tnt-dtp-trigger-icon")
+			</button>
+		}
 
 	}
 }

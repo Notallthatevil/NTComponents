@@ -3,34 +3,104 @@
 @use '../Styles/_Variables/_measurements.scss' as measurements;
 @use '../Styles/_Variables/_typescale.scss' as typescale;
 
-::deep input.tnt-dtp-input[data-tnt-dtp-input='true'] {
-    &[type='date'],
-    &[type='month'],
-    &[type='datetime-local'],
-    &[type='time'] {
+.nt-input-date-time-container {
+    width: 100%;
+    min-width: 0;
+
+    ::deep .tnt-input-container {
+        min-width: 0;
+    }
+
+    ::deep .tnt-input.tnt-input {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+        ::deep .tnt-input.tnt-input:has(.tnt-dtp-trigger):has(.tnt-start-icon):has(.tnt-end-icon) {
+            grid-template-areas: "pad1 start-icon pad2 text pad3 end-icon pad4 trigger-icon pad5";
+            grid-template-columns: 12px 24px 16px 1fr 16px 24px 8px 24px 12px;
+        }
+
+        ::deep .tnt-input.tnt-input:has(.tnt-dtp-trigger):has(.tnt-start-icon):not(:has(.tnt-end-icon)) {
+            grid-template-areas: "pad1 start-icon pad2 text pad3 trigger-icon pad4";
+            grid-template-columns: 12px 24px 16px 1fr 16px 24px 12px;
+        }
+
+        ::deep .tnt-input.tnt-input:has(.tnt-dtp-trigger):has(.tnt-end-icon):not(:has(.tnt-start-icon)) {
+            grid-template-areas: "pad1 text pad2 end-icon pad3 trigger-icon pad4";
+            grid-template-columns: 16px 1fr 16px 24px 8px 24px 12px;
+        }
+
+        ::deep .tnt-input.tnt-input:has(.tnt-dtp-trigger):not(:has(.tnt-start-icon)):not(:has(.tnt-end-icon)) {
+            grid-template-areas: "pad1 text pad2 trigger-icon pad3";
+            grid-template-columns: 16px 1fr 16px 24px 12px;
+        }
+
+    ::deep .tnt-dtp-trigger {
+        grid-area: trigger-icon;
+        align-self: center;
+        justify-self: center;
         appearance: none;
         -webkit-appearance: none;
-        -moz-appearance: textfield;
-        padding-left: 0;
-        padding-right: 0;
-    }
-
-    &::-webkit-calendar-picker-indicator,
-    &::-webkit-time-picker-indicator {
-        display: none;
-        opacity: 0;
-        pointer-events: none;
-        width: 0;
-        min-width: 0;
+        border: none;
         margin: 0;
         padding: 0;
+        min-width: 24px;
+        min-height: 24px;
+        display: inline-grid;
+        place-items: center;
+        background-color: transparent;
+        color: colors.$tnt-color-on-surface-variant;
+        cursor: pointer;
+        z-index: 1;
+
+        &:hover {
+            color: colors.$tnt-color-on-surface;
+        }
+
+        &:focus {
+            outline: none;
+        }
+
+        &:disabled {
+            cursor: default;
+            opacity: 0.38;
+        }
     }
 
-    &::-webkit-calendar-picker-indicator {
-        border-radius: 50%;
-        background-color: color-mix(in srgb, #ffffff 50%, colors.$tnt-color-surface-container-high);
-        left: 8px;
-        position: absolute;
+    ::deep .tnt-dtp-trigger-icon {
+        pointer-events: none;
+    }
+
+    ::deep input {
+        min-width: 0;
+        max-width: 100%;
+        width: 100%;
+
+        &.tnt-dtp-input[data-tnt-dtp-input='true'] {
+
+            &[type='date'],
+            &[type='month'],
+            &[type='datetime-local'],
+            &[type='time'] {
+                appearance: none;
+                -webkit-appearance: none;
+                -moz-appearance: textfield;
+            }
+
+            &::-webkit-calendar-picker-indicator,
+            &::-webkit-time-picker-indicator {
+                display: none;
+                pointer-events: none;
+            }
+
+            &::-webkit-calendar-picker-indicator {
+                border-radius: 50%;
+                background-color: color-mix(in srgb, #ffffff 50%, colors.$tnt-color-surface-container-high);
+                left: 8px;
+                position: absolute;
+            }
+        }
     }
 }
 

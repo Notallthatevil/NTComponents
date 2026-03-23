@@ -59,7 +59,15 @@ describe('NTInputDateTime picker behavior', () => {
         input.dataset.tntDtpInput = 'true';
         input.dataset.tntDtpTarget = pickerId;
         input.dataset.tntDtpMode = mode;
-        input.dataset.tntDtpOpenOnFocus = 'true';
+        input.dataset.tntDtpOpenOnFocus = 'false';
+
+        const label = document.createElement('label');
+        label.appendChild(input);
+
+        const trigger = document.createElement('button');
+        trigger.type = 'button';
+        trigger.dataset.tntDtpTrigger = 'true';
+        label.appendChild(trigger);
 
         if (min) {
             input.min = min;
@@ -157,9 +165,10 @@ describe('NTInputDateTime picker behavior', () => {
         actions.appendChild(confirmButton);
         picker.appendChild(actions);
 
-        document.body.appendChild(input);
+        document.body.appendChild(label);
         document.body.appendChild(picker);
 
+        setRect(label, { height: 48, left: 80, top: 84, width: 240 });
         setRect(input, { height: 36, left: 80, top: 90, width: 240 });
         setRect(picker, { height: 300, left: 0, top: 0, width: 320 });
 
@@ -167,13 +176,19 @@ describe('NTInputDateTime picker behavior', () => {
             confirmButton,
             hourInput,
             input,
+            label,
             minuteInput,
             monthLabel,
             nowButton,
             picker,
             secondInput,
+            trigger,
             yearLabel,
         };
+    }
+
+    function openPicker(trigger) {
+        trigger.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     }
 
     beforeEach(() => {
@@ -200,11 +215,11 @@ describe('NTInputDateTime picker behavior', () => {
         jest.restoreAllMocks();
     });
 
-    test('opens on focus and shows current month/year when date value is empty', () => {
-        const { input, monthLabel, picker } = createPickerFixture({ mode: 'date', value: '' });
+    test('opens from trigger and shows current month/year when date value is empty', () => {
+        const { input, monthLabel, picker, trigger } = createPickerFixture({ mode: 'date', value: '' });
 
         onLoad(null, null);
-        input.dispatchEvent(new Event('focus'));
+        openPicker(trigger);
 
         const expectedLabel = new Intl.DateTimeFormat(undefined, {
             month: 'long',
@@ -213,40 +228,41 @@ describe('NTInputDateTime picker behavior', () => {
 
         expect(picker.classList.contains('tnt-dtp-open')).toBe(true);
         expect(monthLabel.textContent).toBe(expectedLabel);
+        expect(document.activeElement).toBe(input);
     });
 
     test('now populates datetime input with current date and time', () => {
-        const { input, nowButton } = createPickerFixture({ mode: 'datetime', value: '' });
+        const { input, nowButton, trigger } = createPickerFixture({ mode: 'datetime', value: '' });
 
         onLoad(null, null);
-        input.dispatchEvent(new Event('focus'));
+        openPicker(trigger);
         nowButton.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 
         expect(input.value).toMatch(/^2026-03-15T14:05:09(?:\.000)?$/);
     });
 
     test('now populates month input with current month', () => {
-        const { input, nowButton } = createPickerFixture({ mode: 'month', value: '' });
+        const { input, nowButton, trigger } = createPickerFixture({ mode: 'month', value: '' });
 
         onLoad(null, null);
-        input.dispatchEvent(new Event('focus'));
+        openPicker(trigger);
         nowButton.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 
         expect(input.value).toBe('2026-03');
     });
 
     test('now populates time input with current time', () => {
-        const { input, nowButton } = createPickerFixture({ mode: 'time', value: '' });
+        const { input, nowButton, trigger } = createPickerFixture({ mode: 'time', value: '' });
 
         onLoad(null, null);
-        input.dispatchEvent(new Event('focus'));
+        openPicker(trigger);
         nowButton.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 
         expect(input.value).toBe('14:05:09');
     });
 
     test('min and max dates disable out-of-range calendar days', () => {
-        const { input, picker } = createPickerFixture({
+        const { input, picker, trigger } = createPickerFixture({
             max: '2026-03-20',
             min: '2026-03-10',
             mode: 'date',
@@ -254,7 +270,7 @@ describe('NTInputDateTime picker behavior', () => {
         });
 
         onLoad(null, null);
-        input.dispatchEvent(new Event('focus'));
+        openPicker(trigger);
 
         const outOfRange = picker.querySelector('[data-tnt-dtp-year="2026"][data-tnt-dtp-month="2"][data-tnt-dtp-day="5"]');
         const inRange = picker.querySelector('[data-tnt-dtp-year="2026"][data-tnt-dtp-month="2"][data-tnt-dtp-day="15"]');
@@ -266,14 +282,14 @@ describe('NTInputDateTime picker behavior', () => {
     });
 
     test('disabled date values are blocked in the calendar', () => {
-        const { input, picker } = createPickerFixture({
+        const { input, picker, trigger } = createPickerFixture({
             disabledDates: '2026-03-15',
             mode: 'date',
             value: '',
         });
 
         onLoad(null, null);
-        input.dispatchEvent(new Event('focus'));
+        openPicker(trigger);
 
         const disabledDate = picker.querySelector('[data-tnt-dtp-year="2026"][data-tnt-dtp-month="2"][data-tnt-dtp-day="15"]');
 
@@ -282,14 +298,14 @@ describe('NTInputDateTime picker behavior', () => {
     });
 
     test('disabled time values block confirm until time changes', () => {
-        const { confirmButton, input, secondInput } = createPickerFixture({
+        const { confirmButton, input, secondInput, trigger } = createPickerFixture({
             disabledTimes: '14:05:09',
             mode: 'time',
             value: '14:05:09',
         });
 
         onLoad(null, null);
-        input.dispatchEvent(new Event('focus'));
+        openPicker(trigger);
 
         expect(confirmButton.disabled).toBe(true);
 
@@ -304,30 +320,30 @@ describe('NTInputDateTime picker behavior', () => {
         const second = createPickerFixture({ mode: 'date' });
 
         onLoad(null, null);
-        first.input.dispatchEvent(new Event('focus'));
+        openPicker(first.trigger);
         onDispose(first.input, null);
 
-        second.input.dispatchEvent(new Event('focus'));
+        openPicker(second.trigger);
         onUpdate(null, null);
 
         expect(second.picker.classList.contains('tnt-dtp-open')).toBe(true);
     });
 
     test('tab on input closes picker', () => {
-        const { input, picker } = createPickerFixture({ mode: 'date', value: '' });
+        const { input, picker, trigger } = createPickerFixture({ mode: 'date', value: '' });
 
         onLoad(null, null);
-        input.dispatchEvent(new Event('focus'));
+        openPicker(trigger);
         input.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'Tab' }));
 
         expect(picker.classList.contains('tnt-dtp-open')).toBe(false);
     });
 
     test('enter on input confirms current selection and closes picker', () => {
-        const { input, picker } = createPickerFixture({ mode: 'date', value: '' });
+        const { input, picker, trigger } = createPickerFixture({ mode: 'date', value: '' });
 
         onLoad(null, null);
-        input.dispatchEvent(new Event('focus'));
+        openPicker(trigger);
         input.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'Enter' }));
 
         expect(input.value).toBe('2026-03-15');
@@ -346,31 +362,31 @@ describe('NTInputDateTime picker behavior', () => {
     });
 
     test('small viewport uses modal layout class', () => {
-        const { input, picker } = createPickerFixture({ mode: 'date', value: '' });
+        const { input, picker, trigger } = createPickerFixture({ mode: 'date', value: '' });
         Object.defineProperty(window, 'innerWidth', { configurable: true, value: 500 });
 
         onLoad(null, null);
-        input.dispatchEvent(new Event('focus'));
+        openPicker(trigger);
 
         expect(picker.classList.contains('tnt-dtp-modal')).toBe(true);
     });
 
     test('small viewport modal renders immediately without waiting for animation frame', () => {
-        const { input, picker } = createPickerFixture({ mode: 'date', value: '' });
+        const { picker, trigger } = createPickerFixture({ mode: 'date', value: '' });
         Object.defineProperty(window, 'innerWidth', { configurable: true, value: 500 });
         const rafSpy = jest.fn(() => 1);
         global.requestAnimationFrame = rafSpy;
 
         onLoad(null, null);
-        input.dispatchEvent(new Event('focus'));
+        openPicker(trigger);
 
         expect(rafSpy).not.toHaveBeenCalled();
         expect(picker.classList.contains('tnt-dtp-modal')).toBe(true);
         expect(picker.style.visibility).toBe('visible');
     });
 
-    test('click after focus does not trigger a second open render cycle', () => {
-        const { input } = createPickerFixture({ mode: 'date', value: '' });
+    test('clicking the input after trigger-open does not trigger a second open render cycle', () => {
+        const { input, trigger } = createPickerFixture({ mode: 'date', value: '' });
         const rafSpy = jest.fn(callback => {
             callback();
             return 1;
@@ -378,20 +394,20 @@ describe('NTInputDateTime picker behavior', () => {
         global.requestAnimationFrame = rafSpy;
 
         onLoad(null, null);
-        input.dispatchEvent(new Event('focus'));
+        openPicker(trigger);
         expect(rafSpy).toHaveBeenCalledTimes(1);
 
         input.dispatchEvent(new Event('click', { bubbles: true }));
         expect(rafSpy).toHaveBeenCalledTimes(1);
     });
 
-    test('small viewport click after focus does not reopen modal picker', () => {
-        const { input, picker } = createPickerFixture({ mode: 'date', value: '' });
+    test('small viewport input click after trigger-open does not reopen modal picker', () => {
+        const { input, picker, trigger } = createPickerFixture({ mode: 'date', value: '' });
         Object.defineProperty(window, 'innerWidth', { configurable: true, value: 500 });
         const setAttributeSpy = jest.spyOn(picker, 'setAttribute');
 
         onLoad(null, null);
-        input.dispatchEvent(new Event('focus'));
+        openPicker(trigger);
         input.dispatchEvent(new Event('click', { bubbles: true }));
 
         const openStateWrites = setAttributeSpy.mock.calls.filter(([name, value]) => name === 'aria-hidden' && value === 'false');
@@ -399,38 +415,30 @@ describe('NTInputDateTime picker behavior', () => {
     });
 
     test('desktop layout aligns picker left edge to the label left edge', () => {
-        const { input, picker } = createPickerFixture({ mode: 'date', value: '' });
-        const label = document.createElement('label');
-        document.body.appendChild(label);
-        label.appendChild(input);
-
+        const { input, label, picker, trigger } = createPickerFixture({ mode: 'date', value: '' });
         setRect(label, { height: 72, left: 36, top: 60, width: 520 });
         setRect(input, { height: 36, left: 180, top: 88, width: 240 });
 
         onLoad(null, null);
-        input.dispatchEvent(new Event('focus'));
+        openPicker(trigger);
 
         expect(picker.classList.contains('tnt-dtp-modal')).toBe(false);
         expect(picker.style.left).toBe('36px');
     });
 
     test('desktop layout offsets below label bounds to avoid label overlap', () => {
-        const { input, picker } = createPickerFixture({ mode: 'date', value: '' });
-        const label = document.createElement('label');
-        document.body.appendChild(label);
-        label.appendChild(input);
-
+        const { input, label, picker, trigger } = createPickerFixture({ mode: 'date', value: '' });
         setRect(label, { height: 100, left: 40, top: 60, width: 520 });
         setRect(input, { height: 36, left: 180, top: 88, width: 240 });
 
         onLoad(null, null);
-        input.dispatchEvent(new Event('focus'));
+        openPicker(trigger);
 
         expect(picker.classList.contains('tnt-dtp-modal')).toBe(false);
         expect(picker.style.top).toBe('166px');
     });
 
-    test('small viewport opens modal when input is already focused before load', () => {
+    test('small viewport does not auto-open when input is already focused before load', () => {
         const { input, picker } = createPickerFixture({ mode: 'date', value: '' });
         Object.defineProperty(window, 'innerWidth', { configurable: true, value: 500 });
 
@@ -439,7 +447,7 @@ describe('NTInputDateTime picker behavior', () => {
 
         onLoad(null, null);
 
-        expect(picker.classList.contains('tnt-dtp-open')).toBe(true);
-        expect(picker.classList.contains('tnt-dtp-modal')).toBe(true);
+        expect(picker.classList.contains('tnt-dtp-open')).toBe(false);
+        expect(picker.classList.contains('tnt-dtp-modal')).toBe(false);
     });
 });

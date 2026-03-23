@@ -593,8 +593,30 @@ function makePickerUntabbable(state) {
 
     const focusableElements = state.picker.querySelectorAll('button, input, select, textarea, a[href], [tabindex]');
     for (const element of focusableElements) {
-        element.setAttribute('tabindex', '-1');
+        if (element.getAttribute('tabindex') !== '-1') {
+            element.setAttribute('tabindex', '-1');
+        }
     }
+}
+
+function getRenderSignature(state) {
+    return [
+        state.mode,
+        state.viewYear,
+        state.viewMonth,
+        state.draft?.year,
+        state.draft?.month,
+        state.draft?.day,
+        state.draft?.hour,
+        state.draft?.minute,
+        state.draft?.second,
+        state.meridiem,
+        state.input?.value ?? '',
+        state.input?.min ?? '',
+        state.input?.max ?? '',
+        state.input?.dataset?.tntDtpDisabledDates ?? '',
+        state.input?.dataset?.tntDtpDisabledTimes ?? '',
+    ].join('|');
 }
 
 function renderPicker(state) {
@@ -602,6 +624,15 @@ function renderPicker(state) {
         return;
     }
 
+    const renderSignature = getRenderSignature(state);
+    if (state.lastRenderSignature === renderSignature) {
+        if (state.isOpen && (!state.isModal || !shouldUseModalLayout(state))) {
+            schedulePositionUpdate();
+        }
+        return;
+    }
+
+    state.lastRenderSignature = renderSignature;
     state.picker.classList.remove('tnt-dtp-mode-date', 'tnt-dtp-mode-month', 'tnt-dtp-mode-time', 'tnt-dtp-mode-datetime');
     state.picker.classList.add(`tnt-dtp-mode-${state.mode}`);
     state.picker.dataset.tntDtpMode = state.mode;
@@ -632,6 +663,7 @@ function isTargetInsideState(state, target) {
         return false;
     }
 
+    const label = state.label ?? state.input?.closest?.('label') ?? state.input?.labels?.[0] ?? null;
     const surface = state.surface ?? state.picker?.querySelector?.('[data-tnt-dtp-surface]');
     const targetIsBackdrop = state.isModal && state.picker === target;
 
@@ -639,7 +671,7 @@ function isTargetInsideState(state, target) {
         return false;
     }
 
-    return state.input?.contains(target) || surface?.contains(target) || (!state.isModal && state.picker?.contains(target));
+    return label?.contains(target) || surface?.contains(target) || (!state.isModal && state.picker?.contains(target));
 }
 
 function getLabelAnchorRect(state) {
@@ -802,6 +834,10 @@ function openPicker(state) {
     }
 
     renderPicker(state);
+
+    if (document.activeElement !== state.input && state.input?.focus) {
+        state.input.focus({ preventScroll: true });
+    }
 }
 
 function handleDaySelection(state, button) {
@@ -965,6 +1001,7 @@ function syncDraftFromTimeFields(state) {
 }
 
 function configureStateFromAttributes(state) {
+    state.label = state.input?.closest?.('label') ?? state.input?.labels?.[0] ?? state.label ?? null;
     state.mode = parseMode(state);
     state.openOnFocus = state.input?.dataset?.tntDtpOpenOnFocus !== 'false';
     state.surface = state.picker?.querySelector?.('[data-tnt-dtp-surface]') ?? null;
@@ -973,15 +1010,30 @@ function configureStateFromAttributes(state) {
     state.draft = clampDraftToConstraints(state, state.draft);
 
     if (state.picker) {
-        state.picker.setAttribute('aria-hidden', state.isOpen ? 'false' : 'true');
+        const ariaHidden = state.isOpen ? 'false' : 'true';
+        if (state.picker.getAttribute('aria-hidden') !== ariaHidden) {
+            state.picker.setAttribute('aria-hidden', ariaHidden);
+        }
+
         if (!state.isOpen) {
-            state.picker.classList.remove('tnt-dtp-open');
-            state.picker.style.visibility = 'hidden';
+            if (state.picker.classList.contains('tnt-dtp-open')) {
+                state.picker.classList.remove('tnt-dtp-open');
+            }
+
+            if (state.picker.style.visibility !== 'hidden') {
+                state.picker.style.visibility = 'hidden';
+            }
         }
     }
 
-    makePickerUntabbable(state);
-    renderPicker(state);
+    if (!state.didMakePickerUntabbable) {
+        makePickerUntabbable(state);
+        state.didMakePickerUntabbable = true;
+    }
+
+    if (state.isOpen) {
+        renderPicker(state);
+    }
 }
 
 function createPickerState(input, picker) {
@@ -989,9 +1041,12 @@ function createPickerState(input, picker) {
         draft: createDefaultDraft(),
         disabledDateSet: new Set(),
         disabledTimeSet: new Set(),
+        didMakePickerUntabbable: false,
         input,
         isOpen: false,
         isModal: false,
+        label: input.closest?.('label') ?? input.labels?.[0] ?? null,
+        lastRenderSignature: null,
         maxDraft: null,
         meridiem: 'am',
         minDraft: null,
@@ -1009,10 +1064,23 @@ function createPickerState(input, picker) {
         }
     };
 
-    state.onInputClick = () => {
-        if (!state.isOpen) {
-            openPicker(state);
+    state.onLabelMouseDown = event => {
+        const trigger = event.target?.closest?.('[data-tnt-dtp-trigger="true"]');
+        if (!trigger) {
+            return;
         }
+
+        event.preventDefault();
+    };
+
+    state.onLabelClick = event => {
+        const trigger = event.target?.closest?.('[data-tnt-dtp-trigger="true"]');
+        if (!trigger) {
+            return;
+        }
+
+        event.preventDefault();
+        openPicker(state);
     };
 
     state.onInputInput = () => {
@@ -1045,7 +1113,7 @@ function createPickerState(input, picker) {
             return;
         }
 
-        if (event.key === 'ArrowDown' && event.altKey) {
+        if (event.key === 'ArrowDown' && event.altKey && state.openOnFocus) {
             event.preventDefault();
             openPicker(state);
         }
@@ -1103,9 +1171,10 @@ function createPickerState(input, picker) {
     };
 
     input.addEventListener('focus', state.onInputFocus);
-    input.addEventListener('click', state.onInputClick);
     input.addEventListener('input', state.onInputInput);
     input.addEventListener('keydown', state.onInputKeyDown);
+    state.label?.addEventListener('mousedown', state.onLabelMouseDown);
+    state.label?.addEventListener('click', state.onLabelClick);
     picker.addEventListener('click', state.onPickerClick);
     picker.addEventListener('input', state.onPickerInput);
     picker.addEventListener('keydown', state.onPickerKeyDown);
@@ -1122,9 +1191,10 @@ function cleanupPickerState(state) {
     closePicker(state);
 
     state.input?.removeEventListener('focus', state.onInputFocus);
-    state.input?.removeEventListener('click', state.onInputClick);
     state.input?.removeEventListener('input', state.onInputInput);
     state.input?.removeEventListener('keydown', state.onInputKeyDown);
+    state.label?.removeEventListener('mousedown', state.onLabelMouseDown);
+    state.label?.removeEventListener('click', state.onLabelClick);
     state.picker?.removeEventListener('click', state.onPickerClick);
     state.picker?.removeEventListener('input', state.onPickerInput);
     state.picker?.removeEventListener('keydown', state.onPickerKeyDown);
@@ -1184,6 +1254,39 @@ function synchronizePickers() {
     }
     else {
         detachGlobalHandlers();
+    }
+}
+
+function synchronizePickerForElement(element) {
+    if (!element?.matches?.('input[data-tnt-dtp-input="true"][data-tnt-dtp-target]')) {
+        synchronizePickers();
+        return;
+    }
+
+    const input = element;
+    const existing = pickerStateByInput.get(input);
+    if (existing) {
+        configureStateFromAttributes(existing);
+        if (shouldAutoOpenForFocusedInput(existing)) {
+            openPicker(existing);
+        }
+        return;
+    }
+
+    const targetId = input.dataset.tntDtpTarget;
+    const picker = targetId ? document.getElementById(targetId) : null;
+    if (!picker) {
+        return;
+    }
+
+    const state = createPickerState(input, picker);
+    pickerStateByInput.set(input, state);
+    if (shouldAutoOpenForFocusedInput(state)) {
+        openPicker(state);
+    }
+
+    if (pickerStateByInput.size > 0) {
+        attachGlobalHandlers();
     }
 }
 
@@ -1428,7 +1531,7 @@ export function onLoad(element, dotNetRef) {
 
 export function onUpdate(element, dotNetRef) {
     ensureMutationObserver();
-    synchronizePickers();
+    synchronizePickerForElement(element);
 }
 
 export function onDispose(element, dotNetRef) {

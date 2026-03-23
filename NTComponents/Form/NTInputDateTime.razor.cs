@@ -19,7 +19,7 @@ public partial class NTInputDateTime<[DynamicallyAccessedMembers(DynamicallyAcce
     ///     Gets or sets a value indicating whether the Material picker is enabled.
     /// </summary>
     [Parameter]
-    public bool EnableMaterialPicker { get; set; } = true;
+    public bool EnableCustomPicker { get; set; } = true;
 
     /// <summary>
     ///     Gets or sets the format string used to display the DateTime value.
@@ -209,9 +209,20 @@ public partial class NTInputDateTime<[DynamicallyAccessedMembers(DynamicallyAcce
     protected string? DisabledTimeValuesAttribute => BuildDisabledTimeValuesAttribute();
 
     /// <summary>
+    ///     Gets the accessible label used by the custom picker trigger.
+    /// </summary>
+    protected string PickerTriggerAriaLabel => _pickerMode switch {
+        DateTimePickerMode.Date => "Open calendar",
+        DateTimePickerMode.Month => "Open month picker",
+        DateTimePickerMode.Time => "Open time picker",
+        DateTimePickerMode.DateTime => "Open date and time picker",
+        _ => "Open picker"
+    };
+
+    /// <summary>
     ///     Gets a value indicating whether the Material picker is active for the current input type.
     /// </summary>
-    protected bool UseMaterialPicker => EnableMaterialPicker && _pickerMode is not DateTimePickerMode.None;
+    protected bool UseCustomPicker => EnableCustomPicker && _pickerMode is not DateTimePickerMode.None;
 
     /// <summary>
     ///     Gets a value indicating whether the picker "Now" quick action is rendered.
