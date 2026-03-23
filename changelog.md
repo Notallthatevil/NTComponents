@@ -1,3 +1,10 @@
+## [1.38.6](https://github.com/Notallthatevil/NTComponents/compare/v1.38.5...v1.38.6) (2026-03-23)
+
+
+### Bug Fixes
+
+* **NTInputDateTime:** add custom picker mode and trigger button ([45c7b63](https://github.com/Notallthatevil/NTComponents/commit/45c7b63f3f81267a9ca178f6955c8b967be046e2))
+
 ## [1.38.4](https://github.com/Notallthatevil/NTComponents/compare/v1.38.3...v1.38.4) (2026-03-20)
 
 
