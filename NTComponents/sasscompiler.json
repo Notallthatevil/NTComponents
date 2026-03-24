@@ -1,4 +1,4 @@
-﻿{
+{
 	"Arguments": "--error-css --style=expanded --no-source-map",
 	"GenerateScopedCss": true,
 	"ScopedCssFolders": [
@@ -23,6 +23,7 @@
 		"Scheduler",
 		"Script",
 		"Skeleton",
+		"Snackbar",
 		"Storage",
 		"TabView",
 		"Theming",
