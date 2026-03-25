@@ -76,7 +76,7 @@ Value: @_value
 	}
 
 	private async Task<IEnumerable<Item>> SearchFunc(string? search, CancellationToken cancellationToken = default) {
-		await Task.Delay(1000, cancellationToken);
+		await Task.Delay(10000, cancellationToken);
         if (!string.IsNullOrWhiteSpace(search)) {
 			return Items.Where(x => x.Name.Contains(search, StringComparison.OrdinalIgnoreCase));
 		}

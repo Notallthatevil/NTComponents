@@ -33,7 +33,7 @@
 					  SupportingText="@SupportingText"
 					  ErrorMessage="@_displayErrorMessage"
 					  @ref="_inputBox" />
-		<TnTProgressIndicator Show="@_searching" ProgressColor="ProgressColor" Size="Size.Small" />
+		<TnTProgressIndicator Show="@_searching" ProgressColor="ProgressColor" Size="@(Appearance is FormAppearance.OutlinedXS or FormAppearance.FilledXS ? Size.XS : Size.Small)" />
 	</span>
 	@if (_items.Any() || (!_items.Any() && !string.IsNullOrWhiteSpace(Value) && !_searching && !_itemSelected)) {
 		<div class="tnt-typeahead-content">
