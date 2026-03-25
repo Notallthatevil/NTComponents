@@ -1,3 +1,15 @@
+# [1.39.0](https://github.com/Notallthatevil/NTComponents/compare/v1.38.7...v1.39.0) (2026-03-25)
+
+
+### Bug Fixes
+
+* **typeahead:** add TextColor parameter for customization ([249b63e](https://github.com/Notallthatevil/NTComponents/commit/249b63e8b2b0b3407f0bc5856179c5f71893e776))
+
+
+### Features
+
+* **form:** add XS appearance variant and styles ([240fc4c](https://github.com/Notallthatevil/NTComponents/commit/240fc4cd6de1ba5d6697ca755970fc5153863acc))
+
 ## [1.38.7](https://github.com/Notallthatevil/NTComponents/compare/v1.38.6...v1.38.7) (2026-03-24)
 
 
