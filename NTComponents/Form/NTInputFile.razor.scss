@@ -105,6 +105,18 @@ $action-fg-color: var(--nt-input-file-action-fg-color);
                     }
                 }
             }
+
+            &.tnt-form-xs {
+                .tnt-label {
+                    transform: scale(0.75) translateY(-24px);
+                }
+
+                &:has(.tnt-start-icon) {
+                    .tnt-label {
+                        transform: scale(0.75) translate(-50px, -24px);
+                    }
+                }
+            }
         }
 
         &.tnt-form-filled:has(.tnt-label) {
@@ -116,6 +128,20 @@ $action-fg-color: var(--nt-input-file-action-fg-color);
             &.tnt-form-compact {
                 .tnt-label {
                     transform: scale(0.75) translateY(-14px);
+                }
+            }
+
+            &.tnt-form-xs {
+                .tnt-label {
+                    transform: scale(0.75) translateY(-15px);
+                }
+
+                ::deep input {
+                    transform: none;
+                }
+
+                .nt-input-file-upload-button {
+                    transform: none;
                 }
             }
 
@@ -254,7 +280,51 @@ $action-fg-color: var(--nt-input-file-action-fg-color);
             }
 
         }
+
+        &.tnt-form-xs {
+            ::deep input {
+                min-height: 24px;
+            }
+
+            .nt-input-element-container {
+                align-self: end;
+            }
+
+            ::deep input::file-selector-button {
+                height: 24px;
+                border-radius: 16px / 100%;
+                padding: 0 8px;
+                margin: 0 6px 0 0;
+            }
+
+            .nt-input-file-upload-button {
+                align-self: end;
+
+                ::deep button {
+                    min-height: 0;
+                }
+
+                ::deep .tnt-small-button-layer {
+                    height: 24px;
+                    padding: 0 8px;
+                    border-radius: 12px;
+                }
+            }
+        }
     }
 
     @include base.tnt-form-compact;
+    @include base.tnt-form-xs;
+
+    &:has(.tnt-form-xs) {
+        .tnt-input {
+            &.tnt-form-outlined {
+                grid-template-rows: 36px;
+            }
+
+            &.tnt-form-filled {
+                grid-template-rows: 40px;
+            }
+        }
+    }
 }

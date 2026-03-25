@@ -278,4 +278,114 @@
             grid-template-rows: 32px 16px;
         }
     }
+
+    &:has(.tnt-form-xs) {
+        @include base.tnt-supporting-text-xs;
+
+        &:has(.checkbox-appearance-span-and-flip) {
+            grid-template-rows: 22px 12px;
+
+            .tnt-supporting-text {
+                top: -4px;
+            }
+        }
+
+        .tnt-input {
+            .tnt-label {
+                @include typescale.tnt-body-small;
+            }
+
+            ::deep {
+                .tnt-start-icon, .tnt-end-icon {
+                    font-size: 18px;
+                }
+            }
+
+            .tnt-checkbox-overlay {
+                width: 28px;
+                height: 28px;
+            }
+
+            &.checkbox-appearnce-default {
+                min-width: 28px;
+                min-height: 28px;
+                grid-template-columns: 28px;
+                grid-template-rows: 28px;
+            }
+
+            &.checkbox-appearance-span-and-flip {
+                grid-template-rows: 22px;
+            }
+
+            &:has(.tnt-start-icon):has(.tnt-end-icon) {
+                grid-template-columns: 24px 28px 24px;
+            }
+
+            &:has(.tnt-start-icon):not(:has(.tnt-end-icon)) {
+                grid-template-columns: 24px 28px;
+            }
+
+            &:has(.tnt-end-icon):not(:has(.tnt-start-icon)) {
+                grid-template-columns: 28px 24px;
+            }
+
+            &:has(.tnt-start-icon):has(.tnt-end-icon):has(.tnt-label).checkbox-appearance-default {
+                grid-template-columns: 24px 28px auto 12px 24px;
+            }
+
+            &:has(.tnt-start-icon):not(:has(.tnt-end-icon)):has(.tnt-label).checkbox-appearance-default {
+                grid-template-columns: 24px 28px auto;
+            }
+
+            &:has(.tnt-end-icon):not(:has(.tnt-start-icon)):has(.tnt-label).checkbox-appearance-default {
+                grid-template-columns: 28px auto 12px 24px;
+            }
+
+            &:has(.tnt-label):not(:has(.tnt-start-icon)):not(:has(.tnt-end-icon)).checkbox-appearance-default {
+                grid-template-columns: 28px auto;
+            }
+
+            &:has(.tnt-start-icon):has(.tnt-end-icon):has(.tnt-label).checkbox-appearance-span-and-flip {
+                grid-template-columns: 24px 12px auto 28px 12px 24px;
+            }
+
+            &:has(.tnt-start-icon):not(:has(.tnt-end-icon)):has(.tnt-label).checkbox-appearance-span-and-flip {
+                grid-template-columns: 24px 12px auto 28px;
+            }
+
+            &:has(.tnt-end-icon):not(:has(.tnt-start-icon)):has(.tnt-label).checkbox-appearance-span-and-flip {
+                grid-template-columns: auto 28px 12px 24px;
+            }
+
+            &:has(.tnt-label):not(:has(.tnt-start-icon)):not(:has(.tnt-end-icon)).checkbox-appearance-span-and-flip {
+                grid-template-columns: auto 28px;
+            }
+
+            &:before {
+                height: 14px;
+                width: 14px;
+            }
+
+            &:after {
+                height: 10px;
+                width: 5px;
+            }
+
+            &:has(input:checked) {
+                &:after {
+                    transform: translateY(-1px) rotateZ(45deg);
+                }
+            }
+
+            &.checkbox-appearance-span-and-flip {
+                &:after {
+                    right: 11px;
+                }
+
+                &:before {
+                    right: 7px;
+                }
+            }
+        }
+    }
 }

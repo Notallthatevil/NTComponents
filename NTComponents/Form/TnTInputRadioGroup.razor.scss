@@ -230,5 +230,48 @@
                 margin: 2px 0;
             }
         }
+
+        &.tnt-form-xs {
+            .tnt-radio-buttons {
+                gap: 4px;
+            }
+
+            .tnt-label {
+                @include typescale.tnt-body-small;
+            }
+
+            ::deep {
+                .tnt-start-icon, .tnt-end-icon {
+                    font-size: 18px;
+                }
+
+                .tnt-radio-input {
+                    margin: 1px 0;
+                    grid-template-rows: 14px;
+                    grid-template-columns: 8px 14px 8px 1fr 8px;
+
+                    &:has(.tnt-start-icon):has(.tnt-end-icon) {
+                        grid-template-columns: 8px 18px 8px 14px 8px 1fr 8px 18px 8px;
+                    }
+
+                    &:has(.tnt-start-icon):not(:has(.tnt-end-icon)) {
+                        grid-template-columns: 8px 18px 8px 14px 8px 1fr 8px;
+                    }
+
+                    &:has(.tnt-end-icon):not(:has(.tnt-start-icon)) {
+                        grid-template-columns: 8px 14px 8px 1fr 8px 18px 8px;
+                    }
+
+                    .tnt-radio-button {
+                        width: 14px;
+                        height: 14px;
+                    }
+
+                    .tnt-label {
+                        @include typescale.tnt-body-small;
+                    }
+                }
+            }
+        }
     }
 }

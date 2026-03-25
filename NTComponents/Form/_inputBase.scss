@@ -209,6 +209,12 @@ $supporting-text-color: var(--tnt-input-supporting-text-color);
                     }
                 }
 
+                &.tnt-form-xs {
+                    .tnt-label {
+                        transform: scale(0.75) translateY(-18px);
+                    }
+                }
+
 
                 &:has(.tnt-start-icon) {
                     .tnt-label {
@@ -218,6 +224,12 @@ $supporting-text-color: var(--tnt-input-supporting-text-color);
                     &.tnt-form-compact {
                         .tnt-label {
                             transform: scale(0.75) translate(-50px,-26px);
+                        }
+                    }
+
+                    &.tnt-form-xs {
+                        .tnt-label {
+                            transform: scale(0.75) translate(-50px,-18px);
                         }
                     }
                 }
@@ -286,6 +298,18 @@ $supporting-text-color: var(--tnt-input-supporting-text-color);
                         }
                     }
                 }
+
+                &.tnt-form-xs {
+                    .tnt-label {
+                        transform: scale(0.75) translateY(-9px);
+                    }
+
+                    &:has(input[type=file]) {
+                        .tnt-label {
+                            transform: scale(0.75) translateY(-9px);
+                        }
+                    }
+                }
             }
 
             &:has(#{$element}:focus), &:has(#{$element}:active) {
@@ -318,6 +342,15 @@ $supporting-text-color: var(--tnt-input-supporting-text-color);
         letter-spacing: 0.5px;
         line-height:14px;
         padding-top:2px;
+    }
+}
+
+@mixin tnt-supporting-text-xs {
+    .tnt-supporting-text {
+        font-size: 10px;
+        letter-spacing: 0.4px;
+        line-height: 12px;
+        padding-top: 1px;
     }
 }
 
@@ -363,6 +396,73 @@ $supporting-text-color: var(--tnt-input-supporting-text-color);
 
             ::deep input {
                 @include typescale.tnt-body-medium;
+            }
+        }
+    }
+}
+
+@mixin tnt-form-xs($element: input) {
+    &:has(.tnt-form-xs) {
+        @include tnt-supporting-text-xs;
+
+        .tnt-input {
+            &.tnt-form-outlined {
+                grid-template-rows: 26px;
+
+                &:has(.tnt-label) {
+                    &:has(input:not(:placeholder-shown)), &:has(input:focus), &:has(input:active), &.tnt-placeholder {
+                        .tnt-label {
+                            transform: scale(0.75) translateY(-18px);
+                        }
+
+                        &:has(.tnt-start-icon) {
+                            .tnt-label {
+                                transform: scale(0.75) translate(-50px,-18px);
+                            }
+                        }
+                    }
+                }
+            }
+
+            &.tnt-form-filled {
+                grid-template-rows: 27px; // +1 from border-bottom
+
+                &:has(.tnt-label) {
+                    &:has(#{$element}:not(:placeholder-shown)), &:has(#{$element}:focus), &:has(#{$element}:active), &.tnt-placeholder {
+                        .tnt-label {
+                            transform: scale(0.75) translateY(-9px);
+                        }
+                    }
+
+                    ::deep {
+                        #{$element}:not(:placeholder-shown), #{$element}:focus, #{$element}:active {
+                            transform: translateY(4px);
+                        }
+                    }
+                }
+
+                &.tnt-placeholder:has(.tnt-label) {
+                    ::deep {
+                        #{$element} {
+                            transform: translateY(4px);
+                        }
+                    }
+                }
+            }
+
+            .tnt-label {
+                @include typescale.tnt-body-small;
+            }
+
+            ::deep #{$element} {
+                @include typescale.tnt-body-small;
+                padding: 0;
+            }
+
+            ::deep {
+                .tnt-start-icon, .tnt-end-icon {
+                    font-size: 18px;
+                }
             }
         }
     }

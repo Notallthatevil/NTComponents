@@ -92,5 +92,15 @@ public enum FormAppearance {
     /// <summary>
     ///     Same as <see cref="Filled" /> but with more compact spacing."/&gt;
     /// </summary>
-    FilledCompact
+    FilledCompact,
+
+    /// <summary>
+    ///     Same as <see cref="OutlinedCompact" /> but with xs spacing, targeting a total element height of approximately 26px.
+    /// </summary>
+    OutlinedXS,
+
+    /// <summary>
+    ///     Same as <see cref="FilledCompact" /> but with xs spacing, targeting a total element height of approximately 26px.
+    /// </summary>
+    FilledXS
 }

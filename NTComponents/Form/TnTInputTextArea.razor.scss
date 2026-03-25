@@ -216,5 +216,15 @@
                 @include typescale.tnt-body-medium;
             }
         }
+
+        &.tnt-form-xs {
+            .tnt-label {
+                @include typescale.tnt-body-small;
+            }
+
+            ::deep textarea {
+                @include typescale.tnt-body-small;
+            }
+        }
     }
 }

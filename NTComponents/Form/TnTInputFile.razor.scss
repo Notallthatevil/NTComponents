@@ -254,7 +254,17 @@ $on-tint-color: var(--tnt-input-on-tint-color);
                 padding: 0 8px;
             }
         }
+
+        &.tnt-form-xs {
+
+            ::deep input::file-selector-button {
+                height: 24px;
+                border-radius: 16px;
+                padding: 0 8px;
+            }
+        }
     }
 
     @include base.tnt-form-compact;
+    @include base.tnt-form-xs;
 }

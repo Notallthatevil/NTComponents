@@ -244,6 +244,18 @@
                     }
                 }
 
+                &.tnt-form-xs {
+                    .tnt-label {
+                        transform: scale(0.75) translateY(-18px) !important;
+                    }
+
+                    &:has(.tnt-start-icon) {
+                        .tnt-label {
+                            transform: scale(0.75) translate(-50px,-18px) !important;
+                        }
+                    }
+                }
+
                 &:has(select:focus), &:has(select:active) {
                     .tnt-label {
                         color: base.$tint-color;
@@ -283,4 +295,5 @@
     }
 
     @include base.tnt-form-compact(select);
+    @include base.tnt-form-xs(select);
 }

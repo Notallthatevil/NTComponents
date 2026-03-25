@@ -290,10 +290,40 @@
 				<TnTMarkdownEditor @bind-Value="@Input.Area" />
 			</TnTColumn>
 		</TnTRow>
+
+		<TnTRow>
+			<TnTCard Appearance="CardAppearance.Outlined">
+				<h3>Searchable Select (SSR)</h3>
+
+				
+				<NTInputSelect TInputType="Guid?"
+							   @bind-Value="Input.SelectedId"
+							   Placeholder="@_placeholder" Label="@_label" SupportingText="@_supportingText" StartIcon="@_startIcon" EndIcon="@_endIcon" Tooltip="@(_g ? _tooltip : null)">
+					@foreach (var option in _options) {
+						<NTInputSelectOption TInputType="Guid?"
+											 Value="@option"
+											 Label="@option.ToString()" />
+					}
+				</NTInputSelect>
+			</TnTCard>
+		</TnTRow>
+
 	</TnTForm>
 </TnTContainer>
 
 @code {
+	private readonly IReadOnlyList<Guid> _options = CreateOptions();
+
+	private Task HandleValidSubmit() {
+		return Task.CompletedTask;
+	}
+
+	private static IReadOnlyList<Guid> CreateOptions() {
+		return Enumerable.Range(1, 250)
+			.Select(index => Guid.Parse($"00000000-0000-0000-0000-{index:000000000000}"))
+			.ToArray();
+	}
+
 	private sealed class InputModel {
 		[Required]
 		[StringLength(50)]
@@ -346,6 +376,8 @@
 
 		[Required]
 		public string? Area { get; set; }
+
+		public Guid? SelectedId { get; set; }
 
 	}
 

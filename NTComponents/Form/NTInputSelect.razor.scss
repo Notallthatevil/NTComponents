@@ -127,4 +127,7 @@
             color: colors.$tnt-color-on-surface-variant;
         }
     }
+
+    @include base.tnt-form-compact;
+    @include base.tnt-form-xs;
 }

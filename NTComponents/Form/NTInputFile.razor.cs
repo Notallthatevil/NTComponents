@@ -259,6 +259,7 @@ public partial class NTInputFile : IAsyncDisposable {
     private Size EffectiveUploadButtonSize => UploadButtonSize ?? EffectiveAppearance switch {
         FormAppearance.Outlined or FormAppearance.Filled => Size.Small,
         FormAppearance.OutlinedCompact or FormAppearance.FilledCompact => Size.XS,
+        FormAppearance.OutlinedXS or FormAppearance.FilledXS => Size.XS,
         _ => Size.Medium
     };
 
@@ -819,13 +820,18 @@ public partial class NTInputFile : IAsyncDisposable {
         var appearanceClass = effectiveAppearance switch {
             FormAppearance.Filled => "tnt-form-filled",
             FormAppearance.FilledCompact => "tnt-form-filled",
+            FormAppearance.FilledXS => "tnt-form-filled",
             FormAppearance.Outlined => "tnt-form-outlined",
             FormAppearance.OutlinedCompact => "tnt-form-outlined",
+            FormAppearance.OutlinedXS => "tnt-form-outlined",
             _ => throw new NotSupportedException()
         };
 
         if (effectiveAppearance is FormAppearance.FilledCompact or FormAppearance.OutlinedCompact) {
             appearanceClass += " tnt-form-compact";
+        }
+        else if (effectiveAppearance is FormAppearance.FilledXS or FormAppearance.OutlinedXS) {
+            appearanceClass += " tnt-form-xs";
         }
         return appearanceClass;
     }

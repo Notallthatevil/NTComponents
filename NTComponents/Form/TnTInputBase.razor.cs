@@ -633,13 +633,18 @@ public abstract partial class TnTInputBase<TInputType> : InputBase<TInputType>, 
         var appearanceClass = effectiveAppearance switch {
             FormAppearance.Filled => "tnt-form-filled",
             FormAppearance.FilledCompact => "tnt-form-filled",
+            FormAppearance.FilledXS => "tnt-form-filled",
             FormAppearance.Outlined => "tnt-form-outlined",
             FormAppearance.OutlinedCompact => "tnt-form-outlined",
+            FormAppearance.OutlinedXS => "tnt-form-outlined",
             _ => throw new NotSupportedException()
         };
 
         if (effectiveAppearance is FormAppearance.FilledCompact or FormAppearance.OutlinedCompact) {
             appearanceClass += " tnt-form-compact";
+        }
+        else if (effectiveAppearance is FormAppearance.FilledXS or FormAppearance.OutlinedXS) {
+            appearanceClass += " tnt-form-xs";
         }
         return appearanceClass;
     }
