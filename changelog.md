@@ -1,3 +1,10 @@
+## [1.38.7](https://github.com/Notallthatevil/NTComponents/compare/v1.38.6...v1.38.7) (2026-03-24)
+
+
+### Bug Fixes
+
+* **styles:** add Snackbar to ScopedCssFolders in sasscompiler.json ([cdfcf7f](https://github.com/Notallthatevil/NTComponents/commit/cdfcf7f3c9bac475f61579cf57273b8bf4fa3989))
+
 ## [1.38.6](https://github.com/Notallthatevil/NTComponents/compare/v1.38.5...v1.38.6) (2026-03-23)
 
 
