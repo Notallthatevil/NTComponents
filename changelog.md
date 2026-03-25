@@ -1,3 +1,10 @@
+## [1.39.1](https://github.com/Notallthatevil/NTComponents/compare/v1.39.0...v1.39.1) (2026-03-25)
+
+
+### Bug Fixes
+
+* **typeahead,inputs:** switch style, and progress size ([153d30f](https://github.com/Notallthatevil/NTComponents/commit/153d30fd66a91f0d2f400ae972b4a274ee6fe4ab))
+
 # [1.39.0](https://github.com/Notallthatevil/NTComponents/compare/v1.38.7...v1.39.0) (2026-03-25)
 
 
