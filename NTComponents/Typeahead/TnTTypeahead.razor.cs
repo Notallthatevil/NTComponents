@@ -26,6 +26,12 @@ public partial class TnTTypeahead<TItem> {
     public TnTColor BackgroundColor { get; set; } = TnTColor.SurfaceContainerHighest;
 
     /// <summary>
+    ///     The text color of the typeahead component.
+    /// </summary>
+    [Parameter]
+    public TnTColor TextColor { get; set; } = TnTColor.OnSurface;
+
+    /// <summary>
     ///     The delay in milliseconds before performing a search after the user types.
     /// </summary>
     [Parameter]
