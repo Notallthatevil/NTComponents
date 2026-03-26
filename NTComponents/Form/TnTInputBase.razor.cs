@@ -152,6 +152,13 @@ public abstract partial class TnTInputBase<TInputType> : InputBase<TInputType>, 
     public FormAppearance Appearance { get; set; }
 
     /// <summary>
+    ///     When <see langword="true" />, ignores any cascaded <see cref="ITnTForm" /> values (appearance,
+    ///     disabled, and read-only) and uses this component's own parameter values instead.
+    /// </summary>
+    [Parameter]
+    public bool OverrideForm { get; set; }
+
+    /// <summary>
     ///     Specifies the type of the input element, which determines how the input is rendered and validated.
     /// </summary>
     [Parameter]
@@ -627,8 +634,8 @@ public abstract partial class TnTInputBase<TInputType> : InputBase<TInputType>, 
     /// <param name="appearance">The form appearance value for which to retrieve the associated CSS class. Must be a defined value of the <see cref="FormAppearance" /> enumeration.</param>
     /// <returns>A string containing the CSS class name that represents the given form appearance. The returned value reflects whether the appearance is filled, outlined, or compact.</returns>
     /// <exception cref="NotSupportedException">Thrown if <paramref name="appearance" /> is not a supported <see cref="FormAppearance" /> value.</exception>
-    protected static string GetAppearanceClass(ITnTForm? parentForm, FormAppearance appearance) {
-        var effectiveAppearance = parentForm is not null ? parentForm.Appearance : appearance;
+    protected string GetAppearanceClass(ITnTForm? parentForm, FormAppearance appearance) {
+        var effectiveAppearance = parentForm is not null && !OverrideForm ? parentForm.Appearance : appearance;
 
         var appearanceClass = effectiveAppearance switch {
             FormAppearance.Filled => "tnt-form-filled",

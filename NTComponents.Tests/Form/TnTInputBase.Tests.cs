@@ -590,6 +590,167 @@ public class TnTInputBase_Tests : BunitContext {
         }
     }
 
+    [Fact]
+    public void OverrideForm_DefaultsToFalse() {
+        // Arrange & Act
+        var cut = RenderTestInput();
+
+        // Assert
+        cut.Instance.OverrideForm.Should().BeFalse();
+    }
+
+    [Fact]
+    public void WithOverrideFormTrue_FieldDisabled_IgnoresFormDisabled() {
+        // Arrange — form is disabled, but the component opts out
+        var form = new MockTnTForm { Disabled = true };
+
+        // Act
+        var instance = RenderTestInputWithForm(form, disabled: false, overrideForm: true);
+
+        // Assert
+        instance.FieldDisabled.Should().BeFalse();
+    }
+
+    [Fact]
+    public void WithOverrideFormTrue_FieldDisabled_RespectsLocalDisabled() {
+        // Arrange — form is NOT disabled, but the component itself is
+        var form = new MockTnTForm { Disabled = false };
+
+        // Act
+        var instance = RenderTestInputWithForm(form, disabled: true, overrideForm: true);
+
+        // Assert
+        instance.FieldDisabled.Should().BeTrue();
+    }
+
+    [Fact]
+    public void WithOverrideFormTrue_FieldReadonly_IgnoresFormReadOnly() {
+        // Arrange — form is read-only, but the component opts out
+        var form = new MockTnTForm { ReadOnly = true };
+
+        // Act
+        var instance = RenderTestInputWithForm(form, readOnly: false, overrideForm: true);
+
+        // Assert
+        instance.FieldReadonly.Should().BeFalse();
+    }
+
+    [Fact]
+    public void WithOverrideFormTrue_FieldReadonly_RespectsLocalReadOnly() {
+        // Arrange — form is NOT read-only, but the component itself is
+        var form = new MockTnTForm { ReadOnly = false };
+
+        // Act
+        var instance = RenderTestInputWithForm(form, readOnly: true, overrideForm: true);
+
+        // Assert
+        instance.FieldReadonly.Should().BeTrue();
+    }
+
+    [Fact]
+    public void WithOverrideFormTrue_UsesLocalAppearance_NotFormAppearance() {
+        // Arrange — form is FilledXS, component wants Outlined
+        var form = new MockTnTForm { Appearance = FormAppearance.FilledXS };
+        var model = CreateTestModel();
+
+        // Act
+        var cut = Render<CascadingValue<ITnTForm>>(parameters => {
+            parameters.Add(p => p.Value, form);
+            parameters.Add(p => p.IsFixed, true);
+            parameters.Add(p => p.ChildContent, (RenderFragment)(builder => {
+                builder.OpenComponent<TestTnTInputBase>(0);
+                builder.AddAttribute(1, nameof(TestTnTInputBase.ValueExpression), (Expression<Func<string?>>)(() => model.TestValue));
+                builder.AddAttribute(2, nameof(TestTnTInputBase.Value), model.TestValue);
+                builder.AddAttribute(3, nameof(TestTnTInputBase.ValueChanged), EventCallback.Factory.Create<string?>(this, v => model.TestValue = v));
+                builder.AddAttribute(4, nameof(TestTnTInputBase.Appearance), FormAppearance.Outlined);
+                builder.AddAttribute(5, nameof(TestTnTInputBase.OverrideForm), true);
+                builder.CloseComponent();
+            }));
+        });
+        var cls = cut.Find("label").GetAttribute("class")!;
+
+        // Assert
+        cls.Should().Contain("tnt-form-outlined");
+        cls.Should().NotContain("tnt-form-filled");
+        cls.Should().NotContain("tnt-form-xs");
+    }
+
+    [Fact]
+    public void WithOverrideFormTrue_InputNotDisabled_WhenOnlyFormIsDisabled() {
+        // Arrange
+        var form = new MockTnTForm { Disabled = true };
+        var model = CreateTestModel();
+
+        // Act
+        var cut = Render<CascadingValue<ITnTForm>>(parameters => {
+            parameters.Add(p => p.Value, form);
+            parameters.Add(p => p.IsFixed, true);
+            parameters.Add(p => p.ChildContent, (RenderFragment)(builder => {
+                builder.OpenComponent<TestTnTInputBase>(0);
+                builder.AddAttribute(1, nameof(TestTnTInputBase.ValueExpression), (Expression<Func<string?>>)(() => model.TestValue));
+                builder.AddAttribute(2, nameof(TestTnTInputBase.Value), model.TestValue);
+                builder.AddAttribute(3, nameof(TestTnTInputBase.ValueChanged), EventCallback.Factory.Create<string?>(this, v => model.TestValue = v));
+                builder.AddAttribute(4, nameof(TestTnTInputBase.OverrideForm), true);
+                builder.CloseComponent();
+            }));
+        });
+
+        // Assert
+        cut.Find("input").HasAttribute("disabled").Should().BeFalse();
+    }
+
+    [Fact]
+    public void WithOverrideFormFalse_FormAppearanceStillTakesPrecedence() {
+        // Arrange — verify the default (false) behaviour is unchanged
+        var form = new MockTnTForm { Appearance = FormAppearance.Outlined };
+
+        // Act
+        var instance = RenderTestInputWithForm(form, appearance: FormAppearance.Filled, overrideForm: false);
+
+        // Assert — form wins
+        var cut = Render<CascadingValue<ITnTForm>>(parameters => {
+            parameters.Add(p => p.Value, form);
+            parameters.Add(p => p.IsFixed, true);
+            parameters.Add(p => p.ChildContent, (RenderFragment)(builder => {
+                var model2 = CreateTestModel();
+                builder.OpenComponent<TestTnTInputBase>(0);
+                builder.AddAttribute(1, nameof(TestTnTInputBase.ValueExpression), (Expression<Func<string?>>)(() => model2.TestValue));
+                builder.AddAttribute(2, nameof(TestTnTInputBase.Value), model2.TestValue);
+                builder.AddAttribute(3, nameof(TestTnTInputBase.ValueChanged), EventCallback.Factory.Create<string?>(this, v => model2.TestValue = v));
+                builder.AddAttribute(4, nameof(TestTnTInputBase.Appearance), FormAppearance.Filled);
+                builder.AddAttribute(5, nameof(TestTnTInputBase.OverrideForm), false);
+                builder.CloseComponent();
+            }));
+        });
+        var cls = cut.Find("label").GetAttribute("class")!;
+        cls.Should().Contain("tnt-form-outlined");
+        cls.Should().NotContain("tnt-form-filled");
+    }
+
+    [Fact]
+    public void WithOverrideFormFalse_FormDisabledStillDisablesInput() {
+        // Arrange — verify the default (false) behaviour is unchanged
+        var form = new MockTnTForm { Disabled = true };
+        var model = CreateTestModel();
+
+        // Act
+        var cut = Render<CascadingValue<ITnTForm>>(parameters => {
+            parameters.Add(p => p.Value, form);
+            parameters.Add(p => p.IsFixed, true);
+            parameters.Add(p => p.ChildContent, (RenderFragment)(builder => {
+                builder.OpenComponent<TestTnTInputBase>(0);
+                builder.AddAttribute(1, nameof(TestTnTInputBase.ValueExpression), (Expression<Func<string?>>)(() => model.TestValue));
+                builder.AddAttribute(2, nameof(TestTnTInputBase.Value), model.TestValue);
+                builder.AddAttribute(3, nameof(TestTnTInputBase.ValueChanged), EventCallback.Factory.Create<string?>(this, v => model.TestValue = v));
+                builder.AddAttribute(4, nameof(TestTnTInputBase.OverrideForm), false);
+                builder.CloseComponent();
+            }));
+        });
+
+        // Assert
+        cut.Find("input").HasAttribute("disabled").Should().BeTrue();
+    }
+
     private TestModel CreateTestModel() => new();
 
     private TestModelWithValidation CreateValidationTestModel() => new();
@@ -605,7 +766,7 @@ public class TnTInputBase_Tests : BunitContext {
         });
     }
 
-    private TestTnTInputBase RenderTestInputWithForm(MockTnTForm form, TestModel? model = null, bool? disabled = null, bool? readOnly = null) {
+    private TestTnTInputBase RenderTestInputWithForm(MockTnTForm form, TestModel? model = null, bool? disabled = null, bool? readOnly = null, bool? overrideForm = null, FormAppearance? appearance = null) {
         model ??= CreateTestModel();
         var cut = Render<CascadingValue<ITnTForm>>(parameters => {
             parameters.Add(p => p.Value, form);
@@ -620,6 +781,10 @@ public class TnTInputBase_Tests : BunitContext {
                     builder.AddAttribute(4, nameof(TestTnTInputBase.Disabled), disabled.Value);
                 if (readOnly.HasValue)
                     builder.AddAttribute(5, nameof(TestTnTInputBase.ReadOnly), readOnly.Value);
+                if (overrideForm.HasValue)
+                    builder.AddAttribute(6, nameof(TestTnTInputBase.OverrideForm), overrideForm.Value);
+                if (appearance.HasValue)
+                    builder.AddAttribute(7, nameof(TestTnTInputBase.Appearance), appearance.Value);
 
                 builder.CloseComponent();
             }));
