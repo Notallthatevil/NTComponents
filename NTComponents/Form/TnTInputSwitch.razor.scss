@@ -316,9 +316,9 @@
             }
 
             &.checkbox-appearnce-default {
-                min-width: 28px;
+                min-width: 32px;
                 min-height: 28px;
-                grid-template-columns: 32px;
+                grid-template-columns: 36px;
                 grid-template-rows: 28px;
             }
 
@@ -327,70 +327,70 @@
             }
 
             &:has(.tnt-start-icon):has(.tnt-end-icon) {
-                grid-template-columns: 24px 32px 24px;
+                grid-template-columns: 24px 36px 24px;
             }
 
             &:has(.tnt-start-icon):not(:has(.tnt-end-icon)) {
-                grid-template-columns: 24px 32px;
+                grid-template-columns: 24px 36px;
             }
 
             &:has(.tnt-end-icon):not(:has(.tnt-start-icon)) {
-                grid-template-columns: 32px 24px;
+                grid-template-columns: 36px 24px;
             }
 
             &:has(.tnt-start-icon):has(.tnt-end-icon):has(.tnt-label).checkbox-appearance-default {
-                grid-template-columns: 24px 32px auto 12px 24px;
+                grid-template-columns: 24px 36px auto 12px 24px;
             }
 
             &:has(.tnt-start-icon):not(:has(.tnt-end-icon)):has(.tnt-label).checkbox-appearance-default {
-                grid-template-columns: 24px 32px auto;
+                grid-template-columns: 24px 36px auto;
             }
 
             &:has(.tnt-end-icon):not(:has(.tnt-start-icon)):has(.tnt-label).checkbox-appearance-default {
-                grid-template-columns: 32px auto 12px 24px;
+                grid-template-columns: 36px auto 12px 24px;
             }
 
             &:has(.tnt-label):not(:has(.tnt-start-icon)):not(:has(.tnt-end-icon)).checkbox-appearance-default {
-                grid-template-columns: 32px auto;
+                grid-template-columns: 36px auto;
             }
 
             &:has(.tnt-start-icon):has(.tnt-end-icon):has(.tnt-label).checkbox-appearance-span-and-flip {
-                grid-template-columns: 24px 12px auto 32px 12px 24px;
+                grid-template-columns: 24px 12px auto 36px 12px 24px;
             }
 
             &:has(.tnt-start-icon):not(:has(.tnt-end-icon)):has(.tnt-label).checkbox-appearance-span-and-flip {
-                grid-template-columns: 24px 12px auto 32px;
+                grid-template-columns: 24px 12px auto 36px;
             }
 
             &:has(.tnt-end-icon):not(:has(.tnt-start-icon)):has(.tnt-label).checkbox-appearance-span-and-flip {
-                grid-template-columns: auto 32px 12px 24px;
+                grid-template-columns: auto 36px 12px 24px;
             }
 
             &:has(.tnt-label):not(:has(.tnt-start-icon)):not(:has(.tnt-end-icon)).checkbox-appearance-span-and-flip {
-                grid-template-columns: auto 32px;
+                grid-template-columns: auto 36px;
             }
 
             &:before {
                 height: 12px;
-                width: 24px;
+                width: 28px;
                 border-radius: 12px;
             }
 
             &:after {
-                height: 8px;
-                width: 8px;
-                transform: translateX(-7px);
+                height: 10px;
+                width: 10px;
+                transform: translateX(-9px);
             }
 
             &:has(input:checked) {
                 &:after {
-                    transform: translateX(7px) scale(1.2);
+                    transform: translateX(8px) scale(1.5);
                 }
             }
 
             &.checkbox-appearance-span-and-flip {
                 &:after {
-                    right: 12px;
+                    right: 14px;
                 }
 
                 &:before {
