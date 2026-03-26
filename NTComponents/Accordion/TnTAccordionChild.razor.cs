@@ -70,10 +70,17 @@ public partial class TnTAccordionChild {
     public TnTColor? HeaderTintColor { get; set; }
 
     /// <summary>
-    ///     The label of the accordion child.
+    ///     A custom template rendered in place of <see cref="Label" /> inside the accordion header button.
+    ///     When set, <see cref="Label" /> is ignored.
     /// </summary>
-    [Parameter, EditorRequired]
-    public string Label { get; set; } = default!;
+    [Parameter]
+    public RenderFragment? HeaderTemplate { get; set; }
+
+    /// <summary>
+    ///     The label of the accordion child. Required when <see cref="HeaderTemplate" /> is not provided.
+    /// </summary>
+    [Parameter]
+    public string? Label { get; set; }
 
     /// <summary>
     ///     Callback invoked after the accordion has closed.

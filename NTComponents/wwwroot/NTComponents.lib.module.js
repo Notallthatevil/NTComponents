@@ -390,6 +390,15 @@ window.NTComponents = {
         });
     },
     toggleAccordionHeader: (e) => {
+        // If the click bubbled up from a nested interactive element inside the header template,
+        // don't toggle the accordion — let that element handle its own click.
+        // currentTarget is only set when called from the native onclick attribute (real browser);
+        // skip the guard when it is absent so synthetic events in tests are unaffected.
+        if (e.currentTarget != null
+            && e.target !== e.currentTarget
+            && e.target?.closest?.('button, a, input, select, textarea') !== e.currentTarget) {
+            return;
+        }
         const header = e.currentTarget
             ?? e.target?.closest?.('[data-accordion-header="true"]')
             ?? e.target?.closest?.('button, h3');

@@ -3,7 +3,15 @@
 @rendermode InteractiveAuto
 
 <TnTAccordion>
-    <TnTAccordionChild Label="Title 1" OpenByDefault="true">
+    <TnTAccordionChild OpenByDefault="true">
+        <HeaderTemplate>
+            Title 1
+            <TnTButton OnClickCallback="@(() => Console.WriteLine("HeaderClicked"))" StopPropagation="true">
+                Click me
+            </TnTButton>
+        </HeaderTemplate>
+        <ChildContent>
+
         <TnTButton ElementTitle="Button 1">
             Button 1
         </TnTButton>
@@ -20,6 +28,7 @@ _count++;})">
                 I am count @(i + 1)
             </div>
         }
+        </ChildContent>
     </TnTAccordionChild>
     <TnTAccordionChild Label="Title 2" OpenByDefault="true">
         <TnTProgressIndicator Appearance="ProgressAppearance.Ring"></TnTProgressIndicator>
