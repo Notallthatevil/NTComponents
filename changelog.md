@@ -1,3 +1,10 @@
+# [1.42.0](https://github.com/Notallthatevil/NTComponents/compare/v1.41.0...v1.42.0) (2026-03-26)
+
+
+### Features
+
+* **input:** add OverrideForm to bypass form context ([ae68f52](https://github.com/Notallthatevil/NTComponents/commit/ae68f527110057d9528bfc7027f8fd0376f5d1f0))
+
 # [1.41.0](https://github.com/Notallthatevil/NTComponents/compare/v1.40.0...v1.41.0) (2026-03-26)
 
 
