@@ -1,3 +1,10 @@
+# [1.40.0](https://github.com/Notallthatevil/NTComponents/compare/v1.39.1...v1.40.0) (2026-03-26)
+
+
+### Features
+
+* **accordion:** add HeaderTemplate for custom headers ([783c431](https://github.com/Notallthatevil/NTComponents/commit/783c431b1c479111ad830abd6f99919aee8633d7))
+
 ## [1.39.1](https://github.com/Notallthatevil/NTComponents/compare/v1.39.0...v1.39.1) (2026-03-25)
 
 
