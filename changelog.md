@@ -1,3 +1,10 @@
+## [1.42.1](https://github.com/Notallthatevil/NTComponents/compare/v1.42.0...v1.42.1) (2026-03-26)
+
+
+### Bug Fixes
+
+* **TnTInputBase:** remove tests for OverrideForm ignoring form state ([e752942](https://github.com/Notallthatevil/NTComponents/commit/e7529429c3d949d610d6974d0e4915cbf3334f56))
+
 # [1.42.0](https://github.com/Notallthatevil/NTComponents/compare/v1.41.0...v1.42.0) (2026-03-26)
 
 
