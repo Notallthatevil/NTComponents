@@ -135,6 +135,15 @@ public partial class TnTAccordionChild {
     public async Task CloseAsync() => await _parent.SetAsClosed(_elementId);
 
     /// <inheritdoc />
+    protected override void OnParametersSet() {
+        base.OnParametersSet();
+        if (HeaderTemplate is null && Label is null) {
+            throw new InvalidOperationException(
+                $"{nameof(TnTAccordionChild)} requires either {nameof(Label)} or {nameof(HeaderTemplate)} to be set.");
+        }
+    }
+
+    /// <inheritdoc />
     public void Dispose() {
         GC.SuppressFinalize(this);
         _parent.RemoveChild(this);
