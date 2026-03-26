@@ -1,3 +1,10 @@
+# [1.41.0](https://github.com/Notallthatevil/NTComponents/compare/v1.40.0...v1.41.0) (2026-03-26)
+
+
+### Features
+
+* **styles:** enlarge input switch for improved usability ([e403100](https://github.com/Notallthatevil/NTComponents/commit/e403100476e8213bcf9b33e0a2d2343f8d2070fc))
+
 # [1.40.0](https://github.com/Notallthatevil/NTComponents/compare/v1.39.1...v1.40.0) (2026-03-26)
 
 
