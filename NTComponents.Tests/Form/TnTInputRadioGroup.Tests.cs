@@ -367,6 +367,19 @@ public class TnTInputRadioGroup_Tests : BunitContext {
     }
 
     [Fact]
+    public void Radio_Buttons_Use_GroupName_When_Provided() {
+        // Arrange & Act
+        var cut = RenderInputRadioGroup(configure: p => p.Add(c => c.GroupName, "custom-radio-group"));
+        var radioInputs = cut.FindAll("input[type=radio]");
+
+        // Assert
+        radioInputs.Should().HaveCount(3);
+        foreach (var radio in radioInputs) {
+            radio.GetAttribute("name").Should().Be("custom-radio-group");
+        }
+    }
+
+    [Fact]
     public void Radio_Selection_Updates_Model_Value() {
         // Arrange
         var model = CreateTestModel();

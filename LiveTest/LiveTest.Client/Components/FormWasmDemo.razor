@@ -214,7 +214,7 @@
 				Radio @Input.Radio
 			</h3>
 			<TnTColumn S="12">
-				<TnTInputRadioGroup @bind-Value="@Input.Radio" SupportingText="@_supportingText" Placeholder="@_placeholder" Label="@_label" StartIcon="@_startIcon" EndIcon="@_endIcon" Tooltip="@(_g ? _tooltip : null)">
+				<TnTInputRadioGroup @bind-Value="@Input.Radio" GroupName="form-wasm-demo-radio-vertical" SupportingText="@_supportingText" Placeholder="@_placeholder" Label="@_label" StartIcon="@_startIcon" EndIcon="@_endIcon" Tooltip="@(_g ? _tooltip : null)">
 					<TnTInputRadio TInputType="RadioEnum?" Value="RadioEnum.One" Label="@RadioEnum.One.ToString()" StartIcon="@_startIcon" EndIcon="@_endIcon" />
 					<TnTInputRadio TInputType="RadioEnum?" Value="RadioEnum.Two" Label="@RadioEnum.Two.ToString()" StartIcon="@_startIcon" EndIcon="@_endIcon" />
 					<TnTInputRadio TInputType="RadioEnum?" Value="RadioEnum.Three" Label="@RadioEnum.Three.ToString()" StartIcon="@_startIcon" EndIcon="@_endIcon" />
@@ -223,7 +223,7 @@
 			</TnTColumn>
 
 			<TnTColumn S="12">
-				<TnTInputRadioGroup @bind-Value="@Input.Radio" SupportingText="@_supportingText" Placeholder="@_placeholder" Label="@_label" StartIcon="@_startIcon" EndIcon="@_endIcon" LayoutDirection="LayoutDirection.Horizontal" Tooltip="@(_g ? _tooltip : null)">
+				<TnTInputRadioGroup @bind-Value="@Input.Radio" GroupName="form-wasm-demo-radio-horizontal" SupportingText="@_supportingText" Placeholder="@_placeholder" Label="@_label" StartIcon="@_startIcon" EndIcon="@_endIcon" LayoutDirection="LayoutDirection.Horizontal" Tooltip="@(_g ? _tooltip : null)">
 					<TnTInputRadio TInputType="RadioEnum?" Value="RadioEnum.One" Label="@RadioEnum.One.ToString()" StartIcon="@_startIcon" EndIcon="@_endIcon" />
 					<TnTInputRadio TInputType="RadioEnum?" Value="RadioEnum.Two" Label="@RadioEnum.Two.ToString()" StartIcon="@_startIcon" EndIcon="@_endIcon" />
 					<TnTInputRadio TInputType="RadioEnum?" Value="RadioEnum.Three" Label="@RadioEnum.Three.ToString()" StartIcon="@_startIcon" EndIcon="@_endIcon" />
@@ -372,7 +372,7 @@
 		public string[] Multi { get; set; } = [];
 
 		[Required]
-		public RadioEnum? Radio { get; set; }
+		public RadioEnum? Radio { get; set; } = RadioEnum.One;
 
 		[Required]
 		public string? Area { get; set; }

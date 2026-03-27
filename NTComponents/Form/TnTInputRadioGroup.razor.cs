@@ -21,6 +21,12 @@ public partial class TnTInputRadioGroup<[DynamicallyAccessedMembers(DynamicallyA
     [Parameter]
     public RenderFragment ChildContent { get; set; } = default!;
 
+    /// <summary>
+    ///     Gets or sets the HTML name attribute shared by the radios in this group.
+    /// </summary>
+    [Parameter]
+    public string? GroupName { get; set; }
+
     /// <inheritdoc />
     public override string? ElementClass => CssClassBuilder.Create(base.ElementClass!)
         .AddClass("tnt-radio-group")
@@ -40,6 +46,11 @@ public partial class TnTInputRadioGroup<[DynamicallyAccessedMembers(DynamicallyA
     ///     Gets or sets the current value of the radio group.
     /// </summary>
     internal TInputType? InternalCurrentValue { get => CurrentValue; set => CurrentValue = value; }
+
+    /// <summary>
+    ///     Gets the HTML name used by the radios in this group.
+    /// </summary>
+    internal string? RadioName => string.IsNullOrWhiteSpace(GroupName) ? ElementName : GroupName;
 
     /// <summary>
     ///     Gets the edit context of the radio group.
