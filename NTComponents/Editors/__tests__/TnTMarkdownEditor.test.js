@@ -31,6 +31,8 @@ describe('TnTMarkdownEditor JavaScript Module Structure', () => {
     expect(fileContent).toContain('tnt-markdown-editor');
     expect(fileContent).toContain('EasyMDE');
     expect(fileContent).toContain('attributeChangedCallback');
+    expect(fileContent).toContain('editor-value');
+    expect(fileContent).toContain('setEditorValue');
     
     // Verify custom toolbar items are defined
     expect(fileContent).toContain('left-text');
@@ -71,6 +73,7 @@ describe('TnTMarkdownEditor JavaScript Module Structure', () => {
     // Verify change handler setup
     expect(fileContent).toContain('codemirror.on("change"');
     expect(fileContent).toContain('UpdateValue');
+    expect(fileContent).toContain('isSynchronizing');
   });
 
   test('module handles dotNetRef mapping', () => {

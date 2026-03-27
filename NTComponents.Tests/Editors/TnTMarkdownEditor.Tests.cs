@@ -65,24 +65,24 @@ public class TnTMarkdownEditor_Tests : BunitContext {
     }
 
     [Fact]
-    public void Does_Not_Render_InitialValue_When_Null_Or_Empty() {
+    public void Renders_Empty_EditorValue_When_No_Value_Or_InitialValue_Provided() {
         // Act
         var cut = Render<TnTMarkdownEditor>();
-        var initialValueDivs = cut.FindAll("div.initial-value");
+        var editorValueDiv = cut.Find("div.editor-value");
 
         // Assert
-        initialValueDivs.Should().BeEmpty();
+        editorValueDiv.TextContent.Should().BeEmpty();
     }
 
     [Fact]
-    public void Does_Not_Render_InitialValue_When_Whitespace_Only() {
+    public void Renders_Whitespace_InitialValue_When_Provided() {
         // Act
         var cut = Render<TnTMarkdownEditor>(p => p
             .Add(x => x.InitialValue, "   \n\t  "));
-        var initialValueDivs = cut.FindAll("div.initial-value");
+        var editorValueDiv = cut.Find("div.editor-value");
 
         // Assert
-        initialValueDivs.Should().BeEmpty();
+        editorValueDiv.TextContent.Should().Be("   \n\t  ");
     }
 
     [Fact]
@@ -201,13 +201,13 @@ public class TnTMarkdownEditor_Tests : BunitContext {
         // Act
         var cut = Render<TnTMarkdownEditor>(p => p
             .Add(x => x.InitialValue, initialValue));
-        var initialValueDiv = cut.Find("div.initial-value");
+        var editorValueDiv = cut.Find("div.editor-value");
 
         // Assert
-        initialValueDiv.Should().NotBeNull();
-        initialValueDiv.TextContent.Should().Contain("# Hello World");
-        initialValueDiv.TextContent.Should().Contain("This is **bold** text.");
-        initialValueDiv.GetAttribute("style").Should().Contain("display:none");
+        editorValueDiv.Should().NotBeNull();
+        editorValueDiv.TextContent.Should().Contain("# Hello World");
+        editorValueDiv.TextContent.Should().Contain("This is **bold** text.");
+        editorValueDiv.GetAttribute("style").Should().Contain("display:none");
     }
 
     [Fact]
@@ -315,6 +315,35 @@ public class TnTMarkdownEditor_Tests : BunitContext {
 
         // Assert
         cut.Instance.Value.Should().Be(value);
+    }
+
+    [Fact]
+    public void EditorValue_Prefers_Value_Over_InitialValue() {
+        // Arrange
+        var value = "# Bound Content";
+        var initialValue = "# Initial Content";
+
+        // Act
+        var cut = Render<TnTMarkdownEditor>(p => p
+            .Add(x => x.Value, value)
+            .Add(x => x.InitialValue, initialValue));
+
+        // Assert
+        cut.Find("div.editor-value").TextContent.Should().Be(value);
+    }
+
+    [Fact]
+    public void BoundEditorValue_Ignores_InitialValue_When_Value_Is_Null() {
+        // Arrange
+        var model = new MarkdownEditorModel();
+
+        // Act
+        var cut = Render<TnTMarkdownEditor>(p => p
+            .Add(x => x.InitialValue, "# Initial Content")
+            .Add(x => x.ValueExpression, () => model.Value));
+
+        // Assert
+        cut.Find("div.editor-value").TextContent.Should().BeEmpty();
     }
 
     [Fact]

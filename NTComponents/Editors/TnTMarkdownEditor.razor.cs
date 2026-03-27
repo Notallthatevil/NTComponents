@@ -92,6 +92,11 @@ public partial class TnTMarkdownEditor {
         .AddClass(GetValidationCssClass())
         .Build();
 
+    private string CurrentEditorValue =>
+        ValueChanged.HasDelegate || ValueExpression is not null
+            ? Value ?? string.Empty
+            : Value ?? InitialValue ?? string.Empty;
+
     private bool ShowValidationMessages => EditContext is not null && (ValueExpression is not null || RenderedHtmlExpression is not null);
 
     private bool ShowSupportingText => !string.IsNullOrWhiteSpace(SupportingText) || ShowValidationMessages;

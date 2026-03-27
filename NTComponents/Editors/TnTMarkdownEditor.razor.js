@@ -6,6 +6,34 @@ const easyMDECss = 'https://unpkg.com/easymde/dist/easymde.min.css';
 
 const markdownEditorsMap = new Map();
 const elementDotNetRefMap = new Map();
+
+function getEditorKey(element) {
+    return element?.getAttribute(NTComponents.customAttribute);
+}
+
+function getEditorValue(element) {
+    const valueElement = element?.querySelector('.editor-value');
+    return valueElement?.textContent ?? '';
+}
+
+function setEditorValue(editorState, value) {
+    if (!editorState?.mde) {
+        return;
+    }
+
+    const nextValue = value ?? '';
+    if (editorState.mde.value() === nextValue) {
+        return;
+    }
+
+    editorState.isSynchronizing = true;
+    try {
+        editorState.mde.value(nextValue);
+    } finally {
+        editorState.isSynchronizing = false;
+    }
+}
+
 export function onLoad(element, dotNetElementRef) {
     const highlightLink = document.querySelector(`link[rel="stylesheet"][href*="${highlightJsCss}"]`);
     if (!highlightLink) {
@@ -37,13 +65,14 @@ export function onLoad(element, dotNetElementRef) {
 
                 if (elementDotNetRefMap.get(oldValue)) {
                     elementDotNetRefMap.set(newValue, elementDotNetRefMap.get(oldValue));
-                    elementDotNetRefMap.delete(newValue);
+                    elementDotNetRefMap.delete(oldValue);
                 }
 
                 let easyMDE = null;
 
-                if (markdownEditorsMap.get(oldValue)) {
-                    easyMDE = markdownEditorsMap.get(oldValue).mde;
+                const existingState = markdownEditorsMap.get(oldValue);
+                if (existingState) {
+                    easyMDE = existingState.mde;
                     markdownEditorsMap.delete(oldValue);
                 }
 
@@ -53,31 +82,24 @@ export function onLoad(element, dotNetElementRef) {
                         child = document.createElement('textarea');
                         this.appendChild(child);
                     }
-                    let initalValueElement = this.querySelector('.initial-value');
-                    let initialValue = undefined;
-                    if (initalValueElement) {
-                        initialValue = initalValueElement.innerHTML;
-                        initalValueElement.remove();
-                    }
 
                     let self = this;
                     easyMDE = new EasyMDE({
                         element: child,
-                        initialValue: initialValue,
+                        initialValue: getEditorValue(this),
                         sideBySideFullscreen: false,
                         previewRender: (text) => {
-                            let attr = self.getAttribute(NTComponents.customAttribute);
-                            if (attr) {
-                                let e = markdownEditorsMap.get(attr).mde;
-                                if (e && e.markdown) {
-                                    text = e.markdown(text);
-                                }
-
-                                text = text.replace(/<tnt-left>(.+)?<\/tnt-left>/g, '<div style="text-align:left">$1</div>');
-                                text = text.replace(/<tnt-center>(.+)?<\/tnt-center>/g, '<div style="text-align:center">$1</div>');
-                                text = text.replace(/<tnt-right>(.+)?<\/tnt-right>/g, '<div style="text-align:right">$1</div>');
-                                text = text.replace(/<table>/, '<table style="width:100%">');
+                            const key = getEditorKey(self);
+                            const editorState = key ? markdownEditorsMap.get(key) : null;
+                            const editor = editorState?.mde;
+                            if (editor && editor.markdown) {
+                                text = editor.markdown(text);
                             }
+
+                            text = text.replace(/<tnt-left>(.+)?<\/tnt-left>/g, '<div style="text-align:left">$1</div>');
+                            text = text.replace(/<tnt-center>(.+)?<\/tnt-center>/g, '<div style="text-align:center">$1</div>');
+                            text = text.replace(/<tnt-right>(.+)?<\/tnt-right>/g, '<div style="text-align:right">$1</div>');
+                            text = text.replace(/<table>/, '<table style="width:100%">');
                             return text;
                         },
                         toolbar: [
@@ -166,14 +188,21 @@ export function onLoad(element, dotNetElementRef) {
                     });
                     if (easyMDE.codemirror && easyMDE.codemirror.on) {
                         easyMDE.codemirror.on("change", function () {
+                            const key = getEditorKey(self);
+                            const editorState = key ? markdownEditorsMap.get(key) : null;
+                            if (editorState?.isSynchronizing) {
+                                return;
+                            }
+
                             var text = easyMDE.value();
-                            const dotNetRef = elementDotNetRefMap.get(newValue);
+                            const dotNetRef = key ? elementDotNetRefMap.get(key) : null;
                             if (dotNetRef) {
                                 dotNetRef.invokeMethodAsync("UpdateValue", text, easyMDE.options.previewRender(text));
                             }
                         });
                         easyMDE.codemirror.on("blur", function () {
-                            const dotNetRef = elementDotNetRefMap.get(newValue);
+                            const key = getEditorKey(self);
+                            const dotNetRef = key ? elementDotNetRefMap.get(key) : null;
                             if (dotNetRef) {
                                 dotNetRef.invokeMethodAsync("HandleBlurAsync");
                             }
@@ -183,7 +212,8 @@ export function onLoad(element, dotNetElementRef) {
 
                 markdownEditorsMap.set(newValue, {
                     element: this,
-                    mde: easyMDE
+                    mde: easyMDE,
+                    isSynchronizing: false
                 });
             }
 
@@ -199,18 +229,23 @@ export function onLoad(element, dotNetElementRef) {
 
 export function onUpdate(element, dotNetElementRef) {
     if (element && dotNetElementRef) {
-        const key = element.getAttribute(NTComponents.customAttribute);
+        const key = getEditorKey(element);
 
         if (elementDotNetRefMap.get(key)) {
             elementDotNetRefMap.delete(key);
         }
         elementDotNetRefMap.set(key, dotNetElementRef);
+
+        const editorState = markdownEditorsMap.get(key);
+        if (editorState) {
+            setEditorValue(editorState, getEditorValue(element));
+        }
     }
 }
 
 export function onDispose(element, dotNetElementRef) {
     if (element) {
-        const key = element.getAttribute(NTComponents.customAttribute);
+        const key = getEditorKey(element);
         elementDotNetRefMap.delete(key);
     }
 }

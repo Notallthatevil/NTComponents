@@ -7,7 +7,7 @@
 		<h3>FormTesting</h3>
 		<label>
 			Appearance
-			<select @bind="_appearance">
+			<select @bind="_appearance" @bind:after="UpdateMardownValue">
 				@foreach (var opt in Enum.GetValues<FormAppearance>()) {
 					<option value="@opt">@opt.ToString()</option>
 				}
@@ -433,6 +433,33 @@
 		Seven,
 		Eight,
 		Nine,
+	}
+
+	private void UpdateMardownValue() {
+		switch (_appearance) {
+			case FormAppearance.Filled:
+				Input.Area = "This is some **markdown** in a filled form.";
+				break;
+			case FormAppearance.Outlined:
+				Input.Area = "This is some **markdown** in an outlined form.";
+				break;
+			case FormAppearance.FilledCompact:
+				Input.Area = "This is some **markdown** in a filled compact form.";
+				break;
+			case FormAppearance.OutlinedCompact:
+				Input.Area = "This is some **markdown** in an outlined compact form.";
+				break;
+			case FormAppearance.FilledXS:
+				Input.Area = "This is some **markdown** in a filled xs form.";
+				break;
+			case FormAppearance.OutlinedXS:
+				Input.Area = "This is some **markdown** in an outlined xs form.";
+				break;
+			default:
+				Input.Area = "This is some **markdown** in a form.";
+				break;
+
+		}
 	}
 }
 

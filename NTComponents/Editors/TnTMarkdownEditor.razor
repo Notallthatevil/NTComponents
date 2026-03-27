@@ -5,11 +5,7 @@
 <div class="@EditorContainerClass" style="@ElementStyle">
     <tnt-markdown-editor @attributes="AdditionalAttributes" @ref="Element">
         <textarea style="display:none;" />
-        @if(!string.IsNullOrWhiteSpace(InitialValue)) {
-        <div class="initial-value" style="display:none">
-            @InitialValue
-        </div>
-        }
+        <div class="editor-value" style="display:none">@CurrentEditorValue</div>
     </tnt-markdown-editor>
     @if (ShowSupportingText) {
         <span class="tnt-supporting-text">
