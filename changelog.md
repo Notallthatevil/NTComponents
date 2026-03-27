@@ -1,3 +1,10 @@
+## [1.42.2](https://github.com/Notallthatevil/NTComponents/compare/v1.42.1...v1.42.2) (2026-03-27)
+
+
+### Bug Fixes
+
+* **radio-group:** add GroupName param for custom radio name ([e501999](https://github.com/Notallthatevil/NTComponents/commit/e501999610670faf49d30d09c2a2d2b2a6a6311e))
+
 ## [1.42.1](https://github.com/Notallthatevil/NTComponents/compare/v1.42.0...v1.42.1) (2026-03-26)
 
 
