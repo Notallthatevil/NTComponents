@@ -36,6 +36,8 @@
         border: none;
         outline: none;
         margin-top: 10px;
+        padding-left: 0;
+        padding-right: 0;
 
         &:has(.tnt-start-icon):has(.tnt-end-icon) {
             grid-template-areas: "pad1 start-icon pad2 radio pad3 end-icon pad4";
@@ -130,7 +132,7 @@
 
                 ::deep {
                     .tnt-radio-input {
-                        transform: translateY(8px)
+                        //transform: translateY(8px)
                     }
                 }
             }
@@ -144,7 +146,7 @@
             &.tnt-placeholder:has(.tnt-label) {
                 ::deep {
                     .tnt-radio-input {
-                        transform: translateY(8px);
+                        //transform: translateY(8px);
                     }
                 }
             }
@@ -232,6 +234,9 @@
         }
 
         &.tnt-form-xs {
+            &.tnt-form-filled:has(> .tnt-label){
+                padding-top: 18px;
+            }
             .tnt-radio-buttons {
                 gap: 4px;
             }
@@ -248,18 +253,18 @@
                 .tnt-radio-input {
                     margin: 1px 0;
                     grid-template-rows: 14px;
-                    grid-template-columns: 8px 14px 8px 1fr 8px;
+                    grid-template-columns: 14px 8px 1fr;
 
                     &:has(.tnt-start-icon):has(.tnt-end-icon) {
-                        grid-template-columns: 8px 18px 8px 14px 8px 1fr 8px 18px 8px;
+                        grid-template-columns: 18px 8px 14px 8px 1fr 8px 18px;
                     }
 
                     &:has(.tnt-start-icon):not(:has(.tnt-end-icon)) {
-                        grid-template-columns: 8px 18px 8px 14px 8px 1fr 8px;
+                        grid-template-columns: 18px 8px 14px 8px 1fr;
                     }
 
                     &:has(.tnt-end-icon):not(:has(.tnt-start-icon)) {
-                        grid-template-columns: 8px 14px 8px 1fr 8px 18px 8px;
+                        grid-template-columns: 14px 8px 1fr 8px 18px;
                     }
 
                     .tnt-radio-button {

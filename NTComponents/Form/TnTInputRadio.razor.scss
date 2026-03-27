@@ -9,8 +9,8 @@
     box-sizing: border-box;
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
-    grid-template-areas: "pad1 radio pad2 label pad3";
-    grid-template-columns: 16px 20px 16px 1fr 16px;
+    grid-template-areas: "radio pad2 label pad3";
+    grid-template-columns: 20px 16px 1fr 16px;
     caret-color: base.$tint-color;
     cursor: pointer;
     color: base.$text-color;
@@ -21,18 +21,18 @@
     @include base.tnt-label(label);
 
     &:has(.tnt-start-icon):has(.tnt-end-icon) {
-        grid-template-areas: "pad1 start-icon pad2 radio pad3 label end-icon pad4";
-        grid-template-columns: 12px 24px 16px 20px 16px 1fr 16px 24px 12px;
+        grid-template-areas: "start-icon pad2 radio pad3 label end-icon pad4";
+        grid-template-columns: 24px 16px 20px 16px 1fr 16px 24px 12px;
     }
 
     &:has(.tnt-start-icon):not(:has(.tnt-end-icon)) {
-        grid-template-areas: "pad1 start-icon pad2 radio pad3 label pad4";
-        grid-template-columns: 12px 24px 16px 20px 16px 1fr 16px;
+        grid-template-areas: "start-icon pad2 radio pad3 label pad4";
+        grid-template-columns: 24px 16px 20px 16px 1fr 16px;
     }
 
     &:has(.tnt-end-icon):not(:has(.tnt-start-icon)) {
-        grid-template-areas: "pad1 radio pad2 label pad3 end-icon pad4";
-        grid-template-columns: 16px 20px 16px 1fr 16px 24px 12px;
+        grid-template-areas: "radio pad2 label pad3 end-icon pad4";
+        grid-template-columns: 20px 16px 1fr 16px 24px 12px;
     }
 
     @include base.disabled-and-readonly;
