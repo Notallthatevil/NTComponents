@@ -1,3 +1,10 @@
+# [1.43.0](https://github.com/Notallthatevil/NTComponents/compare/v1.42.3...v1.43.0) (2026-03-27)
+
+
+### Features
+
+* **markdown-editor:** unify value precedence and sync logic ([ede5ae8](https://github.com/Notallthatevil/NTComponents/commit/ede5ae826e19b71f91b001c7b02f62d788ddb56d))
+
 ## [1.42.3](https://github.com/Notallthatevil/NTComponents/compare/v1.42.2...v1.42.3) (2026-03-27)
 
 
