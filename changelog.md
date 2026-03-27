@@ -1,3 +1,10 @@
+## [1.42.3](https://github.com/Notallthatevil/NTComponents/compare/v1.42.2...v1.42.3) (2026-03-27)
+
+
+### Bug Fixes
+
+* **styles:** simplify radio group grid layouts and padding ([bb906a7](https://github.com/Notallthatevil/NTComponents/commit/bb906a7e9319c6c9df2c733d201da1957a9d8199))
+
 ## [1.42.2](https://github.com/Notallthatevil/NTComponents/compare/v1.42.1...v1.42.2) (2026-03-27)
 
 
