@@ -100,7 +100,7 @@ function cleanupDrag(state) {
     window.removeEventListener('pointercancel', state.onPointerUp);
 }
 
-export function initializePopoverWindow(element, dotNetObjectRef, options) {
+export function initializePopoverWindow(element, dotNetObjectRef, options, animateFromLauncher) {
     if (!element) {
         return;
     }
@@ -118,18 +118,24 @@ export function initializePopoverWindow(element, dotNetObjectRef, options) {
         startClientY: 0,
         startLeft: options?.left ?? 0,
         startTop: options?.top ?? 0,
-        top: options?.top ?? 0
+        top: options?.top ?? 0,
+        cancelCloseAnimation: null
     };
 
-    state.onEnterAnimationEnd = event => {
-        if (event.target !== element || event.animationName !== 'tnt-popover-enter') {
-            return;
-        }
+    // Only register the enter animation listener when the element uses the CSS enter animation.
+    // When animateFromLauncher=true the --entering class is never applied, so the animation
+    // never fires and the listener would be orphaned until disposePopoverWindow.
+    if (!animateFromLauncher) {
+        state.onEnterAnimationEnd = event => {
+            if (event.target !== element || event.animationName !== 'tnt-popover-enter') {
+                return;
+            }
 
-        element.removeEventListener('animationend', state.onEnterAnimationEnd);
-        state.onEnterAnimationEnd = null;
-        state.dotNetObjectRef?.invokeMethodAsync('NotifyEnterAnimationCompleted').catch(() => {});
-    };
+            element.removeEventListener('animationend', state.onEnterAnimationEnd);
+            state.onEnterAnimationEnd = null;
+            state.dotNetObjectRef?.invokeMethodAsync('NotifyEnterAnimationCompleted').catch(() => {});
+        };
+    }
 
     state.onFocusIn = () => {
         notifyActivated(state);
@@ -193,7 +199,10 @@ export function initializePopoverWindow(element, dotNetObjectRef, options) {
     state.handle = getHandle(element);
     state.handle?.addEventListener('pointerdown', state.onPointerDown);
     state.element.addEventListener('focusin', state.onFocusIn);
-    state.element.addEventListener('animationend', state.onEnterAnimationEnd);
+
+    if (state.onEnterAnimationEnd) {
+        state.element.addEventListener('animationend', state.onEnterAnimationEnd);
+    }
 
     states.set(element, state);
     applyPosition(element, state.left, state.top);
@@ -277,6 +286,9 @@ export function disposePopoverWindow(element) {
         return;
     }
 
+    // Immediately resolve any pending close animation so callers are not left waiting.
+    state.cancelCloseAnimation?.();
+
     cleanupDrag(state);
     state.handle?.removeEventListener('pointerdown', state.onPointerDown);
     state.element.removeEventListener('focusin', state.onFocusIn);
@@ -297,6 +309,8 @@ export function waitForCloseAnimation(element) {
         return Promise.resolve();
     }
 
+    const state = states.get(element);
+
     return new Promise(resolve => {
         const timeout = setTimeout(resolve, 300);
 
@@ -307,9 +321,19 @@ export function waitForCloseAnimation(element) {
 
             element.removeEventListener('animationend', onAnimationEnd);
             clearTimeout(timeout);
+            if (state) state.cancelCloseAnimation = null;
             resolve();
         }
 
         element.addEventListener('animationend', onAnimationEnd);
+
+        if (state) {
+            state.cancelCloseAnimation = () => {
+                element.removeEventListener('animationend', onAnimationEnd);
+                clearTimeout(timeout);
+                state.cancelCloseAnimation = null;
+                resolve();
+            };
+        }
     });
 }

@@ -62,6 +62,8 @@ public partial class TnTPopoverWindow : IAsyncDisposable {
         .AddClass("tnt-popover--dragging", false)
         .AddClass("tnt-popover--entering", _isEntering && !AnimateFromLauncher)
         .AddClass("tnt-popover--hidden", !Popover.IsVisible)
+        // Hide uses a JS WAAPI animation (animatePopoverToLauncher) and needs no CSS leaving class.
+        // Only Close relies on the CSS exit animation to signal when to complete.
         .AddClass("tnt-popover--leaving", _dismissAction == PopoverDismissAction.Close)
         .AddClass(Popover.Options.ElementClass)
         .Build();
@@ -106,7 +108,7 @@ public partial class TnTPopoverWindow : IAsyncDisposable {
         try {
             if (firstRender) {
                 _jsModule = await _jsRuntime.ImportIsolatedJs(this, JsModulePath);
-                await _jsModule.InvokeVoidAsync("initializePopoverWindow", _windowElement, _dotNetObjectReference, CreateClientOptions());
+                await _jsModule.InvokeVoidAsync("initializePopoverWindow", _windowElement, _dotNetObjectReference, CreateClientOptions(), AnimateFromLauncher);
             }
             else if (_jsModule is not null) {
                 await _jsModule.InvokeVoidAsync("updatePopoverWindow", _windowElement, CreateClientOptions());
