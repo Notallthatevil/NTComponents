@@ -809,10 +809,10 @@ public class TnTTypeahead_Tests : BunitContext {
         var cut = RenderTypeahead(CountingSearchFunc, parameters => parameters
             .Add(p => p.DebounceMilliseconds, 100));
 
-        // Act - Type multiple characters quickly using InvokeAsync to avoid stale event handler ids
-        await cut.InvokeAsync(() => cut.Find("input").Input("a"));
-        await cut.InvokeAsync(() => cut.Find("input").Input("ap"));
-        await cut.InvokeAsync(() => cut.Find("input").Input("app"));
+        // Act - Type multiple characters without awaiting each to simulate fast typing
+        _ = cut.InvokeAsync(() => cut.Find("input").Input("a"));
+        _ = cut.InvokeAsync(() => cut.Find("input").Input("ap"));
+        _ = cut.InvokeAsync(() => cut.Find("input").Input("app"));
 
         // Allow time for debounce to trigger the actual search call(s)
         await Task.Delay(250, Xunit.TestContext.Current.CancellationToken);

@@ -212,11 +212,11 @@ public class TnTWeekView_Tests : BunitContext {
             new TnTEvent
             {
                 Title = "Test Event",
-                EventStart = DateTimeOffset.Now,
-                EventEnd = DateTimeOffset.Now.AddHours(1)
+                EventStart = new DateTimeOffset(2024, 6, 12, 10, 0, 0, TimeSpan.Zero),
+                EventEnd = new DateTimeOffset(2024, 6, 12, 11, 0, 0, TimeSpan.Zero)
             }
         };
-        var scheduler = CreateTestScheduler(events);
+        var scheduler = CreateTestScheduler(events, new DateOnly(2024, 6, 12));
 
         // Act
         var cut = Render<TnTWeekView<TnTEvent>>(parameters => parameters
@@ -238,11 +238,11 @@ public class TnTWeekView_Tests : BunitContext {
             {
                 Title = "Test Event",
                 Description = "Event description",
-                EventStart = DateTimeOffset.Now,
-                EventEnd = DateTimeOffset.Now.AddHours(1)
+                EventStart = new DateTimeOffset(2024, 6, 12, 10, 0, 0, TimeSpan.Zero),
+                EventEnd = new DateTimeOffset(2024, 6, 12, 11, 0, 0, TimeSpan.Zero)
             }
         };
-        var scheduler = CreateTestScheduler(events);
+        var scheduler = CreateTestScheduler(events, new DateOnly(2024, 6, 12));
 
         // Act
         var cut = Render<TnTWeekView<TnTEvent>>(parameters => parameters
@@ -264,11 +264,11 @@ public class TnTWeekView_Tests : BunitContext {
             {
                 Title = "Test Event",
                 Description = "Event description",
-                EventStart = DateTimeOffset.Now,
-                EventEnd = DateTimeOffset.Now.AddHours(1)
+                EventStart = new DateTimeOffset(2024, 6, 12, 10, 0, 0, TimeSpan.Zero),
+                EventEnd = new DateTimeOffset(2024, 6, 12, 11, 0, 0, TimeSpan.Zero)
             }
         };
-        var scheduler = CreateTestScheduler(events);
+        var scheduler = CreateTestScheduler(events, new DateOnly(2024, 6, 12));
 
         // Act
         var cut = Render<TnTWeekView<TnTEvent>>(parameters => parameters
@@ -571,11 +571,11 @@ public class TnTWeekView_Tests : BunitContext {
             new TnTEvent
             {
                 Title = "Test Event",
-                EventStart = DateTimeOffset.Now,
-                EventEnd = DateTimeOffset.Now.AddHours(1)
+                EventStart = new DateTimeOffset(2024, 6, 12, 10, 0, 0, TimeSpan.Zero),
+                EventEnd = new DateTimeOffset(2024, 6, 12, 11, 0, 0, TimeSpan.Zero)
             }
         };
-        var scheduler = CreateTestScheduler(events);
+        var scheduler = CreateTestScheduler(events, new DateOnly(2024, 6, 12));
 
         // Act
         var cut = Render<TnTWeekView<TnTEvent>>(parameters => parameters
