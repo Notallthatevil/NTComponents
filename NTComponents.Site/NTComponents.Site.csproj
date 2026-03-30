@@ -6,6 +6,9 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<OverrideHtmlAssetPlaceholders>true</OverrideHtmlAssetPlaceholders>
 		<ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>
+		<NTComponentsChartsProject>..\Submodules\NTComponents.Charts\NTComponents.Charts\NTComponents.Charts.csproj</NTComponentsChartsProject>
+		<NTComponentsChartsAvailable Condition="Exists('$(NTComponentsChartsProject)')">true</NTComponentsChartsAvailable>
+		<NTComponentsChartsAvailable Condition="'$(NTComponentsChartsAvailable)' == ''">false</NTComponentsChartsAvailable>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -15,7 +18,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\Submodules\NTComponents.Charts\NTComponents.Charts\NTComponents.Charts.csproj" />
+		<ProjectReference Include="$(NTComponentsChartsProject)" Condition="'$(NTComponentsChartsAvailable)' == 'true'" />
 	</ItemGroup>
 
 	<ItemGroup>

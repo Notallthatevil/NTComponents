@@ -1,0 +1,21 @@
+@page "/breadcrumbs-ssr"
+@using NTComponents
+
+<h1>Breadcrumbs SSR</h1>
+
+<p>Static SSR breadcrumb examples used for browser verification.</p>
+
+<section>
+    <h2>Standard Path</h2>
+    <TnTBreadcrumbs Items="@StandardItems" />
+</section>
+
+<section>
+    <h2>With Home Icon</h2>
+    <TnTBreadcrumbs Items="@HomeItems" />
+</section>
+
+<section>
+    <h2>Disabled Intermediate Item</h2>
+    <TnTBreadcrumbs Items="@DisabledItems" data-testid="ssr-breadcrumbs" />
+</section>

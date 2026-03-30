@@ -1,5 +1,3 @@
-@using System.ComponentModel.DataAnnotations
-@using Microsoft.AspNetCore.Components.Forms
 @using NTComponents
 
 <div style="border:1px solid var(--tnt-color-outline-variant); border-radius:8px; padding:16px; margin-bottom:16px;">
@@ -20,7 +18,7 @@
                          MaximumFileCount="5"
                          ShowRemoveButton="true"
                          SelectedFiles="@_selectedFiles"
-                         OnSelectionChanged="files => _selectedFiles = files" />
+                         OnSelectionChanged="HandleSelectionChanged" />
         </TnTWizardStep>
 
         <TnTWizardStep Title="Step 3" SubTitle="Review">
@@ -39,19 +37,3 @@
         </TnTWizardStep>
     </TnTWizard>
 </div>
-
-@code {
-    private readonly Step1Model _step1 = new();
-    private IReadOnlyList<IBrowserFile>? _selectedFiles;
-
-    private static string FormatFileSize(long bytes) => bytes switch {
-        < 1024 => $"{bytes} B",
-        < 1_048_576 => $"{bytes / 1024.0:F1} KB",
-        _ => $"{bytes / 1_048_576.0:F1} MB"
-    };
-
-    private sealed class Step1Model {
-        [Required]
-        public string Name { get; set; } = string.Empty;
-    }
-}

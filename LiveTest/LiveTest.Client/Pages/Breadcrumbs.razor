@@ -1,0 +1,52 @@
+@page "/breadcrumbs"
+@using NTComponents
+@rendermode InteractiveAuto
+
+<h1>Breadcrumbs</h1>
+
+<p>Material 3 breadcrumb trails with semantic markup, accessible current-page handling, and an SSR-safe rendering path.</p>
+
+<section>
+    <h2>Interactive Preview</h2>
+
+    <label>
+        Preset
+        <select @bind="SelectedPreset">
+            @foreach (var preset in Enum.GetValues<BreadcrumbDemoPreset>()) {
+                <option value="@preset">@preset</option>
+            }
+        </select>
+    </label>
+
+    <label>
+        <input type="checkbox" @bind="IncludeHomeIcon" />
+        Include home icon
+    </label>
+
+    <label>
+        <input type="checkbox" @bind="DisableIntermediate" />
+        Disable intermediate item
+    </label>
+
+    <label>
+        <input type="checkbox" @bind="UseExplicitCurrent" />
+        Mark current item explicitly
+    </label>
+
+    <TnTBreadcrumbs Items="@PreviewItems" />
+</section>
+
+<section>
+    <h2>Long Labels</h2>
+    <TnTBreadcrumbs Items="@LongLabelItems" />
+</section>
+
+<section>
+    <h2>Icon-Only First Item</h2>
+    <TnTBreadcrumbs Items="@IconOnlyItems" />
+</section>
+
+<section>
+    <h2>Static SSR Route</h2>
+    <p>The non-interactive SSR smoke-test route is available at <code>/breadcrumbs-ssr</code>.</p>
+</section>

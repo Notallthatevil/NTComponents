@@ -1,0 +1,55 @@
+@namespace NTComponents
+@inherits NTComponents.Core.TnTComponentBase
+
+<nav @attributes="AdditionalAttributes"
+     class="@ElementClass"
+     style="@ElementStyle"
+     lang="@ElementLang"
+     id="@ElementId"
+     title="@ElementTitle"
+     aria-label="@AriaLabel"
+     @ref="Element">
+    <ol class="tnt-breadcrumbs__list">
+        @foreach (var item in ResolvedItems) {
+            <li class="tnt-breadcrumbs__item">
+                @if (item.Index > 0) {
+                    <span class="tnt-breadcrumbs__separator" aria-hidden="true">
+                        <MaterialIcon Icon="@MaterialIcon.ChevronRight" Size="IconSize.Small" />
+                    </span>
+                }
+
+                @if (item.RenderAsLink) {
+                    <a class="@GetCrumbClass(item)"
+                       href="@item.Href"
+                       aria-label="@item.AriaLabel">
+                        @if (item.Icon is not null) {
+                            <span class="tnt-breadcrumbs__icon" aria-hidden="true">
+                                @item.Icon.Render("tnt-breadcrumbs__icon-glyph")
+                            </span>
+                        }
+
+                        @if (item.HasText) {
+                            <span class="tnt-breadcrumbs__label">@item.Text</span>
+                        }
+                    </a>
+                }
+                else {
+                    <span class="@GetCrumbClass(item)"
+                          aria-label="@item.AriaLabel"
+                          aria-current="@GetAriaCurrent(item)"
+                          aria-disabled="@GetAriaDisabled(item)">
+                        @if (item.Icon is not null) {
+                            <span class="tnt-breadcrumbs__icon" aria-hidden="true">
+                                @item.Icon.Render("tnt-breadcrumbs__icon-glyph")
+                            </span>
+                        }
+
+                        @if (item.HasText) {
+                            <span class="tnt-breadcrumbs__label">@item.Text</span>
+                        }
+                    </span>
+                }
+            </li>
+        }
+    </ol>
+</nav>

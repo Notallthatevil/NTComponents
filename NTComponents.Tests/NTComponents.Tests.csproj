@@ -8,6 +8,9 @@
 		<OutputType>Exe</OutputType>
 		<WarningLevel>8</WarningLevel>
 		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+		<NTComponentsChartsProject>..\Submodules\NTComponents.Charts\NTComponents.Charts\NTComponents.Charts.csproj</NTComponentsChartsProject>
+		<NTComponentsChartsAvailable Condition="Exists('$(NTComponentsChartsProject)')">true</NTComponentsChartsAvailable>
+		<NTComponentsChartsAvailable Condition="'$(NTComponentsChartsAvailable)' == ''">false</NTComponentsChartsAvailable>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -45,12 +48,16 @@
 		<ProjectReference Include="..\NTComponents\NTComponents.csproj" />
 		<ProjectReference Include="..\NTComponents.AspNetCore\NTComponents.AspNetCore.csproj" />
 		<ProjectReference Include="..\NTComponents.Extensions\NTComponents.Extensions.csproj" />
-		<ProjectReference Include="..\Submodules\NTComponents.Charts\NTComponents.Charts\NTComponents.Charts.csproj" />
+		<ProjectReference Include="$(NTComponentsChartsProject)" Condition="'$(NTComponentsChartsAvailable)' == 'true'" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<Using Include="Bunit" />
 		<Using Include="Xunit" />
 		<Using Include="AwesomeAssertions" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(NTComponentsChartsAvailable)' != 'true'">
+		<Compile Remove="Charts/**/*.cs" />
 	</ItemGroup>
 </Project>

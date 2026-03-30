@@ -1,0 +1,96 @@
+@use '../Styles/_Variables/_colors.scss' as colors;
+@use '../Styles/_Variables/_measurements.scss' as measurements;
+@use '../Styles/_Variables/_typescale.scss' as typescale;
+
+.tnt-breadcrumbs {
+    display: block;
+    color: colors.$tnt-color-on-surface;
+
+    &__list {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    &__item {
+        display: inline-flex;
+        align-items: center;
+        min-width: 0;
+    }
+
+    &__separator {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 2px;
+        color: colors.$tnt-color-on-surface-variant;
+        flex: 0 0 auto;
+
+        ::deep .tnt-icon {
+            font-size: 18px;
+        }
+    }
+
+    &__crumb {
+        @include typescale.tnt-label-large;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 48px;
+        max-width: 100%;
+        padding: 0 8px;
+        border-radius: measurements.$tnt-pill-border-radius-small;
+        color: colors.$tnt-color-on-surface-variant;
+        text-decoration: none;
+        white-space: nowrap;
+
+        &--link {
+            transition: background-color 150ms ease-in-out, color 150ms ease-in-out;
+
+            &:hover,
+            &:focus-visible {
+                background-color: colors.$tnt-color-surface-container-highest;
+                color: colors.$tnt-color-on-surface;
+                outline: none;
+            }
+
+            &:focus-visible {
+                box-shadow: 0 0 0 2px colors.$tnt-color-outline;
+            }
+        }
+
+        &--current {
+            color: colors.$tnt-color-on-surface;
+            font-weight: 600;
+        }
+
+        &--disabled {
+            color: colors.$tnt-color-outline;
+        }
+
+        &--icon-only {
+            justify-content: center;
+            min-width: 48px;
+            padding: 0 12px;
+        }
+    }
+
+    &__icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+    }
+
+    &__label {
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    ::deep .tnt-breadcrumbs__icon-glyph {
+        font-size: 20px;
+    }
+}

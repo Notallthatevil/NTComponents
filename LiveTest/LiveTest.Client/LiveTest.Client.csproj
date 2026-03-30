@@ -6,6 +6,9 @@
     <Nullable>enable</Nullable>
     <NoDefaultLaunchSettingsFile>true</NoDefaultLaunchSettingsFile>
     <StaticWebAssetProjectMode>Default</StaticWebAssetProjectMode>
+    <NTComponentsChartsProject>..\..\Submodules\NTComponents.Charts\NTComponents.Charts\NTComponents.Charts.csproj</NTComponentsChartsProject>
+    <NTComponentsChartsAvailable Condition="Exists('$(NTComponentsChartsProject)')">true</NTComponentsChartsAvailable>
+    <NTComponentsChartsAvailable Condition="'$(NTComponentsChartsAvailable)' == ''">false</NTComponentsChartsAvailable>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0'">
@@ -15,7 +18,15 @@
   <ItemGroup>
     <ProjectReference Include="..\..\NTComponents.Extensions\NTComponents.Extensions.csproj" />
     <ProjectReference Include="..\..\NTComponents\NTComponents.csproj" />
-    <ProjectReference Include="..\..\Submodules\NTComponents.Charts\NTComponents.Charts\NTComponents.Charts.csproj" />
+    <ProjectReference Include="$(NTComponentsChartsProject)" Condition="'$(NTComponentsChartsAvailable)' == 'true'" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(NTComponentsChartsAvailable)' != 'true'">
+    <Content Remove="Pages/BarGraph.razor" />
+    <Content Remove="Pages/BubbleChart.razor" />
+    <Content Remove="Pages/Charts.razor" />
+    <Content Remove="Pages/LineGraph.razor" />
+    <Content Remove="Pages/TreeMap.razor" />
   </ItemGroup>
 
 </Project>
