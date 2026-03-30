@@ -25,6 +25,7 @@
       "<rootDir>/NTComponents/Accordion/__tests__",
       "<rootDir>/NTComponents/Animation/__tests__",
       "<rootDir>/NTComponents/Editors/__tests__",
+      "<rootDir>/NTComponents/Popover/__tests__",
       "<rootDir>/NTComponents/TabView/__tests__",
       "<rootDir>/NTComponents/Theming/__tests__",
       "<rootDir>/NTComponents/Typeahead/__tests__",

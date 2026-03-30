@@ -1,0 +1,278 @@
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Rendering;
+using Microsoft.AspNetCore.Components.Web;
+using Microsoft.JSInterop;
+using NTComponents.Core;
+using NTComponents.Ext;
+
+namespace NTComponents;
+
+/// <summary>
+///     Renders a single floating popover window.
+/// </summary>
+public partial class TnTPopoverWindow : IAsyncDisposable {
+    private const string JsModulePath = "./_content/NTComponents/Popover/TnTPopoverWindow.razor.js";
+    private PopoverDismissAction _dismissAction;
+    private readonly DotNetObjectReference<TnTPopoverWindow> _dotNetObjectReference;
+    private readonly IJSRuntime _jsRuntime;
+    private readonly ITnTPopoverService _popoverService;
+    private readonly string _descriptionElementId = TnTComponentIdentifier.NewId();
+    private readonly string _titleElementId = TnTComponentIdentifier.NewId();
+    private bool _hasAnimatedFromLauncher;
+    private bool _isEntering = true;
+    private IJSObjectReference? _jsModule;
+    private ElementReference _windowElement;
+
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="TnTPopoverWindow" /> class.
+    /// </summary>
+    /// <param name="jsRuntime">The JavaScript runtime.</param>
+    /// <param name="popoverService">The popover service.</param>
+    public TnTPopoverWindow(IJSRuntime jsRuntime, ITnTPopoverService popoverService) {
+        _jsRuntime = jsRuntime;
+        _popoverService = popoverService;
+        _dotNetObjectReference = DotNetObjectReference.Create(this);
+    }
+
+    /// <summary>
+    ///     Gets or sets the popover handle being rendered.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public ITnTPopoverHandle Popover { get; set; } = default!;
+
+    /// <summary>
+    ///     Gets or sets a value indicating whether the popover should animate from the launcher strip.
+    /// </summary>
+    [Parameter]
+    public bool AnimateFromLauncher { get; set; }
+
+    /// <summary>
+    ///     Gets or sets a callback invoked after a launcher-enter animation completes.
+    /// </summary>
+    [Parameter]
+    public EventCallback<string> OnLauncherEnterAnimationCompleted { get; set; }
+
+    private string? DescriptionElementId => string.IsNullOrWhiteSpace(Popover.Options.Description) ? null : _descriptionElementId;
+
+    private string DisplayTitle => string.IsNullOrWhiteSpace(Popover.Options.Title) ? "Window" : Popover.Options.Title!;
+
+    private bool IsDismissPending => _dismissAction is not PopoverDismissAction.None;
+
+    private string ElementClass => CssClassBuilder.Create("tnt-popover")
+        .AddClass("tnt-popover--dragging", false)
+        .AddClass("tnt-popover--entering", _isEntering && !AnimateFromLauncher)
+        .AddClass("tnt-popover--hidden", !Popover.IsVisible)
+        .AddClass("tnt-popover--leaving", _dismissAction == PopoverDismissAction.Close)
+        .AddClass(Popover.Options.ElementClass)
+        .Build();
+
+    private string? ElementStyle => CssStyleBuilder.Create()
+        .Add(Popover.Options.ElementStyle!)
+        .AddStyle("left", $"{Popover.Left.ToString(System.Globalization.CultureInfo.InvariantCulture)}px")
+        .AddStyle("top", $"{Popover.Top.ToString(System.Globalization.CultureInfo.InvariantCulture)}px")
+        .AddStyle("z-index", Popover.ZIndex.ToString(System.Globalization.CultureInfo.InvariantCulture))
+        .AddVariable("tnt-popover-bg-color", Popover.Options.BackgroundColor)
+        .AddVariable("tnt-popover-fg-color", Popover.Options.TextColor)
+        .AddVariable("tnt-popover-width", Popover.Options.Width)
+        .AddVariable("tnt-popover-height", Popover.Options.Height)
+        .AddVariable("tnt-popover-min-width", Popover.Options.MinWidth)
+        .AddVariable("tnt-popover-min-height", Popover.Options.MinHeight)
+        .AddVariable("tnt-popover-max-width", Popover.Options.MaxWidth)
+        .AddVariable("tnt-popover-max-height", Popover.Options.MaxHeight)
+        .Build();
+
+    /// <inheritdoc />
+    public async ValueTask DisposeAsync() {
+        if (_jsModule is not null) {
+            try {
+                await _jsModule.InvokeVoidAsync("disposePopoverWindow", _windowElement);
+                await _jsModule.DisposeAsync();
+            }
+            catch (JSDisconnectedException) {
+            }
+        }
+
+        _dotNetObjectReference.Dispose();
+        GC.SuppressFinalize(this);
+    }
+
+    /// <inheritdoc />
+    protected override async Task OnAfterRenderAsync(bool firstRender) {
+        await base.OnAfterRenderAsync(firstRender);
+        if (!RendererInfo.IsInteractive) {
+            return;
+        }
+
+        try {
+            if (firstRender) {
+                _jsModule = await _jsRuntime.ImportIsolatedJs(this, JsModulePath);
+                await _jsModule.InvokeVoidAsync("initializePopoverWindow", _windowElement, _dotNetObjectReference, CreateClientOptions());
+            }
+            else if (_jsModule is not null) {
+                await _jsModule.InvokeVoidAsync("updatePopoverWindow", _windowElement, CreateClientOptions());
+            }
+
+            if (AnimateFromLauncher && !_hasAnimatedFromLauncher && _jsModule is not null) {
+                _hasAnimatedFromLauncher = true;
+                _isEntering = false;
+                await _jsModule.InvokeVoidAsync("animatePopoverFromLauncher", _windowElement, Popover.ElementId);
+
+                if (OnLauncherEnterAnimationCompleted.HasDelegate) {
+                    await OnLauncherEnterAnimationCompleted.InvokeAsync(Popover.ElementId);
+                }
+            }
+        }
+        catch (JSDisconnectedException) {
+        }
+    }
+
+    /// <summary>
+    ///     Invoked by JavaScript when the popover should be activated.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    [JSInvokable]
+    public async Task NotifyActivated() {
+        await Popover.BringToFrontAsync();
+    }
+
+    /// <summary>
+    ///     Invoked by JavaScript when the popover position changes after a drag operation.
+    /// </summary>
+    /// <param name="left">The new left position in pixels.</param>
+    /// <param name="top">The new top position in pixels.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    [JSInvokable]
+    public async Task NotifyPositionChanged(double left, double top) {
+        await _popoverService.UpdatePositionAsync(Popover, left, top);
+    }
+
+    private object CreateClientOptions() => new {
+        allowDragging = Popover.Options.AllowDragging,
+        left = Popover.Left,
+        top = Popover.Top,
+        viewportPadding = 16
+    };
+
+    private async Task CloseAsync() => await BeginDismissAsync(PopoverDismissAction.Close);
+
+    private async Task HideAsync() {
+        if (IsDismissPending) {
+            return;
+        }
+
+        _isEntering = false;
+        _dismissAction = PopoverDismissAction.Hide;
+        await InvokeAsync(StateHasChanged);
+
+        if (!RendererInfo.IsInteractive || _jsModule is null) {
+            _dismissAction = PopoverDismissAction.None;
+            await Popover.HideAsync();
+            return;
+        }
+
+        try {
+            await _jsModule.InvokeVoidAsync("animatePopoverToLauncher", _windowElement, Popover.ElementId);
+            _dismissAction = PopoverDismissAction.None;
+            await Popover.HideAsync();
+        }
+        catch (JSDisconnectedException) {
+            _dismissAction = PopoverDismissAction.None;
+            await Popover.HideAsync();
+        }
+    }
+
+    private RenderFragment RenderContent() {
+        return builder => {
+            if (Popover.ChildContent is not null) {
+                builder.AddContent(0, Popover.ChildContent);
+                return;
+            }
+
+            if (Popover.Type is null) {
+                return;
+            }
+
+            builder.OpenComponent(10, Popover.Type);
+#pragma warning disable CS8620
+            builder.AddMultipleAttributes(20, Popover.Parameters);
+#pragma warning restore CS8620
+            builder.CloseComponent();
+        };
+    }
+
+    private async Task BeginDismissAsync(PopoverDismissAction dismissAction) {
+        if (IsDismissPending) {
+            return;
+        }
+
+        _isEntering = false;
+        _dismissAction = dismissAction;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task OnAnimationEndAsync(EventArgs _) {
+        if (_isEntering && !IsDismissPending) {
+            _isEntering = false;
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        if (!IsDismissPending || _dismissAction != PopoverDismissAction.Close) {
+            return;
+        }
+
+        var dismissAction = _dismissAction;
+        _dismissAction = PopoverDismissAction.None;
+
+        if (dismissAction == PopoverDismissAction.Hide) {
+            await Popover.HideAsync();
+            return;
+        }
+
+        await Popover.CloseAsync();
+    }
+
+    private async Task OnHeaderKeyDownAsync(KeyboardEventArgs args) {
+        if (!Popover.Options.AllowDragging) {
+            return;
+        }
+
+        var step = args.ShiftKey ? 48 : 16;
+        var left = Popover.Left;
+        var top = Popover.Top;
+
+        switch (args.Key) {
+            case "ArrowLeft":
+                left -= step;
+                break;
+            case "ArrowRight":
+                left += step;
+                break;
+            case "ArrowUp":
+                top -= step;
+                break;
+            case "ArrowDown":
+                top += step;
+                break;
+            default:
+                return;
+        }
+
+        await Popover.BringToFrontAsync();
+        await _popoverService.UpdatePositionAsync(Popover, left, top);
+    }
+
+    private async Task OnPointerDownAsync() => await Popover.BringToFrontAsync();
+
+    private async Task OnWindowKeyDownAsync(KeyboardEventArgs args) {
+        if (args.Key == "Escape" && Popover.Options.CloseOnEscape) {
+            await CloseAsync();
+        }
+    }
+
+    private enum PopoverDismissAction {
+        None,
+        Hide,
+        Close
+    }
+}

@@ -1,0 +1,165 @@
+@use '../Styles/_Variables/_colors.scss' as colors;
+@use '../Styles/_Variables/_typescale.scss' as typescale;
+@use '../Styles/_Variables/_elevation.scss' as elevation;
+
+.tnt-popover {
+    @include elevation.tnt-elevation(3, false);
+
+    --tnt-popover-motion-duration: 180ms;
+    --tnt-popover-motion-easing: cubic-bezier(0.2, 0, 0, 1);
+
+    position: fixed;
+    display: flex;
+    flex-direction: column;
+    width: min(var(--tnt-popover-width), calc(100vw - 1rem));
+    max-width: min(var(--tnt-popover-max-width), calc(100vw - 1rem));
+    min-width: min(var(--tnt-popover-min-width), calc(100vw - 1rem));
+    height: var(--tnt-popover-height);
+    max-height: min(var(--tnt-popover-max-height), calc(100vh - 1rem));
+    min-height: min(var(--tnt-popover-min-height), calc(100vh - 4rem));
+    overflow: hidden;
+    border: 1px solid colors.$tnt-color-outline-variant;
+    border-radius: 24px;
+    background-color: var(--tnt-popover-bg-color);
+    color: var(--tnt-popover-fg-color);
+    pointer-events: auto;
+    outline: none;
+    transform-origin: top left;
+    will-change: opacity, transform;
+    transition: box-shadow 150ms ease, transform 150ms ease, opacity 150ms ease;
+
+    &:focus-within {
+        box-shadow: 0 16px 20px 6px colors.$tnt-color-shadow;
+    }
+
+    &--entering {
+        animation: tnt-popover-enter var(--tnt-popover-motion-duration) var(--tnt-popover-motion-easing) both;
+    }
+
+    &--dragging {
+        transform: scale(1.01);
+    }
+
+    &--leaving {
+        pointer-events: none;
+        animation: tnt-popover-exit var(--tnt-popover-motion-duration) var(--tnt-popover-motion-easing) both;
+    }
+
+    &__header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 1rem 1rem 0.75rem;
+        cursor: move;
+        user-select: none;
+        background:
+            linear-gradient(
+                180deg,
+                color-mix(in srgb, colors.$tnt-color-surface-tint 10%, transparent),
+                transparent
+            );
+    }
+
+    &__heading {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        min-width: 0;
+    }
+
+    &__drag-indicator {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 0.125rem;
+        color: colors.$tnt-color-on-surface-variant;
+    }
+
+    &__titles {
+        min-width: 0;
+    }
+
+    &__title {
+        @include typescale.tnt-title-medium;
+
+        margin: 0;
+        color: inherit;
+    }
+
+    &__description {
+        @include typescale.tnt-body-small;
+
+        margin: 0.25rem 0 0;
+        color: colors.$tnt-color-on-surface-variant;
+    }
+
+    &__actions {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    &__action-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.25rem;
+        height: 2.25rem;
+        border: none;
+        border-radius: 999px;
+        background: transparent;
+        color: inherit;
+        cursor: pointer;
+    }
+
+    &__action-button:hover:not(:disabled),
+    &__action-button:focus-visible:not(:disabled) {
+        background-color: color-mix(in srgb, colors.$tnt-color-surface-tint 14%, transparent);
+        outline: none;
+    }
+
+    &__action-button:disabled {
+        opacity: 0.6;
+        cursor: default;
+    }
+
+    &__body {
+        @include typescale.tnt-body-medium;
+
+        flex: 1 1 auto;
+        overflow: auto;
+        padding: 0 1rem 1rem;
+    }
+}
+
+@keyframes tnt-popover-enter {
+    from {
+        opacity: 0;
+        transform: translateY(0.5rem) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes tnt-popover-exit {
+    from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateY(0.5rem) scale(0.98);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tnt-popover {
+        --tnt-popover-motion-duration: 1ms;
+        transition-duration: 1ms;
+    }
+}

@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using NTComponents;
 using NTComponents.Core;
 using NTComponents.Dialog;
+using NTComponents.Popover;
 using NTComponents.Snackbar;
 using NTComponents.Storage;
 using NTComponents.Toast;
@@ -27,6 +28,7 @@ public static class TnTServicesExt {
         var o = new NTComponentsDefaultOptions();
         options?.Invoke(o);
         return services.AddScoped<ITnTDialogService, TnTDialogService>()
+             .AddScoped<ITnTPopoverService, TnTPopoverService>()
              .AddScoped<INTSnackbarService, NTSnackbarService>()
              .AddScoped<ITnTToastService, TnTToastService>()
              .AddScoped<ISessionStorageService, SessionStorageService>()

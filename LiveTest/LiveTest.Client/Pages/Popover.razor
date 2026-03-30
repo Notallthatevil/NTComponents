@@ -1,0 +1,32 @@
+@page "/popover"
+@namespace LiveTest.Client.Pages
+@using NTComponents
+@rendermode InteractiveAuto
+
+<h3>Popover</h3>
+
+<p>
+    Floating, modeless windows that can be dragged, hidden, restored, and brought to the front without blocking the rest of the page.
+</p>
+
+<p>
+    Try opening a workspace, dragging the windows around, hiding one to the launcher strip, and reopening it. The title bar also supports arrow-key movement when focused.
+</p>
+
+<div class="d-flex flex-wrap gap-2 mb-3">
+    <TnTButton ElementId="open-workspace-popovers" OnClickCallback="OpenWorkspaceAsync">
+        Open Workspace
+    </TnTButton>
+
+    <TnTButton ElementId="open-notes-popover" OnClickCallback="OpenNotesPopoverAsync">
+        Open Notes Window
+    </TnTButton>
+
+    <TnTButton ElementId="open-inspector-popover" OnClickCallback="OpenInspectorPopoverAsync">
+        Open Inspector Window
+    </TnTButton>
+
+    <TnTButton ElementId="open-preview-popover" OnClickCallback="OpenPreviewPopoverAsync">
+        Open Preview Window
+    </TnTButton>
+</div>

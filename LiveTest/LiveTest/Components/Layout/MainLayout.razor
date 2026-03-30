@@ -70,6 +70,9 @@
         <TnTSideNavLink href="/dialog" Icon="@MaterialIcon.Diamond">
             Dialogs
         </TnTSideNavLink>
+        <TnTSideNavLink href="/popover" Icon="@MaterialIcon.Dock">
+            Popover
+        </TnTSideNavLink>
 
         <TnTSideNavMenuGroup Icon="@MaterialIcon.EditNote" ExpandByDefault="false" Label="Editors">
             <TnTSideNavLink href="/markdown" Icon="@MaterialIcon.MarkAsUnread">
@@ -143,5 +146,6 @@
 </TnTLayout>
 
 <TnTDialog @rendermode="InteractiveAuto" />
+<TnTPopoverHost @rendermode="InteractiveAuto" />
 <TnTToast @rendermode="InteractiveAuto" />
 <NTSnackbar @rendermode="InteractiveAuto" />
