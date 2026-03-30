@@ -64,25 +64,20 @@ $content-text-color: var(--tnt-accordion-child-content-fg-color);
         }
 
         & > div:last-child {
-            overflow: auto;
-            max-height: 80vh;
+            display: grid;
+            grid-template-rows: 0fr;
             border-radius: 0;
+            overflow: hidden;
+            transition: grid-template-rows 250ms ease-in-out;
 
-            &.tnt-collapsed {
-                animation: 250ms ease-in-out forwards closeAccordion;
+            & > .tnt-accordion-child-content-body {
+                min-height: 0;
+                overflow: auto;
+                max-height: 80vh;
             }
 
             &.tnt-expanded {
-                display: block;
-
-                &:not(:has(.tnt-expanded)):not(:has(.tnt-collapsed)) {
-                    animation: 250ms ease-in-out forwards openAccordion;
-                }
-            }
-
-            &:not(.tnt-collapsed):not(.tnt-expanded) {
-                height: 0;
-                display: none;
+                grid-template-rows: 1fr;
             }
         }
 
@@ -127,23 +122,3 @@ $content-text-color: var(--tnt-accordion-child-content-fg-color);
 }
 
 
-@keyframes closeAccordion {
-    0% {
-        height: var(--content-height);
-    }
-
-    100% {
-        height: 0px;
-        display: none;
-    }
-}
-
-@keyframes openAccordion {
-    0% {
-        height: 0px;
-    }
-
-    100% {
-        height: var(--content-height);
-    }
-}

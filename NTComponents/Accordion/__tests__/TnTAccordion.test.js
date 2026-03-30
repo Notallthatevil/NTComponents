@@ -8,13 +8,6 @@ if (!global.NTComponents) {
   global.NTComponents = { customAttribute: 'tntid' };
 }
 
-if (typeof global.ResizeObserver === 'undefined') {
-  global.ResizeObserver = class { observe(){} disconnect(){} };
-}
-if (typeof global.MutationObserver === 'undefined') {
-  global.MutationObserver = class { observe(){} disconnect(){} };
-}
-
 describe('TnTAccordion web component', () => {
   beforeEach(() => {
     document.body.innerHTML = '';
@@ -98,23 +91,22 @@ describe('TnTAccordion web component', () => {
     expect(acc.accordionChildren.length).toBe(2);
   });
 
-  test('updateChild sets content height and observers when expanded', () => {
+  test('update syncs inert and aria state for expanded content', () => {
     const acc = createAccordion();
     const { wrapper, content } = createChild({ expanded: true });
-    Object.defineProperty(content, 'scrollHeight', { value: 250, configurable: true });
     acc.appendChild(wrapper);
     acc.update();
-    expect(content.style.getPropertyValue('--content-height')).toBe('250px');
-    expect(content.resizeObserver).toBeDefined();
-    expect(content.mutationObserver).toBeDefined();
+    expect(content.getAttribute('aria-hidden')).toBe('false');
+    expect(content.hasAttribute('inert')).toBe(false);
   });
 
-  test('updateChild clears inline height when collapsed', () => {
+  test('update syncs inert and aria state for collapsed content', () => {
     const acc = createAccordion();
     const { wrapper, content } = createChild();
     acc.appendChild(wrapper);
     acc.update();
-    expect(content.style.height).toBe('');
+    expect(content.getAttribute('aria-hidden')).toBe('true');
+    expect(content.hasAttribute('inert')).toBe(true);
   });
 
   test('closeChildren collapses other expanded children', () => {
@@ -186,16 +178,13 @@ describe('TnTAccordion web component', () => {
     const acc = createAccordion({ limitOne: true });
     const first = createChild({ expanded: true });
     const second = createChild({ expanded: true });
-    Object.defineProperty(first.content, 'scrollHeight', { value: 180, configurable: true });
     acc.appendChild(first.wrapper);
     acc.appendChild(second.wrapper);
     acc.update();
     acc.closeChildren(second.wrapper);
     expect(first.button.getAttribute('aria-expanded')).toBe('false');
-    expect(first.content.getAttribute('aria-hidden')).toBe('false');
-    expect(first.content.style.getPropertyValue('--content-height')).toBe('180px');
-    first.content.dispatchEvent(new Event('animationend'));
     expect(first.content.getAttribute('aria-hidden')).toBe('true');
+    expect(first.content.hasAttribute('inert')).toBe(true);
   });
 
   test('limitToOneExpanded reflects CSS class', () => {

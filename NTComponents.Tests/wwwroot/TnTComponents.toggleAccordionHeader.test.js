@@ -140,7 +140,6 @@ describe('NTComponents.toggleAccordionHeader', () => {
       const content = document.createElement('div');
       content.setAttribute('data-accordion-content', 'true');
       content.className = 'tnt-expanded';
-      Object.defineProperty(content, 'scrollHeight', { value: 240, configurable: true });
 
       const nestedAccordion = document.createElement('tnt-accordion');
       const nestedItem = document.createElement('div');
@@ -165,10 +164,8 @@ describe('NTComponents.toggleAccordionHeader', () => {
       NTComponents.toggleAccordionHeader(event);
 
       expect(content.classList.contains('tnt-collapsed')).toBe(true);
-      expect(content.getAttribute('aria-hidden')).toBe('false');
-      expect(content.style.getPropertyValue('--content-height')).toBe('240px');
-      content.dispatchEvent(new Event('animationend'));
       expect(content.getAttribute('aria-hidden')).toBe('true');
+      expect(content.hasAttribute('inert')).toBe(true);
       expect(nestedContent.classList.contains('tnt-expanded')).toBe(false);
       expect(nestedContent.classList.contains('tnt-collapsed')).toBe(false);
    });

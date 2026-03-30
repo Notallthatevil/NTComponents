@@ -174,31 +174,6 @@ const getAccordionChildHeader = (accordion, child) => {
         ?? null;
 };
 
-const clearPendingAccordionAriaHidden = (content) => {
-    if (content?.accordionAriaHiddenHandler) {
-        content.removeEventListener('animationend', content.accordionAriaHiddenHandler);
-        content.accordionAriaHiddenHandler = undefined;
-    }
-};
-
-const scheduleAccordionAriaHidden = (content) => {
-    if (!content) {
-        return;
-    }
-
-    clearPendingAccordionAriaHidden(content);
-    const onAnimationEnd = () => {
-        if (content.classList.contains('tnt-collapsed') && !content.classList.contains('tnt-expanded')) {
-            content.setAttribute('aria-hidden', 'true');
-        }
-
-        clearPendingAccordionAriaHidden(content);
-    };
-
-    content.accordionAriaHiddenHandler = onAnimationEnd;
-    content.addEventListener('animationend', onAnimationEnd, { once: true });
-};
-
 const resetAccordionElement = (accordion) => {
     if (!accordion) {
         return;
@@ -411,8 +386,8 @@ window.NTComponents = {
             const candidateContent = getChildContent(candidateChild);
             const candidateHeader = getAccordionChildHeader(accordion, candidateChild);
             if (candidateContent) {
-                clearPendingAccordionAriaHidden(candidateContent);
                 candidateContent.setAttribute('aria-hidden', expanded ? 'false' : 'true');
+                candidateContent.toggleAttribute('inert', !expanded);
             }
             if (candidateHeader) {
                 candidateHeader.setAttribute('aria-expanded', expanded ? 'true' : 'false');
@@ -429,18 +404,9 @@ window.NTComponents = {
                 return;
             }
 
-            clearPendingAccordionAriaHidden(candidateContent);
-            if (!expanded) {
-                candidateContent.style.setProperty('--content-height', `${candidateContent.scrollHeight}px`);
-            }
             candidateContent.classList.toggle('tnt-expanded', expanded);
             candidateContent.classList.toggle('tnt-collapsed', !expanded);
-            const candidateHeader = getAccordionChildHeader(accordion, candidateChild);
-            candidateHeader?.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-            candidateContent.setAttribute('aria-hidden', 'false');
-            if (!expanded) {
-                scheduleAccordionAriaHidden(candidateContent);
-            }
+            syncChildAccessibility(candidateChild, expanded);
         };
         const closeChildren = (excludeChild) => {
             if (typeof accordion?.closeChildren === 'function') {

@@ -35,31 +35,6 @@ export class TnTAccordion extends HTMLElement {
         return this.querySelectorAll(':scope > .tnt-accordion-child');
     }
 
-    clearPendingAriaHidden(content) {
-        if (content?.accordionAriaHiddenHandler) {
-            content.removeEventListener('animationend', content.accordionAriaHiddenHandler);
-            content.accordionAriaHiddenHandler = undefined;
-        }
-    }
-
-    scheduleAriaHidden(content) {
-        if (!content) {
-            return;
-        }
-
-        this.clearPendingAriaHidden(content);
-        const onAnimationEnd = () => {
-            if (content.classList.contains('tnt-collapsed') && !content.classList.contains('tnt-expanded')) {
-                content.setAttribute('aria-hidden', 'true');
-            }
-
-            this.clearPendingAriaHidden(content);
-        };
-
-        content.accordionAriaHiddenHandler = onAnimationEnd;
-        content.addEventListener('animationend', onAnimationEnd, { once: true });
-    }
-
     getChildContent(child) {
         return child?.querySelector(':scope > [data-accordion-content="true"]')
             ?? child?.querySelector(':scope > div:last-child')
@@ -112,7 +87,6 @@ export class TnTAccordion extends HTMLElement {
             const content = this.getChildContent(child);
             if (content) {
                 this.syncChildAccessibility(child, content.classList.contains('tnt-expanded'));
-                this.updateChild(content);
             }
         });
     }
@@ -123,7 +97,6 @@ export class TnTAccordion extends HTMLElement {
                 const content = this.getChildContent(child);
                 if (content?.classList.contains('tnt-expanded')) {
                     this.setExpandedState(child, false);
-                    this.updateChild(content);
                 }
             }
         });
@@ -149,44 +122,7 @@ export class TnTAccordion extends HTMLElement {
         });
     }
 
-    updateChild(content) {
-        if (!content) {
-            return;
-        }
-
-        if (content.resizeObserver) {
-            content.resizeObserver.disconnect();
-            content.resizeObserver = undefined;
-        }
-
-        if (content.mutationObserver) {
-            content.mutationObserver.disconnect();
-            content.mutationObserver = undefined;
-        }
-
-        if (content.classList.contains('tnt-expanded')) {
-            this.clearPendingAriaHidden(content);
-            content.style.setProperty('--content-height', content.scrollHeight + 'px');
-
-            content.resizeObserver = new ResizeObserver(() => {
-                content.style.setProperty('--content-height', content.scrollHeight + 'px');
-            });
-
-            content.mutationObserver = new MutationObserver((mutationList) => {
-                for (const mutation of mutationList) {
-                    if (mutation.type === 'childList') {
-                        content.style.setProperty('--content-height', content.scrollHeight + 'px');
-                    }
-                }
-            });
-
-            content.resizeObserver.observe(document.body);
-            content.mutationObserver.observe(content, { childList: true, subtree: true });
-        }
-        else {
-            content.style.height = null;
-        }
-    }
+    updateChild() { }
 
     setExpandedState(child, expanded) {
         const content = this.getChildContent(child);
@@ -194,21 +130,9 @@ export class TnTAccordion extends HTMLElement {
             return;
         }
 
-        if (!expanded) {
-            content.style.setProperty('--content-height', `${content.scrollHeight}px`);
-        }
-
         content.classList.toggle('tnt-expanded', expanded);
         content.classList.toggle('tnt-collapsed', !expanded);
-        const header = this.getChildHeader(child);
-        header?.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-        if (expanded) {
-            content.setAttribute('aria-hidden', 'false');
-        }
-        else {
-            content.setAttribute('aria-hidden', 'false');
-            this.scheduleAriaHidden(content);
-        }
+        this.syncChildAccessibility(child, expanded);
     }
 
     syncChildAccessibility(child, expanded) {
@@ -219,6 +143,7 @@ export class TnTAccordion extends HTMLElement {
         }
 
         content.setAttribute('aria-hidden', expanded ? 'false' : 'true');
+        content.toggleAttribute('inert', !expanded);
         header.setAttribute('aria-expanded', expanded ? 'true' : 'false');
     }
 }

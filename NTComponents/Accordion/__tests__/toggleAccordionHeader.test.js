@@ -3,13 +3,6 @@
  */
 import '../../wwwroot/NTComponents.lib.module.js';
 
-if (typeof global.ResizeObserver === 'undefined') {
-    global.ResizeObserver = class { observe() {} disconnect() {} };
-}
-if (typeof global.MutationObserver === 'undefined') {
-    global.MutationObserver = class { observe() {} disconnect() {} };
-}
-
 describe('toggleAccordionHeader', () => {
     let toggleAccordionHeader;
 
