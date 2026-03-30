@@ -1,0 +1,31 @@
+@using NTComponents
+
+<TnTForm Model="Model" OnValidSubmit="HandleValidSubmit" OnInvalidSubmit="HandleInvalidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <TnTCard Appearance="CardAppearance.Outlined">
+        <TnTRow>
+            <TnTColumn S="12">
+                <NTRichTextEditor @bind-Value="Model.Value"
+                                  Label="Notes"
+                                  Placeholder="Type some formatted text"
+                                  SupportingText="Bold, italic, and underline are stored as markdown while the editor stays rendered."
+                                  OnBlurCallback="HandleBlurAsync" />
+            </TnTColumn>
+        </TnTRow>
+        <TnTRow>
+            <TnTColumn S="12">
+                <TnTButton Type="ButtonType.Submit">Submit</TnTButton>
+            </TnTColumn>
+        </TnTRow>
+        <TnTRow>
+            <TnTColumn S="12">
+                <div>@SubmitMessage</div>
+                <div>@BlurMessage</div>
+                <div>Markdown value:</div>
+                <pre>@(Model.Value ?? string.Empty)</pre>
+            </TnTColumn>
+        </TnTRow>
+    </TnTCard>
+</TnTForm>
