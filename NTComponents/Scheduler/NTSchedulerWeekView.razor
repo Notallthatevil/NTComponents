@@ -1,0 +1,85 @@
+@namespace NTComponents
+@using NTComponents.Scheduler
+@typeparam TEventType
+
+<div class="nt-scheduler-week-view" aria-label="Week view">
+    <div class="nt-scheduler-week-view__header">
+        <div class="nt-scheduler-week-view__time-gutter"></div>
+        @foreach (var column in Columns) {
+            <div class="@GetHeaderClass(column)">
+                <span class="tnt-label-medium">@column.Date.ToString("ddd")</span>
+                <span class="tnt-title-medium">@column.Date.Day</span>
+            </div>
+        }
+    </div>
+
+    <div class="nt-scheduler-week-view__all-day-row">
+        <div class="nt-scheduler-week-view__all-day-label tnt-label-small">All day</div>
+        <div class="nt-scheduler-week-view__all-day-grid"
+             style="@GetAllDayGridStyle()">
+            <div class="nt-scheduler-week-view__all-day-backgrounds">
+                @foreach (var column in Columns) {
+                    <div class="nt-scheduler-week-view__all-day-column"></div>
+                }
+            </div>
+
+            @if (AllDaySpans.Count > 0) {
+                <div class="nt-scheduler-week-view__all-day-spans">
+                    @foreach (var span in AllDaySpans) {
+                        <button type="button"
+                                class="@GetAllDayEventClass(span)"
+                                style="@GetAllDayEventStyle(span)"
+                                aria-label="@GetEventAriaLabel(span.Event)"
+                                data-nt-scheduler-event-id="@span.Event.Id"
+                                @onclick="@(() => OnEventSelected.InvokeAsync(span.Event))">
+                            <span>@span.Event.Title</span>
+                        </button>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="nt-scheduler-week-view__body">
+        <div class="nt-scheduler-week-view__time-column">
+            @foreach (var slot in Slots.Where(slot => slot.Start.Date == Slots[0].Start.Date)) {
+                <div class="nt-scheduler-week-view__time-label tnt-body-small">
+                    @slot.Start.LocalDateTime.ToString("h tt")
+                </div>
+            }
+        </div>
+
+        <div class="nt-scheduler-week-view__day-columns">
+            @foreach (var column in Columns) {
+                <div class="@GetColumnClass(column)">
+                    @foreach (var slot in Slots.Where(slot => slot.Start.Date == column.Date.ToDateTime(TimeOnly.MinValue).Date)) {
+                        <button type="button"
+                                class="nt-scheduler-week-view__slot"
+                                aria-label="@GetSlotLabel(slot)"
+                                aria-disabled="@GetSlotDisabledState()"
+                                data-nt-scheduler-slot-start="@slot.Start.ToString("O")"
+                                disabled="@(!CanDrop && !CanInteract)"
+                                @onclick="@(() => HandleSlotSelectedAsync(slot))">
+                        </button>
+                    }
+
+                    @if (column.IsToday && CurrentTimePercent.HasValue) {
+                        <div class="nt-scheduler-week-view__current-time" style="@GetCurrentTimeStyle()"></div>
+                    }
+
+                    @foreach (var timedEvent in column.TimedEvents) {
+                        <button type="button"
+                                class="nt-scheduler-week-view__event"
+                                style="@GetEventStyle(timedEvent)"
+                                aria-label="@GetEventAriaLabel(timedEvent.Event)"
+                                data-nt-scheduler-event-id="@timedEvent.Event.Id"
+                                @onclick="@(() => OnEventSelected.InvokeAsync(timedEvent.Event))">
+                            <span class="nt-scheduler-week-view__event-title">@timedEvent.Event.Title</span>
+                            <span class="nt-scheduler-week-view__event-time tnt-body-small">@GetEventTime(timedEvent.Event)</span>
+                        </button>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>

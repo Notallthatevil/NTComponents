@@ -1,0 +1,107 @@
+@use '../Styles/_Variables/_colors.scss' as colors;
+
+.nt-scheduler-event-editor {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+
+    &__backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, .32);
+    }
+
+    &__dialog {
+        position: relative;
+        z-index: 1;
+        width: min(100%, 520px);
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        padding: 24px;
+        border-radius: 28px;
+        background-color: colors.$tnt-color-surface-container-high;
+        color: colors.$tnt-color-on-surface;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, .22);
+    }
+
+    &__body {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    &__field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    &__label {
+        color: colors.$tnt-color-on-surface-variant;
+    }
+
+    &__input,
+    &__textarea {
+        width: 100%;
+        border: 1px solid colors.$tnt-color-outline;
+        border-radius: 18px;
+        background-color: colors.$tnt-color-surface-container-lowest;
+        color: inherit;
+        padding: 12px 14px;
+        box-sizing: border-box;
+
+        &:focus-visible {
+            outline: 2px solid colors.$tnt-color-primary;
+            outline-offset: 1px;
+        }
+    }
+
+    &__textarea {
+        resize: vertical;
+        min-height: 96px;
+    }
+
+    &__error {
+        color: colors.$tnt-color-error;
+    }
+
+    &__actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    &__button {
+        appearance: none;
+        min-height: 40px;
+        padding: 0 18px;
+        border: none;
+        border-radius: 20px;
+        background-color: colors.$tnt-color-surface-container-highest;
+        color: colors.$tnt-color-on-surface;
+        cursor: pointer;
+        font-weight: 600;
+
+        &:focus-visible {
+            outline: 2px solid colors.$tnt-color-primary;
+            outline-offset: 2px;
+        }
+
+        &--primary {
+            background-color: colors.$tnt-color-primary;
+            color: colors.$tnt-color-on-primary;
+        }
+
+        &--danger {
+            margin-right: auto;
+            background-color: colors.$tnt-color-error-container;
+            color: colors.$tnt-color-on-error-container;
+        }
+    }
+}

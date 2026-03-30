@@ -14,7 +14,7 @@ public record TnTEvent {
     /// <summary>
     ///     Gets the title of the event.
     /// </summary>
-    public string Title { get; init; } = default!;
+    public string Title { get; set; } = string.Empty;
 
     /// <summary>
     ///     Gets or sets the description of the event.

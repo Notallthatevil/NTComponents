@@ -1,0 +1,156 @@
+@use '../Styles/_Variables/_colors.scss' as colors;
+@use '../Styles/_Variables/_measurements.scss' as measurements;
+
+.nt-scheduler-month-view {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+
+    &__weekday-row,
+    &__week-grid,
+    &__span-layer {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    &__rows {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    &__week {
+        --nt-scheduler-month-visible-lanes: 0;
+        position: relative;
+    }
+
+    &__weekday {
+        padding: 0 8px;
+        color: colors.$tnt-color-on-surface-variant;
+    }
+
+    &__cell {
+        position: relative;
+        min-height: calc(88px + (var(--nt-scheduler-month-visible-lanes) * 30px));
+        padding: 8px;
+        border-radius: 20px;
+        background-color: colors.$tnt-color-surface-container-lowest;
+        border: 1px solid colors.$tnt-color-outline-variant;
+        box-sizing: border-box;
+        overflow: hidden;
+
+        &--outside {
+            opacity: .7;
+        }
+
+        &--today {
+            border-color: colors.$tnt-color-primary;
+            box-shadow: inset 0 0 0 1px colors.$tnt-color-primary;
+        }
+    }
+
+    &__cell-hit-target {
+        position: absolute;
+        inset: 0;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        z-index: 0;
+
+        &:disabled {
+            cursor: default;
+        }
+    }
+
+    &__cell-content {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        justify-content: space-between;
+    }
+
+    &__cell-header {
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    &__day-number {
+        width: 32px;
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 16px;
+    }
+
+    &__cell--today &__day-number {
+        background-color: colors.$tnt-color-primary;
+        color: colors.$tnt-color-on-primary;
+    }
+
+    &__span-layer {
+        position: absolute;
+        top: 42px;
+        left: 8px;
+        right: 8px;
+        z-index: 2;
+        grid-auto-rows: 24px;
+        pointer-events: none;
+    }
+
+    &__event {
+        appearance: none;
+        border: none;
+        border-radius: 14px;
+        padding: 4px 10px;
+        text-align: left;
+        background-color: colors.$tnt-color-tertiary-container;
+        color: colors.$tnt-color-on-tertiary-container;
+        cursor: pointer;
+        font-size: .875rem;
+        font-weight: 600;
+        min-width: 0;
+        pointer-events: auto;
+        position: relative;
+
+        &:focus-visible {
+            outline: 2px solid colors.$tnt-color-primary;
+            outline-offset: 2px;
+        }
+    }
+
+    &__event--continues-before {
+        border-top-left-radius: 8px;
+        border-bottom-left-radius: 8px;
+    }
+
+    &__event--continues-after {
+        border-top-right-radius: 8px;
+        border-bottom-right-radius: 8px;
+    }
+
+    &__event-title,
+    &__more {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    &__more {
+        color: colors.$tnt-color-on-surface-variant;
+        padding-inline: 2px;
+        align-self: flex-start;
+        position: relative;
+        z-index: 1;
+    }
+}
+
+@media #{measurements.$small-and-down} {
+    .nt-scheduler-month-view {
+        min-width: 780px;
+    }
+}

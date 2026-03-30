@@ -1,0 +1,64 @@
+@namespace NTComponents
+@using NTComponents.Scheduler
+@typeparam TEventType
+
+<div class="nt-scheduler-month-view" role="grid" aria-label="Month view">
+    <div class="nt-scheduler-month-view__weekday-row" aria-hidden="true">
+        @foreach (var weekdayLabel in WeekdayLabels) {
+            <div class="nt-scheduler-month-view__weekday tnt-label-medium">@weekdayLabel</div>
+        }
+    </div>
+
+    <div class="nt-scheduler-month-view__rows">
+        @foreach (var row in Rows) {
+            <div class="nt-scheduler-month-view__week"
+                 style="@GetWeekStyle(row)">
+                <div class="nt-scheduler-month-view__week-grid">
+                    @foreach (var cell in row.Cells) {
+                        <div class="@GetCellClass(cell)"
+                             role="gridcell"
+                             aria-current="@(cell.IsToday ? "date" : null)"
+                             aria-label="@cell.AccessibleLabel">
+                            <button type="button"
+                                    class="nt-scheduler-month-view__cell-hit-target"
+                                    aria-label="@($"Create event on {cell.AccessibleLabel}")"
+                                    aria-disabled="@GetInteractiveState(cell)"
+                                    data-nt-scheduler-slot-start="@cell.DropStart.ToString("O")"
+                                    disabled="@(!CanDrop && !CanInteract)"
+                                    @onclick="() => HandleDaySelectedAsync(cell.Date)">
+                            </button>
+
+                            <div class="nt-scheduler-month-view__cell-content">
+                                <div class="nt-scheduler-month-view__cell-header">
+                                    <span class="nt-scheduler-month-view__day-number tnt-title-small">@cell.Date.Day</span>
+                                </div>
+
+                                @if (cell.HiddenEventCount > 0) {
+                                    <span class="nt-scheduler-month-view__more tnt-body-small">
+                                        +@cell.HiddenEventCount more
+                                    </span>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                @if (row.Spans.Count > 0) {
+                    <div class="nt-scheduler-month-view__span-layer">
+                        @foreach (var span in row.Spans) {
+                            <button type="button"
+                                    class="@GetSpanClass(span)"
+                                    style="@GetSpanStyle(span)"
+                                    aria-label="@GetEventAriaLabel(span.Event)"
+                                    data-nt-scheduler-event-id="@span.Event.Id"
+                                    @onclick="@(() => OnEventSelected.InvokeAsync(span.Event))"
+                                    @onclick:stopPropagation="true">
+                                <span class="nt-scheduler-month-view__event-title">@span.Event.Title</span>
+                            </button>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>

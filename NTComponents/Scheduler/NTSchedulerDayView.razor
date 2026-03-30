@@ -1,0 +1,66 @@
+@namespace NTComponents
+@using NTComponents.Scheduler
+@typeparam TEventType
+
+<div class="nt-scheduler-day-view" aria-label="Day view">
+    <div class="nt-scheduler-day-view__header">
+        <div class="nt-scheduler-day-view__headline">
+            <span class="tnt-title-large">@Column.Date.ToString("dddd")</span>
+            <span class="tnt-body-medium">@Column.Date.ToString("D")</span>
+        </div>
+    </div>
+
+    <div class="nt-scheduler-day-view__all-day">
+        <div class="nt-scheduler-day-view__all-day-label tnt-label-small">All day</div>
+        <div class="nt-scheduler-day-view__all-day-events">
+            @foreach (var schedulerEvent in Column.AllDayEvents) {
+                <button type="button"
+                        class="nt-scheduler-day-view__all-day-event"
+                        aria-label="@GetEventAriaLabel(schedulerEvent)"
+                        data-nt-scheduler-event-id="@schedulerEvent.Id"
+                        @onclick="@(() => OnEventSelected.InvokeAsync(schedulerEvent))">
+                    <span>@schedulerEvent.Title</span>
+                </button>
+            }
+        </div>
+    </div>
+
+    <div class="nt-scheduler-day-view__body">
+        <div class="nt-scheduler-day-view__time-column">
+            @foreach (var slot in Slots) {
+                <div class="nt-scheduler-day-view__time-label tnt-body-small">
+                    @slot.Start.LocalDateTime.ToString("h tt")
+                </div>
+            }
+        </div>
+
+        <div class="@GetColumnClass()">
+            @foreach (var slot in Slots) {
+                <button type="button"
+                        class="nt-scheduler-day-view__slot"
+                        aria-label="@GetSlotLabel(slot)"
+                        aria-disabled="@GetSlotDisabledState()"
+                        data-nt-scheduler-slot-start="@slot.Start.ToString("O")"
+                        disabled="@(!CanDrop && !CanInteract)"
+                        @onclick="@(() => HandleSlotSelectedAsync(slot))">
+                </button>
+            }
+
+            @if (Column.IsToday && CurrentTimePercent.HasValue) {
+                <div class="nt-scheduler-day-view__current-time" style="@GetCurrentTimeStyle()"></div>
+            }
+
+            @foreach (var timedEvent in Column.TimedEvents) {
+                <button type="button"
+                        class="nt-scheduler-day-view__event"
+                        style="@GetEventStyle(timedEvent)"
+                        aria-label="@GetEventAriaLabel(timedEvent.Event)"
+                        data-nt-scheduler-event-id="@timedEvent.Event.Id"
+                        @onclick="@(() => OnEventSelected.InvokeAsync(timedEvent.Event))">
+                    <span class="nt-scheduler-day-view__event-title">@timedEvent.Event.Title</span>
+                    <span class="nt-scheduler-day-view__event-time tnt-body-small">@GetEventTime(timedEvent.Event)</span>
+                </button>
+            }
+        </div>
+    </div>
+</div>

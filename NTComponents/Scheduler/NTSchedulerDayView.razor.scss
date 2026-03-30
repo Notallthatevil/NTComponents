@@ -1,0 +1,133 @@
+@use '../Styles/_Variables/_colors.scss' as colors;
+
+.nt-scheduler-day-view {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+
+    &__header,
+    &__all-day,
+    &__body {
+        display: grid;
+        grid-template-columns: 88px minmax(0, 1fr);
+        gap: 12px;
+    }
+
+    &__headline {
+        grid-column: 2;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        padding: 12px 16px;
+        border-radius: 20px;
+        border: 1px solid colors.$tnt-color-outline-variant;
+        background-color: colors.$tnt-color-surface-container-lowest;
+    }
+
+    &__all-day-label {
+        color: colors.$tnt-color-on-surface-variant;
+    }
+
+    &__all-day-events,
+    &__day-column {
+        position: relative;
+        border-radius: 20px;
+        border: 1px solid colors.$tnt-color-outline-variant;
+        background-color: colors.$tnt-color-surface-container-lowest;
+    }
+
+    &__all-day-events {
+        min-height: 56px;
+        padding: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    &__all-day-event,
+    &__event {
+        appearance: none;
+        border: none;
+        border-radius: 14px;
+        background-color: colors.$tnt-color-tertiary-container;
+        color: colors.$tnt-color-on-tertiary-container;
+        cursor: pointer;
+
+        &:focus-visible {
+            outline: 2px solid colors.$tnt-color-primary;
+            outline-offset: 2px;
+        }
+    }
+
+    &__all-day-event {
+        padding: 6px 10px;
+        text-align: left;
+        font-weight: 600;
+    }
+
+    &__time-column,
+    &__day-column {
+        min-height: 864px;
+    }
+
+    &__time-column {
+        display: grid;
+        grid-auto-rows: minmax(0, 1fr);
+    }
+
+    &__time-label {
+        height: 36px;
+        padding-top: 2px;
+        text-align: right;
+        color: colors.$tnt-color-on-surface-variant;
+    }
+
+    &__day-column {
+        display: grid;
+        grid-auto-rows: minmax(0, 1fr);
+
+        &--today {
+            background-color: colors.$tnt-color-surface-container;
+        }
+    }
+
+    &__slot {
+        appearance: none;
+        width: 100%;
+        min-height: 36px;
+        border: none;
+        border-top: 1px solid colors.$tnt-color-outline-variant;
+        background: transparent;
+        cursor: pointer;
+
+        &:disabled {
+            cursor: default;
+        }
+    }
+
+    &__event {
+        position: absolute;
+        padding: 10px 12px;
+        margin-left: 4px;
+        text-align: left;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, .12);
+    }
+
+    &__event-title,
+    &__event-time {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    &__current-time {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background-color: colors.$tnt-color-error;
+        z-index: 2;
+    }
+}

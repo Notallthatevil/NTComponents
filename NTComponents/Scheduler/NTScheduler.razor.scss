@@ -1,0 +1,156 @@
+@use '../Styles/_Variables/_colors.scss' as colors;
+@use '../Styles/_Variables/_measurements.scss' as measurements;
+
+.nt-scheduler {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+    border-radius: 28px;
+    border: 1px solid colors.$tnt-color-outline-variant;
+    box-sizing: border-box;
+    min-height: 720px;
+
+    &__toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    &__toolbar-group {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    &__headline {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 220px;
+    }
+
+    &__title {
+        font-weight: 600;
+    }
+
+    &__range {
+        color: colors.$tnt-color-on-surface-variant;
+    }
+
+    &__surface {
+        display: flex;
+        flex: 1 1 auto;
+        min-height: 0;
+    }
+
+    &__icon-button,
+    &__tonal-button,
+    &__view-button {
+        appearance: none;
+        border: none;
+        cursor: pointer;
+        transition: background-color .2s ease, color .2s ease, box-shadow .2s ease, transform .2s ease;
+
+        &:disabled {
+            opacity: .5;
+            cursor: default;
+        }
+
+        &:focus-visible {
+            outline: 2px solid colors.$tnt-color-primary;
+            outline-offset: 2px;
+        }
+    }
+
+    &__icon-button {
+        width: 40px;
+        height: 40px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 20px;
+        background-color: colors.$tnt-color-surface-container-highest;
+        color: colors.$tnt-color-on-surface;
+    }
+
+    &__tonal-button {
+        min-height: 40px;
+        padding: 0 18px;
+        border-radius: 20px;
+        background-color: colors.$tnt-color-secondary-container;
+        color: colors.$tnt-color-on-secondary-container;
+        font-weight: 600;
+    }
+
+    &__view-button {
+        min-height: 40px;
+        padding: 0 18px;
+        border-radius: 20px;
+        background-color: colors.$tnt-color-surface-container-highest;
+        color: colors.$tnt-color-on-surface-variant;
+        font-weight: 600;
+
+        &--selected {
+            background-color: colors.$tnt-color-primary;
+            color: colors.$tnt-color-on-primary;
+        }
+    }
+
+    &--dragging [data-nt-scheduler-event-id] {
+        pointer-events: none;
+    }
+
+    [data-nt-scheduler-can-drag='true'] [data-nt-scheduler-event-id] {
+        cursor: grab;
+    }
+
+    &--dragging [data-nt-scheduler-event-id] {
+        cursor: grabbing;
+    }
+}
+
+.nt-scheduler__drag-ghost,
+.nt-scheduler__drop-preview {
+    box-sizing: border-box;
+    overflow: hidden;
+    transform-origin: top left;
+}
+
+.nt-scheduler__drag-ghost {
+    z-index: 9998;
+    opacity: .62;
+    transform: translate(6px, 6px) scale(1.01);
+    box-shadow:
+        0 18px 36px rgba(0, 0, 0, .24),
+        0 8px 16px rgba(0, 0, 0, .18);
+}
+
+.nt-scheduler__drop-preview {
+    z-index: 9999;
+    opacity: .45;
+    box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, .3),
+        0 8px 18px rgba(0, 0, 0, .12);
+    filter: saturate(.9);
+}
+
+@media #{measurements.$small-and-down} {
+    .nt-scheduler {
+        padding: 12px;
+        border-radius: 20px;
+        min-height: 640px;
+
+        &__headline {
+            width: 100%;
+            order: -1;
+        }
+
+        &__surface {
+            overflow: auto;
+        }
+    }
+}

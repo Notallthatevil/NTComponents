@@ -1,0 +1,78 @@
+@namespace NTComponents
+@using NTComponents.Scheduler
+@typeparam TEventType
+
+<div class="nt-scheduler-event-editor" role="presentation">
+    <div class="nt-scheduler-event-editor__backdrop" @onclick="OnCancel"></div>
+
+    <div class="nt-scheduler-event-editor__dialog"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="nt-scheduler-event-editor-title">
+        <div class="nt-scheduler-event-editor__header">
+            <h2 id="nt-scheduler-event-editor-title" class="nt-scheduler-event-editor__title tnt-title-large">
+                @(State.IsNewEvent ? "Create event" : "Edit event")
+            </h2>
+        </div>
+
+        <div class="nt-scheduler-event-editor__body">
+            <label class="nt-scheduler-event-editor__field">
+                <span class="nt-scheduler-event-editor__label tnt-label-medium">Title</span>
+                <input class="nt-scheduler-event-editor__input"
+                       type="text"
+                       maxlength="120"
+                       @bind="State.Title" />
+            </label>
+
+            <label class="nt-scheduler-event-editor__field">
+                <span class="nt-scheduler-event-editor__label tnt-label-medium">Start</span>
+                <input class="nt-scheduler-event-editor__input"
+                       type="datetime-local"
+                       value="@State.StartInputValue"
+                       @onchange="OnStartChanged" />
+            </label>
+
+            <label class="nt-scheduler-event-editor__field">
+                <span class="nt-scheduler-event-editor__label tnt-label-medium">End</span>
+                <input class="nt-scheduler-event-editor__input"
+                       type="datetime-local"
+                       value="@State.EndInputValue"
+                       @onchange="OnEndChanged" />
+            </label>
+
+            <label class="nt-scheduler-event-editor__field">
+                <span class="nt-scheduler-event-editor__label tnt-label-medium">Description</span>
+                <textarea class="nt-scheduler-event-editor__textarea"
+                          rows="4"
+                          @bind="State.Description"></textarea>
+            </label>
+
+            @if (!string.IsNullOrWhiteSpace(ErrorMessage)) {
+                <div class="nt-scheduler-event-editor__error tnt-body-small" role="alert">
+                    @ErrorMessage
+                </div>
+            }
+        </div>
+
+        <div class="nt-scheduler-event-editor__actions">
+            @if (CanDelete) {
+                <button type="button"
+                        class="nt-scheduler-event-editor__button nt-scheduler-event-editor__button--danger"
+                        @onclick="OnDelete">
+                    Delete
+                </button>
+            }
+
+            <button type="button"
+                    class="nt-scheduler-event-editor__button"
+                    @onclick="OnCancel">
+                Cancel
+            </button>
+            <button type="button"
+                    class="nt-scheduler-event-editor__button nt-scheduler-event-editor__button--primary"
+                    @onclick="OnSave">
+                Save
+            </button>
+        </div>
+    </div>
+</div>

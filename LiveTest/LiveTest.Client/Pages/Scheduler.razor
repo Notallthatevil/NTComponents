@@ -1,18 +1,160 @@
 @page "/scheduler"
 @using NTComponents
 @using NTComponents.Scheduler
-@using NTComponents.Scheduler.Events
 @rendermode InteractiveAuto
 
-<h3>Scheduler</h3>
+<div class="scheduler-demo">
+    <div class="scheduler-demo__hero">
+        <h1>NTScheduler</h1>
+        <p>
+            Interactive demo for the new scheduler surface. Try switching views, dragging events, clicking empty slots to create events,
+            and editing or deleting existing items.
+        </p>
+    </div>
 
+    <TnTRow class="scheduler-demo__layout">
+        <TnTColumn S="12" L="4">
+            <TnTCard class="scheduler-demo__panel">
+                <div class="tnt-card-header">
+                    <h2>Controls</h2>
+                </div>
 
-<TnTScheduler TEventType="TnTEvent"
-              Events="TasksList.ToArray()"
-              EventClickedCallback="OnEventClicked"
-              EventSlotClickedCallback="OnEventSlotClicked">
-    <TnTWeekView StartViewOn="DayOfWeek.Monday" />
-</TnTScheduler>
+                <div class="scheduler-demo__controls">
+                    <label>
+                        Focused date
+                        <input type="date"
+                               value="@SelectedDateInput"
+                               @onchange="OnSelectedDateInputChanged" />
+                    </label>
 
-<br />
+                    <label>
+                        External view binding
+                        <select @bind="SelectedView">
+                            @foreach (var view in Enum.GetValues<NTSchedulerView>()) {
+                                <option value="@view">@view</option>
+                            }
+                        </select>
+                    </label>
 
+                    <label>
+                        Slot interval
+                        <select @bind="TimeSlotIntervalMinutes">
+                            <option value="15">15 minutes</option>
+                            <option value="30">30 minutes</option>
+                            <option value="60">60 minutes</option>
+                        </select>
+                    </label>
+
+                    <label>
+                        Day starts at
+                        <select @bind="VisibleHourStart">
+                            @foreach (var hour in Hours) {
+                                <option value="@hour">@FormatHour(hour)</option>
+                            }
+                        </select>
+                    </label>
+
+                    <label>
+                        Day ends at
+                        <select @bind="VisibleHourEnd">
+                            @foreach (var hour in EndHours) {
+                                <option value="@hour">@FormatHour(hour)</option>
+                            }
+                        </select>
+                    </label>
+
+                    <label class="scheduler-demo__toggle">
+                        <input type="checkbox" @bind="EnableEventCreation" />
+                        Enable click-to-create
+                    </label>
+
+                    <label class="scheduler-demo__toggle">
+                        <input type="checkbox" @bind="EnableEventEditing" />
+                        Enable editing
+                    </label>
+
+                    <label class="scheduler-demo__toggle">
+                        <input type="checkbox" @bind="EnableDragDrop" />
+                        Enable drag and drop
+                    </label>
+
+                    <div class="scheduler-demo__actions">
+                        <button type="button" @onclick="ResetDemo">Reset seeded events</button>
+                        <button type="button" @onclick="JumpToToday">Jump to today</button>
+                    </div>
+                </div>
+            </TnTCard>
+
+            <TnTCard class="scheduler-demo__panel">
+                <div class="tnt-card-header">
+                    <h2>State</h2>
+                </div>
+
+                <div class="scheduler-demo__state">
+                    <p><strong>View:</strong> @SelectedView</p>
+                    <p><strong>Focused date:</strong> @SelectedDate.ToString("D")</p>
+                    <p><strong>Events:</strong> @TasksList.Count</p>
+                    <p><strong>Selected event:</strong> @(SelectedEvent?.Title ?? "None")</p>
+
+                    @if (SelectedEvent is not null) {
+                        <div class="scheduler-demo__event-summary">
+                            <p><strong>Starts:</strong> @SelectedEvent.EventStart.LocalDateTime.ToString("f")</p>
+                            <p><strong>Ends:</strong> @SelectedEvent.EventEnd.LocalDateTime.ToString("f")</p>
+                            <p><strong>Description:</strong> @(string.IsNullOrWhiteSpace(SelectedEvent.Description) ? "No description" : SelectedEvent.Description)</p>
+                        </div>
+                    }
+                </div>
+            </TnTCard>
+        </TnTColumn>
+
+        <TnTColumn S="12" L="8">
+            <TnTCard class="scheduler-demo__canvas">
+                <div class="scheduler-demo__tips">
+                    <h2>Try This</h2>
+                    <ul>
+                        <li>Click an empty month cell or time slot to open the built-in editor.</li>
+                        <li>Drag an event to another day or time while drag/drop is enabled.</li>
+                        <li>Switch the view externally and then use the scheduler's own header controls.</li>
+                    </ul>
+                </div>
+
+                <NTScheduler TEventType="TnTEvent"
+                             Date="SelectedDate"
+                             DateChanged="OnDateChanged"
+                             DefaultEventDuration="DefaultEventDuration"
+                             EnableDragDrop="EnableDragDrop"
+                             EnableEventCreation="EnableEventCreation"
+                             EnableEventEditing="EnableEventEditing"
+                             Events="TasksList"
+                             EventChanged="OnEventChanged"
+                             EventClicked="OnEventClicked"
+                             SlotSelected="OnEventSlotClicked"
+                             TimeSlotIntervalMinutes="TimeSlotIntervalMinutes"
+                             Title="Team calendar"
+                             View="SelectedView"
+                             ViewChanged="OnViewChanged"
+                             VisibleHourEnd="VisibleHourEnd"
+                             VisibleHourStart="VisibleHourStart" />
+            </TnTCard>
+
+            <TnTCard class="scheduler-demo__panel">
+                <div class="tnt-card-header">
+                    <h2>Activity Log</h2>
+                </div>
+
+                <div class="scheduler-demo__log">
+                    @if (ActivityLog.Count == 0) {
+                        <p>No interactions yet.</p>
+                    }
+                    else {
+                        <ul>
+                            @foreach (var logEntry in ActivityLog) {
+                                <li>@logEntry</li>
+                            }
+                        </ul>
+                    }
+                </div>
+            </TnTCard>
+        </TnTColumn>
+    </TnTRow>
+</div>

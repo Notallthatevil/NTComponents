@@ -1,0 +1,206 @@
+@use '../Styles/_Variables/_colors.scss' as colors;
+@use '../Styles/_Variables/_measurements.scss' as measurements;
+
+.nt-scheduler-week-view {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    min-width: 920px;
+
+    &__header,
+    &__all-day-row,
+    &__body {
+        display: grid;
+        grid-template-columns: 64px repeat(7, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    &__time-gutter,
+    &__all-day-label {
+        color: colors.$tnt-color-on-surface-variant;
+    }
+
+    &__day-header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        min-height: 68px;
+        border-radius: 18px;
+        background-color: colors.$tnt-color-surface-container-lowest;
+        border: 1px solid colors.$tnt-color-outline-variant;
+
+        &--today {
+            background-color: colors.$tnt-color-primary-container;
+            color: colors.$tnt-color-on-primary-container;
+        }
+    }
+
+    &__all-day-column,
+    &__day-column {
+        position: relative;
+        border-radius: 20px;
+        border: 1px solid colors.$tnt-color-outline-variant;
+        background-color: colors.$tnt-color-surface-container-lowest;
+        overflow: hidden;
+    }
+
+    &__all-day-column {
+        min-height: 56px;
+    }
+
+    &__all-day-grid {
+        --nt-scheduler-all-day-lanes: 1;
+        grid-column: 2 / -1;
+        position: relative;
+        min-height: calc(32px + (var(--nt-scheduler-all-day-lanes) * 30px));
+    }
+
+    &__all-day-backgrounds,
+    &__all-day-spans {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    &__all-day-backgrounds {
+        position: absolute;
+        inset: 0;
+    }
+
+    &__all-day-spans {
+        position: relative;
+        z-index: 1;
+        grid-auto-rows: 28px;
+        pointer-events: none;
+    }
+
+    &__all-day-event,
+    &__event {
+        appearance: none;
+        border: none;
+        border-radius: 14px;
+        background-color: colors.$tnt-color-tertiary-container;
+        color: colors.$tnt-color-on-tertiary-container;
+        cursor: pointer;
+
+        &:focus-visible {
+            outline: 2px solid colors.$tnt-color-primary;
+            outline-offset: 2px;
+        }
+    }
+
+    &__all-day-event {
+        padding: 6px 10px;
+        text-align: left;
+        font-weight: 600;
+        min-width: 0;
+        pointer-events: auto;
+    }
+
+    &__all-day-event--continues-before {
+        border-top-left-radius: 8px;
+        border-bottom-left-radius: 8px;
+    }
+
+    &__all-day-event--continues-after {
+        border-top-right-radius: 8px;
+        border-bottom-right-radius: 8px;
+    }
+
+    &__time-column,
+    &__day-column {
+        min-height: 864px;
+    }
+
+    &__day-columns {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        grid-column: 2 / -1;
+        gap: 8px;
+        min-width: 0;
+    }
+
+    &__time-column {
+        display: grid;
+        grid-auto-rows: minmax(0, 1fr);
+        gap: 0;
+    }
+
+    &__time-label {
+        position: relative;
+        height: 36px;
+        padding-right: 8px;
+        text-align: right;
+        color: colors.$tnt-color-on-surface-variant;
+    }
+
+    &__day-column {
+        display: grid;
+        grid-auto-rows: minmax(0, 1fr);
+        gap: 0;
+
+        &--today {
+            background-color: colors.$tnt-color-surface-container;
+        }
+    }
+
+    &__slot {
+        appearance: none;
+        width: 100%;
+        min-height: 36px;
+        border: none;
+        border-top: 1px solid colors.$tnt-color-outline-variant;
+        background: transparent;
+        cursor: pointer;
+
+        &:disabled {
+            cursor: default;
+        }
+    }
+
+    &__event {
+        position: absolute;
+        padding: 8px 10px;
+        margin-left: 3px;
+        text-align: left;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, .12);
+        z-index: 1;
+    }
+
+    &__event-title,
+    &__event-time {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    &__current-time {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background-color: colors.$tnt-color-error;
+        z-index: 2;
+
+        &::before {
+            content: '';
+            position: absolute;
+            top: -4px;
+            left: -1px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: colors.$tnt-color-error;
+        }
+    }
+}
+
+@media #{measurements.$small-and-down} {
+    .nt-scheduler-week-view {
+        min-width: 980px;
+    }
+}

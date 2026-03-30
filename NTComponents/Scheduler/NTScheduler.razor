@@ -1,0 +1,111 @@
+@namespace NTComponents
+@using NTComponents.Core
+@using NTComponents.Scheduler
+@typeparam TEventType
+@inherits TnTPageScriptComponent<NTScheduler<TEventType>>
+
+<div @attributes="AdditionalAttributes"
+     class="@ElementClass"
+     style="@ElementStyle"
+     id="@ElementId"
+     title="@ElementTitle"
+     lang="@ElementLang"
+     aria-label="@AriaLabel"
+     data-nt-scheduler-can-drag="@CanDrag.ToString().ToLowerInvariant()"
+     data-nt-scheduler="true"
+     @ref="Element">
+    <div class="nt-scheduler__toolbar">
+        <div class="nt-scheduler__toolbar-group">
+            <button type="button"
+                    class="nt-scheduler__icon-button"
+                    aria-label="Previous range"
+                    disabled="@(!RendererInfo.IsInteractive)"
+                    @onclick="GoToPreviousAsync">
+                @MaterialIcon.ChevronLeft.Render()
+            </button>
+            <button type="button"
+                    class="nt-scheduler__tonal-button"
+                    disabled="@(!RendererInfo.IsInteractive)"
+                    @onclick="GoToTodayAsync">
+                Today
+            </button>
+            <button type="button"
+                    class="nt-scheduler__icon-button"
+                    aria-label="Next range"
+                    disabled="@(!RendererInfo.IsInteractive)"
+                    @onclick="GoToNextAsync">
+                @MaterialIcon.ChevronRight.Render()
+            </button>
+        </div>
+
+        <div class="nt-scheduler__headline">
+            <div class="nt-scheduler__title tnt-title-large">@Title</div>
+            <div class="nt-scheduler__range tnt-body-medium">@VisibleRangeLabel</div>
+        </div>
+
+        <div class="nt-scheduler__toolbar-group" role="group" aria-label="Scheduler view">
+            @foreach (var schedulerView in _availableViews) {
+                <button type="button"
+                        class="@GetViewButtonClass(schedulerView)"
+                        aria-pressed="@(View == schedulerView ? "true" : "false")"
+                        disabled="@(!RendererInfo.IsInteractive)"
+                        @onclick="() => ChangeViewAsync(schedulerView)">
+                    @schedulerView
+                </button>
+            }
+        </div>
+    </div>
+
+    <div class="nt-scheduler__surface">
+        @if (View == NTSchedulerView.Month) {
+            <NTSchedulerMonthView TEventType="TEventType"
+                                  CanDrag="@CanDrag"
+                                  CanDrop="@CanDrop"
+                                  CanInteract="@CanCreate"
+                                  MaxVisibleEventsPerDay="@MaxVisibleMonthEvents"
+                                  OnDaySelected="@HandleMonthCellSelectedAsync"
+                                  OnEventSelected="@HandleEventSelectedAsync"
+                                  Rows="@BuildMonthRows()"
+                                  WeekdayLabels="@GetWeekdayLabels()" />
+        }
+        else if (View == NTSchedulerView.Week) {
+            <NTSchedulerWeekView TEventType="TEventType"
+                                 AllDaySpans="@BuildAllDaySpans(7)"
+                                 CanDrag="@CanDrag"
+                                 CanDrop="@CanDrop"
+                                 CanInteract="@CanInteract"
+                                 Columns="@BuildTimeGridColumns(7)"
+                                 CurrentTimePercent="@GetCurrentTimeIndicatorPercent()"
+                                 OnEventSelected="@HandleEventSelectedAsync"
+                                 OnSlotSelected="@HandleTimeSlotSelectedAsync"
+                                 Slots="@BuildVisibleTimeSlots(NTSchedulerView.Week)"
+                                 VisibleHourEnd="@VisibleHourEnd"
+                                 VisibleHourStart="@VisibleHourStart" />
+        }
+        else {
+            <NTSchedulerDayView TEventType="TEventType"
+                                CanDrag="@CanDrag"
+                                CanDrop="@CanDrop"
+                                CanInteract="@CanInteract"
+                                Column="@BuildTimeGridColumns(1).Single()"
+                                CurrentTimePercent="@GetCurrentTimeIndicatorPercent()"
+                                OnEventSelected="@HandleEventSelectedAsync"
+                                OnSlotSelected="@HandleTimeSlotSelectedAsync"
+                                Slots="@BuildVisibleTimeSlots(NTSchedulerView.Day)"
+                                VisibleHourEnd="@VisibleHourEnd"
+                                VisibleHourStart="@VisibleHourStart" />
+        }
+    </div>
+
+    @if (_editorState is not null) {
+        <NTSchedulerEventEditor TEventType="TEventType"
+                                CanDelete="@(!_editorState.IsNewEvent && CanEdit)"
+                                ErrorMessage="@_editorErrorMessage"
+                                State="@_editorState"
+                                OnCancel="@CloseEditor"
+                                OnDelete="@DeleteEditorEventAsync"
+                                OnSave="@SaveEditorAsync" />
+    }
+</div>
+
+@PageScript
