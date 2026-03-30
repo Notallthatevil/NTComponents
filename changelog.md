@@ -1,3 +1,10 @@
+# [1.44.0](https://github.com/Notallthatevil/NTComponents/compare/v1.43.0...v1.44.0) (2026-03-30)
+
+
+### Features
+
+* **accordion:** refactor to use inert and grid transitions ([83a20c6](https://github.com/Notallthatevil/NTComponents/commit/83a20c675ca7d5842cac10913f881c03b285d712))
+
 # [1.43.0](https://github.com/Notallthatevil/NTComponents/compare/v1.42.3...v1.43.0) (2026-03-27)
 
 
