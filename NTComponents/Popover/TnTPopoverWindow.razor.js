@@ -85,7 +85,7 @@ async function runAnimation(element, keyframes) {
 }
 
 function notifyActivated(state) {
-    return state.dotNetObjectRef?.invokeMethodAsync('NotifyActivated') ?? Promise.resolve();
+    return (state.dotNetObjectRef?.invokeMethodAsync('NotifyActivated') ?? Promise.resolve()).catch(() => {});
 }
 
 function cleanupDrag(state) {
@@ -121,6 +121,16 @@ export function initializePopoverWindow(element, dotNetObjectRef, options) {
         top: options?.top ?? 0
     };
 
+    state.onEnterAnimationEnd = event => {
+        if (event.target !== element || event.animationName !== 'tnt-popover-enter') {
+            return;
+        }
+
+        element.removeEventListener('animationend', state.onEnterAnimationEnd);
+        state.onEnterAnimationEnd = null;
+        state.dotNetObjectRef?.invokeMethodAsync('NotifyEnterAnimationCompleted').catch(() => {});
+    };
+
     state.onFocusIn = () => {
         notifyActivated(state);
     };
@@ -145,7 +155,11 @@ export function initializePopoverWindow(element, dotNetObjectRef, options) {
 
     state.onPointerUp = async () => {
         cleanupDrag(state);
-        await state.dotNetObjectRef?.invokeMethodAsync('NotifyPositionChanged', state.left, state.top);
+        try {
+            await state.dotNetObjectRef?.invokeMethodAsync('NotifyPositionChanged', state.left, state.top);
+        } catch {
+            // The .NET component may have been disposed before this callback resolved.
+        }
     };
 
     state.onPointerDown = async event => {
@@ -179,6 +193,7 @@ export function initializePopoverWindow(element, dotNetObjectRef, options) {
     state.handle = getHandle(element);
     state.handle?.addEventListener('pointerdown', state.onPointerDown);
     state.element.addEventListener('focusin', state.onFocusIn);
+    state.element.addEventListener('animationend', state.onEnterAnimationEnd);
 
     states.set(element, state);
     applyPosition(element, state.left, state.top);
@@ -266,9 +281,35 @@ export function disposePopoverWindow(element) {
     state.handle?.removeEventListener('pointerdown', state.onPointerDown);
     state.element.removeEventListener('focusin', state.onFocusIn);
 
+    if (state.onEnterAnimationEnd) {
+        state.element.removeEventListener('animationend', state.onEnterAnimationEnd);
+    }
+
     if (typeof state.handle?.releasePointerCapture === 'function' && state.pointerId !== null) {
         state.handle.releasePointerCapture(state.pointerId);
     }
 
     states.delete(element);
+}
+
+export function waitForCloseAnimation(element) {
+    if (!element) {
+        return Promise.resolve();
+    }
+
+    return new Promise(resolve => {
+        const timeout = setTimeout(resolve, 300);
+
+        function onAnimationEnd(event) {
+            if (event.target !== element || event.animationName !== 'tnt-popover-exit') {
+                return;
+            }
+
+            element.removeEventListener('animationend', onAnimationEnd);
+            clearTimeout(timeout);
+            resolve();
+        }
+
+        element.addEventListener('animationend', onAnimationEnd);
+    });
 }

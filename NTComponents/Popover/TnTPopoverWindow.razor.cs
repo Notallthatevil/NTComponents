@@ -153,7 +153,31 @@ public partial class TnTPopoverWindow : IAsyncDisposable {
         viewportPadding = 16
     };
 
-    private async Task CloseAsync() => await BeginDismissAsync(PopoverDismissAction.Close);
+    private async Task CloseAsync() {
+        if (IsDismissPending) {
+            return;
+        }
+
+        _isEntering = false;
+        _dismissAction = PopoverDismissAction.Close;
+        await InvokeAsync(StateHasChanged);
+
+        if (!RendererInfo.IsInteractive || _jsModule is null) {
+            _dismissAction = PopoverDismissAction.None;
+            await Popover.CloseAsync();
+            return;
+        }
+
+        try {
+            await _jsModule.InvokeVoidAsync("waitForCloseAnimation", _windowElement);
+            _dismissAction = PopoverDismissAction.None;
+            await Popover.CloseAsync();
+        }
+        catch (JSDisconnectedException) {
+            _dismissAction = PopoverDismissAction.None;
+            await Popover.CloseAsync();
+        }
+    }
 
     private async Task HideAsync() {
         if (IsDismissPending) {
@@ -181,6 +205,16 @@ public partial class TnTPopoverWindow : IAsyncDisposable {
         }
     }
 
+    /// <summary>
+    ///     Invoked by JavaScript when the popover enter animation has completed.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    [JSInvokable]
+    public async Task NotifyEnterAnimationCompleted() {
+        _isEntering = false;
+        await InvokeAsync(StateHasChanged);
+    }
+
     private RenderFragment RenderContent() {
         return builder => {
             if (Popover.ChildContent is not null) {
@@ -198,38 +232,6 @@ public partial class TnTPopoverWindow : IAsyncDisposable {
 #pragma warning restore CS8620
             builder.CloseComponent();
         };
-    }
-
-    private async Task BeginDismissAsync(PopoverDismissAction dismissAction) {
-        if (IsDismissPending) {
-            return;
-        }
-
-        _isEntering = false;
-        _dismissAction = dismissAction;
-        await InvokeAsync(StateHasChanged);
-    }
-
-    private async Task OnAnimationEndAsync(EventArgs _) {
-        if (_isEntering && !IsDismissPending) {
-            _isEntering = false;
-            await InvokeAsync(StateHasChanged);
-            return;
-        }
-
-        if (!IsDismissPending || _dismissAction != PopoverDismissAction.Close) {
-            return;
-        }
-
-        var dismissAction = _dismissAction;
-        _dismissAction = PopoverDismissAction.None;
-
-        if (dismissAction == PopoverDismissAction.Hide) {
-            await Popover.HideAsync();
-            return;
-        }
-
-        await Popover.CloseAsync();
     }
 
     private async Task OnHeaderKeyDownAsync(KeyboardEventArgs args) {
