@@ -62,11 +62,12 @@ public class NTInputDateTime_Tests : BunitContext {
         DateTime? callbackValue = null;
         var model = CreateTestModel();
         var callback = EventCallback.Factory.Create<DateTime?>(this, (value) => callbackValue = value);
-        var cut = RenderInputDateTime(model, p => p.Add(c => c.BindAfter, callback));
+        var cut = RenderInputDateTime(model, p => p.Add(c => c.BindAfter, callback)
+            .Add(c => c.BindOnInput, true));
         var input = cut.Find("input");
 
         // Act
-        input.Change("2024-03-10T12:00:00");
+        input.Input("2024-03-10T12:00:00");
 
         // Assert
         callbackValue.Should().Be(new DateTime(2024, 3, 10, 12, 0, 0));

@@ -59,11 +59,12 @@ public class TnTInputNumeric_Tests : BunitContext {
         int? callbackValue = null;
         var model = CreateTestModel();
         var callback = EventCallback.Factory.Create<int?>(this, (value) => callbackValue = value);
-        var cut = RenderInputNumeric(model, p => p.Add(c => c.BindAfter, callback));
+        var cut = RenderInputNumeric(model, p => p.Add(c => c.BindAfter, callback)
+        .Add(c => c.BindOnInput, true));
         var input = cut.Find("input");
 
         // Act
-        input.Change("789");
+        input.Input("789");
 
         // Assert
         callbackValue.Should().Be(789);

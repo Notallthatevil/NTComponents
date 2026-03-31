@@ -59,11 +59,12 @@ public class TnTInputTextArea_Tests : BunitContext {
         var callbackValue = "";
         var model = CreateTestModel();
         var callback = EventCallback.Factory.Create<string?>(this, (value) => callbackValue = value ?? "");
-        var cut = RenderInputTextArea(model, p => p.Add(c => c.BindAfter, callback));
+        var cut = RenderInputTextArea(model, p => p.Add(c => c.BindAfter, callback)
+            .Add(c => c.BindOnInput, true));
         var textArea = cut.Find("textarea");
 
         // Act
-        textArea.Change("Test Value");
+        textArea.Input("Test Value");
 
         // Assert
         callbackValue.Should().Be("Test Value");

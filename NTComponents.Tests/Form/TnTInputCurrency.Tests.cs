@@ -59,11 +59,12 @@ public class TnTInputCurrency_Tests : BunitContext {
         decimal? callbackValue = null;
         var model = CreateTestModel();
         var callback = EventCallback.Factory.Create<decimal?>(this, (value) => callbackValue = value);
-        var cut = RenderInputCurrency(model, p => p.Add(c => c.BindAfter, callback));
+        var cut = RenderInputCurrency(model, p => p.Add(c => c.BindAfter, callback)
+        .Add(c => c.BindOnInput, true));
         var input = cut.Find("input");
 
         // Act
-        input.Change("$555.25");
+        input.Input("$555.25");
 
         // Assert
         callbackValue.Should().Be(555.25m);
