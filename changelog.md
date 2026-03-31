@@ -1,3 +1,10 @@
+## [1.44.2](https://github.com/Notallthatevil/NTComponents/compare/v1.44.1...v1.44.2) (2026-03-30)
+
+
+### Bug Fixes
+
+* **TnTWeekView, TnTTypeahead:** use fixed dates and improve input simulation ([70affac](https://github.com/Notallthatevil/NTComponents/commit/70affac5fbb6f8aefcaefc7117cbeef9dd8c7bdf))
+
 # [1.44.0](https://github.com/Notallthatevil/NTComponents/compare/v1.43.0...v1.44.0) (2026-03-30)
 
 
