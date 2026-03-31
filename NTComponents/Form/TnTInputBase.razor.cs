@@ -461,7 +461,9 @@ public abstract partial class TnTInputBase<TInputType> : InputBase<TInputType>, 
     /// <param name="newValue">The new value</param>
     protected async Task OnInputAsync(string? newValue) {
         CurrentValueAsString = newValue;
-        await BindAfter.InvokeAsync(CurrentValue);
+        if (BindOnInput) {
+            await BindAfter.InvokeAsync(CurrentValue);
+        }
     }
 
     /// <inheritdoc />
