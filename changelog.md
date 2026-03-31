@@ -1,3 +1,10 @@
+## [1.44.3](https://github.com/Notallthatevil/NTComponents/compare/v1.44.2...v1.44.3) (2026-03-31)
+
+
+### Bug Fixes
+
+* **input:** conditionally invoke BindAfter on input change ([60cc29d](https://github.com/Notallthatevil/NTComponents/commit/60cc29d720dfe2c87c0af980d78cf92270e02e04))
+
 ## [1.44.2](https://github.com/Notallthatevil/NTComponents/compare/v1.44.1...v1.44.2) (2026-03-30)
 
 
