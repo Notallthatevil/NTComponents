@@ -17,7 +17,7 @@
     & > select {
         z-index: 1;
         background: none;
-        color: none;
+        color: transparent;
         border: none;
         appearance: none;
         outline: none;
@@ -31,6 +31,8 @@
 
         & > option {
             font-size: 1rem;
+            color: var(--tnt-color-on-surface);
+            background-color: var(--tnt-color-surface);
         }
     }
 }

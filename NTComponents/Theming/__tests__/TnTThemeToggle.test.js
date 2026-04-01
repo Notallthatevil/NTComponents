@@ -97,6 +97,12 @@ describe('TnTThemeToggle JavaScript Module', () => {
         return element;
     };
 
+    const resolveThemeLinkLoad = () => {
+        const themeLink = document.head.querySelector('link[data-tnt-theme]');
+        themeLink?.dispatchEvent(new Event('load'));
+        return themeLink;
+    };
+
     describe('Custom Element Registration', () => {
         test('onLoad registers custom element only once', () => {
             const defineSpy = jest.spyOn(customElements, 'define');
@@ -414,12 +420,14 @@ describe('TnTThemeToggle JavaScript Module', () => {
     describe('DOM Manipulation', () => {
         test('updateThemeLink creates new link when none exists', async () => {
             const element = createThemeToggleElement();
+            const updatePromise = element.updateThemeLink('/themes/light.css', true);
+
+            const linkElement = resolveThemeLinkLoad();
+            await updatePromise;
             
-            await element.updateThemeLink('/themes/light.css', true);
-            
-            const linkElement = document.head.querySelector('link[data-tnt-theme]');
             expect(linkElement).not.toBeNull();
             expect(linkElement.href).toContain('/themes/light.css');
+            expect(linkElement.getAttribute('data-tnt-theme-loaded')).toBe('true');
         });
 
         test('updateThemeLink updates existing link', async () => {
@@ -431,11 +439,29 @@ describe('TnTThemeToggle JavaScript Module', () => {
             existingLink.href = '/themes/old.css';
             document.head.appendChild(existingLink);
             
-            await element.updateThemeLink('/themes/new.css', true);
+            const updatePromise = element.updateThemeLink('/themes/new.css', true);
+            resolveThemeLinkLoad();
+            await updatePromise;
             
             const linkElement = document.head.querySelector('link[data-tnt-theme]');
             expect(linkElement).toBe(existingLink);
             expect(linkElement.href).toContain('/themes/new.css');
+        });
+
+        test('updateThemeLink keeps critical style until theme stylesheet loads', async () => {
+            const element = createThemeToggleElement();
+            const criticalStyle = document.createElement('style');
+            criticalStyle.setAttribute('data-tnt-theme-critical', 'true');
+            document.head.appendChild(criticalStyle);
+
+            const updatePromise = element.updateThemeLink('/themes/dark.css', true);
+
+            expect(document.head.querySelector('style[data-tnt-theme-critical]')).toBe(criticalStyle);
+
+            resolveThemeLinkLoad();
+            await updatePromise;
+
+            expect(document.head.querySelector('style[data-tnt-theme-critical]')).toBeNull();
         });
 
         test('updateThemeLink removes link and injects fallback when file not found', async () => {

@@ -127,18 +127,46 @@ class TnTThemeToggleElement extends HTMLElement {
         return themesRoot.endsWith("/") ? themesRoot : `${themesRoot}/`;
     }
 
-    async updateThemeLink(cssHref, exists) {
-        // Remove any fallback <style data-tnt-theme> if present
-        document.querySelector('style[data-tnt-theme]')?.remove();
+    getThemeLinkAbsoluteHref(cssHref) {
+        return new URL(cssHref, window.location.href).href;
+    }
 
+    removeCriticalThemeStyles() {
+        document.querySelector('style[data-tnt-theme-critical]')?.remove();
+    }
+
+    waitForThemeLinkLoad(themeLink) {
+        if (!themeLink) {
+            return Promise.resolve();
+        }
+
+        if (themeLink.getAttribute('data-tnt-theme-loaded') === 'true' || themeLink.sheet) {
+            themeLink.setAttribute('data-tnt-theme-loaded', 'true');
+            return Promise.resolve();
+        }
+
+        return new Promise(resolve => {
+            const complete = (status) => {
+                themeLink.setAttribute('data-tnt-theme-loaded', status);
+                resolve();
+            };
+
+            themeLink.addEventListener('load', () => complete('true'), { once: true });
+            themeLink.addEventListener('error', () => complete('error'), { once: true });
+        });
+    }
+
+    async updateThemeLink(cssHref, exists) {
         const themeLink = document.querySelector('link[data-tnt-theme]');
 
         if (exists) {
+            let activeThemeLink = themeLink;
+            const newHref = this.getThemeLinkAbsoluteHref(cssHref);
+
             if (themeLink) {
                 // Only update href if different
-                const currentHref = themeLink.href;
-                const newHref = cssHref.startsWith('http') ? cssHref : `${location.origin}${cssHref}`;
-                if (currentHref !== newHref) {
+                if (themeLink.href !== newHref) {
+                    themeLink.setAttribute('data-tnt-theme-loaded', 'false');
                     themeLink.href = cssHref;
                 }
             } else {
@@ -149,12 +177,19 @@ class TnTThemeToggleElement extends HTMLElement {
                     href: cssHref
                 });
                 link.setAttribute('data-tnt-theme', 'true');
+                link.setAttribute('data-tnt-theme-loaded', 'false');
                 document.head.appendChild(link);
+                activeThemeLink = link;
             }
+
+            await this.waitForThemeLinkLoad(activeThemeLink);
+            this.removeCriticalThemeStyles();
+            document.querySelector('style[data-tnt-theme]')?.remove();
         } else {
             // Remove the link if present and inject fallback styles
             themeLink?.remove();
             this.injectFallbackStyles();
+            this.removeCriticalThemeStyles();
         }
     }
 

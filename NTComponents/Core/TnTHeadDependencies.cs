@@ -21,41 +21,52 @@ public class TnTHeadDependencies : IComponent {
     }
 
     private void Render(RenderTreeBuilder builder) {
+        // <style data-tnt-theme-critical="true">html, body, #app { background-color: Canvas; color: CanvasText; }</style>
+        builder.OpenElement(0, "style");
+        builder.AddAttribute(1, "data-tnt-theme-critical", "true");
+        builder.AddContent(2, "html, body, #app { background-color: Canvas; color: CanvasText; }");
+        builder.CloseElement();
+
+        // <script src="_content/NTComponents/theme-bootstrap.js"></script>
+        builder.OpenElement(3, "script");
+        builder.AddAttribute(4, "src", "_content/NTComponents/theme-bootstrap.js");
+        builder.CloseElement();
+
         // <link rel="preconnect" href="https://fonts.googleapis.com">
-        builder.OpenElement(0, "link");
-        builder.AddAttribute(1, "rel", "preconnect");
-        builder.AddAttribute(2, "href", "https://fonts.googleapis.com");
+        builder.OpenElement(5, "link");
+        builder.AddAttribute(6, "rel", "preconnect");
+        builder.AddAttribute(7, "href", "https://fonts.googleapis.com");
         builder.CloseElement();
 
         // <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        builder.OpenElement(3, "link");
-        builder.AddAttribute(4, "rel", "preconnect");
-        builder.AddAttribute(5, "href", "https://fonts.gstatic.com");
-        builder.AddAttribute(6, "crossorigin", string.Empty);
+        builder.OpenElement(8, "link");
+        builder.AddAttribute(9, "rel", "preconnect");
+        builder.AddAttribute(10, "href", "https://fonts.gstatic.com");
+        builder.AddAttribute(11, "crossorigin", string.Empty);
         builder.CloseElement();
 
         // <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
-        builder.OpenElement(7, "link");
-        builder.AddAttribute(8, "href", "https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap");
-        builder.AddAttribute(9, "rel", "stylesheet");
+        builder.OpenElement(12, "link");
+        builder.AddAttribute(13, "href", "https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap");
+        builder.AddAttribute(14, "rel", "stylesheet");
         builder.CloseElement();
 
         // <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp" />
-        builder.OpenElement(10, "link");
-        builder.AddAttribute(11, "rel", "stylesheet");
-        builder.AddAttribute(12, "href", "https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp");
+        builder.OpenElement(15, "link");
+        builder.AddAttribute(16, "rel", "stylesheet");
+        builder.AddAttribute(17, "href", "https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp");
         builder.CloseElement();
 
         // <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded" />
-        builder.OpenElement(13, "link");
-        builder.AddAttribute(14, "rel", "stylesheet");
-        builder.AddAttribute(15, "href", "https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded");
+        builder.OpenElement(18, "link");
+        builder.AddAttribute(19, "rel", "stylesheet");
+        builder.AddAttribute(20, "href", "https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded");
         builder.CloseElement();
 
         // <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
-        builder.OpenElement(16, "link");
-        builder.AddAttribute(17, "rel", "stylesheet");
-        builder.AddAttribute(18, "href", "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined");
+        builder.OpenElement(21, "link");
+        builder.AddAttribute(22, "rel", "stylesheet");
+        builder.AddAttribute(23, "href", "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined");
         builder.CloseElement();
     }
 }
