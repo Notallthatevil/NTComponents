@@ -1,3 +1,10 @@
+## [1.44.4](https://github.com/Notallthatevil/NTComponents/compare/v1.44.3...v1.44.4) (2026-03-31)
+
+
+### Bug Fixes
+
+* **input:** ensure BindAfter tested with BindOnInput=true ([be3d7c9](https://github.com/Notallthatevil/NTComponents/commit/be3d7c91f429990c715356c1181c77a78c832288))
+
 ## [1.44.3](https://github.com/Notallthatevil/NTComponents/compare/v1.44.2...v1.44.3) (2026-03-31)
 
 
