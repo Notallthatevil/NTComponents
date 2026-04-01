@@ -444,6 +444,9 @@ public abstract partial class TnTInputBase<TInputType> : InputBase<TInputType>, 
     protected async Task OnBlurAsync(FocusEventArgs args) {
         EditContext?.NotifyFieldChanged(FieldIdentifier);
         await OnBlurCallback.InvokeAsync(args);
+        if (!BindOnInput) {
+            await BindAfter.InvokeAsync(CurrentValue);
+        }
     }
 
     /// <summary>
