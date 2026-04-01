@@ -1,3 +1,10 @@
+## [1.44.5](https://github.com/Notallthatevil/NTComponents/compare/v1.44.4...v1.44.5) (2026-04-01)
+
+
+### Bug Fixes
+
+* **input-base:** trigger BindAfter on blur if not BindOnInput ([975feaa](https://github.com/Notallthatevil/NTComponents/commit/975feaa27fe255ed36e84453193924dbb958e59c))
+
 ## [1.44.4](https://github.com/Notallthatevil/NTComponents/compare/v1.44.3...v1.44.4) (2026-03-31)
 
 
