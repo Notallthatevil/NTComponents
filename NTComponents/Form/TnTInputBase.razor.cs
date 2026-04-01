@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.Extensions.DependencyInjection;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
@@ -346,6 +347,9 @@ public abstract partial class TnTInputBase<TInputType> : InputBase<TInputType>, 
     /// <inheritdoc />
     public abstract InputType Type { get; }
 
+    [Inject]
+    private IServiceProvider? Services { get; set; }
+
     /// <summary>
     ///     Gets or sets the cascading parameter for the form.
     /// </summary>
@@ -640,7 +644,7 @@ public abstract partial class TnTInputBase<TInputType> : InputBase<TInputType>, 
     /// <returns>A string containing the CSS class name that represents the given form appearance. The returned value reflects whether the appearance is filled, outlined, or compact.</returns>
     /// <exception cref="NotSupportedException">Thrown if <paramref name="appearance" /> is not a supported <see cref="FormAppearance" /> value.</exception>
     protected string GetAppearanceClass(ITnTForm? parentForm, FormAppearance appearance) {
-        var effectiveAppearance = parentForm is not null && !OverrideForm ? parentForm.Appearance : appearance;
+        var effectiveAppearance = FormAppearanceResolver.ResolveEffective(parentForm, appearance, Services, parentForm is not null && !OverrideForm);
 
         var appearanceClass = effectiveAppearance switch {
             FormAppearance.Filled => "tnt-form-filled",

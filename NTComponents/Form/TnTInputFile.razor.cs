@@ -25,6 +25,7 @@ SOFTWARE
 
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using NTComponents.Core;
 using NTComponents.Ext;
@@ -321,6 +322,9 @@ public partial class TnTInputFile {
     /// </summary>
     [Inject]
     protected IJSRuntime JSRuntime { get; private set; } = default!;
+
+    [Inject]
+    private IServiceProvider? Services { get; set; }
 
     /// <summary>
     ///     Gets or sets the progress details for the current file.
@@ -636,8 +640,8 @@ public partial class TnTInputFile {
     /// <param name="appearance">The form appearance value for which to retrieve the associated CSS class. Must be a defined value of the <see cref="FormAppearance" /> enumeration.</param>
     /// <returns>A string containing the CSS class name that represents the given form appearance. The returned value reflects whether the appearance is filled, outlined, or compact.</returns>
     /// <exception cref="NotSupportedException">Thrown if <paramref name="appearance" /> is not a supported <see cref="FormAppearance" /> value.</exception>
-    protected static string GetAppearanceClass(ITnTForm? parentForm, FormAppearance appearance) {
-        var effectiveAppearance = parentForm is not null ? parentForm.Appearance : appearance;
+    protected string GetAppearanceClass(ITnTForm? parentForm, FormAppearance appearance) {
+        var effectiveAppearance = FormAppearanceResolver.ResolveEffective(parentForm, appearance, Services);
 
         var appearanceClass = effectiveAppearance switch {
             FormAppearance.Filled => "tnt-form-filled",

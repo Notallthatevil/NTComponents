@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.Extensions.DependencyInjection;
+using NTComponents.Core;
 using NTComponents.Form;
 
 namespace NTComponents.Tests.Form;
@@ -8,11 +10,6 @@ namespace NTComponents.Tests.Form;
 ///     Unit tests for <see cref="TnTForm" />.
 /// </summary>
 public class TnTForm_Tests : BunitContext {
-
-    public TnTForm_Tests() {
-        // Default renderer info for tests
-        SetRendererInfo(new RendererInfo("WebAssembly", true));
-    }
 
     private class TestModel {
         public string? Name { get; set; }
@@ -30,9 +27,12 @@ public class TnTForm_Tests : BunitContext {
         }
     }
 
+    private void SetInteractiveRenderer() => SetRendererInfo(new RendererInfo("WebAssembly", true));
+
     [Fact]
     public void WhenInitialized_WithInteractiveRenderer_AndNoNoValidateAttribute_ThenAddsNoValidateAttribute() {
         // Arrange
+        SetInteractiveRenderer();
         var model = new TestModel();
 
         // Act
@@ -49,7 +49,7 @@ public class TnTForm_Tests : BunitContext {
     [Fact]
     public void WhenInitialized_WithInteractiveRenderer_AndNoValidateAttributePresent_ThenPreservesExistingNoValidateAttribute() {
         // Arrange
-        SetRendererInfo(new RendererInfo("WebAssembly", true));
+        SetInteractiveRenderer();
         var model = new TestModel();
         var additionalAttributes = new Dictionary<string, object> { { "novalidate", "preserved" } };
 
@@ -85,6 +85,7 @@ public class TnTForm_Tests : BunitContext {
     [Fact]
     public void WhenRendered_ThenCascadesITnTForm() {
         // Arrange
+        SetInteractiveRenderer();
         var model = new TestModel();
 
         // Act
@@ -104,8 +105,58 @@ public class TnTForm_Tests : BunitContext {
     }
 
     [Fact]
+    public void WhenRendered_WithoutRegisteredDefaultOptions_ThenFallsBackToOutlinedCompactAppearance() {
+        // Arrange
+        SetInteractiveRenderer();
+        var model = new TestModel();
+
+        // Act
+        var cut = Render<TnTForm>(parameters => parameters
+            .Add(p => p.Model, model)
+            .Add(p => p.ChildContent, (context) => builder => {
+                builder.OpenComponent<ChildComponent>(0);
+                builder.CloseComponent();
+            })
+        );
+
+        var capturedForm = cut.FindComponent<ChildComponent>().Instance.Form;
+
+        // Assert
+        cut.Instance.Appearance.Should().Be(FormAppearance.Default);
+        capturedForm.Should().NotBeNull();
+        capturedForm!.Appearance.Should().Be(FormAppearance.OutlinedCompact);
+    }
+
+    [Fact]
+    public void WhenRendered_WithRegisteredDefaultOptions_ThenCascadesConfiguredAppearance() {
+        // Arrange
+        using var context = new global::Bunit.BunitContext();
+        context.Services.AddSingleton(new NTComponentsDefaultOptions {
+            DefaultFormAppearance = FormAppearance.FilledXS
+        });
+        context.SetRendererInfo(new RendererInfo("WebAssembly", true));
+        var model = new TestModel();
+
+        // Act
+        var cut = context.Render<TnTForm>(parameters => parameters
+            .Add(p => p.Model, model)
+            .Add(p => p.ChildContent, (context) => builder => {
+                builder.OpenComponent<ChildComponent>(0);
+                builder.CloseComponent();
+            })
+        );
+
+        var capturedForm = cut.FindComponent<ChildComponent>().Instance.Form;
+
+        // Assert
+        capturedForm.Should().NotBeNull();
+        capturedForm!.Appearance.Should().Be(FormAppearance.FilledXS);
+    }
+
+    [Fact]
     public void WhenRendered_ThenRendersChildContent() {
         // Arrange
+        SetInteractiveRenderer();
         var model = new TestModel();
 
         // Act
@@ -126,6 +177,7 @@ public class TnTForm_Tests : BunitContext {
     [Fact]
     public void WhenParametersSet_ThenReflectsCorrectState() {
         // Arrange
+        SetInteractiveRenderer();
         var model = new TestModel();
 
         // Act

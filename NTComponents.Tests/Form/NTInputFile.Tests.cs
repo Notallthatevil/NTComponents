@@ -3,6 +3,8 @@ using Bunit.JSInterop;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Rendering;
+using Microsoft.Extensions.DependencyInjection;
+using NTComponents.Core;
 
 namespace NTComponents.Tests.Form;
 
@@ -206,6 +208,31 @@ public class NTInputFile_Tests : BunitContext {
         host.Find("#selected-names").TextContent.Should().Be("first.txt|third.txt");
     }
 
+    [Fact]
+    public void WithoutParentForm_DefaultAppearance_UsesOutlinedCompactFallback() {
+        // Arrange & Act
+        var cut = Render<NTInputFile>();
+
+        // Assert
+        cut.Markup.Should().Contain("tnt-form-outlined");
+        cut.Markup.Should().Contain("tnt-form-compact");
+    }
+
+    [Fact]
+    public void WithoutParentForm_ConfiguredDefaultAppearance_IsApplied() {
+        // Arrange
+        using var context = CreateIsolatedContext(services => services.AddSingleton(new NTComponentsDefaultOptions {
+            DefaultFormAppearance = FormAppearance.FilledXS
+        }));
+
+        // Act
+        var cut = context.Render<NTInputFile>();
+
+        // Assert
+        cut.Markup.Should().Contain("tnt-form-filled");
+        cut.Markup.Should().Contain("tnt-form-xs");
+    }
+
     private static Task SeedProgressAsync(IRenderedComponent<NTInputFile> cut, IBrowserFile file, string status)
         => SeedProgressAsync(cut, [file], status);
 
@@ -229,6 +256,17 @@ public class NTInputFile_Tests : BunitContext {
         pendingFiles.AddRange(files);
 
         await SeedProgressAsync(cut, files, status);
+    }
+
+    private static global::Bunit.BunitContext CreateIsolatedContext(Action<IServiceCollection>? configureServices = null) {
+        var context = new global::Bunit.BunitContext();
+        configureServices?.Invoke(context.Services);
+        context.SetRendererInfo(new RendererInfo("WebAssembly", true));
+
+        var module = context.JSInterop.SetupModule(JsModulePath);
+        module.SetupVoid("removeSelectedFile", _ => true).SetVoidResult();
+
+        return context;
     }
 
     private sealed class SelectionChangedHost : ComponentBase {

@@ -6,29 +6,33 @@ using System.Diagnostics.CodeAnalysis;
 namespace NTComponents;
 
 /// <summary>
-///     Defines the contract for a TnT form, exposing appearance, disabled, and read-only state. Implementations provide metadata for form rendering and state management in NTComponents.
+/// Defines the contract for a TnT form, exposing appearance, disabled, and read-only state. Implementations provide
+/// metadata for form rendering and state management in NTComponents.
 /// </summary>
 public interface ITnTForm {
 
     /// <summary>
-    ///     Gets the visual appearance of the form, which controls its style and layout.
+    /// Gets the visual appearance of the form, which controls its style and layout.
     /// </summary>
     FormAppearance Appearance { get; }
 
     /// <summary>
-    ///     Gets a value indicating whether the form is disabled. When true, user input is blocked.
+    /// Gets a value indicating whether the form is disabled. When true, user input is blocked.
     /// </summary>
     bool Disabled { get; }
 
     /// <summary>
-    ///     Gets a value indicating whether the form is read-only. When true, input fields cannot be edited but may be copied.
+    /// Gets a value indicating whether the form is read-only. When true, input fields cannot be edited but may be
+    /// copied.
     /// </summary>
     bool ReadOnly { get; }
 }
 
 /// <summary>
-///     A Blazor form component that extends <see cref="EditForm" /> and implements <see cref="ITnTForm" />. Provides additional parameters for appearance, disabled, and read-only state, and supplies
-///     itself as a cascading value for child components to access form metadata and state. This class is sealed for performance as it is not intended to be inherited.
+/// A Blazor form component that extends <see cref="EditForm" /> and implements <see cref="ITnTForm" />. Provides
+/// additional parameters for appearance, disabled, and read-only state, and supplies itself as a cascading value for
+/// child components to access form metadata and state. This class is sealed for performance as it is not intended to be
+/// inherited.
 /// </summary>
 [ExcludeFromCodeCoverage]
 public sealed class TnTForm : EditForm, ITnTForm {
@@ -44,6 +48,13 @@ public sealed class TnTForm : EditForm, ITnTForm {
     /// <inheritdoc />
     [Parameter]
     public bool ReadOnly { get; set; }
+
+    [Inject]
+    private IServiceProvider? Services { get; set; }
+
+    FormAppearance ITnTForm.Appearance => EffectiveAppearance;
+
+    internal FormAppearance EffectiveAppearance => FormAppearanceResolver.ResolveLocal(Appearance, Services);
 
     /// <inheritdoc />
     protected override void OnInitialized() {
@@ -70,37 +81,45 @@ public sealed class TnTForm : EditForm, ITnTForm {
 }
 
 /// <summary>
-///     Specifies the appearance of a form.
+/// Specifies the appearance of a form.
 /// </summary>
 public enum FormAppearance {
 
     /// <summary>
-    ///     The form has an outlined appearance.
+    /// The form will take on the appearance defined in
+    /// <see cref="Core.NTComponentsDefaultOptions.DefaultFormAppearance"/>.
+    /// </summary>
+    Default = 0,
+
+    /// <summary>
+    /// The form has an outlined appearance.
     /// </summary>
     Outlined,
 
     /// <summary>
-    ///     The form has a filled appearance.
+    /// The form has a filled appearance.
     /// </summary>
     Filled,
 
     /// <summary>
-    ///     Same as <see cref="Outlined" /> but with more compact spacing."/&gt;
+    /// Same as <see cref="Outlined" /> but with more compact spacing."/&gt;
     /// </summary>
     OutlinedCompact,
 
     /// <summary>
-    ///     Same as <see cref="Filled" /> but with more compact spacing."/&gt;
+    /// Same as <see cref="Filled" /> but with more compact spacing."/&gt;
     /// </summary>
     FilledCompact,
 
     /// <summary>
-    ///     Same as <see cref="OutlinedCompact" /> but with xs spacing, targeting a total element height of approximately 26px.
+    /// Same as <see cref="OutlinedCompact" /> but with xs spacing, targeting a total element height of approximately
+    /// 26px.
     /// </summary>
     OutlinedXS,
 
     /// <summary>
-    ///     Same as <see cref="FilledCompact" /> but with xs spacing, targeting a total element height of approximately 26px.
+    /// Same as <see cref="FilledCompact" /> but with xs spacing, targeting a total element height of approximately
+    /// 26px.
     /// </summary>
     FilledXS
 }

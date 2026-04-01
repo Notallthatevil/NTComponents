@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.DependencyInjection;
 using System.ComponentModel.DataAnnotations;
 using System.Linq.Expressions;
+using NTComponents.Core;
 using NTComponents.Interfaces;
 
 namespace NTComponents.Tests.Form;
@@ -192,6 +194,43 @@ public class TnTInputBase_Tests : BunitContext {
         // Assert
         var cls = label.GetAttribute("class")!;
         cls.Should().Contain("tnt-form-outlined");
+    }
+
+    [Fact]
+    public void ElementClass_WithDefaultAppearanceAndNoForm_UsesOutlinedCompactFallback() {
+        // Arrange & Act
+        var cut = RenderTestInput();
+        var cls = cut.Find("label").GetAttribute("class")!;
+
+        // Assert
+        cls.Should().Contain("tnt-form-outlined");
+        cls.Should().Contain("tnt-form-compact");
+    }
+
+    [Fact]
+    public void ElementClass_WithConfiguredDefaultAppearanceAndNoForm_UsesConfiguredAppearance() {
+        // Arrange
+        using var context = new global::Bunit.BunitContext();
+        context.Services.AddSingleton(new NTComponentsDefaultOptions {
+            DefaultFormAppearance = FormAppearance.FilledXS
+        });
+        context.SetRendererInfo(new RendererInfo("WebAssembly", true));
+
+        var model = CreateTestModel();
+
+        // Act
+        var cut = context.Render<TestTnTInputBase>(parameters => {
+            parameters
+                .Add(p => p.ValueExpression, () => model.TestValue)
+                .Add(p => p.Value, model.TestValue)
+                .Add(p => p.ValueChanged, EventCallback.Factory.Create<string?>(this, v => model.TestValue = v));
+        });
+
+        var cls = cut.Find("label").GetAttribute("class")!;
+
+        // Assert
+        cls.Should().Contain("tnt-form-filled");
+        cls.Should().Contain("tnt-form-xs");
     }
 
     [Fact]
@@ -649,6 +688,41 @@ public class TnTInputBase_Tests : BunitContext {
         cls.Should().Contain("tnt-form-outlined");
         cls.Should().NotContain("tnt-form-filled");
         cls.Should().NotContain("tnt-form-xs");
+    }
+
+    [Fact]
+    public void WithOverrideFormTrue_AndDefaultLocalAppearance_UsesConfiguredDefault_NotFormAppearance() {
+        // Arrange
+        using var context = new global::Bunit.BunitContext();
+        context.Services.AddSingleton(new NTComponentsDefaultOptions {
+            DefaultFormAppearance = FormAppearance.FilledXS
+        });
+        context.SetRendererInfo(new RendererInfo("WebAssembly", true));
+
+        var form = new MockTnTForm { Appearance = FormAppearance.Outlined };
+        var model = CreateTestModel();
+
+        // Act
+        var cut = context.Render<CascadingValue<ITnTForm>>(parameters => {
+            parameters.Add(p => p.Value, form);
+            parameters.Add(p => p.IsFixed, true);
+            parameters.Add(p => p.ChildContent, (RenderFragment)(builder => {
+                builder.OpenComponent<TestTnTInputBase>(0);
+                builder.AddAttribute(1, nameof(TestTnTInputBase.ValueExpression), (Expression<Func<string?>>)(() => model.TestValue));
+                builder.AddAttribute(2, nameof(TestTnTInputBase.Value), model.TestValue);
+                builder.AddAttribute(3, nameof(TestTnTInputBase.ValueChanged), EventCallback.Factory.Create<string?>(this, v => model.TestValue = v));
+                builder.AddAttribute(4, nameof(TestTnTInputBase.OverrideForm), true);
+                builder.AddAttribute(5, nameof(TestTnTInputBase.Appearance), FormAppearance.Default);
+                builder.CloseComponent();
+            }));
+        });
+
+        var cls = cut.Find("label").GetAttribute("class")!;
+
+        // Assert
+        cls.Should().Contain("tnt-form-filled");
+        cls.Should().Contain("tnt-form-xs");
+        cls.Should().NotContain("tnt-form-outlined");
     }
 
     [Fact]

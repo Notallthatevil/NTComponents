@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using NTComponents.Core;
 using NTComponents.Ext;
@@ -250,7 +251,7 @@ public partial class NTInputFile : IAsyncDisposable {
     [Parameter]
     public TnTColor? UploadButtonTextColor { get; set; }
 
-    private FormAppearance EffectiveAppearance => _tntForm?.Appearance ?? Appearance;
+    private FormAppearance EffectiveAppearance => FormAppearanceResolver.ResolveEffective(_tntForm, Appearance, Services);
 
     private TnTColor EffectiveUploadButtonBackgroundColor => UploadButtonBackgroundColor ?? TintColor;
 
@@ -325,6 +326,9 @@ public partial class NTInputFile : IAsyncDisposable {
 
     [Inject]
     private IJSRuntime JSRuntime { get; set; } = default!;
+
+    [Inject]
+    private IServiceProvider? Services { get; set; }
 
     private IReadOnlyDictionary<string, object> InputAttributes => BuildInputAttributes(useSsrNameFallback: false);
 
@@ -814,8 +818,8 @@ public partial class NTInputFile : IAsyncDisposable {
         }
     }
 
-    private static string GetAppearanceClass(ITnTForm? parentForm, FormAppearance appearance) {
-        var effectiveAppearance = parentForm is not null ? parentForm.Appearance : appearance;
+    private string GetAppearanceClass(ITnTForm? parentForm, FormAppearance appearance) {
+        var effectiveAppearance = FormAppearanceResolver.ResolveEffective(parentForm, appearance, Services);
 
         var appearanceClass = effectiveAppearance switch {
             FormAppearance.Filled => "tnt-form-filled",
