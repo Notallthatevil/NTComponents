@@ -1,3 +1,5 @@
+using System;
+using System.ComponentModel;
 using Microsoft.AspNetCore.Components;
 using NTComponents.Core;
 using NTComponents.Layout;
@@ -7,6 +9,8 @@ namespace NTComponents;
 /// <summary>
 ///     The header content to be rendered.
 /// </summary>
+[Obsolete("Use NTHeader instead. TnTHeader will be removed in a future release.")]
+[EditorBrowsable(EditorBrowsableState.Never)]
 public partial class TnTHeader {
 
     /// <inheritdoc />

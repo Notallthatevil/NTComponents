@@ -1,3 +1,5 @@
+using System;
+using System.ComponentModel;
 using Microsoft.AspNetCore.Components;
 using NTComponents.Core;
 
@@ -6,6 +8,8 @@ namespace NTComponents;
 /// <summary>
 ///     Represents a layout component that serves as a container for other components or content.
 /// </summary>
+[Obsolete("Use NTLayout instead. TnTLayout will be removed in a future release.")]
+[EditorBrowsable(EditorBrowsableState.Never)]
 public partial class TnTLayout {
 
     /// <summary>

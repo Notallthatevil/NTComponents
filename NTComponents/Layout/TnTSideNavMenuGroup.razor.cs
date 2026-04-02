@@ -1,3 +1,5 @@
+using System;
+using System.ComponentModel;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.JSInterop;
@@ -11,6 +13,8 @@ namespace NTComponents;
 ///     A collapsible navigation group component for side navigation menus.
 /// </summary>
 /// <remarks>Provides a toggleable group of navigation items with an expandable/collapsible section.</remarks>
+[Obsolete("Use NTSideNavMenuGroup instead. TnTSideNavMenuGroup will be removed in a future release.")]
+[EditorBrowsable(EditorBrowsableState.Never)]
 public partial class TnTSideNavMenuGroup {
 
     /// <inheritdoc />

@@ -1,7 +1,8 @@
+using System;
+using System.ComponentModel;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components.Routing;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,6 +14,8 @@ namespace NTComponents;
 /// <summary>
 ///     Represents a navigation link (anchor) component specifically designed for side navigation menus.
 /// </summary>
+[Obsolete("Use NTSideNavLink instead. TnTSideNavLink will be removed in a future release.")]
+[EditorBrowsable(EditorBrowsableState.Never)]
 public partial class TnTSideNavLink {
 
     /// <inheritdoc />

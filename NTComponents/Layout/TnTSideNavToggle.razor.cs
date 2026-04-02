@@ -1,3 +1,5 @@
+using System;
+using System.ComponentModel;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.JSInterop;
@@ -10,6 +12,8 @@ namespace NTComponents;
 /// <summary>
 ///     Toggle button for the side navigation component.
 /// </summary>
+[Obsolete("Use NTSideNavToggle instead. TnTSideNavToggle will be removed in a future release.")]
+[EditorBrowsable(EditorBrowsableState.Never)]
 public partial class TnTSideNavToggle {
 
     /// <inheritdoc />

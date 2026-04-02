@@ -1,3 +1,5 @@
+using System;
+using System.ComponentModel;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
 using NTComponents.Core;
@@ -8,6 +10,8 @@ namespace NTComponents;
 /// <summary>
 ///     Represents a side navigation component in the TnT layout system.
 /// </summary>
+[Obsolete("Use NTSideNav instead. TnTSideNav will be removed in a future release.")]
+[EditorBrowsable(EditorBrowsableState.Never)]
 public partial class TnTSideNav {
 
     /// <inheritdoc />

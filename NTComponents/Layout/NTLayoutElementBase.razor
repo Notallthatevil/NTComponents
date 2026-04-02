@@ -1,0 +1,35 @@
+@namespace NTComponents
+@inherits NTComponents.Core.TnTComponentBase
+
+@switch (ResolvedTagName) {
+    case "article":
+        <article @attributes="AdditionalAttributes" class="@ElementClass" style="@ElementStyle" lang="@ElementLang" id="@ElementId" title="@ElementTitle" @attributes="RootStateAttributes" @ref="Element">
+            @ChildContent
+        </article>
+        break;
+    case "footer":
+        <footer @attributes="AdditionalAttributes" class="@ElementClass" style="@ElementStyle" lang="@ElementLang" id="@ElementId" title="@ElementTitle" @attributes="RootStateAttributes" @ref="Element">
+            @ChildContent
+        </footer>
+        break;
+    case "header":
+        <header @attributes="AdditionalAttributes" class="@ElementClass" style="@ElementStyle" lang="@ElementLang" id="@ElementId" title="@ElementTitle" @attributes="RootStateAttributes" @ref="Element">
+            @ChildContent
+        </header>
+        break;
+    case "main":
+        <main @attributes="AdditionalAttributes" class="@ElementClass" style="@ElementStyle" lang="@ElementLang" id="@ElementId" title="@ElementTitle" @attributes="RootStateAttributes" @ref="Element">
+            @ChildContent
+        </main>
+        break;
+    case "section":
+        <section @attributes="AdditionalAttributes" class="@ElementClass" style="@ElementStyle" lang="@ElementLang" id="@ElementId" title="@ElementTitle" @attributes="RootStateAttributes" @ref="Element">
+            @ChildContent
+        </section>
+        break;
+    default:
+        <div @attributes="AdditionalAttributes" class="@ElementClass" style="@ElementStyle" lang="@ElementLang" id="@ElementId" title="@ElementTitle" @attributes="RootStateAttributes" @ref="Element">
+            @ChildContent
+        </div>
+        break;
+}
