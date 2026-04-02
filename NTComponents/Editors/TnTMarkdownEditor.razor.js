@@ -16,6 +16,39 @@ function getEditorValue(element) {
     return valueElement?.textContent ?? '';
 }
 
+function getEditorRevision(element) {
+    const revisionElement = element?.querySelector('.editor-revision');
+    const revision = Number.parseInt(revisionElement?.textContent ?? '0', 10);
+    return Number.isNaN(revision) ? 0 : revision;
+}
+
+function isEditorFocused(editorState) {
+    const codeMirror = editorState?.mde?.codemirror;
+    if (!codeMirror) {
+        return false;
+    }
+
+    if (typeof codeMirror.hasFocus === 'function' && codeMirror.hasFocus()) {
+        return true;
+    }
+
+    const wrapper = typeof codeMirror.getWrapperElement === 'function'
+        ? codeMirror.getWrapperElement()
+        : null;
+
+    return !!wrapper?.contains(document.activeElement);
+}
+
+function shouldSkipServerSync(editorState, nextValue, nextRevision) {
+    if (!editorState?.mde || !isEditorFocused(editorState)) {
+        return false;
+    }
+
+    const currentValue = editorState.mde.value();
+    const currentRevision = editorState.localRevision ?? 0;
+    return nextRevision < currentRevision && nextValue !== currentValue;
+}
+
 function setEditorValue(editorState, value) {
     if (!editorState?.mde) {
         return;
@@ -69,10 +102,12 @@ export function onLoad(element, dotNetElementRef) {
                 }
 
                 let easyMDE = null;
+                let localRevision = getEditorRevision(this);
 
                 const existingState = markdownEditorsMap.get(oldValue);
                 if (existingState) {
                     easyMDE = existingState.mde;
+                    localRevision = existingState.localRevision ?? localRevision;
                     markdownEditorsMap.delete(oldValue);
                 }
 
@@ -195,9 +230,11 @@ export function onLoad(element, dotNetElementRef) {
                             }
 
                             var text = easyMDE.value();
+                            editorState.localRevision = (editorState.localRevision ?? 0) + 1;
+                            const revision = editorState.localRevision;
                             const dotNetRef = key ? elementDotNetRefMap.get(key) : null;
                             if (dotNetRef) {
-                                dotNetRef.invokeMethodAsync("UpdateValue", text, easyMDE.options.previewRender(text));
+                                dotNetRef.invokeMethodAsync("UpdateValue", text, easyMDE.options.previewRender(text), revision);
                             }
                         });
                         easyMDE.codemirror.on("blur", function () {
@@ -212,6 +249,7 @@ export function onLoad(element, dotNetElementRef) {
 
                 markdownEditorsMap.set(newValue, {
                     element: this,
+                    localRevision,
                     mde: easyMDE,
                     isSynchronizing: false
                 });
@@ -238,7 +276,14 @@ export function onUpdate(element, dotNetElementRef) {
 
         const editorState = markdownEditorsMap.get(key);
         if (editorState) {
-            setEditorValue(editorState, getEditorValue(element));
+            const nextValue = getEditorValue(element);
+            const nextRevision = getEditorRevision(element);
+            if (shouldSkipServerSync(editorState, nextValue, nextRevision)) {
+                return;
+            }
+
+            editorState.localRevision = Math.max(editorState.localRevision ?? 0, nextRevision);
+            setEditorValue(editorState, nextValue);
         }
     }
 }

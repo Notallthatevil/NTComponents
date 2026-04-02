@@ -87,6 +87,7 @@ public partial class TnTMarkdownEditor {
     private FieldIdentifier? _renderedHtmlFieldIdentifier;
     private FieldIdentifier? _valueFieldIdentifier;
     private EditContext? _previousEditContext;
+    private long _latestClientRevision;
 
     private string EditorContainerClass => CssClassBuilder.Create("tnt-markdown-editor")
         .AddClass(GetValidationCssClass())
@@ -97,6 +98,8 @@ public partial class TnTMarkdownEditor {
             ? Value ?? string.Empty
             : Value ?? InitialValue ?? string.Empty;
 
+    private long CurrentEditorRevision => _latestClientRevision;
+
     private bool ShowValidationMessages => EditContext is not null && (ValueExpression is not null || RenderedHtmlExpression is not null);
 
     private bool ShowSupportingText => !string.IsNullOrWhiteSpace(SupportingText) || ShowValidationMessages;
@@ -106,8 +109,14 @@ public partial class TnTMarkdownEditor {
     /// </summary>
     /// <param name="value">       The new Markdown content.</param>
     /// <param name="renderedText">The rendered HTML content.</param>
+    /// <param name="revision">    The client revision that produced the update.</param>
     [JSInvokable]
-    public async Task UpdateValue(string value, string renderedText) {
+    public async Task UpdateValue(string value, string renderedText, long revision = 0) {
+        if (revision < _latestClientRevision) {
+            return;
+        }
+
+        _latestClientRevision = revision;
         Value = value;
         await ValueChanged.InvokeAsync(Value);
         var body = renderedText;

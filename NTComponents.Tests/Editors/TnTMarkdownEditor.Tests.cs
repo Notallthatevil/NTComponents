@@ -75,6 +75,15 @@ public class TnTMarkdownEditor_Tests : BunitContext {
     }
 
     [Fact]
+    public void Renders_Initial_Revision_Marker() {
+        // Act
+        var cut = Render<TnTMarkdownEditor>();
+
+        // Assert
+        cut.Find("div.editor-revision").TextContent.Should().Be("0");
+    }
+
+    [Fact]
     public void Renders_Whitespace_InitialValue_When_Provided() {
         // Act
         var cut = Render<TnTMarkdownEditor>(p => p
@@ -261,6 +270,33 @@ public class TnTMarkdownEditor_Tests : BunitContext {
 
         // Assert When no body tag is found, the regex should not match and RenderedHtml should not be set
         cut.Instance.RenderedHtml.Should().Be(new MarkupString("<h1>Test</h1><p>Content</p>"));
+    }
+
+    [Fact]
+    public async Task UpdateValue_Tracks_Client_Revision() {
+        // Arrange
+        var cut = Render<TnTMarkdownEditor>();
+
+        // Act
+        await cut.Instance.UpdateValue("# Test", "<body><p>Content</p></body>", 3);
+
+        // Assert
+        cut.Find("div.editor-revision").TextContent.Should().Be("3");
+    }
+
+    [Fact]
+    public async Task UpdateValue_Ignores_Stale_Client_Revisions() {
+        // Arrange
+        var cut = Render<TnTMarkdownEditor>();
+
+        // Act
+        await cut.Instance.UpdateValue("# Newer", "<body><p>Newer</p></body>", 2);
+        await cut.Instance.UpdateValue("# Older", "<body><p>Older</p></body>", 1);
+
+        // Assert
+        cut.Instance.Value.Should().Be("# Newer");
+        cut.Instance.RenderedHtml!.Value.Value.Should().Be("<p>Newer</p>");
+        cut.Find("div.editor-revision").TextContent.Should().Be("2");
     }
 
     [Fact]

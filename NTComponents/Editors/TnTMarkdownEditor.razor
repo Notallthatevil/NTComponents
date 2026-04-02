@@ -6,6 +6,7 @@
     <tnt-markdown-editor @attributes="AdditionalAttributes" @ref="Element">
         <textarea style="display:none;" />
         <div class="editor-value" style="display:none">@CurrentEditorValue</div>
+        <div class="editor-revision" style="display:none">@CurrentEditorRevision</div>
     </tnt-markdown-editor>
     @if (ShowSupportingText) {
         <span class="tnt-supporting-text">
