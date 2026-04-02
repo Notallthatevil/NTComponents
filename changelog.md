@@ -1,3 +1,11 @@
+# [1.45.0](https://github.com/Notallthatevil/NTComponents/compare/v1.44.5...v1.45.0) (2026-04-01)
+
+
+### Features
+
+* **core:** add global default options and appearance resolver ([a264221](https://github.com/Notallthatevil/NTComponents/commit/a2642210fcb01de8d57edd6f28bb483f48e30a5e))
+* **theme:** add critical style and theme bootstrapper ([100bd38](https://github.com/Notallthatevil/NTComponents/commit/100bd381db1df19d5ace631e5f56d39048b6a278))
+
 ## [1.44.5](https://github.com/Notallthatevil/NTComponents/compare/v1.44.4...v1.44.5) (2026-04-01)
 
 
