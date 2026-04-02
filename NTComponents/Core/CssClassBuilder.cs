@@ -49,7 +49,7 @@ public sealed class CssClassBuilder {
     /// </summary>
     /// <param name="elevation">The elevation level.</param>
     /// <returns>The current instance of <see cref="CssClassBuilder" />.</returns>
-    public CssClassBuilder AddElevation(int elevation) => AddClass($"tnt-elevation-{Math.Clamp(elevation, 0, 10)}", elevation >= 0);
+    public CssClassBuilder AddElevation(int elevation) => AddClass($"tnt-elevation-{Math.Clamp(elevation, 0, 10)} nt-elevation-{Math.Clamp(elevation, 0, 10)}", elevation >= 0);
 
     /// <summary>
     ///     Adds a CSS class for filled state.
