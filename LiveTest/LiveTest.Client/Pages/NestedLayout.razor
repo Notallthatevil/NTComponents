@@ -2,11 +2,11 @@
 @using NTComponents
 
 
-<NTComponents.TnTLayout>
-    <NTComponents.TnTHeader>
+<NTComponents.NTLayout Mode="NTLayoutMode.Nested">
+    <NTComponents.NTHeader>
         Header Content
         <NTComponents.TnTSideNavToggle />
-    </NTComponents.TnTHeader>
+    </NTComponents.NTHeader>
 
     <NTComponents.TnTSideNav>
        <h3>
@@ -46,10 +46,10 @@
         <TnTSideNavLink Label="Wizard" href="/Wizard" Icon="@MaterialIcon.Image" />
     </NTComponents.TnTSideNav>
 
-    <NTComponents.TnTBody>
+    <NTComponents.NTBody>
         Some body content
-    </NTComponents.TnTBody>
-    @* <NTComponents.TnTFooter>
+    </NTComponents.NTBody>
+    @* <NTComponents.NTFooter>
         Nested footer
-    </NTComponents.TnTFooter> *@
-</NTComponents.TnTLayout>
+    </NTComponents.NTFooter> *@
+</NTComponents.NTLayout>

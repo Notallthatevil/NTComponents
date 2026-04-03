@@ -1,21 +1,21 @@
 @using NTComponents
 @inherits LayoutComponentBase
 
-<TnTLayout>
-    <TnTHeader>
+<NTLayout>
+    <NTHeader>
         <TnTSideNavToggle>
             <MaterialIcon Icon="@MaterialIcon.Menu" />
         </TnTSideNavToggle>
         <TnTThemeToggle />
         This is my header
-    </TnTHeader>
-    <TnTBody>
+    </NTHeader>
+    <NTBody>
         @Body
-    </TnTBody>
+    </NTBody>
 
-    <TnTFooter>
+    <NTFooter>
         Footer content
-    </TnTFooter>
+    </NTFooter>
     <TnTSideNav HideOnLargeScreens="true">
         <h3>
             My First Headline
@@ -140,7 +140,7 @@
         </TnTSideNavLink>
     </TnTSideNav>
 
-</TnTLayout>
+</NTLayout>
 
 <TnTDialog @rendermode="InteractiveAuto" />
 <TnTToast @rendermode="InteractiveAuto" />
