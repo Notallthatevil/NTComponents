@@ -1,3 +1,15 @@
+# [1.46.0](https://github.com/Notallthatevil/NTComponents/compare/v1.45.1...v1.46.0) (2026-04-06)
+
+
+### Bug Fixes
+
+* **toast:** improve toast color contrast and close button style ([7ce29e6](https://github.com/Notallthatevil/NTComponents/commit/7ce29e656fdbbdde5744021400ada62af9e39e8e))
+
+
+### Features
+
+* **TnTChip:** add SubLabel support and tests ([06ba4c8](https://github.com/Notallthatevil/NTComponents/commit/06ba4c8689fa8025f2c71cb93c4f79a676445eb4))
+
 ## [1.45.1](https://github.com/Notallthatevil/NTComponents/compare/v1.45.0...v1.45.1) (2026-04-02)
 
 
