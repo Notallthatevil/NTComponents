@@ -131,7 +131,7 @@ public class TnTToast_Tests : BunitContext {
         // Assert
         var progressBar = cut.Find(".tnt-toast-progress");
         var style = progressBar.GetAttribute("style");
-        style.Should().Contain("background-color: var(--tnt-color-warning)");
+        style.Should().Contain("background-color: var(--tnt-color-on-warning)");
     }
 
     [Fact]

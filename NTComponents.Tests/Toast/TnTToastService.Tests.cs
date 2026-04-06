@@ -324,8 +324,8 @@ public class TnTToastService_Tests {
         createdToast.Should().NotBeNull();
         createdToast!.Title.Should().Be("Error Title");
         createdToast.Message.Should().Be("Something went wrong");
-        createdToast.BackgroundColor.Should().Be(TnTColor.ErrorContainer);
-        createdToast.TextColor.Should().Be(TnTColor.Error);
+        createdToast.BackgroundColor.Should().Be(TnTColor.Error);
+        createdToast.TextColor.Should().Be(TnTColor.OnError);
     }
 
     [Fact]
@@ -368,8 +368,8 @@ public class TnTToastService_Tests {
         createdToast.Message.Should().Be("Error Message");
         createdToast.Timeout.Should().Be(15);
         createdToast.ShowClose.Should().BeFalse();
-        createdToast.BackgroundColor.Should().Be(TnTColor.ErrorContainer);
-        createdToast.TextColor.Should().Be(TnTColor.Error);
+        createdToast.BackgroundColor.Should().Be(TnTColor.Error);
+        createdToast.TextColor.Should().Be(TnTColor.OnError);
     }
 
     [Fact]
@@ -392,8 +392,8 @@ public class TnTToastService_Tests {
         createdToast.Message.Should().Be("Info Message");
         createdToast.Timeout.Should().Be(8);
         createdToast.ShowClose.Should().BeFalse();
-        createdToast.BackgroundColor.Should().Be(TnTColor.InfoContainer);
-        createdToast.TextColor.Should().Be(TnTColor.Info);
+        createdToast.BackgroundColor.Should().Be(TnTColor.Info);
+        createdToast.TextColor.Should().Be(TnTColor.OnInfo);
     }
 
     [Fact]
@@ -437,8 +437,8 @@ public class TnTToastService_Tests {
         createdToast.Message.Should().Be("Success Message");
         createdToast.Timeout.Should().Be(12);
         createdToast.ShowClose.Should().BeFalse();
-        createdToast.BackgroundColor.Should().Be(TnTColor.SuccessContainer);
-        createdToast.TextColor.Should().Be(TnTColor.Success);
+        createdToast.BackgroundColor.Should().Be(TnTColor.Success);
+        createdToast.TextColor.Should().Be(TnTColor.OnSuccess);
     }
 
     [Fact]
@@ -482,8 +482,8 @@ public class TnTToastService_Tests {
         createdToast.Message.Should().Be("Warning Message");
         createdToast.Timeout.Should().Be(6);
         createdToast.ShowClose.Should().BeFalse();
-        createdToast.BackgroundColor.Should().Be(TnTColor.WarningContainer);
-        createdToast.TextColor.Should().Be(TnTColor.Warning);
+        createdToast.BackgroundColor.Should().Be(TnTColor.Warning);
+        createdToast.TextColor.Should().Be(TnTColor.OnWarning);
     }
 
     [Fact]
