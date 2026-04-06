@@ -449,4 +449,50 @@ public class TnTChip_Tests : BunitContext {
         // Assert
         cut.FindAll(".tnt-label").Should().BeEmpty();
     }
+
+    [Fact]
+    public void SubLabel_Null_Does_Not_Render_SubLabel_Span() {
+        // Arrange & Act
+        var cut = Render<TnTChip>(p => p.Add(c => c.Label, "Test"));
+
+        // Assert
+        cut.FindAll(".tnt-sub-label").Should().BeEmpty();
+    }
+
+    [Fact]
+    public void SubLabel_Empty_Does_Not_Render_SubLabel_Span() {
+        // Arrange & Act
+        var cut = Render<TnTChip>(p => p.Add(c => c.Label, "Test").Add(c => c.SubLabel, ""));
+
+        // Assert
+        cut.FindAll(".tnt-sub-label").Should().BeEmpty();
+    }
+
+    [Fact]
+    public void SubLabel_Whitespace_Does_Not_Render_SubLabel_Span() {
+        // Arrange & Act
+        var cut = Render<TnTChip>(p => p.Add(c => c.Label, "Test").Add(c => c.SubLabel, "   "));
+
+        // Assert
+        cut.FindAll(".tnt-sub-label").Should().BeEmpty();
+    }
+
+    [Fact]
+    public void SubLabel_Set_Renders_SubLabel_Span_Inside_Label() {
+        // Arrange & Act
+        var cut = Render<TnTChip>(p => p.Add(c => c.Label, "Test").Add(c => c.SubLabel, "Details"));
+
+        // Assert
+        cut.Find(".tnt-label .tnt-sub-label").TextContent.Should().Be("Details");
+    }
+
+    [Fact]
+    public void SubLabel_Set_Label_Text_Still_Renders() {
+        // Arrange & Act
+        var cut = Render<TnTChip>(p => p.Add(c => c.Label, "Test").Add(c => c.SubLabel, "Details"));
+
+        // Assert
+        cut.Find(".tnt-label").TextContent.Should().Contain("Test");
+        cut.Find(".tnt-label").TextContent.Should().Contain("Details");
+    }
 }

@@ -87,6 +87,12 @@ public partial class TnTChip
     public TnTIcon? StartIcon { get; set; }
 
     /// <summary>
+    ///     Optional secondary text displayed below the label. Rendered in a smaller font within the same chip height.
+    /// </summary>
+    [Parameter]
+    public string? SubLabel { get; set; }
+
+    /// <summary>
     ///     The text color of the chip.
     /// </summary>
     [Parameter]

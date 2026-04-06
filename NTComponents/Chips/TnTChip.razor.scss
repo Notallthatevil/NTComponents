@@ -1,4 +1,4 @@
-﻿@use '../Styles/_Variables/_colors.scss' as colors;
+@use '../Styles/_Variables/_colors.scss' as colors;
 @use '../Styles/_Variables/_typescale.scss' as typescale;
 @use '../Styles/_Variables/_interactable.scss' as interactable;
 $bg-color: var(--tnt-chip-background-color);
@@ -54,9 +54,27 @@ $tint-color: var(--tnt-chip-tint-color);
     .tnt-label {
         grid-area: label;
         align-self: center;
-        justify-self: center;
+        justify-self: start;
         pointer-events: none;
+        white-space: nowrap;
+        overflow: hidden;
         @include typescale.tnt-label-large;
+
+        &:has(.tnt-sub-label) {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: center;
+            line-height: 1;
+
+            .tnt-sub-label {
+                @include typescale.tnt-label-small;
+                line-height: 1;
+                opacity: 0.7;
+                white-space: nowrap;
+                overflow: hidden;
+            }
+        }
     }
 
     input {

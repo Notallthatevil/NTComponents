@@ -22,6 +22,9 @@
     @if (!string.IsNullOrWhiteSpace(Label)) {
         <span class="tnt-label">
             @Label
+            @if (!string.IsNullOrWhiteSpace(SubLabel)) {
+                <span class="tnt-sub-label">@SubLabel</span>
+            }
         </span>
     }
 

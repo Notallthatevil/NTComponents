@@ -8,12 +8,19 @@
 <NTComponents.TnTChip Label="Chip" CloseButtonClicked="@Closed" @bind-Value="_c" BindAfter="Checked" Disabled="true" />
 <NTComponents.TnTChip StartIcon="@MaterialIcon.GridOn" Label="Chip" CloseButtonClicked="@Closed" BindAfter="Checked" @bind-Value="_d" />
 
+<NTComponents.TnTChip Label="Chip" SubLabel="Sub label" @bind-Value="_e" BindAfter="Checked" DisableToggle="true" />
+<NTComponents.TnTChip StartIcon="@MaterialIcon.GridOn" Label="Chip" SubLabel="Sub label" BindAfter="Checked" @bind-Value="_f" />
+<NTComponents.TnTChip StartIcon="@MaterialIcon.GridOn" Label="Chip" SubLabel="Sub label" CloseButtonClicked="@Closed" BindAfter="Checked" @bind-Value="_g" />
+
 
 @code {
     private bool _a;
     private bool _b;
     private bool _c;
     private bool _d;
+    private bool _e;
+    private bool _f;
+    private bool _g;
 
 
     private void Checked(bool b) {
