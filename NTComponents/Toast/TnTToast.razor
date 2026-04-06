@@ -33,7 +33,7 @@
 
                     @if (toast.ShowClose) {
                         if (RendererInfo.IsInteractive) {
-                            <TnTImageButton Icon="@MaterialIcon.Close" TextColor="@TnTColor.Outline" BackgroundColor="@TnTColor.Transparent" OnClickCallback="@(() => _service.CloseAsync(toast))" />
+                            <TnTImageButton Icon="@MaterialIcon.Close" TextColor="@toast.TextColor" BackgroundColor="@TnTColor.Transparent" OnClickCallback="@(() => _service.CloseAsync(toast))" />
                         }
                         else {
                             <button class="@_ssrCloseButtonClass"

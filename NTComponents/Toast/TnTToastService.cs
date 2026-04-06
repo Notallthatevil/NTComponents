@@ -36,19 +36,19 @@ internal class TnTToastService : ITnTToastService {
     }
 
     public async Task ShowErrorAsync(string title, string? message = null, int timeout = 10, bool showClose = true) =>
-        await ShowAsync(title, message, timeout, showClose, TnTColor.ErrorContainer, TnTColor.Error);
+        await ShowAsync(title, message, timeout, showClose, TnTColor.Error, TnTColor.OnError);
 
     public async Task ShowErrorAsync(string title, Exception? message, int timeout = 10, bool showClose = true) =>
         await ShowErrorAsync(title, message?.Message, timeout, showClose);
 
     public async Task ShowInfoAsync(string title, string? message = null, int timeout = 10, bool showClose = true) =>
-        await ShowAsync(title, message, timeout, showClose, TnTColor.InfoContainer, TnTColor.Info);
+        await ShowAsync(title, message, timeout, showClose, TnTColor.Info, TnTColor.OnInfo);
 
     public async Task ShowSuccessAsync(string title, string? message = null, int timeout = 10, bool showClose = true) =>
-        await ShowAsync(title, message, timeout, showClose, TnTColor.SuccessContainer, TnTColor.Success);
+        await ShowAsync(title, message, timeout, showClose, TnTColor.Success, TnTColor.OnSuccess);
 
     public async Task ShowWarningAsync(string title, string? message = null, int timeout = 10, bool showClose = true) =>
-        await ShowAsync(title, message, timeout, showClose, TnTColor.WarningContainer, TnTColor.Warning);
+        await ShowAsync(title, message, timeout, showClose, TnTColor.Warning, TnTColor.OnWarning);
 
     /// <summary>
     ///     Implementation of the ITnTToast interface.
