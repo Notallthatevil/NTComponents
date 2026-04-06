@@ -1,3 +1,10 @@
+## [1.45.1](https://github.com/Notallthatevil/NTComponents/compare/v1.45.0...v1.45.1) (2026-04-02)
+
+
+### Bug Fixes
+
+* **markdown-editor:** add client revision tracking ([986d521](https://github.com/Notallthatevil/NTComponents/commit/986d521379c6810d5fc1a6442091add974133325))
+
 # [1.45.0](https://github.com/Notallthatevil/NTComponents/compare/v1.44.5...v1.45.0) (2026-04-01)
 
 
