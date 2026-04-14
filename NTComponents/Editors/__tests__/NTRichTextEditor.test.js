@@ -1045,6 +1045,7 @@ describe('NTRichTextEditor runtime behavior', () => {
   test('image and table tools support cancel, escape, enter, and invalid-input paths', () => {
     const fixture = createEditorFixture();
     editorModule.onLoad(fixture.element, createDotNetRef());
+    const imageToolbarButton = fixture.element.querySelector('[data-command="image"]');
 
     setSurfaceContent(fixture.surface, '<p>Image host</p>');
     const imageText = fixture.surface.querySelector('p').firstChild;
@@ -1059,9 +1060,11 @@ describe('NTRichTextEditor runtime behavior', () => {
     const imageUrlInput = fixture.element.querySelector('[data-role="image-url"]');
     const imageAltInput = fixture.element.querySelector('[data-role="image-alt"]');
     expect(imagePanel.hidden).toBe(false);
+    expect(imageToolbarButton.getAttribute('aria-expanded')).toBe('true');
 
     click(fixture.element.querySelector('[data-role="image-cancel"]'));
     expect(imagePanel.hidden).toBe(true);
+    expect(imageToolbarButton.getAttribute('aria-expanded')).toBe('false');
     expect(document.activeElement).toBe(fixture.surface);
 
     click(fixture.element.querySelector('[data-command="image"]'));

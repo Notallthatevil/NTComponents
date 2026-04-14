@@ -1876,6 +1876,9 @@ const toolHost: RichTextEditorToolHost = {
     restoreSelectionRange,
     saveSelectionRange,
     setToolPanelOpen: (element: HTMLElement, command: string, isOpen: boolean) => {
+        const button = getToolbarButtons(element).find((candidate) => candidate.dataset.command === command) ?? null;
+        button?.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+
         const panel = qs<HTMLElement>(element, `[data-tool-command="${command}"]`);
         if (!panel) {
             return;

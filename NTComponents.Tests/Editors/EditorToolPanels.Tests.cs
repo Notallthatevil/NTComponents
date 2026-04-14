@@ -6,7 +6,8 @@ public class EditorToolPanels_Tests : BunitContext {
     public void ImagePanel_Renders_Expected_Interactive_Fields() {
         var cut = Render<EditorToolImagePanel>(parameters => parameters.Add(x => x.Disabled, false));
 
-        cut.Find("[data-tool-command='image']").Should().NotBeNull();
+        cut.Find("[data-tool-command='image']").GetAttribute("role").Should().Be("group");
+        cut.Find("[data-tool-command='image']").GetAttribute("aria-label").Should().Be("Image settings");
         cut.Find("[data-role='image-url']").GetAttribute("type").Should().Be("url");
         cut.Find("[data-role='image-file']").GetAttribute("type").Should().Be("file");
         cut.Find("[data-role='image-file']").GetAttribute("accept").Should().Be("image/*");
@@ -29,7 +30,8 @@ public class EditorToolPanels_Tests : BunitContext {
     public void TablePanel_Renders_Expected_Interactive_Fields() {
         var cut = Render<EditorToolTablePanel>(parameters => parameters.Add(x => x.Disabled, false));
 
-        cut.Find("[data-tool-command='table']").Should().NotBeNull();
+        cut.Find("[data-tool-command='table']").GetAttribute("role").Should().Be("group");
+        cut.Find("[data-tool-command='table']").GetAttribute("aria-label").Should().Be("Table settings");
         cut.Find("[data-role='table-columns']").GetAttribute("type").Should().Be("number");
         cut.Find("[data-role='table-columns']").GetAttribute("max").Should().Be("8");
         cut.Find("[data-role='table-rows']").GetAttribute("type").Should().Be("number");
@@ -51,7 +53,8 @@ public class EditorToolPanels_Tests : BunitContext {
     public void TextColorPanel_Renders_Expected_Interactive_Fields() {
         var cut = Render<EditorToolTextColorPanel>(parameters => parameters.Add(x => x.Disabled, false));
 
-        cut.Find("[data-tool-command='textColor']").Should().NotBeNull();
+        cut.Find("[data-tool-command='textColor']").GetAttribute("role").Should().Be("group");
+        cut.Find("[data-tool-command='textColor']").GetAttribute("aria-label").Should().Be("Text color settings");
         cut.Find("[data-role='text-color-value']").GetAttribute("type").Should().Be("color");
         cut.Find("[data-role='text-color-apply']").TextContent.Should().Contain("Apply color");
         cut.Find("[data-role='text-color-cancel']").TextContent.Should().Contain("Cancel");
@@ -69,7 +72,8 @@ public class EditorToolPanels_Tests : BunitContext {
     public void LinkPanel_Renders_Expected_Interactive_Fields() {
         var cut = Render<EditorToolLinkPanel>(parameters => parameters.Add(x => x.Disabled, false));
 
-        cut.Find("[data-tool-command='link']").Should().NotBeNull();
+        cut.Find("[data-tool-command='link']").GetAttribute("role").Should().Be("group");
+        cut.Find("[data-tool-command='link']").GetAttribute("aria-label").Should().Be("Link settings");
         cut.Find("[data-role='link-url']").GetAttribute("type").Should().Be("url");
         cut.Find("[data-role='link-text']").GetAttribute("type").Should().Be("text");
         cut.Find("[data-role='link-apply']").TextContent.Should().Contain("Apply link");
@@ -88,7 +92,8 @@ public class EditorToolPanels_Tests : BunitContext {
     public void IframePanel_Renders_Expected_Interactive_Fields() {
         var cut = Render<EditorToolIframePanel>(parameters => parameters.Add(x => x.Disabled, false));
 
-        cut.Find("[data-tool-command='iframe']").Should().NotBeNull();
+        cut.Find("[data-tool-command='iframe']").GetAttribute("role").Should().Be("group");
+        cut.Find("[data-tool-command='iframe']").GetAttribute("aria-label").Should().Be("Iframe settings");
         cut.Find("[data-role='iframe-url']").GetAttribute("type").Should().Be("url");
         cut.Find("[data-role='iframe-title']").GetAttribute("type").Should().Be("text");
         cut.Find("[data-role='iframe-width']").GetAttribute("type").Should().Be("text");
