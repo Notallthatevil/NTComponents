@@ -3,7 +3,7 @@
 @implements NTComponents.Interfaces.ITnTPageScriptComponent<NTRichTextEditor>
 
 <div class="tnt-input-container" style="@ElementStyle">
-	<nt-rich-text-editor @attributes="EditorAttributes"
+	<nt-rich-text-editor @attributes="_editorAttributes"
 	                     class="@ElementClass"
 	                     data-bind-on-input="@(BindOnInput.ToString().ToLowerInvariant())"
 	                     data-editable="@((!FieldDisabled && !FieldReadonly).ToString().ToLowerInvariant())"
@@ -24,267 +24,49 @@
 			<div class="tnt-rich-text-editor-value" hidden>@CurrentValueAsString</div>
 
 			<div class="tnt-rich-text-editor-toolbar" role="toolbar" aria-label="Text formatting">
-				<button type="button"
-				        class="tnt-rich-text-editor-toolbar-button"
-				        data-command="undo"
-				        aria-label="Undo"
-				        title="Undo (Ctrl+Z)"
-				        aria-pressed="false"
-				        disabled="@(FieldDisabled || FieldReadonly)">
-					↶
-				</button>
-				<button type="button"
-				        class="tnt-rich-text-editor-toolbar-button"
-				        data-command="redo"
-				        aria-label="Redo"
-				        title="Redo (Ctrl+Y)"
-				        aria-pressed="false"
-				        disabled="@(FieldDisabled || FieldReadonly)">
-					↷
-				</button>
-				<span class="tnt-rich-text-editor-toolbar-divider" aria-hidden="true"></span>
-				<button type="button"
-				        class="tnt-rich-text-editor-toolbar-button"
-				        data-command="paragraph"
-				        aria-label="Paragraph"
-				        title="Paragraph (Ctrl+Alt+0)"
-				        aria-pressed="false"
-				        disabled="@(FieldDisabled || FieldReadonly)">
-					¶
-				</button>
-				<button type="button"
-				        class="tnt-rich-text-editor-toolbar-button"
-				        data-command="heading"
-				        data-value="1"
-				        aria-label="Heading 1"
-				        title="Heading 1 (Ctrl+Alt+1)"
-				        aria-pressed="false"
-				        disabled="@(FieldDisabled || FieldReadonly)">
-					H1
-				</button>
-				<button type="button"
-				        class="tnt-rich-text-editor-toolbar-button"
-				        data-command="heading"
-				        data-value="2"
-				        aria-label="Heading 2"
-				        title="Heading 2 (Ctrl+Alt+2)"
-				        aria-pressed="false"
-				        disabled="@(FieldDisabled || FieldReadonly)">
-					H2
-				</button>
-				<button type="button"
-				        class="tnt-rich-text-editor-toolbar-button"
-				        data-command="heading"
-				        data-value="3"
-				        aria-label="Heading 3"
-				        title="Heading 3 (Ctrl+Alt+3)"
-				        aria-pressed="false"
-				        disabled="@(FieldDisabled || FieldReadonly)">
-					H3
-				</button>
-				<button type="button"
-				        class="tnt-rich-text-editor-toolbar-button"
-				        data-command="heading"
-				        data-value="4"
-				        aria-label="Heading 4"
-				        title="Heading 4 (Ctrl+Alt+4)"
-				        aria-pressed="false"
-				        disabled="@(FieldDisabled || FieldReadonly)">
-					H4
-				</button>
-				<button type="button"
-				        class="tnt-rich-text-editor-toolbar-button"
-				        data-command="heading"
-				        data-value="5"
-				        aria-label="Heading 5"
-				        title="Heading 5 (Ctrl+Alt+5)"
-				        aria-pressed="false"
-				        disabled="@(FieldDisabled || FieldReadonly)">
-					H5
-				</button>
-				<button type="button"
-				        class="tnt-rich-text-editor-toolbar-button"
-				        data-command="heading"
-				        data-value="6"
-				        aria-label="Heading 6"
-				        title="Heading 6 (Ctrl+Alt+6)"
-				        aria-pressed="false"
-				        disabled="@(FieldDisabled || FieldReadonly)">
-					H6
-				</button>
-				<span class="tnt-rich-text-editor-toolbar-divider" aria-hidden="true"></span>
-				<button type="button"
-				        class="tnt-rich-text-editor-toolbar-button"
-				        data-command="alignLeft"
-				        aria-label="Align left"
-				        title="Align Left (Ctrl+Shift+L)"
-				        aria-pressed="false"
-				        disabled="@(FieldDisabled || FieldReadonly)">
-					≡←
-				</button>
-				<button type="button"
-				        class="tnt-rich-text-editor-toolbar-button"
-				        data-command="alignCenter"
-				        aria-label="Align center"
-				        title="Align Center (Ctrl+Shift+E)"
-				        aria-pressed="false"
-				        disabled="@(FieldDisabled || FieldReadonly)">
-					≡↔
-				</button>
-				<button type="button"
-				        class="tnt-rich-text-editor-toolbar-button"
-				        data-command="alignRight"
-				        aria-label="Align right"
-				        title="Align Right (Ctrl+Shift+R)"
-				        aria-pressed="false"
-				        disabled="@(FieldDisabled || FieldReadonly)">
-					→≡
-				</button>
-				<button type="button"
-				        class="tnt-rich-text-editor-toolbar-button"
-				        data-command="alignJustify"
-				        aria-label="Justify"
-				        title="Justify (Ctrl+Shift+J)"
-				        aria-pressed="false"
-				        disabled="@(FieldDisabled || FieldReadonly)">
-					≣
-				</button>
-				<span class="tnt-rich-text-editor-toolbar-divider" aria-hidden="true"></span>
-				<button type="button"
-				        class="tnt-rich-text-editor-toolbar-button"
-				        data-command="unorderedList"
-				        aria-label="Bulleted list"
-				        title="Bulleted List (Ctrl+Alt+7)"
-				        aria-pressed="false"
-				        disabled="@(FieldDisabled || FieldReadonly)">
-					•
-				</button>
-				<button type="button"
-				        class="tnt-rich-text-editor-toolbar-button"
-				        data-command="orderedList"
-				        aria-label="Numbered list"
-				        title="Numbered List (Ctrl+Alt+8)"
-				        aria-pressed="false"
-				        disabled="@(FieldDisabled || FieldReadonly)">
-					1.
-				</button>
-				<button type="button"
-				        class="tnt-rich-text-editor-toolbar-button"
-				        data-command="blockquote"
-				        aria-label="Quote block"
-				        title="Quote Block (Ctrl+Alt+Q)"
-				        aria-pressed="false"
-				        disabled="@(FieldDisabled || FieldReadonly)">
-					❝
-				</button>
-				<button type="button"
-				        class="tnt-rich-text-editor-toolbar-button"
-				        data-command="codeBlock"
-				        aria-label="Code block"
-				        title="Code Block (Ctrl+Alt+C)"
-				        aria-pressed="false"
-				        disabled="@(FieldDisabled || FieldReadonly)">
-					&lt;/&gt;
-				</button>
-				<button type="button"
-				        class="tnt-rich-text-editor-toolbar-button"
-				        data-command="table"
-				        aria-label="Insert table"
-				        title="Insert Table (Ctrl+Alt+T)"
-				        aria-pressed="false"
-				        disabled="@(FieldDisabled || FieldReadonly)">
-					▦
-				</button>
-				<span class="tnt-rich-text-editor-toolbar-divider" aria-hidden="true"></span>
-				<button type="button"
-				        class="tnt-rich-text-editor-toolbar-button"
-				        data-command="bold"
-				        aria-label="Bold"
-				        title="Bold (Ctrl+B)"
-				        aria-pressed="false"
-				        disabled="@(FieldDisabled || FieldReadonly)">
-					<strong>B</strong>
-				</button>
-				<button type="button"
-				        class="tnt-rich-text-editor-toolbar-button"
-				        data-command="italic"
-				        aria-label="Italic"
-				        title="Italic (Ctrl+I)"
-				        aria-pressed="false"
-				        disabled="@(FieldDisabled || FieldReadonly)">
-					<em>I</em>
-				</button>
-				<button type="button"
-				        class="tnt-rich-text-editor-toolbar-button"
-				        data-command="underline"
-				        aria-label="Underline"
-				        title="Underline (Ctrl+U)"
-				        aria-pressed="false"
-				        disabled="@(FieldDisabled || FieldReadonly)">
-					<u>U</u>
-				</button>
-				<button type="button"
-				        class="tnt-rich-text-editor-toolbar-button"
-				        data-command="strikeThrough"
-				        aria-label="Strikethrough"
-				        title="Strikethrough (Ctrl+Shift+S)"
-				        aria-pressed="false"
-				        disabled="@(FieldDisabled || FieldReadonly)">
-					<s>S</s>
-				</button>
-				<button type="button"
-				        class="tnt-rich-text-editor-toolbar-button"
-				        data-command="textColor"
-				        aria-label="Text color"
-				        title="Text Color (Ctrl+Alt+X)"
-				        aria-pressed="false"
-				        disabled="@(FieldDisabled || FieldReadonly)">
-					A
-				</button>
-				<button type="button"
-				        class="tnt-rich-text-editor-toolbar-button"
-				        data-command="link"
-				        aria-label="Insert link"
-				        title="Insert Link (Ctrl+K)"
-				        aria-pressed="false"
-				        disabled="@(FieldDisabled || FieldReadonly)">
-					LINK
-				</button>
-				<span class="tnt-rich-text-editor-toolbar-divider" aria-hidden="true"></span>
-				<button type="button"
-				        class="tnt-rich-text-editor-toolbar-button"
-				        data-command="image"
-				        aria-label="Insert image"
-				        title="Insert Image (Ctrl+Alt+M)"
-				        aria-pressed="false"
-				        disabled="@(FieldDisabled || FieldReadonly)">
-					IMG
-				</button>
-				<button type="button"
-				        class="tnt-rich-text-editor-toolbar-button"
-				        data-command="iframe"
-				        aria-label="Insert iframe"
-				        title="Insert Iframe (Ctrl+Alt+F)"
-				        aria-pressed="false"
-				        disabled="@(FieldDisabled || FieldReadonly)">
-					⧉
-				</button>
+				@foreach (var toolbarButton in ToolbarButtons ?? NTRichTextEditor.DefaultToolbarButtons) {
+					if (toolbarButton.IsDivider) {
+						<span class="@GetToolbarDividerClass(toolbarButton)" aria-hidden="true"></span>
+					}
+					else {
+						<button type="button"
+						        class="@GetToolbarButtonClass(toolbarButton)"
+						        data-command="@toolbarButton.Action"
+						        data-value="@toolbarButton.Value"
+						        aria-label="@GetToolbarButtonAriaLabel(toolbarButton)"
+						        aria-keyshortcuts="@GetToolbarButtonAriaKeyShortcuts(toolbarButton)"
+						        title="@GetToolbarButtonTitle(toolbarButton)"
+						        aria-pressed="false"
+						        disabled="@(FieldDisabled || FieldReadonly)">
+							@if (toolbarButton.Icon is not null) {
+								@toolbarButton.Icon.Render("tnt-rich-text-editor-toolbar-icon")
+							}
+							@if (!string.IsNullOrWhiteSpace(toolbarButton.Text)) {
+								<span class="tnt-rich-text-editor-toolbar-button-text">@toolbarButton.Text</span>
+							}
+						</button>
+					}
+				}
 			</div>
+
+			@foreach (var tool in _activeToolsToRender) {
+				if (tool.PanelTemplate is not null) {
+					@tool.PanelTemplate(FieldDisabled || FieldReadonly)
+				}
+			}
 
 			<div class="tnt-rich-text-editor-surface"
 			     data-role="surface"
 			     data-placeholder="@(string.IsNullOrWhiteSpace(Placeholder) ? "Start typing" : Placeholder)"
-			     data-empty="@EditorEmptyAttribute"
+			     data-empty="@string.IsNullOrWhiteSpace(CurrentValueAsString).ToString().ToLowerInvariant()"
 			     data-maxlength="@GetMaxLength()"
-			     contenteditable="@ContentEditableAttribute"
+			     contenteditable="@((!FieldDisabled && !FieldReadonly).ToString().ToLowerInvariant())"
 			     tabindex="@(FieldDisabled ? "-1" : "0")"
 			     role="textbox"
 			     aria-multiline="true"
-			     aria-label="@AriaLabel"
+			     aria-label="@(Label ?? Placeholder ?? FieldIdentifier.FieldName)"
 			     spellcheck="true"
-			     onkeydown="NTComponents.stopEnterPropagation(event)">
-				@((MarkupString)_renderedHtml)
-			</div>
+			     onkeydown="NTComponents.stopEnterPropagation(event)"></div>
 		</div>
 
 		@if (!string.IsNullOrWhiteSpace(Label)) {
@@ -315,7 +97,7 @@
 	}
 
 	@if (GetMaxLength() > 0 && ShowInputLength) {
-		<span class="tnt-input-length">@EditorLengthText</span>
+		<span class="tnt-input-length">@($"{CurrentValueAsString?.Length ?? 0}/{GetMaxLength()}")</span>
 	}
 </div>
 

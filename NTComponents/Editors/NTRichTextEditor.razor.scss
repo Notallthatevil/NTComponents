@@ -71,6 +71,13 @@
                 gap: 4px;
                 flex-wrap: wrap;
                 align-items: center;
+                position: sticky;
+                top: var(--tnt-rich-text-editor-toolbar-sticky-top, 0);
+                z-index: 2;
+                padding: 6px 0;
+                background-color: color-mix(in srgb, base.$background-color 94%, transparent);
+                backdrop-filter: blur(8px);
+                border-bottom: 1px solid color-mix(in srgb, currentColor 10%, transparent);
             }
 
             .tnt-rich-text-editor-toolbar-divider {
@@ -108,6 +115,127 @@
                     background-color: color-mix(in srgb, base.$tint-color 24%, transparent);
                     color: base.$tint-color;
                     box-shadow: inset 0 0 0 1px color-mix(in srgb, base.$tint-color 42%, transparent);
+                }
+            }
+
+            .tnt-rich-text-editor-toolbar-icon {
+                font-size: 18px;
+                line-height: 18px;
+            }
+
+            .tnt-rich-text-editor-inline-tool {
+                display: grid;
+                gap: 12px;
+                padding: 12px;
+                position: sticky;
+                top: calc(var(--tnt-rich-text-editor-toolbar-sticky-top, 0px) + var(--tnt-rich-text-editor-panel-sticky-offset, 3rem));
+                z-index: 1;
+                border-radius: 12px;
+                background-color: color-mix(in srgb, base.$background-color 94%, base.$tint-color 6%);
+                backdrop-filter: blur(8px);
+                box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 10%, transparent);
+
+                &[hidden] {
+                    display: none;
+                }
+            }
+
+            .tnt-rich-text-editor-inline-tool-fields {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+                gap: 10px;
+                align-items: start;
+            }
+
+            .tnt-rich-text-editor-inline-tool-field {
+                display: grid;
+                gap: 6px;
+                min-width: 0;
+
+                span {
+                    @include typescale.tnt-label-small;
+                    color: color-mix(in srgb, currentColor 78%, transparent);
+                }
+
+                input {
+                    min-width: 0;
+                    max-width: 100%;
+                    width: 100%;
+                    min-height: 34px;
+                    padding: 6px 10px;
+                    border: 0;
+                    border-radius: 10px;
+                    box-sizing: border-box;
+                    background-color: color-mix(in srgb, base.$background-color 82%, white 18%);
+                    color: inherit;
+                    box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 12%, transparent);
+
+                    &:focus {
+                        outline: 2px solid color-mix(in srgb, base.$tint-color 50%, transparent);
+                        outline-offset: 1px;
+                    }
+                }
+
+                input[type='file'] {
+                    min-height: 34px;
+                    padding: 4px 6px;
+                }
+
+                input[type='color'] {
+                    width: min(100%, 64px);
+                    min-width: 48px;
+                    padding: 2px;
+                    cursor: pointer;
+                    appearance: none;
+                    -webkit-appearance: none;
+                    background-color: transparent;
+                    overflow: hidden;
+
+                    &::-webkit-color-swatch-wrapper {
+                        padding: 0;
+                    }
+
+                    &::-webkit-color-swatch {
+                        border: 0;
+                        border-radius: 8px;
+                    }
+
+                    &::-moz-color-swatch {
+                        border: 0;
+                        border-radius: 8px;
+                    }
+                }
+            }
+
+            .tnt-rich-text-editor-inline-tool-actions {
+                display: flex;
+                gap: 8px;
+                justify-content: flex-end;
+                flex-wrap: wrap;
+            }
+
+            .tnt-rich-text-editor-table-editor {
+                .tnt-rich-text-editor-inline-tool-fields {
+                    grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr));
+                }
+
+            }
+
+            .tnt-rich-text-editor-iframe-editor {
+                .tnt-rich-text-editor-inline-tool-fields {
+                    grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+                }
+            }
+
+            .tnt-rich-text-editor-text-color-editor {
+                .tnt-rich-text-editor-inline-tool-fields {
+                    grid-template-columns: minmax(0, 88px);
+                }
+            }
+
+            .tnt-rich-text-editor-link-editor {
+                .tnt-rich-text-editor-inline-tool-fields {
+                    grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
                 }
             }
 
@@ -167,12 +295,13 @@
                     width: 100%;
                     border-collapse: collapse;
                     table-layout: fixed;
+                    --nt-rich-text-table-border-color: color-mix(in srgb, currentColor 16%, transparent);
                 }
 
                 th,
                 td {
                     padding: 10px 12px;
-                    border: 1px solid color-mix(in srgb, currentColor 16%, transparent);
+                    border: 1px solid var(--nt-rich-text-table-border-color);
                     text-align: left;
                     vertical-align: top;
                 }
@@ -265,9 +394,30 @@
                     margin-top: 0.8rem;
                 }
             }
+
+            .tnt-rich-text-editor-ssr-input {
+                min-height: 112px;
+                width: 100%;
+                padding: 0;
+                margin: 0;
+                border: 0;
+                outline: none;
+                resize: vertical;
+                background-color: transparent;
+                color: inherit;
+                white-space: pre-wrap;
+                word-break: break-word;
+                overflow-wrap: anywhere;
+                font: inherit;
+                @include typescale.tnt-body-large;
+
+                &::placeholder {
+                    opacity: 0.72;
+                }
+            }
         }
 
-        @include base.invalid('.tnt-rich-text-editor-surface');
+        @include base.invalid(':is(.tnt-rich-text-editor-surface, .tnt-rich-text-editor-ssr-input)');
 
         &.tnt-form-filled {
             border-bottom: 1px solid colors.$tnt-color-outline-variant;
@@ -289,7 +439,8 @@
                 background-color: color-mix(in srgb, base.$tint-color 15%, base.$background-color);
             }
 
-            &:has(.tnt-rich-text-editor-surface:focus) {
+            &:has(.tnt-rich-text-editor-surface:focus),
+            &:has(.tnt-rich-text-editor-ssr-input:focus) {
                 &:after {
                     transform: rotateY(0deg);
                 }
@@ -334,7 +485,8 @@
                 background-color: color-mix(in srgb, base.$tint-color 15%, transparent);
             }
 
-            &:has(.tnt-rich-text-editor-surface:focus) {
+            &:has(.tnt-rich-text-editor-surface:focus),
+            &:has(.tnt-rich-text-editor-ssr-input:focus) {
                 &:before {
                     transform: rotateX(0deg);
                 }
@@ -351,7 +503,9 @@
             }
 
             &:has(.tnt-rich-text-editor-surface:focus),
+            &:has(.tnt-rich-text-editor-ssr-input:focus),
             &:has(.tnt-rich-text-editor-surface[data-empty="false"]),
+            &:has(.tnt-rich-text-editor-ssr-input:not(:placeholder-shown)),
             &.tnt-placeholder {
                 .tnt-label {
                     transform-origin: left;
@@ -361,7 +515,9 @@
 
             &.tnt-form-outlined {
                 &:has(.tnt-rich-text-editor-surface:focus),
+                &:has(.tnt-rich-text-editor-ssr-input:focus),
                 &:has(.tnt-rich-text-editor-surface[data-empty="false"]),
+                &:has(.tnt-rich-text-editor-ssr-input:not(:placeholder-shown)),
                 &.tnt-placeholder {
                     .tnt-label {
                         transform: scale(0.75) translateY(-32px);
@@ -371,7 +527,8 @@
                 }
             }
 
-            &:has(.tnt-rich-text-editor-surface:focus) {
+            &:has(.tnt-rich-text-editor-surface:focus),
+            &:has(.tnt-rich-text-editor-ssr-input:focus) {
                 .tnt-label {
                     color: base.$tint-color;
                 }
@@ -390,6 +547,11 @@
                 }
 
                 .tnt-rich-text-editor-surface {
+                    min-height: 88px;
+                    @include typescale.tnt-body-medium;
+                }
+
+                .tnt-rich-text-editor-ssr-input {
                     min-height: 88px;
                     @include typescale.tnt-body-medium;
                 }
@@ -412,7 +574,21 @@
                     min-height: 28px;
                 }
 
+                .tnt-rich-text-editor-toolbar-icon {
+                    font-size: 16px;
+                    line-height: 16px;
+                }
+
+                .tnt-rich-text-editor-inline-tool-fields {
+                    grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
+                }
+
                 .tnt-rich-text-editor-surface {
+                    min-height: 72px;
+                    @include typescale.tnt-body-small;
+                }
+
+                .tnt-rich-text-editor-ssr-input {
                     min-height: 72px;
                     @include typescale.tnt-body-small;
                 }

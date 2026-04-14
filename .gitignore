@@ -363,3 +363,6 @@ MigrationBackup/
 */compilerconfig.json
 */compilerconfig.json.defaults
 coverlet.runsettings
+/NTComponents/Editors/NTRichTextEditor.razor.js
+/NTComponents/Editors/Tool/**.js
+/NTComponents/Editors/Core/**.js

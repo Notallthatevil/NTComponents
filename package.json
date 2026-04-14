@@ -4,9 +4,14 @@
   "type": "module",
   "devDependencies": {
     "jest": "^29.7.0",
-    "jest-environment-jsdom": "^29.7.0"
+    "jest-environment-jsdom": "^29.7.0",
+    "terser": "^5.46.1",
+    "typescript": "^6.0.2"
   },
   "scripts": {
+    "build:ts": "tsc -p tsconfig.json",
+    "build:rich-text-editor": "tsc -p tsconfig.json --pretty false",
+    "build:rich-text-editor:release": "tsc -p tsconfig.json --pretty false && terser NTComponents/Editors/NTRichTextEditor.razor.js --module --compress --comments false --output NTComponents/Editors/NTRichTextEditor.razor.js && terser NTComponents/Editors/Tool/EditorToolImageButton.razor.js --module --compress --comments false --output NTComponents/Editors/Tool/EditorToolImageButton.razor.js && terser NTComponents/Editors/Tool/EditorToolTableButton.razor.js --module --compress --comments false --output NTComponents/Editors/Tool/EditorToolTableButton.razor.js && terser NTComponents/Editors/Tool/EditorToolTextColorButton.razor.js --module --compress --comments false --output NTComponents/Editors/Tool/EditorToolTextColorButton.razor.js && terser NTComponents/Editors/Tool/EditorToolLinkButton.razor.js --module --compress --comments false --output NTComponents/Editors/Tool/EditorToolLinkButton.razor.js && terser NTComponents/Editors/Tool/EditorToolIframeButton.razor.js --module --compress --comments false --output NTComponents/Editors/Tool/EditorToolIframeButton.razor.js",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "test:js": "npm run test"
   },
