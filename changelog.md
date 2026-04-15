@@ -1,3 +1,10 @@
+# [1.48.0](https://github.com/Notallthatevil/NTComponents/compare/v1.47.0...v1.48.0) (2026-04-15)
+
+
+### Features
+
+* **NTTag:** add NTTag component with icons and theming ([20f9955](https://github.com/Notallthatevil/NTComponents/commit/20f995541df296bf3cf3f420800c4d5eeb8a9124))
+
 # [1.47.0](https://github.com/Notallthatevil/NTComponents/compare/v1.46.0...v1.47.0) (2026-04-15)
 
 
