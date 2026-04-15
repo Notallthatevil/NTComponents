@@ -1,0 +1,598 @@
+@use '../Form/_inputBase.scss' as base;
+@use '../Styles/_Variables/_colors.scss' as colors;
+@use '../Styles/_Variables/_typescale.scss' as typescale;
+
+.tnt-input-container {
+    display: grid;
+    grid-template-areas: "container-input container-input tooltip-icon" "supporting-text input-length tooltip-icon";
+    grid-template-rows: auto auto;
+    grid-template-columns: 1fr minmax(auto, 8ch) minmax(0, auto);
+    margin-bottom: 4px;
+
+    @include base.supporting-text;
+    @include base.tnt-input-length;
+
+    ::deep .tnt-tooltip-icon {
+        grid-area: tooltip-icon;
+        padding: 0 4px;
+    }
+
+    nt-rich-text-editor.tnt-input {
+        grid-area: container-input;
+        position: relative;
+        display: inline-grid;
+        width: 100%;
+        box-sizing: border-box;
+        grid-template-areas: "pad1 text pad2";
+        grid-template-columns: 16px 1fr 16px;
+        color: base.$text-color;
+        caret-color: base.$tint-color;
+        transition: 250ms ease-in-out;
+        margin-top: 6px;
+        @include base.tnt-label;
+        @include base.disabled-and-readonly;
+
+        &:has(.tnt-start-icon):has(.tnt-end-icon) {
+            grid-template-areas: "pad1 start-icon pad2 text pad3 end-icon pad4";
+            grid-template-columns: 12px 24px 16px 1fr 16px 24px 12px;
+        }
+
+        &:has(.tnt-start-icon):not(:has(.tnt-end-icon)) {
+            grid-template-areas: "pad1 start-icon pad2 text pad3";
+            grid-template-columns: 12px 24px 16px 1fr 16px;
+        }
+
+        &:has(.tnt-end-icon):not(:has(.tnt-start-icon)) {
+            grid-template-areas: "pad1 text pad2 end-icon pad3";
+            grid-template-columns: 16px 1fr 16px 24px 12px;
+        }
+
+        &:has(.tnt-tooltip-icon) {
+            width: calc(100% - 50px);
+        }
+
+        ::deep {
+            @include base.default-icon;
+
+            .tnt-rich-text-editor-shell {
+                grid-area: text;
+                display: grid;
+                gap: 8px;
+                padding: 16px 0 12px;
+            }
+
+            .tnt-rich-text-editor-hidden-input,
+            .tnt-rich-text-editor-value {
+                display: none;
+            }
+
+            .tnt-rich-text-editor-toolbar {
+                display: flex;
+                gap: 4px;
+                flex-wrap: wrap;
+                align-items: center;
+                position: sticky;
+                top: var(--tnt-rich-text-editor-toolbar-sticky-top, 0);
+                z-index: 2;
+                padding: 6px 0;
+                background-color: color-mix(in srgb, base.$background-color 94%, transparent);
+                backdrop-filter: blur(8px);
+                border-bottom: 1px solid color-mix(in srgb, currentColor 10%, transparent);
+            }
+
+            .tnt-rich-text-editor-toolbar-divider {
+                width: 1px;
+                align-self: stretch;
+                margin: 4px 2px;
+                background-color: color-mix(in srgb, currentColor 18%, transparent);
+                border-radius: 999px;
+            }
+
+            .tnt-rich-text-editor-toolbar-button {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                min-width: 32px;
+                min-height: 32px;
+                padding: 4px 8px;
+                border: 0;
+                border-radius: 999px;
+                background-color: transparent;
+                color: inherit;
+                cursor: pointer;
+                transition: background-color 150ms ease-in-out, color 150ms ease-in-out;
+
+                &:hover:not(:disabled) {
+                    background-color: color-mix(in srgb, base.$tint-color 16%, transparent);
+                }
+
+                &:disabled {
+                    opacity: 0.5;
+                    cursor: default;
+                }
+
+                &[aria-pressed='true'] {
+                    background-color: color-mix(in srgb, base.$tint-color 24%, transparent);
+                    color: base.$tint-color;
+                    box-shadow: inset 0 0 0 1px color-mix(in srgb, base.$tint-color 42%, transparent);
+                }
+            }
+
+            .tnt-rich-text-editor-toolbar-icon {
+                font-size: 18px;
+                line-height: 18px;
+            }
+
+            .tnt-rich-text-editor-inline-tool {
+                display: grid;
+                gap: 12px;
+                padding: 12px;
+                position: sticky;
+                top: calc(var(--tnt-rich-text-editor-toolbar-sticky-top, 0px) + var(--tnt-rich-text-editor-panel-sticky-offset, 3rem));
+                z-index: 1;
+                border-radius: 12px;
+                background-color: color-mix(in srgb, base.$background-color 94%, base.$tint-color 6%);
+                backdrop-filter: blur(8px);
+                box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 10%, transparent);
+
+                &[hidden] {
+                    display: none;
+                }
+            }
+
+            .tnt-rich-text-editor-inline-tool-fields {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+                gap: 10px;
+                align-items: start;
+            }
+
+            .tnt-rich-text-editor-inline-tool-field {
+                display: grid;
+                gap: 6px;
+                min-width: 0;
+
+                span {
+                    @include typescale.tnt-label-small;
+                    color: color-mix(in srgb, currentColor 78%, transparent);
+                }
+
+                input {
+                    min-width: 0;
+                    max-width: 100%;
+                    width: 100%;
+                    min-height: 34px;
+                    padding: 6px 10px;
+                    border: 0;
+                    border-radius: 10px;
+                    box-sizing: border-box;
+                    background-color: color-mix(in srgb, base.$background-color 82%, white 18%);
+                    color: inherit;
+                    box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 12%, transparent);
+
+                    &:focus {
+                        outline: 2px solid color-mix(in srgb, base.$tint-color 50%, transparent);
+                        outline-offset: 1px;
+                    }
+                }
+
+                input[type='file'] {
+                    min-height: 34px;
+                    padding: 4px 6px;
+                }
+
+                input[type='color'] {
+                    width: min(100%, 64px);
+                    min-width: 48px;
+                    padding: 2px;
+                    cursor: pointer;
+                    appearance: none;
+                    -webkit-appearance: none;
+                    background-color: transparent;
+                    overflow: hidden;
+
+                    &::-webkit-color-swatch-wrapper {
+                        padding: 0;
+                    }
+
+                    &::-webkit-color-swatch {
+                        border: 0;
+                        border-radius: 8px;
+                    }
+
+                    &::-moz-color-swatch {
+                        border: 0;
+                        border-radius: 8px;
+                    }
+                }
+            }
+
+            .tnt-rich-text-editor-inline-tool-actions {
+                display: flex;
+                gap: 8px;
+                justify-content: flex-end;
+                flex-wrap: wrap;
+            }
+
+            .tnt-rich-text-editor-table-editor {
+                .tnt-rich-text-editor-inline-tool-fields {
+                    grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr));
+                }
+
+            }
+
+            .tnt-rich-text-editor-iframe-editor {
+                .tnt-rich-text-editor-inline-tool-fields {
+                    grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+                }
+            }
+
+            .tnt-rich-text-editor-text-color-editor {
+                .tnt-rich-text-editor-inline-tool-fields {
+                    grid-template-columns: minmax(0, 88px);
+                }
+            }
+
+            .tnt-rich-text-editor-link-editor {
+                .tnt-rich-text-editor-inline-tool-fields {
+                    grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+                }
+            }
+
+            .tnt-rich-text-editor-surface {
+                min-height: 112px;
+                outline: none;
+                border: 0;
+                background-color: transparent;
+                color: inherit;
+                white-space: pre-wrap;
+                word-break: break-word;
+                overflow-wrap: anywhere;
+                @include typescale.tnt-body-large;
+
+                &:empty::before {
+                    content: attr(data-placeholder);
+                    opacity: 0.72;
+                    pointer-events: none;
+                }
+
+                p {
+                    margin: 0;
+                }
+
+                ul,
+                ol {
+                    margin: 0;
+                    padding-left: 1.5rem;
+                }
+
+                li + li {
+                    margin-top: 0.25rem;
+                }
+
+                blockquote {
+                    margin: 0;
+                    padding-left: 12px;
+                    border-left: 3px solid color-mix(in srgb, base.$tint-color 36%, transparent);
+                    color: color-mix(in srgb, currentColor 84%, transparent);
+                }
+
+                pre {
+                    margin: 0;
+                    padding: 12px 14px;
+                    border-radius: 10px;
+                    background-color: color-mix(in srgb, base.$tint-color 10%, transparent);
+                    overflow-x: auto;
+                    white-space: pre-wrap;
+                }
+
+                pre code {
+                    font-family: Consolas, 'Courier New', monospace;
+                    white-space: inherit;
+                }
+
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    table-layout: fixed;
+                    --nt-rich-text-table-border-color: color-mix(in srgb, currentColor 16%, transparent);
+                }
+
+                th,
+                td {
+                    padding: 10px 12px;
+                    border: 1px solid var(--nt-rich-text-table-border-color);
+                    text-align: left;
+                    vertical-align: top;
+                }
+
+                th {
+                    background-color: color-mix(in srgb, base.$tint-color 10%, transparent);
+                    font-weight: 600;
+                }
+
+                img {
+                    display: block;
+                    max-width: 100%;
+                    height: auto;
+                    border-radius: 10px;
+                }
+
+                iframe {
+                    display: block;
+                    width: 100%;
+                    max-width: 100%;
+                    border: 0;
+                    border-radius: 10px;
+                    background-color: color-mix(in srgb, base.$tint-color 6%, transparent);
+                }
+
+                a {
+                    color: base.$tint-color;
+                    text-decoration: underline;
+                    text-underline-offset: 2px;
+                }
+
+                p + p {
+                    margin-top: 0.8rem;
+                }
+
+                h1,
+                h2,
+                h3,
+                h4,
+                h5,
+                h6 {
+                    margin: 0;
+                    line-height: 1.2;
+                }
+
+                h1 + p,
+                h2 + p,
+                h3 + p,
+                h4 + p,
+                h5 + p,
+                h6 + p,
+                p + h1,
+                p + h2,
+                p + h3,
+                p + h4,
+                p + h5,
+                p + h6,
+                h1 + h2,
+                h2 + h3,
+                h3 + h4,
+                p + ul,
+                p + ol,
+                p + blockquote,
+                p + pre,
+                ul + p,
+                ol + p,
+                blockquote + p,
+                pre + p,
+                ul + ul,
+                ul + ol,
+                ol + ul,
+                ol + ol,
+                blockquote + blockquote,
+                pre + pre,
+                table + p,
+                p + table,
+                table + table,
+                ul + table,
+                ol + table,
+                blockquote + table,
+                pre + table,
+                table + ul,
+                table + ol,
+                table + blockquote,
+                table + pre,
+                img + p,
+                p + img,
+                iframe + p,
+                p + iframe {
+                    margin-top: 0.8rem;
+                }
+            }
+
+            .tnt-rich-text-editor-ssr-input {
+                min-height: 112px;
+                width: 100%;
+                padding: 0;
+                margin: 0;
+                border: 0;
+                outline: none;
+                resize: vertical;
+                background-color: transparent;
+                color: inherit;
+                white-space: pre-wrap;
+                word-break: break-word;
+                overflow-wrap: anywhere;
+                font: inherit;
+                @include typescale.tnt-body-large;
+
+                &::placeholder {
+                    opacity: 0.72;
+                }
+            }
+        }
+
+        @include base.invalid(':is(.tnt-rich-text-editor-surface, .tnt-rich-text-editor-ssr-input)');
+
+        &.tnt-form-filled {
+            border-bottom: 1px solid colors.$tnt-color-outline-variant;
+            border-radius: 4px 4px 0 0;
+            background-color: base.$background-color;
+
+            &:after {
+                position: absolute;
+                content: '';
+                inset-inline: 0;
+                bottom: 0;
+                height: 2px;
+                background-color: base.$tint-color;
+                transform: rotateY(90deg);
+                transition: 250ms ease-out;
+            }
+
+            &:hover {
+                background-color: color-mix(in srgb, base.$tint-color 15%, base.$background-color);
+            }
+
+            &:has(.tnt-rich-text-editor-surface:focus),
+            &:has(.tnt-rich-text-editor-ssr-input:focus) {
+                &:after {
+                    transform: rotateY(0deg);
+                }
+            }
+        }
+
+        &.tnt-form-outlined {
+            border-radius: 4px;
+            background-color: transparent;
+            outline: 1px solid colors.$tnt-color-outline;
+
+            &:before,
+            &:after {
+                content: '';
+                position: absolute;
+                inset: -1px;
+                border-radius: inherit;
+                box-sizing: border-box;
+                border-color: base.$tint-color;
+                border-style: solid;
+                transition: 250ms ease-in-out;
+                pointer-events: none;
+            }
+
+            &:before {
+                border-left-width: 2px;
+                border-right-width: 2px;
+                border-top-width: 0;
+                border-bottom-width: 0;
+                transform: rotateX(90deg);
+            }
+
+            &:after {
+                border-top-width: 2px;
+                border-bottom-width: 2px;
+                border-left-width: 0;
+                border-right-width: 0;
+                transform: rotateY(90deg);
+            }
+
+            &:hover {
+                background-color: color-mix(in srgb, base.$tint-color 15%, transparent);
+            }
+
+            &:has(.tnt-rich-text-editor-surface:focus),
+            &:has(.tnt-rich-text-editor-ssr-input:focus) {
+                &:before {
+                    transform: rotateX(0deg);
+                }
+
+                &:after {
+                    transform: rotateY(0deg);
+                }
+            }
+        }
+
+        &:has(.tnt-label) {
+            .tnt-label {
+                top: 16px;
+            }
+
+            &:has(.tnt-rich-text-editor-surface:focus),
+            &:has(.tnt-rich-text-editor-ssr-input:focus),
+            &:has(.tnt-rich-text-editor-surface[data-empty="false"]),
+            &:has(.tnt-rich-text-editor-ssr-input:not(:placeholder-shown)),
+            &.tnt-placeholder {
+                .tnt-label {
+                    transform-origin: left;
+                    transform: scale(0.75) translateY(-20px);
+                }
+            }
+
+            &.tnt-form-outlined {
+                &:has(.tnt-rich-text-editor-surface:focus),
+                &:has(.tnt-rich-text-editor-ssr-input:focus),
+                &:has(.tnt-rich-text-editor-surface[data-empty="false"]),
+                &:has(.tnt-rich-text-editor-ssr-input:not(:placeholder-shown)),
+                &.tnt-placeholder {
+                    .tnt-label {
+                        transform: scale(0.75) translateY(-32px);
+                        background-color: base.$background-color;
+                        padding: 0 4px;
+                    }
+                }
+            }
+
+            &:has(.tnt-rich-text-editor-surface:focus),
+            &:has(.tnt-rich-text-editor-ssr-input:focus) {
+                .tnt-label {
+                    color: base.$tint-color;
+                }
+            }
+        }
+
+        &.tnt-form-compact {
+            .tnt-label {
+                @include typescale.tnt-body-medium;
+            }
+
+            ::deep {
+                .tnt-rich-text-editor-shell {
+                    padding-top: 12px;
+                    padding-bottom: 10px;
+                }
+
+                .tnt-rich-text-editor-surface {
+                    min-height: 88px;
+                    @include typescale.tnt-body-medium;
+                }
+
+                .tnt-rich-text-editor-ssr-input {
+                    min-height: 88px;
+                    @include typescale.tnt-body-medium;
+                }
+            }
+        }
+
+        &.tnt-form-xs {
+            .tnt-label {
+                @include typescale.tnt-body-small;
+            }
+
+            ::deep {
+                .tnt-rich-text-editor-shell {
+                    padding-top: 10px;
+                    padding-bottom: 8px;
+                }
+
+                .tnt-rich-text-editor-toolbar-button {
+                    min-width: 28px;
+                    min-height: 28px;
+                }
+
+                .tnt-rich-text-editor-toolbar-icon {
+                    font-size: 16px;
+                    line-height: 16px;
+                }
+
+                .tnt-rich-text-editor-inline-tool-fields {
+                    grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
+                }
+
+                .tnt-rich-text-editor-surface {
+                    min-height: 72px;
+                    @include typescale.tnt-body-small;
+                }
+
+                .tnt-rich-text-editor-ssr-input {
+                    min-height: 72px;
+                    @include typescale.tnt-body-small;
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,17 @@
+@page "/rich-text-editor"
+@using LiveTest.Client.Components
+
+<h3>
+    SSR
+</h3>
+<RichTextEditorComponent />
+
+<h3>
+    Server
+</h3>
+<RichTextEditorComponent @rendermode="InteractiveServer" />
+
+<h3>
+    WASM
+</h3>
+<RichTextEditorComponent @rendermode="InteractiveWebAssembly" />

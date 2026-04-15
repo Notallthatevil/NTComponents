@@ -1,4 +1,42 @@
 const pageScriptInfoBySrc = new Map();
+const richTextEditorToolRegistry = {
+    tools: new Map(),
+    onChange: null
+};
+
+export function setRichTextEditorToolRegistryChangedCallback(callback) {
+    richTextEditorToolRegistry.onChange = callback;
+}
+
+export function registerRichTextEditorTool(tool) {
+    richTextEditorToolRegistry.tools.set(tool.command, tool);
+    richTextEditorToolRegistry.onChange?.();
+    return tool;
+}
+
+export function getRichTextEditorTool(command) {
+    return richTextEditorToolRegistry.tools.get(command) ?? null;
+}
+
+export function getRichTextEditorToolState(editorState, tool) {
+    const existingState = editorState.toolStates.get(tool.command);
+    if (existingState) {
+        return existingState;
+    }
+
+    const state = tool.createState();
+    editorState.toolStates.set(tool.command, state);
+    return state;
+}
+
+export function createRichTextEditorToolContext(element, editorState, host, tool) {
+    return {
+        element,
+        editorState,
+        host,
+        toolState: getRichTextEditorToolState(editorState, tool)
+    };
+}
 
 function registerPageScriptElement(src) {
     if (!src) {

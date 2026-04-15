@@ -1,0 +1,40 @@
+@namespace NTComponents
+@using Microsoft.AspNetCore.Components
+@using NTComponents.Core
+
+<button type="button"
+        class="@ButtonClass"
+        data-command="link"
+        aria-label="@AriaLabel"
+        aria-haspopup="dialog"
+        aria-expanded="false"
+        aria-keyshortcuts="@NTRichTextEditor.GetToolbarButtonAriaKeyShortcuts(Button)"
+        title="@NTRichTextEditor.GetToolbarButtonTitle(Button)"
+        aria-pressed="false"
+        disabled="@Disabled">
+    @if (Button.Icon is not null) {
+        @Button.Icon.Render("tnt-rich-text-editor-toolbar-icon")
+    }
+    @if (!string.IsNullOrWhiteSpace(Button.Text)) {
+        <span class="tnt-rich-text-editor-toolbar-button-text">@Button.Text</span>
+    }
+</button>
+
+@code {
+    [Parameter, EditorRequired]
+    public INTRichTextEditorButton Button { get; set; } = default!;
+
+    [Parameter]
+    public bool Disabled { get; set; }
+
+    private string AriaLabel => !string.IsNullOrWhiteSpace(Button.AriaLabel)
+        ? Button.AriaLabel
+        : !string.IsNullOrWhiteSpace(Button.Text)
+            ? Button.Text
+            : Button.Title ?? "Insert link";
+
+    private string ButtonClass => CssClassBuilder.Create()
+        .AddClass("tnt-rich-text-editor-toolbar-button")
+        .AddClass(Button.CssClass, !string.IsNullOrWhiteSpace(Button.CssClass))
+        .Build();
+}

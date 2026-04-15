@@ -1,0 +1,56 @@
+@namespace NTComponents
+@using Microsoft.AspNetCore.Components
+
+<div class="tnt-rich-text-editor-inline-tool tnt-rich-text-editor-table-editor"
+     data-tool-command="table"
+     data-role="table-editor"
+     role="group"
+     aria-label="Table settings"
+     hidden
+     aria-hidden="true">
+    <div class="tnt-rich-text-editor-inline-tool-fields">
+        <label class="tnt-rich-text-editor-inline-tool-field">
+            <span>Columns</span>
+            <input type="number"
+                   data-role="table-columns"
+                   min="1"
+                   max="8"
+                   step="1"
+                   disabled="@Disabled" />
+        </label>
+        <label class="tnt-rich-text-editor-inline-tool-field">
+            <span>Rows</span>
+            <input type="number"
+                   data-role="table-rows"
+                   min="1"
+                   max="12"
+                   step="1"
+                   disabled="@Disabled" />
+        </label>
+        <label class="tnt-rich-text-editor-inline-tool-field">
+            <span>Border color</span>
+            <input type="color"
+                   data-role="table-border-color"
+                   disabled="@Disabled" />
+        </label>
+    </div>
+    <div class="tnt-rich-text-editor-inline-tool-actions">
+        <button type="button"
+                class="tnt-rich-text-editor-toolbar-button"
+                data-role="table-apply"
+                disabled="@Disabled">
+            Apply table
+        </button>
+        <button type="button"
+                class="tnt-rich-text-editor-toolbar-button"
+                data-role="table-cancel"
+                disabled="@Disabled">
+            Cancel
+        </button>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public bool Disabled { get; set; }
+}

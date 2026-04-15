@@ -1,0 +1,104 @@
+@namespace NTComponents
+@inherits TnTInputBase<string?>
+@implements NTComponents.Interfaces.ITnTPageScriptComponent<NTRichTextEditor>
+
+<div class="tnt-input-container" style="@ElementStyle">
+	<nt-rich-text-editor @attributes="_editorAttributes"
+	                     class="@ElementClass"
+	                     data-bind-on-input="@(BindOnInput.ToString().ToLowerInvariant())"
+	                     data-editable="@((!FieldDisabled && !FieldReadonly).ToString().ToLowerInvariant())"
+	                     title="@ElementTitle"
+	                     lang="@ElementLang"
+	                     id="@ElementId"
+	                     @ref="Element">
+		@if (StartIcon is not null) {
+			@StartIcon.Render("tnt-start-icon")
+		}
+
+		<div class="tnt-rich-text-editor-shell">
+			<input type="hidden"
+			       class="tnt-rich-text-editor-hidden-input"
+			       name="@ElementName"
+			       value="@CurrentValueAsString" />
+
+			<div class="tnt-rich-text-editor-value" hidden>@CurrentValueAsString</div>
+
+			<div class="tnt-rich-text-editor-toolbar" role="toolbar" aria-label="Text formatting">
+				@foreach (var toolbarButton in ToolbarButtons ?? NTRichTextEditor.DefaultToolbarButtons) {
+					if (toolbarButton.IsDivider) {
+						<span class="@GetToolbarDividerClass(toolbarButton)" aria-hidden="true"></span>
+					}
+					else {
+						<button type="button"
+						        class="@GetToolbarButtonClass(toolbarButton)"
+						        data-command="@toolbarButton.Action"
+						        data-value="@toolbarButton.Value"
+						        aria-label="@GetToolbarButtonAriaLabel(toolbarButton)"
+						        aria-keyshortcuts="@GetToolbarButtonAriaKeyShortcuts(toolbarButton)"
+						        title="@GetToolbarButtonTitle(toolbarButton)"
+						        aria-pressed="false"
+						        disabled="@(FieldDisabled || FieldReadonly)">
+							@if (toolbarButton.Icon is not null) {
+								@toolbarButton.Icon.Render("tnt-rich-text-editor-toolbar-icon")
+							}
+							@if (!string.IsNullOrWhiteSpace(toolbarButton.Text)) {
+								<span class="tnt-rich-text-editor-toolbar-button-text">@toolbarButton.Text</span>
+							}
+						</button>
+					}
+				}
+			</div>
+
+			@foreach (var tool in _activeToolsToRender) {
+				if (tool.PanelTemplate is not null) {
+					@tool.PanelTemplate(FieldDisabled || FieldReadonly)
+				}
+			}
+
+			<div class="tnt-rich-text-editor-surface"
+			     data-role="surface"
+			     data-placeholder="@(string.IsNullOrWhiteSpace(Placeholder) ? "Start typing" : Placeholder)"
+			     data-empty="@string.IsNullOrWhiteSpace(CurrentValueAsString).ToString().ToLowerInvariant()"
+			     data-maxlength="@GetMaxLength()"
+			     contenteditable="@((!FieldDisabled && !FieldReadonly).ToString().ToLowerInvariant())"
+			     tabindex="@(FieldDisabled ? "-1" : "0")"
+			     role="textbox"
+			     aria-multiline="true"
+			     aria-label="@(Label ?? Placeholder ?? FieldIdentifier.FieldName)"
+			     spellcheck="true"
+			     onkeydown="NTComponents.stopEnterPropagation(event)"></div>
+		</div>
+
+		@if (!string.IsNullOrWhiteSpace(Label)) {
+			<span class="tnt-label">
+				@Label
+			</span>
+		}
+
+		@if (EndIcon is not null) {
+			@EndIcon.Render("tnt-end-icon")
+		}
+	</nt-rich-text-editor>
+
+	@if (Tooltip is not null) {
+		@TooltipIcon.Render()
+	}
+
+	@if (!string.IsNullOrWhiteSpace(SupportingText) || !string.IsNullOrWhiteSpace(ErrorMessage) || (EditContext is not null && !DisableValidationMessage && ValueExpression is not null)) {
+		<span class="tnt-supporting-text">
+			@if (!string.IsNullOrWhiteSpace(ErrorMessage)) {
+				<div class="tnt-components tnt-validation-message">@ErrorMessage</div>
+			}
+			else if (EditContext is not null && !DisableValidationMessage && ValueExpression is not null) {
+				<ValidationMessage TValue="@(string)" For="@ValueExpression" class="tnt-components tnt-validation-message" />
+			}
+			@SupportingText
+		</span>
+	}
+
+	@if (GetMaxLength() > 0 && ShowInputLength) {
+		<span class="tnt-input-length">@($"{CurrentValueAsString?.Length ?? 0}/{GetMaxLength()}")</span>
+	}
+</div>
+
+@PageScript
