@@ -6,41 +6,41 @@ namespace LiveTest.Client.Pages;
 /// <summary>
 ///     Demo page for the popover window system.
 /// </summary>
-public partial class Popover(ITnTPopoverService popoverService) {
-    private readonly ITnTPopoverService _popoverService = popoverService;
+public partial class Popover(INTPopoverService popoverService) {
+    private readonly INTPopoverService _popoverService = popoverService;
 
     private async Task OpenInspectorPopoverAsync() {
-        await _popoverService.OpenAsync(CreateInspectorContent(), new TnTPopoverOptions {
+        await _popoverService.OpenAsync(CreateInspectorContent(), new NTPopoverOptions {
             Description = "A secondary floating tool window.",
             InitialLeft = 360,
             InitialTop = 128,
             InstanceKey = "livetest-inspector",
             Title = "Inspector",
-            Width = "20rem"
+            Width = "320px"
         });
     }
 
     private async Task OpenNotesPopoverAsync() {
-        await _popoverService.OpenAsync(CreateNotesContent(), new TnTPopoverOptions {
+        await _popoverService.OpenAsync(CreateNotesContent(), new NTPopoverOptions {
             Description = "A floating notes window that can be hidden and restored.",
             InitialLeft = 40,
             InitialTop = 96,
             InstanceKey = "livetest-notes",
-            MaxHeight = "28rem",
+            MaxHeight = "448px",
             Title = "Notes",
-            Width = "24rem"
+            Width = "384px"
         });
     }
 
     private async Task OpenPreviewPopoverAsync() {
-        await _popoverService.OpenAsync(CreatePreviewContent(), new TnTPopoverOptions {
+        await _popoverService.OpenAsync(CreatePreviewContent(), new NTPopoverOptions {
             Description = "A compact read-only preview surface.",
             InitialLeft = 660,
             InitialTop = 112,
             InstanceKey = "livetest-preview",
-            MaxHeight = "24rem",
+            MaxHeight = "384px",
             Title = "Preview",
-            Width = "18rem"
+            Width = "288px"
         });
     }
 

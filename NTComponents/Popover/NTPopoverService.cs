@@ -4,10 +4,14 @@ using NTComponents.Core;
 
 namespace NTComponents.Popover;
 
+internal interface INTPopoverHighlightState {
+    int HighlightRequestId { get; }
+}
+
 /// <summary>
-///     Provides the default scoped implementation of <see cref="ITnTPopoverService" />.
+///     Provides the default scoped implementation of <see cref="INTPopoverService" />.
 /// </summary>
-internal sealed class TnTPopoverService : ITnTPopoverService {
+internal sealed class NTPopoverService : INTPopoverService {
     private const int BaseZIndex = 1200;
     private const int DefaultOffset = 24;
     private const int DefaultStartLeft = 24;
@@ -19,10 +23,10 @@ internal sealed class TnTPopoverService : ITnTPopoverService {
     private int _nextZIndex;
 
     /// <inheritdoc />
-    public event ITnTPopoverService.PopoversChangedCallback? OnChanged;
+    public event INTPopoverService.PopoversChangedCallback? OnChanged;
 
     /// <inheritdoc />
-    public async Task BringToFrontAsync(ITnTPopoverHandle popover) {
+    public async Task BringToFrontAsync(INTPopoverHandle popover) {
         if (popover is not PopoverHandle handle || !_popovers.Contains(handle)) {
             return;
         }
@@ -38,7 +42,7 @@ internal sealed class TnTPopoverService : ITnTPopoverService {
     }
 
     /// <inheritdoc />
-    public async Task CloseAsync(ITnTPopoverHandle popover) {
+    public async Task CloseAsync(INTPopoverHandle popover) {
         if (popover is not PopoverHandle handle) {
             return;
         }
@@ -49,14 +53,14 @@ internal sealed class TnTPopoverService : ITnTPopoverService {
     }
 
     /// <inheritdoc />
-    public IReadOnlyList<ITnTPopoverHandle> GetPopovers() {
+    public IReadOnlyList<INTPopoverHandle> GetPopovers() {
         return _popovers
-            .Cast<ITnTPopoverHandle>()
+            .Cast<INTPopoverHandle>()
             .ToArray();
     }
 
     /// <inheritdoc />
-    public async Task HideAsync(ITnTPopoverHandle popover) {
+    public async Task HideAsync(INTPopoverHandle popover) {
         if (popover is not PopoverHandle handle || !_popovers.Contains(handle) || !handle.IsVisible) {
             return;
         }
@@ -66,7 +70,7 @@ internal sealed class TnTPopoverService : ITnTPopoverService {
     }
 
     /// <inheritdoc />
-    public Task<ITnTPopoverHandle> OpenAsync(RenderFragment renderFragment, TnTPopoverOptions? options = null) {
+    public Task<INTPopoverHandle> OpenAsync(RenderFragment renderFragment, NTPopoverOptions? options = null) {
         ArgumentNullException.ThrowIfNull(renderFragment, nameof(renderFragment));
 
         var resolvedOptions = options ?? new();
@@ -84,7 +88,7 @@ internal sealed class TnTPopoverService : ITnTPopoverService {
     }
 
     /// <inheritdoc />
-    public Task<ITnTPopoverHandle> OpenAsync<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TComponent>(TnTPopoverOptions? options = null, IReadOnlyDictionary<string, object?>? parameters = null) where TComponent : IComponent {
+    public Task<INTPopoverHandle> OpenAsync<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TComponent>(NTPopoverOptions? options = null, IReadOnlyDictionary<string, object?>? parameters = null) where TComponent : IComponent {
         var resolvedOptions = options ?? new();
         var existingHandleTask = TryReuseExistingAsync(resolvedOptions);
         if (existingHandleTask is not null) {
@@ -101,7 +105,7 @@ internal sealed class TnTPopoverService : ITnTPopoverService {
     }
 
     /// <inheritdoc />
-    public async Task ShowAsync(ITnTPopoverHandle popover) {
+    public async Task ShowAsync(INTPopoverHandle popover) {
         if (popover is not PopoverHandle handle || !_popovers.Contains(handle)) {
             return;
         }
@@ -112,7 +116,7 @@ internal sealed class TnTPopoverService : ITnTPopoverService {
     }
 
     /// <inheritdoc />
-    public async Task UpdatePositionAsync(ITnTPopoverHandle popover, double left, double top) {
+    public async Task UpdatePositionAsync(INTPopoverHandle popover, double left, double top) {
         if (popover is not PopoverHandle handle || !_popovers.Contains(handle)) {
             return;
         }
@@ -128,7 +132,7 @@ internal sealed class TnTPopoverService : ITnTPopoverService {
         await NotifyChangedAsync();
     }
 
-    private Task<ITnTPopoverHandle>? TryReuseExistingAsync(TnTPopoverOptions options) {
+    private Task<INTPopoverHandle>? TryReuseExistingAsync(NTPopoverOptions options) {
         if (string.IsNullOrWhiteSpace(options.InstanceKey)) {
             return null;
         }
@@ -141,7 +145,7 @@ internal sealed class TnTPopoverService : ITnTPopoverService {
             : ReuseExistingAsync(existingHandle);
     }
 
-    private PopoverHandle CreateHandle(TnTPopoverOptions options) {
+    private PopoverHandle CreateHandle(NTPopoverOptions options) {
         var offsetIndex = _nextDefaultOffsetIndex++ % OffsetCycle;
 
         return new PopoverHandle(this) {
@@ -155,22 +159,28 @@ internal sealed class TnTPopoverService : ITnTPopoverService {
 
     private async Task NotifyChangedAsync() => await (OnChanged?.Invoke() ?? Task.CompletedTask);
 
-    private async Task<ITnTPopoverHandle> NotifyOpenedAsync(PopoverHandle handle) {
+    private async Task<INTPopoverHandle> NotifyOpenedAsync(PopoverHandle handle) {
         await NotifyChangedAsync();
         return handle;
     }
 
-    private async Task<ITnTPopoverHandle> ReuseExistingAsync(PopoverHandle handle) {
+    private async Task<INTPopoverHandle> ReuseExistingAsync(PopoverHandle handle) {
         if (!handle.IsVisible) {
             await ShowAsync(handle);
             return handle;
         }
 
+        handle.HighlightRequestId++;
+        var currentZIndex = handle.ZIndex;
         await BringToFrontAsync(handle);
+        if (handle.ZIndex == currentZIndex) {
+            await NotifyChangedAsync();
+        }
+
         return handle;
     }
 
-    private sealed record PopoverHandle(TnTPopoverService Service) : ITnTPopoverHandle {
+    private sealed record PopoverHandle(NTPopoverService Service) : INTPopoverHandle, INTPopoverHighlightState {
 
         /// <inheritdoc />
         public RenderFragment? ChildContent { get; init; }
@@ -182,10 +192,13 @@ internal sealed class TnTPopoverService : ITnTPopoverService {
         public bool IsVisible { get; set; }
 
         /// <inheritdoc />
+        public int HighlightRequestId { get; set; }
+
+        /// <inheritdoc />
         public double Left { get; set; }
 
         /// <inheritdoc />
-        public TnTPopoverOptions Options { get; init; } = new();
+        public NTPopoverOptions Options { get; init; } = new();
 
         /// <inheritdoc />
         public IReadOnlyDictionary<string, object?>? Parameters { get; init; }

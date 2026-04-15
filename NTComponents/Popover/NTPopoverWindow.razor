@@ -8,31 +8,31 @@
          aria-labelledby="@_titleElementId"
          aria-describedby="@DescriptionElementId"
          tabindex="-1"
-         data-tnt-popover-window="true"
+         data-nt-popover-window="true"
          @ref="_windowElement"
          @onpointerdown="OnPointerDownAsync"
          @onkeydown="OnWindowKeyDownAsync">
-    <div class="tnt-popover__header"
-         data-tnt-popover-drag-handle="true"
+    <div class="nt-popover__header"
+         data-nt-popover-drag-handle="true"
          tabindex="0"
          aria-label="Window title bar. Use arrow keys to move the window."
          @onpointerdown="OnPointerDownAsync"
          @onkeydown="OnHeaderKeyDownAsync">
-        <div class="tnt-popover__heading">
-            <span class="tnt-popover__drag-indicator" aria-hidden="true">@MaterialIcon.DragIndicator.Render()</span>
+        <div class="nt-popover__heading">
+            <span class="nt-popover__drag-indicator" aria-hidden="true">@MaterialIcon.DragIndicator.Render()</span>
 
-            <div class="tnt-popover__titles">
-                <h2 class="tnt-popover__title" id="@_titleElementId">@DisplayTitle</h2>
+            <div class="nt-popover__titles">
+                <h2 class="nt-popover__title" id="@_titleElementId">@DisplayTitle</h2>
 
                 @if (!string.IsNullOrWhiteSpace(Popover.Options.Description)) {
-                    <p class="tnt-popover__description" id="@_descriptionElementId">@Popover.Options.Description</p>
+                    <p class="nt-popover__description" id="@_descriptionElementId">@Popover.Options.Description</p>
                 }
             </div>
         </div>
 
-        <div class="tnt-popover__actions" role="toolbar" aria-label="@($"{DisplayTitle} window actions")">
+        <div class="nt-popover__actions" role="toolbar" aria-label="@($"{DisplayTitle} window actions")">
             @if (Popover.Options.ShowHideButton) {
-                <button class="tnt-popover__action-button"
+                <button class="nt-popover__action-button"
                         type="button"
                         aria-label="@($"Hide {DisplayTitle}")"
                         disabled="@(!RendererInfo.IsInteractive || IsDismissPending)"
@@ -42,7 +42,7 @@
             }
 
             @if (Popover.Options.ShowCloseButton) {
-                <button class="tnt-popover__action-button"
+                <button class="nt-popover__action-button"
                         type="button"
                         aria-label="@($"Close {DisplayTitle}")"
                         disabled="@(!RendererInfo.IsInteractive || IsDismissPending)"
@@ -53,7 +53,7 @@
         </div>
     </div>
 
-    <div class="tnt-popover__body">
+    <div class="nt-popover__body">
         <CascadingValue Value="Popover" IsFixed="true">
             @RenderContent()
         </CascadingValue>

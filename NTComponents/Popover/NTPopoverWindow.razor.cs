@@ -4,31 +4,33 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
 using NTComponents.Core;
 using NTComponents.Ext;
+using NTComponents.Popover;
 
 namespace NTComponents;
 
 /// <summary>
 ///     Renders a single floating popover window.
 /// </summary>
-public partial class TnTPopoverWindow : IAsyncDisposable {
-    private const string JsModulePath = "./_content/NTComponents/Popover/TnTPopoverWindow.razor.js";
+public partial class NTPopoverWindow : IAsyncDisposable {
+    private const string JsModulePath = "./_content/NTComponents/Popover/NTPopoverWindow.razor.js";
     private PopoverDismissAction _dismissAction;
-    private readonly DotNetObjectReference<TnTPopoverWindow> _dotNetObjectReference;
+    private readonly DotNetObjectReference<NTPopoverWindow> _dotNetObjectReference;
     private readonly IJSRuntime _jsRuntime;
-    private readonly ITnTPopoverService _popoverService;
+    private readonly INTPopoverService _popoverService;
     private readonly string _descriptionElementId = TnTComponentIdentifier.NewId();
     private readonly string _titleElementId = TnTComponentIdentifier.NewId();
     private bool _hasAnimatedFromLauncher;
     private bool _isEntering = true;
+    private int _lastHighlightRequestId;
     private IJSObjectReference? _jsModule;
     private ElementReference _windowElement;
 
     /// <summary>
-    ///     Initializes a new instance of the <see cref="TnTPopoverWindow" /> class.
+    ///     Initializes a new instance of the <see cref="NTPopoverWindow" /> class.
     /// </summary>
     /// <param name="jsRuntime">The JavaScript runtime.</param>
     /// <param name="popoverService">The popover service.</param>
-    public TnTPopoverWindow(IJSRuntime jsRuntime, ITnTPopoverService popoverService) {
+    public NTPopoverWindow(IJSRuntime jsRuntime, INTPopoverService popoverService) {
         _jsRuntime = jsRuntime;
         _popoverService = popoverService;
         _dotNetObjectReference = DotNetObjectReference.Create(this);
@@ -38,7 +40,7 @@ public partial class TnTPopoverWindow : IAsyncDisposable {
     ///     Gets or sets the popover handle being rendered.
     /// </summary>
     [Parameter, EditorRequired]
-    public ITnTPopoverHandle Popover { get; set; } = default!;
+    public INTPopoverHandle Popover { get; set; } = default!;
 
     /// <summary>
     ///     Gets or sets a value indicating whether the popover should animate from the launcher strip.
@@ -58,13 +60,17 @@ public partial class TnTPopoverWindow : IAsyncDisposable {
 
     private bool IsDismissPending => _dismissAction is not PopoverDismissAction.None;
 
-    private string ElementClass => CssClassBuilder.Create("tnt-popover")
-        .AddClass("tnt-popover--dragging", false)
-        .AddClass("tnt-popover--entering", _isEntering && !AnimateFromLauncher)
-        .AddClass("tnt-popover--hidden", !Popover.IsVisible)
+    private int HighlightRequestId => Popover is INTPopoverHighlightState highlightState
+        ? highlightState.HighlightRequestId
+        : 0;
+
+    private string ElementClass => CssClassBuilder.Create("nt-popover")
+        .AddClass("nt-popover--dragging", false)
+        .AddClass("nt-popover--entering", _isEntering && !AnimateFromLauncher)
+        .AddClass("nt-popover--hidden", !Popover.IsVisible)
         // Hide uses a JS WAAPI animation (animatePopoverToLauncher) and needs no CSS leaving class.
         // Only Close relies on the CSS exit animation to signal when to complete.
-        .AddClass("tnt-popover--leaving", _dismissAction == PopoverDismissAction.Close)
+        .AddClass("nt-popover--leaving", _dismissAction == PopoverDismissAction.Close)
         .AddClass(Popover.Options.ElementClass)
         .Build();
 
@@ -73,14 +79,14 @@ public partial class TnTPopoverWindow : IAsyncDisposable {
         .AddStyle("left", $"{Popover.Left.ToString(System.Globalization.CultureInfo.InvariantCulture)}px")
         .AddStyle("top", $"{Popover.Top.ToString(System.Globalization.CultureInfo.InvariantCulture)}px")
         .AddStyle("z-index", Popover.ZIndex.ToString(System.Globalization.CultureInfo.InvariantCulture))
-        .AddVariable("tnt-popover-bg-color", Popover.Options.BackgroundColor)
-        .AddVariable("tnt-popover-fg-color", Popover.Options.TextColor)
-        .AddVariable("tnt-popover-width", Popover.Options.Width)
-        .AddVariable("tnt-popover-height", Popover.Options.Height)
-        .AddVariable("tnt-popover-min-width", Popover.Options.MinWidth)
-        .AddVariable("tnt-popover-min-height", Popover.Options.MinHeight)
-        .AddVariable("tnt-popover-max-width", Popover.Options.MaxWidth)
-        .AddVariable("tnt-popover-max-height", Popover.Options.MaxHeight)
+        .AddVariable("nt-popover-bg-color", Popover.Options.BackgroundColor)
+        .AddVariable("nt-popover-fg-color", Popover.Options.TextColor)
+        .AddVariable("nt-popover-width", Popover.Options.Width)
+        .AddVariable("nt-popover-height", Popover.Options.Height)
+        .AddVariable("nt-popover-min-width", Popover.Options.MinWidth)
+        .AddVariable("nt-popover-min-height", Popover.Options.MinHeight)
+        .AddVariable("nt-popover-max-width", Popover.Options.MaxWidth)
+        .AddVariable("nt-popover-max-height", Popover.Options.MaxHeight)
         .Build();
 
     /// <inheritdoc />
@@ -106,12 +112,20 @@ public partial class TnTPopoverWindow : IAsyncDisposable {
         }
 
         try {
+            var highlightRequestId = HighlightRequestId;
             if (firstRender) {
+                _lastHighlightRequestId = highlightRequestId;
                 _jsModule = await _jsRuntime.ImportIsolatedJs(this, JsModulePath);
                 await _jsModule.InvokeVoidAsync("initializePopoverWindow", _windowElement, _dotNetObjectReference, CreateClientOptions(), AnimateFromLauncher);
             }
             else if (_jsModule is not null) {
                 await _jsModule.InvokeVoidAsync("updatePopoverWindow", _windowElement, CreateClientOptions());
+
+                if (highlightRequestId != _lastHighlightRequestId) {
+                    _lastHighlightRequestId = highlightRequestId;
+                    _isEntering = false;
+                    await _jsModule.InvokeVoidAsync("highlightPopoverWindow", _windowElement);
+                }
             }
 
             if (AnimateFromLauncher && !_hasAnimatedFromLauncher && _jsModule is not null) {

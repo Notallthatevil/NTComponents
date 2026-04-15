@@ -5,7 +5,7 @@ namespace NTComponents.Tests.E2E.Popover;
 /// <summary>
 ///     Browser tests for the popover window system.
 /// </summary>
-public class TnTPopover_E2E_Tests : IAsyncLifetime {
+public class NTPopover_E2E_Tests : IAsyncLifetime {
     private PlaywrightFixture? _fixture;
     private IPage? _page;
     private string AppBaseUrl = default!;
@@ -32,11 +32,11 @@ public class TnTPopover_E2E_Tests : IAsyncLifetime {
 
         await _page.ClickAsync("#open-notes-popover");
         await _page.ClickAsync("#open-inspector-popover");
-        await _page.WaitForSelectorAsync(".tnt-popover");
+        await _page.WaitForSelectorAsync(".nt-popover");
 
-        var notesWindow = _page.Locator(".tnt-popover:has-text('Notes')").First;
-        var inspectorWindow = _page.Locator(".tnt-popover:has-text('Inspector')").First;
-        var header = notesWindow.Locator(".tnt-popover__header");
+        var notesWindow = _page.Locator(".nt-popover:has-text('Notes')").First;
+        var inspectorWindow = _page.Locator(".nt-popover:has-text('Inspector')").First;
+        var header = notesWindow.Locator(".nt-popover__header");
 
         var headerBox = await header.BoundingBoxAsync();
         headerBox.Should().NotBeNull();
@@ -51,7 +51,7 @@ public class TnTPopover_E2E_Tests : IAsyncLifetime {
 
         await notesWindow.Locator("button[aria-label='Hide Notes']").ClickAsync();
         await _page.WaitForSelectorAsync("button[aria-label='Restore Notes']");
-        (await _page.Locator(".tnt-popover:has-text('Notes')").CountAsync()).Should().Be(0);
+        (await _page.Locator(".nt-popover:has-text('Notes')").CountAsync()).Should().Be(0);
 
         await _page.ClickAsync("button[aria-label='Restore Notes']");
         await notesWindow.WaitForAsync(new LocatorWaitForOptions { Timeout = 5000 });

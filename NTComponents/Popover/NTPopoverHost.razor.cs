@@ -3,13 +3,13 @@ using NTComponents.Core;
 namespace NTComponents;
 
 /// <summary>
-///     Renders active popover windows and hidden-window launchers managed by <see cref="ITnTPopoverService" />.
+///     Renders active popover windows and hidden-window launchers managed by <see cref="INTPopoverService" />.
 /// </summary>
-public partial class TnTPopoverHost(ITnTPopoverService popoverService) {
-    private readonly ITnTPopoverService _popoverService = popoverService;
-    private IReadOnlyList<ITnTPopoverHandle> _hiddenPopovers = [];
+public partial class NTPopoverHost(INTPopoverService popoverService) {
+    private readonly INTPopoverService _popoverService = popoverService;
+    private IReadOnlyList<INTPopoverHandle> _hiddenPopovers = [];
     private readonly HashSet<string> _restoringPopoverIds = [];
-    private IReadOnlyList<ITnTPopoverHandle> _visiblePopovers = [];
+    private IReadOnlyList<INTPopoverHandle> _visiblePopovers = [];
 
     /// <summary>
     ///     Disposes the host and unsubscribes from popover service events.
@@ -26,13 +26,13 @@ public partial class TnTPopoverHost(ITnTPopoverService popoverService) {
         _popoverService.OnChanged += OnChangedAsync;
     }
 
-    private static string GetTitle(ITnTPopoverHandle popover) {
+    private static string GetTitle(INTPopoverHandle popover) {
         return string.IsNullOrWhiteSpace(popover.Options.Title) ? "Window" : popover.Options.Title!;
     }
 
     private static string GetLauncherClass(bool isRestoring) {
-        return CssClassBuilder.Create("tnt-popover-host__launcher")
-            .AddClass("tnt-popover-host__launcher--restoring", isRestoring)
+        return CssClassBuilder.Create("nt-popover-host__launcher")
+            .AddClass("nt-popover-host__launcher--restoring", isRestoring)
             .Build();
     }
 
@@ -62,7 +62,7 @@ public partial class TnTPopoverHost(ITnTPopoverService popoverService) {
             .ToArray();
     }
 
-    private async Task RestoreAsync(ITnTPopoverHandle popover) {
+    private async Task RestoreAsync(INTPopoverHandle popover) {
         if (!_restoringPopoverIds.Add(popover.ElementId)) {
             return;
         }

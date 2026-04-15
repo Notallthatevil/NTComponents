@@ -6,7 +6,7 @@ namespace NTComponents;
 ///     Represents configuration options for a floating popover window.
 /// </summary>
 [ExcludeFromCodeCoverage]
-public class TnTPopoverOptions {
+public class NTPopoverOptions {
 
     /// <summary>
     ///     Gets the background color of the popover surface.
@@ -56,12 +56,12 @@ public class TnTPopoverOptions {
     /// <summary>
     ///     Gets the maximum height of the popover.
     /// </summary>
-    public string MaxHeight { get; init; } = "min(calc(100vh - 6rem), 42rem)";
+    public string MaxHeight { get; init; } = "min(calc(100vh - 96px), 672px)";
 
     /// <summary>
     ///     Gets the maximum width of the popover.
     /// </summary>
-    public string MaxWidth { get; init; } = "min(calc(100vw - 2rem), 42rem)";
+    public string MaxWidth { get; init; } = "min(calc(100vw - 32px), 672px)";
 
     /// <summary>
     ///     Gets an optional stable key used to reuse an existing popover instead of creating a duplicate.
@@ -71,12 +71,12 @@ public class TnTPopoverOptions {
     /// <summary>
     ///     Gets the minimum height of the popover.
     /// </summary>
-    public string MinHeight { get; init; } = "12rem";
+    public string MinHeight { get; init; } = "192px";
 
     /// <summary>
     ///     Gets the minimum width of the popover.
     /// </summary>
-    public string MinWidth { get; init; } = "18rem";
+    public string MinWidth { get; init; } = "288px";
 
     /// <summary>
     ///     Gets a value indicating whether a close button is shown in the header.
@@ -101,5 +101,5 @@ public class TnTPopoverOptions {
     /// <summary>
     ///     Gets the desired width of the popover.
     /// </summary>
-    public string Width { get; init; } = "min(32rem, calc(100vw - 2rem))";
+    public string Width { get; init; } = "min(512px, calc(100vw - 32px))";
 }

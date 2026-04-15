@@ -1,11 +1,11 @@
-﻿import { jest } from '@jest/globals';
-import { disposePopoverWindow, initializePopoverWindow, updatePopoverWindow, waitForCloseAnimation } from '../TnTPopoverWindow.razor.js';
+﻿﻿﻿﻿﻿import { jest } from '@jest/globals';
+import { disposePopoverWindow, highlightPopoverWindow, initializePopoverWindow, updatePopoverWindow, waitForCloseAnimation } from '../NTPopoverWindow.razor.js';
 
 if (typeof global.PointerEvent === 'undefined') {
   global.PointerEvent = MouseEvent;
 }
 
-describe('TnTPopoverWindow JS module', () => {
+describe('NTPopoverWindow JS module', () => {
   beforeEach(() => {
     document.body.innerHTML = '';
     jest.clearAllMocks();
@@ -15,12 +15,12 @@ describe('TnTPopoverWindow JS module', () => {
 
   function createPopover() {
     const element = document.createElement('section');
-    element.className = 'tnt-popover';
+    element.className = 'nt-popover';
     Object.defineProperty(element, 'offsetWidth', { configurable: true, value: 240 });
     Object.defineProperty(element, 'offsetHeight', { configurable: true, value: 180 });
 
     const handle = document.createElement('div');
-    handle.setAttribute('data-tnt-popover-drag-handle', 'true');
+    handle.setAttribute('data-nt-popover-drag-handle', 'true');
     handle.setPointerCapture = jest.fn();
     handle.releasePointerCapture = jest.fn();
 
@@ -87,6 +87,19 @@ describe('TnTPopoverWindow JS module', () => {
     expect(element.style.top).toBe('144px');
   });
 
+  test('highlight applies the highlight class until the animation ends', () => {
+    const { element } = createPopover();
+    element.classList.add('nt-popover--entering');
+    initializePopoverWindow(element, { invokeMethodAsync: jest.fn() }, { left: 0, top: 0, allowDragging: true, viewportPadding: 16 });
+
+    highlightPopoverWindow(element);
+
+    expect(element.classList.contains('nt-popover--entering')).toBe(false);
+    expect(element.classList.contains('nt-popover--highlighting')).toBe(true);
+    fireAnimationEnd(element, 'nt-popover-highlight');
+    expect(element.classList.contains('nt-popover--highlighting')).toBe(false);
+  });
+
   test('dispose removes event listeners', () => {
     const { element, handle } = createPopover();
     const invokeMethodAsync = jest.fn(() => Promise.resolve());
@@ -101,14 +114,14 @@ describe('TnTPopoverWindow JS module', () => {
   });
 
   describe('enter animation', () => {
-    test('invokes NotifyEnterAnimationCompleted when tnt-popover-enter ends on the element', async () => {
+    test('invokes NotifyEnterAnimationCompleted when nt-popover-enter ends on the element', async () => {
       // Arrange
       const { element } = createPopover();
       const invokeMethodAsync = jest.fn(() => Promise.resolve());
       initializePopoverWindow(element, { invokeMethodAsync }, { left: 0, top: 0 });
 
       // Act
-      fireAnimationEnd(element, 'tnt-popover-enter');
+      fireAnimationEnd(element, 'nt-popover-enter');
       await Promise.resolve();
 
       // Assert
@@ -124,7 +137,7 @@ describe('TnTPopoverWindow JS module', () => {
       element.appendChild(child);
 
       // Act - fire animationend from child (bubbles to element but target !== element)
-      fireAnimationEnd(child, 'tnt-popover-enter');
+      fireAnimationEnd(child, 'nt-popover-enter');
       await Promise.resolve();
 
       // Assert
@@ -133,13 +146,13 @@ describe('TnTPopoverWindow JS module', () => {
 
     test('does not register enter animation listener when animateFromLauncher=true', async () => {
       // Arrange - restoring a hidden popover uses the launcher animation path, so the CSS
-      // tnt-popover-enter animation never plays; the listener must not be registered.
+      // nt-popover-enter animation never plays; the listener must not be registered.
       const { element } = createPopover();
       const invokeMethodAsync = jest.fn(() => Promise.resolve());
       initializePopoverWindow(element, { invokeMethodAsync }, { left: 0, top: 0 }, true);
 
-      // Act - fire tnt-popover-enter as if the CSS class were applied
-      fireAnimationEnd(element, 'tnt-popover-enter');
+      // Act - fire nt-popover-enter as if the CSS class were applied
+      fireAnimationEnd(element, 'nt-popover-enter');
       await Promise.resolve();
 
       // Assert - no callback should have been invoked
@@ -156,14 +169,14 @@ describe('TnTPopoverWindow JS module', () => {
       jest.useRealTimers();
     });
 
-    test('resolves when tnt-popover-exit animationend fires on the element', async () => {
+    test('resolves when nt-popover-exit animationend fires on the element', async () => {
       // Arrange
       const { element } = createPopover();
       initializePopoverWindow(element, { invokeMethodAsync: jest.fn() }, { left: 0, top: 0 });
       const promise = waitForCloseAnimation(element);
 
       // Act
-      fireAnimationEnd(element, 'tnt-popover-exit');
+      fireAnimationEnd(element, 'nt-popover-exit');
 
       // Assert
       await expect(promise).resolves.toBeUndefined();
@@ -178,7 +191,7 @@ describe('TnTPopoverWindow JS module', () => {
       const promise = waitForCloseAnimation(element);
 
       // Act - fire from child; event.target is child, not element
-      fireAnimationEnd(child, 'tnt-popover-exit');
+      fireAnimationEnd(child, 'nt-popover-exit');
 
       let resolved = false;
       promise.then(() => { resolved = true; });

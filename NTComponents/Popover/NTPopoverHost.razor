@@ -2,18 +2,18 @@
 @implements IDisposable
 
 @if (_visiblePopovers.Count > 0 || _hiddenPopovers.Count > 0) {
-    <div class="tnt-popover-host">
+    <div class="nt-popover-host">
         @foreach (var popover in _visiblePopovers) {
-            <TnTPopoverWindow Popover="@popover"
+            <NTPopoverWindow Popover="@popover"
                               AnimateFromLauncher="@_restoringPopoverIds.Contains(popover.ElementId)"
                               OnLauncherEnterAnimationCompleted="OnLauncherEnterAnimationCompletedAsync"
                               @key="popover.ElementId" />
         }
 
-        <div class="tnt-popover-host__launchers"
+        <div class="nt-popover-host__launchers"
              role="toolbar"
              aria-label="Hidden windows"
-             data-tnt-popover-launchers="true">
+             data-nt-popover-launchers="true">
             @foreach (var popover in _hiddenPopovers) {
                 var isRestoring = _restoringPopoverIds.Contains(popover.ElementId);
 
@@ -21,11 +21,11 @@
                         type="button"
                         aria-label="@($"Restore {GetTitle(popover)}")"
                         disabled="@(!RendererInfo.IsInteractive || isRestoring)"
-                        data-tnt-popover-launcher-id="@popover.ElementId"
+                        data-nt-popover-launcher-id="@popover.ElementId"
                         aria-hidden="@isRestoring"
                         @onclick="() => RestoreAsync(popover)">
-                    <span class="tnt-popover-host__launcher-icon" aria-hidden="true">@MaterialIcon.Dock.Render()</span>
-                    <span class="tnt-popover-host__launcher-text">@GetTitle(popover)</span>
+                    <span class="nt-popover-host__launcher-icon" aria-hidden="true">@MaterialIcon.Dock.Render()</span>
+                    <span class="nt-popover-host__launcher-text">@GetTitle(popover)</span>
                 </button>
             }
         </div>

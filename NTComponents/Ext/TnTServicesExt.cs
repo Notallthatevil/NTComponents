@@ -28,7 +28,7 @@ public static class TnTServicesExt {
         var o = new NTComponentsDefaultOptions();
         options?.Invoke(o);
         return services.AddScoped<ITnTDialogService, TnTDialogService>()
-             .AddScoped<ITnTPopoverService, TnTPopoverService>()
+             .AddScoped<INTPopoverService, NTPopoverService>()
              .AddScoped<INTSnackbarService, NTSnackbarService>()
              .AddScoped<ITnTToastService, TnTToastService>()
              .AddScoped<ISessionStorageService, SessionStorageService>()

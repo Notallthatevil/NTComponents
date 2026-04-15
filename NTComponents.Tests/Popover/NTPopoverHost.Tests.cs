@@ -6,27 +6,29 @@ using NTComponents.Popover;
 namespace NTComponents.Tests.Popover;
 
 /// <summary>
-///     bUnit tests for <see cref="TnTPopoverHost" />.
+///     bUnit tests for <see cref="NTPopoverHost" />.
 /// </summary>
-public class TnTPopoverHost_Tests : BunitContext {
-    private const string JsModulePath = "./_content/NTComponents/Popover/TnTPopoverWindow.razor.js";
+public class NTPopoverHost_Tests : BunitContext {
+    private const string JsModulePath = "./_content/NTComponents/Popover/NTPopoverWindow.razor.js";
 
-    public TnTPopoverHost_Tests() {
-        Services.AddSingleton<ITnTPopoverService, TnTPopoverService>();
+    public NTPopoverHost_Tests() {
+        Services.AddSingleton<INTPopoverService, NTPopoverService>();
         SetRendererInfo(new RendererInfo("WebAssembly", true));
 
         var module = JSInterop.SetupModule(JsModulePath);
         module.SetupVoid("initializePopoverWindow", _ => true).SetVoidResult();
         module.SetupVoid("updatePopoverWindow", _ => true).SetVoidResult();
+        module.SetupVoid("highlightPopoverWindow", _ => true).SetVoidResult();
         module.SetupVoid("animatePopoverFromLauncher", _ => true).SetVoidResult();
         module.SetupVoid("animatePopoverToLauncher", _ => true).SetVoidResult();
         module.SetupVoid("disposePopoverWindow", _ => true).SetVoidResult();
+        module.SetupVoid("waitForCloseAnimation", _ => true).SetVoidResult();
     }
 
     [Fact]
     public void EmptyHost_RendersNothing() {
         // Act
-        var cut = Render<TnTPopoverHost>();
+        var cut = Render<NTPopoverHost>();
 
         // Assert
         cut.Markup.Trim().Should().BeEmpty();
@@ -35,41 +37,40 @@ public class TnTPopoverHost_Tests : BunitContext {
     [Fact]
     public async Task EscapeKey_ClosesVisiblePopover() {
         // Arrange
-        var service = Services.GetRequiredService<ITnTPopoverService>();
-        var cut = Render<TnTPopoverHost>();
-        await service.OpenAsync(CreateContent("Notes"), new TnTPopoverOptions { Title = "Notes" });
+        var service = Services.GetRequiredService<INTPopoverService>();
+        var cut = Render<NTPopoverHost>();
+        await service.OpenAsync(CreateContent("Notes"), new NTPopoverOptions { Title = "Notes" });
 
         // Act
-        await cut.Find(".tnt-popover").TriggerEventAsync("onkeydown", new KeyboardEventArgs { Key = "Escape" });
-        await cut.Find(".tnt-popover").TriggerEventAsync("onanimationend", EventArgs.Empty);
+        await cut.Find(".nt-popover").TriggerEventAsync("onkeydown", new KeyboardEventArgs { Key = "Escape" });
 
         // Assert
-        cut.WaitForAssertion(() => cut.FindAll(".tnt-popover").Should().BeEmpty());
+        cut.WaitForAssertion(() => cut.FindAll(".nt-popover").Should().BeEmpty());
     }
 
     [Fact]
     public async Task HideButton_MovesPopoverToLauncherStrip() {
         // Arrange
-        var service = Services.GetRequiredService<ITnTPopoverService>();
-        var cut = Render<TnTPopoverHost>();
-        await service.OpenAsync(CreateContent("Notes"), new TnTPopoverOptions { Title = "Notes" });
+        var service = Services.GetRequiredService<INTPopoverService>();
+        var cut = Render<NTPopoverHost>();
+        await service.OpenAsync(CreateContent("Notes"), new NTPopoverOptions { Title = "Notes" });
 
         // Act
         await cut.Find("button[aria-label='Hide Notes']").ClickAsync(new MouseEventArgs());
 
         // Assert
         cut.WaitForAssertion(() => {
-            cut.FindAll(".tnt-popover").Should().BeEmpty();
-            cut.Find(".tnt-popover-host__launcher").TextContent.Should().Contain("Notes");
+            cut.FindAll(".nt-popover").Should().BeEmpty();
+            cut.Find(".nt-popover-host__launcher").TextContent.Should().Contain("Notes");
         });
     }
 
     [Fact]
     public async Task HiddenPopover_CanBeRestoredFromLauncherStrip() {
         // Arrange
-        var service = Services.GetRequiredService<ITnTPopoverService>();
-        var cut = Render<TnTPopoverHost>();
-        await service.OpenAsync(CreateContent("Inspector"), new TnTPopoverOptions { Title = "Inspector" });
+        var service = Services.GetRequiredService<INTPopoverService>();
+        var cut = Render<NTPopoverHost>();
+        await service.OpenAsync(CreateContent("Inspector"), new NTPopoverOptions { Title = "Inspector" });
         await cut.Find("button[aria-label='Hide Inspector']").ClickAsync(new MouseEventArgs());
 
         // Act
@@ -77,25 +78,44 @@ public class TnTPopoverHost_Tests : BunitContext {
 
         // Assert
         cut.WaitForAssertion(() => {
-            cut.Find(".tnt-popover__title").TextContent.Should().Be("Inspector");
-            cut.FindAll(".tnt-popover-host__launcher").Should().BeEmpty();
+            cut.Find(".nt-popover__title").TextContent.Should().Be("Inspector");
+            cut.FindAll(".nt-popover-host__launcher").Should().BeEmpty();
         });
+    }
+
+    [Fact]
+    public async Task ReopeningVisiblePopover_InvokesHighlightAnimation() {
+        // Arrange
+        var service = Services.GetRequiredService<INTPopoverService>();
+        var cut = Render<NTPopoverHost>();
+        var options = new NTPopoverOptions {
+            InstanceKey = "inspector",
+            Title = "Inspector"
+        };
+        await service.OpenAsync(CreateContent("Inspector"), options);
+
+        // Act
+        await service.OpenAsync(CreateContent("Inspector"), options);
+
+        // Assert
+        cut.WaitForAssertion(() =>
+            JSInterop.Invocations.Should().Contain(invocation => invocation.Identifier == "highlightPopoverWindow"));
     }
 
     [Fact]
     public async Task VisiblePopover_RendersAccessibleDialogMarkup() {
         // Arrange
-        var service = Services.GetRequiredService<ITnTPopoverService>();
-        var cut = Render<TnTPopoverHost>();
+        var service = Services.GetRequiredService<INTPopoverService>();
+        var cut = Render<NTPopoverHost>();
 
         // Act
-        await service.OpenAsync(CreateContent("Accessible"), new TnTPopoverOptions {
+        await service.OpenAsync(CreateContent("Accessible"), new NTPopoverOptions {
             Description = "Modeless window",
             Title = "Accessible"
         });
 
         // Assert
-        var popover = cut.Find(".tnt-popover");
+        var popover = cut.Find(".nt-popover");
         popover.GetAttribute("role").Should().Be("dialog");
         popover.GetAttribute("aria-modal").Should().Be("false");
         popover.GetAttribute("aria-labelledby").Should().NotBeNullOrWhiteSpace();
@@ -105,12 +125,12 @@ public class TnTPopoverHost_Tests : BunitContext {
     [Fact]
     public async Task SsrMode_RendersWithoutJsInteropAndDisablesHeaderButtons() {
         // Arrange
-        var service = Services.GetRequiredService<ITnTPopoverService>();
+        var service = Services.GetRequiredService<INTPopoverService>();
         SetRendererInfo(new RendererInfo("Static", false));
-        await service.OpenAsync(CreateContent("Static"), new TnTPopoverOptions { Title = "Static" });
+        await service.OpenAsync(CreateContent("Static"), new NTPopoverOptions { Title = "Static" });
 
         // Act
-        var cut = Render<TnTPopoverHost>();
+        var cut = Render<NTPopoverHost>();
 
         // Assert
         cut.Find("button[aria-label='Hide Static']").HasAttribute("disabled").Should().BeTrue();

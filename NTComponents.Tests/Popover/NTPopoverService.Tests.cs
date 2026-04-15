@@ -4,16 +4,16 @@ using NTComponents.Popover;
 namespace NTComponents.Tests.Popover;
 
 /// <summary>
-///     Unit tests for <see cref="TnTPopoverService" />.
+///     Unit tests for <see cref="NTPopoverService" />.
 /// </summary>
-public class TnTPopoverService_Tests {
+public class NTPopoverService_Tests {
 
     [Fact]
     public async Task BringToFrontAsync_AssignsHigherZIndex() {
         // Arrange
-        var service = new TnTPopoverService();
-        var first = await service.OpenAsync<TestComponent>(new TnTPopoverOptions { Title = "First" });
-        var second = await service.OpenAsync<TestComponent>(new TnTPopoverOptions { Title = "Second" });
+        var service = new NTPopoverService();
+        var first = await service.OpenAsync<TestComponent>(new NTPopoverOptions { Title = "First" });
+        var second = await service.OpenAsync<TestComponent>(new NTPopoverOptions { Title = "Second" });
 
         // Act
         await service.BringToFrontAsync(first);
@@ -25,15 +25,15 @@ public class TnTPopoverService_Tests {
     [Fact]
     public async Task BringToFrontAsync_ForFrontmostPopover_DoesNotRaiseChanged() {
         // Arrange
-        var service = new TnTPopoverService();
+        var service = new NTPopoverService();
         var changedCount = 0;
         service.OnChanged += () => {
             changedCount++;
             return Task.CompletedTask;
         };
 
-        await service.OpenAsync<TestComponent>(new TnTPopoverOptions { Title = "First" });
-        var second = await service.OpenAsync<TestComponent>(new TnTPopoverOptions { Title = "Second" });
+        await service.OpenAsync<TestComponent>(new NTPopoverOptions { Title = "First" });
+        var second = await service.OpenAsync<TestComponent>(new NTPopoverOptions { Title = "Second" });
         changedCount = 0;
 
         // Act
@@ -46,7 +46,7 @@ public class TnTPopoverService_Tests {
     [Fact]
     public async Task CloseAsync_RemovesPopoverFromCollection() {
         // Arrange
-        var service = new TnTPopoverService();
+        var service = new NTPopoverService();
         var popover = await service.OpenAsync<TestComponent>();
 
         // Act
@@ -59,7 +59,7 @@ public class TnTPopoverService_Tests {
     [Fact]
     public async Task HideAsync_MarksPopoverInvisibleWithoutRemovingIt() {
         // Arrange
-        var service = new TnTPopoverService();
+        var service = new NTPopoverService();
         var popover = await service.OpenAsync<TestComponent>();
 
         // Act
@@ -73,7 +73,7 @@ public class TnTPopoverService_Tests {
     [Fact]
     public async Task OpenAsync_ForRenderFragment_PreservesChildContent() {
         // Arrange
-        var service = new TnTPopoverService();
+        var service = new NTPopoverService();
 
         // Act
         var popover = await service.OpenAsync(builder => {
@@ -90,10 +90,10 @@ public class TnTPopoverService_Tests {
     [Fact]
     public async Task OpenAsync_Generic_UsesProvidedOptionsAndDefaultsToVisible() {
         // Arrange
-        var service = new TnTPopoverService();
+        var service = new NTPopoverService();
 
         // Act
-        var popover = await service.OpenAsync<TestComponent>(new TnTPopoverOptions {
+        var popover = await service.OpenAsync<TestComponent>(new NTPopoverOptions {
             InitialLeft = 128,
             InitialTop = 256,
             Title = "Inspector"
@@ -110,14 +110,14 @@ public class TnTPopoverService_Tests {
     [Fact]
     public async Task OpenAsync_WithMatchingInstanceKey_ReusesExistingPopover() {
         // Arrange
-        var service = new TnTPopoverService();
+        var service = new NTPopoverService();
 
         // Act
-        var first = await service.OpenAsync<TestComponent>(new TnTPopoverOptions {
+        var first = await service.OpenAsync<TestComponent>(new NTPopoverOptions {
             InstanceKey = "inspector",
             Title = "Inspector"
         });
-        var second = await service.OpenAsync<TestComponent>(new TnTPopoverOptions {
+        var second = await service.OpenAsync<TestComponent>(new NTPopoverOptions {
             InstanceKey = "inspector",
             Title = "Inspector"
         });
@@ -128,17 +128,46 @@ public class TnTPopoverService_Tests {
     }
 
     [Fact]
+    public async Task OpenAsync_WithMatchingVisibleInstanceKey_RequestsHighlight() {
+        // Arrange
+        var service = new NTPopoverService();
+        var changedCount = 0;
+        service.OnChanged += () => {
+            changedCount++;
+            return Task.CompletedTask;
+        };
+
+        var first = await service.OpenAsync<TestComponent>(new NTPopoverOptions {
+            InstanceKey = "inspector",
+            Title = "Inspector"
+        });
+        var highlightState = first.Should().BeAssignableTo<INTPopoverHighlightState>().Which;
+        changedCount = 0;
+
+        // Act
+        var second = await service.OpenAsync<TestComponent>(new NTPopoverOptions {
+            InstanceKey = "inspector",
+            Title = "Inspector"
+        });
+
+        // Assert
+        second.Should().BeSameAs(first);
+        highlightState.HighlightRequestId.Should().Be(1);
+        changedCount.Should().Be(1);
+    }
+
+    [Fact]
     public async Task OpenAsync_WithMatchingHiddenInstanceKey_ShowsExistingPopover() {
         // Arrange
-        var service = new TnTPopoverService();
-        var popover = await service.OpenAsync<TestComponent>(new TnTPopoverOptions {
+        var service = new NTPopoverService();
+        var popover = await service.OpenAsync<TestComponent>(new NTPopoverOptions {
             InstanceKey = "notes",
             Title = "Notes"
         });
         await service.HideAsync(popover);
 
         // Act
-        var reopened = await service.OpenAsync<TestComponent>(new TnTPopoverOptions {
+        var reopened = await service.OpenAsync<TestComponent>(new NTPopoverOptions {
             InstanceKey = "notes",
             Title = "Notes"
         });
@@ -152,7 +181,7 @@ public class TnTPopoverService_Tests {
     [Fact]
     public async Task ShowAsync_RestoresPopoverVisibility() {
         // Arrange
-        var service = new TnTPopoverService();
+        var service = new NTPopoverService();
         var popover = await service.OpenAsync<TestComponent>();
         await service.HideAsync(popover);
 
@@ -166,7 +195,7 @@ public class TnTPopoverService_Tests {
     [Fact]
     public async Task UpdatePositionAsync_PersistsLeftAndTop() {
         // Arrange
-        var service = new TnTPopoverService();
+        var service = new NTPopoverService();
         var popover = await service.OpenAsync<TestComponent>();
 
         // Act

@@ -2,7 +2,7 @@
 @use '../Styles/_Variables/_typescale.scss' as typescale;
 @use '../Styles/_Variables/_elevation.scss' as elevation;
 
-.tnt-popover-host {
+.nt-popover-host {
     position: fixed;
     inset: 0;
     z-index: 1200;
@@ -10,14 +10,14 @@
 
     &__launchers {
         position: fixed;
-        left: 1rem;
-        right: 1rem;
-        bottom: 1rem;
+        left: 16px;
+        right: 16px;
+        bottom: 16px;
         display: flex;
         flex-wrap: wrap;
         align-items: flex-end;
-        gap: 0.75rem;
-        min-height: 2.75rem;
+        gap: 12px;
+        min-height: 44px;
         pointer-events: auto;
     }
 
@@ -27,11 +27,11 @@
 
         display: inline-flex;
         align-items: center;
-        gap: 0.5rem;
-        min-height: 2.5rem;
+        gap: 8px;
+        min-height: 40px;
         border: 1px solid colors.$tnt-color-outline-variant;
         border-radius: 999px;
-        padding: 0.5rem 0.875rem;
+        padding: 8px 14px;
         background-color: colors.$tnt-color-surface-container;
         color: colors.$tnt-color-on-surface;
         cursor: pointer;

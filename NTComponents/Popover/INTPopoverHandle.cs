@@ -6,7 +6,7 @@ namespace NTComponents;
 /// <summary>
 ///     Represents a popover window that can be shown, hidden, moved, and closed.
 /// </summary>
-public interface ITnTPopoverHandle {
+public interface INTPopoverHandle {
 
     /// <summary>
     ///     Gets inline child content when the popover was opened from a render fragment.
@@ -31,7 +31,7 @@ public interface ITnTPopoverHandle {
     /// <summary>
     ///     Gets the options used to configure the popover.
     /// </summary>
-    TnTPopoverOptions Options { get; }
+    NTPopoverOptions Options { get; }
 
     /// <summary>
     ///     Gets the component parameters used when rendering a typed popover.

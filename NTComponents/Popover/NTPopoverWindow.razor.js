@@ -19,11 +19,11 @@ function applyPosition(element, left, top) {
 }
 
 function getHandle(element) {
-    return element?.querySelector('[data-tnt-popover-drag-handle="true"]') ?? null;
+    return element?.querySelector('[data-nt-popover-drag-handle="true"]') ?? null;
 }
 
 function getLauncherStrip() {
-    return document.querySelector('[data-tnt-popover-launchers="true"]');
+    return document.querySelector('[data-nt-popover-launchers="true"]');
 }
 
 function getLauncher(popoverId) {
@@ -31,7 +31,7 @@ function getLauncher(popoverId) {
         return null;
     }
 
-    return document.querySelector(`[data-tnt-popover-launcher-id="${CSS.escape(popoverId)}"]`);
+    return document.querySelector(`[data-nt-popover-launcher-id="${CSS.escape(popoverId)}"]`);
 }
 
 function getFallbackLauncherRect() {
@@ -94,10 +94,14 @@ function cleanupDrag(state) {
     }
 
     state.isDragging = false;
-    state.element.classList.remove('tnt-popover--dragging');
+    state.element.classList.remove('nt-popover--dragging');
     window.removeEventListener('pointermove', state.onPointerMove);
     window.removeEventListener('pointerup', state.onPointerUp);
     window.removeEventListener('pointercancel', state.onPointerUp);
+}
+
+function cleanupHighlight(state) {
+    state.cancelHighlightAnimation?.();
 }
 
 export function initializePopoverWindow(element, dotNetObjectRef, options, animateFromLauncher) {
@@ -119,6 +123,7 @@ export function initializePopoverWindow(element, dotNetObjectRef, options, anima
         startLeft: options?.left ?? 0,
         startTop: options?.top ?? 0,
         top: options?.top ?? 0,
+        cancelHighlightAnimation: null,
         cancelCloseAnimation: null
     };
 
@@ -127,7 +132,7 @@ export function initializePopoverWindow(element, dotNetObjectRef, options, anima
     // never fires and the listener would be orphaned until disposePopoverWindow.
     if (!animateFromLauncher) {
         state.onEnterAnimationEnd = event => {
-            if (event.target !== element || event.animationName !== 'tnt-popover-enter') {
+            if (event.target !== element || event.animationName !== 'nt-popover-enter') {
                 return;
             }
 
@@ -183,7 +188,7 @@ export function initializePopoverWindow(element, dotNetObjectRef, options, anima
         state.startClientY = event.clientY;
         state.startLeft = state.left;
         state.startTop = state.top;
-        state.element.classList.add('tnt-popover--dragging');
+        state.element.classList.add('nt-popover--dragging');
 
         if (typeof state.handle?.setPointerCapture === 'function' && state.pointerId !== null) {
             state.handle.setPointerCapture(state.pointerId);
@@ -206,6 +211,39 @@ export function initializePopoverWindow(element, dotNetObjectRef, options, anima
 
     states.set(element, state);
     applyPosition(element, state.left, state.top);
+}
+
+export function highlightPopoverWindow(element) {
+    if (!element) {
+        return;
+    }
+
+    const state = states.get(element);
+    if (!state) {
+        return;
+    }
+
+    cleanupHighlight(state);
+    element.classList.remove('nt-popover--entering');
+    element.classList.remove('nt-popover--highlighting');
+    void element.offsetWidth;
+    element.classList.add('nt-popover--highlighting');
+
+    const timeout = setTimeout(cleanup, 560);
+
+    function cleanup(event) {
+        if (event && (event.target !== element || event.animationName !== 'nt-popover-highlight')) {
+            return;
+        }
+
+        element.removeEventListener('animationend', cleanup);
+        clearTimeout(timeout);
+        element.classList.remove('nt-popover--highlighting');
+        state.cancelHighlightAnimation = null;
+    }
+
+    state.cancelHighlightAnimation = cleanup;
+    element.addEventListener('animationend', cleanup);
 }
 
 export function updatePopoverWindow(element, options) {
@@ -288,6 +326,7 @@ export function disposePopoverWindow(element) {
 
     // Immediately resolve any pending close animation so callers are not left waiting.
     state.cancelCloseAnimation?.();
+    cleanupHighlight(state);
 
     cleanupDrag(state);
     state.handle?.removeEventListener('pointerdown', state.onPointerDown);
@@ -315,7 +354,7 @@ export function waitForCloseAnimation(element) {
         const timeout = setTimeout(resolve, 300);
 
         function onAnimationEnd(event) {
-            if (event.target !== element || event.animationName !== 'tnt-popover-exit') {
+            if (event.target !== element || event.animationName !== 'nt-popover-exit') {
                 return;
             }
 
