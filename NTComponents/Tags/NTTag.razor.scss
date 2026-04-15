@@ -1,0 +1,31 @@
+@use '../Styles/_Variables/_typescale.scss' as typescale;
+
+$bg-color: var(--nt-tag-background-color);
+$text-color: var(--nt-tag-text-color);
+
+.nt-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 4px 10px;
+    overflow: hidden;
+    vertical-align: middle;
+    background-color: $bg-color;
+    color: $text-color;
+    border-radius: 8px;
+    @include typescale.tnt-label-medium;
+
+    .nt-tag-content {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .nt-tag-icon {
+        flex: 0 0 auto;
+    }
+}

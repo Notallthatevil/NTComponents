@@ -1,0 +1,21 @@
+@namespace NTComponents
+@using NTComponents.Core
+@inherits TnTComponentBase
+
+<span @attributes="AdditionalAttributes"
+      class="@ElementClass"
+      style="@ElementStyle"
+      title="@ElementTitle"
+      id="@ElementId"
+      lang="@ElementLang"
+      @ref="Element">
+    @if (StartIcon is not null) {
+        @StartIcon.Render("nt-tag-icon")
+    }
+    <span class="nt-tag-content">
+        @ChildContent
+    </span>
+    @if (EndIcon is not null) {
+        @EndIcon.Render("nt-tag-icon")
+    }
+</span>
