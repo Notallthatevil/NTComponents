@@ -1,3 +1,10 @@
+# [1.47.0](https://github.com/Notallthatevil/NTComponents/compare/v1.46.0...v1.47.0) (2026-04-15)
+
+
+### Features
+
+* **rich-text-editor:** add extensible rich text editor with tool plugins, TypeScript interop, and tests ([6f040c8](https://github.com/Notallthatevil/NTComponents/commit/6f040c826055aec069c19b2a8b28a16f88fe58f2))
+
 # [1.46.0](https://github.com/Notallthatevil/NTComponents/compare/v1.45.1...v1.46.0) (2026-04-06)
 
 
