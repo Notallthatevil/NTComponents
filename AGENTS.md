@@ -7,6 +7,12 @@
 `NTComponents.Site/` and `LiveTest/` are sample/demo hosts.  
 `Submodules/NTComponents.Charts/` is a Git submodule and should be updated intentionally.
 
+## Design Source
+Use the Figma Material 3 source file as the baseline for all component design work:
+- `M3`: https://www.figma.com/design/R5ZmyUEcfQt9bp2piDlBIp/
+
+When designing or updating components, align structure, states, spacing, tokens, and interaction patterns to this file unless a task explicitly requires a deviation.
+
 ## Build, Test, and Development Commands
 - `dotnet restore` - restore NuGet packages for all projects.
 - `dotnet build NTComponents.slnx -c Release` - build all projects with analyzers and Sass compilation.

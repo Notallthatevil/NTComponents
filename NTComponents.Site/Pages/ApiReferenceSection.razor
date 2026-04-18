@@ -1,0 +1,53 @@
+@using NTComponents.GeneratedDocumentation
+
+<section class="docs-section">
+    <h2>API reference</h2>
+    <TnTCard Appearance="CardAppearance.Outlined" class="api-reference-card">
+        <dl class="api-summary-list">
+            <div>
+                <dt>Full name</dt>
+                <dd><code>@Type.FullName</code></dd>
+            </div>
+            <div>
+                <dt>Kind</dt>
+                <dd>@Type.Kind</dd>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(Type.BaseTypeFullName))
+            {
+                <div>
+                    <dt>Base type</dt>
+                    <dd><code>@Type.BaseTypeFullName</code></dd>
+                </div>
+            }
+        </dl>
+    </TnTCard>
+</section>
+
+@if (Type.Properties.Count > 0)
+{
+    <section class="docs-section">
+        <h2>Properties</h2>
+        <MemberTable Items="Type.Properties.Select(MemberRow.FromProperty).ToArray()" />
+    </section>
+}
+
+@if (Type.Methods.Count > 0)
+{
+    <section class="docs-section">
+        <h2>Methods</h2>
+        <MemberTable Items="Type.Methods.Select(MemberRow.FromMethod).ToArray()" />
+    </section>
+}
+
+@if (Type.Fields.Count > 0)
+{
+    <section class="docs-section">
+        <h2>Fields</h2>
+        <MemberTable Items="Type.Fields.Select(MemberRow.FromField).ToArray()" />
+    </section>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public TypeDocumentation Type { get; set; } = default!;
+}

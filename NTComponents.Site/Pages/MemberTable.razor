@@ -1,0 +1,28 @@
+<TnTCard Appearance="CardAppearance.Outlined" class="member-table-card">
+    <table class="member-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Signature</th>
+                <th>Summary</th>
+                <th>Source</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Items)
+            {
+                <tr>
+                    <td>@item.Name</td>
+                    <td><code>@item.Signature</code></td>
+                    <td>@item.Summary</td>
+                    <td>@(item.IsFromBaseType ? item.DeclaringTypeFullName : "Declared")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</TnTCard>
+
+@code {
+    [Parameter, EditorRequired]
+    public IReadOnlyList<MemberRow> Items { get; set; } = [];
+}

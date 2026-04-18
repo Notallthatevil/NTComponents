@@ -1,0 +1,69 @@
+@page "/tools/theme-converter"
+@inject MaterialThemeCssConverter Converter
+
+<PageTitle>Theme Converter - NTComponents</PageTitle>
+
+<section class="docs-page-hero compact">
+    <NTTag BackgroundColor="TnTColor.PrimaryContainer" TextColor="TnTColor.OnPrimaryContainer">
+        Tool
+    </NTTag>
+    <h1>Theme converter</h1>
+    <p>
+        Paste Material Theme Builder JSON and generate NTComponents CSS files for the `Themes` folder.
+    </p>
+</section>
+
+<section class="docs-section converter-grid">
+    <TnTCard Appearance="CardAppearance.Outlined" class="converter-panel">
+        <h2>Input</h2>
+        <TnTInputTextArea @bind-Value="_themeJson"
+                          Label="Material Theme Builder JSON"
+                          Placeholder="{ &quot;schemes&quot;: { &quot;light&quot;: ... } }"
+                          BindOnInput="true"
+                          rows="18" />
+        <TnTButton OnClickCallback="ConvertTheme">Convert theme</TnTButton>
+    </TnTCard>
+
+    <TnTCard Appearance="CardAppearance.Outlined" class="converter-panel">
+        <h2>Output</h2>
+        @if (_result is null)
+        {
+            <p>Converted CSS files will appear here.</p>
+        }
+        else
+        {
+            @if (_result.Errors.Count > 0)
+            {
+                <div class="docs-message error">
+                    @foreach (var error in _result.Errors)
+                    {
+                        <p>@error</p>
+                    }
+                </div>
+            }
+            @if (_result.Warnings.Count > 0)
+            {
+                <div class="docs-message warning">
+                    @foreach (var warning in _result.Warnings)
+                    {
+                        <p>@warning</p>
+                    }
+                </div>
+            }
+            @foreach (var output in _result.Outputs)
+            {
+                <section class="converter-output">
+                    <h3>@output.FileName</h3>
+                    <pre><code>@output.Css</code></pre>
+                </section>
+            }
+        }
+    </TnTCard>
+</section>
+
+@code {
+    private string? _themeJson;
+    private ThemeConversionResult? _result;
+
+    private void ConvertTheme(MouseEventArgs _) => _result = Converter.Convert(_themeJson);
+}

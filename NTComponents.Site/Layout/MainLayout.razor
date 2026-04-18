@@ -1,16 +1,33 @@
 @inherits LayoutComponentBase
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
+<TnTLayout class="docs-shell">
+    <NavMenu />
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+    <TnTHeader class="docs-header" BackgroundColor="TnTColor.Surface" TextColor="TnTColor.OnSurface">
+        <div class="docs-brand">
+            <TnTSideNavToggle ElementTitle="Toggle navigation" />
+            <MaterialIcon Icon="auto_awesome_mosaic" />
+            <a href="">NTComponents</a>
         </div>
+        <div class="docs-header-actions">
+            <TnTThemeToggle />
+            <TnTButton Appearance="ButtonAppearance.Outlined"
+                       BackgroundColor="TnTColor.Surface"
+                       TextColor="TnTColor.OnSurface"
+                       TintColor="TnTColor.Primary"
+                       OnClickCallback="NavigateToGettingStarted">
+                Get started
+            </TnTButton>
+        </div>
+    </TnTHeader>
 
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
-</div>
+    <TnTBody class="docs-main" BackgroundColor="TnTColor.Background" TextColor="TnTColor.OnBackground">
+        @Body
+    </TnTBody>
+</TnTLayout>
+
+@code {
+    [Inject]
+    private NavigationManager Navigation { get; set; } = default!;
+
+    private void NavigateToGettingStarted(MouseEventArgs _) => Navigation.NavigateTo("/docs");
+}

@@ -1,0 +1,42 @@
+@page "/docs/components"
+@inject DocumentationCatalog Catalog
+@inject NavigationManager Navigation
+
+<PageTitle>Components - NTComponents</PageTitle>
+
+<section class="docs-page-hero compact">
+    <NTTag BackgroundColor="TnTColor.PrimaryContainer" TextColor="TnTColor.OnPrimaryContainer">
+        Components
+    </NTTag>
+    <h1>Component guides</h1>
+    <p>
+        Demo and playground pages for every NTComponents Razor component, backed by generated API reference and raw Razor examples.
+    </p>
+</section>
+
+@foreach (var group in Catalog.ComponentGroups)
+{
+    <section class="docs-section">
+        <h2>@group.Name</h2>
+        <div class="docs-card-grid">
+            @foreach (var component in group.Entries)
+            {
+                <TnTCard Appearance="CardAppearance.Outlined" class="docs-result-card">
+                    <div class="docs-card-header">
+                        <h3>@component.DisplayName</h3>
+                        @if (component.IsFeatured)
+                        {
+                            <NTTag BackgroundColor="TnTColor.SuccessContainer" TextColor="TnTColor.OnSuccessContainer">
+                                Featured
+                            </NTTag>
+                        }
+                    </div>
+                    <p>@component.Summary</p>
+                    <TnTButton Appearance="ButtonAppearance.Text" TextColor="TnTColor.Primary" OnClickCallback="@(_ => Navigation.NavigateTo($"/docs/components/{component.Slug}"))">
+                        Open
+                    </TnTButton>
+                </TnTCard>
+            }
+        </div>
+    </section>
+}

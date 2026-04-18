@@ -1,101 +1,29 @@
-<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">NTComponents.Site</a>
-        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
-            <span class="navbar-toggler-icon"></span>
-        </button>
+<TnTSideNav class="docs-nav">
+    <div class="docs-nav-header">
+        <MaterialIcon Icon="menu_book" />
+        <span>Documentation</span>
     </div>
-</div>
 
-<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
-    <TnTThemeToggle />
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="line-chart">
-                <span class="bi bi-graph-up" aria-hidden="true"></span> Line Chart
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="bar-chart">
-                <span class="bi bi-bar-chart-fill" aria-hidden="true"></span> Bar Chart
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="combined-chart">
-                <span class="bi bi-intersect" aria-hidden="true"></span> Combined Chart
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="pie-chart">
-                <span class="bi bi-pie-chart-fill" aria-hidden="true"></span> Pie Chart
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="area-chart">
-                <span class="bi bi-graph-up-filled" aria-hidden="true"></span> Area Chart
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="box-plot">
-                <span class="bi bi-sliders2-vertical" aria-hidden="true"></span> Box Plot
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="heatmap">
-                <span class="bi bi-grid-3x3" aria-hidden="true"></span> Heatmap
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="radar-chart">
-                <span class="bi bi-pentagon" aria-hidden="true"></span> Radar Chart
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="advanced-axes">
-                <span class="bi bi-gear-wide-connected" aria-hidden="true"></span> Advanced Axes
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="treemap">
-                <span class="bi bi-bounding-box" aria-hidden="true"></span> Treemap
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="custom-rendering">
-                <span class="bi bi-brush" aria-hidden="true"></span> Advanced Rendering
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="charts/interactivity">
-                <span class="bi bi-zoom-in" aria-hidden="true"></span> Interactivity
-            </NavLink>
-        </div>
-    </nav>
-
-</div>
-
-@code {
-    private bool collapseNavMenu = true;
-
-    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
-
-    private void ToggleNavMenu()
-    {
-        collapseNavMenu = !collapseNavMenu;
-    }
-}
+    <TnTSideNavLink href="" Match="NavLinkMatch.All" Icon="@MaterialIcon.Home">
+        Home
+    </TnTSideNavLink>
+    <TnTSideNavLink href="docs" Icon="@MaterialIcon.MenuBook">
+        Docs
+    </TnTSideNavLink>
+    <TnTSideNavMenuGroup Label="Reference" Icon="@MaterialIcon.LibraryBooks">
+        <TnTSideNavLink href="docs/components" Icon="@MaterialIcon.Widgets">
+            Components
+        </TnTSideNavLink>
+        <TnTSideNavLink href="docs/api" Icon="@MaterialIcon.Api">
+            API Reference
+        </TnTSideNavLink>
+    </TnTSideNavMenuGroup>
+    <TnTSideNavMenuGroup Label="Tools" Icon="@MaterialIcon.Tune">
+        <TnTSideNavLink href="docs/theming" Icon="@MaterialIcon.Palette">
+            Theming
+        </TnTSideNavLink>
+        <TnTSideNavLink href="tools/theme-converter" Icon="@MaterialIcon.Tune">
+            Theme Converter
+        </TnTSideNavLink>
+    </TnTSideNavMenuGroup>
+</TnTSideNav>
