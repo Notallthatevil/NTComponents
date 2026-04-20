@@ -1,0 +1,28 @@
+@namespace NTComponents
+@using NTComponents.Core
+@inherits TnTPageScriptComponent<NTShape>
+
+<nt-shape @attributes="AdditionalAttributes"
+          id="@ElementId"
+          lang="@ElementLang"
+          title="@ElementTitle"
+          class="@ElementClass"
+          style="@ElementStyle"
+          @ref="Element"
+          data-shape="@((int)Shape)"
+          data-animate-shape-changes="@AnimateShapeChanges.ToString().ToLowerInvariant()"
+          data-transition-duration-ms="@TransitionDurationMilliseconds"
+          data-transition-easing="@((int)TransitionEasing)"
+          data-clip-id="@ClipPathId">
+    <svg class="nt-shape-defs" viewBox="0 0 1 1" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+        <defs>
+            <clipPath id="@ClipPathId" clipPathUnits="objectBoundingBox">
+                <path class="nt-shape-path" d="@InitialPathData"></path>
+            </clipPath>
+        </defs>
+    </svg>
+    <div class="nt-shape-content" style="@ContentStyle">
+        @ChildContent
+    </div>
+</nt-shape>
+@PageScript

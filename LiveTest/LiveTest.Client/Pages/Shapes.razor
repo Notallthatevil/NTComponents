@@ -1,0 +1,36 @@
+@page "/shapes"
+@using NTComponents
+@rendermode InteractiveAuto
+
+<PageTitle>Shapes</PageTitle>
+
+<div style="display:grid;gap:1rem;max-width:48rem;">
+    <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:end;">
+        <label style="display:grid;gap:0.35rem;">
+            <span>Shape</span>
+            <select @bind="SelectedShape" style="min-width:18rem;padding:0.5rem;">
+                @foreach (var shape in Enum.GetValues<NTShapeType>()) {
+                    <option value="@shape">@shape</option>
+                }
+            </select>
+        </label>
+        <label style="display:flex;gap:0.5rem;align-items:center;">
+            <input type="checkbox" @bind="AnimateShapeChanges" />
+            <span>Animate shape changes</span>
+        </label>
+    </div>
+
+    <NTShape Shape="@SelectedShape"
+             AnimateShapeChanges="@AnimateShapeChanges"
+             style="width:18rem;height:12rem;">
+        <div style="display:grid;place-items:center;background:#6750A4;color:#FFFFFF;font:600 1.15rem/1.2 Roboto,sans-serif;text-align:center;padding:1rem;">
+            @SelectedShape
+        </div>
+    </NTShape>
+</div>
+
+@code {
+    private bool AnimateShapeChanges { get; set; } = true;
+
+    private NTShapeType SelectedShape { get; set; } = NTShapeType.Circle;
+}

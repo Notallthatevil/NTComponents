@@ -21,6 +21,7 @@
   },
   "include": [
     "NTComponents/Editors/**/*.ts",
+    "NTComponents/Shapes/**/*.ts",
     "NTComponents/**/*.d.ts"
   ],
   "exclude": [

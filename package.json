@@ -11,8 +11,8 @@
   "scripts": {
     "build:ts": "tsc -p tsconfig.json",
     "build:rich-text-editor": "tsc -p tsconfig.json --pretty false",
-    "build:rich-text-editor:release": "tsc -p tsconfig.json --pretty false && terser NTComponents/Editors/NTRichTextEditor.razor.js --module --compress --comments false --output NTComponents/Editors/NTRichTextEditor.razor.js && terser NTComponents/Editors/Tool/EditorToolImageButton.razor.js --module --compress --comments false --output NTComponents/Editors/Tool/EditorToolImageButton.razor.js && terser NTComponents/Editors/Tool/EditorToolTableButton.razor.js --module --compress --comments false --output NTComponents/Editors/Tool/EditorToolTableButton.razor.js && terser NTComponents/Editors/Tool/EditorToolTextColorButton.razor.js --module --compress --comments false --output NTComponents/Editors/Tool/EditorToolTextColorButton.razor.js && terser NTComponents/Editors/Tool/EditorToolLinkButton.razor.js --module --compress --comments false --output NTComponents/Editors/Tool/EditorToolLinkButton.razor.js && terser NTComponents/Editors/Tool/EditorToolIframeButton.razor.js --module --compress --comments false --output NTComponents/Editors/Tool/EditorToolIframeButton.razor.js",
-    "pretest": "npm run build:rich-text-editor",
+    "build:rich-text-editor:release": "tsc -p tsconfig.json --pretty false && terser NTComponents/Editors/NTRichTextEditor.razor.js --module --compress --comments false --output NTComponents/Editors/NTRichTextEditor.razor.js && terser NTComponents/Editors/Tool/EditorToolImageButton.razor.js --module --compress --comments false --output NTComponents/Editors/Tool/EditorToolImageButton.razor.js && terser NTComponents/Editors/Tool/EditorToolTableButton.razor.js --module --compress --comments false --output NTComponents/Editors/Tool/EditorToolTableButton.razor.js && terser NTComponents/Editors/Tool/EditorToolTextColorButton.razor.js --module --compress --comments false --output NTComponents/Editors/Tool/EditorToolTextColorButton.razor.js && terser NTComponents/Editors/Tool/EditorToolLinkButton.razor.js --module --compress --comments false --output NTComponents/Editors/Tool/EditorToolLinkButton.razor.js && terser NTComponents/Editors/Tool/EditorToolIframeButton.razor.js --module --compress --comments false --output NTComponents/Editors/Tool/EditorToolIframeButton.razor.js && terser NTComponents/Shapes/NTShape.razor.js --module --compress --comments false --output NTComponents/Shapes/NTShape.razor.js",
+    "pretest": "npm run build:ts",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "test:js": "npm run test"
   },
@@ -25,6 +25,7 @@
       "<rootDir>/NTComponents/Accordion/__tests__",
       "<rootDir>/NTComponents/Animation/__tests__",
       "<rootDir>/NTComponents/Editors/__tests__",
+      "<rootDir>/NTComponents/Shapes/__tests__",
       "<rootDir>/NTComponents/TabView/__tests__",
       "<rootDir>/NTComponents/Theming/__tests__",
       "<rootDir>/NTComponents/Typeahead/__tests__",
