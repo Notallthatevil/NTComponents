@@ -1,4 +1,7 @@
-﻿/* display - large */
+@use 'sass:map';
+@use 'sass:string';
+
+/* display - large */
 $tnt-typescale-display-large-font-family-name: Roboto;
 $tnt-typescale-display-large-font-weight: 400;
 $tnt-typescale-display-large-font-size: 57px;
@@ -89,6 +92,85 @@ $tnt-typescale-title-small-font-size: 14px;
 $tnt-typescale-title-small-line-height: 20px;
 $tnt-typescale-title-small-letter-spacing: 0.10px;
 
+$nt-typescale-baseline: (
+    'display-large': (font-ref: brand, weight: 400, size: 57px, line-height: 64px, tracking: -0.25px),
+    'display-medium': (font-ref: brand, weight: 400, size: 45px, line-height: 52px, tracking: 0px),
+    'display-small': (font-ref: brand, weight: 400, size: 36px, line-height: 44px, tracking: 0px),
+    'headline-large': (font-ref: brand, weight: 400, size: 32px, line-height: 40px, tracking: 0px),
+    'headline-medium': (font-ref: brand, weight: 400, size: 28px, line-height: 36px, tracking: 0px),
+    'headline-small': (font-ref: brand, weight: 400, size: 24px, line-height: 32px, tracking: 0px),
+    'title-large': (font-ref: brand, weight: 400, size: 22px, line-height: 28px, tracking: 0px),
+    'title-medium': (font-ref: brand, weight: 500, size: 16px, line-height: 24px, tracking: 0.15px),
+    'title-small': (font-ref: brand, weight: 500, size: 14px, line-height: 20px, tracking: 0.10px),
+    'body-large': (font-ref: plain, weight: 400, size: 16px, line-height: 24px, tracking: 0.50px),
+    'body-medium': (font-ref: plain, weight: 400, size: 14px, line-height: 20px, tracking: 0.25px),
+    'body-small': (font-ref: plain, weight: 400, size: 12px, line-height: 16px, tracking: 0.40px),
+    'label-large': (font-ref: brand, weight: 500, size: 14px, line-height: 20px, tracking: 0.10px),
+    'label-medium': (font-ref: plain, weight: 500, size: 12px, line-height: 16px, tracking: 0.50px),
+    'label-small': (font-ref: plain, weight: 500, size: 11px, line-height: 16px, tracking: 0.50px),
+);
+
+$nt-typescale-emphasized: (
+    'display-large': (font-ref: brand, weight: 500, size: 57px, line-height: 64px, tracking: -0.25px),
+    'display-medium': (font-ref: brand, weight: 500, size: 45px, line-height: 52px, tracking: 0px),
+    'display-small': (font-ref: brand, weight: 500, size: 36px, line-height: 44px, tracking: 0px),
+    'headline-large': (font-ref: brand, weight: 500, size: 32px, line-height: 40px, tracking: 0px),
+    'headline-medium': (font-ref: brand, weight: 500, size: 28px, line-height: 36px, tracking: 0px),
+    'headline-small': (font-ref: brand, weight: 500, size: 24px, line-height: 32px, tracking: 0px),
+    'title-large': (font-ref: brand, weight: 500, size: 22px, line-height: 28px, tracking: 0px),
+    'title-medium': (font-ref: brand, weight: 700, size: 16px, line-height: 24px, tracking: 0.15px),
+    'title-small': (font-ref: brand, weight: 700, size: 14px, line-height: 20px, tracking: 0.10px),
+    'body-large': (font-ref: plain, weight: 500, size: 16px, line-height: 24px, tracking: 0.50px),
+    'body-medium': (font-ref: plain, weight: 500, size: 14px, line-height: 20px, tracking: 0.25px),
+    'body-small': (font-ref: plain, weight: 500, size: 12px, line-height: 16px, tracking: 0.40px),
+    'label-large': (font-ref: brand, weight: 700, size: 14px, line-height: 20px, tracking: 0.10px),
+    'label-medium': (font-ref: plain, weight: 700, size: 12px, line-height: 16px, tracking: 0.50px),
+    'label-small': (font-ref: plain, weight: 700, size: 11px, line-height: 16px, tracking: 0.50px),
+);
+
+@function _nt-ref-typeface($typeface, $fallback: Roboto) {
+    @return string.unquote("var(--nt-ref-typeface-#{$typeface}, #{$fallback})");
+}
+
+@function _nt-ref-weight($weight) {
+    @if $weight == 400 {
+        @return string.unquote('var(--nt-ref-typeface-weight-regular, 400)');
+    }
+
+    @if $weight == 500 {
+        @return string.unquote('var(--nt-ref-typeface-weight-medium, 500)');
+    }
+
+    @if $weight == 700 {
+        @return string.unquote('var(--nt-ref-typeface-weight-bold, 700)');
+    }
+
+    @return $weight;
+}
+
+@function _nt-style-token-var($style, $property, $fallback, $emphasized: false) {
+    $prefix: if($emphasized, 'emphasized-', '');
+    @return string.unquote("var(--nt-sys-typescale-#{$prefix}#{$style}-#{$property}, #{$fallback})");
+}
+
+@function _nt-style-config($style, $emphasized: false) {
+    @return if($emphasized, map.get($nt-typescale-emphasized, $style), map.get($nt-typescale-baseline, $style));
+}
+
+@mixin _nt-apply-style($style, $emphasized: false) {
+    $config: _nt-style-config($style, $emphasized);
+    $font-ref: map.get($config, font-ref);
+    $weight: map.get($config, weight);
+    $size: map.get($config, size);
+    $line-height: map.get($config, line-height);
+    $tracking: map.get($config, tracking);
+
+    font-family: _nt-style-token-var($style, font, _nt-ref-typeface($font-ref), $emphasized);
+    font-weight: _nt-style-token-var($style, weight, _nt-ref-weight($weight), $emphasized);
+    font-size: _nt-style-token-var($style, size, $size, $emphasized);
+    line-height: _nt-style-token-var($style, line-height, $line-height, $emphasized);
+    letter-spacing: _nt-style-token-var($style, tracking, $tracking, $emphasized);
+}
 
 @mixin tnt-display-large {
     font-family: $tnt-typescale-display-large-font-family-name;
@@ -210,8 +292,136 @@ $tnt-typescale-title-small-letter-spacing: 0.10px;
     letter-spacing: $tnt-typescale-title-small-letter-spacing;
 }
 
+@mixin nt-display-large {
+    @include _nt-apply-style('display-large');
+}
+
+@mixin nt-display-medium {
+    @include _nt-apply-style('display-medium');
+}
+
+@mixin nt-display-small {
+    @include _nt-apply-style('display-small');
+}
+
+@mixin nt-headline-large {
+    @include _nt-apply-style('headline-large');
+}
+
+@mixin nt-headline-medium {
+    @include _nt-apply-style('headline-medium');
+}
+
+@mixin nt-headline-small {
+    @include _nt-apply-style('headline-small');
+}
+
+@mixin nt-title-large {
+    @include _nt-apply-style('title-large');
+}
+
+@mixin nt-title-medium {
+    @include _nt-apply-style('title-medium');
+}
+
+@mixin nt-title-small {
+    @include _nt-apply-style('title-small');
+}
+
+@mixin nt-body-large {
+    @include _nt-apply-style('body-large');
+}
+
+@mixin nt-body-medium {
+    @include _nt-apply-style('body-medium');
+}
+
+@mixin nt-body-small {
+    @include _nt-apply-style('body-small');
+}
+
+@mixin nt-label-large {
+    @include _nt-apply-style('label-large');
+}
+
+@mixin nt-label-medium {
+    @include _nt-apply-style('label-medium');
+}
+
+@mixin nt-label-small {
+    @include _nt-apply-style('label-small');
+}
+
+@mixin nt-display-large-emphasized {
+    @include _nt-apply-style('display-large', true);
+}
+
+@mixin nt-display-medium-emphasized {
+    @include _nt-apply-style('display-medium', true);
+}
+
+@mixin nt-display-small-emphasized {
+    @include _nt-apply-style('display-small', true);
+}
+
+@mixin nt-headline-large-emphasized {
+    @include _nt-apply-style('headline-large', true);
+}
+
+@mixin nt-headline-medium-emphasized {
+    @include _nt-apply-style('headline-medium', true);
+}
+
+@mixin nt-headline-small-emphasized {
+    @include _nt-apply-style('headline-small', true);
+}
+
+@mixin nt-title-large-emphasized {
+    @include _nt-apply-style('title-large', true);
+}
+
+@mixin nt-title-medium-emphasized {
+    @include _nt-apply-style('title-medium', true);
+}
+
+@mixin nt-title-small-emphasized {
+    @include _nt-apply-style('title-small', true);
+}
+
+@mixin nt-body-large-emphasized {
+    @include _nt-apply-style('body-large', true);
+}
+
+@mixin nt-body-medium-emphasized {
+    @include _nt-apply-style('body-medium', true);
+}
+
+@mixin nt-body-small-emphasized {
+    @include _nt-apply-style('body-small', true);
+}
+
+@mixin nt-label-large-emphasized {
+    @include _nt-apply-style('label-large', true);
+}
+
+@mixin nt-label-medium-emphasized {
+    @include _nt-apply-style('label-medium', true);
+}
+
+@mixin nt-label-small-emphasized {
+    @include _nt-apply-style('label-small', true);
+}
+
 @mixin tnt-typescale($font-weight, $font-size, $line-height, $font-tracking) {
     font-family: 'Roboto', sans-serif;
+    font-weight: $font-weight;
+    font-size: $font-size;
+    line-height: $line-height;
+    letter-spacing: $font-tracking;
+}
+
+@mixin nt-typescale($font-weight, $font-size, $line-height, $font-tracking, $font-family: _nt-ref-typeface(brand)) {
+    font-family: $font-family;
     font-weight: $font-weight;
     font-size: $font-size;
     line-height: $line-height;
