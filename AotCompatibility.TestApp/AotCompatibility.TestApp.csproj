@@ -10,6 +10,9 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\NTComponents.Analyzers\NTComponents.Analyzers.csproj"
+		                  OutputItemType="Analyzer"
+		                  ReferenceOutputAssembly="false" />
 		<ProjectReference Include="..\NTComponents\NTComponents.csproj" />
 		<TrimmerRootAssembly Include="NTComponents" />
 	</ItemGroup>

@@ -41,6 +41,9 @@
 		<ProjectReference Include="..\NTComponents.CodeDocumentation.Generator\NTComponents.CodeDocumentation.Generator.csproj"
 		                  OutputItemType="Analyzer"
 		                  ReferenceOutputAssembly="false" />
+		<ProjectReference Include="..\NTComponents.Analyzers\NTComponents.Analyzers.csproj"
+		                  OutputItemType="Analyzer"
+		                  ReferenceOutputAssembly="false" />
 	</ItemGroup>
 
 	<ItemGroup>
