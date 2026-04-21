@@ -1,94 +1,11 @@
 @page "/"
-@inject NavigationManager Navigation
+<PageTitle>NTComponents.Site</PageTitle>
 
-<PageTitle>NTComponents</PageTitle>
-
-<section class="home-hero">
-    <div class="home-hero-copy">
-        <NTTag BackgroundColor="TnTColor.PrimaryContainer" TextColor="TnTColor.OnPrimaryContainer">
-            Blazor component library
-        </NTTag>
-        <h1>NTComponents</h1>
-        <p>
-            Build modern Blazor applications with a Material-inspired component system, runtime theming,
-            rich inputs, data grids, charts, dialogs, navigation, and generated API documentation.
-        </p>
-        <div class="home-hero-actions">
-            <TnTButton ButtonSize="Size.Medium"
-                       Appearance="ButtonAppearance.Filled"
-                       OnClickCallback="OpenDocs">
-                Browse docs
-            </TnTButton>
-            <TnTButton ButtonSize="Size.Medium"
-                       Appearance="ButtonAppearance.Outlined"
-                       BackgroundColor="TnTColor.Surface"
-                       TextColor="TnTColor.OnSurface"
-                       TintColor="TnTColor.Primary"
-                       OnClickCallback="OpenComponents">
-                View components
-            </TnTButton>
-        </div>
-    </div>
-    <TnTCard class="home-preview" Appearance="CardAppearance.Outlined">
-        <div class="home-preview-toolbar">
-            <span>Runtime preview</span>
-            <TnTThemeToggle />
-        </div>
-        <div class="home-preview-surface">
-            <TnTButton Appearance="ButtonAppearance.Filled">Primary</TnTButton>
-            <TnTButton Appearance="ButtonAppearance.Outlined"
-                       BackgroundColor="TnTColor.Surface"
-                       TextColor="TnTColor.OnSurface">
-                Outlined
-            </TnTButton>
-            <NTTag BackgroundColor="TnTColor.Success" TextColor="TnTColor.OnSuccess">
-                Ready
-            </NTTag>
-        </div>
-    </TnTCard>
+<section class="starter-card">
+    <p class="starter-kicker">Clean State</p>
+    <h1>NTComponents.Site</h1>
+    <p>
+        This site has been reset to a bare-bones starting point. Add routes, components, and styles here as the new
+        build takes shape.
+    </p>
 </section>
-
-<section class="home-section">
-    <div class="section-heading">
-        <h2>Documentation that follows the code</h2>
-        <p>
-            The redesigned site combines curated component guidance with the generated documentation model
-            emitted by `NTComponents.CodeDocumentation.Generator`.
-        </p>
-    </div>
-    <div class="feature-grid">
-        <TnTCard Appearance="CardAppearance.Filled">
-            <MaterialIcon Icon="api" />
-            <h3>Generated API reference</h3>
-            <p>Browse documented types, properties, methods, fields, inherited members, and signatures from the library build.</p>
-        </TnTCard>
-        <TnTCard Appearance="CardAppearance.Filled">
-            <MaterialIcon Icon="widgets" />
-            <h3>Component examples</h3>
-            <p>Use live examples with runtime controls for sizing, color, appearance, state, placement, and behavior.</p>
-        </TnTCard>
-        <TnTCard Appearance="CardAppearance.Filled">
-            <MaterialIcon Icon="palette" />
-            <h3>Theme tooling</h3>
-            <p>Learn the NTComponents theme contract and convert Material Theme Builder output into site-ready CSS files.</p>
-        </TnTCard>
-    </div>
-</section>
-
-<section class="home-section home-install">
-    <TnTCard Appearance="CardAppearance.Outlined">
-        <div class="install-content">
-            <div>
-                <h2>Start with the component library</h2>
-                <p>Reference the package, add the NTComponents head dependencies, and build your shell with the same components documented here.</p>
-            </div>
-            <pre><code>dotnet add package NTComponents</code></pre>
-        </div>
-    </TnTCard>
-</section>
-
-@code {
-    private void OpenDocs(MouseEventArgs _) => Navigation.NavigateTo("/docs");
-
-    private void OpenComponents(MouseEventArgs _) => Navigation.NavigateTo("/docs/components");
-}

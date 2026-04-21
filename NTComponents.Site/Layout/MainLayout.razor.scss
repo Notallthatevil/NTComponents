@@ -1,50 +1,20 @@
-::deep .docs-shell {
-    background:
-        linear-gradient(135deg, color-mix(in srgb, var(--tnt-color-primary-container) 18%, transparent), transparent 34rem),
-        var(--tnt-color-background);
+.site-shell {
+    min-height: 100vh;
+    background: var(--tnt-color-background);
     color: var(--tnt-color-on-background);
 }
 
-::deep .docs-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 0 clamp(0.75rem, 2vw, 1.25rem);
+.site-header {
+    padding: 1rem 1.5rem;
     border-bottom: 1px solid var(--tnt-color-outline-variant);
+    background: var(--tnt-color-surface);
 }
 
-.docs-brand {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-weight: 800;
-    font-size: 1.05rem;
-    min-width: 0;
-}
-
-.docs-brand a {
+.site-header a {
     color: inherit;
     text-decoration: none;
 }
 
-.docs-header-actions {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-::deep .docs-main {
-    min-width: 0;
-    padding: clamp(1rem, 3vw, 2.5rem);
-}
-
-@media (max-width: 820px) {
-    .docs-header-actions {
-        gap: 0.5rem;
-    }
-
-    .docs-header-actions ::deep .tnt-button {
-        display: none;
-    }
+.site-main {
+    padding: 2rem 1.5rem;
 }
