@@ -52,6 +52,14 @@ public sealed class CssClassBuilder {
     public CssClassBuilder AddElevation(int elevation) => AddClass($"tnt-elevation-{Math.Clamp(elevation, 0, 10)}", elevation >= 0);
 
     /// <summary>
+    ///     Adds a CSS class for NT elevation.
+    /// </summary>
+    /// <param name="elevation">The NT elevation level.</param>
+    /// <param name="enabled">Whether the class should be added.</param>
+    /// <returns>The current instance of <see cref="CssClassBuilder" />.</returns>
+    public CssClassBuilder AddElevation(NTElevation elevation, bool enabled = true) => AddClass(elevation.ToCssClass(), enabled);
+
+    /// <summary>
     ///     Adds a CSS class for filled state.
     /// </summary>
     /// <param name="enabled">Whether the filled state is enabled.</param>

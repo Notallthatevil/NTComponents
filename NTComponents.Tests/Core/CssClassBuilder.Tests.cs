@@ -249,6 +249,18 @@ public class CssClassBuilder_Tests {
     }
 
     [Fact]
+    public void AddElevation_WithNtElevation_AddsNtElevationClass() {
+        // Arrange
+        var builder = CssClassBuilder.Create("");
+
+        // Act
+        var result = builder.AddElevation(NTElevation.High).Build();
+
+        // Assert
+        result.Should().Be("nt-elevation-high");
+    }
+
+    [Fact]
     public void AddElevation_WithZeroElevation_AddsElevationClass() {
         // Arrange
         var builder = CssClassBuilder.Create("");
