@@ -49,6 +49,18 @@ public class TnTMeasurements_Tests : BunitContext {
         markup.Should().Contain(".tnt-title-large{");
         markup.Should().Contain(".tnt-title-medium{");
         markup.Should().Contain(".tnt-title-small{");
+
+        // New nt-prefixed styles
+        markup.Should().Contain(".nt-display-large{");
+        markup.Should().Contain(".nt-headline-large{");
+        markup.Should().Contain(".nt-title-large{");
+        markup.Should().Contain(".nt-body-large{");
+        markup.Should().Contain(".nt-label-large{");
+        markup.Should().Contain(".nt-display-large-emphasized{");
+        markup.Should().Contain(".nt-headline-large-emphasized{");
+        markup.Should().Contain(".nt-title-large-emphasized{");
+        markup.Should().Contain(".nt-body-large-emphasized{");
+        markup.Should().Contain(".nt-label-large-emphasized{");
     }
 
     [Fact]
@@ -96,6 +108,7 @@ public class TnTMeasurements_Tests : BunitContext {
         // Assert Both custom measurements and fonts should be present
         cut.Markup.Should().Contain("--tnt-header-height:120px");
         cut.Markup.Should().Contain(".tnt-display-large{font-family:Roboto;");
+        cut.Markup.Should().Contain(".nt-display-large{font-family:var(--nt-sys-typescale-display-large-font,var(--nt-ref-typeface-brand,Roboto));");
         cut.Markup.Should().Contain("body{padding:0;margin:0;}");
     }
 
@@ -131,6 +144,41 @@ public class TnTMeasurements_Tests : BunitContext {
         cut.Markup.Should().Contain(".tnt-label-large{font-family:Roboto;font-weight:500;font-size:14px;line-height:20px;letter-spacing:0.10px;}");
         cut.Markup.Should().Contain(".tnt-label-medium{font-family:Roboto;font-weight:500;font-size:12px;line-height:16px;letter-spacing:0.50px;}");
         cut.Markup.Should().Contain(".tnt-label-small{font-family:Roboto;font-weight:500;font-size:11px;line-height:16px;letter-spacing:0.50px;}");
+    }
+
+    [Fact]
+    public void NtTypefaceTokens_ArePresent() {
+        // Arrange & Act
+        var cut = RenderMeasurements();
+
+        // Assert
+        cut.Markup.Should().Contain("--nt-ref-typeface-brand:Roboto;");
+        cut.Markup.Should().Contain("--nt-ref-typeface-plain:Roboto;");
+        cut.Markup.Should().Contain("--nt-ref-typeface-weight-regular:400;");
+        cut.Markup.Should().Contain("--nt-ref-typeface-weight-medium:500;");
+        cut.Markup.Should().Contain("--nt-ref-typeface-weight-bold:700;");
+    }
+
+    [Fact]
+    public void LegacyTntTitleMedium_IsRetained() {
+        // Arrange & Act
+        var cut = RenderMeasurements();
+
+        // Assert
+        cut.Markup.Should().Contain(".tnt-title-medium{font-family:Roboto;font-weight:500;font-size:18px;line-height:24px;letter-spacing:0.15px;}");
+    }
+
+    [Fact]
+    public void NtTypographyTokens_AreRendered() {
+        // Arrange & Act
+        var cut = RenderMeasurements();
+
+        // Assert
+        cut.Markup.Should().Contain("--nt-sys-typescale-title-medium-size:16px;");
+        cut.Markup.Should().Contain("--nt-sys-typescale-emphasized-display-large-weight:500;");
+        cut.Markup.Should().Contain("--nt-sys-typescale-emphasized-title-medium-weight:700;");
+        cut.Markup.Should().Contain(".nt-title-medium{font-family:var(--nt-sys-typescale-title-medium-font,var(--nt-ref-typeface-brand,Roboto));font-weight:var(--nt-sys-typescale-title-medium-weight,500);font-size:var(--nt-sys-typescale-title-medium-size,16px);line-height:var(--nt-sys-typescale-title-medium-line-height,24px);letter-spacing:var(--nt-sys-typescale-title-medium-tracking,0.15px);}");
+        cut.Markup.Should().Contain(".nt-label-large-emphasized{font-family:var(--nt-sys-typescale-emphasized-label-large-font,var(--nt-ref-typeface-brand,Roboto));font-weight:var(--nt-sys-typescale-emphasized-label-large-weight,700);font-size:var(--nt-sys-typescale-emphasized-label-large-size,14px);line-height:var(--nt-sys-typescale-emphasized-label-large-line-height,20px);letter-spacing:var(--nt-sys-typescale-emphasized-label-large-tracking,0.10px);}");
     }
 
     [Fact]
@@ -224,10 +272,13 @@ public class TnTMeasurements_Tests : BunitContext {
 
         // Assert
         cut.Markup.Should().Contain("<style class=\"tnt-fonts\">");
+        cut.Markup.Should().Contain(":root{--nt-ref-typeface-brand:Roboto;");
         cut.Markup.Should().Contain("body{padding:0;margin:0;}");
         cut.Markup.Should().Contain(".tnt-display-large{font-family:Roboto;");
         cut.Markup.Should().Contain(".tnt-body-medium{font-family:Roboto;font-weight:400;font-size:14px;line-height:20px;letter-spacing:0.25px;}");
         cut.Markup.Should().Contain(".tnt-title-small{font-family:Roboto;font-weight:500;font-size:14px;line-height:20px;letter-spacing:0.10px;}");
+        cut.Markup.Should().Contain(".nt-body-medium{font-family:var(--nt-sys-typescale-body-medium-font,var(--nt-ref-typeface-plain,Roboto));font-weight:var(--nt-sys-typescale-body-medium-weight,400);font-size:var(--nt-sys-typescale-body-medium-size,14px);line-height:var(--nt-sys-typescale-body-medium-line-height,20px);letter-spacing:var(--nt-sys-typescale-body-medium-tracking,0.25px);}");
+        cut.Markup.Should().Contain(".nt-title-small{font-family:var(--nt-sys-typescale-title-small-font,var(--nt-ref-typeface-brand,Roboto));font-weight:var(--nt-sys-typescale-title-small-weight,500);font-size:var(--nt-sys-typescale-title-small-size,14px);line-height:var(--nt-sys-typescale-title-small-line-height,20px);letter-spacing:var(--nt-sys-typescale-title-small-tracking,0.10px);}");
     }
 
     [Fact]
