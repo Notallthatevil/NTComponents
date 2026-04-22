@@ -1,10 +1,13 @@
 @namespace NTComponents
 
 <style class="tnt-measurements">
-:root{--tnt-header-height:@($"{HeaderHeight}px;");--tnt-footer-height:@($"{FooterHeight}px;");--tnt-side-nav-width:@($"{SideNavWidth}px;");}
+:root{--tnt-header-height:@($"{HeaderHeight}px;");--tnt-footer-height:@($"{FooterHeight}px;");--tnt-side-nav-width:@($"{SideNavWidth}px;");@(NtCornerRadiusVariables)}
 </style>
 <style class="nt-elevations">
 .nt-elevation-none{box-shadow:none;}.nt-elevation-lowest{box-shadow:0px 1px 1px 0px var(--tnt-color-shadow);}.nt-elevation-low{box-shadow:0px 2px 3px 0px var(--tnt-color-shadow);}.nt-elevation-medium{box-shadow:0px 4px 6px 0px var(--tnt-color-shadow);}.nt-elevation-high{box-shadow:0px 6px 8px 0px var(--tnt-color-shadow);}.nt-elevation-highest{box-shadow:0px 8px 12px 0px var(--tnt-color-shadow);}
+</style>
+<style class="nt-corner-radii">
+@(NtCornerRadiusStyles)
 </style>
 <style class="tnt-fonts">
 @(LegacyTntFontStyles)@(NtFontStyles)

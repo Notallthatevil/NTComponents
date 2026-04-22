@@ -64,6 +64,8 @@ public partial class TnTMeasurements
     };
 
     private static readonly string NtFontStyles = BuildNtFontStyles();
+    private static readonly string NtCornerRadiusVariables = BuildNtCornerRadiusVariables();
+    private static readonly string NtCornerRadiusStyles = BuildNtCornerRadiusStyles();
 
     /// <summary>
     /// Gets or sets the footer height.
@@ -103,6 +105,30 @@ public partial class TnTMeasurements
         return builder.ToString();
     }
 
+    private static string BuildNtCornerRadiusVariables()
+    {
+        var builder = new StringBuilder();
+
+        foreach (var cornerRadius in Enum.GetValues<NTCornerRadius>()) {
+            builder.Append("--").Append(GetCornerRadiusTokenName(cornerRadius)).Append(':').Append(cornerRadius.ToCssValue()).Append(';');
+        }
+
+        return builder.ToString();
+    }
+
+    private static string BuildNtCornerRadiusStyles()
+    {
+        var builder = new StringBuilder();
+
+        foreach (var cornerRadius in Enum.GetValues<NTCornerRadius>()) {
+            builder.Append('.').Append(cornerRadius.ToCssClass()).Append('{');
+            builder.Append("border-radius:var(--").Append(GetCornerRadiusTokenName(cornerRadius)).Append(',').Append(cornerRadius.ToCssValue()).Append(");");
+            builder.Append('}');
+        }
+
+        return builder.ToString();
+    }
+
     private static void AppendTypographyTokens(StringBuilder builder, IEnumerable<TypographyStyle> styles, bool emphasized)
     {
         foreach (var style in styles) {
@@ -131,6 +157,20 @@ public partial class TnTMeasurements
     private static string GetTokenPrefix(string styleName, bool emphasized) => emphasized
         ? $"nt-sys-typescale-emphasized-{styleName}"
         : $"nt-sys-typescale-{styleName}";
+
+    private static string GetCornerRadiusTokenName(NTCornerRadius cornerRadius) => cornerRadius switch {
+        NTCornerRadius.None => "nt-sys-shape-corner-none",
+        NTCornerRadius.ExtraSmall => "nt-sys-shape-corner-extra-small",
+        NTCornerRadius.Small => "nt-sys-shape-corner-small",
+        NTCornerRadius.Medium => "nt-sys-shape-corner-medium",
+        NTCornerRadius.Large => "nt-sys-shape-corner-large",
+        NTCornerRadius.LargeIncreased => "nt-sys-shape-corner-large-increased",
+        NTCornerRadius.ExtraLarge => "nt-sys-shape-corner-extra-large",
+        NTCornerRadius.ExtraLargeIncreased => "nt-sys-shape-corner-extra-large-increased",
+        NTCornerRadius.ExtraExtraLarge => "nt-sys-shape-corner-extra-extra-large",
+        NTCornerRadius.Full => "nt-sys-shape-corner-full",
+        _ => throw new ArgumentOutOfRangeException(nameof(cornerRadius), cornerRadius, null)
+    };
 
     private static string GetUtilityClassName(string styleName, bool emphasized) => emphasized
         ? $"nt-{styleName}-emphasized"

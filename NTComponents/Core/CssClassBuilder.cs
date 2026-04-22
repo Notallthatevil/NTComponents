@@ -38,6 +38,14 @@ public sealed class CssClassBuilder {
     }
 
     /// <summary>
+    ///     Adds a CSS class for NT corner radius.
+    /// </summary>
+    /// <param name="cornerRadius">The NT corner radius token.</param>
+    /// <param name="enabled">Whether the class should be added.</param>
+    /// <returns>The current instance of <see cref="CssClassBuilder" />.</returns>
+    public CssClassBuilder AddCornerRadius(NTCornerRadius cornerRadius, bool enabled = true) => AddClass(cornerRadius.ToCssClass(), enabled);
+
+    /// <summary>
     ///     Adds a CSS class for disabled state.
     /// </summary>
     /// <param name="disabled">Whether the component is disabled.</param>
