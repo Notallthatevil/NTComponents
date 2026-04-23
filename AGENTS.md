@@ -30,6 +30,7 @@ Follow `.editorconfig`:
 - Public types/methods/properties use `PascalCase`; interfaces start with `I`.
 
 Keep related component files co-located and consistently named (example: `TnTButton.razor`, `TnTButton.razor.cs`, `TnTButton.razor.scss`).
+For component SCSS, do not use `__`/BEM-style CSS class names. Prefer nested classes under the component root and normal SCSS nesting best practices instead.
 
 ## Testing Guidelines
 Use xUnit v3 + bUnit for C# tests and Playwright for browser E2E coverage. Use Jest for JS modules.
