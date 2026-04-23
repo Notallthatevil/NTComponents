@@ -1,12 +1,27 @@
 .nt-card {
+    position: relative;
     display: block;
     box-sizing: border-box;
+    min-width: 0;
     padding: 16px;
     border: 1px solid transparent;
     background-color: var(--nt-card-background-color);
     color: var(--nt-card-content-color, inherit);
+    overflow: hidden;
+    outline: none;
     text-decoration: none;
-    transition: box-shadow 120ms ease, border-color 120ms ease, transform 120ms ease;
+    transition: background-color 120ms ease, box-shadow 120ms ease, border-color 120ms ease, color 120ms ease, outline-color 120ms ease;
+
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        pointer-events: none;
+        border-radius: inherit;
+        background: var(--nt-card-state-layer-color);
+        transition: opacity 120ms ease;
+    }
 
     &.nt-card-outlined {
         border-color: var(--nt-card-outline-color);
@@ -23,17 +38,26 @@
         cursor: pointer;
     }
 
-    &.nt-card-actionable.nt-card-elevated:not(.nt-card-disabled):hover {
-        transform: translateY(-1px);
+    &.nt-card-actionable:not(.nt-card-disabled):hover::before {
+        opacity: 0.08;
     }
 
     &.nt-card-actionable:not(.nt-card-disabled):focus-visible {
-        outline: 2px solid var(--nt-card-outline-color);
+        outline: 3px solid color-mix(in srgb, var(--nt-card-outline-color) 44%, transparent);
         outline-offset: 2px;
     }
 
+    &.nt-card-actionable:not(.nt-card-disabled):focus-visible::before {
+        opacity: 0.1;
+    }
+
+    &.nt-card-actionable:not(.nt-card-disabled):active::before {
+        opacity: 0.1;
+    }
+
     &.nt-card-disabled {
-        opacity: 0.6;
+        opacity: 0.38;
         cursor: default;
+        outline: none;
     }
 }

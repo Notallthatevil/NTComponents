@@ -71,6 +71,7 @@ public partial class NTCard : TnTComponentBase {
         .AddVariable("nt-card-background-color", EffectiveBackgroundColor)
         .AddVariable("nt-card-content-color", EffectiveTextColor.ToCssTnTColorVariable(), EffectiveTextColor.HasValue)
         .AddVariable("nt-card-outline-color", OutlineColor)
+        .AddVariable("nt-card-state-layer-color", EffectiveStateLayerColor)
         .Build();
 
     /// <summary>
@@ -118,6 +119,7 @@ public partial class NTCard : TnTComponentBase {
     }
 
     private TnTColor? EffectiveTextColor => TextColor ?? (Variant == NTCardVariant.Outlined ? null : TnTColor.OnSurface);
+    private TnTColor EffectiveStateLayerColor => TextColor ?? TnTColor.OnSurface;
 
     private bool HasHrefAttribute => AdditionalAttributes?.TryGetValue("href", out var href) == true
         && !string.IsNullOrWhiteSpace(Convert.ToString(href));
@@ -131,11 +133,23 @@ public partial class NTCard : TnTComponentBase {
                 return null;
             }
 
-            if (RendersAnchor) {
-                return AdditionalAttributes;
+            var filteredAttributes = new Dictionary<string, object>(AdditionalAttributes);
+
+            if (RendersAnchor && !IsDisabled) {
+                return filteredAttributes;
             }
 
-            var filteredAttributes = new Dictionary<string, object>(AdditionalAttributes);
+            if (RendersAnchor) {
+                foreach (var attributeName in _linkAttributeNames) {
+                    filteredAttributes.Remove(attributeName);
+                }
+
+                filteredAttributes["aria-disabled"] = "true";
+                filteredAttributes["tabindex"] = "-1";
+
+                return filteredAttributes;
+            }
+
             foreach (var attributeName in _linkAttributeNames) {
                 filteredAttributes.Remove(attributeName);
             }
