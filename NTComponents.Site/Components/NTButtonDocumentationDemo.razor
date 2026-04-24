@@ -108,13 +108,14 @@
                 <NTButton Label="Small" ButtonSize="Size.Small" Variant="NTButtonVariant.Outlined" />
                 <NTButton Label="Medium" ButtonSize="Size.Medium" Variant="NTButtonVariant.Outlined" />
                 <NTButton Label="Large" ButtonSize="Size.Large" Variant="NTButtonVariant.Outlined" />
+                <NTButton Label="XL" ButtonSize="Size.Largest" Variant="NTButtonVariant.Outlined" />
             </div>
         </div>
     </div>
 </section>
 
 @code {
-    private static readonly IReadOnlyList<Size> _supportedSizes = [Size.Smallest, Size.Small, Size.Medium, Size.Large];
+    private static readonly IReadOnlyList<Size> _supportedSizes = [Size.Smallest, Size.Small, Size.Medium, Size.Large, Size.Largest];
 
     private int _clickCount;
     private NTButtonVariant _variant = NTButtonVariant.Filled;
@@ -205,6 +206,7 @@
         Size.Small => "Small",
         Size.Medium => "Medium",
         Size.Large => "Large",
+        Size.Largest => "Extra large",
         _ => size.ToString()
     };
 }

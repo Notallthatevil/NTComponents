@@ -191,4 +191,18 @@ public class NTButton_Tests : BunitContext {
         style.Should().Contain("--nt-button-bg:var(--tnt-color-transparent)");
         style.Should().Contain("--nt-button-fg:var(--tnt-color-primary)");
     }
+
+    [Fact]
+    public void Variant_Rerender_Recomputes_Default_Colors_And_Elevation_When_Not_Provided() {
+        var cut = Render<NTButton>(parameters => parameters
+            .Add(x => x.Label, "Dynamic")
+            .Add(x => x.Variant, NTButtonVariant.Filled));
+
+        var rerender = () => cut.SetParametersAndRender(parameters => parameters
+            .Add(x => x.Label, "Dynamic")
+            .Add(x => x.Variant, NTButtonVariant.Text));
+
+        rerender.Should().NotThrow();
+        cut.Find("button").GetAttribute("style").Should().Contain("--nt-button-bg:var(--tnt-color-transparent)");
+    }
 }
