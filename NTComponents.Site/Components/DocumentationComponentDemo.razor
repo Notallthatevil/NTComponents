@@ -1,0 +1,472 @@
+@using System.Globalization
+@using System.Reflection
+
+<section class="doc-section doc-group-panel doc-component-demo" id="demo">
+    <div class="doc-section-heading">
+        <h2 class="@NTTypography.TitleLarge.ToCssClass()">Demo</h2>
+    </div>
+
+    <div class="layout">
+        <div class="preview">
+            <div class="panel-heading">
+                <div>
+                    <p class="kicker @NTTypography.LabelLarge.ToCssClass()">Live preview</p>
+                    <h3 class="@NTTypography.TitleMedium.ToCssClass()">@TypePage.Name</h3>
+                </div>
+                <span class="parameter-count @NTTypography.LabelLarge.ToCssClass()">@GetParameterCountLabel()</span>
+            </div>
+
+            <div class="stage">
+                <ErrorBoundary @ref="_previewBoundary">
+                    <ChildContent>
+                        <DynamicComponent Type="ComponentType" Parameters="GetComponentParameters()" />
+                    </ChildContent>
+                    <ErrorContent Context="exception">
+                        <div class="error" role="alert">
+                            <p class="@NTTypography.LabelLarge.ToCssClass()">Current parameters are invalid.</p>
+                            <p class="@NTTypography.BodySmall.ToCssClass()">@exception.Message</p>
+                        </div>
+                    </ErrorContent>
+                </ErrorBoundary>
+            </div>
+
+            @if (_eventCallbackCounts.Count > 0) {
+                <div class="events" aria-label="Event callback counts">
+                    @foreach (var eventCount in _eventCallbackCounts.OrderBy(item => item.Key, StringComparer.Ordinal)) {
+                        <span class="@NTTypography.BodySmall.ToCssClass()">
+                            <strong>@eventCount.Value</strong>
+                            @eventCount.Key
+                        </span>
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="controls">
+            <div class="panel-heading">
+                <div>
+                    <p class="kicker @NTTypography.LabelLarge.ToCssClass()">Parameters</p>
+                    <h3 class="@NTTypography.TitleMedium.ToCssClass()">Declared controls</h3>
+                </div>
+            </div>
+
+            @if (_parameters.Count == 0) {
+                <div class="empty-state">
+                    <p class="@NTTypography.BodyMedium.ToCssClass()">No public parameters are declared on this component.</p>
+                </div>
+            }
+            else {
+                @foreach (var parameter in GetOrderedParameters()) {
+                    <div class="field">
+                        <div class="field-heading">
+                            <label class="@NTTypography.LabelLarge.ToCssClass()" for="@GetFieldId(parameter)">@parameter.Documentation.Name</label>
+                            <div class="field-meta">
+                                @if (parameter.IsRequired) {
+                                    <span class="badge @NTTypography.LabelMedium.ToCssClass()">Required</span>
+                                }
+                                <span class="@NTTypography.BodySmall.ToCssClass()">@GetParameterTypeLabel(parameter)</span>
+                            </div>
+
+                            @if (!string.IsNullOrWhiteSpace(parameter.Documentation.Content.SummaryParagraphs.FirstOrDefault())) {
+                                <small class="@NTTypography.BodySmall.ToCssClass()">@((MarkupString)parameter.Documentation.Content.SummaryParagraphs.First())</small>
+                            }
+                        </div>
+
+                        @switch (parameter.Kind) {
+                            case DemoInputKind.Bool:
+                                <div class="checkbox-control switch-control">
+                                    <input id="@GetFieldId(parameter)"
+                                           type="checkbox"
+                                           checked="@GetBoolChecked(parameter)"
+                                           @onchange="args => SetBoolCheckboxValue(parameter, args)" />
+                                    <label class="@NTTypography.BodyMedium.ToCssClass()" for="@GetFieldId(parameter)">
+                                        <span class="switch-track" aria-hidden="true">
+                                            <span class="switch-thumb"></span>
+                                        </span>
+                                        <span>@GetBoolLabel(parameter)</span>
+                                    </label>
+
+                                    @if (!parameter.IsRequired) {
+                                        <button type="button"
+                                                class="@NTTypography.LabelLarge.ToCssClass()"
+                                                disabled="@(!_setParameters.Contains(parameter.Documentation.Name))"
+                                                @onclick="() => ClearParameterValue(parameter)">
+                                            Default
+                                        </button>
+                                    }
+                                </div>
+                                break;
+
+                            case DemoInputKind.Enum:
+                                <select id="@GetFieldId(parameter)" value="@GetEnumValue(parameter)" @onchange="args => SetEnumValue(parameter, args)">
+                                    @if (!parameter.IsRequired) {
+                                        <option value="">Default</option>
+                                    }
+                                    @foreach (var value in Enum.GetNames(parameter.UnderlyingType)) {
+                                        <option value="@value">@value</option>
+                                    }
+                                </select>
+                                break;
+
+                            case DemoInputKind.Icon:
+                                <select id="@GetFieldId(parameter)" value="@GetIconValue(parameter)" @onchange="args => SetIconValue(parameter, args)">
+                                    <option value="">Default</option>
+                                    @foreach (var icon in _iconOptions.Keys) {
+                                        <option value="@icon">@icon</option>
+                                    }
+                                </select>
+                                break;
+
+                            case DemoInputKind.EventCallback:
+                                <div class="checkbox-control switch-control">
+                                    <input id="@GetFieldId(parameter)"
+                                           type="checkbox"
+                                           checked="@GetEventCallbackAttached(parameter)"
+                                           @onchange="args => SetEventCallbackChecked(parameter, args)" />
+                                    <label class="@NTTypography.BodyMedium.ToCssClass()" for="@GetFieldId(parameter)">
+                                        <span class="switch-track" aria-hidden="true">
+                                            <span class="switch-thumb"></span>
+                                        </span>
+                                        <span>@(GetEventCallbackAttached(parameter) ? "Attached" : "Not attached")</span>
+                                    </label>
+                                </div>
+                                break;
+
+                            case DemoInputKind.RenderFragment:
+                                <textarea id="@GetFieldId(parameter)" value="@GetTextValue(parameter)" @onchange="args => SetRenderFragmentValue(parameter, args)" rows="3"></textarea>
+                                break;
+
+                            case DemoInputKind.String:
+                                <input id="@GetFieldId(parameter)" value="@GetTextValue(parameter)" @onchange="args => SetStringValue(parameter, args)" />
+                                break;
+
+                            case DemoInputKind.Number:
+                                <input id="@GetFieldId(parameter)" type="number" value="@GetTextValue(parameter)" @onchange="args => SetNumberValue(parameter, args)" />
+                                break;
+
+                            default:
+                                <input id="@GetFieldId(parameter)" value="@GetUnsupportedValue(parameter)" disabled />
+                                break;
+                        }
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</section>
+
+@code {
+    private static readonly IReadOnlyDictionary<string, TnTIcon> _iconOptions = new Dictionary<string, TnTIcon>(StringComparer.Ordinal) {
+        ["Add"] = MaterialIcon.Add,
+        ["Check"] = MaterialIcon.Check,
+        ["Close"] = MaterialIcon.Close,
+        ["Edit"] = MaterialIcon.Edit
+    };
+
+    private readonly Dictionary<string, int> _eventCallbackCounts = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, string> _fieldValues = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, object?> _parameterValues = new(StringComparer.Ordinal);
+    private readonly HashSet<string> _setParameters = new(StringComparer.Ordinal);
+    private IReadOnlyList<ComponentDemoParameter> _parameters = Array.Empty<ComponentDemoParameter>();
+    private ErrorBoundary? _previewBoundary;
+    private string? _loadedTypeFullName;
+
+    [Parameter, EditorRequired]
+    public Type ComponentType { get; set; } = default!;
+
+    [Parameter, EditorRequired]
+    public DocumentationTypePage TypePage { get; set; } = default!;
+
+    protected override void OnParametersSet() {
+        if (string.Equals(_loadedTypeFullName, TypePage.FullName, StringComparison.Ordinal)) {
+            return;
+        }
+
+        _loadedTypeFullName = TypePage.FullName;
+        _fieldValues.Clear();
+        _parameterValues.Clear();
+        _setParameters.Clear();
+        _eventCallbackCounts.Clear();
+
+        var declaredParameters = GetDeclaredParameterProperties();
+
+        _parameters = TypePage.Properties
+            .Where(property => declaredParameters.ContainsKey(property.Name)
+                && string.Equals(property.DeclaringTypeFullName, TypePage.FullName, StringComparison.Ordinal))
+            .Select(property => CreateParameter(property, declaredParameters[property.Name]))
+            .OfType<ComponentDemoParameter>()
+            .ToArray();
+
+        foreach (var parameter in _parameters.Where(parameter => parameter.IsRequired)) {
+            SeedRequiredParameter(parameter);
+        }
+    }
+
+    private IReadOnlyDictionary<string, PropertyInfo> GetDeclaredParameterProperties() {
+        return ComponentType
+            .GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly)
+            .Where(property => property.DeclaringType == ComponentType
+                && Attribute.IsDefined(property, typeof(ParameterAttribute), inherit: false))
+            .ToDictionary(property => property.Name, StringComparer.Ordinal);
+    }
+
+    private ComponentDemoParameter CreateParameter(DocumentationMemberPage documentation, PropertyInfo property) {
+        var nullableType = Nullable.GetUnderlyingType(property.PropertyType);
+        var underlyingType = nullableType ?? property.PropertyType;
+        var isNullable = nullableType is not null || !property.PropertyType.IsValueType;
+
+        return new ComponentDemoParameter(
+            documentation,
+            property,
+            property.PropertyType,
+            underlyingType,
+            isNullable,
+            Attribute.IsDefined(property, typeof(EditorRequiredAttribute), inherit: false),
+            GetInputKind(property.PropertyType, underlyingType));
+    }
+
+    private IDictionary<string, object> GetComponentParameters() {
+        return _setParameters
+            .Where(_parameterValues.ContainsKey)
+            .ToDictionary(name => name, name => _parameterValues[name]!, StringComparer.Ordinal);
+    }
+
+    private IEnumerable<ComponentDemoParameter> GetOrderedParameters() {
+        return _parameters
+            .OrderByDescending(parameter => parameter.IsRequired)
+            .ThenBy(parameter => parameter.Kind == DemoInputKind.Bool ? 0 : parameter.Kind == DemoInputKind.Enum ? 1 : 2)
+            .ThenBy(parameter => parameter.Documentation.Name, StringComparer.Ordinal);
+    }
+
+    private static DemoInputKind GetInputKind(Type parameterType, Type underlyingType) {
+        if (underlyingType == typeof(bool)) {
+            return DemoInputKind.Bool;
+        }
+
+        if (underlyingType.IsEnum) {
+            return DemoInputKind.Enum;
+        }
+
+        if (parameterType == typeof(string)) {
+            return DemoInputKind.String;
+        }
+
+        if (parameterType == typeof(RenderFragment)) {
+            return DemoInputKind.RenderFragment;
+        }
+
+        if (typeof(TnTIcon).IsAssignableFrom(underlyingType)) {
+            return DemoInputKind.Icon;
+        }
+
+        if (parameterType == typeof(EventCallback) || parameterType == typeof(EventCallback<MouseEventArgs>)) {
+            return DemoInputKind.EventCallback;
+        }
+
+        if (IsNumericType(underlyingType)) {
+            return DemoInputKind.Number;
+        }
+
+        return DemoInputKind.Unsupported;
+    }
+
+    private static bool IsNumericType(Type type) {
+        return type == typeof(byte)
+            || type == typeof(decimal)
+            || type == typeof(double)
+            || type == typeof(float)
+            || type == typeof(int)
+            || type == typeof(long)
+            || type == typeof(short);
+    }
+
+    private void SeedRequiredParameter(ComponentDemoParameter parameter) {
+        switch (parameter.Kind) {
+            case DemoInputKind.String:
+                SetParameterValue(parameter, $"Demo {TypePage.Name}");
+                break;
+
+            case DemoInputKind.RenderFragment:
+                SetRenderFragmentText(parameter, $"Demo content for {TypePage.Name}");
+                break;
+
+            case DemoInputKind.Bool:
+                SetParameterValue(parameter, false);
+                break;
+
+            case DemoInputKind.Enum:
+                SetParameterValue(parameter, Enum.GetValues(parameter.UnderlyingType).GetValue(0));
+                break;
+        }
+    }
+
+    private bool GetBoolChecked(ComponentDemoParameter parameter) {
+        return _setParameters.Contains(parameter.Documentation.Name)
+            && _parameterValues.TryGetValue(parameter.Documentation.Name, out var value)
+            && value is bool boolValue
+            && boolValue;
+    }
+
+    private string GetBoolLabel(ComponentDemoParameter parameter) {
+        if (!_setParameters.Contains(parameter.Documentation.Name)) {
+            return "Default";
+        }
+
+        return GetBoolChecked(parameter) ? "True" : "False";
+    }
+
+    private string GetEnumValue(ComponentDemoParameter parameter) {
+        return _setParameters.Contains(parameter.Documentation.Name)
+            ? Convert.ToString(_parameterValues[parameter.Documentation.Name], CultureInfo.InvariantCulture) ?? string.Empty
+            : string.Empty;
+    }
+
+    private bool GetEventCallbackAttached(ComponentDemoParameter parameter) {
+        return _setParameters.Contains(parameter.Documentation.Name);
+    }
+
+    private string GetIconValue(ComponentDemoParameter parameter) {
+        return _fieldValues.GetValueOrDefault(parameter.Documentation.Name, string.Empty);
+    }
+
+    private string GetTextValue(ComponentDemoParameter parameter) {
+        return _fieldValues.GetValueOrDefault(parameter.Documentation.Name, string.Empty);
+    }
+
+    private static string GetUnsupportedValue(ComponentDemoParameter parameter) {
+        return $"Unsupported: {parameter.Documentation.TypeDisplayName ?? parameter.ParameterType.Name}";
+    }
+
+    private string GetFieldId(ComponentDemoParameter parameter) {
+        return $"demo-{TypePage.Name}-{parameter.Documentation.Name}";
+    }
+
+    private string GetParameterCountLabel() {
+        return _parameters.Count == 1 ? "1 parameter" : $"{_parameters.Count} parameters";
+    }
+
+    private static string GetParameterTypeLabel(ComponentDemoParameter parameter) {
+        return parameter.Documentation.TypeDisplayName ?? parameter.ParameterType.Name;
+    }
+
+    private void SetBoolCheckboxValue(ComponentDemoParameter parameter, ChangeEventArgs args) {
+        SetParameterValue(parameter, args.Value is true);
+    }
+
+    private void SetEnumValue(ComponentDemoParameter parameter, ChangeEventArgs args) {
+        var value = Convert.ToString(args.Value, CultureInfo.InvariantCulture);
+        if (string.IsNullOrWhiteSpace(value)) {
+            ClearParameterValue(parameter);
+            return;
+        }
+
+        SetParameterValue(parameter, Enum.Parse(parameter.UnderlyingType, value));
+    }
+
+    private void SetEventCallbackChecked(ComponentDemoParameter parameter, ChangeEventArgs args) {
+        if (args.Value is not true) {
+            ClearParameterValue(parameter);
+            return;
+        }
+
+        SetParameterValue(parameter, CreateEventCallback(parameter));
+    }
+
+    private void SetIconValue(ComponentDemoParameter parameter, ChangeEventArgs args) {
+        var value = Convert.ToString(args.Value, CultureInfo.InvariantCulture) ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(value) || !_iconOptions.TryGetValue(value, out var icon)) {
+            ClearParameterValue(parameter);
+            return;
+        }
+
+        _fieldValues[parameter.Documentation.Name] = value;
+        SetParameterValue(parameter, icon);
+    }
+
+    private void SetNumberValue(ComponentDemoParameter parameter, ChangeEventArgs args) {
+        var value = Convert.ToString(args.Value, CultureInfo.InvariantCulture) ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(value)) {
+            ClearParameterValue(parameter);
+            return;
+        }
+
+        _fieldValues[parameter.Documentation.Name] = value;
+        SetParameterValue(parameter, Convert.ChangeType(value, parameter.UnderlyingType, CultureInfo.InvariantCulture));
+    }
+
+    private void SetRenderFragmentValue(ComponentDemoParameter parameter, ChangeEventArgs args) {
+        var value = Convert.ToString(args.Value, CultureInfo.InvariantCulture) ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(value) && !parameter.IsRequired) {
+            ClearParameterValue(parameter);
+            return;
+        }
+
+        SetRenderFragmentText(parameter, string.IsNullOrWhiteSpace(value) ? $"Demo content for {TypePage.Name}" : value);
+    }
+
+    private void SetStringValue(ComponentDemoParameter parameter, ChangeEventArgs args) {
+        var value = Convert.ToString(args.Value, CultureInfo.InvariantCulture) ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(value) && !parameter.IsRequired) {
+            ClearParameterValue(parameter);
+            return;
+        }
+
+        SetParameterValue(parameter, string.IsNullOrWhiteSpace(value) ? $"Demo {TypePage.Name}" : value);
+    }
+
+    private void SetRenderFragmentText(ComponentDemoParameter parameter, string value) {
+        RenderFragment fragment = builder => builder.AddContent(0, value);
+        _fieldValues[parameter.Documentation.Name] = value;
+        SetParameterValue(parameter, fragment);
+    }
+
+    private void SetParameterValue(ComponentDemoParameter parameter, object? value) {
+        _previewBoundary?.Recover();
+        _setParameters.Add(parameter.Documentation.Name);
+        _parameterValues[parameter.Documentation.Name] = value;
+        _fieldValues[parameter.Documentation.Name] = Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty;
+    }
+
+    private void ClearParameterValue(ComponentDemoParameter parameter) {
+        _previewBoundary?.Recover();
+        _setParameters.Remove(parameter.Documentation.Name);
+        _parameterValues.Remove(parameter.Documentation.Name);
+        _fieldValues.Remove(parameter.Documentation.Name);
+
+        if (parameter.IsRequired) {
+            SeedRequiredParameter(parameter);
+        }
+    }
+
+    private object CreateEventCallback(ComponentDemoParameter parameter) {
+        if (parameter.ParameterType == typeof(EventCallback<MouseEventArgs>)) {
+            return EventCallback.Factory.Create<MouseEventArgs>(this, _ => TrackEventCallback(parameter.Documentation.Name));
+        }
+
+        return EventCallback.Factory.Create(this, () => TrackEventCallback(parameter.Documentation.Name));
+    }
+
+    private void TrackEventCallback(string name) {
+        _eventCallbackCounts[name] = _eventCallbackCounts.GetValueOrDefault(name) + 1;
+    }
+
+    private sealed record ComponentDemoParameter(
+        DocumentationMemberPage Documentation,
+        PropertyInfo Property,
+        Type ParameterType,
+        Type UnderlyingType,
+        bool IsNullable,
+        bool IsRequired,
+        DemoInputKind Kind);
+
+    private enum DemoInputKind {
+        Unsupported,
+        Bool,
+        Enum,
+        EventCallback,
+        Icon,
+        Number,
+        RenderFragment,
+        String
+    }
+}

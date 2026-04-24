@@ -26,6 +26,10 @@
                 <DocumentationContentView Content="TypePage.Content" />
             </section>
 
+            @if (DemoComponentType is not null) {
+                <DocumentationComponentDemo TypePage="TypePage" ComponentType="DemoComponentType" />
+            }
+
             @if (SupplementalSections is not null) {
                 @SupplementalSections
             }
@@ -86,6 +90,9 @@
     public DocumentationTypePage TypePage { get; set; } = default!;
 
     [Parameter]
+    public Type? DemoComponentType { get; set; }
+
+    [Parameter]
     public RenderFragment? SupplementalSections { get; set; }
 
     [Parameter]
@@ -112,6 +119,10 @@
         var items = new List<(string FragmentId, string Label)> {
             ("overview", "Overview")
         };
+
+        if (DemoComponentType is not null) {
+            items.Add(("demo", "Demo"));
+        }
 
         if (SupplementalOutlineItems.Count > 0) {
             items.AddRange(SupplementalOutlineItems.Select(item => (item.FragmentId, item.Label)));

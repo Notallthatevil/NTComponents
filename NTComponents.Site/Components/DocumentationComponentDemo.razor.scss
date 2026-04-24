@@ -1,0 +1,288 @@
+.doc-component-demo {
+    .layout {
+        display: grid;
+        gap: 24px;
+        margin-top: 24px;
+    }
+
+    .preview {
+        display: grid;
+        gap: 16px;
+    }
+
+    .panel-heading {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 24px;
+
+        h3,
+        p {
+            margin: 0;
+        }
+    }
+
+    .kicker {
+        margin: 0;
+        color: var(--tnt-color-on-surface-variant);
+    }
+
+    .parameter-count,
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        padding: 0 10px;
+        border-radius: 8px;
+        background: var(--tnt-color-secondary-container);
+        color: var(--tnt-color-on-secondary-container);
+        white-space: nowrap;
+    }
+
+    .stage {
+        display: grid;
+        min-height: 320px;
+        place-items: center;
+        padding: 32px;
+        border-radius: 16px;
+        background: var(--tnt-color-surface-container-low);
+        box-shadow: inset 0 0 0 1px var(--tnt-color-outline-variant);
+    }
+
+    .error {
+        display: grid;
+        gap: 8px;
+        max-width: 420px;
+        padding: 16px;
+        border-radius: 12px;
+        background: var(--tnt-color-error-container);
+        color: var(--tnt-color-on-error-container);
+        box-shadow: inset 0 0 0 1px var(--tnt-color-error);
+
+        p {
+            margin: 0;
+        }
+    }
+
+    .events {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .events span {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        padding: 0 10px;
+        border-radius: 8px;
+        background: var(--tnt-color-surface-container);
+        color: var(--tnt-color-on-surface-variant);
+    }
+
+    .events strong {
+        margin-right: 6px;
+        color: var(--tnt-color-on-surface);
+    }
+
+    .controls {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    }
+
+    .controls > .panel-heading {
+        padding-top: 8px;
+        border-top: 1px solid var(--tnt-color-outline-variant);
+    }
+
+    .controls > .panel-heading,
+    .empty-state {
+        grid-column: 1 / -1;
+    }
+
+    .field {
+        display: grid;
+        align-content: start;
+        gap: 12px;
+        min-width: 0;
+        min-height: 156px;
+        padding: 16px;
+        border-radius: 12px;
+        background: var(--tnt-color-surface-container-lowest);
+        box-shadow: inset 0 0 0 1px var(--tnt-color-outline-variant);
+    }
+
+    .field-heading {
+        display: grid;
+        gap: 4px;
+    }
+
+    .field-heading label {
+        overflow-wrap: anywhere;
+    }
+
+    .field-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        color: var(--tnt-color-on-surface-variant);
+    }
+
+    .badge {
+        min-height: 24px;
+        background: var(--tnt-color-primary-container);
+        color: var(--tnt-color-on-primary-container);
+    }
+
+    .field small {
+        display: -webkit-box;
+        overflow: hidden;
+        color: var(--tnt-color-on-surface-variant);
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        line-height: 1.45;
+    }
+
+    .field input:not([type="checkbox"]),
+    .field select,
+    .field textarea {
+        width: 100%;
+        min-height: 48px;
+        padding: 10px 14px;
+        border: 1px solid var(--tnt-color-outline);
+        border-radius: 8px;
+        background: var(--tnt-color-surface);
+        color: inherit;
+        font: inherit;
+        transition: border-color 150ms ease, box-shadow 150ms ease;
+    }
+
+    .field input:not([type="checkbox"]):hover,
+    .field select:hover,
+    .field textarea:hover {
+        border-color: var(--tnt-color-on-surface-variant);
+    }
+
+    .field input:not([type="checkbox"]):focus,
+    .field select:focus,
+    .field textarea:focus {
+        border-color: var(--tnt-color-primary);
+        outline: 0;
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--tnt-color-primary) 22%, transparent);
+    }
+
+    .field input:not([type="checkbox"]):disabled {
+        color: var(--tnt-color-on-surface-variant);
+        opacity: .72;
+    }
+
+    .field textarea {
+        min-height: 96px;
+        resize: vertical;
+    }
+
+    .checkbox-control {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-height: 48px;
+    }
+
+    .checkbox-control input {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
+
+    .checkbox-control label {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 48px;
+        margin-right: auto;
+        cursor: pointer;
+    }
+
+    .switch-track {
+        position: relative;
+        display: inline-flex;
+        width: 52px;
+        height: 32px;
+        border: 2px solid var(--tnt-color-outline);
+        border-radius: 999px;
+        background: var(--tnt-color-surface-container-highest);
+        transition: background-color 150ms ease, border-color 150ms ease;
+    }
+
+    .switch-thumb {
+        position: absolute;
+        top: 6px;
+        left: 6px;
+        width: 16px;
+        height: 16px;
+        border-radius: 999px;
+        background: var(--tnt-color-outline);
+        transition: transform 150ms ease, width 150ms ease, height 150ms ease, background-color 150ms ease;
+    }
+
+    .checkbox-control input:checked + label .switch-track {
+        border-color: var(--tnt-color-primary);
+        background: var(--tnt-color-primary);
+    }
+
+    .checkbox-control input:checked + label .switch-thumb {
+        width: 24px;
+        height: 24px;
+        background: var(--tnt-color-on-primary);
+        transform: translate(16px, -4px);
+    }
+
+    .checkbox-control input:focus-visible + label .switch-track {
+        outline: 3px solid color-mix(in srgb, var(--tnt-color-primary) 36%, transparent);
+        outline-offset: 2px;
+    }
+
+    .checkbox-control button {
+        min-height: 36px;
+        padding: 0 12px;
+        border: 1px solid var(--tnt-color-outline);
+        border-radius: 999px;
+        background: transparent;
+        color: var(--tnt-color-primary);
+        cursor: pointer;
+    }
+
+    .checkbox-control button:disabled {
+        color: var(--tnt-color-on-surface-variant);
+        cursor: default;
+        opacity: .54;
+    }
+
+    .empty-state {
+        display: grid;
+        min-height: 120px;
+        place-items: center;
+        color: var(--tnt-color-on-surface-variant);
+        text-align: center;
+
+        p {
+            margin: 0;
+        }
+    }
+
+    @media (max-width: 720px) {
+        .panel-heading {
+            display: grid;
+        }
+
+        .stage {
+            min-height: 220px;
+            padding: 24px;
+        }
+    }
+}

@@ -112,7 +112,7 @@ public sealed class DocumentationCatalog {
             typeDocumentation.Fields.Select(member => MapMember(member.Name, member.Signature, member.TypeDisplayName, member.TypeFullName, member.Summary, member.XmlDocumentation, member.DeclaringTypeFullName, member.IsFromBaseType))
                 .OrderBy(member => member.Name, StringComparer.Ordinal)
                 .ToArray(),
-            typeDocumentation.Properties.Select(member => MapMember(member.Name, member.Signature, member.TypeDisplayName, member.TypeFullName, member.Summary, member.XmlDocumentation, member.DeclaringTypeFullName, member.IsFromBaseType))
+            typeDocumentation.Properties.Select(member => MapMember(member.Name, member.Signature, member.TypeDisplayName, member.TypeFullName, member.Summary, member.XmlDocumentation, member.DeclaringTypeFullName, member.IsFromBaseType, member.IsParameter, member.IsEditorRequired))
                 .OrderBy(member => member.Name, StringComparer.Ordinal)
                 .ToArray(),
             typeDocumentation.Methods.Select(member => MapMember(member.Name, member.Signature, null, null, member.Summary, member.XmlDocumentation, member.DeclaringTypeFullName, member.IsFromBaseType))
@@ -121,7 +121,7 @@ public sealed class DocumentationCatalog {
             _featuredTypeFullNames.Contains(typeDocumentation.FullName, StringComparer.Ordinal));
     }
 
-    private static DocumentationMemberPage MapMember(string name, string signature, string? typeDisplayName, string? typeFullName, string summary, string xmlDocumentation, string declaringTypeFullName, bool isFromBaseType) {
+    private static DocumentationMemberPage MapMember(string name, string signature, string? typeDisplayName, string? typeFullName, string summary, string xmlDocumentation, string declaringTypeFullName, bool isFromBaseType, bool isParameter = false, bool isEditorRequired = false) {
         var content = XmlDocumentationContentParser.Parse(xmlDocumentation, summary);
 
         return new DocumentationMemberPage(
@@ -132,6 +132,8 @@ public sealed class DocumentationCatalog {
             typeFullName,
             declaringTypeFullName,
             isFromBaseType,
+            isParameter,
+            isEditorRequired,
             content);
     }
 
@@ -238,6 +240,8 @@ public sealed record DocumentationMemberPage(
     string? TypeFullName,
     string DeclaringTypeFullName,
     bool IsFromBaseType,
+    bool IsParameter,
+    bool IsEditorRequired,
     DocumentationContent Content);
 
 public sealed record DocumentationContent(

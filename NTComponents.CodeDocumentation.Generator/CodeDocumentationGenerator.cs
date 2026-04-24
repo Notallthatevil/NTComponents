@@ -144,7 +144,9 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
             ExtractSummary(xmlDocumentation),
             xmlDocumentation,
             property.ContainingType?.ToDisplayString(TypeDisplayFormat) ?? string.Empty,
-            isFromBaseType);
+            isFromBaseType,
+            HasAttribute(property, "Microsoft.AspNetCore.Components.ParameterAttribute"),
+            HasAttribute(property, "Microsoft.AspNetCore.Components.EditorRequiredAttribute"));
     }
 
     private static FieldDocumentationModel BuildFieldDocumentation(IFieldSymbol field, bool isFromBaseType, CancellationToken cancellationToken) {
@@ -360,7 +362,9 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         builder.AppendLine("    /// <param name=\"xmlDocumentation\">The full XML documentation block.</param>");
         builder.AppendLine("    /// <param name=\"declaringTypeFullName\">The fully qualified type that declares the property.</param>");
         builder.AppendLine("    /// <param name=\"isFromBaseType\">Indicates whether the property was inherited from a base class.</param>");
-        builder.AppendLine("    public PropertyDocumentation(string name, string signature, string typeDisplayName, string typeFullName, string summary, string xmlDocumentation, string declaringTypeFullName, bool isFromBaseType) {");
+        builder.AppendLine("    /// <param name=\"isParameter\">Indicates whether the property has the Parameter attribute.</param>");
+        builder.AppendLine("    /// <param name=\"isEditorRequired\">Indicates whether the property has the EditorRequired attribute.</param>");
+        builder.AppendLine("    public PropertyDocumentation(string name, string signature, string typeDisplayName, string typeFullName, string summary, string xmlDocumentation, string declaringTypeFullName, bool isFromBaseType, bool isParameter, bool isEditorRequired) {");
         builder.AppendLine("        Name = name;");
         builder.AppendLine("        Signature = signature;");
         builder.AppendLine("        TypeDisplayName = typeDisplayName;");
@@ -369,6 +373,8 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         builder.AppendLine("        XmlDocumentation = xmlDocumentation;");
         builder.AppendLine("        DeclaringTypeFullName = declaringTypeFullName;");
         builder.AppendLine("        IsFromBaseType = isFromBaseType;");
+        builder.AppendLine("        IsParameter = isParameter;");
+        builder.AppendLine("        IsEditorRequired = isEditorRequired;");
         builder.AppendLine("    }");
         builder.AppendLine();
         builder.AppendLine("    /// <summary>");
@@ -403,6 +409,14 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         builder.AppendLine("    /// Gets a value indicating whether this property is inherited from a base class.");
         builder.AppendLine("    /// </summary>");
         builder.AppendLine("    public bool IsFromBaseType { get; }");
+        builder.AppendLine("    /// <summary>");
+        builder.AppendLine("    /// Gets a value indicating whether this property has the Parameter attribute.");
+        builder.AppendLine("    /// </summary>");
+        builder.AppendLine("    public bool IsParameter { get; }");
+        builder.AppendLine("    /// <summary>");
+        builder.AppendLine("    /// Gets a value indicating whether this property has the EditorRequired attribute.");
+        builder.AppendLine("    /// </summary>");
+        builder.AppendLine("    public bool IsEditorRequired { get; }");
         builder.AppendLine("}");
         builder.AppendLine();
         builder.AppendLine("/// <summary>");
@@ -529,7 +543,9 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
             builder.AppendLine($"                    {ToLiteral(property.Summary)},");
             builder.AppendLine($"                    {ToLiteral(property.XmlDocumentation)},");
             builder.AppendLine($"                    {ToLiteral(property.DeclaringTypeFullName)},");
-            builder.AppendLine($"                    {ToBooleanLiteral(property.IsFromBaseType)}),");
+            builder.AppendLine($"                    {ToBooleanLiteral(property.IsFromBaseType)},");
+            builder.AppendLine($"                    {ToBooleanLiteral(property.IsParameter)},");
+            builder.AppendLine($"                    {ToBooleanLiteral(property.IsEditorRequired)}),");
         }
         builder.AppendLine("            },");
 
@@ -657,6 +673,16 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
                method.MethodKind != MethodKind.EventAdd &&
                method.MethodKind != MethodKind.EventRemove &&
                method.MethodKind != MethodKind.EventRaise;
+    }
+
+    private static bool HasAttribute(ISymbol symbol, string attributeFullName) {
+        foreach (var attribute in symbol.GetAttributes()) {
+            if (string.Equals(attribute.AttributeClass?.ToDisplayString(), attributeFullName, StringComparison.Ordinal)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static IEnumerable<INamedTypeSymbol> EnumerateTypes(INamespaceSymbol namespaceSymbol) {
@@ -836,7 +862,9 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
             string summary,
             string xmlDocumentation,
             string declaringTypeFullName,
-            bool isFromBaseType) {
+            bool isFromBaseType,
+            bool isParameter,
+            bool isEditorRequired) {
             Name = name;
             Signature = signature;
             TypeDisplayName = typeDisplayName;
@@ -845,6 +873,8 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
             XmlDocumentation = xmlDocumentation;
             DeclaringTypeFullName = declaringTypeFullName;
             IsFromBaseType = isFromBaseType;
+            IsParameter = isParameter;
+            IsEditorRequired = isEditorRequired;
         }
 
         public string Name { get; }
@@ -862,6 +892,10 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         public string DeclaringTypeFullName { get; }
 
         public bool IsFromBaseType { get; }
+
+        public bool IsParameter { get; }
+
+        public bool IsEditorRequired { get; }
     }
 
     private sealed class FieldDocumentationModel {

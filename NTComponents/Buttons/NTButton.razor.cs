@@ -145,8 +145,8 @@ public partial class NTButton : TnTComponentBase {
 
     internal string? AriaPressed => IsToggleButton ? Selected.ToString().ToLowerInvariant() : null;
 
-    private ButtonShape EffectiveShape => IsToggleButton && Selected
-        ? Shape == ButtonShape.Round ? ButtonShape.Square : ButtonShape.Round
+    private ButtonShape EffectiveShape => IsToggleButton
+        ? Selected ? ButtonShape.Square : ButtonShape.Round
         : Shape;
 
     private bool _backgroundColorWasProvided;
@@ -206,6 +206,10 @@ public partial class NTButton : TnTComponentBase {
     }
 
     private TnTColor GetDefaultBackgroundColor() {
+        if (IsToggleButton) {
+            return GetDefaultToggleBackgroundColor();
+        }
+
         return Variant switch {
             NTButtonVariant.Elevated => TnTColor.SurfaceContainerLow,
             NTButtonVariant.Filled => TnTColor.Primary,
@@ -216,11 +220,26 @@ public partial class NTButton : TnTComponentBase {
         };
     }
 
+    private TnTColor GetDefaultToggleBackgroundColor() {
+        return Variant switch {
+            NTButtonVariant.Elevated => Selected ? TnTColor.Primary : TnTColor.SurfaceContainerLow,
+            NTButtonVariant.Filled => Selected ? TnTColor.Primary : TnTColor.SurfaceContainer,
+            NTButtonVariant.Tonal => Selected ? TnTColor.Secondary : TnTColor.SecondaryContainer,
+            NTButtonVariant.Outlined => Selected ? TnTColor.InverseSurface : TnTColor.Transparent,
+            NTButtonVariant.Text => TnTColor.Transparent,
+            _ => throw new ArgumentOutOfRangeException(nameof(Variant), Variant, null)
+        };
+    }
+
     private NTElevation GetDefaultElevation() {
         return Variant == NTButtonVariant.Elevated ? NTElevation.Lowest : NTElevation.None;
     }
 
     private TnTColor GetDefaultTextColor() {
+        if (IsToggleButton) {
+            return GetDefaultToggleTextColor();
+        }
+
         return Variant switch {
             NTButtonVariant.Elevated => TnTColor.Primary,
             NTButtonVariant.Filled => TnTColor.OnPrimary,
@@ -231,8 +250,27 @@ public partial class NTButton : TnTComponentBase {
         };
     }
 
+    private TnTColor GetDefaultToggleTextColor() {
+        return Variant switch {
+            NTButtonVariant.Elevated => Selected ? TnTColor.OnPrimary : TnTColor.Primary,
+            NTButtonVariant.Filled => Selected ? TnTColor.OnPrimary : TnTColor.OnSurfaceVariant,
+            NTButtonVariant.Tonal => Selected ? TnTColor.OnSecondary : TnTColor.OnSecondaryContainer,
+            NTButtonVariant.Outlined => Selected ? TnTColor.InverseOnSurface : TnTColor.OnSurfaceVariant,
+            NTButtonVariant.Text => TnTColor.Primary,
+            _ => throw new ArgumentOutOfRangeException(nameof(Variant), Variant, null)
+        };
+    }
+
     private void ValidateBackgroundColorForVariant() {
         if (Variant is NTButtonVariant.Text or NTButtonVariant.Outlined) {
+            if (Variant == NTButtonVariant.Outlined && IsToggleButton && Selected) {
+                if (BackgroundColor is TnTColor.None or TnTColor.Transparent) {
+                    throw new InvalidOperationException($"{Variant} selected toggle buttons must use a visible container {nameof(BackgroundColor)}.");
+                }
+
+                return;
+            }
+
             if (BackgroundColor != TnTColor.Transparent) {
                 throw new InvalidOperationException($"{Variant} buttons must use a transparent {nameof(BackgroundColor)}.");
             }

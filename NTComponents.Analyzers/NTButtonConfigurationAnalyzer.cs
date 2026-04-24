@@ -195,6 +195,14 @@ public sealed class NTButtonConfigurationAnalyzer : DiagnosticAnalyzer {
         }
 
         if (effectiveVariant is "Text" or "Outlined") {
+            if (effectiveVariant == "Outlined" && IsSelectedToggle(frame)) {
+                if (colorName is "None" or "Transparent") {
+                    context.ReportDiagnostic(Diagnostic.Create(TransparentBackgroundRule, backgroundColor.Location, effectiveVariant));
+                }
+
+                return;
+            }
+
             if (colorName != "Transparent") {
                 context.ReportDiagnostic(Diagnostic.Create(OpaqueBackgroundRule, backgroundColor.Location, effectiveVariant));
             }
@@ -206,6 +214,15 @@ public sealed class NTButtonConfigurationAnalyzer : DiagnosticAnalyzer {
             && colorName is "None" or "Transparent") {
             context.ReportDiagnostic(Diagnostic.Create(TransparentBackgroundRule, backgroundColor.Location, effectiveVariant));
         }
+    }
+
+    private static bool IsSelectedToggle(ComponentFrame frame) {
+        return frame.Attributes.TryGetValue("IsToggleButton", out var isToggleButton)
+            && TryGetBooleanConstant(isToggleButton.Operation, out var isToggle)
+            && isToggle
+            && frame.Attributes.TryGetValue("Selected", out var selected)
+            && TryGetBooleanConstant(selected.Operation, out var isSelected)
+            && isSelected;
     }
 
     private static void AnalyzeTextColor(SyntaxNodeAnalysisContext context, ComponentFrame frame, INamedTypeSymbol colorType) {

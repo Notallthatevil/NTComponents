@@ -34,7 +34,7 @@ namespace Microsoft.AspNetCore.Components.Rendering {
 namespace NTComponents {
     public class NTButton { }
     public enum NTButtonVariant { Elevated, Filled, Tonal, Outlined, Text }
-    public enum TnTColor { None, Transparent, Primary, OnPrimary, SecondaryContainer, OnSecondaryContainer, SurfaceContainerLow }
+    public enum TnTColor { None, Transparent, Primary, OnPrimary, SecondaryContainer, OnSecondaryContainer, SurfaceContainerLow, InverseSurface }
     public enum NTElevation { None, Lowest, Low, Medium, High, Highest }
 }
 """;
@@ -75,7 +75,7 @@ namespace Microsoft.AspNetCore.Components.Rendering {
 namespace NTComponents {
     public class NTButton { }
     public enum NTButtonVariant { Elevated, Filled, Tonal, Outlined, Text }
-    public enum TnTColor { None, Transparent, Primary, OnPrimary, SecondaryContainer, OnSecondaryContainer, SurfaceContainerLow }
+    public enum TnTColor { None, Transparent, Primary, OnPrimary, SecondaryContainer, OnSecondaryContainer, SurfaceContainerLow, InverseSurface }
     public enum NTElevation { None, Lowest, Low, Medium, High, Highest }
 }
 """;
@@ -117,7 +117,7 @@ namespace Microsoft.AspNetCore.Components.Rendering {
 namespace NTComponents {
     public class NTButton { }
     public enum NTButtonVariant { Elevated, Filled, Tonal, Outlined, Text }
-    public enum TnTColor { None, Transparent, Primary, OnPrimary, SecondaryContainer, OnSecondaryContainer, SurfaceContainerLow }
+    public enum TnTColor { None, Transparent, Primary, OnPrimary, SecondaryContainer, OnSecondaryContainer, SurfaceContainerLow, InverseSurface }
     public enum NTElevation { None, Lowest, Low, Medium, High, Highest }
 }
 """;
@@ -153,6 +153,13 @@ public static class ButtonFactory {
         builder.AddAttribute(7, "BackgroundColor", global::NTComponents.TnTColor.SurfaceContainerLow);
         builder.AddAttribute(8, "Elevation", global::NTComponents.NTElevation.Lowest);
         builder.CloseComponent();
+
+        builder.OpenComponent<global::NTComponents.NTButton>(9);
+        builder.AddAttribute(10, "Variant", global::NTComponents.NTButtonVariant.Outlined);
+        builder.AddAttribute(11, "IsToggleButton", true);
+        builder.AddAttribute(12, "Selected", true);
+        builder.AddAttribute(13, "BackgroundColor", global::NTComponents.TnTColor.InverseSurface);
+        builder.CloseComponent();
     }
 }
 
@@ -167,7 +174,7 @@ namespace Microsoft.AspNetCore.Components.Rendering {
 namespace NTComponents {
     public class NTButton { }
     public enum NTButtonVariant { Elevated, Filled, Tonal, Outlined, Text }
-    public enum TnTColor { None, Transparent, Primary, OnPrimary, SecondaryContainer, OnSecondaryContainer, SurfaceContainerLow }
+    public enum TnTColor { None, Transparent, Primary, OnPrimary, SecondaryContainer, OnSecondaryContainer, SurfaceContainerLow, InverseSurface }
     public enum NTElevation { None, Lowest, Low, Medium, High, Highest }
 }
 """;
@@ -175,6 +182,43 @@ namespace NTComponents {
         var diagnostics = await GetDiagnosticsAsync(("ButtonFactory.cs", source));
 
         Assert.Empty(diagnostics);
+    }
+
+    [Fact]
+    public async Task Reports_SelectedOutlinedToggle_With_TransparentBackground() {
+        const string source = """
+using Microsoft.AspNetCore.Components.Rendering;
+
+public static class ButtonFactory {
+    public static void Build(RenderTreeBuilder builder) {
+        builder.OpenComponent<global::NTComponents.NTButton>(0);
+        builder.AddAttribute(1, "Variant", global::NTComponents.NTButtonVariant.Outlined);
+        builder.AddAttribute(2, "IsToggleButton", true);
+        builder.AddAttribute(3, "Selected", true);
+        builder.AddAttribute(4, "BackgroundColor", global::NTComponents.TnTColor.Transparent);
+        builder.CloseComponent();
+    }
+}
+
+namespace Microsoft.AspNetCore.Components.Rendering {
+    public class RenderTreeBuilder {
+        public void OpenComponent<TComponent>(int sequence) { }
+        public void AddAttribute(int sequence, string name, object? value) { }
+        public void CloseComponent() { }
+    }
+}
+
+namespace NTComponents {
+    public class NTButton { }
+    public enum NTButtonVariant { Elevated, Filled, Tonal, Outlined, Text }
+    public enum TnTColor { None, Transparent, Primary, OnPrimary, SecondaryContainer, OnSecondaryContainer, SurfaceContainerLow, InverseSurface }
+    public enum NTElevation { None, Lowest, Low, Medium, High, Highest }
+}
+""";
+
+        var diagnostic = Assert.Single(await GetDiagnosticsAsync(("ButtonFactory.cs", source)));
+
+        Assert.Equal(NTButtonConfigurationAnalyzer.TransparentBackgroundDiagnosticId, diagnostic.Id);
     }
 
     private static async Task<ImmutableArray<Diagnostic>> GetDiagnosticsAsync(params (string Path, string Source)[] sources) {

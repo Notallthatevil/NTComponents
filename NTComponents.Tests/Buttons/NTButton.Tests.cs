@@ -70,17 +70,25 @@ public class NTButton_Tests : BunitContext {
     }
 
     [Fact]
-    public void Selected_Toggle_Inverts_Round_Shape_To_Square_Class() {
+    public void Toggle_Button_Uses_Round_Unselected_And_Square_Selected_Shapes() {
+        var unselected = Render<NTButton>(parameters => parameters
+            .Add(x => x.Label, "Unselected")
+            .Add(x => x.IsToggleButton, true)
+            .Add(x => x.Selected, false)
+            .Add(x => x.Shape, ButtonShape.Square));
         var cut = Render<NTButton>(parameters => parameters
             .Add(x => x.Label, "Selected")
             .Add(x => x.IsToggleButton, true)
             .Add(x => x.Selected, true)
             .Add(x => x.Shape, ButtonShape.Round));
 
-        var button = cut.Find("button");
+        var unselectedButton = unselected.Find("button");
+        var selectedButton = cut.Find("button");
 
-        button.GetAttribute("class")!.Should().Contain("nt-button-shape-square");
-        button.GetAttribute("class")!.Should().NotContain("nt-button-shape-round");
+        unselectedButton.GetAttribute("class")!.Should().Contain("nt-button-shape-round");
+        unselectedButton.GetAttribute("class")!.Should().NotContain("nt-button-shape-square");
+        selectedButton.GetAttribute("class")!.Should().Contain("nt-button-shape-square");
+        selectedButton.GetAttribute("class")!.Should().NotContain("nt-button-shape-round");
     }
 
     [Fact]
@@ -192,13 +200,35 @@ public class NTButton_Tests : BunitContext {
         style.Should().Contain("--nt-button-fg:var(--tnt-color-primary)");
     }
 
+    [Theory]
+    [InlineData(NTButtonVariant.Elevated, false, "surface-container-low", "primary")]
+    [InlineData(NTButtonVariant.Elevated, true, "primary", "on-primary")]
+    [InlineData(NTButtonVariant.Filled, false, "surface-container", "on-surface-variant")]
+    [InlineData(NTButtonVariant.Filled, true, "primary", "on-primary")]
+    [InlineData(NTButtonVariant.Tonal, false, "secondary-container", "on-secondary-container")]
+    [InlineData(NTButtonVariant.Tonal, true, "secondary", "on-secondary")]
+    [InlineData(NTButtonVariant.Outlined, false, "transparent", "on-surface-variant")]
+    [InlineData(NTButtonVariant.Outlined, true, "inverse-surface", "inverse-on-surface")]
+    public void Toggle_Button_Default_Colors_Come_From_Selected_State(NTButtonVariant variant, bool selected, string expectedBackground, string expectedText) {
+        var cut = Render<NTButton>(parameters => parameters
+            .Add(x => x.Label, "Toggle")
+            .Add(x => x.IsToggleButton, true)
+            .Add(x => x.Selected, selected)
+            .Add(x => x.Variant, variant));
+
+        var style = cut.Find("button").GetAttribute("style");
+
+        style.Should().Contain($"--nt-button-bg:var(--tnt-color-{expectedBackground})");
+        style.Should().Contain($"--nt-button-fg:var(--tnt-color-{expectedText})");
+    }
+
     [Fact]
     public void Variant_Rerender_Recomputes_Default_Colors_And_Elevation_When_Not_Provided() {
         var cut = Render<NTButton>(parameters => parameters
             .Add(x => x.Label, "Dynamic")
             .Add(x => x.Variant, NTButtonVariant.Filled));
 
-        var rerender = () => cut.SetParametersAndRender(parameters => parameters
+        var rerender = () => cut.Render(parameters => parameters
             .Add(x => x.Label, "Dynamic")
             .Add(x => x.Variant, NTButtonVariant.Text));
 

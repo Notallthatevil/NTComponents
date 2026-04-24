@@ -17,10 +17,9 @@
 }
 else {
     <DocumentationTypeDetailView TypePage="TypePage"
+                                 DemoComponentType="DemoComponentType"
                                  BackHref="/docs/components"
-                                 BackLabel="Back to components index"
-                                 SupplementalSections="SupplementalSections"
-                                 SupplementalOutlineItems="SupplementalOutlineItems" />
+                                 BackLabel="Back to components index" />
 }
 
 @code {
@@ -28,22 +27,10 @@ else {
     public string Slug { get; set; } = string.Empty;
 
     private DocumentationTypePage? TypePage { get; set; }
-    private static readonly IReadOnlyList<DocumentationOutlineItem> _ntButtonOutlineItems = [
-        new("demo", "Demo")
-    ];
-
-    private RenderFragment? SupplementalSections => TypePage?.FullName == "NTComponents.NTButton"
-        ? builder => {
-            builder.OpenComponent<NTButtonDocumentationDemo>(0);
-            builder.CloseComponent();
-        }
-        : null;
-
-    private IReadOnlyList<DocumentationOutlineItem> SupplementalOutlineItems => TypePage?.FullName == "NTComponents.NTButton"
-        ? _ntButtonOutlineItems
-        : Array.Empty<DocumentationOutlineItem>();
+    private Type? DemoComponentType { get; set; }
 
     protected override void OnParametersSet() {
         TypePage = DocumentationCatalog.TryGetComponentType(Slug, out var typePage) ? typePage : null;
+        DemoComponentType = TypePage is null ? null : typeof(NTButton).Assembly.GetType(TypePage.FullName);
     }
 }
