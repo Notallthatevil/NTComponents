@@ -182,6 +182,18 @@ public class TnTMeasurements_Tests : BunitContext {
     }
 
     [Fact]
+    public void NtCornerRadiusTokens_AreRendered() {
+        // Arrange & Act
+        var cut = RenderMeasurements();
+
+        // Assert
+        cut.Markup.Should().Contain("--nt-sys-shape-corner-medium:12px;");
+        cut.Markup.Should().Contain("--nt-sys-shape-corner-full:50%;");
+        cut.Markup.Should().Contain(".nt-corner-radius-medium{border-radius:var(--nt-sys-shape-corner-medium,12px);}");
+        cut.Markup.Should().Contain(".nt-corner-radius-full{border-radius:var(--nt-sys-shape-corner-full,50%);}");
+    }
+
+    [Fact]
     public void FooterHeight_CanBeCustomized() {
         // Arrange & Act
         var cut = RenderMeasurements(parameters => parameters

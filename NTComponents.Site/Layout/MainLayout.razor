@@ -1,10 +1,19 @@
 @inherits LayoutComponentBase
 <div class="site-shell">
     <header class="site-header">
-        <a href="">NTComponents.Site</a>
+        <div class="site-header-inner">
+            <a class="site-brand @NTTypography.TitleMedium.ToCssClass()" href="">NTComponents</a>
+            <nav class="site-nav">
+                <a class="@NTTypography.LabelLarge.ToCssClass()" href="">Home</a>
+                <a class="@NTTypography.LabelLarge.ToCssClass()" href="/docs/components">Components</a>
+                <a class="@NTTypography.LabelLarge.ToCssClass()" href="/docs/reference">Reference</a>
+            </nav>
+        </div>
     </header>
 
     <main class="site-main">
-        @Body
+        <div class="site-main-inner">
+            @Body
+        </div>
     </main>
 </div>

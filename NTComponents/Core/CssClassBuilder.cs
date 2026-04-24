@@ -41,7 +41,7 @@ public sealed class CssClassBuilder {
     ///     Adds a CSS class for NT corner radius.
     /// </summary>
     /// <param name="cornerRadius">The NT corner radius token.</param>
-    /// <param name="enabled">Whether the class should be added.</param>
+    /// <param name="enabled">     Whether the class should be added.</param>
     /// <returns>The current instance of <see cref="CssClassBuilder" />.</returns>
     public CssClassBuilder AddCornerRadius(NTCornerRadius cornerRadius, bool enabled = true) => AddClass(cornerRadius.ToCssClass(), enabled);
 
@@ -63,9 +63,17 @@ public sealed class CssClassBuilder {
     ///     Adds a CSS class for NT elevation.
     /// </summary>
     /// <param name="elevation">The NT elevation level.</param>
-    /// <param name="enabled">Whether the class should be added.</param>
+    /// <param name="enabled">  Whether the class should be added.</param>
     /// <returns>The current instance of <see cref="CssClassBuilder" />.</returns>
     public CssClassBuilder AddElevation(NTElevation elevation, bool enabled = true) => AddClass(elevation.ToCssClass(), enabled);
+
+    /// <summary>
+    ///     Adds an elevation CSS class to the builder.
+    /// </summary>
+    /// <param name="elevation">The elevation level to apply.</param>
+    /// <param name="enabled">  Determines whether the elevation class is added. Default is <see langword="true" />.</param>
+    /// <returns>The current <see cref="CssClassBuilder" /> instance for method chaining.</returns>
+    public CssClassBuilder AddElevation(NTElevation? elevation, bool enabled = true) => AddClass(elevation.GetValueOrDefault().ToCssClass(), enabled && elevation.HasValue);
 
     /// <summary>
     ///     Adds a CSS class for filled state.

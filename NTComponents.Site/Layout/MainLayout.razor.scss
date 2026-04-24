@@ -5,16 +5,53 @@
 }
 
 .site-header {
-    padding: 1rem 1.5rem;
+    position: sticky;
+    top: 0;
+    z-index: 10;
     border-bottom: 1px solid var(--tnt-color-outline-variant);
-    background: var(--tnt-color-surface);
+    background: color-mix(in srgb, var(--tnt-color-surface) 92%, transparent);
+    backdrop-filter: blur(10px);
 }
 
-.site-header a {
+.site-header-inner {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: center;
+    max-width: 72rem;
+    margin: 0 auto;
+    padding: 0.875rem 1rem;
+}
+
+.site-brand,
+.site-nav a {
     color: inherit;
     text-decoration: none;
 }
 
+.site-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.875rem;
+    align-items: center;
+}
+
 .site-main {
-    padding: 2rem 1.5rem;
+    padding: 1.25rem 1rem 2.5rem;
+}
+
+.site-main-inner {
+    max-width: 72rem;
+    margin: 0 auto;
+}
+
+@media (max-width: 640px) {
+    .site-header-inner {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .site-main {
+        padding-top: 1rem;
+    }
 }

@@ -1,0 +1,147 @@
+@using NTComponents.Site.Documentation
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
+
+<section class="docs-page docs-detail-page">
+    <header class="docs-hero">
+        <a class="doc-back-link @NTTypography.LabelLarge.ToCssClass()" href="@BackHref">@BackLabel</a>
+        <div class="doc-title-row">
+            <span class="doc-type-kind @NTTypography.LabelLarge.ToCssClass()">@TypePage.Kind</span>
+            @if (TypePage.IsFeatured) {
+                <span class="doc-feature-flag @NTTypography.LabelLarge.ToCssClass()">Featured</span>
+            }
+        </div>
+        <h1 class="@NTTypography.HeadlineLarge.ToCssClass()">@TypePage.Name</h1>
+        <p class="doc-type-full-name @NTTypography.BodyMedium.ToCssClass()">@TypePage.FullName</p>
+        <code class="doc-signature">@TypePage.Declaration</code>
+    </header>
+
+    <div class="doc-detail-layout">
+        <div class="doc-detail-main">
+            <section class="doc-section doc-group-panel" id="overview">
+                <div class="doc-section-heading">
+                    <h2 class="@NTTypography.TitleLarge.ToCssClass()">Overview</h2>
+                </div>
+
+                <DocumentationContentView Content="TypePage.Content" />
+            </section>
+
+            @if (SupplementalSections is not null) {
+                @SupplementalSections
+            }
+
+            @if (TypePage.Kind == "enum") {
+                <DocumentationEnumValueTable SectionId="enum-values" Values="TypePage.Fields" />
+            }
+            else {
+                <DocumentationMemberGroup Title="Fields"
+                                          Description="Field documentation discovered from the generated source model."
+                                          OwnerTypeFullName="TypePage.FullName"
+                                          RenderAsTable="true"
+                                          SectionId="fields"
+                                          Members="TypePage.Fields" />
+            }
+
+            <DocumentationMemberGroup Title="Properties"
+                                      Description="Property documentation discovered from the generated source model."
+                                      OwnerTypeFullName="TypePage.FullName"
+                                      RenderAsTable="true"
+                                      SectionId="properties"
+                                      Members="TypePage.Properties" />
+
+            <DocumentationMemberGroup Title="Methods"
+                                      Description="Method documentation discovered from the generated source model."
+                                      OwnerTypeFullName="TypePage.FullName"
+                                      SectionId="methods"
+                                      Members="TypePage.Methods" />
+        </div>
+
+        @if (GetOutlineItems().Count > 0) {
+            <aside class="doc-detail-sidebar">
+                <div class="doc-outline">
+                    <p class="doc-outline-title @NTTypography.LabelLarge.ToCssClass()">On this page</p>
+
+                    @foreach (var item in GetOutlineItems()) {
+                        <a class="doc-outline-link @NTTypography.BodySmall.ToCssClass()"
+                           href="@($"#{item.FragmentId}")"
+                           @onclick:preventDefault="true"
+                           @onclick="() => ScrollToFragmentAsync(item.FragmentId)">
+                            @item.Label
+                        </a>
+                    }
+                </div>
+            </aside>
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter, EditorRequired]
+    public string BackHref { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public string BackLabel { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public DocumentationTypePage TypePage { get; set; } = default!;
+
+    [Parameter]
+    public RenderFragment? SupplementalSections { get; set; }
+
+    [Parameter]
+    public IReadOnlyList<DocumentationOutlineItem> SupplementalOutlineItems { get; set; } = Array.Empty<DocumentationOutlineItem>();
+
+    private string? _lastHandledFragmentId;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender) {
+        var fragmentId = GetCurrentFragmentId();
+        if (!string.IsNullOrWhiteSpace(fragmentId) && !string.Equals(fragmentId, _lastHandledFragmentId, StringComparison.Ordinal)) {
+            await ScrollToFragmentAsync(fragmentId, updateHistory: false);
+            _lastHandledFragmentId = fragmentId;
+        }
+    }
+
+    private string? GetCurrentFragmentId() {
+        var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+        return string.IsNullOrWhiteSpace(uri.Fragment)
+            ? null
+            : uri.Fragment.TrimStart('#');
+    }
+
+    private IReadOnlyList<(string FragmentId, string Label)> GetOutlineItems() {
+        var items = new List<(string FragmentId, string Label)> {
+            ("overview", "Overview")
+        };
+
+        if (SupplementalOutlineItems.Count > 0) {
+            items.AddRange(SupplementalOutlineItems.Select(item => (item.FragmentId, item.Label)));
+        }
+
+        if (TypePage.Kind == "enum" && TypePage.Fields.Count > 0) {
+            items.Add(("enum-values", "Enum values"));
+        }
+
+        if (TypePage.Kind != "enum" && TypePage.Fields.Count > 0) {
+            items.Add(("fields", "Fields"));
+        }
+
+        if (TypePage.Properties.Count > 0) {
+            items.Add(("properties", "Properties"));
+        }
+
+        if (TypePage.Methods.Count > 0) {
+            items.Add(("methods", "Methods"));
+        }
+
+        return items;
+    }
+
+    private async Task ScrollToFragmentAsync(string fragmentId, bool updateHistory = true) {
+        if (string.IsNullOrWhiteSpace(fragmentId)) {
+            return;
+        }
+
+        await JSRuntime.InvokeVoidAsync("ntDocs.scrollToFragment", fragmentId, updateHistory);
+        _lastHandledFragmentId = fragmentId;
+    }
+}

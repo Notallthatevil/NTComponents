@@ -177,6 +177,18 @@ public class CssClassBuilder_Tests {
     }
 
     [Fact]
+    public void AddCornerRadius_WithToken_AddsNtCornerRadiusClass() {
+        // Arrange
+        var builder = CssClassBuilder.Create("");
+
+        // Act
+        var result = builder.AddCornerRadius(NTCornerRadius.Medium).Build();
+
+        // Assert
+        result.Should().Be("nt-corner-radius-medium");
+    }
+
+    [Fact]
     public void AddDisabled_WithFalse_DoesNotAddClass() {
         // Arrange
         var builder = CssClassBuilder.Create("");

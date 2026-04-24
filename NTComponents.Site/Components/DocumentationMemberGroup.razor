@@ -1,0 +1,258 @@
+@using NTComponents.Site.Documentation
+@using System.Text
+@using System.Text.RegularExpressions
+@inject DocumentationCatalog DocumentationCatalog
+
+@if (Members.Count > 0) {
+    <section class="doc-section doc-group-panel" id="@SectionId">
+        <div class="doc-section-heading">
+            <h2 class="@NTTypography.TitleLarge.ToCssClass()">@Title</h2>
+            @if (!string.IsNullOrWhiteSpace(Description)) {
+                <p class="@NTTypography.BodyMedium.ToCssClass()">@Description</p>
+            }
+        </div>
+
+        @if (RenderAsTable) {
+            <div class="doc-table-wrap">
+                <table class="doc-table">
+                    <thead>
+                        <tr>
+                            <th class="@NTTypography.LabelLarge.ToCssClass()">@GetMemberColumnTitle()</th>
+                            <th class="@NTTypography.LabelLarge.ToCssClass()">Type</th>
+                            <th class="@NTTypography.LabelLarge.ToCssClass()">Documentation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var group in GetTableGroups()) {
+                            @if (group.IsInheritedGroup) {
+                                <tr class="doc-table-divider">
+                                    <td colspan="3">
+                                        <span class="doc-member-meta @NTTypography.LabelLarge.ToCssClass()">Inherited from </span>
+                                        @if (TryGetDocumentationHref(group.DeclaringTypeFullName, out var declaringTypeHref)) {
+                                            <a class="doc-inline-link @NTTypography.LabelLarge.ToCssClass()" href="@declaringTypeHref">@group.DeclaringTypeFullName</a>
+                                        }
+                                        else {
+                                            <span class="@NTTypography.LabelLarge.ToCssClass()">@group.DeclaringTypeFullName</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+
+                            @foreach (var member in group.Members) {
+                                <tr id="@member.AnchorId">
+                                    <td class="doc-table-name">
+                                        <div class="doc-table-value-content">
+                                            <strong class="@NTTypography.TitleMedium.ToCssClass()">@member.Name</strong>
+                                        </div>
+                                    </td>
+                                    <td class="doc-table-type">
+                                        @((MarkupString)GetLinkedTypeMarkup(member))
+                                    </td>
+                                    <td>
+                                        <DocumentationContentView Content="member.Content" Compact="true" />
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else {
+            <div class="doc-member-list">
+                @foreach (var member in Members) {
+                    <NTCard class="doc-member-card" ElementId="@member.AnchorId">
+                        <div class="doc-member-header">
+                            <h3 class="@NTTypography.TitleMedium.ToCssClass()">@member.Name</h3>
+                            <code class="doc-signature">@member.Signature</code>
+                        </div>
+
+                        @if (member.IsFromBaseType) {
+                            <p class="doc-member-meta @NTTypography.LabelLarge.ToCssClass()">
+                                Inherited from
+                                @if (TryGetDocumentationHref(member.DeclaringTypeFullName, out var declaringTypeHref)) {
+                                    <a class="doc-inline-link @NTTypography.LabelLarge.ToCssClass()" href="@declaringTypeHref">@member.DeclaringTypeFullName</a>
+                                }
+                                else {
+                                    <span class="@NTTypography.LabelLarge.ToCssClass()">@member.DeclaringTypeFullName</span>
+                                }
+                            </p>
+                        }
+
+                        <DocumentationContentView Content="member.Content" />
+                    </NTCard>
+                }
+            </div>
+        }
+    </section>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public string Description { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public IReadOnlyList<DocumentationMemberPage> Members { get; set; } = Array.Empty<DocumentationMemberPage>();
+
+    [Parameter]
+    public string? OwnerTypeFullName { get; set; }
+
+    [Parameter]
+    public bool RenderAsTable { get; set; }
+
+    [Parameter]
+    public string? SectionId { get; set; }
+
+    [Parameter, EditorRequired]
+    public string Title { get; set; } = string.Empty;
+
+    private string GetMemberColumnTitle() {
+        return Title switch {
+            "Properties" => "Property",
+            "Fields" => "Field",
+            _ => Title
+        };
+    }
+
+    private IEnumerable<DocumentationMemberGroupRow> GetTableGroups() {
+        string? currentDeclaringType = null;
+        var currentMembers = new List<DocumentationMemberPage>();
+
+        foreach (var member in Members) {
+            if (!string.Equals(currentDeclaringType, member.DeclaringTypeFullName, StringComparison.Ordinal) && currentMembers.Count > 0) {
+                yield return CreateGroup(currentDeclaringType ?? OwnerTypeFullName ?? string.Empty, currentMembers);
+                currentMembers = new List<DocumentationMemberPage>();
+            }
+
+            currentDeclaringType = member.DeclaringTypeFullName;
+            currentMembers.Add(member);
+        }
+
+        if (currentMembers.Count > 0) {
+            yield return CreateGroup(currentDeclaringType ?? OwnerTypeFullName ?? string.Empty, currentMembers);
+        }
+    }
+
+    private string GetLinkedTypeMarkup(DocumentationMemberPage member) {
+        var typeDisplay = member.TypeDisplayName ?? GetLegacyMemberType(member);
+        var builder = new StringBuilder();
+        var lastIndex = 0;
+
+        foreach (Match match in Regex.Matches(typeDisplay, @"[A-Za-z_][A-Za-z0-9_.]*")) {
+            if (match.Index > lastIndex) {
+                builder.Append(System.Net.WebUtility.HtmlEncode(typeDisplay[lastIndex..match.Index]));
+            }
+
+            var token = match.Value;
+            if (TryGetDocumentationHref(token, out var href)) {
+                builder.Append("<a class=\"doc-inline-link\" href=\"");
+                builder.Append(System.Net.WebUtility.HtmlEncode(href));
+                builder.Append("\">");
+                builder.Append(System.Net.WebUtility.HtmlEncode(token));
+                builder.Append("</a>");
+            }
+            else {
+                builder.Append(System.Net.WebUtility.HtmlEncode(token));
+            }
+
+            lastIndex = match.Index + match.Length;
+        }
+
+        if (lastIndex < typeDisplay.Length) {
+            builder.Append(System.Net.WebUtility.HtmlEncode(typeDisplay[lastIndex..]));
+        }
+
+        return $"<code>{builder}</code>";
+    }
+
+    private static DocumentationMemberGroupRow CreateGroup(string declaringTypeFullName, IReadOnlyList<DocumentationMemberPage> members) {
+        return new DocumentationMemberGroupRow(
+            declaringTypeFullName,
+            members.All(member => member.IsFromBaseType),
+            members.ToArray());
+    }
+
+    private static string GetLegacyMemberType(DocumentationMemberPage member) {
+        var signature = member.Signature.Trim();
+        var nameIndex = signature.IndexOf(member.Name, StringComparison.Ordinal);
+        if (nameIndex <= 0) {
+            return signature;
+        }
+
+        var prefix = signature[..nameIndex].TrimEnd();
+        var tokens = prefix.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (tokens.Length == 0) {
+            return prefix;
+        }
+
+        var modifiers = new HashSet<string>(StringComparer.Ordinal) {
+            "public",
+            "private",
+            "protected",
+            "internal",
+            "static",
+            "readonly",
+            "const",
+            "virtual",
+            "override",
+            "abstract",
+            "sealed",
+            "required",
+            "unsafe",
+            "volatile",
+            "extern",
+            "partial",
+            "new"
+        };
+
+        var typeTokens = tokens.Where(token => !modifiers.Contains(token));
+        var typeName = string.Join(" ", typeTokens);
+        var resolvedTypeName = string.IsNullOrWhiteSpace(typeName) ? prefix : typeName;
+        return StripOwningTypePrefix(resolvedTypeName, member.DeclaringTypeFullName);
+    }
+
+    private static string StripOwningTypePrefix(string typeName, string declaringTypeFullName) {
+        if (string.IsNullOrWhiteSpace(typeName) || string.IsNullOrWhiteSpace(declaringTypeFullName)) {
+            return typeName;
+        }
+
+        var normalized = typeName.Trim();
+        var declaringTypeName = declaringTypeFullName.Split('.').LastOrDefault() ?? declaringTypeFullName;
+
+        if (normalized.StartsWith(declaringTypeFullName + ".", StringComparison.Ordinal)) {
+            normalized = normalized[(declaringTypeFullName.Length + 1)..];
+        }
+        else if (normalized.StartsWith(declaringTypeName + ".", StringComparison.Ordinal)) {
+            normalized = normalized[(declaringTypeName.Length + 1)..];
+        }
+
+        return normalized.Trim();
+    }
+
+    private bool TryGetDocumentationHref(string typeNameOrFullName, out string? href) {
+        href = null;
+        if (string.IsNullOrWhiteSpace(typeNameOrFullName)) {
+            return false;
+        }
+
+        var normalized = NormalizeTypeLookupValue(typeNameOrFullName);
+        return DocumentationCatalog.TryGetTypeHref(normalized, out href)
+               || DocumentationCatalog.TryGetTypeHrefByName(normalized, out href);
+    }
+
+    private static string NormalizeTypeLookupValue(string value) {
+        var normalized = value.Trim();
+        normalized = normalized.TrimEnd('?');
+        var bracketIndex = normalized.IndexOf('[');
+        if (bracketIndex >= 0) {
+            normalized = normalized[..bracketIndex];
+        }
+
+        return normalized;
+    }
+
+    private sealed record DocumentationMemberGroupRow(
+        string DeclaringTypeFullName,
+        bool IsInheritedGroup,
+        IReadOnlyList<DocumentationMemberPage> Members);
+}

@@ -1,0 +1,210 @@
+<section class="doc-section doc-group-panel nt-button-demo" id="demo">
+    <div class="doc-section-heading">
+        <h2 class="@NTTypography.TitleLarge.ToCssClass()">Demo</h2>
+        <p class="@NTTypography.BodyMedium.ToCssClass()">
+            Preview the current <code>NTButton</code> surface with live controls for variant, size, shape, icon,
+            ripple, disabled state, and toggle behavior.
+        </p>
+    </div>
+
+    <div class="nt-button-demo-layout">
+        <div class="nt-button-demo-preview">
+            <div class="nt-button-demo-preview-copy">
+                <p class="nt-button-demo-kicker @NTTypography.LabelLarge.ToCssClass()">Live preview</p>
+                <h3 class="@NTTypography.TitleMedium.ToCssClass()">Interactive state</h3>
+                <p class="@NTTypography.BodyMedium.ToCssClass()">
+                    Click the preview button to verify its current configuration and, when toggle mode is enabled,
+                    watch the selected state update live.
+                </p>
+            </div>
+
+            <div class="nt-button-demo-stage">
+                <NTButton Label="@PreviewLabel"
+                          Variant="@Variant"
+                          ButtonSize="@ButtonSize"
+                          Shape="@Shape"
+                          LeadingIcon="@(ShowLeadingIcon ? MaterialIcon.Edit : null)"
+                          Disabled="@Disabled"
+                          EnableRipple="@EnableRipple"
+                          IsToggleButton="@IsToggleButton"
+                          Selected="@Selected"
+                          OnClickCallback="@HandlePreviewClick" />
+            </div>
+
+            <p class="nt-button-demo-meta @NTTypography.BodySmall.ToCssClass()">@PreviewStatus</p>
+        </div>
+
+        <div class="nt-button-demo-controls">
+            <label class="nt-button-demo-field">
+                <span class="@NTTypography.LabelLarge.ToCssClass()">Variant</span>
+                <select @bind="Variant">
+                    @foreach (var variant in Enum.GetValues<NTButtonVariant>()) {
+                        <option value="@variant">@variant</option>
+                    }
+                </select>
+            </label>
+
+            <label class="nt-button-demo-field">
+                <span class="@NTTypography.LabelLarge.ToCssClass()">Size</span>
+                <select @bind="ButtonSize">
+                    @foreach (var size in _supportedSizes) {
+                        <option value="@size">@GetSizeLabel(size)</option>
+                    }
+                </select>
+            </label>
+
+            <label class="nt-button-demo-field">
+                <span class="@NTTypography.LabelLarge.ToCssClass()">Shape</span>
+                <select @bind="Shape">
+                    @foreach (var shape in Enum.GetValues<ButtonShape>()) {
+                        <option value="@shape">@shape</option>
+                    }
+                </select>
+            </label>
+
+            <label class="nt-button-demo-toggle @NTTypography.BodyMedium.ToCssClass()">
+                <input type="checkbox" @bind="ShowLeadingIcon" />
+                <span>Show leading icon</span>
+            </label>
+
+            <label class="nt-button-demo-toggle @NTTypography.BodyMedium.ToCssClass()">
+                <input type="checkbox" @bind="EnableRipple" />
+                <span>Enable ripple</span>
+            </label>
+
+            <label class="nt-button-demo-toggle @NTTypography.BodyMedium.ToCssClass()">
+                <input type="checkbox" @bind="Disabled" />
+                <span>Disable button</span>
+            </label>
+
+            <label class="nt-button-demo-toggle @NTTypography.BodyMedium.ToCssClass()">
+                <input type="checkbox" @bind="IsToggleButton" />
+                <span>Toggle button mode</span>
+            </label>
+
+            <label class="nt-button-demo-toggle @NTTypography.BodyMedium.ToCssClass()">
+                <input type="checkbox" @bind="Selected" disabled="@(!IsToggleButton)" />
+                <span>Selected state</span>
+            </label>
+        </div>
+    </div>
+
+    <div class="nt-button-demo-showcase">
+        <div class="nt-button-demo-showcase-group">
+            <p class="nt-button-demo-kicker @NTTypography.LabelLarge.ToCssClass()">Variant lineup</p>
+            <div class="nt-button-demo-row">
+                <NTButton Label="Elevated" Variant="NTButtonVariant.Elevated" LeadingIcon="MaterialIcon.Edit" />
+                <NTButton Label="Filled" Variant="NTButtonVariant.Filled" />
+                <NTButton Label="Tonal" Variant="NTButtonVariant.Tonal" />
+                <NTButton Label="Outlined" Variant="NTButtonVariant.Outlined" />
+                <NTButton Label="Text" Variant="NTButtonVariant.Text" />
+            </div>
+        </div>
+
+        <div class="nt-button-demo-showcase-group">
+            <p class="nt-button-demo-kicker @NTTypography.LabelLarge.ToCssClass()">Size lineup</p>
+            <div class="nt-button-demo-row">
+                <NTButton Label="XS" ButtonSize="Size.Smallest" Variant="NTButtonVariant.Outlined" />
+                <NTButton Label="Small" ButtonSize="Size.Small" Variant="NTButtonVariant.Outlined" />
+                <NTButton Label="Medium" ButtonSize="Size.Medium" Variant="NTButtonVariant.Outlined" />
+                <NTButton Label="Large" ButtonSize="Size.Large" Variant="NTButtonVariant.Outlined" />
+            </div>
+        </div>
+    </div>
+</section>
+
+@code {
+    private static readonly IReadOnlyList<Size> _supportedSizes = [Size.Smallest, Size.Small, Size.Medium, Size.Large];
+
+    private int _clickCount;
+    private NTButtonVariant _variant = NTButtonVariant.Filled;
+    private Size _buttonSize = Size.Small;
+    private ButtonShape _shape = ButtonShape.Round;
+    private bool _showLeadingIcon = true;
+    private bool _enableRipple = true;
+    private bool _disabled;
+    private bool _isToggleButton;
+    private bool _selected;
+
+    private NTButtonVariant Variant {
+        get => _variant;
+        set {
+            _variant = value;
+            EnsureValidState();
+        }
+    }
+
+    private Size ButtonSize {
+        get => _buttonSize;
+        set => _buttonSize = value;
+    }
+
+    private ButtonShape Shape {
+        get => _shape;
+        set => _shape = value;
+    }
+
+    private bool ShowLeadingIcon {
+        get => _showLeadingIcon;
+        set => _showLeadingIcon = value;
+    }
+
+    private bool EnableRipple {
+        get => _enableRipple;
+        set => _enableRipple = value;
+    }
+
+    private bool Disabled {
+        get => _disabled;
+        set => _disabled = value;
+    }
+
+    private bool IsToggleButton {
+        get => _isToggleButton;
+        set {
+            _isToggleButton = value;
+            EnsureValidState();
+        }
+    }
+
+    private bool Selected {
+        get => _selected;
+        set => _selected = _isToggleButton && value;
+    }
+
+    private string PreviewLabel => IsToggleButton
+        ? Selected ? "Saved" : "Save"
+        : "Save changes";
+
+    private string PreviewStatus => IsToggleButton
+        ? $"Toggle selected: {Selected}. Click count: {_clickCount}."
+        : $"Click count: {_clickCount}.";
+
+    private Task HandlePreviewClick(MouseEventArgs _) {
+        _clickCount++;
+
+        if (IsToggleButton) {
+            Selected = !Selected;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private void EnsureValidState() {
+        if (_isToggleButton && _variant == NTButtonVariant.Text) {
+            _variant = NTButtonVariant.Filled;
+        }
+
+        if (!_isToggleButton) {
+            _selected = false;
+        }
+    }
+
+    private static string GetSizeLabel(Size size) => size switch {
+        Size.Smallest => "XS",
+        Size.Small => "Small",
+        Size.Medium => "Medium",
+        Size.Large => "Large",
+        _ => size.ToString()
+    };
+}

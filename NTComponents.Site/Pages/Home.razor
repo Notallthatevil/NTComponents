@@ -1,11 +1,93 @@
 @page "/"
+@inject DocumentationCatalog DocumentationCatalog
+
 <PageTitle>NTComponents.Site</PageTitle>
 
-<section class="starter-card">
-    <p class="starter-kicker">Clean State</p>
-    <h1>NTComponents.Site</h1>
-    <p>
-        This site has been reset to a bare-bones starting point. Add routes, components, and styles here as the new
-        build takes shape.
-    </p>
+<section class="docs-page docs-page-home">
+    <header class="docs-hero">
+        <p class="docs-kicker @NTTypography.LabelLarge.ToCssClass()">NTComponents Documentation</p>
+        <h1 class="@NTTypography.HeadlineLarge.ToCssClass()">Reference-first docs, generated from the source</h1>
+        <p class="@NTTypography.BodyLarge.ToCssClass()">
+            Browse the shared enums and API reference pages generated from the same XML documentation that ships with
+            the component library.
+        </p>
+        <div class="docs-actions">
+            <a class="docs-primary-link @NTTypography.LabelLarge.ToCssClass()" href="/docs/reference">Open reference index</a>
+        </div>
+    </header>
+
+    <section class="doc-group-panel doc-section">
+        <div class="doc-section-heading">
+            <h2 class="@NTTypography.TitleLarge.ToCssClass()">Featured foundations</h2>
+            <p class="@NTTypography.BodyMedium.ToCssClass()">
+                These pages are discovered from the generated documentation model and rendered through the same shared
+                reference components.
+            </p>
+        </div>
+
+        <div class="doc-type-list">
+            @foreach (var typePage in DocumentationCatalog.FeaturedTypes) {
+                <NTCard class="doc-type-row" href="@($"/docs/reference/{typePage.Slug}")" Variant="NTCardVariant.Outlined">
+                    <div>
+                        <div class="doc-row-title">
+                            <strong class="@NTTypography.TitleMedium.ToCssClass()">@typePage.Name</strong>
+                            <span class="doc-type-kind @NTTypography.LabelLarge.ToCssClass()">@typePage.Kind</span>
+                        </div>
+                        <p class="doc-type-full-name @NTTypography.BodySmall.ToCssClass()">@typePage.FullName</p>
+                        @if (typePage.Content.SummaryParagraphs.Count > 0) {
+                            <p class="@NTTypography.BodyMedium.ToCssClass()">@((MarkupString)typePage.Content.SummaryParagraphs[0])</p>
+                        }
+                    </div>
+                    <span class="doc-type-open @NTTypography.LabelLarge.ToCssClass()">Open</span>
+                </NTCard>
+            }
+        </div>
+    </section>
+
+    @if (DocumentationCatalog.ComponentTypes.Count > 0) {
+        <section class="doc-group-panel doc-section">
+            <div class="doc-section-heading">
+                <h2 class="@NTTypography.TitleLarge.ToCssClass()">Components</h2>
+                <p class="@NTTypography.BodyMedium.ToCssClass()">
+                    Start with the currently published component pages and expand from the same generated documentation
+                    model over time.
+                </p>
+            </div>
+
+            <div class="doc-type-list">
+                @foreach (var typePage in DocumentationCatalog.ComponentTypes) {
+                    <NTCard class="doc-type-row" href="@($"/docs/components/{typePage.Slug}")" Variant="NTCardVariant.Outlined">
+                        <div>
+                            <div class="doc-row-title">
+                                <strong class="@NTTypography.TitleMedium.ToCssClass()">@typePage.Name</strong>
+                                <span class="doc-type-kind @NTTypography.LabelLarge.ToCssClass()">@typePage.Kind</span>
+                            </div>
+                            <p class="doc-type-full-name @NTTypography.BodySmall.ToCssClass()">@typePage.FullName</p>
+                            @if (typePage.Content.SummaryParagraphs.Count > 0) {
+                                <p class="@NTTypography.BodyMedium.ToCssClass()">@((MarkupString)typePage.Content.SummaryParagraphs[0])</p>
+                            }
+                        </div>
+                        <span class="doc-type-open @NTTypography.LabelLarge.ToCssClass()">Open</span>
+                    </NTCard>
+                }
+            </div>
+        </section>
+    }
+
+    <section class="doc-group-panel doc-section">
+        <div class="doc-section-heading">
+            <h2 class="@NTTypography.TitleLarge.ToCssClass()">What you get</h2>
+        </div>
+
+        <div class="doc-plain-grid">
+            <NTCard class="doc-note">
+                <strong class="@NTTypography.TitleMedium.ToCssClass()">Single source of truth</strong>
+                <p class="@NTTypography.BodyMedium.ToCssClass()">Type pages and enum values come from the generated documentation model instead of hand-maintained site content.</p>
+            </NTCard>
+            <NTCard class="doc-note">
+                <strong class="@NTTypography.TitleMedium.ToCssClass()">Reusable rendering</strong>
+                <p class="@NTTypography.BodyMedium.ToCssClass()">The same page templates render summaries, remarks, parameters, returns, and exceptions across all documented types.</p>
+            </NTCard>
+        </div>
+    </section>
 </section>

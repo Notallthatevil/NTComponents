@@ -1,0 +1,42 @@
+@page "/docs/components"
+@inject DocumentationCatalog DocumentationCatalog
+
+<PageTitle>Components | NTComponents</PageTitle>
+
+<section class="docs-page">
+    <header class="docs-hero">
+        <p class="docs-kicker @NTTypography.LabelLarge.ToCssClass()">Components</p>
+        <h1 class="@NTTypography.HeadlineLarge.ToCssClass()">Documented components</h1>
+        <p class="@NTTypography.BodyLarge.ToCssClass()">
+            Component pages are curated from the generated documentation model so each published component can share
+            the same reusable rendering while still getting its own destination in the site.
+        </p>
+    </header>
+
+    <section class="doc-group-panel doc-section">
+        <div class="doc-section-heading">
+            <h2 class="@NTTypography.TitleLarge.ToCssClass()">Available components</h2>
+            <p class="@NTTypography.BodyMedium.ToCssClass()">
+                The curated component catalog currently publishes <code>NTButton</code> and <code>NTCard</code>.
+            </p>
+        </div>
+
+        <div class="doc-type-list">
+            @foreach (var typePage in DocumentationCatalog.ComponentTypes) {
+                <NTCard class="doc-type-row" href="@($"/docs/components/{typePage.Slug}")" Variant="NTCardVariant.Outlined">
+                    <div>
+                        <div class="doc-row-title">
+                            <strong class="@NTTypography.TitleMedium.ToCssClass()">@typePage.Name</strong>
+                            <span class="doc-type-kind @NTTypography.LabelLarge.ToCssClass()">@typePage.Kind</span>
+                        </div>
+                        <p class="doc-type-full-name @NTTypography.BodySmall.ToCssClass()">@typePage.FullName</p>
+                        @if (typePage.Content.SummaryParagraphs.Count > 0) {
+                            <p class="@NTTypography.BodyMedium.ToCssClass()">@((MarkupString)typePage.Content.SummaryParagraphs[0])</p>
+                        }
+                    </div>
+                    <span class="doc-type-open @NTTypography.LabelLarge.ToCssClass()">Open</span>
+                </NTCard>
+            }
+        </div>
+    </section>
+</section>

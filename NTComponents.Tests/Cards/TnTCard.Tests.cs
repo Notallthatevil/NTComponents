@@ -1,3 +1,4 @@
+#pragma warning disable CS0618
 namespace NTComponents.Tests.Cards;
 
 public class TnTCard_Tests : BunitContext {
@@ -158,3 +159,4 @@ public class TnTCard_Tests : BunitContext {
         cut.Markup.Should().Contain("Inner");
     }
 }
+#pragma warning restore CS0618

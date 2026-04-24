@@ -40,6 +40,12 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         memberOptions: SymbolDisplayMemberOptions.IncludeContainingType | SymbolDisplayMemberOptions.IncludeType,
         miscellaneousOptions: SymbolDisplayMiscellaneousOptions.UseSpecialTypes | SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers);
 
+    private static readonly SymbolDisplayFormat MemberTypeDisplayFormat = new(
+        globalNamespaceStyle: SymbolDisplayGlobalNamespaceStyle.OmittedAsContaining,
+        typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameOnly,
+        genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters,
+        miscellaneousOptions: SymbolDisplayMiscellaneousOptions.UseSpecialTypes | SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers);
+
     public void Initialize(IncrementalGeneratorInitializationContext context) {
         context.RegisterPostInitializationOutput(static postInitializationContext =>
             postInitializationContext.AddSource("GenerateCodeDocumentationAttribute.g.cs", SourceText.From(AttributeSourceText, Encoding.UTF8)));
@@ -133,6 +139,8 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         return new PropertyDocumentationModel(
             property.Name,
             property.ToDisplayString(PropertyDisplayFormat),
+            property.Type.ToDisplayString(MemberTypeDisplayFormat),
+            property.Type.ToDisplayString(TypeDisplayFormat),
             ExtractSummary(xmlDocumentation),
             xmlDocumentation,
             property.ContainingType?.ToDisplayString(TypeDisplayFormat) ?? string.Empty,
@@ -144,6 +152,8 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         return new FieldDocumentationModel(
             field.Name,
             field.ToDisplayString(FieldDisplayFormat),
+            field.Type.ToDisplayString(MemberTypeDisplayFormat),
+            field.Type.ToDisplayString(TypeDisplayFormat),
             ExtractSummary(xmlDocumentation),
             xmlDocumentation,
             field.ContainingType?.ToDisplayString(TypeDisplayFormat) ?? string.Empty,
@@ -344,13 +354,17 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         builder.AppendLine("    /// </summary>");
         builder.AppendLine("    /// <param name=\"name\">The property name.</param>");
         builder.AppendLine("    /// <param name=\"signature\">The property signature.</param>");
+        builder.AppendLine("    /// <param name=\"typeDisplayName\">The display name of the property type.</param>");
+        builder.AppendLine("    /// <param name=\"typeFullName\">The fully qualified property type.</param>");
         builder.AppendLine("    /// <param name=\"summary\">The property summary.</param>");
         builder.AppendLine("    /// <param name=\"xmlDocumentation\">The full XML documentation block.</param>");
         builder.AppendLine("    /// <param name=\"declaringTypeFullName\">The fully qualified type that declares the property.</param>");
         builder.AppendLine("    /// <param name=\"isFromBaseType\">Indicates whether the property was inherited from a base class.</param>");
-        builder.AppendLine("    public PropertyDocumentation(string name, string signature, string summary, string xmlDocumentation, string declaringTypeFullName, bool isFromBaseType) {");
+        builder.AppendLine("    public PropertyDocumentation(string name, string signature, string typeDisplayName, string typeFullName, string summary, string xmlDocumentation, string declaringTypeFullName, bool isFromBaseType) {");
         builder.AppendLine("        Name = name;");
         builder.AppendLine("        Signature = signature;");
+        builder.AppendLine("        TypeDisplayName = typeDisplayName;");
+        builder.AppendLine("        TypeFullName = typeFullName;");
         builder.AppendLine("        Summary = summary;");
         builder.AppendLine("        XmlDocumentation = xmlDocumentation;");
         builder.AppendLine("        DeclaringTypeFullName = declaringTypeFullName;");
@@ -365,6 +379,14 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         builder.AppendLine("    /// Gets the property signature.");
         builder.AppendLine("    /// </summary>");
         builder.AppendLine("    public string Signature { get; }");
+        builder.AppendLine("    /// <summary>");
+        builder.AppendLine("    /// Gets the property type display name.");
+        builder.AppendLine("    /// </summary>");
+        builder.AppendLine("    public string TypeDisplayName { get; }");
+        builder.AppendLine("    /// <summary>");
+        builder.AppendLine("    /// Gets the fully qualified property type.");
+        builder.AppendLine("    /// </summary>");
+        builder.AppendLine("    public string TypeFullName { get; }");
         builder.AppendLine("    /// <summary>");
         builder.AppendLine("    /// Gets the summary text.");
         builder.AppendLine("    /// </summary>");
@@ -392,13 +414,17 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         builder.AppendLine("    /// </summary>");
         builder.AppendLine("    /// <param name=\"name\">The field name.</param>");
         builder.AppendLine("    /// <param name=\"signature\">The field signature.</param>");
+        builder.AppendLine("    /// <param name=\"typeDisplayName\">The display name of the field type.</param>");
+        builder.AppendLine("    /// <param name=\"typeFullName\">The fully qualified field type.</param>");
         builder.AppendLine("    /// <param name=\"summary\">The field summary.</param>");
         builder.AppendLine("    /// <param name=\"xmlDocumentation\">The full XML documentation block.</param>");
         builder.AppendLine("    /// <param name=\"declaringTypeFullName\">The fully qualified type that declares the field.</param>");
         builder.AppendLine("    /// <param name=\"isFromBaseType\">Indicates whether the field was inherited from a base class.</param>");
-        builder.AppendLine("    public FieldDocumentation(string name, string signature, string summary, string xmlDocumentation, string declaringTypeFullName, bool isFromBaseType) {");
+        builder.AppendLine("    public FieldDocumentation(string name, string signature, string typeDisplayName, string typeFullName, string summary, string xmlDocumentation, string declaringTypeFullName, bool isFromBaseType) {");
         builder.AppendLine("        Name = name;");
         builder.AppendLine("        Signature = signature;");
+        builder.AppendLine("        TypeDisplayName = typeDisplayName;");
+        builder.AppendLine("        TypeFullName = typeFullName;");
         builder.AppendLine("        Summary = summary;");
         builder.AppendLine("        XmlDocumentation = xmlDocumentation;");
         builder.AppendLine("        DeclaringTypeFullName = declaringTypeFullName;");
@@ -413,6 +439,14 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         builder.AppendLine("    /// Gets the field signature.");
         builder.AppendLine("    /// </summary>");
         builder.AppendLine("    public string Signature { get; }");
+        builder.AppendLine("    /// <summary>");
+        builder.AppendLine("    /// Gets the field type display name.");
+        builder.AppendLine("    /// </summary>");
+        builder.AppendLine("    public string TypeDisplayName { get; }");
+        builder.AppendLine("    /// <summary>");
+        builder.AppendLine("    /// Gets the fully qualified field type.");
+        builder.AppendLine("    /// </summary>");
+        builder.AppendLine("    public string TypeFullName { get; }");
         builder.AppendLine("    /// <summary>");
         builder.AppendLine("    /// Gets the summary text.");
         builder.AppendLine("    /// </summary>");
@@ -490,6 +524,8 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
             builder.AppendLine("                new PropertyDocumentation(");
             builder.AppendLine($"                    {ToLiteral(property.Name)},");
             builder.AppendLine($"                    {ToLiteral(property.Signature)},");
+            builder.AppendLine($"                    {ToLiteral(property.TypeDisplayName)},");
+            builder.AppendLine($"                    {ToLiteral(property.TypeFullName)},");
             builder.AppendLine($"                    {ToLiteral(property.Summary)},");
             builder.AppendLine($"                    {ToLiteral(property.XmlDocumentation)},");
             builder.AppendLine($"                    {ToLiteral(property.DeclaringTypeFullName)},");
@@ -502,6 +538,8 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
             builder.AppendLine("                new FieldDocumentation(");
             builder.AppendLine($"                    {ToLiteral(field.Name)},");
             builder.AppendLine($"                    {ToLiteral(field.Signature)},");
+            builder.AppendLine($"                    {ToLiteral(field.TypeDisplayName)},");
+            builder.AppendLine($"                    {ToLiteral(field.TypeFullName)},");
             builder.AppendLine($"                    {ToLiteral(field.Summary)},");
             builder.AppendLine($"                    {ToLiteral(field.XmlDocumentation)},");
             builder.AppendLine($"                    {ToLiteral(field.DeclaringTypeFullName)},");
@@ -793,12 +831,16 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         public PropertyDocumentationModel(
             string name,
             string signature,
+            string typeDisplayName,
+            string typeFullName,
             string summary,
             string xmlDocumentation,
             string declaringTypeFullName,
             bool isFromBaseType) {
             Name = name;
             Signature = signature;
+            TypeDisplayName = typeDisplayName;
+            TypeFullName = typeFullName;
             Summary = summary;
             XmlDocumentation = xmlDocumentation;
             DeclaringTypeFullName = declaringTypeFullName;
@@ -808,6 +850,10 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         public string Name { get; }
 
         public string Signature { get; }
+
+        public string TypeDisplayName { get; }
+
+        public string TypeFullName { get; }
 
         public string Summary { get; }
 
@@ -822,12 +868,16 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         public FieldDocumentationModel(
             string name,
             string signature,
+            string typeDisplayName,
+            string typeFullName,
             string summary,
             string xmlDocumentation,
             string declaringTypeFullName,
             bool isFromBaseType) {
             Name = name;
             Signature = signature;
+            TypeDisplayName = typeDisplayName;
+            TypeFullName = typeFullName;
             Summary = summary;
             XmlDocumentation = xmlDocumentation;
             DeclaringTypeFullName = declaringTypeFullName;
@@ -837,6 +887,10 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         public string Name { get; }
 
         public string Signature { get; }
+
+        public string TypeDisplayName { get; }
+
+        public string TypeFullName { get; }
 
         public string Summary { get; }
 

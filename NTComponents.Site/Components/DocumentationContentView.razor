@@ -1,0 +1,179 @@
+@using System.Net
+@using System.Text
+@using System.Text.RegularExpressions
+@using NTComponents.Site.Documentation
+@inject DocumentationCatalog DocumentationCatalog
+
+@if (Content.SummaryParagraphs.Count > 0) {
+    <div class="doc-rich-text">
+        @foreach (var paragraph in Content.SummaryParagraphs) {
+            <p class="@(Compact ? NTTypography.BodyMedium.ToCssClass() : NTTypography.BodyLarge.ToCssClass())">@((MarkupString)LinkDocumentationReferences(paragraph))</p>
+        }
+    </div>
+}
+
+@if (Content.RemarksParagraphs.Count > 0) {
+    <section class="doc-section">
+        @if (!Compact) {
+            <h2 class="@NTTypography.TitleLarge.ToCssClass()">Details</h2>
+        }
+        <div class="doc-rich-text">
+            @foreach (var paragraph in Content.RemarksParagraphs) {
+                <p class="@(Compact ? $"doc-content-meta {NTTypography.BodySmall.ToCssClass()}" : NTTypography.BodyMedium.ToCssClass())">@((MarkupString)LinkDocumentationReferences(paragraph))</p>
+            }
+        </div>
+    </section>
+}
+
+@if (Content.Parameters.Count > 0) {
+    <section class="doc-section">
+        @if (Compact) {
+            <p class="doc-content-label @NTTypography.LabelLarge.ToCssClass()">Parameters</p>
+        }
+        else {
+            <h2 class="@NTTypography.TitleLarge.ToCssClass()">Parameters</h2>
+        }
+        <dl class="doc-definition-list">
+            @foreach (var parameter in Content.Parameters) {
+                <dt class="@NTTypography.TitleMedium.ToCssClass()"><code>@parameter.Name</code></dt>
+                <dd class="@NTTypography.BodyMedium.ToCssClass()">@((MarkupString)LinkDocumentationReferences(parameter.Html))</dd>
+            }
+        </dl>
+    </section>
+}
+
+@if (!string.IsNullOrWhiteSpace(Content.ValueHtml)) {
+    <section class="doc-section">
+        @if (Compact) {
+            <p class="doc-content-label @NTTypography.LabelLarge.ToCssClass()">Value</p>
+        }
+        else {
+            <h2 class="@NTTypography.TitleLarge.ToCssClass()">Value</h2>
+        }
+        <p class="@(Compact ? NTTypography.BodySmall.ToCssClass() : NTTypography.BodyMedium.ToCssClass())">@((MarkupString)LinkDocumentationReferences(Content.ValueHtml))</p>
+    </section>
+}
+
+@if (!string.IsNullOrWhiteSpace(Content.ReturnsHtml)) {
+    <section class="doc-section">
+        @if (Compact) {
+            <p class="doc-content-label @NTTypography.LabelLarge.ToCssClass()">Returns</p>
+        }
+        else {
+            <h2 class="@NTTypography.TitleLarge.ToCssClass()">Returns</h2>
+        }
+        <p class="@(Compact ? NTTypography.BodySmall.ToCssClass() : NTTypography.BodyMedium.ToCssClass())">@((MarkupString)LinkDocumentationReferences(Content.ReturnsHtml))</p>
+    </section>
+}
+
+@if (Content.Exceptions.Count > 0) {
+    <section class="doc-section">
+        @if (Compact) {
+            <p class="doc-content-label @NTTypography.LabelLarge.ToCssClass()">Exceptions</p>
+        }
+        else {
+            <h2 class="@NTTypography.TitleLarge.ToCssClass()">Exceptions</h2>
+        }
+        <dl class="doc-definition-list">
+            @foreach (var exception in Content.Exceptions) {
+                <dt class="@NTTypography.TitleMedium.ToCssClass()"><code>@exception.Name</code></dt>
+                <dd class="@NTTypography.BodyMedium.ToCssClass()">@((MarkupString)LinkDocumentationReferences(exception.Html))</dd>
+            }
+        </dl>
+    </section>
+}
+
+@code {
+    [Parameter]
+    public bool Compact { get; set; }
+
+    [Parameter, EditorRequired]
+    public DocumentationContent Content { get; set; } = default!;
+
+    private string LinkDocumentationReferences(string? html) {
+        if (string.IsNullOrWhiteSpace(html)) {
+            return string.Empty;
+        }
+
+        return Regex.Replace(
+            html,
+            "<code>(.*?)</code>",
+            match => BuildLinkedCodeMarkup(match.Groups[1].Value),
+            RegexOptions.Singleline | RegexOptions.CultureInvariant);
+    }
+
+    private string BuildLinkedCodeMarkup(string encodedCodeText) {
+        var codeText = WebUtility.HtmlDecode(encodedCodeText);
+        if (string.IsNullOrWhiteSpace(codeText)) {
+            return "<code></code>";
+        }
+
+        var builder = new StringBuilder();
+        var lastIndex = 0;
+
+        foreach (Match match in Regex.Matches(codeText, @"[A-Za-z_][A-Za-z0-9_.]*")) {
+            if (match.Index > lastIndex) {
+                builder.Append(WebUtility.HtmlEncode(codeText[lastIndex..match.Index]));
+            }
+
+            builder.Append(BuildLinkedCodeToken(match.Value));
+
+            lastIndex = match.Index + match.Length;
+        }
+
+        if (lastIndex == 0) {
+            return $"<code>{WebUtility.HtmlEncode(codeText)}</code>";
+        }
+
+        if (lastIndex < codeText.Length) {
+            builder.Append(WebUtility.HtmlEncode(codeText[lastIndex..]));
+        }
+
+        return builder.ToString();
+    }
+
+    private string BuildLinkedCodeToken(string token) {
+        if (TryGetDocumentationHref(token, out var href)) {
+            return BuildCodeLink(href, token);
+        }
+
+        var segments = token.Split('.');
+        for (var prefixLength = segments.Length - 1; prefixLength > 0; prefixLength--) {
+            var prefix = string.Join(".", segments.Take(prefixLength));
+            if (!TryGetDocumentationHref(prefix, out href)) {
+                continue;
+            }
+
+            var suffix = string.Join(".", segments.Skip(prefixLength));
+            return $"{BuildCodeLink(href, prefix)}{WebUtility.HtmlEncode("." + suffix)}";
+        }
+
+        return $"<code>{WebUtility.HtmlEncode(token)}</code>";
+    }
+
+    private static string BuildCodeLink(string href, string text) {
+        return $"<a class=\"doc-inline-link\" href=\"{WebUtility.HtmlEncode(href)}\"><code>{WebUtility.HtmlEncode(text)}</code></a>";
+    }
+
+    private bool TryGetDocumentationHref(string typeNameOrFullName, out string? href) {
+        href = null;
+        if (string.IsNullOrWhiteSpace(typeNameOrFullName)) {
+            return false;
+        }
+
+        var normalized = NormalizeTypeLookupValue(typeNameOrFullName);
+        return DocumentationCatalog.TryGetTypeHref(normalized, out href)
+               || DocumentationCatalog.TryGetTypeHrefByName(normalized, out href);
+    }
+
+    private static string NormalizeTypeLookupValue(string value) {
+        var normalized = value.Trim();
+        normalized = normalized.TrimEnd('?');
+        var bracketIndex = normalized.IndexOf('[');
+        if (bracketIndex >= 0) {
+            normalized = normalized[..bracketIndex];
+        }
+
+        return normalized;
+    }
+}

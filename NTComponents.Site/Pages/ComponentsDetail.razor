@@ -1,0 +1,49 @@
+@page "/docs/components/{Slug}"
+@inject DocumentationCatalog DocumentationCatalog
+
+<PageTitle>@(TypePage is null ? "Components | NTComponents" : $"{TypePage.Name} | NTComponents Components")</PageTitle>
+
+@if (TypePage is null) {
+    <section class="docs-page">
+        <header class="docs-hero">
+            <p class="docs-kicker @NTTypography.LabelLarge.ToCssClass()">Components</p>
+            <h1 class="@NTTypography.DisplaySmall.ToCssClass()">Component not found</h1>
+            <p class="@NTTypography.BodyLarge.ToCssClass()">
+                The requested component page was not found in the generated documentation model.
+            </p>
+            <a class="doc-back-link @NTTypography.LabelLarge.ToCssClass()" href="/docs/components">Back to components index</a>
+        </header>
+    </section>
+}
+else {
+    <DocumentationTypeDetailView TypePage="TypePage"
+                                 BackHref="/docs/components"
+                                 BackLabel="Back to components index"
+                                 SupplementalSections="SupplementalSections"
+                                 SupplementalOutlineItems="SupplementalOutlineItems" />
+}
+
+@code {
+    [Parameter]
+    public string Slug { get; set; } = string.Empty;
+
+    private DocumentationTypePage? TypePage { get; set; }
+    private static readonly IReadOnlyList<DocumentationOutlineItem> _ntButtonOutlineItems = [
+        new("demo", "Demo")
+    ];
+
+    private RenderFragment? SupplementalSections => TypePage?.FullName == "NTComponents.NTButton"
+        ? builder => {
+            builder.OpenComponent<NTButtonDocumentationDemo>(0);
+            builder.CloseComponent();
+        }
+        : null;
+
+    private IReadOnlyList<DocumentationOutlineItem> SupplementalOutlineItems => TypePage?.FullName == "NTComponents.NTButton"
+        ? _ntButtonOutlineItems
+        : Array.Empty<DocumentationOutlineItem>();
+
+    protected override void OnParametersSet() {
+        TypePage = DocumentationCatalog.TryGetComponentType(Slug, out var typePage) ? typePage : null;
+    }
+}
