@@ -1,0 +1,34 @@
+.nt-button-ripple-host {
+    border-radius: inherit;
+    display: block;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    position: absolute;
+    z-index: 1;
+}
+
+.nt-button-ripple {
+    background: var(--nt-button-state-layer-color, currentColor);
+    border-radius: 50%;
+    display: block;
+    opacity: 0.12;
+    pointer-events: none;
+    position: absolute;
+    left: var(--nt-button-ripple-origin-x, 50%);
+    top: var(--nt-button-ripple-origin-y, 50%);
+    width: var(--nt-button-ripple-width, 200%);
+    height: var(--nt-button-ripple-height, 200%);
+    transform: translate(-50%, -50%) scale(0);
+    transform-origin: center center;
+    transition: transform 450ms ease-out, opacity 200ms ease-out;
+    will-change: transform, opacity;
+}
+
+.nt-button-ripple-active {
+    transform: translate(-50%, -50%) scale(1.2);
+}
+
+.nt-button-ripple-releasing {
+    opacity: 0;
+}

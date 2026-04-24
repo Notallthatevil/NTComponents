@@ -32,41 +32,47 @@ public class TnTHeadDependencies : IComponent {
         builder.AddAttribute(4, "src", "_content/NTComponents/theme-bootstrap.js");
         builder.CloseElement();
 
-        // <link rel="preconnect" href="https://fonts.googleapis.com">
+        // <link rel="stylesheet" href="_content/NTComponents/nt-ripple.css">
         builder.OpenElement(5, "link");
-        builder.AddAttribute(6, "rel", "preconnect");
-        builder.AddAttribute(7, "href", "https://fonts.googleapis.com");
+        builder.AddAttribute(6, "rel", "stylesheet");
+        builder.AddAttribute(7, "href", "_content/NTComponents/nt-ripple.css");
+        builder.CloseElement();
+
+        // <link rel="preconnect" href="https://fonts.googleapis.com">
+        builder.OpenElement(8, "link");
+        builder.AddAttribute(9, "rel", "preconnect");
+        builder.AddAttribute(10, "href", "https://fonts.googleapis.com");
         builder.CloseElement();
 
         // <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        builder.OpenElement(8, "link");
-        builder.AddAttribute(9, "rel", "preconnect");
-        builder.AddAttribute(10, "href", "https://fonts.gstatic.com");
-        builder.AddAttribute(11, "crossorigin", string.Empty);
+        builder.OpenElement(12, "link");
+        builder.AddAttribute(13, "rel", "preconnect");
+        builder.AddAttribute(14, "href", "https://fonts.gstatic.com");
+        builder.AddAttribute(15, "crossorigin", string.Empty);
         builder.CloseElement();
 
         // <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
-        builder.OpenElement(12, "link");
-        builder.AddAttribute(13, "href", "https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap");
-        builder.AddAttribute(14, "rel", "stylesheet");
+        builder.OpenElement(16, "link");
+        builder.AddAttribute(17, "href", "https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap");
+        builder.AddAttribute(18, "rel", "stylesheet");
         builder.CloseElement();
 
         // <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp" />
-        builder.OpenElement(15, "link");
-        builder.AddAttribute(16, "rel", "stylesheet");
-        builder.AddAttribute(17, "href", "https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp");
+        builder.OpenElement(19, "link");
+        builder.AddAttribute(20, "rel", "stylesheet");
+        builder.AddAttribute(21, "href", "https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp");
         builder.CloseElement();
 
         // <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded" />
-        builder.OpenElement(18, "link");
-        builder.AddAttribute(19, "rel", "stylesheet");
-        builder.AddAttribute(20, "href", "https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded");
+        builder.OpenElement(22, "link");
+        builder.AddAttribute(23, "rel", "stylesheet");
+        builder.AddAttribute(24, "href", "https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded");
         builder.CloseElement();
 
         // <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
-        builder.OpenElement(21, "link");
-        builder.AddAttribute(22, "rel", "stylesheet");
-        builder.AddAttribute(23, "href", "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined");
+        builder.OpenElement(25, "link");
+        builder.AddAttribute(26, "rel", "stylesheet");
+        builder.AddAttribute(27, "href", "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined");
         builder.CloseElement();
     }
 }

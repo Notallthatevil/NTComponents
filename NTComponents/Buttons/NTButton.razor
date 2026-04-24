@@ -1,0 +1,40 @@
+@namespace NTComponents
+@using NTComponents.Core
+@inherits TnTComponentBase
+
+<button @attributes="AdditionalAttributes"
+        class="@ElementClass"
+        style="@ElementStyle"
+        type="@Type.ToHtmlAttribute()"
+        name="@ElementName"
+        disabled="@Disabled"
+        autofocus="@AutoFocus"
+        title="@ElementTitle"
+        id="@ElementId"
+        aria-pressed="@AriaPressed"
+        @onclick="OnClickCallback"
+        @onclick:stopPropagation="StopPropagation"
+        @ref="Element">
+    @if (Tooltip is not null) {
+        <TnTTooltip>
+            @Tooltip
+        </TnTTooltip>
+    }
+
+    @if (EnableRipple) {
+        @NTRipple.Render()
+    }
+
+    @if (LeadingIcon is not null) {
+        <span class="nt-button-icon" aria-hidden="true">
+            @LeadingIcon.Render()
+        </span>
+    }
+
+    <span>@Label</span>
+</button>
+<script>
+    (function (script) {
+        window.NTComponents?.startButtonInteraction?.(script);
+    })(document.currentScript);
+</script>
