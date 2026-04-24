@@ -1,11 +1,30 @@
+@use 'sass:math';
 @use '../Styles/_Variables/_colors.scss' as colors;
 @use '../Styles/_Variables/_corner-radius.scss' as corners;
 @use '../Styles/_Variables/_measurements.scss' as measurements;
 @use '../Styles/_Variables/_motion.scss' as motion;
 @use '../Styles/_Variables/_typescale.scss' as typescale;
 
+$nt-button-state-transition: motion.$nt-motion-duration-short_3 motion.$nt-motion-easing-standard;
+$nt-button-shape-transition: motion.$nt-motion-duration-short_4 motion.$nt-motion-easing-standard;
+$nt-button-sizes: (
+    xs: (32px, 12px, 4px, 20px, measurements.$tnt-pill-border-radius-xs, corners.$nt-corner-radius-small, 500, 14px, 20px, 0.1px),
+    s: (40px, 16px, 8px, 20px, measurements.$tnt-pill-border-radius-small, corners.$nt-corner-radius-small, 500, 14px, 20px, 0.1px),
+    m: (56px, 24px, 8px, 24px, measurements.$tnt-pill-border-radius-medium, corners.$nt-corner-radius-medium, 500, 16px, 24px, 0.15px),
+    l: (96px, 48px, 12px, 32px, measurements.$tnt-pill-border-radius-large, corners.$nt-corner-radius-large, 400, 24px, 32px, 0),
+    xl: (136px, 64px, 16px, 40px, measurements.$tnt-pill-border-radius-xl, corners.$nt-corner-radius-large, 400, 32px, 40px, 0)
+);
+
+@function nt-button-touch-inset($height) {
+    @if $height < 48px {
+        @return math.div(48px - $height, 2);
+    }
+
+    @return 0px;
+}
+
 @mixin nt-button-size($height, $padding, $gap, $icon-size, $radius, $pressed-radius, $weight, $font-size, $line-height, $tracking) {
-    --nt-button-height: #{$height};
+    --nt-button-container-inset-block: #{nt-button-touch-inset($height)};
     --nt-button-icon-size: #{$icon-size};
     --nt-button-pressed-radius: #{$pressed-radius};
     --nt-button-radius: #{$radius};
@@ -19,7 +38,7 @@
 .nt-button {
     --nt-button-bg: #{colors.$tnt-color-primary};
     --nt-button-fg: #{colors.$tnt-color-on-primary};
-    --nt-button-height: 40px;
+    --nt-button-container-inset-block: 4px;
     --nt-button-outline: transparent;
     --nt-button-radius: #{measurements.$tnt-pill-border-radius-small};
     --nt-button-pressed-radius: #{corners.$nt-corner-radius-small};
@@ -41,7 +60,7 @@
     overflow: hidden;
     position: relative;
     text-decoration: none;
-    transition: background-color motion.$nt-motion-duration-short_3 motion.$nt-motion-easing-standard, border-color motion.$nt-motion-duration-short_3 motion.$nt-motion-easing-standard, border-radius motion.$nt-motion-duration-short_4 motion.$nt-motion-easing-standard, box-shadow motion.$nt-motion-duration-short_3 motion.$nt-motion-easing-standard, color motion.$nt-motion-duration-short_3 motion.$nt-motion-easing-standard;
+    transition: border-radius $nt-button-shape-transition, box-shadow $nt-button-state-transition, color $nt-button-state-transition;
     user-select: none;
     vertical-align: middle;
 
@@ -49,7 +68,7 @@
     &::before {
         border-radius: inherit;
         content: '';
-        inset-block: max(0px, calc((48px - var(--nt-button-height)) / 2));
+        inset-block: var(--nt-button-container-inset-block);
         inset-inline: 0;
         pointer-events: none;
         position: absolute;
@@ -58,14 +77,14 @@
     &::after {
         background: var(--nt-button-bg);
         border: 1px solid var(--nt-button-outline);
-        transition: background-color motion.$nt-motion-duration-short_3 motion.$nt-motion-easing-standard, border-color motion.$nt-motion-duration-short_3 motion.$nt-motion-easing-standard, border-radius motion.$nt-motion-duration-short_4 motion.$nt-motion-easing-standard;
+        transition: background-color $nt-button-state-transition, border-color $nt-button-state-transition, border-radius $nt-button-shape-transition;
         z-index: 0;
     }
 
     &::before {
         background: currentColor;
         opacity: 0;
-        transition: border-radius motion.$nt-motion-duration-short_4 motion.$nt-motion-easing-standard, opacity motion.$nt-motion-duration-short_3 motion.$nt-motion-easing-standard;
+        transition: border-radius $nt-button-shape-transition, opacity $nt-button-state-transition;
         z-index: 1;
     }
 
@@ -90,24 +109,10 @@
         }
     }
 
-    &.tnt-size-xs {
-        @include nt-button-size(32px, 12px, 4px, 20px, measurements.$tnt-pill-border-radius-xs, corners.$nt-corner-radius-small, 500, 14px, 20px, 0.1px);
-    }
-
-    &.tnt-size-s {
-        @include nt-button-size(40px, 16px, 8px, 20px, measurements.$tnt-pill-border-radius-small, corners.$nt-corner-radius-small, 500, 14px, 20px, 0.1px);
-    }
-
-    &.tnt-size-m {
-        @include nt-button-size(56px, 24px, 8px, 24px, measurements.$tnt-pill-border-radius-medium, corners.$nt-corner-radius-medium, 500, 16px, 24px, 0.15px);
-    }
-
-    &.tnt-size-l {
-        @include nt-button-size(96px, 48px, 12px, 32px, measurements.$tnt-pill-border-radius-large, corners.$nt-corner-radius-large, 400, 24px, 32px, 0);
-    }
-
-    &.tnt-size-xl {
-        @include nt-button-size(136px, 64px, 16px, 40px, measurements.$tnt-pill-border-radius-xl, corners.$nt-corner-radius-large, 400, 32px, 40px, 0);
+    @each $size, $tokens in $nt-button-sizes {
+        &.tnt-size-#{$size} {
+            @include nt-button-size($tokens...);
+        }
     }
 
     &.nt-button-shape-square {
@@ -130,17 +135,16 @@
         --nt-button-outline: #{colors.$tnt-color-outline};
     }
 
-    &.nt-button-text,
-    &.nt-button-outlined {
-        background: transparent;
+    &.nt-button-text::after {
+        content: none;
     }
 
-    &.nt-button-text::after,
     &.nt-button-outlined::after {
         background: transparent;
     }
 
-    > span:not(.nt-button-ripple-host) {
+    > .nt-button-icon,
+    > .nt-button-label {
         position: relative;
         z-index: 2;
     }
@@ -165,30 +169,26 @@
         color: color-mix(in srgb, #{colors.$tnt-color-on-surface} 38%, transparent);
         cursor: not-allowed;
         outline: none;
-    }
 
-    &.tnt-disabled::after,
-    &:disabled::after {
-        background: color-mix(in srgb, #{colors.$tnt-color-on-surface} 12%, transparent);
-        border-color: transparent;
-    }
+        &::after {
+            background: color-mix(in srgb, #{colors.$tnt-color-on-surface} 12%, transparent);
+            border-color: transparent;
+        }
 
-    &.nt-button-text.tnt-disabled::after,
-    &.nt-button-text:disabled::after,
-    &.nt-button-outlined.tnt-disabled::after,
-    &.nt-button-outlined:disabled::after {
-        background: transparent;
-    }
+        &.nt-button-text::after,
+        &.nt-button-outlined::after {
+            background: transparent;
+        }
 
-    &.nt-button-outlined.tnt-disabled::after,
-    &.nt-button-outlined:disabled::after {
-        border-color: color-mix(in srgb, #{colors.$tnt-color-on-surface} 12%, transparent);
+        &.nt-button-outlined::after {
+            border-color: color-mix(in srgb, #{colors.$tnt-color-on-surface} 12%, transparent);
+        }
     }
 
     ::deep {
         .nt-button-ripple-host {
-            inset-block: max(0px, calc((48px - var(--nt-button-height)) / 2));
-            transition: border-radius motion.$nt-motion-duration-short_4 motion.$nt-motion-easing-standard;
+            inset-block: var(--nt-button-container-inset-block);
+            transition: border-radius $nt-button-shape-transition;
         }
 
         .tnt-icon {
