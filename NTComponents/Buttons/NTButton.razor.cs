@@ -108,6 +108,12 @@ public partial class NTButton : TnTComponentBase {
     public bool Selected { get; set; }
 
     /// <summary>
+    ///     Gets or sets the callback invoked when the toggle selected state changes.
+    /// </summary>
+    [Parameter]
+    public EventCallback<bool> SelectedChanged { get; set; }
+
+    /// <summary>
     ///     Gets or sets the base resting shape for the button.
     /// </summary>
     [Parameter]
@@ -259,6 +265,19 @@ public partial class NTButton : TnTComponentBase {
             NTButtonVariant.Text => TnTColor.Primary,
             _ => throw new ArgumentOutOfRangeException(nameof(Variant), Variant, null)
         };
+    }
+
+    private async Task HandleClickAsync(MouseEventArgs args) {
+        if (Disabled) {
+            return;
+        }
+
+        if (IsToggleButton) {
+            Selected = !Selected;
+            await SelectedChanged.InvokeAsync(Selected);
+        }
+
+        await OnClickCallback.InvokeAsync(args);
     }
 
     private void ValidateBackgroundColorForVariant() {

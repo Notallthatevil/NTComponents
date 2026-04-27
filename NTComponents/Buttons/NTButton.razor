@@ -12,7 +12,7 @@
         title="@ElementTitle"
         id="@ElementId"
         aria-pressed="@AriaPressed"
-        @onclick="OnClickCallback"
+        @onclick="HandleClickAsync"
         @onclick:stopPropagation="StopPropagation"
         @ref="Element">
     @if (Tooltip is not null) {
