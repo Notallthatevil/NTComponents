@@ -708,7 +708,7 @@ window.NTComponents = {
     setupRipple: () => {
         ensureRippleHandlers();
 
-        document.querySelectorAll('.nt-button').forEach((element) => {
+        document.querySelectorAll('.nt-button, .nt-icon-button').forEach((element) => {
             registerButtonInteraction(element);
         });
 

@@ -70,6 +70,22 @@ public class NTButton_Tests : BunitContext {
     }
 
     [Fact]
+    public void Toggle_Click_Invokes_SelectedChanged_For_Bind_Selected() {
+        var selected = false;
+        var cut = Render<NTButton>(parameters => parameters
+            .Add(x => x.Label, "Favorite")
+            .Add(x => x.IsToggleButton, true)
+            .Add(x => x.Selected, selected)
+            .Add(x => x.Variant, NTButtonVariant.Filled)
+            .Add(x => x.SelectedChanged, EventCallback.Factory.Create<bool>(this, value => selected = value)));
+
+        cut.Find("button").Click();
+
+        selected.Should().BeTrue();
+        cut.Instance.Selected.Should().BeTrue();
+    }
+
+    [Fact]
     public void Toggle_Button_Uses_Round_Unselected_And_Square_Selected_Shapes() {
         var unselected = Render<NTButton>(parameters => parameters
             .Add(x => x.Label, "Unselected")

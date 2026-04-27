@@ -1,0 +1,209 @@
+@use 'sass:math';
+@use '../Styles/_Variables/_colors.scss' as colors;
+@use '../Styles/_Variables/_corner-radius.scss' as corners;
+@use '../Styles/_Variables/_measurements.scss' as measurements;
+@use '../Styles/_Variables/_motion.scss' as motion;
+
+$nt-icon-button-state-transition: motion.$nt-motion-duration-short_3 motion.$nt-motion-easing-standard;
+$nt-icon-button-shape-transition: motion.$nt-motion-duration-short_4 motion.$nt-motion-easing-standard;
+$nt-icon-button-sizes: (
+    xs: (32px, 32px, 40px, 52px, 20px, measurements.$tnt-pill-border-radius-xs, corners.$nt-corner-radius-small),
+    s: (40px, 40px, 48px, 64px, 24px, measurements.$tnt-pill-border-radius-small, corners.$nt-corner-radius-small),
+    m: (56px, 56px, 64px, 80px, 24px, measurements.$tnt-pill-border-radius-medium, corners.$nt-corner-radius-medium),
+    l: (96px, 96px, 112px, 128px, 32px, measurements.$tnt-pill-border-radius-large, corners.$nt-corner-radius-large),
+    xl: (136px, 136px, 152px, 168px, 40px, measurements.$tnt-pill-border-radius-xl, corners.$nt-corner-radius-large)
+);
+
+@function nt-icon-button-touch-inset($height) {
+    @if $height < 48px {
+        @return math.div(48px - $height, 2);
+    }
+
+    @return 0px;
+}
+
+@mixin nt-icon-button-size($height, $narrow-width, $default-width, $wide-width, $icon-size, $radius, $pressed-radius) {
+    --nt-icon-button-container-height: #{$height};
+    --nt-icon-button-container-inset-block: #{nt-icon-button-touch-inset($height)};
+    --nt-icon-button-icon-size: #{$icon-size};
+    --nt-icon-button-pressed-radius: #{$pressed-radius};
+    --nt-icon-button-radius: #{$radius};
+    --nt-icon-button-width-narrow: #{$narrow-width};
+    --nt-icon-button-width-default: #{$default-width};
+    --nt-icon-button-width-wide: #{$wide-width};
+}
+
+.nt-icon-button {
+    --nt-icon-button-bg: transparent;
+    --nt-icon-button-fg: #{colors.$tnt-color-on-surface-variant};
+    --nt-icon-button-container-height: 40px;
+    --nt-icon-button-container-inset-block: 4px;
+    --nt-icon-button-container-width: 48px;
+    --nt-icon-button-outline: transparent;
+    --nt-icon-button-radius: #{measurements.$tnt-pill-border-radius-small};
+    --nt-icon-button-pressed-radius: #{corners.$nt-corner-radius-small};
+
+    align-items: center;
+    appearance: none;
+    background: transparent;
+    border: 0;
+    border-radius: var(--nt-icon-button-radius);
+    box-sizing: border-box;
+    color: var(--nt-icon-button-fg);
+    cursor: pointer;
+    display: inline-flex;
+    inline-size: max(48px, var(--nt-icon-button-container-width));
+    justify-content: center;
+    margin: 0;
+    min-block-size: 48px;
+    min-inline-size: 48px;
+    outline: none;
+    overflow: hidden;
+    padding: 0;
+    position: relative;
+    text-decoration: none;
+    transition: border-radius $nt-icon-button-shape-transition, box-shadow $nt-icon-button-state-transition, color $nt-icon-button-state-transition;
+    user-select: none;
+    vertical-align: middle;
+
+    &::after,
+    &::before {
+        border-radius: inherit;
+        content: '';
+        inset-block: var(--nt-icon-button-container-inset-block);
+        inset-inline: calc((100% - var(--nt-icon-button-container-width)) / 2);
+        pointer-events: none;
+        position: absolute;
+    }
+
+    &::after {
+        background: var(--nt-icon-button-bg);
+        block-size: var(--nt-icon-button-container-height);
+        border: 1px solid var(--nt-icon-button-outline);
+        transition: background-color $nt-icon-button-state-transition, border-color $nt-icon-button-state-transition, border-radius $nt-icon-button-shape-transition;
+        z-index: 0;
+    }
+
+    &::before {
+        background: currentColor;
+        opacity: 0;
+        transition: border-radius $nt-icon-button-shape-transition, opacity $nt-icon-button-state-transition;
+        z-index: 1;
+    }
+
+    &:not(.tnt-disabled):not(:disabled) {
+        &:hover::before {
+            opacity: 0.08;
+        }
+
+        &:focus-visible::before,
+        &:active::before {
+            opacity: 0.1;
+        }
+
+        &:focus-visible {
+            outline: 3px solid color-mix(in srgb, currentColor 44%, transparent);
+            outline-offset: 2px;
+        }
+
+        &:active,
+        &.nt-button--pressed-shape {
+            border-radius: var(--nt-icon-button-pressed-radius);
+        }
+    }
+
+    @each $size, $tokens in $nt-icon-button-sizes {
+        &.tnt-size-#{$size} {
+            @include nt-icon-button-size($tokens...);
+        }
+    }
+
+    &.nt-icon-button-width-narrow {
+        --nt-icon-button-container-width: var(--nt-icon-button-width-narrow);
+    }
+
+    &.nt-icon-button-width-default {
+        --nt-icon-button-container-width: var(--nt-icon-button-width-default);
+    }
+
+    &.nt-icon-button-width-wide {
+        --nt-icon-button-container-width: var(--nt-icon-button-width-wide);
+    }
+
+    &.nt-icon-button-shape-square {
+        &.tnt-size-xs,
+        &.tnt-size-s {
+            --nt-icon-button-radius: #{corners.$nt-corner-radius-medium};
+        }
+
+        &.tnt-size-m {
+            --nt-icon-button-radius: #{corners.$nt-corner-radius-large};
+        }
+
+        &.tnt-size-l,
+        &.tnt-size-xl {
+            --nt-icon-button-radius: #{corners.$nt-corner-radius-extra-large};
+        }
+    }
+
+    &.nt-icon-button-outlined {
+        --nt-icon-button-outline: #{colors.$tnt-color-outline};
+    }
+
+    &.nt-icon-button-standard::after {
+        content: none;
+    }
+
+    &.nt-icon-button-outlined::after {
+        background: transparent;
+    }
+
+    > .nt-icon-button-icon {
+        align-items: center;
+        display: inline-flex;
+        flex: 0 0 auto;
+        justify-content: center;
+        position: relative;
+        z-index: 2;
+    }
+
+    &.tnt-disabled,
+    &:disabled {
+        box-shadow: none;
+        color: color-mix(in srgb, #{colors.$tnt-color-on-surface} 38%, transparent);
+        cursor: not-allowed;
+        outline: none;
+
+        &::after {
+            background: color-mix(in srgb, #{colors.$tnt-color-on-surface} 12%, transparent);
+            border-color: transparent;
+        }
+
+        &.nt-icon-button-standard::after,
+        &.nt-icon-button-outlined::after {
+            background: transparent;
+        }
+
+        &.nt-icon-button-outlined::after {
+            border-color: color-mix(in srgb, #{colors.$tnt-color-on-surface} 12%, transparent);
+        }
+    }
+
+    ::deep {
+        .nt-button-ripple-host {
+            inset-block: var(--nt-icon-button-container-inset-block);
+            inset-inline: calc((100% - var(--nt-icon-button-container-width)) / 2);
+            transition: border-radius $nt-icon-button-shape-transition;
+        }
+
+        .tnt-icon {
+            color: inherit;
+            font-size: var(--nt-icon-button-icon-size);
+            pointer-events: none;
+        }
+
+        tnt-page-script {
+            position: absolute;
+        }
+    }
+}
