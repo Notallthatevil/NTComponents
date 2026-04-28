@@ -46,3 +46,24 @@ public enum Size {
     /// </summary>
     XL = Largest
 }
+
+/// <summary>
+/// Extension methods for the <see cref="Size"/> enum, providing functionality to convert sizes to CSS class names.
+/// </summary>
+public static class SizeExtensions {
+    /// <summary>
+    /// Converts the size to a CSS class name.
+    /// </summary>
+    /// <param name="size">The size to convert.</param>
+    /// <returns>A CSS class name corresponding to the size.</returns>
+    public static string ToCssClass(this Size size) {
+        return size switch {
+            Size.Smallest => "nt-size-xs",
+            Size.Small => "nt-size-s",
+            Size.Medium => "nt-size-m",
+            Size.Large => "nt-size-l",
+            Size.Largest => "nt-size-xl",
+            _ => throw new ArgumentOutOfRangeException(nameof(size), size, null)
+        };
+    }
+}

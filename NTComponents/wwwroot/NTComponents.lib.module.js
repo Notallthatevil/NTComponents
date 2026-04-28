@@ -363,6 +363,20 @@ function registerButtonInteraction(element) {
     });
 }
 
+function registerButtonInteractions(element) {
+    if (!element) {
+        return;
+    }
+
+    if (element.matches?.('.nt-button, .nt-icon-button')) {
+        registerButtonInteraction(element);
+    }
+
+    element.querySelectorAll?.('.nt-button, .nt-icon-button').forEach((button) => {
+        registerButtonInteraction(button);
+    });
+}
+
 function registerRippleHost(host) {
     const element = getRippleRegistrationElement(host);
     registerButtonInteraction(element);
@@ -376,8 +390,8 @@ function startButtonInteraction(script) {
 
     let attempts = 0;
     const tryRegister = () => {
-        if (typeof window.NTComponents?.registerButtonInteraction === 'function') {
-            window.NTComponents.registerButtonInteraction(element);
+        if (typeof window.NTComponents?.registerButtonInteractions === 'function') {
+            window.NTComponents.registerButtonInteractions(element);
             return;
         }
 
@@ -725,6 +739,7 @@ window.NTComponents = {
         });
     },
     registerButtonInteraction,
+    registerButtonInteractions,
     registerRippleHost,
     startButtonInteraction,
     startRippleHost,

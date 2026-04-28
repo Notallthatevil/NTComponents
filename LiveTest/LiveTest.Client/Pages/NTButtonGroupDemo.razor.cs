@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.AspNetCore.Components;
 using NTComponents;
 
@@ -9,15 +10,6 @@ namespace LiveTest.Client.Pages;
 ///     Demonstrates the <see cref="NTButtonGroup" /> component within the LiveTest client app.
 /// </summary>
 public partial class NTButtonGroupDemo : ComponentBase {
-    private static readonly IReadOnlyList<TnTColor> ColorSwatch = new[] {
-        TnTColor.Surface,
-        TnTColor.SurfaceVariant,
-        TnTColor.Primary,
-        TnTColor.Secondary,
-        TnTColor.Success,
-        TnTColor.Error
-    };
-
     private static readonly IReadOnlyList<NTButtonGroupDemoItem> BaseButtonItems = new[] {
         new NTButtonGroupDemoItem {
             Key = "mail",
@@ -34,21 +26,19 @@ public partial class NTButtonGroupDemo : ComponentBase {
         },
         new NTButtonGroupDemoItem {
             Key = "image1",
-            StartIcon = MaterialIcon.QrCode
+            StartIcon = MaterialIcon.QrCode,
+            AriaLabel = "Show QR code"
         },
         new NTButtonGroupDemoItem {
             Key = "image2",
-            StartIcon = MaterialIcon.Radar
+            StartIcon = MaterialIcon.Radar,
+            AriaLabel = "Show radar"
         },
     };
 
-    private static readonly IReadOnlyList<string> ImageSources = new[] {
-        BuildImageData("M", "#2563eb"),
-        BuildImageData("C", "#9333ea"),
-        BuildImageData("S", "#047857")
-    };
-
-    private IReadOnlyList<NTButtonGroupDemoItem> DisplayItems => BaseButtonItems;
+    private IReadOnlyList<NTButtonGroupDemoItem> DisplayItems => UseImages
+        ? BaseButtonItems
+        : BaseButtonItems.Where(item => item.Label is not null).ToArray();
 
     private bool UseImages { get; set; }
 
@@ -57,11 +47,9 @@ public partial class NTButtonGroupDemo : ComponentBase {
 
     private Size ButtonSize { get; set; } = Size.Medium;
 
-    private ButtonAppearance Appearance { get; set; } = ButtonAppearance.Filled;
+    private NTButtonVariant Variant { get; set; } = NTButtonVariant.Tonal;
 
-    private ButtonAppearance SelectedAppearance { get; set; } = ButtonAppearance.Filled;
-
-    private TnTColor BackgroundColor { get; set; } = TnTColor.SurfaceVariant;
+    private ButtonShape Shape { get; set; } = ButtonShape.Round;
 
     private bool DisableRipple { get; set; }
 
@@ -69,17 +57,7 @@ public partial class NTButtonGroupDemo : ComponentBase {
 
     private bool StopPropagation { get; set; } = true;
 
-    private bool UseTintColors { get; set; } = true;
-
-    private bool UseSelectedTintColors { get; set; } = true;
-
-    private bool UseSelectedTextColor { get; set; } = true;
-
-    private TnTColor SelectedTintColor { get; set; } = TnTColor.Primary;
-
-    private TnTColor SelectedOnTintColor { get; set; } = TnTColor.OnPrimary;
-
-    private TnTColor SelectedTextColor { get; set; } = TnTColor.OnPrimary;
+    private bool SelectionRequired { get; set; } = true;
 
     private string SelectedKey { get; set; } = BaseButtonItems[0].Key;
 
@@ -101,16 +79,11 @@ public partial class NTButtonGroupDemo : ComponentBase {
         return Task.CompletedTask;
     }
 
-    private static string BuildImageData(string glyph, string fillColor) {
-        var svg = $"<svg xmlns='http://www.w3.org/2000/svg' width='28' height='28'><rect width='28' height='28' rx='8' fill='{fillColor}'/><text x='50%' y='55%' font-size='14' font-weight='600' fill='white' text-anchor='middle' dominant-baseline='middle'>{glyph}</text></svg>";
-        return $"data:image/svg+xml,{Uri.EscapeDataString(svg)}";
-    }
-
     private sealed record NTButtonGroupDemoItem {
         public required string Key { get; init; }
         public string? Label { get; init; }
+        public string? AriaLabel { get; init; }
         public TnTIcon? StartIcon { get; init; }
-        public TnTIcon? EndIcon { get; init; }
         public bool Disabled { get; init; }
         public bool IsDefaultSelected { get; init; }
     }

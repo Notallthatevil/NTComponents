@@ -1,188 +1,335 @@
+@use 'sass:math';
 @use '../Styles/_Variables/_colors.scss' as colors;
+@use '../Styles/_Variables/_corner-radius.scss' as corners;
 @use '../Styles/_Variables/_measurements.scss' as measurements;
+@use '../Styles/_Variables/_motion.scss' as motion;
 @use '../Styles/_Variables/_typescale.scss' as typescale;
 
-$nt-button-group-first-child-suffix: ' .tnt-small-button-layer';
+$nt-button-group-state-transition: motion.$nt-motion-duration-short_3 motion.$nt-motion-easing-standard;
+$nt-button-group-shape-transition: motion.$nt-motion-duration-short_4 motion.$nt-motion-easing-standard;
+$nt-button-group-sizes: (
+    xs: (32px, 56px, 12px, 18px, 4px, 20px, measurements.$tnt-pill-border-radius-xs, corners.$nt-corner-radius-extra-small, corners.$nt-corner-radius-medium, 500, 14px, 20px, 0.1px),
+    s: (40px, 64px, 16px, 12px, 8px, 20px, measurements.$tnt-pill-border-radius-small, corners.$nt-corner-radius-small, corners.$nt-corner-radius-medium, 500, 14px, 20px, 0.1px),
+    m: (56px, 80px, 24px, 8px, 8px, 24px, measurements.$tnt-pill-border-radius-medium, corners.$nt-corner-radius-small, corners.$nt-corner-radius-large, 500, 16px, 24px, 0.15px),
+    l: (96px, 128px, 48px, 8px, 12px, 32px, measurements.$tnt-pill-border-radius-large, corners.$nt-corner-radius-large, corners.$nt-corner-radius-extra-large, 400, 24px, 32px, 0),
+    xl: (136px, 168px, 64px, 8px, 16px, 40px, measurements.$tnt-pill-border-radius-xl, corners.$nt-corner-radius-large-increased, corners.$nt-corner-radius-extra-large, 400, 32px, 40px, 0)
+);
 
-
-@mixin nt-button-group-connected-pill($corner-radius, $selector: '') {
-    ::deep {
-        .btn-group-btn:not(.btn-group-selected) {
-            &:not(:first-child):not(:last-child) {
-                @if $selector != '' {
-
-                    #{$selector} {
-                        border-radius: $corner-radius;
-                    }
-                }
-                @else {
-                    border-radius: $corner-radius;
-                }
-            }
-
-            &:first-child#{$selector} {
-                border-start-end-radius: $corner-radius;
-                border-end-end-radius: $corner-radius;
-            }
-
-            &:last-child#{$selector} {
-                border-start-start-radius: $corner-radius;
-                border-end-start-radius: $corner-radius;
-            }
-        }
+@function nt-button-group-touch-inset($height) {
+    @if $height < 48px {
+        @return math.div(48px - $height, 2);
     }
+
+    @return 0px;
 }
 
-.nt-button-group {
-    display: inline-flex;
-    border-radius: 16px;
-    overflow: visible;
-    gap: 8px;
+@mixin nt-button-group-size($height, $icon-only-width, $padding, $disconnected-gap, $content-gap, $icon-size, $round-radius, $connected-radius, $square-radius, $weight, $font-size, $line-height, $tracking) {
+    @include typescale.tnt-typescale($weight, $font-size, $line-height, $tracking);
 
-
-    &--connected {
-        gap: 2px;
-        overflow: hidden;
-
-        ::deep {
-            .btn-group-btn:focus-visible {
-                outline: none;
-
-                .tnt-small-button-layer {
-                    &:before {
-                        background-color: var(--tnt-button-tint-color) !important;
-                        opacity: 0.3 !important;
-                    }
-                }
-            }
-
-            .btn-group-btn:active {
-                border-radius: 2px !important;
-
-                .tnt-small-button-layer {
-                    border-radius: 2px !important;
-                }
-            }
-        }
-
-        &.nt-button-group-size-xs {
-            @include nt-button-group-connected-pill(4px, $nt-button-group-first-child-suffix);
-
-            ::deep {
-                .btn-group-btn.btn-group-selected:not(:active) .tnt-small-button-layer {
-                    border-radius: measurements.$tnt-pill-border-radius-xs !important;
-                }
-            }
-        }
-
-        &.nt-button-group-size-small {
-            @include nt-button-group-connected-pill(8px, $nt-button-group-first-child-suffix);
-
-            ::deep {
-                .btn-group-btn.btn-group-selected:not(:active) .tnt-small-button-layer {
-                    border-radius: measurements.$tnt-pill-border-radius-small !important;
-                }
-            }
-        }
-
-        &.nt-button-group-size-medium {
-            @include nt-button-group-connected-pill(8px);
-
-            ::deep {
-                .btn-group-btn.btn-group-selected:not(:active) {
-                    border-radius: measurements.$tnt-pill-border-radius-medium !important;
-                }
-            }
-        }
-
-        &.nt-button-group-size-large {
-            @include nt-button-group-connected-pill(16px);
-
-            ::deep {
-                .btn-group-btn.btn-group-selected:not(:active) {
-                    border-radius: measurements.$tnt-pill-border-radius-large !important;
-                }
-            }
-        }
-
-        &.nt-button-group-size-xl {
-            @include nt-button-group-connected-pill(20px);
-
-            ::deep {
-                .btn-group-btn.btn-group-selected:not(:active) {
-                    border-radius: measurements.$tnt-pill-border-radius-xl !important;
-                }
-            }
-        }
+    &.nt-button-group-disconnected {
+        gap: $disconnected-gap;
     }
 
-    &--disconnected {
+    > .nt-btn-grp-btn {
+        block-size: $height;
+        border-radius: $round-radius;
+        gap: $content-gap;
+        min-block-size: 48px;
+        padding-inline: $padding;
 
-
-        ::deep {
-            .btn-group-btn:has(+.btn-group-btn:active) {
-                transform: scaleX(0.99);
-                transform-origin: 0 50%;
-            }
-
-            .btn-group-btn:active {
-                transform: scaleX(1.03);
-
-                + .btn-group-btn {
-                    transform: scaleX(0.99);
-                    transform-origin: 100% 50%;
-                }
-            }
+        &::after,
+        &::before {
+            inset-block: nt-button-group-touch-inset($height);
         }
 
-        &.nt-button-group-size-xs, .nt-button-group-size-small {
-            gap: 4px;
+        &[aria-pressed='true'] {
+            border-radius: $round-radius;
         }
 
-        &.nt-button-group-size-medium, &.nt-button-group-size-large, &.nt-button-group-size-xl {
-            gap: 8px;
+        &:active,
+        &.nt-button--pressed-shape {
+            border-radius: $connected-radius;
         }
-    }
 
-
-    ::deep {
-
-        & .btn-group-btn {
-            margin: 0;
+        &:has(> .nt-icon-button-icon):not(:has(> .nt-button-label)) {
+            inline-size: $icon-only-width;
             padding-inline: 0;
         }
     }
 
-    &.invalid {
-        ::deep {
-            .tnt-button:has(.tnt-small-button-layer) .tnt-small-button-layer, .tnt-button:not(:has(.tnt-small-button-layer)) .tnt-button {
-                background-color: var(--btn-grp-error-color);
-                color: var(--btn-grp-on-error-color);
+    &.nt-button-group-square > .nt-btn-grp-btn {
+        border-radius: $square-radius;
+
+        &[aria-pressed='true'] {
+            border-radius: $square-radius;
+        }
+    }
+
+    &.nt-button-group-connected {
+        gap: 2px;
+
+        > .nt-btn-grp-btn {
+            border-radius: $connected-radius;
+
+            &[aria-pressed='true'] {
+                border-radius: $round-radius;
             }
+
+            &.nt-btn-grp-btn-first:not([aria-pressed='true']) {
+                border-start-start-radius: $height;
+                border-end-start-radius: $height;
+            }
+
+            &.nt-btn-grp-btn-last:not([aria-pressed='true']) {
+                border-start-end-radius: $height;
+                border-end-end-radius: $height;
+            }
+        }
+
+        &.nt-button-group-square > .nt-btn-grp-btn[aria-pressed='true'] {
+            border-radius: $square-radius;
+        }
+    }
+
+    ::deep .nt-button-ripple-host {
+        inset-block: nt-button-group-touch-inset($height);
+    }
+
+    ::deep .tnt-icon {
+        font-size: $icon-size;
+    }
+}
+
+.nt-button-group {
+    --nt-button-group-bg: #{colors.$tnt-color-secondary-container};
+    --nt-button-group-fg: #{colors.$tnt-color-on-secondary-container};
+    --nt-button-group-outline: transparent;
+    --nt-button-group-selected-bg: #{colors.$tnt-color-secondary};
+    --nt-button-group-selected-fg: #{colors.$tnt-color-on-secondary};
+
+    align-items: center;
+    display: inline-flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 12px;
+    max-inline-size: 100%;
+    vertical-align: middle;
+
+    @each $size, $tokens in $nt-button-group-sizes {
+        &.tnt-size-#{$size} {
+            @include nt-button-group-size($tokens...);
+        }
+    }
+
+    &.nt-button-group-full-width {
+        inline-size: 100%;
+
+        > .nt-btn-grp-btn {
+            flex: 1 1 0;
+            min-inline-size: 0;
+        }
+    }
+
+    > .nt-btn-grp-btn {
+        align-items: center;
+        appearance: none;
+        background: transparent;
+        border: 0;
+        box-sizing: border-box;
+        color: var(--nt-button-group-fg);
+        cursor: pointer;
+        display: inline-flex;
+        justify-content: center;
+        margin: 0;
+        min-inline-size: 48px;
+        outline: none;
+        overflow: hidden;
+        padding-block: 0;
+        position: relative;
+        text-decoration: none;
+        transition: border-radius $nt-button-group-shape-transition, box-shadow $nt-button-group-state-transition, color $nt-button-group-state-transition, transform $nt-button-group-state-transition;
+        user-select: none;
+        vertical-align: middle;
+
+        &::after,
+        &::before {
+            border-radius: inherit;
+            content: '';
+            inset-inline: 0;
+            pointer-events: none;
+            position: absolute;
+            transition: background-color $nt-button-group-state-transition, border-color $nt-button-group-state-transition, border-radius $nt-button-group-shape-transition, opacity $nt-button-group-state-transition;
+        }
+
+        &::after {
+            background: var(--nt-button-group-bg);
+            border: 1px solid var(--nt-button-group-outline);
+            z-index: 0;
+        }
+
+        &::before {
+            background: currentColor;
+            opacity: 0;
+            z-index: 1;
+        }
+
+        &[aria-pressed='true'] {
+            color: var(--nt-button-group-selected-fg);
+
+            &::after {
+                background: var(--nt-button-group-selected-bg);
+            }
+        }
+
+        &:not(:disabled) {
+            &:hover::before {
+                opacity: 0.08;
+            }
+
+            &:focus-visible::before,
+            &:active::before {
+                opacity: 0.1;
+            }
+
+            &:focus-visible {
+                outline: 3px solid color-mix(in srgb, currentColor 44%, transparent);
+                outline-offset: 2px;
+            }
+        }
+
+        &:disabled {
+            box-shadow: none;
+            color: color-mix(in srgb, #{colors.$tnt-color-on-surface} 38%, transparent);
+            cursor: not-allowed;
+            outline: none;
+
+            &::after {
+                background: color-mix(in srgb, #{colors.$tnt-color-on-surface} 12%, transparent);
+                border-color: transparent;
+            }
+        }
+
+        > .nt-button-icon,
+        > .nt-icon-button-icon,
+        > .nt-button-label {
+            position: relative;
+            z-index: 2;
+        }
+
+        > .nt-button-icon,
+        > .nt-icon-button-icon {
+            align-items: center;
+            display: inline-flex;
+            flex: 0 0 auto;
+            justify-content: center;
+        }
+
+        > .nt-button-label {
+            min-inline-size: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    }
+
+    &.nt-button-group-elevated > .nt-btn-grp-btn {
+        box-shadow: 0 1px 2px color-mix(in srgb, #{colors.$tnt-color-shadow} 30%, transparent), 0 1px 3px 1px color-mix(in srgb, #{colors.$tnt-color-shadow} 15%, transparent);
+
+        &[aria-pressed='true'],
+        &:disabled {
+            box-shadow: none;
+        }
+    }
+
+    &.nt-button-group-outlined > .nt-btn-grp-btn {
+        --nt-button-group-outline: #{colors.$tnt-color-outline};
+
+        &[aria-pressed='true']::after {
+            border-color: transparent;
+        }
+    }
+
+    &.nt-button-group-text > .nt-btn-grp-btn::after {
+        content: none;
+    }
+
+    &.invalid > .nt-btn-grp-btn {
+        color: colors.$tnt-color-on-error-container;
+
+        &::after {
+            background: colors.$tnt-color-error-container;
+        }
+
+        &[aria-pressed='true'] {
+            color: colors.$tnt-color-on-error;
+
+            &::after {
+                background: colors.$tnt-color-error;
+            }
+        }
+    }
+
+    &.nt-button-group-disconnected {
+        > .nt-btn-grp-btn:has(+ .nt-btn-grp-btn:active) {
+            transform: scaleX(0.925);
+            transform-origin: 0 50%;
+        }
+
+        > .nt-btn-grp-btn:active {
+            transform: scaleX(1.15);
+
+            + .nt-btn-grp-btn {
+                transform: scaleX(0.925);
+                transform-origin: 100% 50%;
+            }
+        }
+
+        > .nt-btn-grp-btn:first-child:active + .nt-btn-grp-btn,
+        > .nt-btn-grp-btn:has(+ .nt-btn-grp-btn:last-child:active) {
+            transform: scaleX(0.85);
+        }
+    }
+
+    ::deep {
+        .nt-button-ripple-host {
+            transition: border-radius $nt-button-group-shape-transition;
+        }
+
+        .tnt-icon {
+            color: inherit;
+            pointer-events: none;
+        }
+
+        tnt-page-script {
+            position: absolute;
         }
     }
 }
 
 .tnt-supporting-text {
-    width: 100%;
+    inline-size: 100%;
     text-wrap: wrap;
     @include typescale.tnt-body-small;
 }
 
-@keyframes nt-button-group-disconnected-bounce {
-    0% {
-        transform: scaleX(1);
-    }
+@media (prefers-reduced-motion: reduce) {
+    .nt-button-group {
+        > .nt-btn-grp-btn {
+            transition: color $nt-button-group-state-transition;
 
-    50% {
-        transform: scaleX(1.08);
-    }
+            &::after,
+            &::before {
+                transition: opacity $nt-button-group-state-transition;
+            }
+        }
 
-    70% {
-        transform: scaleX(0.98);
-    }
-
-    100% {
-        transform: scaleX(1);
+        &.nt-button-group-disconnected {
+            > .nt-btn-grp-btn,
+            > .nt-btn-grp-btn:active,
+            > .nt-btn-grp-btn:has(+ .nt-btn-grp-btn:active),
+            > .nt-btn-grp-btn:active + .nt-btn-grp-btn {
+                transform: none;
+            }
+        }
     }
 }
