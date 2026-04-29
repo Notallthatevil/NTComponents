@@ -250,6 +250,14 @@ $sizes: (
         }
     }
 
+    &.nt-split-button-text {
+        .nt-split-button-segment::after,
+        .nt-split-button-segment:disabled::after {
+            background: transparent;
+            border-color: transparent;
+        }
+    }
+
     .nt-split-button-leading-icon,
     .nt-split-button-label,
     .nt-split-button-trailing-icon {

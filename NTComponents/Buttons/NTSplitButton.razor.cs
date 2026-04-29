@@ -14,8 +14,8 @@ namespace NTComponents;
 ///         actions should remain available without taking equal visual weight.
 ///     </para>
 ///     <para>
-///         Material 3 split buttons support elevated, filled, tonal, and outlined variants. Text split buttons are intentionally rejected because the split affordance depends on visible button
-///         containers. The trailing button morphs to a full pill shape while expanded, matching the Material 3 activation guidance.
+///         Material 3 split buttons support elevated, filled, tonal, and outlined variants. NTComponents also supports text split buttons as an extension. The trailing button morphs to a full
+///         pill shape while expanded, matching the Material 3 activation guidance.
 ///     </para>
 ///     <para>
 ///         Override <see cref="BackgroundColor" />, <see cref="TextColor" />, <see cref="MenuBackgroundColor" />, and <see cref="MenuTextColor" /> only when the resulting contrast remains clear.
@@ -71,6 +71,7 @@ public partial class NTSplitButton {
         .AddClass("nt-split-button-filled", Variant == NTButtonVariant.Filled)
         .AddClass("nt-split-button-tonal", Variant == NTButtonVariant.Tonal)
         .AddClass("nt-split-button-outlined", Variant == NTButtonVariant.Outlined)
+        .AddClass("nt-split-button-text", Variant == NTButtonVariant.Text)
         .AddClass("nt-split-button-shape-round", Shape == ButtonShape.Round)
         .AddClass("nt-split-button-shape-square", Shape == ButtonShape.Square)
         .AddSize(ButtonSize)
@@ -268,10 +269,6 @@ public partial class NTSplitButton {
             throw new ArgumentException("Icon-only NTSplitButton actions require a non-empty ActionAriaLabel.", nameof(ActionAriaLabel));
         }
 
-        if (Variant == NTButtonVariant.Text) {
-            throw new InvalidOperationException("Text split buttons are not supported by Material 3.");
-        }
-
         if (!_backgroundColorWasProvided || !BackgroundColor.HasValue) {
             BackgroundColor = GetDefaultBackgroundColor();
         }
@@ -467,7 +464,7 @@ public partial class NTSplitButton {
             return;
         }
 
-        if (Variant == NTButtonVariant.Outlined) {
+        if (Variant is NTButtonVariant.Outlined or NTButtonVariant.Text) {
             if (BackgroundColor != TnTColor.Transparent) {
                 throw new InvalidOperationException($"{Variant} split buttons must use a transparent {nameof(BackgroundColor)}.");
             }
