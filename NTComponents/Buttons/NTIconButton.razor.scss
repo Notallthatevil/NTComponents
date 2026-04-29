@@ -3,9 +3,10 @@
 @use '../Styles/_Variables/_corner-radius.scss' as corners;
 @use '../Styles/_Variables/_measurements.scss' as measurements;
 @use '../Styles/_Variables/_motion.scss' as motion;
+@use './buttonFocusRing' as focus;
 
-$nt-icon-button-state-transition: motion.$nt-motion-duration-short_3 motion.$nt-motion-easing-standard;
-$nt-icon-button-shape-transition: motion.$nt-motion-duration-short_4 motion.$nt-motion-easing-standard;
+$nt-icon-button-state-transition: motion.$nt-motion-button-state-transition;
+$nt-icon-button-shape-transition: motion.$nt-motion-button-shape-transition;
 $nt-icon-button-sizes: (
     xs: (32px, 32px, 40px, 52px, 20px, measurements.$tnt-pill-border-radius-xs, corners.$nt-corner-radius-small),
     s: (40px, 40px, 48px, 64px, 24px, measurements.$tnt-pill-border-radius-small, corners.$nt-corner-radius-small),
@@ -106,7 +107,7 @@ $nt-icon-button-sizes: (
             z-index: 3;
 
             &::after {
-                box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 72%, transparent);
+                @include focus.nt-button-focus-ring;
             }
         }
 

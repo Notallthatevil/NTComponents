@@ -1,17 +1,27 @@
+@use 'sass:map';
 @use 'sass:math';
 @use '../Styles/_Variables/_colors.scss' as colors;
 @use '../Styles/_Variables/_corner-radius.scss' as corners;
+@use '../Styles/_Variables/_elevation.scss' as elevation;
 @use '../Styles/_Variables/_motion.scss' as motion;
 @use '../Styles/_Variables/_typescale.scss' as typescale;
+@use './buttonFocusRing' as focus;
 
-$state-transition: motion.$nt-motion-duration-short_3 motion.$nt-motion-easing-standard;
-$shape-transition: motion.$nt-motion-duration-short_4 motion.$nt-motion-easing-standard;
+$state-transition: motion.$nt-motion-button-state-transition;
+$shape-transition: motion.$nt-motion-button-shape-transition;
+$menu-enter-transition: motion.$nt-motion-menu-enter-transition;
+$menu-exit-transition: motion.$nt-motion-menu-exit-transition;
+
+@function type-token($style, $property) {
+    @return map.get(map.get(typescale.$nt-typescale-baseline, $style), $property);
+}
+
 $sizes: (
-    xs: (32px, 12px, 10px, 4px, 20px, 22px, 4px, corners.$nt-corner-radius-medium, -1px, 500, 14px, 20px, 0.1px),
-    s: (40px, 16px, 12px, 8px, 20px, 22px, 4px, corners.$nt-corner-radius-medium, -1px, 500, 14px, 20px, 0.1px),
-    m: (56px, 24px, 24px, 8px, 24px, 26px, 4px, corners.$nt-corner-radius-large, -2px, 500, 16px, 24px, 0.15px),
-    l: (96px, 48px, 48px, 12px, 32px, 38px, 8px, corners.$nt-corner-radius-extra-large, -3px, 400, 24px, 32px, 0),
-    xl: (136px, 64px, 64px, 16px, 40px, 50px, 12px, corners.$nt-corner-radius-extra-large, -6px, 400, 32px, 40px, 0)
+    xs: (32px, 12px, 10px, 4px, 20px, 22px, corners.$nt-corner-radius-extra-small, corners.$nt-corner-radius-medium, -1px, type-token('label-large', weight), type-token('label-large', size), type-token('label-large', line-height), type-token('label-large', tracking)),
+    s: (40px, 16px, 12px, 8px, 20px, 22px, corners.$nt-corner-radius-extra-small, corners.$nt-corner-radius-medium, -1px, type-token('label-large', weight), type-token('label-large', size), type-token('label-large', line-height), type-token('label-large', tracking)),
+    m: (56px, 24px, 24px, 8px, 24px, 26px, corners.$nt-corner-radius-extra-small, corners.$nt-corner-radius-large, -2px, type-token('title-medium', weight), type-token('title-medium', size), type-token('title-medium', line-height), type-token('title-medium', tracking)),
+    l: (96px, 48px, 48px, 12px, 32px, 38px, corners.$nt-corner-radius-small, corners.$nt-corner-radius-extra-large, -3px, type-token('headline-small', weight), type-token('headline-small', size), type-token('headline-small', line-height), type-token('headline-small', tracking)),
+    xl: (136px, 64px, 64px, 16px, 40px, 50px, corners.$nt-corner-radius-medium, corners.$nt-corner-radius-extra-large, -6px, type-token('headline-large', weight), type-token('headline-large', size), type-token('headline-large', line-height), type-token('headline-large', tracking))
 );
 
 @function touch-inset($height) {
@@ -33,7 +43,7 @@ $sizes: (
     --nt-split-button-trailing-icon-offset: #{$trailing-icon-offset};
     --nt-split-button-trailing-icon-offset-rtl: #{-$trailing-icon-offset};
 
-    @include typescale.tnt-typescale($weight, $font-size, $line-height, $tracking);
+    @include typescale.nt-typescale($weight, $font-size, $line-height, $tracking);
 
     .nt-split-button-leading {
         gap: $content-gap;
@@ -61,8 +71,6 @@ $sizes: (
     --nt-split-button-trailing-icon-offset: -1px;
     --nt-split-button-trailing-icon-offset-rtl: 1px;
     --nt-split-button-trailing-icon-current-offset: var(--nt-split-button-trailing-icon-offset);
-    --nt-split-button-trailing-morph-outer-inset: 0px;
-    --nt-split-button-trailing-morph-icon-offset: calc(var(--nt-split-button-trailing-morph-outer-inset) / -2);
 
     color: var(--nt-split-button-fg);
     display: inline-block;
@@ -70,7 +78,6 @@ $sizes: (
 
     &:dir(rtl) {
         --nt-split-button-trailing-icon-current-offset: var(--nt-split-button-trailing-icon-offset-rtl);
-        --nt-split-button-trailing-morph-icon-offset: calc(var(--nt-split-button-trailing-morph-outer-inset) / 2);
     }
 
     @each $size, $tokens in $sizes {
@@ -114,7 +121,7 @@ $sizes: (
         padding-block: 0;
         position: relative;
         text-decoration: none;
-        transition: border-radius $shape-transition, box-shadow $state-transition, color $state-transition;
+        transition: border-radius $shape-transition, color $state-transition;
         user-select: none;
 
         &::after,
@@ -130,7 +137,7 @@ $sizes: (
         &::after {
             background: var(--nt-split-button-bg);
             border: 1px solid var(--nt-split-button-outline);
-            transition: background-color $state-transition, border-color $state-transition, border-radius $shape-transition, box-shadow $state-transition;
+            transition: background-color $state-transition, border-color $state-transition, border-radius $shape-transition;
             z-index: 0;
         }
 
@@ -140,27 +147,27 @@ $sizes: (
         &.nt-elevation-medium,
         &.nt-elevation-high,
         &.nt-elevation-highest {
-            box-shadow: none;
+            box-shadow: map.get(elevation.$elevation-shadows, 0);
         }
 
         &.nt-elevation-lowest::after {
-            box-shadow: 0px 1px 1px 0px var(--tnt-color-shadow);
+            box-shadow: map.get(elevation.$elevation-shadows, 1);
         }
 
         &.nt-elevation-low::after {
-            box-shadow: 0px 2px 3px 0px var(--tnt-color-shadow);
+            box-shadow: map.get(elevation.$elevation-shadows, 2);
         }
 
         &.nt-elevation-medium::after {
-            box-shadow: 0px 4px 6px 0px var(--tnt-color-shadow);
+            box-shadow: map.get(elevation.$elevation-shadows, 3);
         }
 
         &.nt-elevation-high::after {
-            box-shadow: 0px 6px 8px 0px var(--tnt-color-shadow);
+            box-shadow: map.get(elevation.$elevation-shadows, 4);
         }
 
         &.nt-elevation-highest::after {
-            box-shadow: 0px 8px 12px 0px var(--tnt-color-shadow);
+            box-shadow: map.get(elevation.$elevation-shadows, 5);
         }
 
         &::before {
@@ -181,20 +188,18 @@ $sizes: (
             }
 
             &:focus-visible {
-                outline: none;
                 z-index: 3;
 
                 &::after {
-                    box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 72%, transparent);
+                    @include focus.nt-button-focus-ring;
                 }
             }
         }
 
         &:disabled {
-            box-shadow: none;
+            box-shadow: map.get(elevation.$elevation-shadows, 0);
             color: color-mix(in srgb, #{colors.$tnt-color-on-surface} 38%, transparent);
             cursor: not-allowed;
-            outline: none;
 
             &::after {
                 background: color-mix(in srgb, #{colors.$tnt-color-on-surface} 12%, transparent);
@@ -208,7 +213,6 @@ $sizes: (
         border-start-end-radius: var(--nt-split-button-inner-radius);
         border-end-start-radius: var(--nt-split-button-outer-radius);
         border-end-end-radius: var(--nt-split-button-inner-radius);
-        min-inline-size: 48px;
     }
 
     .nt-split-button-trailing {
@@ -223,18 +227,14 @@ $sizes: (
         border-radius: var(--nt-split-button-outer-radius);
     }
 
-    &.nt-split-button-shape-round.nt-split-button-expanded,
-    &.nt-split-button-shape-round:has(.nt-split-button-menu-panel:popover-open) {
+    &.nt-split-button-shape-round.nt-split-button-expanded {
         .nt-split-button-trailing {
             border-radius: var(--nt-split-button-outer-radius);
-        }
 
-        .nt-split-button-trailing {
             &::after,
-            &::before,
-            ::deep .nt-button-ripple-host {
+            &::before {
                 inset-inline-start: 0;
-                inset-inline-end: var(--nt-split-button-trailing-morph-outer-inset);
+                inset-inline-end: 0;
             }
         }
     }
@@ -285,9 +285,8 @@ $sizes: (
         transition: transform $shape-transition;
     }
 
-    &.nt-split-button-expanded .nt-split-button-trailing-icon,
-    &:has(.nt-split-button-menu-panel:popover-open) .nt-split-button-trailing-icon {
-        transform: translateX(var(--nt-split-button-trailing-morph-icon-offset)) rotate(180deg);
+    &.nt-split-button-expanded .nt-split-button-trailing-icon {
+        transform: translateX(0) rotate(180deg);
     }
 
     .nt-split-button-menu-panel {
@@ -296,7 +295,7 @@ $sizes: (
         background: var(--nt-split-button-menu-bg);
         border: 0;
         border-radius: corners.$nt-corner-radius-large;
-        box-shadow: 0 4px 8px 3px color-mix(in srgb, #{colors.$tnt-color-shadow} 18%, transparent), 0 1px 3px color-mix(in srgb, #{colors.$tnt-color-shadow} 30%, transparent);
+        box-shadow: map.get(elevation.$elevation-shadows, 3);
         box-sizing: border-box;
         color: var(--nt-split-button-menu-fg);
         display: none;
@@ -312,13 +311,20 @@ $sizes: (
         top: calc(anchor(bottom) + 4px);
         transform: translateY(-4px) scale(0.98);
         transform-origin: top right;
-        transition: opacity $state-transition, transform $shape-transition;
+        transition: opacity $menu-exit-transition, transform $menu-exit-transition, display $menu-exit-transition allow-discrete;
+        transition-behavior: allow-discrete;
         z-index: 1000;
 
         &:popover-open {
             display: block;
             opacity: 1;
             transform: translateY(0) scale(1);
+            transition: opacity $menu-enter-transition, transform $menu-enter-transition, display $menu-enter-transition allow-discrete;
+
+            @starting-style {
+                opacity: 0;
+                transform: translateY(-4px) scale(0.98);
+            }
         }
 
         ::deep {
@@ -327,7 +333,7 @@ $sizes: (
                 appearance: none;
                 background: transparent;
                 border: 0;
-                border-radius: 0;
+                border-radius: corners.$nt-corner-radius-none;
                 box-sizing: border-box;
                 color: inherit;
                 cursor: pointer;
@@ -339,7 +345,7 @@ $sizes: (
                 position: relative;
                 text-align: start;
                 text-decoration: none;
-                transition: background-color $state-transition, color $state-transition, box-shadow $state-transition;
+                transition: background-color $state-transition, color $state-transition;
                 width: 100%;
 
                 @include typescale.nt-body-large;
@@ -354,7 +360,7 @@ $sizes: (
                 }
 
                 &:focus-visible {
-                    box-shadow: 0 0 0 2px color-mix(in srgb, currentColor 72%, transparent);
+                    @include focus.nt-button-focus-ring;
                     z-index: 2;
                 }
 
@@ -364,12 +370,6 @@ $sizes: (
                     cursor: not-allowed;
                     pointer-events: none;
                 }
-            }
-
-            .nt-split-button-menu-item-icon,
-            .nt-split-button-menu-item-label {
-                position: relative;
-                z-index: 1;
             }
 
             .nt-split-button-menu-item-icon {

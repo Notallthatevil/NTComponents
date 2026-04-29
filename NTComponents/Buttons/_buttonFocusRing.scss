@@ -1,0 +1,9 @@
+@use '../Styles/_Variables/_colors.scss' as colors;
+
+$nt-button-focus-ring-width: 3px !default;
+$nt-button-focus-ring-color: var(--nt-button-focus-ring-color, #{colors.$tnt-color-secondary}) !default;
+
+@mixin nt-button-focus-ring {
+    outline: $nt-button-focus-ring-width solid $nt-button-focus-ring-color;
+    outline-offset: 0;
+}

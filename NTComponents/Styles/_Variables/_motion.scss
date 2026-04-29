@@ -87,3 +87,12 @@ $nt-motion-easing-standard-accelerate: cubic-bezier(0.3, 0, 1, 1);
 $nt-motion-easing-emphasized: $nt-motion-easing-standard;
 $nt-motion-easing-emphasized-decelerate: cubic-bezier(0.05, 0.7, 0.1, 1);
 $nt-motion-easing-emphasized-accelerate: cubic-bezier(0.3, 0, 0.8, 0.15);
+
+// Material component transition pairings.
+// Small utility state changes stay quick with standard easing. Shape morphs use
+// the M3 emphasized curve. Menus enter with deceleration and exit faster with
+// acceleration so dismissal does not feel sluggish.
+$nt-motion-button-state-transition: $nt-motion-duration-short_3 $nt-motion-easing-standard;
+$nt-motion-button-shape-transition: $nt-motion-duration-short_4 $nt-motion-easing-emphasized;
+$nt-motion-menu-enter-transition: $nt-motion-duration-medium_1 $nt-motion-easing-standard-decelerate;
+$nt-motion-menu-exit-transition: $nt-motion-duration-short_4 $nt-motion-easing-standard-accelerate;
