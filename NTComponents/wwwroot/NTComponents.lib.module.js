@@ -368,11 +368,13 @@ function registerButtonInteractions(element) {
         return;
     }
 
-    if (element.matches?.('.nt-button, .nt-icon-button')) {
+    const buttonSelector = '.nt-button, .nt-icon-button, .nt-btn-grp-btn';
+
+    if (element.matches?.(buttonSelector)) {
         registerButtonInteraction(element);
     }
 
-    element.querySelectorAll?.('.nt-button, .nt-icon-button').forEach((button) => {
+    element.querySelectorAll?.(buttonSelector).forEach((button) => {
         registerButtonInteraction(button);
     });
 }

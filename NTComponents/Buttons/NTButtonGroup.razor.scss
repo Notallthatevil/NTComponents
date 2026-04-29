@@ -143,7 +143,7 @@ $nt-button-group-sizes: (
         margin: 0;
         min-inline-size: 48px;
         outline: none;
-        overflow: hidden;
+        overflow: visible;
         padding-block: 0;
         position: relative;
         text-decoration: none;
@@ -158,7 +158,7 @@ $nt-button-group-sizes: (
             inset-inline: 0;
             pointer-events: none;
             position: absolute;
-            transition: background-color $nt-button-group-state-transition, border-color $nt-button-group-state-transition, border-radius $nt-button-group-shape-transition, opacity $nt-button-group-state-transition;
+            transition: background-color $nt-button-group-state-transition, border-color $nt-button-group-state-transition, border-radius $nt-button-group-shape-transition, box-shadow $nt-button-group-state-transition, opacity $nt-button-group-state-transition;
         }
 
         &::after {
@@ -192,8 +192,12 @@ $nt-button-group-sizes: (
             }
 
             &:focus-visible {
-                outline: 3px solid color-mix(in srgb, currentColor 44%, transparent);
-                outline-offset: 2px;
+                outline: none;
+                z-index: 3;
+
+                &::after {
+                    box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 72%, transparent);
+                }
             }
         }
 
@@ -251,6 +255,12 @@ $nt-button-group-sizes: (
 
     &.nt-button-group-text > .nt-btn-grp-btn::after {
         content: none;
+    }
+
+    &.nt-button-group-text > .nt-btn-grp-btn:focus-visible::after {
+        background: transparent;
+        border-color: transparent;
+        content: '';
     }
 
     &.invalid > .nt-btn-grp-btn {

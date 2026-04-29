@@ -1,0 +1,427 @@
+@use 'sass:math';
+@use '../Styles/_Variables/_colors.scss' as colors;
+@use '../Styles/_Variables/_corner-radius.scss' as corners;
+@use '../Styles/_Variables/_motion.scss' as motion;
+@use '../Styles/_Variables/_typescale.scss' as typescale;
+
+$state-transition: motion.$nt-motion-duration-short_3 motion.$nt-motion-easing-standard;
+$shape-transition: motion.$nt-motion-duration-short_4 motion.$nt-motion-easing-standard;
+$sizes: (
+    xs: (32px, 12px, 10px, 4px, 20px, 22px, 4px, corners.$nt-corner-radius-medium, -1px, 500, 14px, 20px, 0.1px),
+    s: (40px, 16px, 12px, 8px, 20px, 22px, 4px, corners.$nt-corner-radius-medium, -1px, 500, 14px, 20px, 0.1px),
+    m: (56px, 24px, 24px, 8px, 24px, 26px, 4px, corners.$nt-corner-radius-large, -2px, 500, 16px, 24px, 0.15px),
+    l: (96px, 48px, 48px, 12px, 32px, 38px, 8px, corners.$nt-corner-radius-extra-large, -3px, 400, 24px, 32px, 0),
+    xl: (136px, 64px, 64px, 16px, 40px, 50px, 12px, corners.$nt-corner-radius-extra-large, -6px, 400, 32px, 40px, 0)
+);
+
+@function touch-inset($height) {
+    @if $height < 48px {
+        @return math.div(48px - $height, 2);
+    }
+
+    @return 0px;
+}
+
+@mixin split-button-size($height, $leading-start, $leading-end, $content-gap, $leading-icon-size, $trailing-icon-size, $inner-radius, $square-radius, $trailing-icon-offset, $weight, $font-size, $line-height, $tracking) {
+    --nt-split-button-height: #{$height};
+    --nt-split-button-container-inset-block: #{touch-inset($height)};
+    --nt-split-button-outer-radius: calc(#{$height} / 2);
+    --nt-split-button-inner-radius: #{$inner-radius};
+    --nt-split-button-leading-icon-size: #{$leading-icon-size};
+    --nt-split-button-square-radius: #{$square-radius};
+    --nt-split-button-trailing-icon-size: #{$trailing-icon-size};
+    --nt-split-button-trailing-icon-offset: #{$trailing-icon-offset};
+    --nt-split-button-trailing-icon-offset-rtl: #{-$trailing-icon-offset};
+
+    @include typescale.tnt-typescale($weight, $font-size, $line-height, $tracking);
+
+    .nt-split-button-leading {
+        gap: $content-gap;
+        padding-inline: $leading-start $leading-end;
+    }
+
+    .nt-split-button-trailing {
+        inline-size: max(48px, #{$height});
+    }
+}
+
+.nt-split-button {
+    --nt-split-button-bg: #{colors.$tnt-color-primary};
+    --nt-split-button-fg: #{colors.$tnt-color-on-primary};
+    --nt-split-button-menu-bg: #{colors.$tnt-color-surface-container};
+    --nt-split-button-menu-fg: #{colors.$tnt-color-on-surface};
+    --nt-split-button-outline: transparent;
+    --nt-split-button-height: 40px;
+    --nt-split-button-container-inset-block: 4px;
+    --nt-split-button-outer-radius: 20px;
+    --nt-split-button-inner-radius: #{corners.$nt-corner-radius-extra-small};
+    --nt-split-button-leading-icon-size: 20px;
+    --nt-split-button-square-radius: #{corners.$nt-corner-radius-medium};
+    --nt-split-button-trailing-icon-size: 22px;
+    --nt-split-button-trailing-icon-offset: -1px;
+    --nt-split-button-trailing-icon-offset-rtl: 1px;
+    --nt-split-button-trailing-icon-current-offset: var(--nt-split-button-trailing-icon-offset);
+    --nt-split-button-trailing-morph-outer-inset: 0px;
+    --nt-split-button-trailing-morph-icon-offset: calc(var(--nt-split-button-trailing-morph-outer-inset) / -2);
+
+    color: var(--nt-split-button-fg);
+    display: inline-block;
+    vertical-align: middle;
+
+    &:dir(rtl) {
+        --nt-split-button-trailing-icon-current-offset: var(--nt-split-button-trailing-icon-offset-rtl);
+        --nt-split-button-trailing-morph-icon-offset: calc(var(--nt-split-button-trailing-morph-outer-inset) / 2);
+    }
+
+    @each $size, $tokens in $sizes {
+        &.tnt-size-#{$size} {
+            @include split-button-size($tokens...);
+        }
+    }
+
+    &.nt-split-button-outlined {
+        --nt-split-button-outline: #{colors.$tnt-color-outline};
+    }
+
+    &.nt-split-button-shape-square {
+        --nt-split-button-outer-radius: var(--nt-split-button-square-radius);
+    }
+
+    .nt-split-button-boundary {
+        align-items: center;
+        display: inline-flex;
+        gap: 2px;
+        position: relative;
+    }
+
+    .nt-split-button-segment {
+        align-items: center;
+        appearance: none;
+        background: transparent;
+        border: 0;
+        box-sizing: border-box;
+        color: inherit;
+        cursor: pointer;
+        display: inline-flex;
+        font: inherit;
+        height: var(--nt-split-button-height);
+        justify-content: center;
+        margin: 0;
+        min-block-size: 48px;
+        min-inline-size: 48px;
+        outline: none;
+        overflow: visible;
+        padding-block: 0;
+        position: relative;
+        text-decoration: none;
+        transition: border-radius $shape-transition, box-shadow $state-transition, color $state-transition;
+        user-select: none;
+
+        &::after,
+        &::before {
+            border-radius: inherit;
+            content: '';
+            inset-block: var(--nt-split-button-container-inset-block);
+            inset-inline: 0;
+            pointer-events: none;
+            position: absolute;
+        }
+
+        &::after {
+            background: var(--nt-split-button-bg);
+            border: 1px solid var(--nt-split-button-outline);
+            transition: background-color $state-transition, border-color $state-transition, border-radius $shape-transition, box-shadow $state-transition;
+            z-index: 0;
+        }
+
+        &.nt-elevation-none,
+        &.nt-elevation-lowest,
+        &.nt-elevation-low,
+        &.nt-elevation-medium,
+        &.nt-elevation-high,
+        &.nt-elevation-highest {
+            box-shadow: none;
+        }
+
+        &.nt-elevation-lowest::after {
+            box-shadow: 0px 1px 1px 0px var(--tnt-color-shadow);
+        }
+
+        &.nt-elevation-low::after {
+            box-shadow: 0px 2px 3px 0px var(--tnt-color-shadow);
+        }
+
+        &.nt-elevation-medium::after {
+            box-shadow: 0px 4px 6px 0px var(--tnt-color-shadow);
+        }
+
+        &.nt-elevation-high::after {
+            box-shadow: 0px 6px 8px 0px var(--tnt-color-shadow);
+        }
+
+        &.nt-elevation-highest::after {
+            box-shadow: 0px 8px 12px 0px var(--tnt-color-shadow);
+        }
+
+        &::before {
+            background: currentColor;
+            opacity: 0;
+            transition: border-radius $shape-transition, opacity $state-transition;
+            z-index: 1;
+        }
+
+        &:not(:disabled) {
+            &:hover::before {
+                opacity: 0.08;
+            }
+
+            &:focus-visible::before,
+            &:active::before {
+                opacity: 0.1;
+            }
+
+            &:focus-visible {
+                outline: none;
+                z-index: 3;
+
+                &::after {
+                    box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 72%, transparent);
+                }
+            }
+        }
+
+        &:disabled {
+            box-shadow: none;
+            color: color-mix(in srgb, #{colors.$tnt-color-on-surface} 38%, transparent);
+            cursor: not-allowed;
+            outline: none;
+
+            &::after {
+                background: color-mix(in srgb, #{colors.$tnt-color-on-surface} 12%, transparent);
+                border-color: transparent;
+            }
+        }
+    }
+
+    .nt-split-button-leading {
+        border-start-start-radius: var(--nt-split-button-outer-radius);
+        border-start-end-radius: var(--nt-split-button-inner-radius);
+        border-end-start-radius: var(--nt-split-button-outer-radius);
+        border-end-end-radius: var(--nt-split-button-inner-radius);
+        min-inline-size: 48px;
+    }
+
+    .nt-split-button-trailing {
+        border-start-start-radius: var(--nt-split-button-inner-radius);
+        border-start-end-radius: var(--nt-split-button-outer-radius);
+        border-end-start-radius: var(--nt-split-button-inner-radius);
+        border-end-end-radius: var(--nt-split-button-outer-radius);
+        padding-inline: 0;
+    }
+
+    &.nt-split-button-shape-round .nt-split-button-leading:not(:disabled):is(:active, .nt-button--pressed-shape) {
+        border-radius: var(--nt-split-button-outer-radius);
+    }
+
+    &.nt-split-button-shape-round.nt-split-button-expanded,
+    &.nt-split-button-shape-round:has(.nt-split-button-menu-panel:popover-open) {
+        .nt-split-button-trailing {
+            border-radius: var(--nt-split-button-outer-radius);
+        }
+
+        .nt-split-button-trailing {
+            &::after,
+            &::before,
+            ::deep .nt-button-ripple-host {
+                inset-inline-start: 0;
+                inset-inline-end: var(--nt-split-button-trailing-morph-outer-inset);
+            }
+        }
+    }
+
+    &.nt-split-button-outlined {
+        .nt-split-button-segment::after {
+            background: transparent;
+        }
+
+        .nt-split-button-segment:disabled::after {
+            background: transparent;
+            border-color: color-mix(in srgb, #{colors.$tnt-color-on-surface} 12%, transparent);
+        }
+    }
+
+    .nt-split-button-leading-icon,
+    .nt-split-button-label,
+    .nt-split-button-trailing-icon {
+        position: relative;
+        z-index: 2;
+    }
+
+    .nt-split-button-leading-icon,
+    .nt-split-button-trailing-icon {
+        align-items: center;
+        display: inline-flex;
+        flex: 0 0 auto;
+        justify-content: center;
+    }
+
+    .nt-split-button-label {
+        min-inline-size: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .nt-split-button-trailing-icon {
+        transform: translateX(var(--nt-split-button-trailing-icon-current-offset));
+        transition: transform $shape-transition;
+    }
+
+    &.nt-split-button-expanded .nt-split-button-trailing-icon,
+    &:has(.nt-split-button-menu-panel:popover-open) .nt-split-button-trailing-icon {
+        transform: translateX(var(--nt-split-button-trailing-morph-icon-offset)) rotate(180deg);
+    }
+
+    .nt-split-button-menu-panel {
+        --nt-split-button-menu-width: min(180px, calc(100vw - 16px));
+
+        background: var(--nt-split-button-menu-bg);
+        border: 0;
+        border-radius: corners.$nt-corner-radius-large;
+        box-shadow: 0 4px 8px 3px color-mix(in srgb, #{colors.$tnt-color-shadow} 18%, transparent), 0 1px 3px color-mix(in srgb, #{colors.$tnt-color-shadow} 30%, transparent);
+        box-sizing: border-box;
+        color: var(--nt-split-button-menu-fg);
+        display: none;
+        inline-size: var(--nt-split-button-menu-width);
+        inset: auto;
+        left: clamp(8px, calc(anchor(right) - var(--nt-split-button-menu-width)), calc(100vw - var(--nt-split-button-menu-width) - 8px));
+        margin: 0;
+        min-inline-size: 0;
+        opacity: 0;
+        overflow: hidden;
+        padding: 8px 0;
+        position: fixed;
+        top: calc(anchor(bottom) + 4px);
+        transform: translateY(-4px) scale(0.98);
+        transform-origin: top right;
+        transition: opacity $state-transition, transform $shape-transition;
+        z-index: 1000;
+
+        &:popover-open {
+            display: block;
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        ::deep {
+            .nt-split-button-menu-item {
+                align-items: center;
+                appearance: none;
+                background: transparent;
+                border: 0;
+                border-radius: 0;
+                box-sizing: border-box;
+                color: inherit;
+                cursor: pointer;
+                display: flex;
+                gap: 12px;
+                min-block-size: 48px;
+                outline: none;
+                padding: 10px 16px;
+                position: relative;
+                text-align: start;
+                text-decoration: none;
+                transition: background-color $state-transition, color $state-transition, box-shadow $state-transition;
+                width: 100%;
+
+                @include typescale.nt-body-large;
+
+                &:hover,
+                &:focus-visible {
+                    background: color-mix(in srgb, currentColor 8%, transparent);
+                }
+
+                &:active {
+                    background: color-mix(in srgb, currentColor 10%, transparent);
+                }
+
+                &:focus-visible {
+                    box-shadow: 0 0 0 2px color-mix(in srgb, currentColor 72%, transparent);
+                    z-index: 2;
+                }
+
+                &:disabled,
+                &.nt-split-button-menu-item-disabled {
+                    color: color-mix(in srgb, #{colors.$tnt-color-on-surface} 38%, transparent);
+                    cursor: not-allowed;
+                    pointer-events: none;
+                }
+            }
+
+            .nt-split-button-menu-item-icon,
+            .nt-split-button-menu-item-label {
+                position: relative;
+                z-index: 1;
+            }
+
+            .nt-split-button-menu-item-icon {
+                align-items: center;
+                block-size: 20px;
+                display: inline-flex;
+                flex: 0 0 auto;
+                inline-size: 20px;
+                justify-content: center;
+
+                .tnt-icon {
+                    color: inherit;
+                    font-size: 20px;
+                    pointer-events: none;
+                }
+            }
+
+            .nt-split-button-menu-item-label {
+                flex: 1 1 auto;
+                min-inline-size: 0;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .nt-split-button-menu-divider {
+                block-size: 1px;
+                background: #{colors.$tnt-color-outline-variant};
+                box-sizing: border-box;
+                flex: 0 0 auto;
+                margin: 0;
+            }
+
+            .nt-split-button-menu-divider-inset {
+                margin-inline: 16px 24px;
+            }
+        }
+    }
+
+    &:dir(rtl) .nt-split-button-menu-panel {
+        left: clamp(8px, anchor(left), calc(100vw - var(--nt-split-button-menu-width) - 8px));
+        transform-origin: top left;
+    }
+
+    ::deep {
+        .nt-button-ripple-host {
+            inset-block: var(--nt-split-button-container-inset-block);
+            transition: border-radius $shape-transition;
+        }
+
+        .nt-split-button-leading-icon .tnt-icon {
+            color: inherit;
+            font-size: var(--nt-split-button-leading-icon-size);
+            pointer-events: none;
+        }
+
+        .nt-split-button-trailing-icon .tnt-icon {
+            color: inherit;
+            font-size: var(--nt-split-button-trailing-icon-size);
+            pointer-events: none;
+        }
+    }
+}

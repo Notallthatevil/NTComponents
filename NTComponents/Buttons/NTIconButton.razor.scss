@@ -58,7 +58,7 @@ $nt-icon-button-sizes: (
     min-block-size: 48px;
     min-inline-size: 48px;
     outline: none;
-    overflow: hidden;
+    overflow: visible;
     padding: 0;
     position: relative;
     text-decoration: none;
@@ -80,7 +80,7 @@ $nt-icon-button-sizes: (
         background: var(--nt-icon-button-bg);
         block-size: var(--nt-icon-button-container-height);
         border: 1px solid var(--nt-icon-button-outline);
-        transition: background-color $nt-icon-button-state-transition, border-color $nt-icon-button-state-transition, border-radius $nt-icon-button-shape-transition;
+        transition: background-color $nt-icon-button-state-transition, border-color $nt-icon-button-state-transition, border-radius $nt-icon-button-shape-transition, box-shadow $nt-icon-button-state-transition;
         z-index: 0;
     }
 
@@ -102,8 +102,12 @@ $nt-icon-button-sizes: (
         }
 
         &:focus-visible {
-            outline: 3px solid color-mix(in srgb, currentColor 44%, transparent);
-            outline-offset: 2px;
+            outline: none;
+            z-index: 3;
+
+            &::after {
+                box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 72%, transparent);
+            }
         }
 
         &:active,
@@ -152,6 +156,12 @@ $nt-icon-button-sizes: (
 
     &.nt-icon-button-standard::after {
         content: none;
+    }
+
+    &.nt-icon-button-standard:focus-visible::after {
+        background: transparent;
+        border-color: transparent;
+        content: '';
     }
 
     &.nt-icon-button-outlined::after {

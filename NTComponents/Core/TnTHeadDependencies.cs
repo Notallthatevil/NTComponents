@@ -74,5 +74,15 @@ public class TnTHeadDependencies : IComponent {
         builder.AddAttribute(26, "rel", "stylesheet");
         builder.AddAttribute(27, "href", "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined");
         builder.CloseElement();
+
+        // <script type="module">...</script>
+        builder.OpenElement(28, "script");
+        builder.AddAttribute(29, "type", "module");
+        builder.AddContent(30, """
+            if (!("anchorName" in document.documentElement.style)) {
+                import("https://unpkg.com/@oddbird/css-anchor-positioning");
+            }
+            """);
+        builder.CloseElement();
     }
 }

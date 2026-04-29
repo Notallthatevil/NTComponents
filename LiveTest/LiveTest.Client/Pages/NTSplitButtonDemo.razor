@@ -1,0 +1,178 @@
+@page "/split-button"
+@using System
+@using NTComponents
+
+<div class="nt-split-button-demo">
+    <h1>NTSplitButton</h1>
+    <p>
+        Exercise the Material 3 split button with a primary action and a related menu of alternatives.
+    </p>
+
+    <TnTRow>
+        <TnTColumn S="12" M="5">
+            <NTCard>
+                <div class="tnt-card-header">
+                    <h2>Controls</h2>
+                </div>
+                <div style="display: grid; gap: 12px; padding: 16px;">
+                    <label>
+                        Variant
+                        <select @bind="Variant">
+                            @foreach (var variant in Variants) {
+                                <option value="@variant">@variant</option>
+                            }
+                        </select>
+                    </label>
+                    <label>
+                        Button size
+                        <select @bind="ButtonSize">
+                            @foreach (var size in Sizes) {
+                                <option value="@size">@GetSizeLabel(size)</option>
+                            }
+                        </select>
+                    </label>
+                    <label>
+                        Shape
+                        <select @bind="Shape">
+                            @foreach (var shape in Shapes) {
+                                <option value="@shape">@shape</option>
+                            }
+                        </select>
+                    </label>
+                    <label>
+                        Label
+                        <input @bind="Label" />
+                    </label>
+                    <label>
+                        <input type="checkbox" @bind="ShowLeadingIcon" />
+                        Show leading icon
+                    </label>
+                    <label>
+                        <input type="checkbox" @bind="Expanded" />
+                        Expanded
+                    </label>
+                    <label>
+                        <input type="checkbox" @bind="EnableRipple" />
+                        Enable ripple
+                    </label>
+                    <label>
+                        <input type="checkbox" @bind="Disabled" />
+                        Disabled
+                    </label>
+                    <label>
+                        <input type="checkbox" @bind="MenuButtonDisabled" />
+                        Menu button disabled
+                    </label>
+                    <label>
+                        <input type="checkbox" @bind="ShowMenuDivider" />
+                        Show menu divider
+                    </label>
+                    <label>
+                        <input type="checkbox" @bind="InsetMenuDivider" disabled="@(!ShowMenuDivider)" />
+                        Inset menu divider
+                    </label>
+                </div>
+            </NTCard>
+        </TnTColumn>
+
+        <TnTColumn S="12" M="7">
+            <NTCard>
+                <div class="tnt-card-header">
+                    <h2>Preview</h2>
+                </div>
+                <div style="display: grid; gap: 24px; padding: 32px;">
+                    <NTSplitButton Label="@EffectiveLabel"
+                                   Variant="@Variant"
+                                   ButtonSize="@ButtonSize"
+                                   Shape="@Shape"
+                                   LeadingIcon="@(ShowLeadingIcon ? MaterialIcon.Save : null)"
+                                   Expanded="@Expanded"
+                                   ExpandedChanged="HandleExpandedChanged"
+                                   EnableRipple="@EnableRipple"
+                                   Disabled="@Disabled"
+                                   MenuButtonDisabled="@MenuButtonDisabled"
+                                   OnClickCallback="HandlePrimaryAction">
+                        <NTSplitButtonButtonItem Label="Save draft" Icon="MaterialIcon.Drafts" OnClickCallback="@((MouseEventArgs _) => SelectMenuAction("Save draft"))" />
+                        <NTSplitButtonButtonItem Label="Save as copy" Icon="MaterialIcon.ContentCopy" OnClickCallback="@((MouseEventArgs _) => SelectMenuAction("Save as copy"))" />
+                        @if (ShowMenuDivider) {
+                            <NTSplitButtonDividerItem Inset="@InsetMenuDivider" />
+                        }
+                        <NTSplitButtonAnchorItem Label="Export" Icon="MaterialIcon.IosShare" Href="/split-button" />
+                    </NTSplitButton>
+
+                    <div>
+                        <p>Primary clicks: <strong>@PrimaryClickCount</strong></p>
+                        <p>Last action: <strong>@LastAction</strong></p>
+                        <p>Expanded: <strong>@Expanded</strong></p>
+                    </div>
+                </div>
+            </NTCard>
+        </TnTColumn>
+    </TnTRow>
+
+    <NTCard>
+        <div class="tnt-card-header">
+            <h2>Variant lineup</h2>
+        </div>
+        <div style="align-items: center; display: flex; flex-wrap: wrap; gap: 16px; padding: 24px;">
+            @foreach (var variant in Variants) {
+                <NTSplitButton Label="@variant.ToString()"
+                               Variant="@variant"
+                               ButtonSize="Size.Small"
+                               Shape="@Shape"
+                               LeadingIcon="MaterialIcon.Save">
+                    <NTSplitButtonButtonItem Label="First option" />
+                    <NTSplitButtonDividerItem />
+                    <NTSplitButtonAnchorItem Label="Second option" Href="/split-button" />
+                </NTSplitButton>
+            }
+        </div>
+    </NTCard>
+</div>
+
+@code {
+    private static readonly IReadOnlyList<NTButtonVariant> Variants = [NTButtonVariant.Elevated, NTButtonVariant.Filled, NTButtonVariant.Tonal, NTButtonVariant.Outlined];
+    private static readonly IReadOnlyList<Size> Sizes = [Size.Smallest, Size.Small, Size.Medium, Size.Large, Size.Largest];
+    private static readonly IReadOnlyList<ButtonShape> Shapes = [ButtonShape.Round, ButtonShape.Square];
+
+    private Size ButtonSize { get; set; } = Size.Small;
+    private bool Disabled { get; set; }
+    private bool EnableRipple { get; set; } = true;
+    private bool Expanded { get; set; }
+    private string Label { get; set; } = "Save";
+    private string LastAction { get; set; } = "None";
+    private bool MenuButtonDisabled { get; set; }
+    private int PrimaryClickCount { get; set; }
+    private ButtonShape Shape { get; set; } = ButtonShape.Round;
+    private bool InsetMenuDivider { get; set; } = true;
+    private bool ShowLeadingIcon { get; set; } = true;
+    private bool ShowMenuDivider { get; set; } = true;
+    private NTButtonVariant Variant { get; set; } = NTButtonVariant.Filled;
+
+    private string EffectiveLabel => string.IsNullOrWhiteSpace(Label) ? "Save" : Label;
+
+    private Task HandleExpandedChanged(bool expanded) {
+        Expanded = expanded;
+        return Task.CompletedTask;
+    }
+
+    private Task HandlePrimaryAction(MouseEventArgs _) {
+        PrimaryClickCount++;
+        LastAction = EffectiveLabel;
+        return Task.CompletedTask;
+    }
+
+    private Task SelectMenuAction(string action) {
+        LastAction = action;
+        return Task.CompletedTask;
+    }
+
+    private static string GetSizeLabel(Size size) => size switch {
+        Size.Smallest => "XS",
+        Size.Small => "Small",
+        Size.Medium => "Medium",
+        Size.Large => "Large",
+        Size.Largest => "Extra large",
+        _ => size.ToString()
+    };
+}
