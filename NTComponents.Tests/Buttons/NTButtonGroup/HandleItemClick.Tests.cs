@@ -33,10 +33,10 @@ public sealed class HandleItemClick_Tests : NTButtonGroupTestContext {
     }
 
     /// <summary>
-    ///     Validates that clicking the already selected button does not clear selection nor fire the event.
+    ///     Validates that clicking the already selected button clears optional single selection.
     /// </summary>
     [Fact]
-    public async Task GivenSelectedItem_WhenClickedAgain_DoesNotClearSelection() {
+    public async Task GivenSelectedItem_WhenClickedAgain_ClearsSelection() {
         // Arrange
         var items = CreateItems();
         var recordedKeys = new List<string?>();
@@ -48,12 +48,60 @@ public sealed class HandleItemClick_Tests : NTButtonGroupTestContext {
 
         // Act
         await buttonElements[0].ClickAsync();
-        buttonElements = cut.FindAll("button.btn-group-btn");
+        var updatedButtons = cut.FindAll("button.btn-group-btn");
+
+        // Assert
+        recordedKeys.Should().Equal([null]);
+        updatedButtons[0].ClassList.Should().NotContain("btn-group-selected");
+    }
+
+    /// <summary>
+    ///     Validates that clicking the selected button keeps selection when selection is required.
+    /// </summary>
+    [Fact]
+    public async Task GivenRequiredSelectedItem_WhenClickedAgain_DoesNotClearSelection() {
+        // Arrange
+        var items = CreateItems();
+        var recordedKeys = new List<string?>();
+        var cut = Render<NTButtonGroup<string>>(parameters => parameters
+            .AddChildContent(RenderItems(items))
+            .Add(p => p.SelectedKey, items.First().Key)
+            .Add(p => p.SelectionRequired, true)
+            .Add(p => p.SelectedKeyChanged, EventCallback.Factory.Create<string?>(this, key => recordedKeys.Add(key))));
+        var buttonElements = cut.FindAll("button.btn-group-btn");
+
+        // Act
         await buttonElements[0].ClickAsync();
         var updatedButtons = cut.FindAll("button.btn-group-btn");
 
         // Assert
         recordedKeys.Should().BeEmpty();
         updatedButtons[0].ClassList.Should().Contain("btn-group-selected");
+    }
+
+    /// <summary>
+    ///     Validates that multi-select mode toggles independent selected keys.
+    /// </summary>
+    [Fact]
+    public async Task GivenMultipleSelectionMode_WhenItemsClicked_UpdatesSelectedKeys() {
+        // Arrange
+        var items = CreateItems();
+        var recordedKeys = new List<IReadOnlyCollection<string>>();
+        var cut = Render<NTButtonGroup<string>>(parameters => parameters
+            .AddChildContent(RenderItems(items))
+            .Add(p => p.SelectionMode, NTButtonGroupSelectionMode.Multiple)
+            .Add(p => p.SelectedKeysChanged, EventCallback.Factory.Create<IReadOnlyCollection<string>>(this, keys => recordedKeys.Add(keys))));
+        var buttonElements = cut.FindAll("button.btn-group-btn");
+
+        // Act
+        await buttonElements[0].ClickAsync();
+        buttonElements = cut.FindAll("button.btn-group-btn");
+        await buttonElements[1].ClickAsync();
+        var updatedButtons = cut.FindAll("button.btn-group-btn");
+
+        // Assert
+        recordedKeys.Should().HaveCount(2);
+        recordedKeys.Last().Should().Equal(items.Select(item => item.Key));
+        updatedButtons.Should().AllSatisfy(button => button.ClassList.Should().Contain("btn-group-selected"));
     }
 }

@@ -43,4 +43,23 @@ public sealed class OnParametersSet_Tests : NTButtonGroupTestContext {
         selectedButtons.Count.Should().Be(1);
         selectedButtons.Single().TextContent.Should().Contain(items.First().Label!);
     }
+
+    /// <summary>
+    ///     Ensures selection-required groups select the first enabled item when no default is provided.
+    /// </summary>
+    [Fact]
+    public void WithSelectionRequired_WhenNoSelectedKey_SelectsFirstItem() {
+        // Arrange
+        var items = CreateItems();
+
+        // Act
+        var cut = Render<NTButtonGroup<string>>(parameters => parameters
+            .AddChildContent(RenderItems(items))
+            .Add(p => p.SelectionRequired, true));
+        var selectedButtons = cut.FindAll("button.btn-group-selected");
+
+        // Assert
+        selectedButtons.Count.Should().Be(1);
+        selectedButtons.Single().TextContent.Should().Contain(items.First().Label!);
+    }
 }

@@ -217,6 +217,65 @@ describe('NTComponents delegated ripple', () => {
       expect(registerSpy).toHaveBeenCalledWith(host);
    });
 
+   test('startButtonInteraction registers button descendants from previous sibling container', () => {
+      const wrapper = document.createElement('div');
+      const group = document.createElement('div');
+      group.className = 'nt-button-group';
+      const button = document.createElement('button');
+      button.className = 'nt-button';
+      const iconButton = document.createElement('button');
+      iconButton.className = 'nt-icon-button';
+      const groupButton = document.createElement('button');
+      groupButton.className = 'nt-btn-grp-btn';
+      const splitButtonSegment = document.createElement('button');
+      splitButtonSegment.className = 'nt-split-button-segment';
+      const script = document.createElement('script');
+      group.appendChild(button);
+      group.appendChild(iconButton);
+      group.appendChild(groupButton);
+      group.appendChild(splitButtonSegment);
+      wrapper.appendChild(group);
+      wrapper.appendChild(script);
+      document.body.appendChild(wrapper);
+
+      global.NTComponents.startButtonInteraction(script);
+
+      const PointerCtor = window.PointerEvent ?? MouseEvent;
+      button.dispatchEvent(new PointerCtor(window.PointerEvent ? 'pointerdown' : 'mousedown', {
+         bubbles: true,
+         clientX: 60,
+         clientY: 30,
+         pointerId: 1,
+         pointerType: 'mouse'
+      }));
+      iconButton.dispatchEvent(new PointerCtor(window.PointerEvent ? 'pointerdown' : 'mousedown', {
+         bubbles: true,
+         clientX: 60,
+         clientY: 30,
+         pointerId: 2,
+         pointerType: 'mouse'
+      }));
+      groupButton.dispatchEvent(new PointerCtor(window.PointerEvent ? 'pointerdown' : 'mousedown', {
+         bubbles: true,
+         clientX: 60,
+         clientY: 30,
+         pointerId: 3,
+         pointerType: 'mouse'
+      }));
+      splitButtonSegment.dispatchEvent(new PointerCtor(window.PointerEvent ? 'pointerdown' : 'mousedown', {
+         bubbles: true,
+         clientX: 60,
+         clientY: 30,
+         pointerId: 4,
+         pointerType: 'mouse'
+      }));
+
+      expect(button.classList.contains('nt-button--pressed-shape')).toBe(true);
+      expect(iconButton.classList.contains('nt-button--pressed-shape')).toBe(true);
+      expect(groupButton.classList.contains('nt-button--pressed-shape')).toBe(true);
+      expect(splitButtonSegment.classList.contains('nt-button--pressed-shape')).toBe(true);
+   });
+
    test('registerButtonInteraction keeps pressed shape without a ripple host', () => {
       const blazor = { addEventListener: jest.fn() };
 

@@ -18,6 +18,8 @@
 else {
     <DocumentationTypeDetailView TypePage="TypePage"
                                  DemoComponentType="DemoComponentType"
+                                 SupplementalSections="SupplementalSections"
+                                 SupplementalOutlineItems="SupplementalOutlineItems"
                                  BackHref="/docs/components"
                                  BackLabel="Back to components index" />
 }
@@ -28,9 +30,29 @@ else {
 
     private DocumentationTypePage? TypePage { get; set; }
     private Type? DemoComponentType { get; set; }
+    private RenderFragment? SupplementalSections { get; set; }
+    private IReadOnlyList<DocumentationOutlineItem> SupplementalOutlineItems { get; set; } = Array.Empty<DocumentationOutlineItem>();
 
     protected override void OnParametersSet() {
         TypePage = DocumentationCatalog.TryGetComponentType(Slug, out var typePage) ? typePage : null;
-        DemoComponentType = TypePage is null ? null : typeof(NTButton).Assembly.GetType(TypePage.FullName);
+        DemoComponentType = TypePage is null ? null : GetDemoComponentType(TypePage.FullName);
+        SupplementalSections = TypePage?.FullName switch {
+            "NTComponents.NTButtonGroup<TObjectType>" => @<NTButtonGroupDocumentationDemo />,
+            "NTComponents.NTIconButton" => @<NTIconButtonDocumentationDemo />,
+            "NTComponents.NTSplitButton" => @<NTSplitButtonDocumentationDemo />,
+            _ => null
+        };
+        SupplementalOutlineItems = TypePage?.FullName switch {
+            "NTComponents.NTButtonGroup<TObjectType>" => [new DocumentationOutlineItem("button-group-demo", "Button group demo")],
+            "NTComponents.NTIconButton" => [new DocumentationOutlineItem("icon-button-demo", "Icon button demo")],
+            "NTComponents.NTSplitButton" => [new DocumentationOutlineItem("split-button-demo", "Split button demo")],
+            _ => Array.Empty<DocumentationOutlineItem>()
+        };
+    }
+
+    private static Type? GetDemoComponentType(string fullName) {
+        return fullName == "NTComponents.NTButtonGroup<TObjectType>"
+            ? null
+            : typeof(NTButton).Assembly.GetType(fullName);
     }
 }

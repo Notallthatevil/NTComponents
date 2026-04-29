@@ -12,6 +12,9 @@ public sealed class DocumentationCatalog {
 
     private static readonly string[] _componentTypeFullNames = [
         "NTComponents.NTButton",
+        "NTComponents.NTButtonGroup<TObjectType>",
+        "NTComponents.NTIconButton",
+        "NTComponents.NTSplitButton",
         "NTComponents.NTCard"
     ];
 

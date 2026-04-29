@@ -1,0 +1,135 @@
+<section class="doc-section doc-group-panel nt-split-button-doc-demo" id="split-button-demo">
+    <div class="doc-section-heading">
+        <h2 class="@NTTypography.TitleLarge.ToCssClass()">Split Button Demo</h2>
+        <p class="@NTTypography.BodyMedium.ToCssClass()">
+            Preview a Material 3 split button with variant, size, icon, expanded state, and disabled-state controls.
+        </p>
+    </div>
+
+    <div class="nt-button-demo-layout">
+        <div class="nt-button-demo-preview">
+            <div class="nt-button-demo-preview-copy">
+                <p class="nt-button-demo-kicker @NTTypography.LabelLarge.ToCssClass()">Live preview</p>
+                <h3 class="@NTTypography.TitleMedium.ToCssClass()">Primary action and alternatives</h3>
+                <p class="@NTTypography.BodyMedium.ToCssClass()">
+                    Use the leading segment for the default action and the trailing segment for related options.
+                </p>
+            </div>
+
+            <div class="nt-button-demo-stage">
+                <NTSplitButton Label="@Label"
+                               Variant="@Variant"
+                               ButtonSize="@ButtonSize"
+                               LeadingIcon="@(ShowLeadingIcon ? MaterialIcon.Save : null)"
+                               Expanded="@Expanded"
+                               ExpandedChanged="HandleExpandedChanged"
+                               Disabled="@Disabled"
+                               EnableRipple="@EnableRipple"
+                               OnClickCallback="HandlePrimaryAction">
+                    <NTSplitButtonButtonItem Label="Save draft" Icon="MaterialIcon.Drafts" OnClickCallback="@((MouseEventArgs _) => SelectMenuAction("Save draft"))" />
+                    <NTSplitButtonButtonItem Label="Save as copy" Icon="MaterialIcon.ContentCopy" OnClickCallback="@((MouseEventArgs _) => SelectMenuAction("Save as copy"))" />
+                    @if (ShowMenuDivider) {
+                        <NTSplitButtonDividerItem Inset="@InsetMenuDivider" />
+                    }
+                    <NTSplitButtonAnchorItem Label="Export" Icon="MaterialIcon.IosShare" Href="/components/NTComponents.NTSplitButton" />
+                </NTSplitButton>
+            </div>
+
+            <p class="nt-button-demo-meta @NTTypography.BodySmall.ToCssClass()">@Status</p>
+        </div>
+
+        <div class="nt-button-demo-controls">
+            <label class="nt-button-demo-field">
+                <span class="@NTTypography.LabelLarge.ToCssClass()">Variant</span>
+                <select @bind="Variant">
+                    @foreach (var variant in _variants) {
+                        <option value="@variant">@variant</option>
+                    }
+                </select>
+            </label>
+
+            <label class="nt-button-demo-field">
+                <span class="@NTTypography.LabelLarge.ToCssClass()">Size</span>
+                <select @bind="ButtonSize">
+                    @foreach (var size in _sizes) {
+                        <option value="@size">@GetSizeLabel(size)</option>
+                    }
+                </select>
+            </label>
+
+            <label class="nt-button-demo-toggle @NTTypography.BodyMedium.ToCssClass()">
+                <input type="checkbox" @bind="ShowLeadingIcon" />
+                <span>Show leading icon</span>
+            </label>
+
+            <label class="nt-button-demo-toggle @NTTypography.BodyMedium.ToCssClass()">
+                <input type="checkbox" @bind="Expanded" />
+                <span>Expanded</span>
+            </label>
+
+            <label class="nt-button-demo-toggle @NTTypography.BodyMedium.ToCssClass()">
+                <input type="checkbox" @bind="EnableRipple" />
+                <span>Enable ripple</span>
+            </label>
+
+            <label class="nt-button-demo-toggle @NTTypography.BodyMedium.ToCssClass()">
+                <input type="checkbox" @bind="Disabled" />
+                <span>Disabled</span>
+            </label>
+
+            <label class="nt-button-demo-toggle @NTTypography.BodyMedium.ToCssClass()">
+                <input type="checkbox" @bind="ShowMenuDivider" />
+                <span>Show menu divider</span>
+            </label>
+
+            <label class="nt-button-demo-toggle @NTTypography.BodyMedium.ToCssClass()">
+                <input type="checkbox" @bind="InsetMenuDivider" disabled="@(!ShowMenuDivider)" />
+                <span>Inset menu divider</span>
+            </label>
+        </div>
+    </div>
+</section>
+
+@code {
+    private static readonly IReadOnlyList<NTButtonVariant> _variants = [NTButtonVariant.Elevated, NTButtonVariant.Filled, NTButtonVariant.Tonal, NTButtonVariant.Outlined];
+    private static readonly IReadOnlyList<Size> _sizes = [Size.Smallest, Size.Small, Size.Medium, Size.Large, Size.Largest];
+
+    private Size ButtonSize { get; set; } = Size.Small;
+    private bool Disabled { get; set; }
+    private bool EnableRipple { get; set; } = true;
+    private bool Expanded { get; set; }
+    private bool InsetMenuDivider { get; set; } = true;
+    private string Label { get; } = "Save";
+    private string LastAction { get; set; } = "None";
+    private int PrimaryClickCount { get; set; }
+    private bool ShowLeadingIcon { get; set; } = true;
+    private bool ShowMenuDivider { get; set; } = true;
+    private NTButtonVariant Variant { get; set; } = NTButtonVariant.Filled;
+
+    private string Status => $"Primary clicks: {PrimaryClickCount}. Last action: {LastAction}. Expanded: {Expanded}.";
+
+    private Task HandleExpandedChanged(bool expanded) {
+        Expanded = expanded;
+        return Task.CompletedTask;
+    }
+
+    private Task HandlePrimaryAction(MouseEventArgs _) {
+        PrimaryClickCount++;
+        LastAction = Label;
+        return Task.CompletedTask;
+    }
+
+    private Task SelectMenuAction(string action) {
+        LastAction = action;
+        return Task.CompletedTask;
+    }
+
+    private static string GetSizeLabel(Size size) => size switch {
+        Size.Smallest => "XS",
+        Size.Small => "Small",
+        Size.Medium => "Medium",
+        Size.Large => "Large",
+        Size.Largest => "Extra large",
+        _ => size.ToString()
+    };
+}

@@ -1,0 +1,294 @@
+@using System.Linq
+
+<section class="doc-section doc-group-panel nt-button-group-demo" id="button-group-demo">
+    <div class="doc-section-heading">
+        <h2 class="@NTTypography.TitleLarge.ToCssClass()">Button Group Demo</h2>
+        <p class="@NTTypography.BodyMedium.ToCssClass()">
+            Preview disconnected and connected button groups with size, shape, variant, single-select, multi-select, and required-selection behavior.
+        </p>
+    </div>
+
+    <div class="nt-button-group-demo-layout">
+        <div class="nt-button-group-demo-preview">
+            <div class="nt-button-group-demo-preview-copy">
+                <p class="nt-button-group-demo-kicker @NTTypography.LabelLarge.ToCssClass()">Live preview</p>
+                <h3 class="@NTTypography.TitleMedium.ToCssClass()">@DisplayType button group</h3>
+                <p class="@NTTypography.BodyMedium.ToCssClass()">
+                    @PreviewDescription
+                </p>
+            </div>
+
+            <div class="nt-button-group-demo-stage">
+                @if (IsActionOnly) {
+                    <NTButtonGroup TObjectType="string"
+                                   DisplayType="@DisplayType"
+                                   ButtonSize="@ButtonSize"
+                                   Variant="@Variant"
+                                   Shape="@Shape"
+                                   SelectionMode="NTButtonGroupSelectionMode.None"
+                                   FullWidth="@FullWidth"
+                                   EnableRipple="@EnableRipple"
+                                   Disabled="@Disabled"
+                                   AriaLabel="Demo actions"
+                                   OnSelectionChanged="@HandleSelectionChanged">
+                        @RenderGroupItems()
+                    </NTButtonGroup>
+                }
+                else if (IsMultiSelect) {
+                    <NTButtonGroup TObjectType="string"
+                                   DisplayType="@DisplayType"
+                                   ButtonSize="@ButtonSize"
+                                   Variant="@Variant"
+                                   Shape="@Shape"
+                                   SelectionMode="NTButtonGroupSelectionMode.Multiple"
+                                   SelectionRequired="@SelectionRequired"
+                                   FullWidth="@FullWidth"
+                                   SelectedKeys="@SelectedKeys"
+                                   SelectedKeysChanged="@HandleSelectedKeysChanged"
+                                   EnableRipple="@EnableRipple"
+                                   Disabled="@Disabled"
+                                   AriaLabel="Demo destinations"
+                                   OnSelectionChanged="@HandleSelectionChanged">
+                        @RenderGroupItems()
+                    </NTButtonGroup>
+                }
+                else {
+                    <NTButtonGroup TObjectType="string"
+                                   DisplayType="@DisplayType"
+                                   ButtonSize="@ButtonSize"
+                                   Variant="@Variant"
+                                   Shape="@Shape"
+                                   SelectionRequired="@SelectionRequired"
+                                   FullWidth="@FullWidth"
+                                   SelectedKey="@SelectedKey"
+                                   SelectedKeyChanged="@HandleSelectedKeyChanged"
+                                   EnableRipple="@EnableRipple"
+                                   Disabled="@Disabled"
+                                   AriaLabel="Demo destinations"
+                                   OnSelectionChanged="@HandleSelectionChanged">
+                        @RenderGroupItems()
+                    </NTButtonGroup>
+                }
+            </div>
+
+            <p class="nt-button-group-demo-meta @NTTypography.BodySmall.ToCssClass()">@SelectionStatus</p>
+        </div>
+
+        <div class="nt-button-group-demo-controls">
+            <label class="nt-button-group-demo-field">
+                <span class="@NTTypography.LabelLarge.ToCssClass()">Group variant</span>
+                <select @bind="DisplayType">
+                    @foreach (var displayType in _displayTypes) {
+                        <option value="@displayType">@displayType</option>
+                    }
+                </select>
+            </label>
+
+            <label class="nt-button-group-demo-field">
+                <span class="@NTTypography.LabelLarge.ToCssClass()">Button variant</span>
+                <select @bind="Variant">
+                    @foreach (var variant in _buttonVariants) {
+                        <option value="@variant">@GetVariantLabel(variant)</option>
+                    }
+                </select>
+            </label>
+
+            <label class="nt-button-group-demo-field">
+                <span class="@NTTypography.LabelLarge.ToCssClass()">Size</span>
+                <select @bind="ButtonSize">
+                    @foreach (var size in _buttonSizes) {
+                        <option value="@size">@GetSizeLabel(size)</option>
+                    }
+                </select>
+            </label>
+
+            <label class="nt-button-group-demo-field">
+                <span class="@NTTypography.LabelLarge.ToCssClass()">Base shape</span>
+                <select @bind="Shape">
+                    @foreach (var shape in Enum.GetValues<ButtonShape>()) {
+                        <option value="@shape">@shape</option>
+                    }
+                </select>
+            </label>
+
+            <label class="nt-button-group-demo-toggle @NTTypography.BodyMedium.ToCssClass()">
+                <input type="checkbox" @bind="IsMultiSelect" />
+                <span>Multi-select</span>
+            </label>
+
+            <label class="nt-button-group-demo-toggle @NTTypography.BodyMedium.ToCssClass()">
+                <input type="checkbox" @bind="IsActionOnly" />
+                <span>Action-only</span>
+            </label>
+
+            <label class="nt-button-group-demo-toggle @NTTypography.BodyMedium.ToCssClass()">
+                <input type="checkbox" @bind="SelectionRequired" />
+                <span>Selection required</span>
+            </label>
+
+            <label class="nt-button-group-demo-toggle @NTTypography.BodyMedium.ToCssClass()">
+                <input type="checkbox" @bind="FullWidth" />
+                <span>Full width</span>
+            </label>
+
+            <label class="nt-button-group-demo-toggle @NTTypography.BodyMedium.ToCssClass()">
+                <input type="checkbox" @bind="UseMixedSizes" />
+                <span>Mixed sizes</span>
+            </label>
+
+            <label class="nt-button-group-demo-toggle @NTTypography.BodyMedium.ToCssClass()">
+                <input type="checkbox" @bind="IncludeIconOnly" />
+                <span>Icon buttons</span>
+            </label>
+
+            <label class="nt-button-group-demo-toggle @NTTypography.BodyMedium.ToCssClass()">
+                <input type="checkbox" @bind="EnableRipple" />
+                <span>Enable ripple</span>
+            </label>
+
+            <label class="nt-button-group-demo-toggle @NTTypography.BodyMedium.ToCssClass()">
+                <input type="checkbox" @bind="Disabled" />
+                <span>Disabled</span>
+            </label>
+        </div>
+    </div>
+
+    <div class="nt-button-group-demo-showcase">
+        <div class="nt-button-group-demo-showcase-group">
+            <p class="nt-button-group-demo-kicker @NTTypography.LabelLarge.ToCssClass()">Disconnected</p>
+            <NTButtonGroup TObjectType="string"
+                           DisplayType="NTButtonGroupDisplayType.Disconnected"
+                           ButtonSize="Size.Small"
+                           Variant="NTButtonVariant.Tonal"
+                           SelectedKey="@("calendar")"
+                           SelectionRequired="true"
+                           AriaLabel="Disconnected destinations">
+                <NTButtonGroupItem Key="@("mail")" Label="Mail" StartIcon="MaterialIcon.Mail" />
+                <NTButtonGroupItem Key="@("calendar")" Label="Calendar" StartIcon="MaterialIcon.CalendarMonth" />
+                <NTButtonGroupItem Key="@("settings")" Label="Settings" StartIcon="MaterialIcon.Settings" />
+            </NTButtonGroup>
+        </div>
+
+        <div class="nt-button-group-demo-showcase-group">
+            <p class="nt-button-group-demo-kicker @NTTypography.LabelLarge.ToCssClass()">Connected</p>
+            <NTButtonGroup TObjectType="string"
+                           DisplayType="NTButtonGroupDisplayType.Connected"
+                           ButtonSize="Size.Small"
+                           Variant="NTButtonVariant.Outlined"
+                           SelectionMode="NTButtonGroupSelectionMode.Multiple"
+                           SelectedKeys="@_connectedShowcaseKeys"
+                           AriaLabel="Connected filters">
+                <NTButtonGroupItem Key="@("open")" Label="Open" />
+                <NTButtonGroupItem Key="@("assigned")" Label="Assigned" />
+                <NTButtonGroupItem Key="@("flagged")" Label="Flagged" />
+                <NTButtonGroupItem Key="@("search")" StartIcon="MaterialIcon.Search" AriaLabel="Search filters" IconWidth="NTIconButtonAppearance.Narrow" />
+            </NTButtonGroup>
+        </div>
+    </div>
+</section>
+
+@code {
+    private static readonly IReadOnlyList<NTButtonGroupDisplayType> _displayTypes = [NTButtonGroupDisplayType.Disconnected, NTButtonGroupDisplayType.Connected];
+    private static readonly IReadOnlyList<NTButtonVariant> _buttonVariants = [NTButtonVariant.Filled, NTButtonVariant.Tonal, NTButtonVariant.Outlined, NTButtonVariant.Elevated];
+    private static readonly IReadOnlyList<Size> _buttonSizes = [Size.Smallest, Size.Small, Size.Medium, Size.Large, Size.Largest];
+    private static readonly IReadOnlyCollection<string> _connectedShowcaseKeys = ["open", "assigned"];
+
+    private NTButtonGroupDisplayType DisplayType { get; set; } = NTButtonGroupDisplayType.Disconnected;
+    private NTButtonVariant Variant { get; set; } = NTButtonVariant.Tonal;
+    private Size ButtonSize { get; set; } = Size.Small;
+    private ButtonShape Shape { get; set; } = ButtonShape.Round;
+    private bool _isMultiSelect;
+    private bool SelectionRequired { get; set; } = true;
+    private bool IsActionOnly { get; set; }
+    private bool FullWidth { get; set; }
+    private bool UseMixedSizes { get; set; }
+    private bool IncludeIconOnly { get; set; } = true;
+    private bool EnableRipple { get; set; } = true;
+    private bool Disabled { get; set; }
+    private string? SelectedKey { get; set; } = "inbox";
+    private IReadOnlyCollection<string> SelectedKeys { get; set; } = ["inbox", "calendar"];
+    private string SelectionStatus { get; set; } = "Selected inbox.";
+
+    private bool IsMultiSelect {
+        get => _isMultiSelect;
+        set {
+            _isMultiSelect = value;
+            SelectionStatus = value
+                ? $"Selected {string.Join(", ", SelectedKeys)}."
+                : $"Selected {SelectedKey ?? "none"}.";
+        }
+    }
+
+    private string PreviewDescription => IsActionOnly
+        ? "Action-only groups organize related actions without exposing selected toggle state."
+        : DisplayType == NTButtonGroupDisplayType.Disconnected
+            ? "Disconnected groups keep spacing between buttons and let adjacent buttons respond to the active or selected item."
+            : "Connected groups sit together as a segmented control replacement; full-width layout is optional.";
+
+    private RenderFragment RenderGroupItems() => builder => {
+        var sequence = 0;
+        foreach (var item in GetPreviewItems()) {
+            builder.OpenComponent<NTButtonGroupItem<string>>(sequence++);
+            builder.AddAttribute(sequence++, nameof(NTButtonGroupItem<string>.Key), item.Key);
+            if (item.Label is not null) {
+                builder.AddAttribute(sequence++, nameof(NTButtonGroupItem<string>.Label), item.Label);
+            }
+
+            if (item.AriaLabel is not null) {
+                builder.AddAttribute(sequence++, nameof(NTButtonGroupItem<string>.AriaLabel), item.AriaLabel);
+            }
+
+            if (item.Icon is not null) {
+                builder.AddAttribute(sequence++, nameof(NTButtonGroupItem<string>.StartIcon), item.Icon);
+            }
+
+            builder.CloseComponent();
+        }
+    };
+
+    private IReadOnlyList<ButtonGroupDemoItem> GetPreviewItems() {
+        var items = new List<ButtonGroupDemoItem> {
+            new("inbox", "Inbox", null, MaterialIcon.Mail, UseMixedSizes ? Size.Small : null),
+            new("calendar", "Calendar", null, MaterialIcon.CalendarMonth, UseMixedSizes ? Size.Large : null),
+            new("spaces", "Spaces", null, MaterialIcon.Groups, null)
+        };
+
+        if (IncludeIconOnly) {
+            items.Add(new ButtonGroupDemoItem("search", null, "Search", MaterialIcon.Search, UseMixedSizes ? Size.Medium : null));
+        }
+
+        return items;
+    }
+
+    private Task HandleSelectedKeyChanged(string? selectedKey) {
+        SelectedKey = selectedKey;
+        SelectionStatus = $"Selected {selectedKey ?? "none"}.";
+        return Task.CompletedTask;
+    }
+
+    private Task HandleSelectedKeysChanged(IReadOnlyCollection<string> selectedKeys) {
+        SelectedKeys = selectedKeys;
+        SelectionStatus = selectedKeys.Count == 0
+            ? "No selections."
+            : $"Selected {string.Join(", ", selectedKeys)}.";
+        return Task.CompletedTask;
+    }
+
+    private Task HandleSelectionChanged(NTButtonGroupItem<string> item) {
+        SelectionStatus = $"Last changed {item.Label ?? item.AriaLabel ?? item.Key}.";
+        return Task.CompletedTask;
+    }
+
+    private static string GetVariantLabel(NTButtonVariant variant) => variant == NTButtonVariant.Text ? "Standard" : variant.ToString();
+
+    private static string GetSizeLabel(Size size) => size switch {
+        Size.Smallest => "XS",
+        Size.Small => "Small",
+        Size.Medium => "Medium",
+        Size.Large => "Large",
+        Size.Largest => "Extra large",
+        _ => size.ToString()
+    };
+
+    private sealed record ButtonGroupDemoItem(string Key, string? Label, string? AriaLabel, TnTIcon? Icon, Size? ButtonSize);
+}

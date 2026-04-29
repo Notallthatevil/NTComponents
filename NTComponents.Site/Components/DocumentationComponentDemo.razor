@@ -297,6 +297,11 @@
             case DemoInputKind.Enum:
                 SetParameterValue(parameter, Enum.GetValues(parameter.UnderlyingType).GetValue(0));
                 break;
+
+            case DemoInputKind.Icon:
+                _fieldValues[parameter.Documentation.Name] = "Add";
+                SetParameterValue(parameter, MaterialIcon.Add);
+                break;
         }
     }
 
