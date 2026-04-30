@@ -17,7 +17,7 @@ public sealed class OnParametersSet_Tests : NTButtonGroupTestContext {
 
         // Act
         var cut = Render<NTButtonGroup<string>>(parameters => parameters.AddChildContent(RenderItems(items)));
-        var selectedButtons = cut.FindAll("button.btn-group-selected");
+        var selectedButtons = cut.FindAll("button[aria-pressed='true']");
 
         // Assert
         selectedButtons.Count.Should().Be(1);
@@ -37,7 +37,7 @@ public sealed class OnParametersSet_Tests : NTButtonGroupTestContext {
         var cut = Render<NTButtonGroup<string>>(parameters => parameters
             .AddChildContent(RenderItems(items))
             .Add(p => p.SelectedKey, explicitKey));
-        var selectedButtons = cut.FindAll("button.btn-group-selected");
+        var selectedButtons = cut.FindAll("button[aria-pressed='true']");
 
         // Assert
         selectedButtons.Count.Should().Be(1);
@@ -56,7 +56,7 @@ public sealed class OnParametersSet_Tests : NTButtonGroupTestContext {
         var cut = Render<NTButtonGroup<string>>(parameters => parameters
             .AddChildContent(RenderItems(items))
             .Add(p => p.SelectionRequired, true));
-        var selectedButtons = cut.FindAll("button.btn-group-selected");
+        var selectedButtons = cut.FindAll("button[aria-pressed='true']");
 
         // Assert
         selectedButtons.Count.Should().Be(1);

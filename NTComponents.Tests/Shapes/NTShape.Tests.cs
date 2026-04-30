@@ -59,7 +59,8 @@ public class NTShape_Tests : BunitContext {
 
         var path = cut.Find(".nt-shape-path");
         path.GetAttribute("d").Should().StartWith("M");
-        path.GetAttribute("d").Should().Contain(" C");
+        path.GetAttribute("d").Should().Contain(" L");
+        path.GetAttribute("d").Should().EndWith(" Z");
 
         var content = cut.Find(".nt-shape-content");
         content.TextContent.Should().Contain("Shape demo");

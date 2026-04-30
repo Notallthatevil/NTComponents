@@ -19,7 +19,7 @@ public sealed class Render_Tests : NTButtonGroupTestContext {
 
         // Act
         var cut = Render<NTButtonGroup<string>>(parameters => parameters.AddChildContent(RenderItems(items)));
-        var buttons = cut.FindAll("button.btn-group-btn");
+        var buttons = cut.FindAll("button.nt-btn-grp-btn");
 
         // Assert
         buttons.Count.Should().Be(items.Count);
@@ -145,7 +145,7 @@ public sealed class Render_Tests : NTButtonGroupTestContext {
 
         // Act
         var cut = Render<NTButtonGroup<string>>(parameters => parameters.AddChildContent(RenderItems(items)));
-        var iconButton = cut.Find("button.nt-icon-button");
+        var iconButton = cut.Find("button.nt-btn-grp-btn");
 
         // Assert
         iconButton.GetAttribute("aria-label").Should().Be(items.First().AriaLabel);
@@ -160,7 +160,7 @@ public sealed class Render_Tests : NTButtonGroupTestContext {
         RenderFragment items = builder => {
             builder.OpenComponent<NTButtonGroupItem<string>>(0);
             builder.AddAttribute(1, nameof(NTButtonGroupItem<string>.Key), "search");
-            builder.AddAttribute(2, nameof(NTButtonGroupItem<string>.StartIcon), (object)MaterialIcon.Search);
+            builder.AddAttribute(2, nameof(NTButtonGroupItem<string>.Icon), (object)MaterialIcon.Search);
             builder.CloseComponent();
         };
 
@@ -169,25 +169,6 @@ public sealed class Render_Tests : NTButtonGroupTestContext {
 
         // Assert
         act.Should().Throw<InvalidOperationException>().WithMessage("*AriaLabel*icon-only*");
-    }
-
-    /// <summary>
-    ///     Ensures item-level sizes override the group size.
-    /// </summary>
-    [Fact]
-    public void WithItemButtonSize_RendersItemSizeClass() {
-        // Arrange
-        var items = CreateItems().Select((item, index) => item with { ButtonSize = index == 0 ? Size.Large : null }).ToArray();
-
-        // Act
-        var cut = Render<NTButtonGroup<string>>(parameters => parameters
-            .AddChildContent(RenderItems(items))
-            .Add(p => p.ButtonSize, Size.Small));
-        var buttons = cut.FindAll("button.btn-group-btn");
-
-        // Assert
-        buttons[0].ClassList.Should().Contain("tnt-size-l");
-        buttons[1].ClassList.Should().Contain("tnt-size-s");
     }
 
     /// <summary>
@@ -202,7 +183,7 @@ public sealed class Render_Tests : NTButtonGroupTestContext {
         var cut = Render<NTButtonGroup<string>>(parameters => parameters
             .AddChildContent(RenderItems(items))
             .Add(p => p.SelectedKey, items.First().Key));
-        var buttons = cut.FindAll("button.btn-group-btn");
+        var buttons = cut.FindAll("button.nt-btn-grp-btn");
 
         // Assert
         buttons[0].GetAttribute("aria-pressed").Should().Be("true");
@@ -220,16 +201,15 @@ public sealed class Render_Tests : NTButtonGroupTestContext {
             .AddChildContent(RenderItems(items))
             .Add(p => p.SelectionMode, NTButtonGroupSelectionMode.None)
             .Add(p => p.SelectedKey, items.First().Key));
-        var buttons = cut.FindAll("button.btn-group-btn");
+        var buttons = cut.FindAll("button.nt-btn-grp-btn");
 
         // Act
         await buttons[0].ClickAsync();
-        buttons = cut.FindAll("button.btn-group-btn");
+        buttons = cut.FindAll("button.nt-btn-grp-btn");
 
         // Assert
         buttons.Should().AllSatisfy(button => {
             button.HasAttribute("aria-pressed").Should().BeFalse();
-            button.ClassList.Should().NotContain("btn-group-selected");
         });
     }
 

@@ -20,16 +20,16 @@ public sealed class HandleItemClick_Tests : NTButtonGroupTestContext {
         var cut = Render<NTButtonGroup<string>>(parameters => parameters
             .AddChildContent(RenderItems(items))
             .Add(p => p.SelectedKeyChanged, EventCallback.Factory.Create<string?>(this, key => recordedKeys.Add(key))));
-        var buttonElements = cut.FindAll("button.btn-group-btn");
+        var buttonElements = cut.FindAll("button.nt-btn-grp-btn");
 
         // Act
         buttonElements[1].Click();
-        var updatedButtons = cut.FindAll("button.btn-group-btn");
+        var updatedButtons = cut.FindAll("button.nt-btn-grp-btn");
 
         // Assert
         recordedKeys.Should().Equal(items.Last().Key);
-        updatedButtons[1].ClassList.Should().Contain("btn-group-selected");
-        updatedButtons[0].ClassList.Should().NotContain("btn-group-selected");
+        updatedButtons[1].GetAttribute("aria-pressed").Should().Be("true");
+        updatedButtons[0].GetAttribute("aria-pressed").Should().Be("false");
     }
 
     /// <summary>
@@ -44,15 +44,15 @@ public sealed class HandleItemClick_Tests : NTButtonGroupTestContext {
             .AddChildContent(RenderItems(items))
             .Add(p => p.SelectedKey, items.First().Key)
             .Add(p => p.SelectedKeyChanged, EventCallback.Factory.Create<string?>(this, key => recordedKeys.Add(key))));
-        var buttonElements = cut.FindAll("button.btn-group-btn");
+        var buttonElements = cut.FindAll("button.nt-btn-grp-btn");
 
         // Act
         await buttonElements[0].ClickAsync();
-        var updatedButtons = cut.FindAll("button.btn-group-btn");
+        var updatedButtons = cut.FindAll("button.nt-btn-grp-btn");
 
         // Assert
         recordedKeys.Should().Equal([null]);
-        updatedButtons[0].ClassList.Should().NotContain("btn-group-selected");
+        updatedButtons[0].GetAttribute("aria-pressed").Should().Be("false");
     }
 
     /// <summary>
@@ -68,15 +68,15 @@ public sealed class HandleItemClick_Tests : NTButtonGroupTestContext {
             .Add(p => p.SelectedKey, items.First().Key)
             .Add(p => p.SelectionRequired, true)
             .Add(p => p.SelectedKeyChanged, EventCallback.Factory.Create<string?>(this, key => recordedKeys.Add(key))));
-        var buttonElements = cut.FindAll("button.btn-group-btn");
+        var buttonElements = cut.FindAll("button.nt-btn-grp-btn");
 
         // Act
         await buttonElements[0].ClickAsync();
-        var updatedButtons = cut.FindAll("button.btn-group-btn");
+        var updatedButtons = cut.FindAll("button.nt-btn-grp-btn");
 
         // Assert
         recordedKeys.Should().BeEmpty();
-        updatedButtons[0].ClassList.Should().Contain("btn-group-selected");
+        updatedButtons[0].GetAttribute("aria-pressed").Should().Be("true");
     }
 
     /// <summary>
@@ -91,17 +91,17 @@ public sealed class HandleItemClick_Tests : NTButtonGroupTestContext {
             .AddChildContent(RenderItems(items))
             .Add(p => p.SelectionMode, NTButtonGroupSelectionMode.Multiple)
             .Add(p => p.SelectedKeysChanged, EventCallback.Factory.Create<IReadOnlyCollection<string>>(this, keys => recordedKeys.Add(keys))));
-        var buttonElements = cut.FindAll("button.btn-group-btn");
+        var buttonElements = cut.FindAll("button.nt-btn-grp-btn");
 
         // Act
         await buttonElements[0].ClickAsync();
-        buttonElements = cut.FindAll("button.btn-group-btn");
+        buttonElements = cut.FindAll("button.nt-btn-grp-btn");
         await buttonElements[1].ClickAsync();
-        var updatedButtons = cut.FindAll("button.btn-group-btn");
+        var updatedButtons = cut.FindAll("button.nt-btn-grp-btn");
 
         // Assert
         recordedKeys.Should().HaveCount(2);
         recordedKeys.Last().Should().Equal(items.Select(item => item.Key));
-        updatedButtons.Should().AllSatisfy(button => button.ClassList.Should().Contain("btn-group-selected"));
+        updatedButtons.Should().AllSatisfy(button => button.GetAttribute("aria-pressed").Should().Be("true"));
     }
 }

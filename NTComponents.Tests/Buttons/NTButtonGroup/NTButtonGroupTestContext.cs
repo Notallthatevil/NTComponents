@@ -36,7 +36,7 @@ public abstract class NTButtonGroupTestContext : BunitContext {
         var first = new NTButtonGroupTestItem {
             Key = Fixture.Create<string>(),
             Label = iconOnlyFirstItem ? null : Fixture.Create<string>(),
-            StartIcon = iconOnlyFirstItem ? new MaterialIcon("home") : null,
+            Icon = iconOnlyFirstItem ? new MaterialIcon("home") : null,
             AriaLabel = iconOnlyFirstItem ? "Home" : null,
             IsDefaultSelected = false
         };
@@ -66,20 +66,16 @@ public abstract class NTButtonGroupTestContext : BunitContext {
                 builder.AddAttribute(3, nameof(NTButtonGroupItem<string>.AriaLabel), item.AriaLabel);
             }
 
-            if (item.StartIcon is not null) {
-                builder.AddAttribute(4, nameof(NTButtonGroupItem<string>.StartIcon), (object)item.StartIcon);
-            }
-
-            if (item.ButtonSize is not null) {
-                builder.AddAttribute(5, nameof(NTButtonGroupItem<string>.ButtonSize), item.ButtonSize);
+            if (item.Icon is not null) {
+                builder.AddAttribute(4, nameof(NTButtonGroupItem<string>.Icon), (object)item.Icon);
             }
 
             if (item.Disabled) {
-                builder.AddAttribute(6, nameof(NTButtonGroupItem<string>.Disabled), true);
+                builder.AddAttribute(5, nameof(NTButtonGroupItem<string>.Disabled), true);
             }
 
             if (item.IsDefaultSelected) {
-                builder.AddAttribute(7, nameof(NTButtonGroupItem<string>.IsDefaultSelected), true);
+                builder.AddAttribute(6, nameof(NTButtonGroupItem<string>.IsDefaultSelected), true);
             }
 
             builder.CloseComponent();
@@ -108,12 +104,7 @@ public abstract class NTButtonGroupTestContext : BunitContext {
         /// <summary>
         ///     Optional icon rendered before the label.
         /// </summary>
-        public TnTIcon? StartIcon { get; init; }
-
-        /// <summary>
-        ///     Optional size override.
-        /// </summary>
-        public Size? ButtonSize { get; init; }
+        public TnTIcon? Icon { get; init; }
 
         /// <summary>
         ///     Controls whether the item is disabled.
