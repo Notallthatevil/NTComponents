@@ -7,74 +7,84 @@ using Microsoft.CodeAnalysis.Operations;
 namespace NTComponents.Analyzers;
 
 /// <summary>
-///     Warns when <c>NTButton</c> is configured in a way that the component rejects at runtime.
+///     Warns when <c>NTButtonGroup</c> is configured in a way that the component rejects at runtime.
 /// </summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
-public sealed class NTButtonConfigurationAnalyzer : DiagnosticAnalyzer {
+public sealed class NTButtonGroupConfigurationAnalyzer : DiagnosticAnalyzer {
 
-    public const string OpaqueBackgroundDiagnosticId = "NTC1003";
-    public const string TransparentBackgroundDiagnosticId = "NTC1004";
-    public const string InvisibleTextColorDiagnosticId = "NTC1005";
-    public const string InvalidElevationDiagnosticId = "NTC1006";
-    public const string TextToggleDiagnosticId = "NTC1007";
-    public const string EmptyLabelDiagnosticId = "NTC1008";
+    public const string TextSelectableDiagnosticId = "NTC1019";
+    public const string OpaqueBackgroundDiagnosticId = "NTC1020";
+    public const string TransparentBackgroundDiagnosticId = "NTC1021";
+    public const string InvisibleTextColorDiagnosticId = "NTC1022";
+    public const string TransparentSelectedBackgroundDiagnosticId = "NTC1023";
+    public const string InvisibleSelectedTextColorDiagnosticId = "NTC1024";
+    public const string MissingIconOnlyAriaLabelDiagnosticId = "NTC1025";
+
+    private static readonly DiagnosticDescriptor TextSelectableRule = new(
+        TextSelectableDiagnosticId,
+        "Text NTButtonGroup cannot be selectable",
+        "NTButtonGroup variant 'Text' does not support selectable behavior",
+        "Usage",
+        DiagnosticSeverity.Warning,
+        isEnabledByDefault: true);
 
     private static readonly DiagnosticDescriptor OpaqueBackgroundRule = new(
         OpaqueBackgroundDiagnosticId,
-        "NTButton background must be transparent for this variant",
-        "NTButton variant '{0}' must use a transparent BackgroundColor",
+        "NTButtonGroup background must be transparent for this variant",
+        "NTButtonGroup variant '{0}' must use a transparent BackgroundColor",
         "Usage",
         DiagnosticSeverity.Warning,
         isEnabledByDefault: true);
 
     private static readonly DiagnosticDescriptor TransparentBackgroundRule = new(
         TransparentBackgroundDiagnosticId,
-        "NTButton background must be visible for this variant",
-        "NTButton variant '{0}' must use a visible container BackgroundColor",
+        "NTButtonGroup background must be visible for this variant",
+        "NTButtonGroup variant '{0}' must use a visible container BackgroundColor",
         "Usage",
         DiagnosticSeverity.Warning,
         isEnabledByDefault: true);
 
     private static readonly DiagnosticDescriptor InvisibleTextColorRule = new(
         InvisibleTextColorDiagnosticId,
-        "NTButton text color must be visible",
-        "NTButton TextColor must be a visible content color",
+        "NTButtonGroup text color must be visible",
+        "NTButtonGroup TextColor must be a visible content color",
         "Usage",
         DiagnosticSeverity.Warning,
         isEnabledByDefault: true);
 
-    private static readonly DiagnosticDescriptor InvalidElevationRule = new(
-        InvalidElevationDiagnosticId,
-        "NTButton elevation is invalid for this variant",
-        "NTButton variant '{0}' cannot use Elevation '{1}'",
+    private static readonly DiagnosticDescriptor TransparentSelectedBackgroundRule = new(
+        TransparentSelectedBackgroundDiagnosticId,
+        "NTButtonGroup selected background must be visible",
+        "Selectable NTButtonGroup variant '{0}' must use a visible selected container SelectedBackgroundColor",
         "Usage",
         DiagnosticSeverity.Warning,
         isEnabledByDefault: true);
 
-    private static readonly DiagnosticDescriptor TextToggleRule = new(
-        TextToggleDiagnosticId,
-        "Text NTButton cannot be a toggle button",
-        "NTButton variant 'Text' does not support toggle behavior",
+    private static readonly DiagnosticDescriptor InvisibleSelectedTextColorRule = new(
+        InvisibleSelectedTextColorDiagnosticId,
+        "NTButtonGroup selected text color must be visible",
+        "Selectable NTButtonGroup SelectedTextColor must be a visible selected content color",
         "Usage",
         DiagnosticSeverity.Warning,
         isEnabledByDefault: true);
 
-    private static readonly DiagnosticDescriptor EmptyLabelRule = new(
-        EmptyLabelDiagnosticId,
-        "NTButton label cannot be empty",
-        "NTButton requires a non-empty Label",
+    private static readonly DiagnosticDescriptor MissingIconOnlyAriaLabelRule = new(
+        MissingIconOnlyAriaLabelDiagnosticId,
+        "Icon-only NTButtonGroup item needs an accessible label",
+        "NTButtonGroupItem requires a non-empty AriaLabel when rendering an icon-only item",
         "Usage",
         DiagnosticSeverity.Warning,
         isEnabledByDefault: true);
 
     /// <inheritdoc />
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => [
+        TextSelectableRule,
         OpaqueBackgroundRule,
         TransparentBackgroundRule,
         InvisibleTextColorRule,
-        InvalidElevationRule,
-        TextToggleRule,
-        EmptyLabelRule
+        TransparentSelectedBackgroundRule,
+        InvisibleSelectedTextColorRule,
+        MissingIconOnlyAriaLabelRule
     ];
 
     /// <inheritdoc />
@@ -82,17 +92,22 @@ public sealed class NTButtonConfigurationAnalyzer : DiagnosticAnalyzer {
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics);
         context.EnableConcurrentExecution();
         context.RegisterCompilationStartAction(static startContext => {
-            var ntButtonType = startContext.Compilation.GetTypeByMetadataName("NTComponents.NTButton");
+            var buttonGroupType = startContext.Compilation.GetTypeByMetadataName("NTComponents.NTButtonGroup`1");
+            var buttonGroupItemType = startContext.Compilation.GetTypeByMetadataName("NTComponents.NTButtonGroupItem`1");
             var buttonVariantType = startContext.Compilation.GetTypeByMetadataName("NTComponents.NTButtonVariant");
+            var selectionModeType = startContext.Compilation.GetTypeByMetadataName("NTComponents.NTButtonGroupSelectionMode");
             var colorType = startContext.Compilation.GetTypeByMetadataName("NTComponents.TnTColor");
-            var elevationType = startContext.Compilation.GetTypeByMetadataName("NTComponents.NTElevation");
 
-            if (ntButtonType is null || buttonVariantType is null || colorType is null || elevationType is null) {
+            if (buttonGroupType is null
+                || buttonGroupItemType is null
+                || buttonVariantType is null
+                || selectionModeType is null
+                || colorType is null) {
                 return;
             }
 
             startContext.RegisterSyntaxNodeAction(
-                nodeContext => AnalyzeExecutableNode(nodeContext, ntButtonType, buttonVariantType, colorType, elevationType),
+                nodeContext => AnalyzeExecutableNode(nodeContext, buttonGroupType, buttonGroupItemType, buttonVariantType, selectionModeType, colorType),
                 Microsoft.CodeAnalysis.CSharp.SyntaxKind.MethodDeclaration,
                 Microsoft.CodeAnalysis.CSharp.SyntaxKind.ConstructorDeclaration,
                 Microsoft.CodeAnalysis.CSharp.SyntaxKind.LocalFunctionStatement,
@@ -104,10 +119,11 @@ public sealed class NTButtonConfigurationAnalyzer : DiagnosticAnalyzer {
 
     private static void AnalyzeExecutableNode(
         SyntaxNodeAnalysisContext context,
-        INamedTypeSymbol ntButtonType,
+        INamedTypeSymbol buttonGroupType,
+        INamedTypeSymbol buttonGroupItemType,
         INamedTypeSymbol buttonVariantType,
-        INamedTypeSymbol colorType,
-        INamedTypeSymbol elevationType) {
+        INamedTypeSymbol selectionModeType,
+        INamedTypeSymbol colorType) {
         var bodyNode = GetBodyNode(context.Node);
         if (bodyNode is null) {
             return;
@@ -121,8 +137,8 @@ public sealed class NTButtonConfigurationAnalyzer : DiagnosticAnalyzer {
         var stack = new Stack<ComponentFrame>();
 
         foreach (var invocation in invocations) {
-            if (TryGetOpenedComponent(invocation, context.SemanticModel, ntButtonType, out var isNtButtonComponent)) {
-                stack.Push(new ComponentFrame(isNtButtonComponent, invocation.GetLocation()));
+            if (TryGetOpenedComponent(invocation, context.SemanticModel, buttonGroupType, buttonGroupItemType, out var componentKind)) {
+                stack.Push(new ComponentFrame(componentKind));
                 continue;
             }
 
@@ -131,15 +147,11 @@ public sealed class NTButtonConfigurationAnalyzer : DiagnosticAnalyzer {
                     continue;
                 }
 
-                var frame = stack.Pop();
-                if (frame.IsNtButton) {
-                    AnalyzeComponentFrame(context, frame, buttonVariantType, colorType, elevationType);
-                }
-
+                AnalyzeComponentFrame(context, stack.Pop(), buttonVariantType, selectionModeType, colorType);
                 continue;
             }
 
-            if (stack.Count == 0 || !stack.Peek().IsNtButton) {
+            if (stack.Count == 0 || stack.Peek().Kind == ComponentKind.None) {
                 continue;
             }
 
@@ -153,38 +165,54 @@ public sealed class NTButtonConfigurationAnalyzer : DiagnosticAnalyzer {
         SyntaxNodeAnalysisContext context,
         ComponentFrame frame,
         INamedTypeSymbol buttonVariantType,
-        INamedTypeSymbol colorType,
-        INamedTypeSymbol elevationType) {
+        INamedTypeSymbol selectionModeType,
+        INamedTypeSymbol colorType) {
+        switch (frame.Kind) {
+            case ComponentKind.ButtonGroup:
+                AnalyzeButtonGroupFrame(context, frame, buttonVariantType, selectionModeType, colorType);
+                break;
+
+            case ComponentKind.ButtonGroupItem:
+                AnalyzeButtonGroupItemFrame(context, frame);
+                break;
+        }
+    }
+
+    private static void AnalyzeButtonGroupFrame(
+        SyntaxNodeAnalysisContext context,
+        ComponentFrame frame,
+        INamedTypeSymbol buttonVariantType,
+        INamedTypeSymbol selectionModeType,
+        INamedTypeSymbol colorType) {
         var effectiveVariant = GetEffectiveVariant(frame, buttonVariantType);
+        var effectiveSelectionMode = GetEffectiveSelectionMode(frame, selectionModeType);
+        var isSelectable = effectiveSelectionMode is null || effectiveSelectionMode != "None";
 
-        AnalyzeLabel(context, frame);
-        AnalyzeTextToggle(context, frame, effectiveVariant);
+        AnalyzeTextSelectable(context, frame, effectiveVariant, effectiveSelectionMode);
         AnalyzeBackgroundColor(context, frame, effectiveVariant, colorType);
+        AnalyzeSelectedBackgroundColor(context, frame, effectiveVariant, isSelectable, colorType);
         AnalyzeTextColor(context, frame, colorType);
-        AnalyzeElevation(context, frame, effectiveVariant, elevationType);
+        AnalyzeSelectedTextColor(context, frame, isSelectable, colorType);
     }
 
-    private static void AnalyzeLabel(SyntaxNodeAnalysisContext context, ComponentFrame frame) {
-        if (!frame.Attributes.TryGetValue("Label", out var label)) {
-            context.ReportDiagnostic(Diagnostic.Create(EmptyLabelRule, frame.Location));
+    private static void AnalyzeButtonGroupItemFrame(SyntaxNodeAnalysisContext context, ComponentFrame frame) {
+        if (!frame.Attributes.TryGetValue("Icon", out var icon)
+            || !IsKnownNonNull(icon.Operation)) {
             return;
         }
 
-        if (IsNullConstant(label.Operation)
-            || (TryGetStringConstant(label.Operation, out var labelValue) && string.IsNullOrWhiteSpace(labelValue))) {
-            context.ReportDiagnostic(Diagnostic.Create(EmptyLabelRule, label.Location));
+        if (TryGetKnownStringState(frame, "Label", out var labelState)
+            && labelState == KnownStringState.Empty
+            && TryGetKnownStringState(frame, "AriaLabel", out var ariaLabelState)
+            && ariaLabelState == KnownStringState.Empty) {
+            context.ReportDiagnostic(Diagnostic.Create(MissingIconOnlyAriaLabelRule, GetAttributeOrComponentLocation(frame, "AriaLabel", icon.Location)));
         }
     }
 
-    private static void AnalyzeTextToggle(SyntaxNodeAnalysisContext context, ComponentFrame frame, string? effectiveVariant) {
-        if (effectiveVariant != "Text"
-            || !frame.Attributes.TryGetValue("IsToggleButton", out var isToggleButton)
-            || !TryGetBooleanConstant(isToggleButton.Operation, out var isToggle)
-            || !isToggle) {
-            return;
+    private static void AnalyzeTextSelectable(SyntaxNodeAnalysisContext context, ComponentFrame frame, string? effectiveVariant, string? effectiveSelectionMode) {
+        if (effectiveVariant == "Text" && effectiveSelectionMode != "None") {
+            context.ReportDiagnostic(Diagnostic.Create(TextSelectableRule, GetAttributeOrComponentLocation(frame, "SelectionMode", frame.Attributes["Variant"].Location)));
         }
-
-        context.ReportDiagnostic(Diagnostic.Create(TextToggleRule, isToggleButton.Location));
     }
 
     private static void AnalyzeBackgroundColor(
@@ -199,14 +227,6 @@ public sealed class NTButtonConfigurationAnalyzer : DiagnosticAnalyzer {
         }
 
         if (effectiveVariant is "Text" or "Outlined") {
-            if (effectiveVariant == "Outlined" && IsSelectedToggle(frame)) {
-                if (colorName is "None" or "Transparent") {
-                    context.ReportDiagnostic(Diagnostic.Create(TransparentBackgroundRule, backgroundColor.Location, effectiveVariant));
-                }
-
-                return;
-            }
-
             if (colorName != "Transparent") {
                 context.ReportDiagnostic(Diagnostic.Create(OpaqueBackgroundRule, backgroundColor.Location, effectiveVariant));
             }
@@ -220,13 +240,22 @@ public sealed class NTButtonConfigurationAnalyzer : DiagnosticAnalyzer {
         }
     }
 
-    private static bool IsSelectedToggle(ComponentFrame frame) {
-        return frame.Attributes.TryGetValue("IsToggleButton", out var isToggleButton)
-            && TryGetBooleanConstant(isToggleButton.Operation, out var isToggle)
-            && isToggle
-            && frame.Attributes.TryGetValue("Selected", out var selected)
-            && TryGetBooleanConstant(selected.Operation, out var isSelected)
-            && isSelected;
+    private static void AnalyzeSelectedBackgroundColor(
+        SyntaxNodeAnalysisContext context,
+        ComponentFrame frame,
+        string? effectiveVariant,
+        bool isSelectable,
+        INamedTypeSymbol colorType) {
+        if (effectiveVariant is null
+            || !isSelectable
+            || effectiveVariant == "Text"
+            || !frame.Attributes.TryGetValue("SelectedBackgroundColor", out var selectedBackgroundColor)
+            || !TryGetEnumMemberName(selectedBackgroundColor.Operation, colorType, out var colorName)
+            || colorName is not ("None" or "Transparent")) {
+            return;
+        }
+
+        context.ReportDiagnostic(Diagnostic.Create(TransparentSelectedBackgroundRule, selectedBackgroundColor.Location, effectiveVariant));
     }
 
     private static void AnalyzeTextColor(SyntaxNodeAnalysisContext context, ComponentFrame frame, INamedTypeSymbol colorType) {
@@ -237,38 +266,57 @@ public sealed class NTButtonConfigurationAnalyzer : DiagnosticAnalyzer {
         }
     }
 
-    private static void AnalyzeElevation(
-        SyntaxNodeAnalysisContext context,
-        ComponentFrame frame,
-        string? effectiveVariant,
-        INamedTypeSymbol elevationType) {
-        if (effectiveVariant is null
-            || !frame.Attributes.TryGetValue("Elevation", out var elevation)
-            || !TryGetEnumMemberName(elevation.Operation, elevationType, out var elevationName)) {
+    private static void AnalyzeSelectedTextColor(SyntaxNodeAnalysisContext context, ComponentFrame frame, bool isSelectable, INamedTypeSymbol colorType) {
+        if (!isSelectable) {
             return;
         }
 
-        if (effectiveVariant == "Elevated") {
-            if (elevationName == "None") {
-                context.ReportDiagnostic(Diagnostic.Create(InvalidElevationRule, elevation.Location, effectiveVariant, elevationName));
-            }
-
-            return;
-        }
-
-        if (elevationName != "None") {
-            context.ReportDiagnostic(Diagnostic.Create(InvalidElevationRule, elevation.Location, effectiveVariant, elevationName));
+        if (frame.Attributes.TryGetValue("SelectedTextColor", out var selectedTextColor)
+            && TryGetEnumMemberName(selectedTextColor.Operation, colorType, out var colorName)
+            && colorName is "None" or "Transparent") {
+            context.ReportDiagnostic(Diagnostic.Create(InvisibleSelectedTextColorRule, selectedTextColor.Location));
         }
     }
 
     private static string? GetEffectiveVariant(ComponentFrame frame, INamedTypeSymbol buttonVariantType) {
         if (!frame.Attributes.TryGetValue("Variant", out var variantValue)) {
-            return "Filled";
+            return "Tonal";
         }
 
         return TryGetEnumMemberName(variantValue.Operation, buttonVariantType, out var variantName)
             ? variantName
             : null;
+    }
+
+    private static string? GetEffectiveSelectionMode(ComponentFrame frame, INamedTypeSymbol selectionModeType) {
+        if (!frame.Attributes.TryGetValue("SelectionMode", out var selectionModeValue)) {
+            return "Single";
+        }
+
+        return TryGetEnumMemberName(selectionModeValue.Operation, selectionModeType, out var selectionModeName)
+            ? selectionModeName
+            : null;
+    }
+
+    private static Location GetAttributeOrComponentLocation(ComponentFrame frame, string attributeName, Location fallback) {
+        return frame.Attributes.TryGetValue(attributeName, out var attribute)
+            ? attribute.Location
+            : fallback;
+    }
+
+    private static bool TryGetKnownStringState(ComponentFrame frame, string attributeName, out KnownStringState state) {
+        if (!frame.Attributes.TryGetValue(attributeName, out var attribute)) {
+            state = KnownStringState.Empty;
+            return true;
+        }
+
+        if (!TryGetStringConstant(attribute.Operation, out var value)) {
+            state = KnownStringState.Unknown;
+            return false;
+        }
+
+        state = string.IsNullOrWhiteSpace(value) ? KnownStringState.Empty : KnownStringState.NonEmpty;
+        return true;
     }
 
     private static SyntaxNode? GetBodyNode(SyntaxNode node) {
@@ -293,9 +341,10 @@ public sealed class NTButtonConfigurationAnalyzer : DiagnosticAnalyzer {
     private static bool TryGetOpenedComponent(
         InvocationExpressionSyntax invocation,
         SemanticModel semanticModel,
-        INamedTypeSymbol ntButtonType,
-        out bool isNtButtonComponent) {
-        isNtButtonComponent = false;
+        INamedTypeSymbol buttonGroupType,
+        INamedTypeSymbol buttonGroupItemType,
+        out ComponentKind componentKind) {
+        componentKind = ComponentKind.None;
 
         if (!TryGetInvocationTarget(invocation, semanticModel, out var methodSymbol)
             || methodSymbol.Name != "OpenComponent"
@@ -318,8 +367,22 @@ public sealed class NTButtonConfigurationAnalyzer : DiagnosticAnalyzer {
             return false;
         }
 
-        isNtButtonComponent = SymbolEqualityComparer.Default.Equals(openedComponentType, ntButtonType);
+        if (IsSameGenericDefinition(openedComponentType, buttonGroupType)) {
+            componentKind = ComponentKind.ButtonGroup;
+            return true;
+        }
+
+        if (IsSameGenericDefinition(openedComponentType, buttonGroupItemType)) {
+            componentKind = ComponentKind.ButtonGroupItem;
+            return true;
+        }
+
         return true;
+    }
+
+    private static bool IsSameGenericDefinition(ITypeSymbol type, INamedTypeSymbol genericDefinition) {
+        return type is INamedTypeSymbol namedType
+            && SymbolEqualityComparer.Default.Equals(namedType.OriginalDefinition, genericDefinition);
     }
 
     private static bool IsCloseComponentInvocation(InvocationExpressionSyntax invocation, SemanticModel semanticModel) {
@@ -355,21 +418,13 @@ public sealed class NTButtonConfigurationAnalyzer : DiagnosticAnalyzer {
         return true;
     }
 
-    private static bool TryGetBooleanConstant(IOperation? operation, out bool value) {
-        value = false;
+    private static bool IsKnownNonNull(IOperation? operation) {
         operation = UnwrapOperation(operation);
-
-        if (operation?.ConstantValue.HasValue == true && operation.ConstantValue.Value is bool boolValue) {
-            value = boolValue;
-            return true;
-        }
-
-        return false;
-    }
-
-    private static bool IsNullConstant(IOperation? operation) {
-        operation = UnwrapOperation(operation);
-        return operation?.ConstantValue.HasValue == true && operation.ConstantValue.Value is null;
+        return operation switch {
+            IObjectCreationOperation => true,
+            IFieldReferenceOperation => true,
+            _ => operation?.ConstantValue.HasValue == true && operation.ConstantValue.Value is not null
+        };
     }
 
     private static bool TryGetStringConstant(IOperation? operation, out string value) {
@@ -447,12 +502,22 @@ public sealed class NTButtonConfigurationAnalyzer : DiagnosticAnalyzer {
         return methodSymbol is not null;
     }
 
-    private sealed class ComponentFrame(bool isNtButton, Location location) {
+    private enum ComponentKind {
+        None,
+        ButtonGroup,
+        ButtonGroupItem
+    }
+
+    private enum KnownStringState {
+        Unknown,
+        Empty,
+        NonEmpty
+    }
+
+    private sealed class ComponentFrame(ComponentKind kind) {
         public Dictionary<string, RecordedAttribute> Attributes { get; } = new(StringComparer.Ordinal);
 
-        public bool IsNtButton { get; } = isNtButton;
-
-        public Location Location { get; } = location;
+        public ComponentKind Kind { get; } = kind;
     }
 
     private readonly struct RecordedAttribute {

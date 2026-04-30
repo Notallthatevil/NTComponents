@@ -384,7 +384,7 @@ public partial class NTSplitButton {
 
     internal string? GetMenuItemAriaDisabled(ISplitButtonItem item) => IsMenuItemDisabled(item) ? "true" : null;
 
-    internal string GetMenuItemAriaLabel(ISplitButtonItem item) => item.AriaLabel ?? item.Label;
+    internal string GetMenuItemAriaLabel(ISplitButtonItem item) => string.IsNullOrWhiteSpace(item.AriaLabel) ? item.Label : item.AriaLabel;
 
     internal string GetMenuItemClass(ISplitButtonItem item) => CssClassBuilder.Create("nt-split-button-menu-item")
         .AddClass(GetMenuItemAdditionalClass(item))

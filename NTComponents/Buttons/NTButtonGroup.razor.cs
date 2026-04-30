@@ -410,7 +410,9 @@ public partial class NTButtonGroup<TObjectType> : TnTComponentBase {
             : shape;
     }
 
-    private string GetItemAriaLabel(NTButtonGroupItem<TObjectType> item) => item.AriaLabel ?? item.Label ?? Convert.ToString(item.Key, CultureInfo.InvariantCulture) ?? string.Empty;
+    private string GetItemAriaLabel(NTButtonGroupItem<TObjectType> item) => !string.IsNullOrWhiteSpace(item.AriaLabel)
+        ? item.AriaLabel
+        : item.Label ?? Convert.ToString(item.Key, CultureInfo.InvariantCulture) ?? string.Empty;
 
     private string GetItemLabel(NTButtonGroupItem<TObjectType> item) => item.Label ?? GetItemAriaLabel(item);
 

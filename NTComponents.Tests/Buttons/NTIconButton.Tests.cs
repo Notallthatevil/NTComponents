@@ -242,6 +242,54 @@ public class NTIconButton_Tests : BunitContext {
     }
 
     [Fact]
+    public void Text_Button_With_Visible_Background_Throws() {
+        var render = () => Render<NTIconButton>(parameters => parameters
+            .Add(x => x.Icon, SampleIcon)
+            .Add(x => x.AriaLabel, "Open menu")
+            .Add(x => x.BackgroundColor, TnTColor.Primary));
+
+        render.Should().Throw<InvalidOperationException>()
+            .WithMessage("*Text icon buttons must use a transparent BackgroundColor*");
+    }
+
+    [Fact]
+    public void Filled_Button_With_Transparent_Background_Throws() {
+        var render = () => Render<NTIconButton>(parameters => parameters
+            .Add(x => x.Icon, SampleIcon)
+            .Add(x => x.AriaLabel, "Open menu")
+            .Add(x => x.Variant, NTButtonVariant.Filled)
+            .Add(x => x.BackgroundColor, TnTColor.Transparent));
+
+        render.Should().Throw<InvalidOperationException>()
+            .WithMessage("*Filled icon buttons must use a visible container BackgroundColor*");
+    }
+
+    [Fact]
+    public void Selected_Outlined_Toggle_With_Transparent_Background_Throws() {
+        var render = () => Render<NTIconButton>(parameters => parameters
+            .Add(x => x.Icon, SampleIcon)
+            .Add(x => x.AriaLabel, "Open menu")
+            .Add(x => x.Variant, NTButtonVariant.Outlined)
+            .Add(x => x.IsToggleButton, true)
+            .Add(x => x.Selected, true)
+            .Add(x => x.BackgroundColor, TnTColor.Transparent));
+
+        render.Should().Throw<InvalidOperationException>()
+            .WithMessage("*Outlined selected toggle icon buttons must use a visible container BackgroundColor*");
+    }
+
+    [Fact]
+    public void Transparent_TextColor_Throws() {
+        var render = () => Render<NTIconButton>(parameters => parameters
+            .Add(x => x.Icon, SampleIcon)
+            .Add(x => x.AriaLabel, "Open menu")
+            .Add(x => x.TextColor, TnTColor.Transparent));
+
+        render.Should().Throw<InvalidOperationException>()
+            .WithMessage("*TextColor must be a visible icon color*");
+    }
+
+    [Fact]
     public void Elevated_Button_With_No_Elevation_Throws() {
         var render = () => Render<NTIconButton>(parameters => parameters
             .Add(x => x.Icon, SampleIcon)

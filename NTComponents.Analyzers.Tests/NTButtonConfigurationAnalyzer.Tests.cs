@@ -16,9 +16,10 @@ using Microsoft.AspNetCore.Components.Rendering;
 public static class ButtonFactory {
     public static void Build(RenderTreeBuilder builder) {
         builder.OpenComponent<global::NTComponents.NTButton>(0);
-        builder.AddAttribute(1, "Variant", global::NTComponents.NTButtonVariant.Text);
-        builder.AddAttribute(2, "BackgroundColor", global::NTComponents.TnTColor.Primary);
-        builder.AddAttribute(3, "IsToggleButton", true);
+        builder.AddAttribute(1, "Label", "Open");
+        builder.AddAttribute(2, "Variant", global::NTComponents.NTButtonVariant.Text);
+        builder.AddAttribute(3, "BackgroundColor", global::NTComponents.TnTColor.Primary);
+        builder.AddAttribute(4, "IsToggleButton", true);
         builder.CloseComponent();
     }
 }
@@ -47,6 +48,48 @@ namespace NTComponents {
             diagnostic => Assert.Equal(NTButtonConfigurationAnalyzer.TextToggleDiagnosticId, diagnostic.Id));
     }
 
+    [Fact]
+    public async Task Reports_Missing_And_Null_Label() {
+        const string source = """
+using Microsoft.AspNetCore.Components.Rendering;
+
+public static class ButtonFactory {
+    public static void Build(RenderTreeBuilder builder) {
+        builder.OpenComponent<global::NTComponents.NTButton>(0);
+        builder.CloseComponent();
+
+        builder.OpenComponent<global::NTComponents.NTButton>(1);
+        builder.AddAttribute(2, "Label", null);
+        builder.CloseComponent();
+    }
+}
+
+namespace Microsoft.AspNetCore.Components.Rendering {
+    public class RenderTreeBuilder {
+        public void OpenComponent<TComponent>(int sequence) { }
+        public void AddAttribute(int sequence, string name, object? value) { }
+        public void CloseComponent() { }
+    }
+}
+
+namespace NTComponents {
+    public class NTButton { }
+    public enum NTButtonVariant { Elevated, Filled, Tonal, Outlined, Text }
+    public enum TnTColor { None, Transparent, Primary, OnPrimary, SecondaryContainer, OnSecondaryContainer, SurfaceContainerLow, InverseSurface }
+    public enum NTElevation { None, Lowest, Low, Medium, High, Highest }
+}
+""";
+
+        var diagnostics = await GetDiagnosticsAsync(("ButtonFactory.cs", source));
+
+        Assert.Equal(
+            [
+                NTButtonConfigurationAnalyzer.EmptyLabelDiagnosticId,
+                NTButtonConfigurationAnalyzer.EmptyLabelDiagnosticId
+            ],
+            diagnostics.Select(static diagnostic => diagnostic.Id));
+    }
+
     [Theory]
     [InlineData("Elevated")]
     [InlineData("Filled")]
@@ -58,8 +101,9 @@ using Microsoft.AspNetCore.Components.Rendering;
 public static class ButtonFactory {
     public static void Build(RenderTreeBuilder builder) {
         builder.OpenComponent<global::NTComponents.NTButton>(0);
-        builder.AddAttribute(1, "Variant", global::NTComponents.NTButtonVariant.{{variant}});
-        builder.AddAttribute(2, "BackgroundColor", global::NTComponents.TnTColor.Transparent);
+        builder.AddAttribute(1, "Label", "Open");
+        builder.AddAttribute(2, "Variant", global::NTComponents.NTButtonVariant.{{variant}});
+        builder.AddAttribute(3, "BackgroundColor", global::NTComponents.TnTColor.Transparent);
         builder.CloseComponent();
     }
 }
@@ -100,8 +144,9 @@ public static class ButtonFactory {
         builder.CloseComponent();
 
         builder.OpenComponent<global::NTComponents.NTButton>(4);
-        builder.AddAttribute(5, "Variant", global::NTComponents.NTButtonVariant.Elevated);
-        builder.AddAttribute(6, "Elevation", global::NTComponents.NTElevation.None);
+        builder.AddAttribute(5, "Label", "Raise");
+        builder.AddAttribute(6, "Variant", global::NTComponents.NTButtonVariant.Elevated);
+        builder.AddAttribute(7, "Elevation", global::NTComponents.NTElevation.None);
         builder.CloseComponent();
     }
 }
@@ -142,23 +187,26 @@ using Microsoft.AspNetCore.Components.Rendering;
 public static class ButtonFactory {
     public static void Build(RenderTreeBuilder builder) {
         builder.OpenComponent<global::NTComponents.NTButton>(0);
-        builder.AddAttribute(1, "Variant", global::NTComponents.NTButtonVariant.Text);
-        builder.AddAttribute(2, "BackgroundColor", global::NTComponents.TnTColor.Transparent);
-        builder.AddAttribute(3, "TextColor", global::NTComponents.TnTColor.Primary);
-        builder.AddAttribute(4, "Elevation", global::NTComponents.NTElevation.None);
+        builder.AddAttribute(1, "Label", "Open");
+        builder.AddAttribute(2, "Variant", global::NTComponents.NTButtonVariant.Text);
+        builder.AddAttribute(3, "BackgroundColor", global::NTComponents.TnTColor.Transparent);
+        builder.AddAttribute(4, "TextColor", global::NTComponents.TnTColor.Primary);
+        builder.AddAttribute(5, "Elevation", global::NTComponents.NTElevation.None);
         builder.CloseComponent();
 
         builder.OpenComponent<global::NTComponents.NTButton>(5);
-        builder.AddAttribute(6, "Variant", global::NTComponents.NTButtonVariant.Elevated);
-        builder.AddAttribute(7, "BackgroundColor", global::NTComponents.TnTColor.SurfaceContainerLow);
-        builder.AddAttribute(8, "Elevation", global::NTComponents.NTElevation.Lowest);
+        builder.AddAttribute(6, "Label", "Raise");
+        builder.AddAttribute(7, "Variant", global::NTComponents.NTButtonVariant.Elevated);
+        builder.AddAttribute(8, "BackgroundColor", global::NTComponents.TnTColor.SurfaceContainerLow);
+        builder.AddAttribute(9, "Elevation", global::NTComponents.NTElevation.Lowest);
         builder.CloseComponent();
 
         builder.OpenComponent<global::NTComponents.NTButton>(9);
-        builder.AddAttribute(10, "Variant", global::NTComponents.NTButtonVariant.Outlined);
-        builder.AddAttribute(11, "IsToggleButton", true);
-        builder.AddAttribute(12, "Selected", true);
-        builder.AddAttribute(13, "BackgroundColor", global::NTComponents.TnTColor.InverseSurface);
+        builder.AddAttribute(10, "Label", "Favorite");
+        builder.AddAttribute(11, "Variant", global::NTComponents.NTButtonVariant.Outlined);
+        builder.AddAttribute(12, "IsToggleButton", true);
+        builder.AddAttribute(13, "Selected", true);
+        builder.AddAttribute(14, "BackgroundColor", global::NTComponents.TnTColor.InverseSurface);
         builder.CloseComponent();
     }
 }
@@ -192,10 +240,11 @@ using Microsoft.AspNetCore.Components.Rendering;
 public static class ButtonFactory {
     public static void Build(RenderTreeBuilder builder) {
         builder.OpenComponent<global::NTComponents.NTButton>(0);
-        builder.AddAttribute(1, "Variant", global::NTComponents.NTButtonVariant.Outlined);
-        builder.AddAttribute(2, "IsToggleButton", true);
-        builder.AddAttribute(3, "Selected", true);
-        builder.AddAttribute(4, "BackgroundColor", global::NTComponents.TnTColor.Transparent);
+        builder.AddAttribute(1, "Label", "Favorite");
+        builder.AddAttribute(2, "Variant", global::NTComponents.NTButtonVariant.Outlined);
+        builder.AddAttribute(3, "IsToggleButton", true);
+        builder.AddAttribute(4, "Selected", true);
+        builder.AddAttribute(5, "BackgroundColor", global::NTComponents.TnTColor.Transparent);
         builder.CloseComponent();
     }
 }

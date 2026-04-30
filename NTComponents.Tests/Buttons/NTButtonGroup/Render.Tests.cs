@@ -152,6 +152,27 @@ public sealed class Render_Tests : NTButtonGroupTestContext {
     }
 
     /// <summary>
+    ///     Ensures whitespace accessible labels do not replace the fallback key accessible label.
+    /// </summary>
+    [Fact]
+    public void WithWhitespaceAriaLabelAndNoLabel_RendersKeyFallback() {
+        // Arrange
+        RenderFragment items = builder => {
+            builder.OpenComponent<NTButtonGroupItem<string>>(0);
+            builder.AddAttribute(1, nameof(NTButtonGroupItem<string>.Key), "home");
+            builder.AddAttribute(2, nameof(NTButtonGroupItem<string>.AriaLabel), " ");
+            builder.CloseComponent();
+        };
+
+        // Act
+        var cut = Render<NTButtonGroup<string>>(parameters => parameters.AddChildContent(items));
+        var button = cut.Find("button.nt-btn-grp-btn");
+
+        // Assert
+        button.GetAttribute("aria-label").Should().Be("home");
+    }
+
+    /// <summary>
     ///     Ensures icon-only items cannot render without an explicit accessible name.
     /// </summary>
     [Fact]
