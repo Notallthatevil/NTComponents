@@ -60,6 +60,7 @@ public sealed partial class NTSplitButtonButtonItem : Microsoft.AspNetCore.Compo
     public RenderFragment Render(NTSplitButton owner) => builder => {
         var sequence = 0;
         builder.OpenElement(sequence++, "button");
+        builder.SetKey(this);
         builder.AddMultipleAttributes(sequence++, NTSplitButton.GetMenuItemAdditionalAttributes(this));
         builder.AddAttribute(sequence++, "class", owner.GetMenuItemClass(this));
         builder.AddAttribute(sequence++, "type", "button");
@@ -73,7 +74,7 @@ public sealed partial class NTSplitButtonButtonItem : Microsoft.AspNetCore.Compo
             builder.AddAttribute(sequence++, "onclick", EventCallback.Factory.Create<MouseEventArgs>(this, args => owner.HandleMenuButtonItemClickAsync(this, args)));
         }
 
-        builder.AddContent(sequence++, owner.RenderMenuItemContent(this));
+        owner.RenderMenuItemContent(builder, this);
         builder.CloseElement();
     };
 

@@ -54,6 +54,7 @@ public sealed partial class NTSplitButtonDividerItem : Microsoft.AspNetCore.Comp
     public RenderFragment Render(NTSplitButton owner) => builder => {
         var sequence = 0;
         builder.OpenElement(sequence++, "div");
+        builder.SetKey(this);
         builder.AddMultipleAttributes(sequence++, NTSplitButton.GetMenuItemAdditionalAttributes(this));
         builder.AddAttribute(sequence++, "class", owner.GetMenuDividerClass(this));
         builder.AddAttribute(sequence++, "role", "separator");

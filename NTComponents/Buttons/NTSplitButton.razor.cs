@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
 using NTComponents.Core;
@@ -196,26 +197,26 @@ public partial class NTSplitButton {
     private string ActionButtonClass => CssClassBuilder.Create("nt-split-button-segment nt-split-button-leading")
         .AddElevation(Elevation)
         .Build();
-    private string ExpandedAttribute => Expanded.ToString().ToLowerInvariant();
+    private string CloseOnMenuContentClickAttribute => ToLowerInvariantString(CloseOnMenuContentClick);
+    private string ExpandedAttribute => ToLowerInvariantString(Expanded);
     private string EffectiveActionLabel => !string.IsNullOrWhiteSpace(Label) ? Label : ActionAriaLabel ?? "action";
     private string EffectiveMenuAriaLabel => string.IsNullOrWhiteSpace(MenuButtonLabel) ? $"More options for {EffectiveActionLabel}" : MenuButtonLabel;
     private bool HasMenuItems => _menuItems.Any(static item => item is not NTSplitButtonDividerItem);
     private bool HasVisibleLabel => !string.IsNullOrWhiteSpace(Label);
     private bool IsMenuButtonDisabled => Disabled || MenuButtonDisabled;
-    private string MenuAnchorName => $"--{_generatedMenuId}-anchor";
+    private string MenuAnchorName => $"--{StableElementId}-anchor";
     private string MenuButtonClass => CssClassBuilder.Create("nt-split-button-segment nt-split-button-trailing")
         .AddElevation(Elevation)
         .Build();
     private string MenuButtonStyle => $"anchor-name: {MenuAnchorName};";
-    private string MenuId => $"{(string.IsNullOrWhiteSpace(ElementId) ? _generatedMenuId : ElementId)}-menu";
+    private string MenuId => $"{StableElementId}-menu";
     private string MenuPanelStyle => $"position-anchor: {MenuAnchorName};";
     private string? MenuPopoverTarget => IsMenuButtonDisabled ? null : MenuId;
+    private string StableElementId => string.IsNullOrWhiteSpace(ElementId) ? ComponentIdentifier : ElementId;
     private static TnTIcon MenuIcon => MaterialIcon.ArrowDropDown;
 
-    private static readonly RenderFragment ButtonRipple = NTRipple.Render();
-    private readonly string _generatedMenuId = $"nt-split-button-{Guid.NewGuid():N}";
+    private static readonly RenderFragment ButtonRipple = NTRipple.RenderHost();
     private readonly List<ISplitButtonItem> _menuItems = [];
-    private readonly HashSet<ISplitButtonItem> _menuItemSet = [];
     private bool _backgroundColorWasProvided;
     private bool _elevationWasProvided;
     private bool _menuBackgroundColorWasProvided;
@@ -313,7 +314,7 @@ public partial class NTSplitButton {
     ///     Tracks a registered menu item so the split button can render a constrained menu layout.
     /// </summary>
     internal void RegisterMenuItem(ISplitButtonItem item) {
-        if (item is not null && _menuItemSet.Add(item)) {
+        if (item is not null && !_menuItems.Contains(item)) {
             _menuItems.Add(item);
             StateHasChanged();
         }
@@ -323,23 +324,8 @@ public partial class NTSplitButton {
     ///     Unregisters a menu item when it is removed.
     /// </summary>
     internal void UnregisterMenuItem(ISplitButtonItem item) {
-        if (item is not null && _menuItemSet.Remove(item) && _menuItems.Remove(item)) {
+        if (item is not null && _menuItems.Remove(item)) {
             StateHasChanged();
-        }
-    }
-
-    private async Task CloseMenuAsync() {
-        if (RendererInfo.IsInteractive && IsolatedJsModule is not null) {
-            try {
-                await IsolatedJsModule.InvokeVoidAsync("setExpanded", Element, false);
-            }
-            catch (JSDisconnectedException) {
-                // The circuit can disconnect between the click and interop.
-            }
-        }
-
-        if (Expanded) {
-            await SetExpandedAsync(false);
         }
     }
 
@@ -374,14 +360,7 @@ public partial class NTSplitButton {
             return;
         }
 
-        await CloseMenuAsync();
         await OnClickCallback.InvokeAsync(args);
-    }
-
-    private async Task HandleMenuContentClickAsync(MouseEventArgs _) {
-        if (CloseOnMenuContentClick) {
-            await CloseMenuAsync();
-        }
     }
 
     internal async Task HandleMenuButtonItemClickAsync(NTSplitButtonButtonItem item, MouseEventArgs args) {
@@ -390,16 +369,6 @@ public partial class NTSplitButton {
         }
 
         await item.OnClickCallback.InvokeAsync(args);
-
-        if (CloseOnMenuContentClick) {
-            await SetExpandedAsync(false);
-        }
-    }
-
-    private async Task HandleMenuKeyDownAsync(KeyboardEventArgs args) {
-        if (args.Key == "Escape") {
-            await CloseMenuAsync();
-        }
     }
 
     private async Task SetExpandedAsync(bool expanded) {
@@ -410,6 +379,8 @@ public partial class NTSplitButton {
         Expanded = expanded;
         await ExpandedChanged.InvokeAsync(expanded);
     }
+
+    private static string ToLowerInvariantString(bool value) => value ? "true" : "false";
 
     internal string? GetMenuItemAriaDisabled(ISplitButtonItem item) => IsMenuItemDisabled(item) ? "true" : null;
 
@@ -425,15 +396,43 @@ public partial class NTSplitButton {
         .AddClass("nt-split-button-menu-divider-inset", item.Inset)
         .Build();
 
-    private static string? GetMenuItemAdditionalClass(ISplitButtonItem item) => item.AdditionalAttributes?.TryGetValue("class", out var @class) == true ? @class?.ToString() : null;
+    private static string? GetMenuItemAdditionalClass(ISplitButtonItem item) =>
+        TryGetAdditionalAttribute(item, "class", out var @class) ? @class?.ToString() : null;
 
-    internal static IEnumerable<KeyValuePair<string, object>>? GetMenuItemAdditionalAttributes(ISplitButtonItem item) =>
-        item.AdditionalAttributes?
-            .Where(static attribute => attribute.Value is not null)
-            .Where(static attribute => !string.Equals(attribute.Key, "class", StringComparison.OrdinalIgnoreCase))
-            .Select(static attribute => new KeyValuePair<string, object>(attribute.Key, attribute.Value!));
+    internal static IEnumerable<KeyValuePair<string, object>>? GetMenuItemAdditionalAttributes(ISplitButtonItem item) {
+        if (item.AdditionalAttributes is null) {
+            return null;
+        }
 
-    internal static bool HasNativeOnClick(ISplitButtonItem item) => item.AdditionalAttributes?.Keys.Any(key => string.Equals(key, "onclick", StringComparison.OrdinalIgnoreCase)) == true;
+        return GetMenuItemAdditionalAttributesCore(item.AdditionalAttributes);
+    }
+
+    private static IEnumerable<KeyValuePair<string, object>> GetMenuItemAdditionalAttributesCore(IReadOnlyDictionary<string, object?> additionalAttributes) {
+        foreach (var attribute in additionalAttributes) {
+            if (attribute.Value is not null && !string.Equals(attribute.Key, "class", StringComparison.OrdinalIgnoreCase)) {
+                yield return new KeyValuePair<string, object>(attribute.Key, attribute.Value);
+            }
+        }
+    }
+
+    internal static bool HasNativeOnClick(ISplitButtonItem item) => TryGetAdditionalAttribute(item, "onclick", out _);
+
+    private static bool TryGetAdditionalAttribute(ISplitButtonItem item, string name, out object? value) {
+        value = null;
+
+        if (item.AdditionalAttributes is null) {
+            return false;
+        }
+
+        foreach (var attribute in item.AdditionalAttributes) {
+            if (string.Equals(attribute.Key, name, StringComparison.OrdinalIgnoreCase)) {
+                value = attribute.Value;
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     internal string? GetMenuAnchorItemHref(NTSplitButtonAnchorItem item) => IsMenuItemDisabled(item) ? null : item.Href;
 
@@ -443,21 +442,20 @@ public partial class NTSplitButton {
 
     internal bool IsMenuItemDisabled(ISplitButtonItem item) => Disabled || item.Disabled;
 
-    internal RenderFragment RenderMenuItemContent(ISplitButtonItem item) => builder => {
-        var sequence = 0;
+    internal void RenderMenuItemContent(RenderTreeBuilder builder, ISplitButtonItem item) {
         if (item.Icon is not null) {
-            builder.OpenElement(sequence++, "span");
-            builder.AddAttribute(sequence++, "class", "nt-split-button-menu-item-icon");
-            builder.AddAttribute(sequence++, "aria-hidden", "true");
-            builder.AddContent(sequence++, item.Icon.Render());
+            builder.OpenElement(100, "span");
+            builder.AddAttribute(101, "class", "nt-split-button-menu-item-icon");
+            builder.AddAttribute(102, "aria-hidden", "true");
+            builder.AddContent(103, item.Icon.Render());
             builder.CloseElement();
         }
 
-        builder.OpenElement(sequence++, "span");
-        builder.AddAttribute(sequence++, "class", "nt-split-button-menu-item-label");
-        builder.AddContent(sequence++, item.Label);
+        builder.OpenElement(110, "span");
+        builder.AddAttribute(111, "class", "nt-split-button-menu-item-label");
+        builder.AddContent(112, item.Label);
         builder.CloseElement();
-    };
+    }
 
     private void ValidateBackgroundColorForVariant() {
         if (!BackgroundColor.HasValue) {

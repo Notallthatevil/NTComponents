@@ -66,6 +66,7 @@ public sealed partial class NTSplitButtonAnchorItem : Microsoft.AspNetCore.Compo
     public RenderFragment Render(NTSplitButton owner) => builder => {
         var sequence = 0;
         builder.OpenElement(sequence++, "a");
+        builder.SetKey(this);
         builder.AddMultipleAttributes(sequence++, NTSplitButton.GetMenuItemAdditionalAttributes(this));
         builder.AddAttribute(sequence++, "class", owner.GetMenuItemClass(this));
         builder.AddAttribute(sequence++, "href", owner.GetMenuAnchorItemHref(this));
@@ -74,7 +75,7 @@ public sealed partial class NTSplitButtonAnchorItem : Microsoft.AspNetCore.Compo
         builder.AddAttribute(sequence++, "aria-disabled", owner.GetMenuItemAriaDisabled(this));
         builder.AddAttribute(sequence++, "aria-label", owner.GetMenuItemAriaLabel(this));
         builder.AddAttribute(sequence++, "tabindex", owner.GetMenuItemTabIndex(this));
-        builder.AddContent(sequence++, owner.RenderMenuItemContent(this));
+        owner.RenderMenuItemContent(builder, this);
         builder.CloseElement();
     };
 
