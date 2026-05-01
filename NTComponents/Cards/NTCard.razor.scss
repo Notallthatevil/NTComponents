@@ -1,3 +1,5 @@
+@use '../Styles/_Variables/_motion.scss' as motion;
+
 .nt-card {
     position: relative;
     display: block;
@@ -10,7 +12,7 @@
     overflow: hidden;
     outline: none;
     text-decoration: none;
-    transition: background-color 120ms ease, box-shadow 120ms ease, border-color 120ms ease, color 120ms ease, outline-color 120ms ease;
+    transition: background-color motion.$nt-motion-button-state-transition, box-shadow motion.$nt-motion-button-state-transition, border-color motion.$nt-motion-button-state-transition, color motion.$nt-motion-button-state-transition, outline-color motion.$nt-motion-button-state-transition;
 
     &::before {
         content: '';
@@ -20,7 +22,7 @@
         pointer-events: none;
         border-radius: inherit;
         background: var(--nt-card-state-layer-color);
-        transition: opacity 120ms ease;
+        transition: opacity motion.$nt-motion-button-state-transition;
     }
 
     &.nt-card-outlined {
