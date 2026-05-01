@@ -1,13 +1,13 @@
+@use 'sass:map';
 @use 'sass:math';
 @use '../Styles/_Variables/_colors.scss' as colors;
 @use '../Styles/_Variables/_corner-radius.scss' as corners;
+@use '../Styles/_Variables/_elevation.scss' as elevation;
 @use '../Styles/_Variables/_measurements.scss' as measurements;
 @use '../Styles/_Variables/_motion.scss' as motion;
 @use '../Styles/_Variables/_typescale.scss' as typescale;
 @use './buttonFocusRing' as focus;
 
-$nt-button-group-state-transition: motion.$nt-motion-button-state-transition;
-$nt-button-group-shape-transition: motion.$nt-motion-button-shape-transition;
 $nt-button-group-sizes: (
     xs: (32px, 56px, 12px, 18px, 4px, 20px, measurements.$tnt-pill-border-radius-xs, corners.$nt-corner-radius-extra-small, corners.$nt-corner-radius-medium, 500, 14px, 20px, 0.1px),
     s: (40px, 64px, 16px, 12px, 8px, 20px, measurements.$tnt-pill-border-radius-small, corners.$nt-corner-radius-small, corners.$nt-corner-radius-medium, 500, 14px, 20px, 0.1px),
@@ -102,12 +102,6 @@ $nt-button-group-sizes: (
 }
 
 .nt-button-group {
-    --nt-button-group-bg: #{colors.$tnt-color-secondary-container};
-    --nt-button-group-fg: #{colors.$tnt-color-on-secondary-container};
-    --nt-button-group-outline: transparent;
-    --nt-button-group-selected-bg: #{colors.$tnt-color-secondary};
-    --nt-button-group-selected-fg: #{colors.$tnt-color-on-secondary};
-
     align-items: center;
     display: inline-flex;
     flex-direction: row;
@@ -137,7 +131,7 @@ $nt-button-group-sizes: (
         background: transparent;
         border: 0;
         box-sizing: border-box;
-        color: var(--nt-button-group-fg);
+        color: var(--nt-button-group-fg, #{colors.$tnt-color-on-secondary-container});
         cursor: pointer;
         display: inline-flex;
         justify-content: center;
@@ -148,7 +142,7 @@ $nt-button-group-sizes: (
         padding-block: 0;
         position: relative;
         text-decoration: none;
-        transition: border-radius $nt-button-group-shape-transition, box-shadow $nt-button-group-state-transition, color $nt-button-group-state-transition, transform $nt-button-group-state-transition;
+        transition: border-radius motion.$nt-motion-button-shape-transition, box-shadow motion.$nt-motion-button-state-transition, color motion.$nt-motion-button-state-transition, transform motion.$nt-motion-button-state-transition;
         user-select: none;
         vertical-align: middle;
 
@@ -159,12 +153,12 @@ $nt-button-group-sizes: (
             inset-inline: 0;
             pointer-events: none;
             position: absolute;
-            transition: background-color $nt-button-group-state-transition, border-color $nt-button-group-state-transition, border-radius $nt-button-group-shape-transition, box-shadow $nt-button-group-state-transition, opacity $nt-button-group-state-transition;
+            transition: background-color motion.$nt-motion-button-state-transition, border-color motion.$nt-motion-button-state-transition, border-radius motion.$nt-motion-button-shape-transition, box-shadow motion.$nt-motion-button-state-transition, opacity motion.$nt-motion-button-state-transition;
         }
 
         &::after {
-            background: var(--nt-button-group-bg);
-            border: 1px solid var(--nt-button-group-outline);
+            background: var(--nt-button-group-bg, #{colors.$tnt-color-secondary-container});
+            border: 1px solid transparent;
             z-index: 0;
         }
 
@@ -175,10 +169,10 @@ $nt-button-group-sizes: (
         }
 
         &[aria-pressed='true'] {
-            color: var(--nt-button-group-selected-fg);
+            color: var(--nt-button-group-selected-fg, #{colors.$tnt-color-on-secondary});
 
             &::after {
-                background: var(--nt-button-group-selected-bg);
+                background: var(--nt-button-group-selected-bg, #{colors.$tnt-color-secondary});
             }
         }
 
@@ -238,7 +232,7 @@ $nt-button-group-sizes: (
     }
 
     &.nt-button-group-elevated > .nt-btn-grp-btn {
-        box-shadow: 0 1px 2px color-mix(in srgb, #{colors.$tnt-color-shadow} 30%, transparent), 0 1px 3px 1px color-mix(in srgb, #{colors.$tnt-color-shadow} 15%, transparent);
+        box-shadow: map.get(elevation.$elevation-shadows, 1);
 
         &[aria-pressed='true'],
         &:disabled {
@@ -247,7 +241,10 @@ $nt-button-group-sizes: (
     }
 
     &.nt-button-group-outlined > .nt-btn-grp-btn {
-        --nt-button-group-outline: #{colors.$tnt-color-outline};
+        &::after {
+            background: transparent;
+            border-color: colors.$tnt-color-outline;
+        }
 
         &[aria-pressed='true']::after {
             border-color: transparent;
@@ -303,7 +300,7 @@ $nt-button-group-sizes: (
 
     ::deep {
         .nt-button-ripple-host {
-            transition: border-radius $nt-button-group-shape-transition;
+            transition: border-radius motion.$nt-motion-button-shape-transition;
         }
 
         .tnt-icon {
@@ -326,11 +323,11 @@ $nt-button-group-sizes: (
 @media (prefers-reduced-motion: reduce) {
     .nt-button-group {
         > .nt-btn-grp-btn {
-            transition: color $nt-button-group-state-transition;
+            transition: color motion.$nt-motion-button-state-transition;
 
             &::after,
             &::before {
-                transition: opacity $nt-button-group-state-transition;
+                transition: opacity motion.$nt-motion-button-state-transition;
             }
         }
 

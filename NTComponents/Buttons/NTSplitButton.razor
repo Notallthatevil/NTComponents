@@ -3,10 +3,6 @@
 @using NTComponents.Core
 @inherits TnTPageScriptComponent<NTSplitButton>
 
-<CascadingValue Value="this" IsFixed="true">
-    @ChildContent
-</CascadingValue>
-
 <DeferRendering>
     <nt-split-button @attributes="AdditionalAttributes"
                      class="@ElementClass"
@@ -37,6 +33,7 @@
             </button>
 
             <button class="@MenuButtonClass"
+                    id="@MenuButtonId"
                     style="@MenuButtonStyle"
                     type="button"
                     disabled="@IsMenuButtonDisabled"
@@ -55,17 +52,19 @@
                 </span>
             </button>
 
-            <div id="@MenuId"
-                 class="nt-split-button-menu-panel"
-                 style="@MenuPanelStyle"
-                 role="menu"
-                 aria-label="@EffectiveMenuAriaLabel"
-                 popover="auto"
-                 data-close-on-item-click="@CloseOnMenuContentClickAttribute">
-                @foreach (var item in _menuItems) {
-                    @item.Render(this)
-                }
-            </div>
+            <NTMenu ElementId="@MenuId"
+                    @ref="_menu"
+                    class="nt-split-button-menu-panel"
+                    AnchorName="@MenuAnchorName"
+                    AnchorSelector="@MenuAnchorSelector"
+                    AriaLabel="@EffectiveMenuAriaLabel"
+                    CloseOnContentClick="@CloseOnMenuContentClick"
+                    ContainerColor="@MenuBackgroundColor"
+                    TextColor="@MenuTextColor"
+                    SelectedContainerColor="@MenuSelectedBackgroundColor"
+                    SelectedTextColor="@MenuSelectedTextColor">
+                @ChildContent
+            </NTMenu>
         </div>
     </nt-split-button>
     @PageScript

@@ -7,11 +7,6 @@
 @use '../Styles/_Variables/_typescale.scss' as typescale;
 @use './buttonFocusRing' as focus;
 
-$state-transition: motion.$nt-motion-button-state-transition;
-$shape-transition: motion.$nt-motion-button-shape-transition;
-$menu-enter-transition: motion.$nt-motion-menu-enter-transition;
-$menu-exit-transition: motion.$nt-motion-menu-exit-transition;
-
 @function type-token($style, $property) {
     @return map.get(map.get(typescale.$nt-typescale-baseline, $style), $property);
 }
@@ -33,66 +28,93 @@ $sizes: (
 }
 
 @mixin split-button-size($height, $leading-start, $leading-end, $content-gap, $leading-icon-size, $trailing-icon-size, $inner-radius, $square-radius, $trailing-icon-offset, $weight, $font-size, $line-height, $tracking) {
-    --nt-split-button-height: #{$height};
-    --nt-split-button-container-inset-block: #{touch-inset($height)};
-    --nt-split-button-outer-radius: calc(#{$height} / 2);
-    --nt-split-button-inner-radius: #{$inner-radius};
-    --nt-split-button-leading-icon-size: #{$leading-icon-size};
-    --nt-split-button-square-radius: #{$square-radius};
-    --nt-split-button-trailing-icon-size: #{$trailing-icon-size};
-    --nt-split-button-trailing-icon-offset: #{$trailing-icon-offset};
-    --nt-split-button-trailing-icon-offset-rtl: #{-$trailing-icon-offset};
-
     @include typescale.nt-typescale($weight, $font-size, $line-height, $tracking);
 
+    .nt-split-button-segment {
+        height: $height;
+
+        &::after,
+        &::before {
+            inset-block: touch-inset($height);
+        }
+    }
+
     .nt-split-button-leading {
+        border-start-start-radius: math.div($height, 2);
+        border-start-end-radius: $inner-radius;
+        border-end-start-radius: math.div($height, 2);
+        border-end-end-radius: $inner-radius;
         gap: $content-gap;
         padding-inline: $leading-start $leading-end;
     }
 
     .nt-split-button-trailing {
+        border-start-start-radius: $inner-radius;
+        border-start-end-radius: math.div($height, 2);
+        border-end-start-radius: $inner-radius;
+        border-end-end-radius: math.div($height, 2);
         inline-size: max(48px, #{$height});
+    }
+
+    &.nt-split-button-shape-square {
+        .nt-split-button-leading {
+            border-start-start-radius: $square-radius;
+            border-end-start-radius: $square-radius;
+        }
+
+        .nt-split-button-trailing {
+            border-start-end-radius: $square-radius;
+            border-end-end-radius: $square-radius;
+        }
+    }
+
+    &.nt-split-button-shape-round .nt-split-button-leading:not(:disabled):is(:active, .nt-button--pressed-shape) {
+        border-radius: math.div($height, 2);
+    }
+
+    &.nt-split-button-shape-round.nt-split-button-expanded {
+        .nt-split-button-trailing {
+            border-radius: math.div($height, 2);
+
+            &::after,
+            &::before {
+                inset-inline-start: 0;
+                inset-inline-end: 0;
+            }
+        }
+    }
+
+    .nt-split-button-trailing-icon {
+        transform: translateX($trailing-icon-offset);
+    }
+
+    &:dir(rtl) .nt-split-button-trailing-icon {
+        transform: translateX(-$trailing-icon-offset);
+    }
+
+    &.nt-split-button-expanded .nt-split-button-trailing-icon {
+        transform: translateX(0) rotate(180deg);
+    }
+
+    ::deep {
+        .nt-button-ripple-host {
+            inset-block: touch-inset($height);
+        }
+
+        .nt-split-button-leading-icon .tnt-icon {
+            font-size: $leading-icon-size;
+        }
+
+        .nt-split-button-trailing-icon .tnt-icon {
+            font-size: $trailing-icon-size;
+        }
     }
 }
 
 .nt-split-button {
-    --nt-split-button-bg: #{colors.$tnt-color-primary};
-    --nt-split-button-fg: #{colors.$tnt-color-on-primary};
-    --nt-split-button-menu-bg: #{colors.$tnt-color-surface-container};
-    --nt-split-button-menu-fg: #{colors.$tnt-color-on-surface};
-    --nt-split-button-outline: transparent;
-    --nt-split-button-height: 40px;
-    --nt-split-button-container-inset-block: 4px;
-    --nt-split-button-outer-radius: 20px;
-    --nt-split-button-inner-radius: #{corners.$nt-corner-radius-extra-small};
-    --nt-split-button-leading-icon-size: 20px;
-    --nt-split-button-square-radius: #{corners.$nt-corner-radius-medium};
-    --nt-split-button-trailing-icon-size: 22px;
-    --nt-split-button-trailing-icon-offset: -1px;
-    --nt-split-button-trailing-icon-offset-rtl: 1px;
-    --nt-split-button-trailing-icon-current-offset: var(--nt-split-button-trailing-icon-offset);
-
     color: var(--nt-split-button-fg);
     display: inline-block;
     vertical-align: middle;
-
-    &:dir(rtl) {
-        --nt-split-button-trailing-icon-current-offset: var(--nt-split-button-trailing-icon-offset-rtl);
-    }
-
-    @each $size, $tokens in $sizes {
-        &.tnt-size-#{$size} {
-            @include split-button-size($tokens...);
-        }
-    }
-
-    &.nt-split-button-outlined {
-        --nt-split-button-outline: #{colors.$tnt-color-outline};
-    }
-
-    &.nt-split-button-shape-square {
-        --nt-split-button-outer-radius: var(--nt-split-button-square-radius);
-    }
 
     .nt-split-button-boundary {
         align-items: center;
@@ -111,7 +133,6 @@ $sizes: (
         cursor: pointer;
         display: inline-flex;
         font: inherit;
-        height: var(--nt-split-button-height);
         justify-content: center;
         margin: 0;
         min-block-size: 48px;
@@ -121,14 +142,13 @@ $sizes: (
         padding-block: 0;
         position: relative;
         text-decoration: none;
-        transition: border-radius $shape-transition, color $state-transition;
+        transition: border-radius motion.$nt-motion-button-shape-transition, color motion.$nt-motion-button-state-transition;
         user-select: none;
 
         &::after,
         &::before {
             border-radius: inherit;
             content: '';
-            inset-block: var(--nt-split-button-container-inset-block);
             inset-inline: 0;
             pointer-events: none;
             position: absolute;
@@ -136,8 +156,8 @@ $sizes: (
 
         &::after {
             background: var(--nt-split-button-bg);
-            border: 1px solid var(--nt-split-button-outline);
-            transition: background-color $state-transition, border-color $state-transition, border-radius $shape-transition;
+            border: 1px solid transparent;
+            transition: background-color motion.$nt-motion-button-state-transition, border-color motion.$nt-motion-button-state-transition, border-radius motion.$nt-motion-button-shape-transition;
             z-index: 0;
         }
 
@@ -173,7 +193,7 @@ $sizes: (
         &::before {
             background: currentColor;
             opacity: 0;
-            transition: border-radius $shape-transition, opacity $state-transition;
+            transition: border-radius motion.$nt-motion-button-shape-transition, opacity motion.$nt-motion-button-state-transition;
             z-index: 1;
         }
 
@@ -208,40 +228,14 @@ $sizes: (
         }
     }
 
-    .nt-split-button-leading {
-        border-start-start-radius: var(--nt-split-button-outer-radius);
-        border-start-end-radius: var(--nt-split-button-inner-radius);
-        border-end-start-radius: var(--nt-split-button-outer-radius);
-        border-end-end-radius: var(--nt-split-button-inner-radius);
-    }
-
     .nt-split-button-trailing {
-        border-start-start-radius: var(--nt-split-button-inner-radius);
-        border-start-end-radius: var(--nt-split-button-outer-radius);
-        border-end-start-radius: var(--nt-split-button-inner-radius);
-        border-end-end-radius: var(--nt-split-button-outer-radius);
         padding-inline: 0;
-    }
-
-    &.nt-split-button-shape-round .nt-split-button-leading:not(:disabled):is(:active, .nt-button--pressed-shape) {
-        border-radius: var(--nt-split-button-outer-radius);
-    }
-
-    &.nt-split-button-shape-round.nt-split-button-expanded {
-        .nt-split-button-trailing {
-            border-radius: var(--nt-split-button-outer-radius);
-
-            &::after,
-            &::before {
-                inset-inline-start: 0;
-                inset-inline-end: 0;
-            }
-        }
     }
 
     &.nt-split-button-outlined {
         .nt-split-button-segment::after {
             background: transparent;
+            border-color: colors.$tnt-color-outline;
         }
 
         .nt-split-button-segment:disabled::after {
@@ -280,155 +274,24 @@ $sizes: (
         white-space: nowrap;
     }
 
-    .nt-split-button-trailing-icon {
-        transform: translateX(var(--nt-split-button-trailing-icon-current-offset));
-        transition: transform $shape-transition;
-    }
-
-    &.nt-split-button-expanded .nt-split-button-trailing-icon {
-        transform: translateX(0) rotate(180deg);
-    }
-
-    .nt-split-button-menu-panel {
-        --nt-split-button-menu-width: min(180px, calc(100vw - 16px));
-
-        background: var(--nt-split-button-menu-bg);
-        border: 0;
-        border-radius: corners.$nt-corner-radius-large;
-        box-shadow: map.get(elevation.$elevation-shadows, 3);
-        box-sizing: border-box;
-        color: var(--nt-split-button-menu-fg);
-        display: none;
-        inline-size: var(--nt-split-button-menu-width);
-        inset: auto;
-        left: clamp(8px, calc(anchor(right) - var(--nt-split-button-menu-width)), calc(100vw - var(--nt-split-button-menu-width) - 8px));
-        margin: 0;
-        min-inline-size: 0;
-        opacity: 0;
-        overflow: hidden;
-        padding: 8px 0;
-        position: fixed;
-        top: calc(anchor(bottom) + 4px);
-        transform: translateY(-4px) scale(0.98);
-        transform-origin: top right;
-        transition: opacity $menu-exit-transition, transform $menu-exit-transition, display $menu-exit-transition allow-discrete;
-        transition-behavior: allow-discrete;
-        z-index: 1000;
-
-        &:popover-open {
-            display: block;
-            opacity: 1;
-            transform: translateY(0) scale(1);
-            transition: opacity $menu-enter-transition, transform $menu-enter-transition, display $menu-enter-transition allow-discrete;
-
-            @starting-style {
-                opacity: 0;
-                transform: translateY(-4px) scale(0.98);
-            }
+    @each $size, $tokens in $sizes {
+        &.tnt-size-#{$size} {
+            @include split-button-size($tokens...);
         }
-
-        ::deep {
-            .nt-split-button-menu-item {
-                align-items: center;
-                appearance: none;
-                background: transparent;
-                border: 0;
-                border-radius: corners.$nt-corner-radius-none;
-                box-sizing: border-box;
-                color: inherit;
-                cursor: pointer;
-                display: flex;
-                gap: 12px;
-                min-block-size: 48px;
-                outline: none;
-                padding: 10px 16px;
-                position: relative;
-                text-align: start;
-                text-decoration: none;
-                transition: background-color $state-transition, color $state-transition;
-                width: 100%;
-
-                @include typescale.nt-body-large;
-
-                &:hover,
-                &:focus-visible {
-                    background: color-mix(in srgb, currentColor 8%, transparent);
-                }
-
-                &:active {
-                    background: color-mix(in srgb, currentColor 10%, transparent);
-                }
-
-                &:focus-visible {
-                    @include focus.nt-button-focus-ring;
-                    z-index: 2;
-                }
-
-                &:disabled,
-                &.nt-split-button-menu-item-disabled {
-                    color: color-mix(in srgb, #{colors.$tnt-color-on-surface} 38%, transparent);
-                    cursor: not-allowed;
-                    pointer-events: none;
-                }
-            }
-
-            .nt-split-button-menu-item-icon {
-                align-items: center;
-                block-size: 20px;
-                display: inline-flex;
-                flex: 0 0 auto;
-                inline-size: 20px;
-                justify-content: center;
-
-                .tnt-icon {
-                    color: inherit;
-                    font-size: 20px;
-                    pointer-events: none;
-                }
-            }
-
-            .nt-split-button-menu-item-label {
-                flex: 1 1 auto;
-                min-inline-size: 0;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-            }
-
-            .nt-split-button-menu-divider {
-                block-size: 1px;
-                background: #{colors.$tnt-color-outline-variant};
-                box-sizing: border-box;
-                flex: 0 0 auto;
-                margin: 0;
-            }
-
-            .nt-split-button-menu-divider-inset {
-                margin-inline: 16px 24px;
-            }
-        }
-    }
-
-    &:dir(rtl) .nt-split-button-menu-panel {
-        left: clamp(8px, anchor(left), calc(100vw - var(--nt-split-button-menu-width) - 8px));
-        transform-origin: top left;
     }
 
     ::deep {
         .nt-button-ripple-host {
-            inset-block: var(--nt-split-button-container-inset-block);
-            transition: border-radius $shape-transition;
+            transition: border-radius motion.$nt-motion-button-shape-transition;
         }
 
         .nt-split-button-leading-icon .tnt-icon {
             color: inherit;
-            font-size: var(--nt-split-button-leading-icon-size);
             pointer-events: none;
         }
 
         .nt-split-button-trailing-icon .tnt-icon {
             color: inherit;
-            font-size: var(--nt-split-button-trailing-icon-size);
             pointer-events: none;
         }
     }

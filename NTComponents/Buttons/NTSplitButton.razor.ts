@@ -8,6 +8,10 @@ interface NTComponentsGlobals {
     registerButtonInteraction?: (element: Maybe<Element>) => void;
 }
 
+interface NTMenuElement extends HTMLElement {
+    updatePlacement?: () => void;
+}
+
 declare global {
     interface Window {
         NTComponents?: NTComponentsGlobals;
@@ -30,16 +34,16 @@ export class NTSplitButton extends HTMLElement {
     private button: HTMLButtonElement | null = null;
     private dotNetRef: DotNetSplitButtonRef | null = null;
     private expanded: boolean | null = null;
+    private interactionsRegistered = false;
+    private items: Element[] = [];
     private leadingButton: HTMLButtonElement | null = null;
-    private panel: HTMLDivElement | null = null;
+    private panel: NTMenuElement | null = null;
     private suppressNextToggleNotification = false;
 
     private readonly onLeadingClick = (): void => {
-        this.closePopover();
-    };
-
-    private readonly onPanelClick = (event: MouseEvent): void => {
-        this.handlePanelClick(event);
+        if (this.panel?.matches(':popover-open')) {
+            this.panel.hidePopover?.();
+        }
     };
 
     private readonly onToggle = (): void => {
@@ -56,9 +60,9 @@ export class NTSplitButton extends HTMLElement {
 
     public removeElementListeners(): void {
         this.panel?.removeEventListener('toggle', this.onToggle);
-        this.panel?.removeEventListener('click', this.onPanelClick);
         this.leadingButton?.removeEventListener('click', this.onLeadingClick);
         this.button = null;
+        this.items = [];
         this.leadingButton = null;
         this.panel = null;
     }
@@ -70,6 +74,9 @@ export class NTSplitButton extends HTMLElement {
             return;
         }
 
+        if (expanded) {
+            this.panel.updatePlacement?.();
+        }
         const isOpen = this.panel.matches(':popover-open');
         if (expanded === isOpen) {
             this.updateOpenState(isOpen, false);
@@ -92,29 +99,21 @@ export class NTSplitButton extends HTMLElement {
         this.setExpanded(this.classList.contains('nt-split-button-expanded'));
     }
 
-    private handlePanelClick(event: MouseEvent): void {
-        if (this.panel?.dataset.closeOnItemClick !== 'true') {
-            return;
-        }
-
-        const target = event.target instanceof Element ? event.target : null;
-        const item = target?.closest('.nt-split-button-menu-item');
-        if (!item || item.classList.contains('nt-split-button-menu-item-disabled')) {
-            return;
-        }
-
-        this.panel.hidePopover?.();
-    }
-
-    private closePopover(): void {
-        if (this.panel?.matches(':popover-open')) {
-            this.panel.hidePopover?.();
-        }
-    }
-
     private registerButtonInteractions(): void {
-        window.NTComponents?.registerButtonInteraction?.(this.leadingButton);
-        window.NTComponents?.registerButtonInteraction?.(this.button);
+        const registerButtonInteraction = window.NTComponents?.registerButtonInteraction;
+        if (!registerButtonInteraction) {
+            this.interactionsRegistered = false;
+            return;
+        }
+
+        registerButtonInteraction(this.leadingButton);
+        registerButtonInteraction(this.button);
+
+        for (const item of this.items) {
+            registerButtonInteraction(item);
+        }
+
+        this.interactionsRegistered = true;
     }
 
     private setDotNetRef(dotNetRef: Maybe<unknown>): void {
@@ -129,12 +128,16 @@ export class NTSplitButton extends HTMLElement {
     }
 
     private updateElements(): void {
-        const panel = this.querySelector<HTMLDivElement>(':scope .nt-split-button-menu-panel');
+        const panel = this.querySelector<NTMenuElement>(':scope .nt-split-button-menu-panel');
         const leadingButton = this.querySelector<HTMLButtonElement>(':scope .nt-split-button-leading');
         const button = this.querySelector<HTMLButtonElement>(':scope .nt-split-button-trailing');
+        const items = Array.from(this.querySelectorAll<Element>(':scope .nt-menu-item'));
+        const itemsChanged = items.length !== this.items.length || items.some((item, index) => item !== this.items[index]);
 
-        if (panel === this.panel && leadingButton === this.leadingButton && button === this.button) {
-            this.registerButtonInteractions();
+        if (panel === this.panel && leadingButton === this.leadingButton && button === this.button && !itemsChanged) {
+            if (!this.interactionsRegistered) {
+                this.registerButtonInteractions();
+            }
             return;
         }
 
@@ -142,9 +145,9 @@ export class NTSplitButton extends HTMLElement {
         this.panel = panel;
         this.leadingButton = leadingButton;
         this.button = button;
+        this.items = items;
 
         this.panel?.addEventListener('toggle', this.onToggle);
-        this.panel?.addEventListener('click', this.onPanelClick);
         this.leadingButton?.addEventListener('click', this.onLeadingClick);
         this.registerButtonInteractions();
     }

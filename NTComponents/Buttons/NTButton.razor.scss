@@ -6,14 +6,12 @@
 @use '../Styles/_Variables/_typescale.scss' as typescale;
 @use './buttonFocusRing' as focus;
 
-$nt-button-state-transition: motion.$nt-motion-button-state-transition;
-$nt-button-shape-transition: motion.$nt-motion-button-shape-transition;
 $nt-button-sizes: (
-    xs: (32px, 12px, 4px, 20px, measurements.$tnt-pill-border-radius-xs, corners.$nt-corner-radius-small, 500, 14px, 20px, 0.1px),
-    s: (40px, 16px, 8px, 20px, measurements.$tnt-pill-border-radius-small, corners.$nt-corner-radius-small, 500, 14px, 20px, 0.1px),
-    m: (56px, 24px, 8px, 24px, measurements.$tnt-pill-border-radius-medium, corners.$nt-corner-radius-medium, 500, 16px, 24px, 0.15px),
-    l: (96px, 48px, 12px, 32px, measurements.$tnt-pill-border-radius-large, corners.$nt-corner-radius-large, 400, 24px, 32px, 0),
-    xl: (136px, 64px, 16px, 40px, measurements.$tnt-pill-border-radius-xl, corners.$nt-corner-radius-large, 400, 32px, 40px, 0)
+    xs: (32px, 12px, 4px, 20px, measurements.$tnt-pill-border-radius-xs, corners.$nt-corner-radius-small, corners.$nt-corner-radius-medium, 500, 14px, 20px, 0.1px),
+    s: (40px, 16px, 8px, 20px, measurements.$tnt-pill-border-radius-small, corners.$nt-corner-radius-small, corners.$nt-corner-radius-medium, 500, 14px, 20px, 0.1px),
+    m: (56px, 24px, 8px, 24px, measurements.$tnt-pill-border-radius-medium, corners.$nt-corner-radius-medium, corners.$nt-corner-radius-large, 500, 16px, 24px, 0.15px),
+    l: (96px, 48px, 12px, 32px, measurements.$tnt-pill-border-radius-large, corners.$nt-corner-radius-large, corners.$nt-corner-radius-extra-large, 400, 24px, 32px, 0),
+    xl: (136px, 64px, 16px, 40px, measurements.$tnt-pill-border-radius-xl, corners.$nt-corner-radius-large, corners.$nt-corner-radius-extra-large, 400, 32px, 40px, 0)
 );
 
 @function nt-button-touch-inset($height) {
@@ -24,33 +22,49 @@ $nt-button-sizes: (
     @return 0px;
 }
 
-@mixin nt-button-size($height, $padding, $gap, $icon-size, $radius, $pressed-radius, $weight, $font-size, $line-height, $tracking) {
-    --nt-button-container-inset-block: #{nt-button-touch-inset($height)};
-    --nt-button-icon-size: #{$icon-size};
-    --nt-button-pressed-radius: #{$pressed-radius};
-    --nt-button-radius: #{$radius};
-
+@mixin nt-button-size($height, $padding, $gap, $icon-size, $radius, $pressed-radius, $square-radius, $weight, $font-size, $line-height, $tracking) {
+    border-radius: $radius;
     gap: $gap;
     height: $height;
     padding-inline: $padding;
+
     @include typescale.tnt-typescale($weight, $font-size, $line-height, $tracking);
+
+    &::after,
+    &::before {
+        inset-block: nt-button-touch-inset($height);
+    }
+
+    &.nt-button-shape-square {
+        border-radius: $square-radius;
+    }
+
+    &:not(.tnt-disabled):not(:disabled) {
+        &:active,
+        &.nt-button--pressed-shape {
+            border-radius: $pressed-radius;
+        }
+    }
+
+    ::deep {
+        .nt-button-ripple-host {
+            inset-block: nt-button-touch-inset($height);
+        }
+
+        .tnt-icon {
+            font-size: $icon-size;
+        }
+    }
 }
 
 .nt-button {
-    --nt-button-bg: #{colors.$tnt-color-primary};
-    --nt-button-fg: #{colors.$tnt-color-on-primary};
-    --nt-button-container-inset-block: 4px;
-    --nt-button-outline: transparent;
-    --nt-button-radius: #{measurements.$tnt-pill-border-radius-small};
-    --nt-button-pressed-radius: #{corners.$nt-corner-radius-small};
-
     align-items: center;
     appearance: none;
     background: transparent;
     border: 0;
-    border-radius: var(--nt-button-radius);
+    border-radius: measurements.$tnt-pill-border-radius-small;
     box-sizing: border-box;
-    color: var(--nt-button-fg);
+    color: var(--nt-button-fg, #{colors.$tnt-color-on-primary});
     cursor: pointer;
     display: inline-flex;
     justify-content: center;
@@ -61,7 +75,7 @@ $nt-button-sizes: (
     overflow: visible;
     position: relative;
     text-decoration: none;
-    transition: border-radius $nt-button-shape-transition, box-shadow $nt-button-state-transition, color $nt-button-state-transition;
+    transition: border-radius motion.$nt-motion-button-shape-transition, box-shadow motion.$nt-motion-button-state-transition, color motion.$nt-motion-button-state-transition;
     user-select: none;
     vertical-align: middle;
 
@@ -69,23 +83,23 @@ $nt-button-sizes: (
     &::before {
         border-radius: inherit;
         content: '';
-        inset-block: var(--nt-button-container-inset-block);
+        inset-block: nt-button-touch-inset(40px);
         inset-inline: 0;
         pointer-events: none;
         position: absolute;
     }
 
     &::after {
-        background: var(--nt-button-bg);
-        border: 1px solid var(--nt-button-outline);
-        transition: background-color $nt-button-state-transition, border-color $nt-button-state-transition, border-radius $nt-button-shape-transition, box-shadow $nt-button-state-transition;
+        background: var(--nt-button-bg, #{colors.$tnt-color-primary});
+        border: 1px solid transparent;
+        transition: background-color motion.$nt-motion-button-state-transition, border-color motion.$nt-motion-button-state-transition, border-radius motion.$nt-motion-button-shape-transition, box-shadow motion.$nt-motion-button-state-transition;
         z-index: 0;
     }
 
     &::before {
         background: currentColor;
         opacity: 0;
-        transition: border-radius $nt-button-shape-transition, opacity $nt-button-state-transition;
+        transition: border-radius motion.$nt-motion-button-shape-transition, opacity motion.$nt-motion-button-state-transition;
         z-index: 1;
     }
 
@@ -107,37 +121,12 @@ $nt-button-sizes: (
                 @include focus.nt-button-focus-ring;
             }
         }
-
-        &:active,
-        &.nt-button--pressed-shape {
-            border-radius: var(--nt-button-pressed-radius);
-        }
     }
 
     @each $size, $tokens in $nt-button-sizes {
         &.tnt-size-#{$size} {
             @include nt-button-size($tokens...);
         }
-    }
-
-    &.nt-button-shape-square {
-        &.tnt-size-xs,
-        &.tnt-size-s {
-            --nt-button-radius: #{corners.$nt-corner-radius-medium};
-        }
-
-        &.tnt-size-m {
-            --nt-button-radius: #{corners.$nt-corner-radius-large};
-        }
-
-        &.tnt-size-l,
-        &.tnt-size-xl {
-            --nt-button-radius: #{corners.$nt-corner-radius-extra-large};
-        }
-    }
-
-    &.nt-button-outlined {
-        --nt-button-outline: #{colors.$tnt-color-outline};
     }
 
     &.nt-button-text::after {
@@ -152,6 +141,7 @@ $nt-button-sizes: (
 
     &.nt-button-outlined::after {
         background: transparent;
+        border-color: colors.$tnt-color-outline;
     }
 
     > .nt-button-icon,
@@ -198,13 +188,13 @@ $nt-button-sizes: (
 
     ::deep {
         .nt-button-ripple-host {
-            inset-block: var(--nt-button-container-inset-block);
-            transition: border-radius $nt-button-shape-transition;
+            inset-block: nt-button-touch-inset(40px);
+            transition: border-radius motion.$nt-motion-button-shape-transition;
         }
 
         .tnt-icon {
             color: inherit;
-            font-size: var(--nt-button-icon-size);
+            font-size: 20px;
             pointer-events: none;
         }
 
