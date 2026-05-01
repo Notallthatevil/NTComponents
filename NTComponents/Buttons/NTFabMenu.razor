@@ -1,0 +1,59 @@
+@namespace NTComponents
+@using NTComponents.Core
+@inherits TnTPageScriptComponent<NTFabMenu>
+
+<CascadingValue Value="this" IsFixed="true">
+    @ChildContent
+</CascadingValue>
+
+<DeferRendering>
+    <nt-fab-menu @attributes="AdditionalAttributes"
+                 class="@ElementClass"
+                 style="@ElementStyle"
+                 id="@ElementId"
+                 title="@ElementTitle"
+                 lang="@ElementLang"
+                 @ref="Element">
+        <div class="nt-fab-menu-boundary">
+            <button class="@ToggleButtonClass"
+                    style="@ToggleButtonStyle"
+                    type="button"
+                    name="@ElementName"
+                    id="@MenuButtonId"
+                    disabled="@Disabled"
+                    autofocus="@AutoFocus"
+                    aria-label="@EffectiveAriaLabel"
+                    aria-haspopup="menu"
+                    aria-expanded="@ExpandedAttribute"
+                    aria-controls="@MenuId"
+                    popovertarget="@MenuPopoverTarget"
+                    popovertargetaction="toggle"
+                    @onclick:stopPropagation="StopPropagation">
+                @if (EnableRipple) {
+                    @ButtonRipple
+                }
+                <span class="nt-fab-menu-open-icon" aria-hidden="true">
+                    @Icon.Render()
+                </span>
+                <span class="nt-fab-menu-close-icon" aria-hidden="true">
+                    @CloseIcon.Render()
+                </span>
+            </button>
+
+            <div id="@MenuId"
+                 class="nt-fab-menu-panel"
+                 style="@MenuPanelStyle"
+                 role="menu"
+                 aria-label="@EffectiveAriaLabel"
+                 popover="auto"
+                 data-close-on-item-click="@CloseOnMenuContentClickAttribute">
+                <div class="nt-fab-menu-items">
+                    @foreach (var item in _menuItems) {
+                        @item.Render(this)
+                    }
+                </div>
+            </div>
+        </div>
+    </nt-fab-menu>
+    @PageScript
+</DeferRendering>

@@ -1,0 +1,196 @@
+@page "/nt-fab-menu"
+@using NTComponents
+
+@rendermode InteractiveAuto
+
+<div style="display: grid; gap: 24px;">
+    <div>
+        <h1>NTFabMenu</h1>
+        <p>Material 3 floating action button menu with native popover support.</p>
+    </div>
+
+    <TnTRow>
+        <TnTColumn S="12" M="4">
+            <NTCard>
+                <div class="tnt-card-header">
+                    <h2>Controls</h2>
+                </div>
+                <div style="display: grid; gap: 12px; padding: 16px;">
+                    <label>
+                        Button size
+                        <select @bind="ButtonSize">
+                            @foreach (var size in Sizes) {
+                                <option value="@size">@GetSizeLabel(size)</option>
+                            }
+                        </select>
+                    </label>
+
+                    <label>
+                        Placement
+                        <select @bind="Placement">
+                            @foreach (var placement in Placements) {
+                                <option value="@placement">@placement</option>
+                            }
+                        </select>
+                    </label>
+
+                    <label>
+                        <input type="checkbox" @bind="Expanded" />
+                        Expanded
+                    </label>
+
+                    <label>
+                        <input type="checkbox" @bind="UseCustomColors" />
+                        Use custom colors
+                    </label>
+
+                    <label>
+                        <input type="checkbox" @bind="CloseOnMenuContentClick" />
+                        Close on item click
+                    </label>
+
+                    <label>
+                        <input type="checkbox" @bind="EnableRipple" />
+                        Enable ripple
+                    </label>
+
+                    <label>
+                        <input type="checkbox" @bind="Disabled" />
+                        Disabled
+                    </label>
+                </div>
+            </NTCard>
+        </TnTColumn>
+
+        <TnTColumn S="12" M="8">
+            <NTCard>
+                <div class="tnt-card-header">
+                    <h2>Preview</h2>
+                </div>
+                <div style="min-height: 320px; padding: 40px; position: relative;">
+                    <NTFabMenu Icon="MaterialIcon.Add"
+                               AriaLabel="Create menu"
+                               ButtonSize="@ButtonSize"
+                               Placement="@Placement"
+                               Expanded="@Expanded"
+                               ExpandedChanged="HandleExpandedChanged"
+                               EnableRipple="@EnableRipple"
+                               Disabled="@Disabled"
+                               CloseOnMenuContentClick="@CloseOnMenuContentClick"
+                               BackgroundColor="@EffectiveFabBackgroundColor"
+                               TextColor="@EffectiveFabTextColor"
+                               SelectedFabBackgroundColor="@EffectiveSelectedFabBackgroundColor"
+                               SelectedFabTextColor="@EffectiveSelectedFabTextColor"
+                               MenuItemBackgroundColor="@EffectiveMenuItemBackgroundColor"
+                               MenuItemTextColor="@EffectiveMenuItemTextColor">
+                        <NTFabMenuButtonItem Label="Create task with a much longer descriptive menu label" Icon="MaterialIcon.AddTask" OnClickCallback="@((MouseEventArgs _) => SelectAction("Create task"))" />
+                        <NTFabMenuButtonItem Label="Upload supporting files and related attachments" Icon="MaterialIcon.UploadFile" OnClickCallback="@((MouseEventArgs _) => SelectAction("Upload file"))" />
+                        <NTFabMenuButtonItem Label="Schedule follow-up reminder" Icon="MaterialIcon.Event" OnClickCallback="@((MouseEventArgs _) => SelectAction("Schedule reminder"))" />
+                        <NTFabMenuAnchorItem Label="Open generated documentation model reference" Icon="MaterialIcon.Article" Href="/documentation-model" />
+                    </NTFabMenu>
+
+                    <div style="bottom: 32px; left: 32px; position: absolute;">
+                        <p>Last action: <strong>@LastAction</strong></p>
+                        <p>Expanded: <strong>@Expanded</strong></p>
+                        <p>Placement: <strong>@Placement</strong></p>
+                    </div>
+                </div>
+            </NTCard>
+        </TnTColumn>
+    </TnTRow>
+
+    <NTCard>
+        <div class="tnt-card-header">
+            <h2>Color overrides</h2>
+        </div>
+        <div style="align-items: center; display: flex; flex-wrap: wrap; gap: 32px; min-height: 220px; padding: 32px;">
+            <NTFabMenu Icon="MaterialIcon.Add"
+                       AriaLabel="Default create menu"
+                       ButtonSize="Size.Small"
+                       Placement="NTFabButtonPlacement.Inline"
+                       EnableRipple="@EnableRipple"
+                       Disabled="@Disabled">
+                <NTFabMenuButtonItem Label="Default draft with extended label" Icon="MaterialIcon.Drafts" OnClickCallback="@((MouseEventArgs _) => SelectAction("Default draft"))" />
+                <NTFabMenuButtonItem Label="Default copy this item with a longer label" Icon="MaterialIcon.ContentCopy" OnClickCallback="@((MouseEventArgs _) => SelectAction("Default copy"))" />
+            </NTFabMenu>
+
+            <NTFabMenu Icon="MaterialIcon.Add"
+                       AriaLabel="Secondary create menu"
+                       ButtonSize="Size.Small"
+                       Placement="NTFabButtonPlacement.Inline"
+                       BackgroundColor="TnTColor.SecondaryContainer"
+                       TextColor="TnTColor.OnSecondaryContainer"
+                       SelectedFabBackgroundColor="TnTColor.Secondary"
+                       SelectedFabTextColor="TnTColor.OnSecondary"
+                       MenuItemBackgroundColor="TnTColor.SecondaryContainer"
+                       MenuItemTextColor="TnTColor.OnSecondaryContainer"
+                       EnableRipple="@EnableRipple"
+                       Disabled="@Disabled">
+                <NTFabMenuButtonItem Label="Secondary draft with extended label" Icon="MaterialIcon.Drafts" OnClickCallback="@((MouseEventArgs _) => SelectAction("Secondary draft"))" />
+                <NTFabMenuButtonItem Label="Secondary copy this item with a longer label" Icon="MaterialIcon.ContentCopy" OnClickCallback="@((MouseEventArgs _) => SelectAction("Secondary copy"))" />
+            </NTFabMenu>
+
+            <NTFabMenu Icon="MaterialIcon.Add"
+                       AriaLabel="Tertiary create menu"
+                       ButtonSize="Size.Small"
+                       Placement="NTFabButtonPlacement.Inline"
+                       BackgroundColor="TnTColor.TertiaryContainer"
+                       TextColor="TnTColor.OnTertiaryContainer"
+                       SelectedFabBackgroundColor="TnTColor.Tertiary"
+                       SelectedFabTextColor="TnTColor.OnTertiary"
+                       MenuItemBackgroundColor="TnTColor.TertiaryContainer"
+                       MenuItemTextColor="TnTColor.OnTertiaryContainer"
+                       EnableRipple="@EnableRipple"
+                       Disabled="@Disabled">
+                <NTFabMenuButtonItem Label="Tertiary draft with extended label" Icon="MaterialIcon.Drafts" OnClickCallback="@((MouseEventArgs _) => SelectAction("Tertiary draft"))" />
+                <NTFabMenuButtonItem Label="Tertiary copy this item with a longer label" Icon="MaterialIcon.ContentCopy" OnClickCallback="@((MouseEventArgs _) => SelectAction("Tertiary copy"))" />
+            </NTFabMenu>
+        </div>
+    </NTCard>
+</div>
+
+@code {
+    private static readonly IReadOnlyList<Size> Sizes = [Size.Smallest, Size.Small, Size.Medium, Size.Large, Size.Largest];
+    private static readonly IReadOnlyList<NTFabButtonPlacement> Placements = [
+        NTFabButtonPlacement.Inline,
+        NTFabButtonPlacement.LowerRight,
+        NTFabButtonPlacement.LowerLeft,
+        NTFabButtonPlacement.UpperRight,
+        NTFabButtonPlacement.UpperLeft
+    ];
+
+    private Size ButtonSize { get; set; } = Size.Small;
+    private bool CloseOnMenuContentClick { get; set; } = true;
+    private bool Disabled { get; set; }
+    private bool EnableRipple { get; set; } = true;
+    private bool Expanded { get; set; }
+    private string LastAction { get; set; } = "None";
+    private NTFabButtonPlacement Placement { get; set; }
+    private bool UseCustomColors { get; set; }
+
+    private TnTColor? EffectiveFabBackgroundColor => UseCustomColors ? TnTColor.SecondaryContainer : null;
+    private TnTColor? EffectiveFabTextColor => UseCustomColors ? TnTColor.OnSecondaryContainer : null;
+    private TnTColor? EffectiveSelectedFabBackgroundColor => UseCustomColors ? TnTColor.Secondary : null;
+    private TnTColor? EffectiveSelectedFabTextColor => UseCustomColors ? TnTColor.OnSecondary : null;
+    private TnTColor? EffectiveMenuItemBackgroundColor => UseCustomColors ? TnTColor.TertiaryContainer : null;
+    private TnTColor? EffectiveMenuItemTextColor => UseCustomColors ? TnTColor.OnTertiaryContainer : null;
+
+    private Task HandleExpandedChanged(bool expanded) {
+        Expanded = expanded;
+        return Task.CompletedTask;
+    }
+
+    private Task SelectAction(string action) {
+        LastAction = action;
+        return Task.CompletedTask;
+    }
+
+    private static string GetSizeLabel(Size size) => size switch {
+        Size.Smallest => "XS",
+        Size.Small => "Small",
+        Size.Medium => "Medium",
+        Size.Large => "Large",
+        Size.Largest => "XL",
+        _ => size.ToString()
+    };
+}

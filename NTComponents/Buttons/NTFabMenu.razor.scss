@@ -1,0 +1,696 @@
+@use 'sass:map';
+@use 'sass:math';
+@use '../Styles/_Variables/_colors.scss' as colors;
+@use '../Styles/_Variables/_corner-radius.scss' as corners;
+@use '../Styles/_Variables/_elevation.scss' as elevation;
+@use '../Styles/_Variables/_measurements.scss' as measurements;
+@use '../Styles/_Variables/_motion.scss' as motion;
+@use '../Styles/_Variables/_typescale.scss' as typescale;
+@use './buttonFocusRing' as focus;
+
+$state-transition: motion.$nt-motion-button-state-transition;
+$shape-transition: motion.$nt-motion-button-shape-transition;
+$menu-enter-transition: motion.$nt-motion-menu-enter-transition;
+$menu-exit-transition: motion.$nt-motion-menu-exit-transition;
+$menu-item-enter-stagger: 25ms;
+$menu-item-exit-stagger: 15ms;
+$fab-bg: var(--nt-fab-menu-fab-bg, #{colors.$tnt-color-primary-container});
+$fab-fg: var(--nt-fab-menu-fab-fg, #{colors.$tnt-color-on-primary-container});
+$selected-fab-bg: var(--nt-fab-menu-selected-fab-bg, #{colors.$tnt-color-primary});
+$selected-fab-fg: var(--nt-fab-menu-selected-fab-fg, #{colors.$tnt-color-on-primary});
+$item-bg: var(--nt-fab-menu-item-bg, #{colors.$tnt-color-primary-container});
+$item-fg: var(--nt-fab-menu-item-fg, #{colors.$tnt-color-on-primary-container});
+$space-unit: measurements.$gutter-width;
+$touch-target-size: $space-unit * 2;
+$viewport-edge-margin: math.div($space-unit * 4, 3);
+$close-size: 56px;
+$close-radius: corners.$nt-corner-radius-extra-large;
+$item-height: 56px;
+$item-radius: corners.$nt-corner-radius-extra-large;
+$item-icon-size: $space-unit;
+$item-gap: math.div($space-unit, 3);
+$item-padding-inline: $space-unit;
+$item-reveal-size: $item-height;
+$stack-gap: math.div($space-unit, 6);
+$close-gap: math.div($space-unit, 3);
+$compact-placement-offset: math.div($space-unit * 2, 3);
+$medium-placement-offset: $space-unit;
+$item-enter-offset: math.div($space-unit * 2, 3);
+$fab-menu-sizes: (
+    s: (source-size: 56px, icon-size: 24px, radius: corners.$nt-corner-radius-large),
+    m: (source-size: 80px, icon-size: 28px, radius: corners.$nt-corner-radius-large-increased),
+    l: (source-size: 96px, icon-size: 36px, radius: corners.$nt-corner-radius-extra-large)
+);
+
+@mixin fab-menu-size($tokens) {
+    $source-size: map.get($tokens, source-size);
+    $source-icon-size: map.get($tokens, icon-size);
+    $source-radius: map.get($tokens, radius);
+
+    block-size: $source-size;
+    inline-size: $source-size;
+
+    .nt-fab-menu-boundary {
+        block-size: $source-size;
+        inline-size: $source-size;
+    }
+
+    .nt-fab-menu-button {
+        block-size: $source-size;
+        border-radius: $source-radius;
+        inline-size: $source-size;
+    }
+
+    @if $source-size != $close-size {
+        &.nt-fab-menu-placement-lower-right,
+        &.nt-fab-menu-placement-lower-left {
+            &.nt-fab-menu-expanded,
+            &:has(.nt-fab-menu-panel:popover-open) {
+                .nt-fab-menu-button {
+                    inset-block-end: $source-size - $close-size;
+                }
+            }
+        }
+    }
+
+    ::deep .nt-fab-menu-open-icon .tnt-icon {
+        font-size: $source-icon-size;
+    }
+}
+
+.nt-fab-menu {
+    color: $fab-fg;
+    display: inline-block;
+    inline-size: 56px;
+    block-size: 56px;
+    position: relative;
+    vertical-align: middle;
+
+    @each $name, $tokens in $fab-menu-sizes {
+        &.tnt-size-#{$name} {
+            @include fab-menu-size($tokens);
+        }
+    }
+
+    &.nt-fab-menu-placement-lower-right,
+    &.nt-fab-menu-placement-lower-left,
+    &.nt-fab-menu-placement-upper-right,
+    &.nt-fab-menu-placement-upper-left {
+        position: fixed;
+        z-index: 1000;
+    }
+
+    &.nt-fab-menu-placement-lower-right,
+    &.nt-fab-menu-placement-lower-left {
+        inset-block-end: $compact-placement-offset;
+    }
+
+    &.nt-fab-menu-placement-upper-right,
+    &.nt-fab-menu-placement-upper-left {
+        inset-block-start: $compact-placement-offset;
+    }
+
+    &.nt-fab-menu-placement-lower-right,
+    &.nt-fab-menu-placement-upper-right {
+        inset-inline-end: $compact-placement-offset;
+    }
+
+    &.nt-fab-menu-placement-lower-left,
+    &.nt-fab-menu-placement-upper-left {
+        inset-inline-start: $compact-placement-offset;
+    }
+
+    @media (min-width: 600px) {
+        &.nt-fab-menu-placement-lower-right,
+        &.nt-fab-menu-placement-lower-left {
+            inset-block-end: $medium-placement-offset;
+        }
+
+        &.nt-fab-menu-placement-upper-right,
+        &.nt-fab-menu-placement-upper-left {
+            inset-block-start: $medium-placement-offset;
+        }
+
+        &.nt-fab-menu-placement-lower-right,
+        &.nt-fab-menu-placement-upper-right {
+            inset-inline-end: $medium-placement-offset;
+        }
+
+        &.nt-fab-menu-placement-lower-left,
+        &.nt-fab-menu-placement-upper-left {
+            inset-inline-start: $medium-placement-offset;
+        }
+    }
+
+    .nt-fab-menu-boundary {
+        block-size: 56px;
+        inline-size: 56px;
+        position: relative;
+    }
+
+    .nt-fab-menu-button {
+        align-items: center;
+        appearance: none;
+        background: transparent;
+        border: 0;
+        border-radius: corners.$nt-corner-radius-large;
+        block-size: 56px;
+        box-sizing: border-box;
+        color: $fab-fg;
+        cursor: pointer;
+        display: inline-flex;
+        inline-size: 56px;
+        inset-block-end: 0;
+        inset-inline-end: 0;
+        justify-content: center;
+        margin: 0;
+        min-block-size: $touch-target-size;
+        min-inline-size: $touch-target-size;
+        outline: none;
+        overflow: visible;
+        padding: 0;
+        position: absolute;
+        transition: block-size $shape-transition, border-radius $shape-transition, box-shadow $state-transition, color $state-transition, inline-size $shape-transition, inset-block-end $shape-transition;
+        transform-origin: top right;
+        user-select: none;
+        z-index: 2;
+
+        &::after,
+        &::before {
+            border-radius: inherit;
+            content: '';
+            inset: 0;
+            pointer-events: none;
+            position: absolute;
+            transition: background-color $state-transition, border-radius $shape-transition, box-shadow $state-transition, opacity $state-transition;
+        }
+
+        &::after {
+            background: $fab-bg;
+            z-index: 0;
+        }
+
+        &::before {
+            background: currentColor;
+            opacity: 0;
+            z-index: 1;
+        }
+
+        &.nt-elevation-none::after {
+            box-shadow: map.get(elevation.$elevation-shadows, 0);
+        }
+
+        &.nt-elevation-lowest::after {
+            box-shadow: map.get(elevation.$elevation-shadows, 1);
+        }
+
+        &.nt-elevation-low::after {
+            box-shadow: map.get(elevation.$elevation-shadows, 2);
+        }
+
+        &.nt-elevation-medium::after {
+            box-shadow: map.get(elevation.$elevation-shadows, 3);
+        }
+
+        &.nt-elevation-high::after {
+            box-shadow: map.get(elevation.$elevation-shadows, 4);
+        }
+
+        &.nt-elevation-highest::after {
+            box-shadow: map.get(elevation.$elevation-shadows, 5);
+        }
+
+        &:not(:disabled) {
+            &:hover::before {
+                opacity: 0.08;
+            }
+
+            &:focus-visible::before,
+            &:active::before {
+                opacity: 0.1;
+            }
+
+            &:focus-visible {
+                z-index: 4;
+
+                &::after {
+                    @include focus.nt-button-focus-ring;
+                }
+            }
+        }
+
+        &:disabled {
+            color: color-mix(in srgb, #{colors.$tnt-color-on-surface} 38%, transparent);
+            cursor: not-allowed;
+
+            &::after {
+                background: color-mix(in srgb, #{colors.$tnt-color-on-surface} 12%, transparent);
+                box-shadow: map.get(elevation.$elevation-shadows, 0);
+            }
+        }
+    }
+
+    &.nt-fab-menu-placement-inline,
+    &.nt-fab-menu-placement-lower-left,
+    &.nt-fab-menu-placement-upper-left {
+        .nt-fab-menu-button {
+            inset-inline-start: 0;
+            inset-inline-end: auto;
+            transform-origin: top left;
+        }
+    }
+
+    &.nt-fab-menu-placement-lower-right,
+    &.nt-fab-menu-placement-upper-right {
+        .nt-fab-menu-button {
+            inset-inline-start: auto;
+            inset-inline-end: 0;
+            transform-origin: top right;
+        }
+    }
+
+    &.nt-fab-menu-expanded,
+    &:has(.nt-fab-menu-panel:popover-open) {
+        .nt-fab-menu-button {
+            block-size: $close-size;
+            border-radius: $close-radius;
+            color: $selected-fab-fg;
+            inline-size: $close-size;
+
+            &::after {
+                background: $selected-fab-bg;
+            }
+        }
+    }
+
+    &.nt-fab-menu-placement-upper-right,
+    &.nt-fab-menu-placement-upper-left {
+        .nt-fab-menu-button {
+            inset-block-start: 0;
+            inset-block-end: auto;
+        }
+    }
+
+    .nt-fab-menu-open-icon,
+    .nt-fab-menu-close-icon {
+        align-items: center;
+        display: inline-flex;
+        justify-content: center;
+        position: relative;
+        transition: opacity $state-transition, transform $shape-transition;
+        z-index: 2;
+    }
+
+    .nt-fab-menu-open-icon {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    .nt-fab-menu-close-icon {
+        inset: 0;
+        opacity: 0;
+        position: absolute;
+        transform: rotate(-90deg) scale(0.7);
+    }
+
+    &.nt-fab-menu-expanded,
+    &:has(.nt-fab-menu-panel:popover-open) {
+        .nt-fab-menu-open-icon {
+            opacity: 0;
+            transform: rotate(90deg) scale(0.7);
+        }
+
+        .nt-fab-menu-close-icon {
+            opacity: 1;
+            transform: rotate(0) scale(1);
+        }
+    }
+
+    .nt-fab-menu-panel {
+        background: transparent;
+        border: 0;
+        box-sizing: border-box;
+        color: $item-fg;
+        display: none;
+        inset: auto;
+        margin: 0;
+        max-block-size: min(75vh, calc(100vh - #{$viewport-edge-margin}));
+        max-inline-size: calc(100vw - #{$viewport-edge-margin});
+        opacity: 0;
+        overflow: visible;
+        padding: 0;
+        position: fixed;
+        transform: none;
+        transform-origin: bottom right;
+        transition: opacity $menu-exit-transition, transform $menu-exit-transition, display $menu-exit-transition allow-discrete;
+        transition-behavior: allow-discrete;
+        z-index: 1001;
+
+        &:popover-open {
+            display: block;
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            transition: opacity $menu-enter-transition, transform $menu-enter-transition, display $menu-enter-transition allow-discrete;
+
+            @starting-style {
+                opacity: 0;
+                transform: none;
+            }
+        }
+    }
+
+    &.nt-fab-menu-placement-inline {
+        .nt-fab-menu-panel {
+            left: anchor(left);
+            top: calc(anchor(bottom) + #{$close-gap});
+            position-try-fallbacks: flip-block, flip-inline, flip-block flip-inline;
+        }
+    }
+
+    &.nt-fab-menu-placement-lower-right {
+        .nt-fab-menu-panel {
+            bottom: calc(anchor(top) + #{$close-gap});
+            right: anchor(right);
+        }
+    }
+
+    &.nt-fab-menu-placement-lower-left {
+        .nt-fab-menu-panel {
+            bottom: calc(anchor(top) + #{$close-gap});
+            left: anchor(left);
+        }
+    }
+
+    &.nt-fab-menu-placement-upper-right {
+        .nt-fab-menu-panel {
+            right: anchor(right);
+            top: calc(anchor(bottom) + #{$close-gap});
+        }
+    }
+
+    &.nt-fab-menu-placement-upper-left {
+        .nt-fab-menu-panel {
+            left: anchor(left);
+            top: calc(anchor(bottom) + #{$close-gap});
+        }
+    }
+
+    .nt-fab-menu-items {
+        align-items: flex-end;
+        display: flex;
+        flex-direction: column;
+        gap: $stack-gap;
+        max-block-size: inherit;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-width: none;
+        transform-origin: bottom right;
+
+        &::-webkit-scrollbar {
+            display: none;
+        }
+    }
+
+    &.nt-fab-menu-placement-lower-left,
+    &.nt-fab-menu-placement-upper-left,
+    &.nt-fab-menu-placement-inline,
+    &:dir(rtl) {
+        .nt-fab-menu-items {
+            align-items: flex-start;
+        }
+    }
+
+    ::deep {
+        .nt-fab-menu-item {
+            align-items: center;
+            appearance: none;
+            background: transparent;
+            border: 0;
+            border-radius: $item-radius;
+            block-size: $item-height;
+            box-sizing: border-box;
+            color: inherit;
+            cursor: pointer;
+            display: inline-flex;
+            flex: 0 0 auto;
+            gap: $item-gap;
+            inline-size: max-content;
+            justify-content: flex-start;
+            margin: 0;
+            max-inline-size: min(360px, calc(100vw - #{$viewport-edge-margin}));
+            min-block-size: $touch-target-size;
+            min-inline-size: $touch-target-size;
+            outline: none;
+            overflow: visible;
+            padding: 0 $item-padding-inline;
+            position: relative;
+            text-align: start;
+            text-decoration: none;
+            clip-path: inset(0 0 0 calc(100% - #{$item-reveal-size}) round #{$item-radius});
+            transform-origin: bottom right;
+            transform: translateY($item-enter-offset) scale(0.92);
+            opacity: 0;
+            transition: color $state-transition, clip-path $menu-exit-transition, opacity $menu-exit-transition, transform $menu-exit-transition;
+            user-select: none;
+
+            @include typescale.nt-title-medium;
+
+            &::after,
+            &::before {
+                border-radius: inherit;
+                content: '';
+                inset: 0;
+                pointer-events: none;
+                position: absolute;
+                transition: background-color $state-transition, border-radius $shape-transition, opacity $state-transition;
+            }
+
+            &::after {
+                background: $item-bg;
+                z-index: 0;
+            }
+
+            &::before {
+                background: currentColor;
+                opacity: 0;
+                z-index: 1;
+            }
+
+            &:hover::before {
+                opacity: 0.08;
+            }
+
+            &:focus-visible::before,
+            &:active::before {
+                opacity: 0.1;
+            }
+
+            &:focus-visible {
+                z-index: 3;
+
+                &::after {
+                    @include focus.nt-button-focus-ring;
+                }
+            }
+
+            &:disabled,
+            &.nt-fab-menu-item-disabled {
+                color: color-mix(in srgb, #{colors.$tnt-color-on-surface} 38%, transparent);
+                cursor: not-allowed;
+                pointer-events: none;
+
+                &::after {
+                    background: color-mix(in srgb, #{colors.$tnt-color-on-surface} 12%, transparent);
+                }
+            }
+        }
+
+        .nt-fab-menu-item-icon,
+        .nt-fab-menu-item-label {
+            position: relative;
+            z-index: 2;
+        }
+
+        .nt-fab-menu-item-icon {
+            align-items: center;
+            block-size: $item-icon-size;
+            display: inline-flex;
+            flex: 0 0 auto;
+            inline-size: $item-icon-size;
+            justify-content: center;
+        }
+
+        .nt-fab-menu-item-label {
+            min-inline-size: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .nt-fab-menu-item-without-icon {
+            padding-inline-start: $item-padding-inline;
+        }
+
+        .nt-button-ripple-host {
+            border-radius: inherit;
+            inset: 0;
+            transition: border-radius $shape-transition;
+        }
+
+        .nt-fab-menu-button .tnt-icon,
+        .nt-fab-menu-item-icon .tnt-icon {
+            color: inherit;
+            font-size: $item-icon-size;
+            pointer-events: none;
+        }
+    }
+
+    .nt-fab-menu-panel:popover-open ::deep .nt-fab-menu-item,
+    &.nt-fab-menu-expanded .nt-fab-menu-panel ::deep .nt-fab-menu-item {
+        clip-path: inset(0 0 0 0 round #{$item-radius});
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        transition: color $state-transition, clip-path $menu-enter-transition, opacity $menu-enter-transition, transform $menu-enter-transition;
+
+        @starting-style {
+            clip-path: inset(0 0 0 calc(100% - #{$item-reveal-size}) round #{$item-radius});
+            opacity: 0;
+            transform: translateY($item-enter-offset) scale(0.92);
+        }
+    }
+
+    &.nt-fab-menu-placement-lower-left {
+        .nt-fab-menu-panel,
+        .nt-fab-menu-items,
+        ::deep .nt-fab-menu-item {
+            transform-origin: bottom left;
+        }
+
+        ::deep .nt-fab-menu-item {
+            clip-path: inset(0 calc(100% - #{$item-reveal-size}) 0 0 round #{$item-radius});
+            transform: translateY($item-enter-offset) scale(0.92);
+        }
+    }
+
+    &.nt-fab-menu-placement-upper-right {
+        .nt-fab-menu-panel,
+        .nt-fab-menu-items,
+        ::deep .nt-fab-menu-item {
+            transform-origin: top right;
+        }
+
+        ::deep .nt-fab-menu-item {
+            transform: translateY(-$item-enter-offset) scale(0.92);
+        }
+
+        .nt-fab-menu-panel:popover-open ::deep .nt-fab-menu-item,
+        &.nt-fab-menu-expanded .nt-fab-menu-panel ::deep .nt-fab-menu-item {
+            @starting-style {
+                transform: translateY(-$item-enter-offset) scale(0.92);
+            }
+        }
+    }
+
+    &.nt-fab-menu-placement-upper-left,
+    &.nt-fab-menu-placement-inline {
+        .nt-fab-menu-panel,
+        .nt-fab-menu-items,
+        ::deep .nt-fab-menu-item {
+            transform-origin: top left;
+        }
+
+        ::deep .nt-fab-menu-item {
+            clip-path: inset(0 calc(100% - #{$item-reveal-size}) 0 0 round #{$item-radius});
+            transform: translateY(-$item-enter-offset) scale(0.92);
+        }
+    }
+
+    &.nt-fab-menu-placement-lower-left {
+        .nt-fab-menu-panel:popover-open ::deep .nt-fab-menu-item,
+        &.nt-fab-menu-expanded .nt-fab-menu-panel ::deep .nt-fab-menu-item {
+            @starting-style {
+                clip-path: inset(0 calc(100% - #{$item-reveal-size}) 0 0 round #{$item-radius});
+                transform: translateY($item-enter-offset) scale(0.92);
+            }
+        }
+    }
+
+    &.nt-fab-menu-placement-upper-left,
+    &.nt-fab-menu-placement-inline {
+        .nt-fab-menu-panel:popover-open ::deep .nt-fab-menu-item,
+        &.nt-fab-menu-expanded .nt-fab-menu-panel ::deep .nt-fab-menu-item {
+            @starting-style {
+                clip-path: inset(0 calc(100% - #{$item-reveal-size}) 0 0 round #{$item-radius});
+                transform: translateY(-$item-enter-offset) scale(0.92);
+            }
+        }
+    }
+
+    &.nt-fab-menu-placement-lower-right,
+    &.nt-fab-menu-placement-lower-left {
+        @for $index from 1 through 6 {
+            .nt-fab-menu-panel:popover-open ::deep .nt-fab-menu-item:nth-child(#{$index}),
+            &.nt-fab-menu-expanded .nt-fab-menu-panel ::deep .nt-fab-menu-item:nth-child(#{$index}) {
+                transition-delay: 0ms, $menu-item-enter-stagger * (6 - $index), $menu-item-enter-stagger * (6 - $index), $menu-item-enter-stagger * (6 - $index);
+            }
+
+            .nt-fab-menu-panel:not(:popover-open) ::deep .nt-fab-menu-item:nth-child(#{$index}) {
+                transition-delay: 0ms, $menu-item-exit-stagger * ($index - 1), $menu-item-exit-stagger * ($index - 1), $menu-item-exit-stagger * ($index - 1);
+            }
+        }
+    }
+
+    &.nt-fab-menu-placement-upper-right,
+    &.nt-fab-menu-placement-upper-left,
+    &.nt-fab-menu-placement-inline {
+        @for $index from 1 through 6 {
+            .nt-fab-menu-panel:popover-open ::deep .nt-fab-menu-item:nth-child(#{$index}),
+            &.nt-fab-menu-expanded .nt-fab-menu-panel ::deep .nt-fab-menu-item:nth-child(#{$index}) {
+                transition-delay: 0ms, $menu-item-enter-stagger * ($index - 1), $menu-item-enter-stagger * ($index - 1), $menu-item-enter-stagger * ($index - 1);
+            }
+
+            .nt-fab-menu-panel:not(:popover-open) ::deep .nt-fab-menu-item:nth-child(#{$index}) {
+                transition-delay: 0ms, $menu-item-exit-stagger * (6 - $index), $menu-item-exit-stagger * (6 - $index), $menu-item-exit-stagger * (6 - $index);
+            }
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .nt-fab-menu-button,
+        .nt-fab-menu-open-icon,
+        .nt-fab-menu-close-icon,
+        .nt-fab-menu-panel,
+        ::deep .nt-fab-menu-item {
+            transition-duration: 1ms;
+            transition-delay: 0ms;
+        }
+
+        .nt-fab-menu-panel,
+        ::deep .nt-fab-menu-item {
+            transform: none;
+            clip-path: none;
+        }
+
+        .nt-fab-menu-panel:popover-open ::deep .nt-fab-menu-item,
+        &.nt-fab-menu-expanded .nt-fab-menu-panel ::deep .nt-fab-menu-item {
+            clip-path: none;
+            transform: none;
+        }
+    }
+}
+
+body:has(.tnt-footer) {
+    .nt-fab-menu {
+        &.nt-fab-menu-placement-lower-right,
+        &.nt-fab-menu-placement-lower-left {
+            inset-block-end: calc(var(--tnt-footer-height) + #{$compact-placement-offset});
+        }
+
+        @media (min-width: 600px) {
+            &.nt-fab-menu-placement-lower-right,
+            &.nt-fab-menu-placement-lower-left {
+                inset-block-end: calc(var(--tnt-footer-height) + #{$medium-placement-offset});
+            }
+        }
+    }
+}

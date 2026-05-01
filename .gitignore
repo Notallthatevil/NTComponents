@@ -368,3 +368,4 @@ coverlet.runsettings
 /NTComponents/Editors/Core/**.js
 /NTComponents/Buttons/NTSplitButton.razor.js
 /NTComponents/Shapes/NTShape.razor.js
+/NTComponents/Buttons/NTFabMenu.razor.js

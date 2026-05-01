@@ -41,3 +41,11 @@ NTC1035 | Usage | Warning | NTFabButton BackgroundColor cannot be None or Transp
 NTC1036 | Usage | Warning | NTFabButton TextColor cannot be None or Transparent.
 NTC1037 | Usage | Warning | NTFabButton ButtonSize Smallest/XS and Largest/XL are remapped to the closest supported FAB size.
 NTC1038 | Usage | Warning | NTFabButton Placement must be a defined NTFabButtonPlacement value.
+NTC1039 | Usage | Warning | NTFabMenu Icon cannot be omitted or null.
+NTC1040 | Usage | Warning | NTFabMenu AriaLabel cannot be empty.
+NTC1041 | Usage | Warning | NTFabMenu color overrides cannot be None or Transparent.
+NTC1042 | Usage | Warning | NTFabMenu ButtonSize Smallest/XS and Largest/XL are remapped to the closest supported FAB size.
+NTC1043 | Usage | Warning | NTFabMenu Placement must be a defined NTFabButtonPlacement value.
+NTC1044 | Usage | Warning | NTFabMenu requires 2 to 6 actionable menu items.
+NTC1045 | Usage | Warning | NTFabMenu item Label cannot be empty.
+NTC1046 | Usage | Warning | NTFabMenuAnchorItem Href cannot be empty.

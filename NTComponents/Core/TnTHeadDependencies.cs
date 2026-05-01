@@ -78,7 +78,7 @@ public class TnTHeadDependencies : IComponent {
         // <script type="module">...</script>
         builder.OpenElement(28, "script");
         builder.AddAttribute(29, "type", "module");
-        builder.AddContent(30, """
+        builder.AddMarkupContent(30, """
             if (!("anchorName" in document.documentElement.style)) {
                 import("https://unpkg.com/@oddbird/css-anchor-positioning");
             }
