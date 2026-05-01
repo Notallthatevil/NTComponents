@@ -1,0 +1,278 @@
+@use 'sass:map';
+@use '../Styles/_Variables/_colors.scss' as colors;
+@use '../Styles/_Variables/_corner-radius.scss' as corners;
+@use '../Styles/_Variables/_elevation.scss' as elevation;
+@use '../Styles/_Variables/_motion.scss' as motion;
+@use '../Styles/_Variables/_typescale.scss' as typescale;
+@use './buttonFocusRing' as focus;
+
+$nt-fab-state-transition: motion.$nt-motion-button-state-transition;
+$nt-fab-shape-transition: motion.$nt-motion-button-shape-transition;
+$nt-fab-sizes: (
+    s: (
+        container-size: 56px,
+        radius: corners.$nt-corner-radius-large,
+        icon-size: 24px,
+        leading-space: 16px,
+        trailing-space: 16px,
+        icon-label-space: 8px,
+        label-weight: 500,
+        label-size: 16px,
+        label-line-height: 24px,
+        label-tracking: 0
+    ),
+    m: (
+        container-size: 80px,
+        radius: corners.$nt-corner-radius-large-increased,
+        icon-size: 28px,
+        leading-space: 26px,
+        trailing-space: 26px,
+        icon-label-space: 12px,
+        label-weight: 400,
+        label-size: 22px,
+        label-line-height: 28px,
+        label-tracking: 0
+    ),
+    l: (
+        container-size: 96px,
+        radius: corners.$nt-corner-radius-extra-large,
+        icon-size: 36px,
+        leading-space: 28px,
+        trailing-space: 28px,
+        icon-label-space: 16px,
+        label-weight: 400,
+        label-size: 24px,
+        label-line-height: 32px,
+        label-tracking: 0
+    )
+);
+$nt-fab-elevations: (
+    none: (rest: 0, hover: 1),
+    lowest: (rest: 1, hover: 2),
+    low: (rest: 2, hover: 3),
+    medium: (rest: 3, hover: 4),
+    high: (rest: 4, hover: 5),
+    highest: (rest: 5, hover: 6)
+);
+
+@mixin nt-fab-size($tokens) {
+    --nt-fab-size: #{map.get($tokens, container-size)};
+    --nt-fab-height: #{map.get($tokens, container-size)};
+    --nt-fab-shape: #{map.get($tokens, radius)};
+    --nt-fab-icon-size: #{map.get($tokens, icon-size)};
+    --nt-fab-leading-space: #{map.get($tokens, leading-space)};
+    --nt-fab-trailing-space: #{map.get($tokens, trailing-space)};
+    --nt-fab-icon-label-space: #{map.get($tokens, icon-label-space)};
+
+    @include typescale.nt-typescale(
+        map.get($tokens, label-weight),
+        map.get($tokens, label-size),
+        map.get($tokens, label-line-height),
+        map.get($tokens, label-tracking)
+    );
+}
+
+.nt-fab-button {
+    --nt-fab-bg: #{colors.$tnt-color-primary-container};
+    --nt-fab-fg: #{colors.$tnt-color-on-primary-container};
+    --nt-fab-size: 80px;
+    --nt-fab-height: 80px;
+    --nt-fab-shape: #{corners.$nt-corner-radius-large-increased};
+    --nt-fab-icon-size: 28px;
+    --nt-fab-leading-space: 26px;
+    --nt-fab-placement-offset: 16px;
+    --nt-fab-trailing-space: 26px;
+    --nt-fab-icon-label-space: 12px;
+
+    align-items: center;
+    appearance: none;
+    background: transparent;
+    border: 0;
+    border-radius: var(--nt-fab-shape);
+    box-sizing: border-box;
+    color: var(--nt-fab-fg);
+    cursor: pointer;
+    display: inline-flex;
+    justify-content: center;
+    margin: 0;
+    min-block-size: max(48px, var(--nt-fab-height));
+    min-inline-size: max(48px, var(--nt-fab-size));
+    outline: none;
+    overflow: visible;
+    padding: 0;
+    position: relative;
+    text-decoration: none;
+    transition: border-radius $nt-fab-shape-transition, box-shadow $nt-fab-state-transition, color $nt-fab-state-transition;
+    user-select: none;
+    vertical-align: middle;
+
+    &::after,
+    &::before {
+        border-radius: inherit;
+        content: '';
+        inset: 0;
+        pointer-events: none;
+        position: absolute;
+    }
+
+    &::after {
+        background: var(--nt-fab-bg);
+        transition: background-color $nt-fab-state-transition, border-radius $nt-fab-shape-transition, box-shadow $nt-fab-state-transition;
+        z-index: 0;
+    }
+
+    &::before {
+        background: currentColor;
+        opacity: 0;
+        transition: border-radius $nt-fab-shape-transition, opacity $nt-fab-state-transition;
+        z-index: 1;
+    }
+
+    @each $name, $tokens in $nt-fab-sizes {
+        &.tnt-size-#{$name} {
+            @include nt-fab-size($tokens);
+        }
+    }
+
+    @each $name, $tokens in $nt-fab-elevations {
+        &.nt-elevation-#{$name} {
+            &::after {
+                box-shadow: map.get(elevation.$elevation-shadows, map.get($tokens, rest));
+            }
+
+            &:not(.tnt-disabled):not(:disabled):hover::after {
+                box-shadow: map.get(elevation.$elevation-shadows, map.get($tokens, hover));
+            }
+        }
+    }
+
+    &.nt-fab-button-icon-only {
+        block-size: var(--nt-fab-size);
+        inline-size: var(--nt-fab-size);
+    }
+
+    &.nt-fab-button-extended {
+        block-size: var(--nt-fab-height);
+        gap: var(--nt-fab-icon-label-space);
+        inline-size: max-content;
+        min-inline-size: max(48px, var(--nt-fab-height));
+        padding-inline: var(--nt-fab-leading-space) var(--nt-fab-trailing-space);
+    }
+
+    &:not(.tnt-disabled):not(:disabled) {
+        &:hover::before {
+            opacity: 0.08;
+        }
+
+        &:focus-visible::before,
+        &:active::before {
+            opacity: 0.1;
+        }
+
+        &:focus-visible {
+            outline: none;
+            z-index: 3;
+
+            &::after {
+                @include focus.nt-button-focus-ring;
+            }
+        }
+    }
+
+    &.nt-fab-button-placement-lower-right,
+    &.nt-fab-button-placement-lower-left,
+    &.nt-fab-button-placement-upper-right,
+    &.nt-fab-button-placement-upper-left {
+        position: fixed;
+        z-index: 1000;
+    }
+
+    &.nt-fab-button-placement-lower-right {
+        bottom: var(--nt-fab-placement-offset);
+        right: var(--nt-fab-placement-offset);
+    }
+
+    &.nt-fab-button-placement-lower-left {
+        bottom: var(--nt-fab-placement-offset);
+        left: var(--nt-fab-placement-offset);
+    }
+
+    &.nt-fab-button-placement-upper-right {
+        right: var(--nt-fab-placement-offset);
+        top: var(--nt-fab-placement-offset);
+    }
+
+    &.nt-fab-button-placement-upper-left {
+        left: var(--nt-fab-placement-offset);
+        top: var(--nt-fab-placement-offset);
+    }
+
+    > .nt-fab-button-icon,
+    > .nt-fab-button-label {
+        position: relative;
+        z-index: 2;
+    }
+
+    .nt-fab-button-icon {
+        align-items: center;
+        display: inline-flex;
+        flex: 0 0 auto;
+        justify-content: center;
+    }
+
+    .nt-fab-button-label {
+        min-inline-size: 0;
+        overflow: visible;
+        white-space: nowrap;
+    }
+
+    &.tnt-disabled,
+    &:disabled {
+        color: color-mix(in srgb, #{colors.$tnt-color-on-surface} 38%, transparent);
+        cursor: not-allowed;
+        outline: none;
+
+        &::after {
+            background: color-mix(in srgb, #{colors.$tnt-color-on-surface} 12%, transparent);
+            box-shadow: none;
+        }
+    }
+
+    ::deep {
+        .nt-button-ripple-host {
+            border-radius: inherit;
+            inset: 0;
+            transition: border-radius $nt-fab-shape-transition;
+        }
+
+        .tnt-icon {
+            color: inherit;
+            font-size: var(--nt-fab-icon-size);
+            pointer-events: none;
+        }
+
+        tnt-page-script {
+            position: absolute;
+        }
+
+        progress.tnt-components {
+            height: 100%;
+            position: absolute !important;
+            width: 100%;
+
+            &.tnt-progress-linear {
+                height: 4px !important;
+                width: calc(100% - 8px) !important;
+            }
+        }
+    }
+}
+
+body:has(.tnt-footer) {
+    .nt-fab-button {
+        &.nt-fab-button-placement-lower-right,
+        &.nt-fab-button-placement-lower-left {
+            bottom: calc(var(--tnt-footer-height) + var(--nt-fab-placement-offset));
+        }
+    }
+}

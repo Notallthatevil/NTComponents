@@ -1,0 +1,195 @@
+@page "/nt-fab-button"
+@using NTComponents
+
+@rendermode InteractiveAuto
+
+<div style="display: grid; gap: 24px;">
+    <div>
+        <h1>NTFabButton</h1>
+        <p>Material 3 floating action button with icon-only and extended label modes.</p>
+    </div>
+
+    <TnTRow>
+        <TnTColumn S="12" M="4">
+            <NTCard>
+                <div class="tnt-card-header">
+                    <h2>Controls</h2>
+                </div>
+                <div style="display: grid; gap: 12px; padding: 16px;">
+                    <label>
+                        Button size
+                        <select @bind="ButtonSize">
+                            @foreach (var size in Sizes) {
+                                <option value="@size">@GetSizeLabel(size)</option>
+                            }
+                        </select>
+                    </label>
+
+                    <label>
+                        Elevation
+                        <select @bind="Elevation">
+                            @foreach (var elevation in Elevations) {
+                                <option value="@elevation">@elevation</option>
+                            }
+                        </select>
+                    </label>
+
+                    <label>
+                        Placement
+                        <select @bind="Placement">
+                            @foreach (var placement in Placements) {
+                                <option value="@placement">@placement</option>
+                            }
+                        </select>
+                    </label>
+
+                    <label>
+                        Label
+                        <input @bind="Label" disabled="@(!ShowLabel)" />
+                    </label>
+
+                    <label>
+                        <input type="checkbox" @bind="ShowLabel" />
+                        Show label
+                    </label>
+
+                    <label>
+                        <input type="checkbox" @bind="UseCustomColors" />
+                        Use secondary container colors
+                    </label>
+
+                    <label>
+                        <input type="checkbox" @bind="EnableRipple" />
+                        Enable ripple
+                    </label>
+
+                    <label>
+                        <input type="checkbox" @bind="Disabled" />
+                        Disabled
+                    </label>
+                </div>
+            </NTCard>
+        </TnTColumn>
+
+        <TnTColumn S="12" M="8">
+            <NTCard>
+                <div class="tnt-card-header">
+                    <h2>Preview</h2>
+                </div>
+                <div style="align-items: center; display: flex; flex-wrap: wrap; gap: 32px; padding: 40px;">
+                    <NTFabButton Icon="MaterialIcon.Add"
+                                 Label="@EffectiveLabel"
+                                 AriaLabel="@EffectiveAriaLabel"
+                                 ButtonSize="@ButtonSize"
+                                 Elevation="@Elevation"
+                                 BackgroundColor="@EffectiveBackgroundColor"
+                                 TextColor="@EffectiveTextColor"
+                                 EnableRipple="@EnableRipple"
+                                 Disabled="@Disabled"
+                                 Placement="@Placement"
+                                 Tooltip="@TooltipContent"
+                                 OnClickCallback="HandleClick" />
+
+                    <div>
+                        <p>Clicks: <strong>@ClickCount</strong></p>
+                        <p>Mode: <strong>@(ShowLabel ? "Extended" : "Icon only")</strong></p>
+                        <p>Effective size: <strong>@GetEffectiveSizeLabel(ButtonSize)</strong></p>
+                        <p>Placement: <strong>@Placement</strong></p>
+                    </div>
+                </div>
+            </NTCard>
+        </TnTColumn>
+    </TnTRow>
+
+    <NTCard>
+        <div class="tnt-card-header">
+            <h2>Size lineup</h2>
+        </div>
+        <div style="align-items: center; display: flex; flex-wrap: wrap; gap: 24px; padding: 32px;">
+            @foreach (var size in SupportedSizes) {
+                <NTFabButton Icon="MaterialIcon.Edit"
+                             AriaLabel="@($"Edit using {size} icon-only FAB")"
+                             ButtonSize="@size"
+                             Elevation="@Elevation"
+                             EnableRipple="@EnableRipple"
+                             Disabled="@Disabled" />
+
+                <NTFabButton Icon="MaterialIcon.Edit"
+                             Label="@GetSizeLabel(size)"
+                             AriaLabel="@($"Edit using {size} extended FAB")"
+                             ButtonSize="@size"
+                             Elevation="@Elevation"
+                             EnableRipple="@EnableRipple"
+                             Disabled="@Disabled" />
+            }
+        </div>
+    </NTCard>
+
+    <NTCard>
+        <div class="tnt-card-header">
+            <h2>Unsupported size fallback</h2>
+        </div>
+        <div style="align-items: center; display: flex; flex-wrap: wrap; gap: 24px; padding: 32px;">
+            <NTFabButton Icon="MaterialIcon.Add"
+                         Label="XS maps to Small"
+                         AriaLabel="Create using extra small fallback"
+                         ButtonSize="@UnsupportedSmallestSize" />
+
+            <NTFabButton Icon="MaterialIcon.Add"
+                         Label="XL maps to Large"
+                         AriaLabel="Create using extra large fallback"
+                         ButtonSize="@UnsupportedLargestSize" />
+        </div>
+    </NTCard>
+</div>
+
+@code {
+    private static readonly IReadOnlyList<Size> Sizes = [Size.Smallest, Size.Small, Size.Medium, Size.Large, Size.Largest];
+    private static readonly IReadOnlyList<Size> SupportedSizes = [Size.Small, Size.Medium, Size.Large];
+    private static readonly Size UnsupportedLargestSize = Size.Largest;
+    private static readonly Size UnsupportedSmallestSize = Size.Smallest;
+    private static readonly IReadOnlyList<NTElevation> Elevations = [NTElevation.Lowest, NTElevation.Low, NTElevation.Medium, NTElevation.High, NTElevation.Highest];
+    private static readonly IReadOnlyList<NTFabButtonPlacement> Placements = [
+        NTFabButtonPlacement.Inline,
+        NTFabButtonPlacement.LowerRight,
+        NTFabButtonPlacement.LowerLeft,
+        NTFabButtonPlacement.UpperRight,
+        NTFabButtonPlacement.UpperLeft
+    ];
+
+    private Size ButtonSize { get; set; } = Size.Medium;
+    private int ClickCount { get; set; }
+    private bool Disabled { get; set; }
+    private NTElevation Elevation { get; set; } = NTElevation.Medium;
+    private bool EnableRipple { get; set; } = true;
+    private string Label { get; set; } = "Create";
+    private NTFabButtonPlacement Placement { get; set; }
+    private bool ShowLabel { get; set; } = true;
+    private bool UseCustomColors { get; set; }
+
+    private string? EffectiveLabel => ShowLabel ? string.IsNullOrWhiteSpace(Label) ? "Create" : Label : null;
+    private string EffectiveAriaLabel => ShowLabel ? $"Create with label {EffectiveLabel}" : "Create a new item";
+    private TnTColor? EffectiveBackgroundColor => UseCustomColors ? TnTColor.SecondaryContainer : null;
+    private TnTColor? EffectiveTextColor => UseCustomColors ? TnTColor.OnSecondaryContainer : null;
+    private RenderFragment TooltipContent => builder => builder.AddContent(0, EffectiveAriaLabel);
+
+    private Task HandleClick(MouseEventArgs _) {
+        ClickCount++;
+        return Task.CompletedTask;
+    }
+
+    private static string GetEffectiveSizeLabel(Size size) => size switch {
+        Size.Smallest => "Small",
+        Size.Largest => "Large",
+        _ => GetSizeLabel(size)
+    };
+
+    private static string GetSizeLabel(Size size) => size switch {
+        Size.Smallest => "XS",
+        Size.Small => "Small",
+        Size.Medium => "Medium",
+        Size.Large => "Large",
+        Size.Largest => "XL",
+        _ => size.ToString()
+    };
+}

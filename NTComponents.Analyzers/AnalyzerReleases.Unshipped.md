@@ -34,3 +34,10 @@ NTC1028 | Usage | Warning | NTIconButton text and unselected outlined variants r
 NTC1029 | Usage | Warning | NTIconButton filled, tonal, elevated, and selected outlined toggle variants require a visible container background.
 NTC1030 | Usage | Warning | NTIconButton TextColor cannot be None or Transparent.
 NTC1031 | Usage | Warning | NTIconButton elevation must match the selected variant.
+NTC1032 | Usage | Warning | NTFabButton Icon cannot be omitted or null.
+NTC1033 | Usage | Warning | Icon-only NTFabButton requires AriaLabel.
+NTC1034 | Usage | Warning | NTFabButton Label cannot contain line breaks.
+NTC1035 | Usage | Warning | NTFabButton BackgroundColor cannot be None or Transparent.
+NTC1036 | Usage | Warning | NTFabButton TextColor cannot be None or Transparent.
+NTC1037 | Usage | Warning | NTFabButton ButtonSize Smallest/XS and Largest/XL are remapped to the closest supported FAB size.
+NTC1038 | Usage | Warning | NTFabButton Placement must be a defined NTFabButtonPlacement value.
