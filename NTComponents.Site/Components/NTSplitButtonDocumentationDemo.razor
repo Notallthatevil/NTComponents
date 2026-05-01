@@ -26,12 +26,12 @@
                                Disabled="@Disabled"
                                EnableRipple="@EnableRipple"
                                OnClickCallback="HandlePrimaryAction">
-                    <NTSplitButtonButtonItem Label="Save draft" Icon="MaterialIcon.Drafts" OnClickCallback="@((MouseEventArgs _) => SelectMenuAction("Save draft"))" />
-                    <NTSplitButtonButtonItem Label="Save as copy" Icon="MaterialIcon.ContentCopy" OnClickCallback="@((MouseEventArgs _) => SelectMenuAction("Save as copy"))" />
+                    <NTMenuButtonItem Label="Save draft" Icon="MaterialIcon.Drafts" OnClickCallback="@((MouseEventArgs _) => SelectMenuAction("Save draft"))" />
+                    <NTMenuButtonItem Label="Save as copy" Icon="MaterialIcon.ContentCopy" OnClickCallback="@((MouseEventArgs _) => SelectMenuAction("Save as copy"))" />
                     @if (ShowMenuDivider) {
-                        <NTSplitButtonDividerItem Inset="@InsetMenuDivider" />
+                        <NTMenuDividerItem Inset="@InsetMenuDivider" />
                     }
-                    <NTSplitButtonAnchorItem Label="Export" Icon="MaterialIcon.IosShare" Href="/components/NTComponents.NTSplitButton" />
+                    <NTMenuAnchorItem Label="Export" Icon="MaterialIcon.IosShare" Href="/components/NTComponents.NTSplitButton" />
                 </NTSplitButton>
             </div>
 

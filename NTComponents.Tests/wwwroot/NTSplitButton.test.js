@@ -22,8 +22,13 @@ function createSplitButton({ expanded = false } = {}) {
    menuButton.className = 'nt-split-button-segment nt-split-button-trailing';
 
    const panel = document.createElement('div');
-   panel.className = 'nt-split-button-menu-panel';
+   panel.className = 'nt-menu nt-split-button-menu-panel nt-menu-placement-auto nt-menu-placement-bottom nt-menu-anchor-auto nt-menu-anchor-end';
    panel.dataset.closeOnItemClick = 'true';
+   panel.updatePlacement = jest.fn();
+
+   const item = document.createElement('button');
+   item.className = 'nt-menu-item nt-split-button-menu-item';
+   panel.append(item);
 
    let isOpen = expanded;
    panel.matches = jest.fn((selector) => selector === ':popover-open' ? isOpen : false);
@@ -43,12 +48,13 @@ function createSplitButton({ expanded = false } = {}) {
    host.append(leadingButton, menuButton, panel);
    document.body.appendChild(host);
 
-   return { host, leadingButton, menuButton, panel };
+   return { host, item, leadingButton, menuButton, panel };
 }
 
 describe('NTSplitButton custom element', () => {
    beforeEach(() => {
       document.body.innerHTML = '';
+      delete window.NTComponents;
       jest.clearAllMocks();
    });
 
@@ -73,6 +79,7 @@ describe('NTSplitButton custom element', () => {
       host.update(dotNetRef);
 
       expect(panel.showPopover).toHaveBeenCalledTimes(1);
+      expect(panel.updatePlacement).toHaveBeenCalledTimes(1);
       expect(dotNetRef.invokeMethodAsync).not.toHaveBeenCalled();
    });
 
@@ -87,4 +94,17 @@ describe('NTSplitButton custom element', () => {
       expect(panel.hidePopover).toHaveBeenCalledTimes(1);
       expect(dotNetRef.invokeMethodAsync).toHaveBeenCalledWith('NotifySplitButtonExpandedChanged', false);
    });
+
+   test('registers split button segments and menu items for ripple interactions', () => {
+      const registerButtonInteraction = jest.fn();
+      window.NTComponents = { registerButtonInteraction };
+      const { host, item, leadingButton, menuButton } = createSplitButton();
+
+      onLoad(host, createDotNetRef());
+
+      expect(registerButtonInteraction).toHaveBeenCalledWith(leadingButton);
+      expect(registerButtonInteraction).toHaveBeenCalledWith(menuButton);
+      expect(registerButtonInteraction).toHaveBeenCalledWith(item);
+   });
+
 });

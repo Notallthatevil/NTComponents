@@ -92,12 +92,16 @@
                                    Disabled="@Disabled"
                                    MenuButtonDisabled="@MenuButtonDisabled"
                                    OnClickCallback="HandlePrimaryAction">
-                        <NTSplitButtonButtonItem Label="Save draft" Icon="MaterialIcon.Drafts" OnClickCallback="@((MouseEventArgs _) => SelectMenuAction("Save draft"))" />
-                        <NTSplitButtonButtonItem Label="Save as copy" Icon="MaterialIcon.ContentCopy" OnClickCallback="@((MouseEventArgs _) => SelectMenuAction("Save as copy"))" />
+                        <NTMenuButtonItem Label="Save draft" Icon="MaterialIcon.Drafts" OnClickCallback="@((MouseEventArgs _) => SelectMenuAction("Save draft"))" />
+                        <NTMenuButtonItem Label="Save as copy" Icon="MaterialIcon.ContentCopy" OnClickCallback="@((MouseEventArgs _) => SelectMenuAction("Save as copy"))" />
                         @if (ShowMenuDivider) {
-                            <NTSplitButtonDividerItem Inset="@InsetMenuDivider" />
+                            <NTMenuDividerItem Inset="@InsetMenuDivider" />
                         }
-                        <NTSplitButtonAnchorItem Label="Export" Icon="MaterialIcon.IosShare" Href="/split-button" />
+                        <NTMenuSubMenuItem Label="Share options" Icon="MaterialIcon.Share">
+                            <NTMenuButtonItem Label="Share with editing permissions" Icon="MaterialIcon.Edit" OnClickCallback="@((MouseEventArgs _) => SelectMenuAction("Share with editing permissions"))" />
+                            <NTMenuButtonItem Label="Share read-only link with a very long label" Icon="MaterialIcon.Link" OnClickCallback="@((MouseEventArgs _) => SelectMenuAction("Share read-only link"))" />
+                        </NTMenuSubMenuItem>
+                        <NTMenuAnchorItem Label="Export" Icon="MaterialIcon.IosShare" Href="/split-button" />
                     </NTSplitButton>
 
                     <div>
@@ -121,9 +125,9 @@
                                ButtonSize="Size.Small"
                                Shape="@Shape"
                                LeadingIcon="MaterialIcon.Save">
-                    <NTSplitButtonButtonItem Label="First option" />
-                    <NTSplitButtonDividerItem />
-                    <NTSplitButtonAnchorItem Label="Second option" Href="/split-button" />
+                    <NTMenuButtonItem Label="First option" />
+                    <NTMenuDividerItem />
+                    <NTMenuAnchorItem Label="Second option" Href="/split-button" />
                 </NTSplitButton>
             }
         </div>
