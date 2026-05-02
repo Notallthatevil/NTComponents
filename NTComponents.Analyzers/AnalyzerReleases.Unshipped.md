@@ -49,3 +49,8 @@ NTC1043 | Usage | Warning | NTFabMenu Placement must be a defined NTFabButtonPla
 NTC1044 | Usage | Warning | NTFabMenu requires 2 to 6 actionable menu items.
 NTC1045 | Usage | Warning | NTFabMenu item Label cannot be empty.
 NTC1046 | Usage | Warning | NTFabMenuAnchorItem Href cannot be empty.
+NTC1047 | Usage | Warning | NTMenu AriaLabel cannot be empty.
+NTC1048 | Usage | Warning | NTMenu requires at least one actionable menu item.
+NTC1049 | Usage | Warning | NTMenu item Label cannot be empty.
+NTC1050 | Usage | Warning | NTMenuAnchorItem Href cannot be empty.
+NTC1051 | Usage | Warning | NTMenu color overrides cannot be None or Transparent.

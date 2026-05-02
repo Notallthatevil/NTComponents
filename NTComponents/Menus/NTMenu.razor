@@ -1,0 +1,27 @@
+@namespace NTComponents
+@using NTComponents.Core
+@inherits TnTPageScriptComponent<NTMenu>
+
+<nt-menu @attributes="AdditionalAttributes"
+         id="@ElementId"
+         class="@ElementClass"
+         style="@ElementStyle"
+         title="@ElementTitle"
+         lang="@ElementLang"
+         role="@Role"
+         aria-label="@AriaLabel"
+         popover="@Popover"
+         data-anchor-selector="@AnchorSelector"
+         data-close-on-item-click="@CloseOnContentClickAttribute"
+         data-submenu="@IsSubMenuAttribute"
+         @ref="Element">
+    <CascadingValue Value="this" IsFixed="true">
+        @ChildContent
+    </CascadingValue>
+    @if (HasRegisteredMenuItems) {
+        @foreach (var item in _menuItems) {
+            @item.Render(this)
+        }
+    }
+</nt-menu>
+@PageScript

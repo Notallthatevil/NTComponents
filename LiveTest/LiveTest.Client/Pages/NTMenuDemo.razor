@@ -1,0 +1,84 @@
+@page "/nt-menu"
+@rendermode InteractiveAuto
+@using Microsoft.AspNetCore.Components.Web
+@using NTComponents
+
+<div style="display: grid; gap: 24px; padding: 24px;">
+    <h1>NTMenu</h1>
+
+    <NTCard>
+        <div class="tnt-card-header">
+            <h2>Anchored menu</h2>
+        </div>
+        <div style="align-items: start; display: grid; gap: 24px; min-block-size: 360px; padding: 32px;">
+            <div style="display: flex; flex-wrap: wrap; gap: 16px;">
+                <NTButton ElementId="@PrimaryButtonId"
+                          Label="Open menu"
+                          LeadingIcon="MaterialIcon.MoreVert"
+                          Variant="@NTButtonVariant.Filled"
+                          style="@($"anchor-name: {PrimaryAnchorName};")"
+                          popovertarget="@PrimaryMenuId"
+                          popovertargetaction="toggle" />
+
+                <NTButton ElementId="@EdgeButtonId"
+                          Label="Open near edge"
+                          LeadingIcon="MaterialIcon.KeyboardArrowDown"
+                          Variant="@NTButtonVariant.Tonal"
+                          style="@($"anchor-name: {EdgeAnchorName}; margin-inline-start: auto;")"
+                          popovertarget="@EdgeMenuId"
+                          popovertargetaction="toggle" />
+            </div>
+
+            <NTMenu ElementId="@PrimaryMenuId"
+                    AnchorName="@PrimaryAnchorName"
+                    AnchorSelector="@($"#{PrimaryButtonId}")"
+                    AriaLabel="Document actions">
+                <NTMenuButtonItem Label="Rename" Icon="MaterialIcon.Edit" OnClickCallback="@((MouseEventArgs _) => SelectAction("Rename"))" />
+                <NTMenuButtonItem Label="Duplicate as a reusable project template with inherited settings" Icon="MaterialIcon.ContentCopy" OnClickCallback="@((MouseEventArgs _) => SelectAction("Duplicate template"))" />
+                <NTMenuDividerItem />
+                <NTMenuSubMenuItem Label="Share" Icon="MaterialIcon.Share">
+                    <NTMenuButtonItem Label="Share with editing permissions" Icon="MaterialIcon.Edit" OnClickCallback="@((MouseEventArgs _) => SelectAction("Share edit"))" />
+                    <NTMenuButtonItem Label="Create read-only public link with expiration policy" Icon="MaterialIcon.Link" OnClickCallback="@((MouseEventArgs _) => SelectAction("Share link"))" />
+                    <NTMenuSubMenuItem Label="Advanced sharing" Icon="MaterialIcon.Tune">
+                        <NTMenuButtonItem Label="Copy audit-safe access request link" Icon="MaterialIcon.ContentCopy" OnClickCallback="@((MouseEventArgs _) => SelectAction("Copy access request link"))" />
+                        <NTMenuAnchorItem Label="Open sharing policy" Icon="MaterialIcon.Policy" Href="/nt-menu" />
+                    </NTMenuSubMenuItem>
+                </NTMenuSubMenuItem>
+                <NTMenuAnchorItem Label="Open details" Icon="MaterialIcon.OpenInNew" Href="/nt-menu" />
+            </NTMenu>
+
+            <NTMenu ElementId="@EdgeMenuId"
+                    AnchorName="@EdgeAnchorName"
+                    AnchorSelector="@($"#{EdgeButtonId}")"
+                    AriaLabel="Viewport edge actions">
+                <NTMenuButtonItem Label="Pin to dashboard" Icon="MaterialIcon.PushPin" OnClickCallback="@((MouseEventArgs _) => SelectAction("Pin to dashboard"))" />
+                <NTMenuButtonItem Label="Move to an archive with a very long retention policy label" Icon="MaterialIcon.Archive" OnClickCallback="@((MouseEventArgs _) => SelectAction("Archive"))" />
+                <NTMenuDividerItem Inset="true" />
+                <NTMenuAnchorItem Label="Open settings" Icon="MaterialIcon.Settings" Href="/nt-menu" />
+            </NTMenu>
+
+            <div>
+                <p>Selected action: <strong>@LastAction</strong></p>
+                <p>Selection count: <strong>@SelectionCount</strong></p>
+            </div>
+        </div>
+    </NTCard>
+</div>
+
+@code {
+    private const string PrimaryAnchorName = "--nt-menu-demo-primary-anchor";
+    private const string PrimaryButtonId = "nt-menu-demo-primary-button";
+    private const string PrimaryMenuId = "nt-menu-demo-primary-menu";
+    private const string EdgeAnchorName = "--nt-menu-demo-edge-anchor";
+    private const string EdgeButtonId = "nt-menu-demo-edge-button";
+    private const string EdgeMenuId = "nt-menu-demo-edge-menu";
+
+    private string LastAction { get; set; } = "None";
+    private int SelectionCount { get; set; }
+
+    private Task SelectAction(string action) {
+        LastAction = action;
+        SelectionCount++;
+        return Task.CompletedTask;
+    }
+}
