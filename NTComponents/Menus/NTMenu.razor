@@ -15,13 +15,17 @@
          data-close-on-item-click="@CloseOnContentClickAttribute"
          data-submenu="@IsSubMenuAttribute"
          @ref="Element">
-    <CascadingValue Value="this" IsFixed="true">
-        @ChildContent
-    </CascadingValue>
-    @if (HasRegisteredMenuItems) {
-        @foreach (var item in _menuItems) {
-            @item.Render(this)
-        }
-    }
+    <div class="nt-menu-surface">
+        <div class="nt-menu-content">
+            <CascadingValue Value="this" IsFixed="true">
+                @ChildContent
+            </CascadingValue>
+            @if (HasRegisteredMenuItems) {
+                @foreach (var item in _menuItems) {
+                    @item.Render(this)
+                }
+            }
+        </div>
+    </div>
 </nt-menu>
 @PageScript

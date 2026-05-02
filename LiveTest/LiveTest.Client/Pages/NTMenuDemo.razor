@@ -27,19 +27,31 @@
                           style="@($"anchor-name: {EdgeAnchorName}; margin-inline-start: auto;")"
                           popovertarget="@EdgeMenuId"
                           popovertargetaction="toggle" />
+
+                <NTButton ElementId="@CompactButtonId"
+                          Label="Compact menu"
+                          LeadingIcon="MaterialIcon.ViewCompact"
+                          Variant="@NTButtonVariant.Outlined"
+                          style="@($"anchor-name: {CompactAnchorName};")"
+                          popovertarget="@CompactMenuId"
+                          popovertargetaction="toggle" />
             </div>
 
             <NTMenu ElementId="@PrimaryMenuId"
                     AnchorName="@PrimaryAnchorName"
                     AnchorSelector="@($"#{PrimaryButtonId}")"
                     AriaLabel="Document actions">
+                <NTMenuLabelItem Label="Document" />
                 <NTMenuButtonItem Label="Rename" Icon="MaterialIcon.Edit" OnClickCallback="@((MouseEventArgs _) => SelectAction("Rename"))" />
                 <NTMenuButtonItem Label="Duplicate as a reusable project template with inherited settings" Icon="MaterialIcon.ContentCopy" OnClickCallback="@((MouseEventArgs _) => SelectAction("Duplicate template"))" />
                 <NTMenuDividerItem />
+                <NTMenuLabelItem Label="Collaboration" />
                 <NTMenuSubMenuItem Label="Share" Icon="MaterialIcon.Share">
+                    <NTMenuLabelItem Label="Permissions" />
                     <NTMenuButtonItem Label="Share with editing permissions" Icon="MaterialIcon.Edit" OnClickCallback="@((MouseEventArgs _) => SelectAction("Share edit"))" />
                     <NTMenuButtonItem Label="Create read-only public link with expiration policy" Icon="MaterialIcon.Link" OnClickCallback="@((MouseEventArgs _) => SelectAction("Share link"))" />
                     <NTMenuSubMenuItem Label="Advanced sharing" Icon="MaterialIcon.Tune">
+                        <NTMenuLabelItem Label="Policy tools" />
                         <NTMenuButtonItem Label="Copy audit-safe access request link" Icon="MaterialIcon.ContentCopy" OnClickCallback="@((MouseEventArgs _) => SelectAction("Copy access request link"))" />
                         <NTMenuAnchorItem Label="Open sharing policy" Icon="MaterialIcon.Policy" Href="/nt-menu" />
                     </NTMenuSubMenuItem>
@@ -51,10 +63,27 @@
                     AnchorName="@EdgeAnchorName"
                     AnchorSelector="@($"#{EdgeButtonId}")"
                     AriaLabel="Viewport edge actions">
+                <NTMenuLabelItem Label="Edge actions" />
                 <NTMenuButtonItem Label="Pin to dashboard" Icon="MaterialIcon.PushPin" OnClickCallback="@((MouseEventArgs _) => SelectAction("Pin to dashboard"))" />
                 <NTMenuButtonItem Label="Move to an archive with a very long retention policy label" Icon="MaterialIcon.Archive" OnClickCallback="@((MouseEventArgs _) => SelectAction("Archive"))" />
                 <NTMenuDividerItem Inset="true" />
                 <NTMenuAnchorItem Label="Open settings" Icon="MaterialIcon.Settings" Href="/nt-menu" />
+            </NTMenu>
+
+            <NTMenu ElementId="@CompactMenuId"
+                    AnchorName="@CompactAnchorName"
+                    AnchorSelector="@($"#{CompactButtonId}")"
+                    Appearance="NTMenuAppearance.Compact"
+                    AriaLabel="Compact menu actions">
+                <NTMenuLabelItem Label="Compact actions" />
+                <NTMenuButtonItem Label="Open" Icon="MaterialIcon.OpenInNew" OnClickCallback="@((MouseEventArgs _) => SelectAction("Compact open"))" />
+                <NTMenuButtonItem Label="Duplicate compact action with longer label" Icon="MaterialIcon.ContentCopy" OnClickCallback="@((MouseEventArgs _) => SelectAction("Compact duplicate"))" />
+                <NTMenuDividerItem />
+                <NTMenuSubMenuItem Label="More" Icon="MaterialIcon.MoreHoriz">
+                    <NTMenuLabelItem Label="Nested compact" />
+                    <NTMenuButtonItem Label="Archive" Icon="MaterialIcon.Archive" OnClickCallback="@((MouseEventArgs _) => SelectAction("Compact archive"))" />
+                    <NTMenuAnchorItem Label="Open compact details" Icon="MaterialIcon.Info" Href="/nt-menu" />
+                </NTMenuSubMenuItem>
             </NTMenu>
 
             <div>
@@ -72,6 +101,9 @@
     private const string EdgeAnchorName = "--nt-menu-demo-edge-anchor";
     private const string EdgeButtonId = "nt-menu-demo-edge-button";
     private const string EdgeMenuId = "nt-menu-demo-edge-menu";
+    private const string CompactAnchorName = "--nt-menu-demo-compact-anchor";
+    private const string CompactButtonId = "nt-menu-demo-compact-button";
+    private const string CompactMenuId = "nt-menu-demo-compact-menu";
 
     private string LastAction { get; set; } = "None";
     private int SelectionCount { get; set; }

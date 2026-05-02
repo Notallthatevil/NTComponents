@@ -1,6 +1,14 @@
 type Maybe<T> = T | null | undefined;
 
+interface NTComponentsGlobals {
+    registerButtonInteraction?: (element: Maybe<Element>) => void;
+}
+
 declare global {
+    interface Window {
+        NTComponents?: NTComponentsGlobals;
+    }
+
     interface HTMLElementTagNameMap {
         'nt-menu': NTMenu;
     }
@@ -12,18 +20,37 @@ function isMenuElement(value: unknown): value is NTMenu {
 
 export class NTMenu extends HTMLElement {
     private anchor: Element | null = null;
+    private interactionsRegistered = false;
+    private items: HTMLElement[] = [];
 
     private readonly onAnchorActivate = (): void => {
         this.updatePlacement();
+    };
+
+    private readonly onBeforeToggle = (event: Event): void => {
+        if ((event as Event & { newState?: string }).newState === 'open') {
+            this.updatePlacement();
+        }
+    };
+
+    private readonly onKeyDown = (event: KeyboardEvent): void => {
+        this.handleKeyDown(event);
     };
 
     private readonly onMenuClick = (event: MouseEvent): void => {
         this.handleMenuClick(event);
     };
 
+    private readonly onToggle = (): void => {
+        this.syncOpenState();
+    };
+
     public connectedCallback(): void {
         this.update();
+        this.addEventListener('beforetoggle', this.onBeforeToggle);
         this.addEventListener('click', this.onMenuClick);
+        this.addEventListener('keydown', this.onKeyDown);
+        this.addEventListener('toggle', this.onToggle);
     }
 
     public disconnectedCallback(): void {
@@ -31,21 +58,43 @@ export class NTMenu extends HTMLElement {
     }
 
     public dispose(): void {
+        this.removeEventListener('beforetoggle', this.onBeforeToggle);
         this.removeEventListener('click', this.onMenuClick);
+        this.removeEventListener('keydown', this.onKeyDown);
+        this.removeEventListener('toggle', this.onToggle);
         this.removeAnchorListeners();
+        this.interactionsRegistered = false;
+        this.items = [];
     }
 
     public update(): void {
         const anchor = this.findAnchor();
-        if (anchor === this.anchor) {
+        const items = this.getItems();
+        const itemsChanged = items.length !== this.items.length || items.some((item, index) => item !== this.items[index]);
+
+        if (anchor === this.anchor && !itemsChanged) {
+            if (!this.interactionsRegistered) {
+                this.registerButtonInteractions();
+            }
             return;
         }
 
-        this.removeAnchorListeners();
-        this.anchor = anchor;
-        this.anchor?.addEventListener('click', this.onAnchorActivate);
-        this.anchor?.addEventListener('keydown', this.onAnchorActivate);
-        this.anchor?.addEventListener('pointerdown', this.onAnchorActivate);
+        if (anchor !== this.anchor) {
+            this.removeAnchorListeners();
+            this.anchor = anchor;
+            this.anchor?.addEventListener('click', this.onAnchorActivate);
+            this.anchor?.addEventListener('keydown', this.onAnchorActivate);
+            this.anchor?.addEventListener('pointerdown', this.onAnchorActivate);
+        }
+
+        if (itemsChanged) {
+            this.items = items;
+            this.interactionsRegistered = false;
+        }
+
+        if (!this.interactionsRegistered) {
+            this.registerButtonInteractions();
+        }
     }
 
     public updatePlacement(): void {
@@ -110,12 +159,16 @@ export class NTMenu extends HTMLElement {
         const previousInset = this.style.inset;
         const previousPointerEvents = this.style.pointerEvents;
         const previousPosition = this.style.position;
+        const previousTransform = this.style.transform;
         const previousVisibility = this.style.visibility;
+        const previousClipPath = this.style.clipPath;
 
+        this.style.clipPath = 'none';
         this.style.display = 'block';
         this.style.inset = 'auto';
         this.style.pointerEvents = 'none';
         this.style.position = 'fixed';
+        this.style.transform = 'none';
         this.style.visibility = 'hidden';
 
         const rect = this.getBoundingClientRect();
@@ -126,9 +179,78 @@ export class NTMenu extends HTMLElement {
         this.style.inset = previousInset;
         this.style.pointerEvents = previousPointerEvents;
         this.style.position = previousPosition;
+        this.style.transform = previousTransform;
         this.style.visibility = previousVisibility;
+        this.style.clipPath = previousClipPath;
 
         return { height, width };
+    }
+
+    private focusItem(offset: number): void {
+        const items = this.getItems();
+        if (items.length === 0) {
+            return;
+        }
+
+        const activeIndex = items.indexOf(document.activeElement as HTMLElement);
+        const startIndex = activeIndex >= 0 ? activeIndex : (offset > 0 ? -1 : 0);
+        const nextIndex = (startIndex + offset + items.length) % items.length;
+        items[nextIndex]?.focus();
+    }
+
+    private focusFirstItem(): void {
+        this.getItems()[0]?.focus();
+    }
+
+    private focusMatchingItem(key: string): void {
+        const search = key.toLocaleLowerCase();
+        const items = this.getItems();
+        const activeIndex = items.indexOf(document.activeElement as HTMLElement);
+
+        for (let offset = 1; offset <= items.length; offset++) {
+            const item = items[(Math.max(activeIndex, 0) + offset) % items.length];
+            if (item?.textContent?.trim().toLocaleLowerCase().startsWith(search)) {
+                item.focus();
+                return;
+            }
+        }
+    }
+
+    private getItems(): HTMLElement[] {
+        return Array.from(this.querySelectorAll<HTMLElement>(':scope > .nt-menu-surface > .nt-menu-content > .nt-menu-item'));
+    }
+
+    private handleKeyDown(event: KeyboardEvent): void {
+        if (!this.matches(':popover-open')) {
+            return;
+        }
+
+        switch (event.key) {
+            case 'ArrowDown':
+                event.preventDefault();
+                this.focusItem(1);
+                break;
+            case 'ArrowUp':
+                event.preventDefault();
+                this.focusItem(-1);
+                break;
+            case 'Escape':
+                event.preventDefault();
+                this.hidePopover?.();
+                this.getAnchorElement()?.focus?.();
+                break;
+            case 'ArrowRight':
+                this.openFocusedSubMenu(event);
+                break;
+            case 'ArrowLeft':
+                this.closeFromSubMenu(event);
+                break;
+            default:
+                if (event.key.length === 1 && !event.altKey && !event.ctrlKey && !event.metaKey) {
+                    this.focusMatchingItem(event.key);
+                }
+                break;
+        }
     }
 
     private handleMenuClick(event: MouseEvent): void {
@@ -151,6 +273,42 @@ export class NTMenu extends HTMLElement {
         }
 
         this.hidePopover?.();
+    }
+
+    private registerButtonInteractions(): void {
+        const registerButtonInteraction = window.NTComponents?.registerButtonInteraction;
+        if (!registerButtonInteraction) {
+            this.interactionsRegistered = false;
+            return;
+        }
+
+        for (const item of this.items) {
+            registerButtonInteraction(item);
+        }
+
+        this.interactionsRegistered = true;
+    }
+
+    private openFocusedSubMenu(event: KeyboardEvent): void {
+        const item = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        if (!item || item.closest('nt-menu') !== this || item.getAttribute('aria-haspopup') !== 'menu') {
+            return;
+        }
+
+        event.preventDefault();
+        const submenuId = item.getAttribute('aria-controls');
+        const submenu = submenuId ? document.getElementById(submenuId) as NTMenu | null : null;
+        submenu?.showPopover?.();
+    }
+
+    private closeFromSubMenu(event: KeyboardEvent): void {
+        if (this.dataset.submenu !== 'true') {
+            return;
+        }
+
+        event.preventDefault();
+        this.hidePopover?.();
+        this.getAnchorElement()?.focus?.();
     }
 
     private removeAnchorListeners(): void {
@@ -185,6 +343,36 @@ export class NTMenu extends HTMLElement {
         this.classList.toggle('nt-menu-anchor-start', !openLeft);
         this.classList.toggle('nt-menu-anchor-end', openLeft);
         this.setPosition(anchorRect.top, left, menuSize, viewportWidth, viewportHeight, edgeMargin);
+    }
+
+    private getAnchorElement(): HTMLElement | null {
+        const anchor = this.anchor ?? this.findAnchor();
+        return anchor instanceof HTMLElement ? anchor : null;
+    }
+
+    private setAnchorPressed(isOpen: boolean): void {
+        const anchor = this.getAnchorElement();
+        if (!anchor) {
+            return;
+        }
+
+        anchor.classList.toggle('nt-menu-anchor-pressed', isOpen);
+        anchor.classList.toggle('nt-button--pressed-shape', isOpen);
+        anchor.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    }
+
+    private syncOpenState(): void {
+        const isOpen = this.matches(':popover-open');
+        this.setAnchorPressed(isOpen);
+
+        if (isOpen) {
+            const focus = () => this.focusFirstItem();
+            if (typeof window.requestAnimationFrame === 'function') {
+                window.requestAnimationFrame(focus);
+            } else {
+                window.setTimeout(focus, 0);
+            }
+        }
     }
 }
 

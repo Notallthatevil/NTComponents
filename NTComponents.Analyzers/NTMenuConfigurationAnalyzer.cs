@@ -76,6 +76,7 @@ public sealed class NTMenuConfigurationAnalyzer : DiagnosticAnalyzer {
             var buttonItemType = startContext.Compilation.GetTypeByMetadataName("NTComponents.NTMenuButtonItem");
             var anchorItemType = startContext.Compilation.GetTypeByMetadataName("NTComponents.NTMenuAnchorItem");
             var dividerItemType = startContext.Compilation.GetTypeByMetadataName("NTComponents.NTMenuDividerItem");
+            var labelItemType = startContext.Compilation.GetTypeByMetadataName("NTComponents.NTMenuLabelItem");
             var subMenuItemType = startContext.Compilation.GetTypeByMetadataName("NTComponents.NTMenuSubMenuItem");
             var colorType = startContext.Compilation.GetTypeByMetadataName("NTComponents.TnTColor");
 
@@ -83,12 +84,13 @@ public sealed class NTMenuConfigurationAnalyzer : DiagnosticAnalyzer {
                 || buttonItemType is null
                 || anchorItemType is null
                 || dividerItemType is null
+                || labelItemType is null
                 || subMenuItemType is null
                 || colorType is null) {
                 return;
             }
 
-            var componentTypes = new ComponentTypes(menuType, buttonItemType, anchorItemType, dividerItemType, subMenuItemType);
+            var componentTypes = new ComponentTypes(menuType, buttonItemType, anchorItemType, dividerItemType, labelItemType, subMenuItemType);
 
             startContext.RegisterSyntaxNodeAction(
                 nodeContext => AnalyzeExecutableNode(nodeContext, componentTypes, colorType),
@@ -163,6 +165,10 @@ public sealed class NTMenuConfigurationAnalyzer : DiagnosticAnalyzer {
 
             case ComponentKind.SubMenuItem:
                 AnalyzeMenuItemLabel(context, frame, "NTMenuSubMenuItem");
+                break;
+
+            case ComponentKind.LabelItem:
+                AnalyzeMenuItemLabel(context, frame, "NTMenuLabelItem");
                 break;
         }
     }
@@ -254,6 +260,7 @@ public sealed class NTMenuConfigurationAnalyzer : DiagnosticAnalyzer {
                     return true;
 
                 case ComponentKind.DividerItem:
+                case ComponentKind.LabelItem:
                     foundAnyKnownMenuItem = true;
                     break;
             }
@@ -445,6 +452,7 @@ public sealed class NTMenuConfigurationAnalyzer : DiagnosticAnalyzer {
         ButtonItem,
         AnchorItem,
         DividerItem,
+        LabelItem,
         SubMenuItem
     }
 
@@ -459,6 +467,7 @@ public sealed class NTMenuConfigurationAnalyzer : DiagnosticAnalyzer {
         INamedTypeSymbol buttonItem,
         INamedTypeSymbol anchorItem,
         INamedTypeSymbol dividerItem,
+        INamedTypeSymbol labelItem,
         INamedTypeSymbol subMenuItem) {
 
         public ComponentKind GetComponentKind(ITypeSymbol componentType) {
@@ -476,6 +485,10 @@ public sealed class NTMenuConfigurationAnalyzer : DiagnosticAnalyzer {
 
             if (SymbolEqualityComparer.Default.Equals(componentType, dividerItem)) {
                 return ComponentKind.DividerItem;
+            }
+
+            if (SymbolEqualityComparer.Default.Equals(componentType, labelItem)) {
+                return ComponentKind.LabelItem;
             }
 
             return SymbolEqualityComparer.Default.Equals(componentType, subMenuItem)

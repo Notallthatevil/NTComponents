@@ -81,11 +81,13 @@ public class NTMenuSubMenuItem : Microsoft.AspNetCore.Components.IComponent, INT
         builder.AddAttribute(sequence++, "style", ButtonStyle);
         builder.AddAttribute(sequence++, "type", "button");
         builder.AddAttribute(sequence++, "role", "menuitem");
-        builder.AddAttribute(sequence++, "disabled", owner.IsMenuItemDisabled(this));
+        builder.AddAttribute(sequence++, "aria-disabled", owner.GetMenuItemAriaDisabled(this));
         builder.AddAttribute(sequence++, "aria-haspopup", "menu");
         builder.AddAttribute(sequence++, "aria-controls", SubMenuId);
+        builder.AddAttribute(sequence++, "aria-expanded", "false");
         builder.AddAttribute(sequence++, "aria-label", owner.GetMenuItemAriaLabel(this));
         builder.AddAttribute(sequence++, "aria-selected", owner.GetMenuItemSelectedAttribute(this));
+        builder.AddAttribute(sequence++, "data-nt-menu-disabled", owner.GetMenuItemDisabledAttribute(this));
         builder.AddAttribute(sequence++, "data-nt-menu-submenu-trigger", "true");
         builder.AddAttribute(sequence++, "popovertarget", owner.IsMenuItemDisabled(this) ? null : SubMenuId);
         builder.AddAttribute(sequence++, "popovertargetaction", "toggle");
@@ -98,10 +100,12 @@ public class NTMenuSubMenuItem : Microsoft.AspNetCore.Components.IComponent, INT
         builder.AddAttribute(sequence++, "class", "nt-menu-submenu");
         builder.AddAttribute(sequence++, nameof(NTMenu.AnchorName), AnchorName);
         builder.AddAttribute(sequence++, nameof(NTMenu.AnchorSelector), AnchorSelector);
+        builder.AddAttribute(sequence++, nameof(NTMenu.Appearance), owner.Appearance);
         builder.AddAttribute(sequence++, nameof(NTMenu.AriaLabel), owner.GetMenuItemAriaLabel(this));
         builder.AddAttribute(sequence++, nameof(NTMenu.CloseOnContentClick), owner.CloseOnContentClick);
         builder.AddAttribute(sequence++, nameof(NTMenu.ContainerColor), owner.ContainerColor);
         builder.AddAttribute(sequence++, nameof(NTMenu.Disabled), owner.IsMenuItemDisabled(this));
+        builder.AddAttribute(sequence++, nameof(NTMenu.Elevation), owner.Elevation);
         builder.AddAttribute(sequence++, nameof(NTMenu.IsSubMenu), true);
         builder.AddAttribute(sequence++, nameof(NTMenu.SelectedContainerColor), owner.SelectedContainerColor);
         builder.AddAttribute(sequence++, nameof(NTMenu.SelectedTextColor), owner.SelectedTextColor);

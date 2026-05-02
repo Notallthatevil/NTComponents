@@ -45,6 +45,16 @@ public partial class NTMenu {
     public string? AnchorSelector { get; set; }
 
     /// <summary>
+    ///     Gets or sets the visual density of the menu.
+    /// </summary>
+    /// <remarks>
+    ///     Use <see cref="NTMenuAppearance.Standard" /> for touch-friendly menus and general application surfaces. Use <see cref="NTMenuAppearance.Compact" /> for dense desktop menus where actions
+    ///     need to fit in less vertical space while remaining keyboard accessible.
+    /// </remarks>
+    [Parameter]
+    public NTMenuAppearance Appearance { get; set; } = NTMenuAppearance.Standard;
+
+    /// <summary>
     ///     Gets or sets the accessible label for the menu container.
     /// </summary>
     [Parameter]
@@ -79,6 +89,8 @@ public partial class NTMenu {
     /// <inheritdoc />
     public override string? ElementClass => CssClassBuilder.Create("nt-menu")
         .AddFromAdditionalAttributes(AdditionalAttributes)
+        .AddElevation(Elevation)
+        .AddClass("nt-menu-compact", Appearance == NTMenuAppearance.Compact)
         .AddClass("nt-menu-anchor-auto")
         .AddClass("nt-menu-anchor-end")
         .AddClass("nt-menu-placement-auto")
@@ -95,6 +107,16 @@ public partial class NTMenu {
         .AddVariable("nt-menu-selected-container-color", SelectedContainerColor.ToCssTnTColorVariable(), SelectedContainerColor.HasValue)
         .AddVariable("nt-menu-selected-content-color", SelectedTextColor.ToCssTnTColorVariable(), SelectedTextColor.HasValue)
         .Build();
+
+    /// <summary>
+    ///     Gets or sets the elevation level used by the floating menu surface.
+    /// </summary>
+    /// <remarks>
+    ///     Material menus should read as temporary surfaces above the current UI. Keep the default medium elevation for most menus, lower it only when the surrounding surface is already elevated, and
+    ///     increase it only when the menu needs stronger separation from dense or layered content.
+    /// </remarks>
+    [Parameter]
+    public NTElevation Elevation { get; set; } = NTElevation.Medium;
 
     /// <summary>
     ///     Gets or sets whether this menu is a nested submenu.
@@ -193,6 +215,12 @@ public partial class NTMenu {
             .AddClass("nt-menu-item-disabled", IsMenuItemDisabled(item))
             .Build();
 
+    internal string GetMenuLabelClass(NTMenuLabelItem item) => CssClassBuilder.Create("nt-menu-label")
+            .AddClass(GetMenuItemAdditionalClass(item))
+            .Build();
+
+    internal string? GetMenuItemDisabledAttribute(INTMenuItem item) => IsMenuItemDisabled(item) ? "true" : null;
+
     internal string? GetMenuItemPopoverTarget(INTMenuItem item) => CloseOnContentClick && !IsMenuItemDisabled(item) ? ElementId : null;
 
     internal string? GetMenuItemSelectedAttribute(INTMenuItem item) => item.Selected ? "true" : null;
@@ -263,4 +291,20 @@ public partial class NTMenu {
 
     private static string? GetMenuItemAdditionalClass(INTMenuItem item) =>
             TryGetAdditionalAttribute(item, "class", out var @class) ? @class?.ToString() : null;
+}
+
+/// <summary>
+///     Visual density options for <see cref="NTMenu" />.
+/// </summary>
+public enum NTMenuAppearance {
+
+    /// <summary>
+    ///     Standard touch-friendly Material menu appearance.
+    /// </summary>
+    Standard,
+
+    /// <summary>
+    ///     Compact desktop-oriented appearance with one smaller typography step and tighter item spacing.
+    /// </summary>
+    Compact
 }

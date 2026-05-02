@@ -1,14 +1,13 @@
 using System.ComponentModel;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
-using Microsoft.AspNetCore.Components.Web;
 
 namespace NTComponents;
 
 /// <summary>
-///     Represents a button action item that registers itself with an <see cref="NTMenu" />.
+///     Represents non-interactive label text that identifies a group or section inside an <see cref="NTMenu" />.
 /// </summary>
-public class NTMenuButtonItem : Microsoft.AspNetCore.Components.IComponent, INTMenuItem, IDisposable {
+public class NTMenuLabelItem : Microsoft.AspNetCore.Components.IComponent, INTMenuItem, IDisposable {
     private NTMenu? _registeredParent;
 
     /// <inheritdoc />
@@ -19,42 +18,30 @@ public class NTMenuButtonItem : Microsoft.AspNetCore.Components.IComponent, INTM
     IReadOnlyDictionary<string, object?>? INTMenuItem.AdditionalAttributes => AdditionalAttributes;
 
     /// <inheritdoc />
-    [Parameter]
-    public string? AriaLabel { get; set; }
+    public string? AriaLabel => null;
 
     /// <inheritdoc />
-    [Parameter]
-    public bool Disabled { get; set; }
+    public bool Disabled => true;
 
     /// <inheritdoc />
-    [Parameter]
-    public TnTIcon? Icon { get; set; }
+    public TnTIcon? Icon => null;
 
     /// <inheritdoc />
-    public bool IsActionable => true;
+    public bool IsActionable => false;
 
     /// <inheritdoc />
     [Parameter]
     [EditorRequired]
     public string Label { get; set; } = string.Empty;
 
-    /// <summary>
-    ///     Invoked when the enabled menu item is clicked.
-    /// </summary>
-    [Parameter]
-    public EventCallback<MouseEventArgs> OnClickCallback { get; set; }
-
     /// <inheritdoc />
-    [Parameter]
-    public bool Selected { get; set; }
+    public bool Selected => false;
 
     /// <summary>
     ///     The parent menu that owns this item.
     /// </summary>
     [CascadingParameter]
     public NTMenu? Parent { get; set; }
-
-    internal bool HasInteractiveCallback => OnClickCallback.HasDelegate;
 
     /// <inheritdoc />
     public void Attach(RenderHandle renderHandle) { }
@@ -68,24 +55,12 @@ public class NTMenuButtonItem : Microsoft.AspNetCore.Components.IComponent, INTM
     /// <inheritdoc />
     public RenderFragment Render(NTMenu owner) => builder => {
         var sequence = 0;
-        builder.OpenElement(sequence++, "button");
+        builder.OpenElement(sequence++, "div");
         builder.SetKey(this);
         builder.AddMultipleAttributes(sequence++, NTMenu.GetMenuItemAdditionalAttributes(this));
-        builder.AddAttribute(sequence++, "class", owner.GetMenuItemClass(this));
-        builder.AddAttribute(sequence++, "type", "button");
-        builder.AddAttribute(sequence++, "role", "menuitem");
-        builder.AddAttribute(sequence++, "aria-disabled", owner.GetMenuItemAriaDisabled(this));
-        builder.AddAttribute(sequence++, "aria-label", owner.GetMenuItemAriaLabel(this));
-        builder.AddAttribute(sequence++, "aria-selected", owner.GetMenuItemSelectedAttribute(this));
-        builder.AddAttribute(sequence++, "data-nt-menu-disabled", owner.GetMenuItemDisabledAttribute(this));
-        builder.AddAttribute(sequence++, "popovertarget", owner.GetMenuItemPopoverTarget(this));
-        builder.AddAttribute(sequence++, "popovertargetaction", "hide");
-
-        if (HasInteractiveCallback && !NTMenu.TryGetAdditionalAttribute(this, "onclick", out _)) {
-            builder.AddAttribute(sequence++, "onclick", EventCallback.Factory.Create<MouseEventArgs>(this, args => owner.HandleMenuButtonItemClickAsync(this, args)));
-        }
-
-        builder.AddContent(sequence++, owner.RenderMenuItemContent(this));
+        builder.AddAttribute(sequence++, "class", owner.GetMenuLabelClass(this));
+        builder.AddAttribute(sequence++, "role", "presentation");
+        builder.AddContent(sequence++, Label);
         builder.CloseElement();
     };
 

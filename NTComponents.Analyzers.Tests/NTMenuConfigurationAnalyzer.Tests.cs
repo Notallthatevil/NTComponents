@@ -27,6 +27,10 @@ public static class MenuFactory {
         builder.AddAttribute(7, "ChildContent", (global::Microsoft.AspNetCore.Components.RenderFragment)(builder2 => {
             builder2.OpenComponent<global::NTComponents.NTMenuDividerItem>(8);
             builder2.CloseComponent();
+
+            builder2.OpenComponent<global::NTComponents.NTMenuLabelItem>(9);
+            builder2.AddAttribute(10, "Label", "Document");
+            builder2.CloseComponent();
         }));
         builder.CloseComponent();
     }
@@ -70,6 +74,10 @@ public static class MenuFactory {
 
         builder.OpenComponent<global::NTComponents.NTMenuSubMenuItem>(6);
         builder.CloseComponent();
+
+        builder.OpenComponent<global::NTComponents.NTMenuLabelItem>(7);
+        builder.AddAttribute(8, "Label", " ");
+        builder.CloseComponent();
     }
 }
 """ + SupportTypes;
@@ -78,6 +86,7 @@ public static class MenuFactory {
 
         Assert.Equal(
             [
+                NTMenuConfigurationAnalyzer.EmptyMenuItemLabelDiagnosticId,
                 NTMenuConfigurationAnalyzer.EmptyMenuItemLabelDiagnosticId,
                 NTMenuConfigurationAnalyzer.EmptyMenuItemLabelDiagnosticId,
                 NTMenuConfigurationAnalyzer.EmptyMenuItemLabelDiagnosticId,
@@ -105,13 +114,17 @@ public static class MenuFactory {
             builder2.AddAttribute(8, "Label", "Save draft");
             builder2.CloseComponent();
 
-            builder2.OpenComponent<global::NTComponents.NTMenuAnchorItem>(9);
-            builder2.AddAttribute(10, "Label", "Open docs");
-            builder2.AddAttribute(11, "Href", "/docs");
+            builder2.OpenComponent<global::NTComponents.NTMenuLabelItem>(9);
+            builder2.AddAttribute(10, "Label", "Links");
             builder2.CloseComponent();
 
-            builder2.OpenComponent<global::NTComponents.NTMenuSubMenuItem>(12);
-            builder2.AddAttribute(13, "Label", "More actions");
+            builder2.OpenComponent<global::NTComponents.NTMenuAnchorItem>(11);
+            builder2.AddAttribute(12, "Label", "Open docs");
+            builder2.AddAttribute(13, "Href", "/docs");
+            builder2.CloseComponent();
+
+            builder2.OpenComponent<global::NTComponents.NTMenuSubMenuItem>(14);
+            builder2.AddAttribute(15, "Label", "More actions");
             builder2.CloseComponent();
         }));
         builder.CloseComponent();
@@ -170,6 +183,7 @@ namespace NTComponents {
     public class NTMenuButtonItem { }
     public class NTMenuAnchorItem { }
     public class NTMenuDividerItem { }
+    public class NTMenuLabelItem { }
     public class NTMenuSubMenuItem { }
     public enum TnTColor { None, Transparent, SurfaceContainerLow, OnSurface, TertiaryContainer, OnTertiaryContainer }
 }
