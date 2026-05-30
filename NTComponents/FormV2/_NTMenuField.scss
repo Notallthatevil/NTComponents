@@ -1,0 +1,284 @@
+@use 'sass:map';
+@use '../Styles/_Variables/_colors.scss' as colors;
+@use '../Styles/_Variables/_corner-radius.scss' as corners;
+@use '../Styles/_Variables/_elevation.scss' as elevation;
+@use '../Styles/_Variables/_motion.scss' as motion;
+@use '../Styles/_Variables/_typescale.scss' as typescale;
+
+$nt-menu-field-motion-duration: motion.$nt-motion-duration-short_3;
+$nt-menu-field-motion-easing: motion.$nt-motion-easing-standard;
+$nt-menu-field-list-padding-block: 8px;
+$nt-menu-field-option-min-height: 56px;
+$nt-menu-field-option-min-height-standard: 48px;
+$nt-menu-field-option-min-height-dense: 40px;
+$nt-menu-field-option-height-condensed: 38px;
+$nt-menu-field-option-padding-inline: 16px;
+$nt-menu-field-option-padding-inline-compact: 12px;
+$nt-menu-field-option-padding-block: 8px;
+$nt-menu-field-option-padding-block-condensed: 0;
+$nt-menu-field-option-gap: 16px;
+$nt-menu-field-option-gap-compact: 12px;
+$nt-menu-field-menu-offset: 4px;
+$nt-menu-field-menu-max-height: 320px;
+$nt-menu-field-icon-size: 24px;
+$nt-menu-field-state-layer-hover-opacity: 0.08;
+$nt-menu-field-state-layer-focus-opacity: 0.12;
+$nt-menu-field-disabled-opacity: 0.38;
+
+@mixin nt-menu-field($root-selector, $control-selector, $indicator-selector, $condensed-class, $menu-z-index: 20) {
+    #{$root-selector} {
+        .nt-input-container-overflow {
+            overflow: visible;
+        }
+
+        .nt-input-container {
+            cursor: text;
+        }
+
+        #{$control-selector} {
+            cursor: text;
+            text-overflow: ellipsis;
+        }
+
+        #{$indicator-selector} {
+            pointer-events: none;
+            transition: color $nt-menu-field-motion-duration $nt-menu-field-motion-easing,
+                opacity $nt-menu-field-motion-duration $nt-menu-field-motion-easing;
+        }
+
+        ::deep .nt-combobox-menu {
+            position: absolute;
+            inset-block-start: calc(100% + $nt-menu-field-menu-offset);
+            inset-inline: 0;
+            z-index: $menu-z-index;
+            box-sizing: border-box;
+            max-height: $nt-menu-field-menu-max-height;
+            overflow: auto;
+            color: colors.$tnt-color-on-surface;
+            background-color: colors.$tnt-color-surface-container;
+            border-radius: corners.$nt-corner-radius-extra-small;
+            box-shadow: map.get(elevation.$elevation-shadows, 3);
+        }
+
+        ::deep .nt-combobox-menu-above {
+            inset-block-start: auto;
+            inset-block-end: calc(100% + $nt-menu-field-menu-offset);
+        }
+
+        ::deep .nt-combobox-list {
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            min-width: 0;
+            margin: 0;
+            padding: $nt-menu-field-list-padding-block 0;
+            list-style: none;
+        }
+
+        ::deep .nt-combobox-list-item {
+            display: contents;
+
+            &[hidden] {
+                display: none;
+            }
+        }
+
+        ::deep .nt-combobox-option {
+            position: relative;
+            display: grid;
+            grid-template-columns: auto minmax(0, 1fr) auto;
+            align-items: center;
+            box-sizing: border-box;
+            width: 100%;
+            min-height: $nt-menu-field-option-min-height;
+            border: 0;
+            gap: $nt-menu-field-option-gap;
+            padding: $nt-menu-field-option-padding-block $nt-menu-field-option-padding-inline;
+            color: colors.$tnt-color-on-surface;
+            font: inherit;
+            text-align: start;
+            background: transparent;
+            cursor: pointer;
+            outline: 0;
+            transition: background-color $nt-menu-field-motion-duration $nt-menu-field-motion-easing,
+                color $nt-menu-field-motion-duration $nt-menu-field-motion-easing;
+
+            &[hidden] {
+                display: none;
+            }
+
+            &::before {
+                position: absolute;
+                inset: 0;
+                content: '';
+                background-color: colors.$tnt-color-on-surface;
+                opacity: 0;
+                transition: opacity $nt-menu-field-motion-duration $nt-menu-field-motion-easing;
+            }
+
+            &:hover::before {
+                opacity: $nt-menu-field-state-layer-hover-opacity;
+            }
+
+            &:focus-visible::before,
+            &.nt-combobox-option-active::before {
+                opacity: $nt-menu-field-state-layer-focus-opacity;
+            }
+        }
+
+        ::deep .nt-combobox-option-selected {
+            color: colors.$tnt-color-on-secondary-container;
+            background-color: colors.$tnt-color-secondary-container;
+
+            &::before {
+                background-color: colors.$tnt-color-on-secondary-container;
+            }
+
+            .nt-combobox-option-leading,
+            .nt-combobox-option-trailing,
+            .nt-combobox-option-supporting {
+                color: colors.$tnt-color-on-secondary-container;
+            }
+        }
+
+        ::deep .nt-combobox-option-disabled {
+            color: colors.$tnt-color-on-surface;
+            cursor: default;
+            opacity: $nt-menu-field-disabled-opacity;
+            pointer-events: none;
+        }
+
+        ::deep .nt-combobox-option-leading,
+        ::deep .nt-combobox-option-trailing {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: $nt-menu-field-icon-size;
+            height: $nt-menu-field-icon-size;
+            color: colors.$tnt-color-on-surface-variant;
+        }
+
+        ::deep .nt-combobox-option-leading {
+            grid-column: 1;
+        }
+
+        ::deep .nt-combobox-option-trailing {
+            grid-column: 3;
+            justify-self: end;
+        }
+
+        ::deep .nt-combobox-option-content {
+            position: relative;
+            grid-column: 1 / 3;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        ::deep .nt-combobox-option-leading + .nt-combobox-option-content {
+            grid-column: 2;
+        }
+
+        ::deep .nt-combobox-option-label {
+            @include typescale.nt-body-large;
+
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        ::deep .nt-combobox-option-supporting,
+        ::deep .nt-combobox-empty {
+            @include typescale.nt-body-medium;
+        }
+
+        ::deep .nt-combobox-option-supporting {
+            overflow: hidden;
+            color: colors.$tnt-color-on-surface-variant;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        ::deep .nt-combobox-empty {
+            padding: 12px $nt-menu-field-option-padding-inline;
+            color: colors.$tnt-color-on-surface-variant;
+        }
+
+        &.nt-input-standard {
+            ::deep .nt-combobox-option {
+                min-height: $nt-menu-field-option-min-height-standard;
+                gap: $nt-menu-field-option-gap-compact;
+                padding-inline: $nt-menu-field-option-padding-inline-compact;
+            }
+        }
+
+        &.nt-input-dense {
+            ::deep .nt-combobox-option {
+                min-height: $nt-menu-field-option-min-height-dense;
+                gap: $nt-menu-field-option-gap-compact;
+                padding-inline: $nt-menu-field-option-padding-inline-compact;
+            }
+
+            ::deep .nt-combobox-option-label,
+            ::deep .nt-combobox-option-supporting,
+            ::deep .nt-combobox-empty {
+                @include typescale.nt-body-medium;
+            }
+        }
+
+        &.#{$condensed-class} {
+            ::deep .nt-combobox-option {
+                height: $nt-menu-field-option-height-condensed;
+                min-height: 0;
+                max-height: $nt-menu-field-option-height-condensed;
+                gap: $nt-menu-field-option-gap-compact;
+                padding-block: $nt-menu-field-option-padding-block-condensed;
+                padding-inline: $nt-menu-field-option-padding-inline-compact;
+                overflow: hidden;
+            }
+
+            ::deep .nt-combobox-option-label {
+                @include typescale.nt-label-medium;
+            }
+
+            ::deep .nt-combobox-option-supporting {
+                @include typescale.nt-label-small;
+
+                display: block;
+            }
+        }
+
+        &.nt-input-readonly,
+        &.nt-input-disabled {
+            #{$control-selector},
+            .nt-input-container {
+                cursor: default;
+            }
+        }
+    }
+
+    @media (forced-colors: active) {
+        #{$root-selector} {
+            ::deep .nt-combobox-menu {
+                border: 1px solid CanvasText;
+            }
+
+            ::deep .nt-combobox-option-selected,
+            ::deep .nt-combobox-option-active {
+                outline: 2px solid Highlight;
+            }
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        #{$root-selector} {
+            #{$indicator-selector},
+            ::deep .nt-combobox-option,
+            ::deep .nt-combobox-option::before {
+                transition-duration: 0ms;
+                transition-delay: 0ms;
+            }
+        }
+    }
+}

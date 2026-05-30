@@ -84,7 +84,7 @@ public class TnTCarouselItem_Tests : BunitContext {
             b.CloseComponent();
         };
         // Act
-        var cut = Render<TnTCarousel>(p => p.Add(c => c.Appearance, CarouselAppearance.Hero).AddChildContent(items));
+        var cut = Render<TnTCarousel>(p => p.Add(c => c.Appearance, CarouselAppearance.CenterAlignedHero).AddChildContent(items));
         // Assert
         cut.Find("tnt-carousel-item").GetAttribute("class")!.Should().Contain("tnt-carousel-hero");
     }
@@ -116,7 +116,7 @@ public class TnTCarouselItem_Tests : BunitContext {
         };
         // Act
         var cut = Render<TnTCarousel>(p => p.AddChildContent(items));
-        // Assert Scope to carousel item only (navigation buttons have ripple)
+        // Assert
         cut.Find("tnt-carousel-item").InnerHtml.Should().NotContain("tnt-ripple-effect");
     }
 

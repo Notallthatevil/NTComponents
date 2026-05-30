@@ -7,6 +7,12 @@
 `NTComponents.Site/` and `LiveTest/` are sample/demo hosts.  
 `Submodules/NTComponents.Charts/` is a Git submodule and should be updated intentionally.
 
+## Design Source
+Use the Figma Material 3 source file as the baseline for all component design work:
+- `M3`: https://www.figma.com/design/R5ZmyUEcfQt9bp2piDlBIp/
+
+When designing or updating components, align structure, states, spacing, tokens, and interaction patterns to this file unless a task explicitly requires a deviation.
+
 ## Build, Test, and Development Commands
 - `dotnet restore` - restore NuGet packages for all projects.
 - `dotnet build NTComponents.slnx -c Release` - build all projects with analyzers and Sass compilation.
@@ -24,6 +30,7 @@ Follow `.editorconfig`:
 - Public types/methods/properties use `PascalCase`; interfaces start with `I`.
 
 Keep related component files co-located and consistently named (example: `TnTButton.razor`, `TnTButton.razor.cs`, `TnTButton.razor.scss`).
+For component SCSS, do not use `__`/BEM-style CSS class names. Prefer nested classes under the component root and normal SCSS nesting best practices instead.
 
 ## Testing Guidelines
 Use xUnit v3 + bUnit for C# tests and Playwright for browser E2E coverage. Use Jest for JS modules.

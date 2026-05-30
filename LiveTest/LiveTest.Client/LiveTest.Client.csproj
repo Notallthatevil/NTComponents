@@ -13,6 +13,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\NTComponents.Analyzers\NTComponents.Analyzers.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\..\NTComponents.Extensions\NTComponents.Extensions.csproj" />
     <ProjectReference Include="..\..\NTComponents\NTComponents.csproj" />
     <ProjectReference Include="..\..\Submodules\NTComponents.Charts\NTComponents.Charts\NTComponents.Charts.csproj" />

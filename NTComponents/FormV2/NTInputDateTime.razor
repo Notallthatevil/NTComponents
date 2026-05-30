@@ -1,0 +1,48 @@
+@namespace NTComponents
+@typeparam DateTimeType
+@inherits NTInputBase<DateTimeType>
+
+@if (EnableCustomPicker) {
+    <TnTPageScript Src="@JsModulePath" />
+}
+
+<div class="@_rootClass">
+    @base.BuildRenderTree
+
+    @if (EnableCustomPicker) {
+        <button type="button"
+                class="tnt-dtp-trigger"
+                aria-label="@_metadata.PickerTriggerAriaLabel"
+                data-tnt-dtp-trigger="true"
+                data-tnt-dtp-target="@_pickerId"
+                disabled="@IsPickerTriggerDisabled">
+            @(_resolvedPickerTriggerIcon.Render("tnt-dtp-trigger-icon"))
+        </button>
+
+        <div id="@_pickerId"
+             class="@_pickerClass"
+             role="dialog"
+             aria-modal="false"
+             aria-hidden="true"
+             aria-labelledby="@_pickerHeadlineId"
+             tabindex="-1"
+             data-tnt-dtp-picker="true"
+             data-tnt-dtp-mode="@_metadata.PickerMode">
+            <div class="tnt-dtp-surface" data-tnt-dtp-surface>
+                <div class="tnt-dtp-header">
+                    <div class="tnt-dtp-subhead" data-tnt-dtp-subhead>@_metadata.PickerSupportingLabel</div>
+                    <div class="tnt-dtp-headline" id="@_pickerHeadlineId" data-tnt-dtp-headline>@_metadata.PickerHeadline</div>
+                </div>
+
+                <div class="tnt-dtp-content" data-tnt-dtp-content></div>
+
+                <div class="tnt-dtp-actions">
+                    <div class="tnt-dtp-action-group">
+                        <button type="button" class="tnt-dtp-action-button tnt-dtp-text-button" data-tnt-dtp-action="cancel">Cancel</button>
+                        <button type="button" class="tnt-dtp-action-button tnt-dtp-text-button" data-tnt-dtp-action="confirm">OK</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>

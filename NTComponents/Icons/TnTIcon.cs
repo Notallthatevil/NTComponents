@@ -15,6 +15,11 @@ public enum IconAppearance {
     Default,
 
     /// <summary>
+    ///     Filled icon style for Material Symbols.
+    /// </summary>
+    Filled,
+
+    /// <summary>
     ///     Outlined icon style with transparent fill and defined edges.
     /// </summary>
     Outlined,

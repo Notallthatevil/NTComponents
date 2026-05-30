@@ -76,11 +76,11 @@ public class TnTCarousel_Tests : BunitContext {
     }
 
     [Fact, Trait("Component", "Carousel")]
-    public void Centered_With_Snapping_Adds_Centered_And_Snapping_Classes() {
+    public void CenterAlignedHero_With_Snapping_Adds_Centered_And_Snapping_Classes() {
         // Arrange
         var items = BuildItems((1, "One", false, true, null));
         // Act
-        var cut = Render<TnTCarousel>(p => p.Add(c => c.Appearance, CarouselAppearance.Centered).Add(c => c.EnableSnapping, true).AddChildContent(items));
+        var cut = Render<TnTCarousel>(p => p.Add(c => c.Appearance, CarouselAppearance.CenterAlignedHero).Add(c => c.EnableSnapping, true).AddChildContent(items));
         var cls = cut.Find("tnt-carousel").GetAttribute("class")!;
         // Assert
         cls.Should().Contain("tnt-carousel-centered");
@@ -88,11 +88,11 @@ public class TnTCarousel_Tests : BunitContext {
     }
 
     [Fact, Trait("Component", "Carousel")]
-    public void Centered_Without_Snapping_Does_Not_Add_Centered_Class() {
+    public void CenterAlignedHero_Without_Snapping_Does_Not_Add_Centered_Class() {
         // Arrange
         var items = BuildItems((1, "One", false, true, null));
         // Act
-        var cut = Render<TnTCarousel>(p => p.Add(c => c.Appearance, CarouselAppearance.Centered).Add(c => c.EnableSnapping, false).AddChildContent(items));
+        var cut = Render<TnTCarousel>(p => p.Add(c => c.Appearance, CarouselAppearance.CenterAlignedHero).Add(c => c.EnableSnapping, false).AddChildContent(items));
         // Assert
         cut.Find("tnt-carousel").GetAttribute("class")!.Should().NotContain("tnt-carousel-centered");
     }
@@ -118,6 +118,17 @@ public class TnTCarousel_Tests : BunitContext {
     }
 
     [Fact, Trait("Component", "Carousel")]
+    public void Default_Appearance_Is_MultiBrowse() {
+        // Arrange
+        var items = BuildItems((1, "One", false, true, null));
+        // Act
+        var cut = Render<TnTCarousel>(p => p.AddChildContent(items));
+        // Assert
+        cut.Instance.Appearance.Should().Be(CarouselAppearance.MultiBrowse);
+        cut.Find("tnt-carousel").GetAttribute("tnt-layout").Should().Be("MultiBrowse");
+    }
+
+    [Fact, Trait("Component", "Carousel")]
     public void Hero_Appearance_Adds_Hero_Class_To_Root_And_Items() {
         // Arrange
         var items = BuildItems((1, "One", false, true, null));
@@ -127,6 +138,22 @@ public class TnTCarousel_Tests : BunitContext {
         // Assert
         rootClass.Should().Contain("tnt-carousel-hero");
         cut.Find("tnt-carousel-item").GetAttribute("class")!.Should().Contain("tnt-carousel-hero");
+    }
+
+    [Theory, Trait("Component", "Carousel")]
+    [InlineData(CarouselAppearance.MultiBrowse)]
+    [InlineData(CarouselAppearance.Uncontained)]
+    [InlineData(CarouselAppearance.UncontainedMultiAspectRatio)]
+    [InlineData(CarouselAppearance.Hero)]
+    [InlineData(CarouselAppearance.CenterAlignedHero)]
+    [InlineData(CarouselAppearance.FullScreen)]
+    public void M3_Appearance_Renders_Layout_Attribute(CarouselAppearance appearance) {
+        // Arrange
+        var items = BuildItems((1, "One", false, true, null));
+        // Act
+        var cut = Render<TnTCarousel>(p => p.Add(c => c.Appearance, appearance).AddChildContent(items));
+        // Assert
+        cut.Find("tnt-carousel").GetAttribute("tnt-layout").Should().Be(appearance.ToString());
     }
 
     [Fact, Trait("Component", "Carousel")]
@@ -214,6 +241,18 @@ public class TnTCarousel_Tests : BunitContext {
         // Assert
         cut.FindAll("tnt-carousel-item").Count.Should().Be(2);
         cut.Find("tnt-carousel").GetAttribute("class")!.Should().Contain("tnt-carousel");
+    }
+
+    [Fact, Trait("Component", "Carousel")]
+    public void Renders_No_Embedded_Navigation_Buttons() {
+        // Arrange
+        var items = BuildItems((1, "One", false, true, null), (2, "Two", false, true, null));
+        // Act
+        var cut = Render<TnTCarousel>(p => p.AddChildContent(items));
+        // Assert
+        cut.FindAll(".tnt-carousel-button").Should().BeEmpty();
+        cut.FindAll(".tnt-carousel-prev-button").Should().BeEmpty();
+        cut.FindAll(".tnt-carousel-next-button").Should().BeEmpty();
     }
 
     [Fact, Trait("Component", "Carousel")]

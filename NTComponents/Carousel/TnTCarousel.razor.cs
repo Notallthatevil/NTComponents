@@ -22,10 +22,10 @@ public partial class TnTCarousel {
     public bool AllowDragging { get; set; } = true;
 
     /// <summary>
-    ///     Visual appearance options for the carousel. Flags can be combined.
+    ///     Material 3 carousel appearance variant.
     /// </summary>
     [Parameter]
-    public CarouselAppearance Appearance { get; set; } = CarouselAppearance.Default;
+    public CarouselAppearance Appearance { get; set; } = CarouselAppearance.MultiBrowse;
 
     /// <summary>
     ///     Optional interval in milliseconds for autoplay. When null, autoplay is disabled.
@@ -51,8 +51,8 @@ public partial class TnTCarousel {
     public override string? ElementClass => CssClassBuilder.Create()
         .AddFromAdditionalAttributes(AdditionalAttributes)
         .AddClass("tnt-carousel")
-        .AddClass("tnt-carousel-hero", Appearance.HasFlag(CarouselAppearance.Hero))
-        .AddClass("tnt-carousel-centered", Appearance.HasFlag(CarouselAppearance.Centered) && EnableSnapping)
+        .AddClass("tnt-carousel-hero", Appearance is CarouselAppearance.Hero or CarouselAppearance.CenterAlignedHero)
+        .AddClass("tnt-carousel-centered", Appearance == CarouselAppearance.CenterAlignedHero && EnableSnapping)
         .AddClass("tnt-carousel-snapping", EnableSnapping)
         .Build();
 
@@ -119,23 +119,37 @@ public partial class TnTCarousel {
 }
 
 /// <summary>
-///     Flags representing the available appearance variants for the <see cref="TnTCarousel" />.
+///     Material 3 carousel appearance variants for the <see cref="TnTCarousel" />.
 /// </summary>
-[Flags]
 public enum CarouselAppearance {
 
     /// <summary>
-    ///     Default appearance with standard sizing and behavior.
+    ///     Horizontal contained layout showing a large item with medium and small trailing items when space allows.
     /// </summary>
-    Default = 0,
+    MultiBrowse = 0,
 
     /// <summary>
-    ///     Hero appearance: larger, more prominent presentation intended for hero sections.
+    ///     Horizontal uncontained row with uniform item sizing.
     /// </summary>
-    Hero = 1,
+    Uncontained = 1,
 
     /// <summary>
-    ///     Centered appearance: centers the active item and is typically used together with snapping.
+    ///     Horizontal uncontained row where item widths vary by content aspect ratio.
     /// </summary>
-    Centered = 2
+    UncontainedMultiAspectRatio = 2,
+
+    /// <summary>
+    ///     Horizontal contained layout with one dominant large item and a trailing preview.
+    /// </summary>
+    Hero = 3,
+
+    /// <summary>
+    ///     Horizontal contained hero layout with the dominant item centered between previews.
+    /// </summary>
+    CenterAlignedHero = 4,
+
+    /// <summary>
+    ///     Vertical edge-to-edge layout showing one item per carousel viewport.
+    /// </summary>
+    FullScreen = 5
 }

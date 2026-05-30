@@ -1,0 +1,66 @@
+@using Microsoft.AspNetCore.Components.Forms
+@using NTComponents
+
+<section id="server-upload-version" style="display:grid;gap:12px;">
+    <h2>InteractiveServer Upload</h2>
+    <NTFileUpload @bind-Value="_files"
+                  ElementId="server-file-upload"
+                  Label="Server upload"
+                  EmptyText="No server file selected"
+                  SupportingText="Streams through the InteractiveServer callback."
+                  MaximumFileSize="52428800"
+                  OnUploadFile="OnUploadFileAsync"
+                  OnProgressChanged="OnProgressChangedAsync"
+                  OnFileError="OnFileErrorAsync"
+                  OnCompleted="OnCompletedAsync" />
+    <output data-testid="server-status">@_status</output>
+    <output data-testid="server-percent">@_percent</output>
+</section>
+
+@code {
+    private IReadOnlyList<IBrowserFile>? _files;
+    private int _percent;
+    private string _status = "Waiting for server upload.";
+
+    protected override Task OnAfterRenderAsync(bool firstRender) {
+        if (!firstRender) {
+            return Task.CompletedTask;
+        }
+
+        _status = "Server ready.";
+        return InvokeAsync(StateHasChanged);
+    }
+
+    private async Task OnUploadFileAsync(NTFileUploadEventArgs args) {
+        if (args.Stream is null) {
+            _status = "Server upload stream missing.";
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        await args.Stream.CopyToAsync(Stream.Null);
+        await Task.Delay(750);
+        _status = $"Server uploaded {args.Name} ({args.Size} bytes).";
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private Task OnProgressChangedAsync(NTFileUploadProgressDetails details) {
+        _percent = details.Percent;
+        return InvokeAsync(StateHasChanged);
+    }
+
+    private Task OnFileErrorAsync(NTFileUploadEventArgs args) {
+        _status = $"Server upload failed: {args.ErrorMessage}";
+        return InvokeAsync(StateHasChanged);
+    }
+
+    private Task OnCompletedAsync(IReadOnlyList<NTFileUploadEventArgs> uploads) {
+        var upload = uploads.FirstOrDefault();
+        _status = upload?.ErrorMessage is { Length: > 0 } errorMessage
+            ? $"Server completed with error: {errorMessage}"
+            : upload is null
+            ? "Server upload completed with no files."
+            : $"Server completed {upload.Name} at {upload.ProgressPercent}%.";
+        return InvokeAsync(StateHasChanged);
+    }
+}

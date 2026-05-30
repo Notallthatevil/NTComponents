@@ -1,0 +1,90 @@
+@use '../Styles/_Variables/_colors.scss' as colors;
+@use './buttonChrome' as buttonChrome;
+
+.nt-button {
+    @include buttonChrome.root("nt-button-bg", "nt-button-fg", colors.$tnt-color-primary, colors.$tnt-color-on-primary);
+
+    vertical-align: middle;
+
+    @each $size, $tokens in buttonChrome.$sizes {
+        &.tnt-size-#{$size} {
+            @include buttonChrome.size("nt-button-shape-square", $tokens...);
+        }
+    }
+
+    &.nt-button-text::after {
+        content: none;
+    }
+
+    &.nt-button-text:focus-visible::after {
+        background: transparent;
+        border-color: transparent;
+        content: '';
+    }
+
+    &.nt-button-outlined::after {
+        background: transparent;
+        border-color: colors.$tnt-color-outline;
+    }
+
+    > .nt-button-icon,
+    > .nt-button-label {
+        position: relative;
+        z-index: 2;
+    }
+
+    .nt-button-label {
+        min-inline-size: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .nt-button-icon {
+        align-items: center;
+        display: inline-flex;
+        flex: 0 0 auto;
+        justify-content: center;
+    }
+
+    &.tnt-disabled,
+    &:disabled {
+        box-shadow: none;
+        color: color-mix(in srgb, #{colors.$tnt-color-on-surface} 38%, transparent);
+        cursor: not-allowed;
+        outline: none;
+
+        &::after {
+            background: color-mix(in srgb, #{colors.$tnt-color-on-surface} 12%, transparent);
+            border-color: transparent;
+        }
+
+        &.nt-button-text::after,
+        &.nt-button-outlined::after {
+            background: transparent;
+        }
+
+        &.nt-button-outlined::after {
+            border-color: color-mix(in srgb, #{colors.$tnt-color-on-surface} 12%, transparent);
+        }
+    }
+
+    @include buttonChrome.ripple-host;
+
+    ::deep {
+        tnt-page-script {
+            position: absolute;
+        }
+
+        progress.tnt-components {
+            height: 100%;
+            position: absolute !important;
+            width: 100%;
+
+            &.tnt-progress-linear {
+                height: 4px !important;
+                width: calc(100% - 8px) !important;
+            }
+        }
+    }
+}

@@ -1,7 +1,13 @@
-﻿@use '../Styles/_Variables/_colors.scss' as colors;
+@use 'sass:map';
+@use '../Styles/_Variables/_colors.scss' as colors;
+@use '../Styles/_Variables/_corner-radius.scss' as corners;
+@use '../Styles/_Variables/_elevation.scss' as elevation;
 @use '../Styles/_Variables/_interactable.scss' as interactable;
+@use '../Styles/_Variables/_motion.scss' as motion;
+@use '../Styles/_Variables/_typescale.scss' as typescale;
 
 $bg-width: var(--tnt-carousel-item-bg-width, 100%);
+$tnt-carousel-item-state-transition: motion.$nt-motion-duration-short_3 motion.$nt-motion-easing-standard;
 
 tnt-carousel-item {
     flex-grow: 0;
@@ -12,16 +18,26 @@ tnt-carousel-item {
 
     .tnt-carousel-item-content {
         box-sizing: border-box;
+        background-color: colors.$tnt-color-surface-container-low;
         background-size: cover;
         background-position: center;
         border: 1px solid colors.$tnt-color-outline;
+        box-shadow: map.get(elevation.$elevation-shadows, 0);
+        color: colors.$tnt-color-on-surface;
         height: 100%;
         max-width: $bg-width;
         min-width: 56px;
-        border-radius: 28px;
+        border-radius: corners.$nt-corner-radius-extra-large;
         overflow: clip;
+        transition: background-color $tnt-carousel-item-state-transition, border-color $tnt-carousel-item-state-transition, box-shadow $tnt-carousel-item-state-transition, color $tnt-carousel-item-state-transition;
+
+        @include typescale.nt-body-large;
 
         @include interactable.tnt-interactable(colors.$tnt-color-surface-tint, null, true);
+
+        &.tnt-interactable:not(.tnt-disabled)::before {
+            transition: opacity $tnt-carousel-item-state-transition, background-color $tnt-carousel-item-state-transition;
+        }
 
         &.tnt-carousel-hero {
             max-width: 100%;

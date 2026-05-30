@@ -1,30 +1,146 @@
 @page "/progress"
+@rendermode InteractiveAuto
+@using NTComponents
 
 <h3>
-    Static
+    M3 progress indicators
 </h3>
 
-<NTComponents.TnTProgressIndicator Appearance="NTComponents.ProgressAppearance.Ring" />
-<NTComponents.TnTProgressIndicator Appearance="NTComponents.ProgressAppearance.Linear" />
+<section style="display:grid; gap:1.25rem; max-width:54rem;">
+    <div style="display:grid; gap:1.5rem; min-height:8rem; padding:1.5rem; border:1px solid var(--tnt-color-outline-variant); border-radius:.5rem; background:var(--tnt-color-surface-container-lowest);">
+        @if (showProgress) {
+            <div style="display:grid; gap:1rem; align-items:center; inline-size:100%;">
+                <NTProgress Variant="@variant"
+                            Size="@size"
+                            ProgressColor="@indicatorColor"
+                            TrackColor="@trackColor"
+                            TrackVisible="@trackVisible"
+                            Animate="@animate"
+                            Value="@EffectiveProgressValue"
+                            Max="100"
+                            AriaLabel="Progress preview" />
+            </div>
+        }
+    </div>
 
-<h3>
-    Interactive
-</h3>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(14rem, 1fr)); gap:1rem; padding:1.25rem; border:1px solid var(--tnt-color-outline-variant); border-radius:.5rem; background:var(--tnt-color-surface);">
+        <label style="display:flex; gap:.5rem; align-items:center;">
+            <input type="checkbox" @bind="showProgress" />
+            Show indicator
+        </label>
 
-<LiveTest.Client.Components.ProgressWithSetPercentage />
+        <label style="display:flex; gap:.5rem; align-items:center;">
+            <input type="checkbox" @bind="animate" disabled="@isDeterminate" />
+            Animate indeterminate
+        </label>
 
+        <label style="display:grid; gap:.35rem;">
+            Variant
+            <select @bind="variant">
+                @foreach (var option in Enum.GetValues<NTProgressVariant>()) {
+                    <option value="@option">@option</option>
+                }
+            </select>
+        </label>
 
-<NTComponents.TnTProgressIndicator Appearance="NTComponents.ProgressAppearance.Ring" Size="NTComponents.Size.Smallest" />
-<br />
+        <label style="display:flex; gap:.5rem; align-items:center;">
+            <input type="checkbox" @bind="isDeterminate" />
+            Determinate
+        </label>
 
-<NTComponents.TnTProgressIndicator Appearance="NTComponents.ProgressAppearance.Ring" Size="NTComponents.Size.Small" />
-<br />
+        <label style="display:grid; gap:.35rem;">
+            Size
+            <select @bind="size">
+                @foreach (var option in Enum.GetValues<Size>()) {
+                    <option value="@option">@option</option>
+                }
+            </select>
+        </label>
 
-<NTComponents.TnTProgressIndicator Appearance="NTComponents.ProgressAppearance.Ring" Size="NTComponents.Size.Medium" />
-<br />
+        <label style="display:grid; gap:.35rem;">
+            Indicator color
+            <select @bind="indicatorColor">
+                @foreach (var option in ColorOptions) {
+                    <option value="@option">@option</option>
+                }
+            </select>
+        </label>
 
-<NTComponents.TnTProgressIndicator Appearance="NTComponents.ProgressAppearance.Ring" Size="NTComponents.Size.Large" />
-<br />
+        <label style="display:grid; gap:.35rem;">
+            Track color
+            <select @bind="trackColor">
+                @foreach (var option in TrackColorOptions) {
+                    <option value="@option">@option</option>
+                }
+            </select>
+        </label>
 
-<NTComponents.TnTProgressIndicator Appearance="NTComponents.ProgressAppearance.Ring" Size="NTComponents.Size.Largest" ProgressColor="NTComponents.TnTColor.Tertiary" />
-<br />
+        <label style="display:flex; gap:.5rem; align-items:center;">
+            <input type="checkbox" @bind="trackVisible" />
+            Track visible
+        </label>
+
+        <label style="display:grid; gap:.35rem;">
+            Progress: @progressValue%
+            <input type="range" min="0" max="100" @bind="progressValue" disabled="@(!isDeterminate)" />
+        </label>
+    </div>
+
+    <div style="display:grid; gap:1rem;">
+        <h4 style="margin:0;">Linear</h4>
+        <div style="display:grid; gap:1.5rem; inline-size:100%;">
+            <NTProgress Variant="NTProgressVariant.Linear" AriaLabel="Indeterminate linear progress indicator" />
+            <NTProgress Variant="NTProgressVariant.Linear" Value="45" AriaLabel="Determinate linear progress indicator" />
+            <NTProgress Variant="NTProgressVariant.LinearWave" ProgressColor="TnTColor.Tertiary" AriaLabel="Indeterminate linear sine wave progress indicator" />
+            <NTProgress Variant="NTProgressVariant.LinearWave" Value="45" ProgressColor="TnTColor.Tertiary" AriaLabel="Determinate linear sine wave progress indicator" />
+        </div>
+    </div>
+
+    <div style="display:grid; gap:1rem;">
+        <h4 style="margin:0;">Ring</h4>
+        <div style="display:flex; gap:1.5rem; align-items:center; flex-wrap:wrap;">
+            <NTProgress Variant="NTProgressVariant.Ring" ProgressColor="TnTColor.Secondary" AriaLabel="Indeterminate ring progress indicator" />
+            <NTProgress Variant="NTProgressVariant.Ring" Value="45" ProgressColor="TnTColor.Secondary" AriaLabel="Determinate ring progress indicator" />
+            <NTProgress Variant="NTProgressVariant.RingWave" Value="45" ProgressColor="TnTColor.Success" AriaLabel="Ring sine wave progress indicator" />
+        </div>
+    </div>
+
+    <div style="display:grid; gap:1rem;">
+        <h4 style="margin:0;">Button progress</h4>
+        <button style="display:inline-flex; inline-size:max-content; min-inline-size:8rem; align-items:center; justify-content:center; gap:.75rem; padding:.625rem 1rem; border:0; border-radius:999px; color:var(--tnt-color-on-primary); background:var(--tnt-color-primary);">
+            <NTProgress Variant="NTProgressVariant.Ring" Size="Size.Smallest" ProgressColor="TnTColor.OnPrimary" TrackVisible="false" AriaLabel="Saving changes" />
+            Saving
+        </button>
+    </div>
+</section>
+
+@code {
+    private bool animate = true;
+    private bool isDeterminate;
+    private bool showProgress = true;
+    private bool trackVisible = true;
+    private int progressValue = 45;
+    private NTProgressVariant variant = NTProgressVariant.Linear;
+    private Size size = Size.Medium;
+    private TnTColor indicatorColor = TnTColor.Primary;
+    private TnTColor trackColor = TnTColor.SecondaryContainer;
+
+    private static readonly TnTColor[] ColorOptions = [
+        TnTColor.Primary,
+        TnTColor.Secondary,
+        TnTColor.Tertiary,
+        TnTColor.Success,
+        TnTColor.Warning,
+        TnTColor.Error
+    ];
+
+    private static readonly TnTColor[] TrackColorOptions = [
+        TnTColor.SecondaryContainer,
+        TnTColor.PrimaryContainer,
+        TnTColor.TertiaryContainer,
+        TnTColor.SurfaceContainerHigh,
+        TnTColor.SurfaceContainerHighest
+    ];
+
+    private double? EffectiveProgressValue => isDeterminate ? progressValue : null;
+}

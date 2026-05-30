@@ -38,6 +38,14 @@ public sealed class CssClassBuilder {
     }
 
     /// <summary>
+    ///     Adds a CSS class for NT corner radius.
+    /// </summary>
+    /// <param name="cornerRadius">The NT corner radius token.</param>
+    /// <param name="enabled">     Whether the class should be added.</param>
+    /// <returns>The current instance of <see cref="CssClassBuilder" />.</returns>
+    public CssClassBuilder AddCornerRadius(NTCornerRadius cornerRadius, bool enabled = true) => AddClass(cornerRadius.ToCssClass(), enabled);
+
+    /// <summary>
     ///     Adds a CSS class for disabled state.
     /// </summary>
     /// <param name="disabled">Whether the component is disabled.</param>
@@ -50,6 +58,22 @@ public sealed class CssClassBuilder {
     /// <param name="elevation">The elevation level.</param>
     /// <returns>The current instance of <see cref="CssClassBuilder" />.</returns>
     public CssClassBuilder AddElevation(int elevation) => AddClass($"tnt-elevation-{Math.Clamp(elevation, 0, 10)}", elevation >= 0);
+
+    /// <summary>
+    ///     Adds a CSS class for NT elevation.
+    /// </summary>
+    /// <param name="elevation">The NT elevation level.</param>
+    /// <param name="enabled">  Whether the class should be added.</param>
+    /// <returns>The current instance of <see cref="CssClassBuilder" />.</returns>
+    public CssClassBuilder AddElevation(NTElevation elevation, bool enabled = true) => AddClass(elevation.ToCssClass(), enabled);
+
+    /// <summary>
+    ///     Adds an elevation CSS class to the builder.
+    /// </summary>
+    /// <param name="elevation">The elevation level to apply.</param>
+    /// <param name="enabled">  Determines whether the elevation class is added. Default is <see langword="true" />.</param>
+    /// <returns>The current <see cref="CssClassBuilder" /> instance for method chaining.</returns>
+    public CssClassBuilder AddElevation(NTElevation? elevation, bool enabled = true) => AddClass(elevation.GetValueOrDefault().ToCssClass(), enabled && elevation.HasValue);
 
     /// <summary>
     ///     Adds a CSS class for filled state.

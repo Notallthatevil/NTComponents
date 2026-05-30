@@ -1,0 +1,23 @@
+@use './colors' as colors;
+
+@mixin nt-scrollbar($thumb-color: colors.$tnt-color-primary-fixed, $track-color: transparent) {
+    scrollbar-color: #{$thumb-color} #{$track-color};
+    scrollbar-gutter: auto;
+    scrollbar-width: thin;
+
+    &::-webkit-scrollbar {
+        block-size: 8px;
+        inline-size: 8px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: #{$track-color};
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: #{$thumb-color};
+        background-clip: content-box;
+        border: 2px solid transparent;
+        border-radius: 9999px;
+    }
+}

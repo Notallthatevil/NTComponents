@@ -1,0 +1,588 @@
+@use '../Styles/_Variables/_colors.scss' as colors;
+@use '../Styles/_Variables/_motion.scss' as motion;
+@use '../Styles/_Variables/_typescale.scss' as typescale;
+
+$nt-switch-touch-target-width: 52px;
+$nt-switch-touch-target-height: 48px;
+$nt-switch-touch-target-width-standard: 48px;
+$nt-switch-touch-target-height-standard: 42px;
+$nt-switch-touch-target-width-dense: 40px;
+$nt-switch-touch-target-height-dense: 28px;
+$nt-switch-track-width: 52px;
+$nt-switch-track-height: 32px;
+$nt-switch-track-width-standard: 48px;
+$nt-switch-track-height-standard: 28px;
+$nt-switch-track-width-dense: 40px;
+$nt-switch-track-height-dense: 24px;
+$nt-switch-track-outline-width: 2px;
+$nt-switch-handle-size: 24px;
+$nt-switch-handle-size-standard: 22px;
+$nt-switch-handle-size-off-scale: 0.6667;
+$nt-switch-handle-size-pressed-scale: 1.1667;
+$nt-switch-handle-size-dense: 18px;
+$nt-switch-handle-size-dense-off-scale: 0.6667;
+$nt-switch-handle-size-dense-pressed-scale: 1.1112;
+$nt-switch-handle-offset: 4px;
+$nt-switch-handle-offset-standard: 3px;
+$nt-switch-handle-offset-dense: 3px;
+$nt-switch-handle-selected-x: 20px;
+$nt-switch-handle-selected-x-standard: 20px;
+$nt-switch-handle-selected-x-dense: 16px;
+$nt-switch-disabled-handle-x-offset: 4px;
+$nt-switch-disabled-handle-x: -$nt-switch-disabled-handle-x-offset;
+$nt-switch-state-layer-selected-x: $nt-switch-handle-selected-x * 0.5;
+$nt-switch-state-layer-selected-x-standard: $nt-switch-handle-selected-x-standard * 0.5;
+$nt-switch-state-layer-selected-x-dense: $nt-switch-handle-selected-x-dense * 0.5;
+$nt-switch-state-layer-size: 40px;
+$nt-switch-state-layer-size-standard: 36px;
+$nt-switch-state-layer-size-dense: 28px;
+$nt-switch-handle-icon-size: 16px;
+$nt-switch-handle-icon-size-standard: 14px;
+$nt-switch-handle-icon-size-dense: 12px;
+$nt-switch-external-icon-size: 24px;
+$nt-switch-external-icon-size-dense: 20px;
+$nt-switch-gap: 6px;
+$nt-switch-supporting-gap: -3px;
+$nt-switch-supporting-gap-dense: 0;
+$nt-switch-trailing-gap: 8px;
+$nt-switch-trailing-padding-inline: 8px;
+$nt-switch-supporting-offset: calc(($nt-switch-touch-target-width - $nt-switch-track-width) / 2);
+$nt-switch-supporting-offset-with-leading: $nt-switch-external-icon-size + $nt-switch-gap + $nt-switch-supporting-offset;
+$nt-switch-disabled-opacity: 0.38;
+$nt-switch-state-hover-opacity: 0.08;
+$nt-switch-state-focus-opacity: 0.12;
+$nt-switch-focus-visible-opacity: 0.22;
+$nt-switch-state-pressed-opacity: 0.12;
+$nt-switch-focus-indicator-width: 3px;
+$nt-switch-enter-duration: motion.$nt-motion-duration-medium_1;
+$nt-switch-exit-duration: motion.$nt-motion-duration-short_4;
+$nt-switch-enter-easing: motion.$nt-motion-easing-emphasized-decelerate;
+$nt-switch-exit-easing: motion.$nt-motion-easing-emphasized-accelerate;
+
+@mixin nt-switch-handle-transform($x, $scale) {
+    transform: translateX($x) scale($scale);
+}
+
+@mixin nt-switch-handle-motion($duration: $nt-switch-enter-duration, $easing: $nt-switch-enter-easing) {
+    transition:
+        background-color $duration linear,
+        transform $duration $easing;
+}
+
+@mixin nt-switch-state-layer-transform($x) {
+    transform: translate(-50%, -50%) translateX($x);
+}
+
+.nt-switch {
+    --nt-switch-disabled-handle-color: #{colors.$tnt-color-on-surface};
+    --nt-switch-disabled-icon-color: #{colors.$tnt-color-surface};
+    --nt-switch-disabled-track-color: #{colors.$tnt-color-on-surface};
+    --nt-switch-error-color: #{colors.$tnt-color-error};
+    --nt-switch-focus-indicator-color: #{colors.$tnt-color-primary};
+    --nt-switch-icon-color: #{colors.$tnt-color-on-surface-variant};
+    --nt-switch-label-color: #{colors.$tnt-color-on-surface};
+    --nt-switch-selected-handle-color: #{colors.$tnt-color-on-primary};
+    --nt-switch-selected-icon-color: #{colors.$tnt-color-primary};
+    --nt-switch-selected-state-layer-color: #{colors.$tnt-color-primary};
+    --nt-switch-selected-track-color: #{colors.$tnt-color-primary};
+    --nt-switch-state-layer-color: #{colors.$tnt-color-on-surface};
+    --nt-switch-supporting-text-color: #{colors.$tnt-color-on-surface-variant};
+    --nt-switch-unselected-handle-color: #{colors.$tnt-color-outline};
+    --nt-switch-unselected-icon-color: #{colors.$tnt-color-surface-container-highest};
+    --nt-switch-unselected-outline-color: #{colors.$tnt-color-outline};
+    --nt-switch-unselected-track-color: #{colors.$tnt-color-surface-container-highest};
+    --nt-switch-external-icon-size: #{$nt-switch-external-icon-size};
+
+    display: inline-flex;
+    flex-direction: column;
+    min-width: 0;
+    color: var(--nt-switch-label-color);
+
+    .nt-switch-label {
+        display: inline-flex;
+        align-items: center;
+        gap: $nt-switch-gap;
+        min-width: 0;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .nt-switch-touch-target {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+        width: $nt-switch-touch-target-width;
+        height: $nt-switch-touch-target-height;
+        border-radius: 999px;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    input {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        appearance: none;
+        cursor: inherit;
+        opacity: 0;
+    }
+
+    .nt-switch-state-layer {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: $nt-switch-state-layer-size;
+        height: $nt-switch-state-layer-size;
+        border-radius: 50%;
+        background-color: var(--nt-switch-state-layer-color);
+        opacity: 0;
+        pointer-events: none;
+        transition:
+            transform $nt-switch-exit-duration $nt-switch-exit-easing,
+            opacity $nt-switch-exit-duration linear,
+            background-color $nt-switch-exit-duration linear,
+            box-shadow $nt-switch-exit-duration linear;
+
+        @include nt-switch-state-layer-transform(-$nt-switch-state-layer-selected-x);
+    }
+
+    input:focus-visible ~ .nt-switch-state-layer {
+        opacity: $nt-switch-focus-visible-opacity;
+        box-shadow: 0 0 0 $nt-switch-focus-indicator-width var(--nt-switch-focus-indicator-color);
+    }
+
+    input:checked ~ .nt-switch-state-layer {
+        background-color: var(--nt-switch-selected-state-layer-color);
+        transition:
+            transform $nt-switch-enter-duration $nt-switch-enter-easing,
+            opacity $nt-switch-exit-duration linear,
+            background-color $nt-switch-enter-duration linear,
+            box-shadow $nt-switch-exit-duration linear;
+
+        @include nt-switch-state-layer-transform($nt-switch-state-layer-selected-x);
+    }
+
+    input:checked ~ .nt-switch-track {
+        border-color: var(--nt-switch-selected-track-color);
+        background-color: var(--nt-switch-selected-track-color);
+        transition:
+            background-color $nt-switch-enter-duration linear,
+            border-color $nt-switch-enter-duration linear;
+    }
+
+    input:checked ~ .nt-switch-track .nt-switch-handle {
+        background-color: var(--nt-switch-selected-handle-color);
+        transition:
+            background-color $nt-switch-enter-duration linear,
+            transform $nt-switch-enter-duration $nt-switch-enter-easing;
+
+        @include nt-switch-handle-transform($nt-switch-handle-selected-x, 1);
+    }
+
+    input:checked ~ .nt-switch-track .nt-switch-handle-icon-on {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    input:checked ~ .nt-switch-track .nt-switch-handle-icon-off {
+        opacity: 0;
+        transform: scale(0.7);
+    }
+
+    .nt-switch-track {
+        position: relative;
+        display: block;
+        width: $nt-switch-track-width;
+        height: $nt-switch-track-height;
+        border: $nt-switch-track-outline-width solid var(--nt-switch-unselected-outline-color);
+        border-radius: calc($nt-switch-track-height / 2);
+        background-color: var(--nt-switch-unselected-track-color);
+        box-sizing: border-box;
+        pointer-events: none;
+        transition:
+            background-color $nt-switch-exit-duration linear,
+            border-color $nt-switch-exit-duration linear;
+    }
+
+    .nt-switch-handle {
+        position: absolute;
+        top: calc(50% - (#{$nt-switch-handle-size} / 2));
+        left: $nt-switch-handle-offset;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: $nt-switch-handle-size;
+        height: $nt-switch-handle-size;
+        border-radius: 50%;
+        background-color: var(--nt-switch-unselected-handle-color);
+        transform-origin: center;
+        transition:
+            background-color $nt-switch-exit-duration linear,
+            transform $nt-switch-exit-duration $nt-switch-exit-easing;
+
+        @include nt-switch-handle-transform(0, $nt-switch-handle-size-off-scale);
+    }
+
+    .nt-switch-handle-icon {
+        position: absolute;
+        width: $nt-switch-handle-icon-size;
+        height: $nt-switch-handle-icon-size;
+        fill: none;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 2px;
+        opacity: 0;
+        transform: scale(0.7);
+        transition:
+            opacity motion.$nt-motion-duration-short_2 linear,
+            transform $nt-switch-exit-duration $nt-switch-exit-easing;
+    }
+
+    .nt-switch-handle-icon-off {
+        stroke: var(--nt-switch-unselected-icon-color);
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    .nt-switch-handle-icon-on {
+        stroke: var(--nt-switch-selected-icon-color);
+    }
+
+    .nt-switch-label-text {
+        min-width: 0;
+        flex: 0 1 auto;
+        overflow-wrap: anywhere;
+
+        @include typescale.nt-body-large;
+    }
+
+    .nt-switch-leading,
+    .nt-switch-trailing {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+        width: var(--nt-switch-external-icon-size);
+        height: var(--nt-switch-external-icon-size);
+        color: var(--nt-switch-icon-color);
+    }
+
+    ::deep {
+        .nt-switch-leading :where(svg, .material-symbols-outlined),
+        .nt-switch-trailing :where(svg, .material-symbols-outlined) {
+            width: var(--nt-switch-external-icon-size);
+            height: var(--nt-switch-external-icon-size);
+            font-size: var(--nt-switch-external-icon-size);
+            color: inherit;
+            fill: currentColor;
+        }
+    }
+
+    .nt-switch-supporting-row {
+        margin-top: $nt-switch-supporting-gap;
+        padding-inline-start: $nt-switch-supporting-offset;
+    }
+
+    .nt-switch-supporting {
+        display: block;
+        color: var(--nt-switch-supporting-text-color);
+
+        @include typescale.nt-body-small;
+    }
+
+    .nt-switch-error-text {
+        color: var(--nt-switch-error-color);
+    }
+
+    &:hover:not(.nt-switch-disabled):not(.nt-switch-readonly) {
+        .nt-switch-state-layer {
+            opacity: $nt-switch-state-hover-opacity;
+        }
+
+        .nt-switch-handle {
+            @include nt-switch-handle-motion;
+            @include nt-switch-handle-transform(0, $nt-switch-handle-size-pressed-scale);
+        }
+    }
+
+    &:focus-within:not(.nt-switch-disabled) {
+        .nt-switch-state-layer {
+            opacity: $nt-switch-state-focus-opacity;
+        }
+    }
+
+    &:active:not(.nt-switch-disabled):not(.nt-switch-readonly) {
+        .nt-switch-state-layer {
+            opacity: $nt-switch-state-pressed-opacity;
+        }
+
+        .nt-switch-handle {
+            @include nt-switch-handle-motion;
+            @include nt-switch-handle-transform(0, $nt-switch-handle-size-pressed-scale);
+        }
+    }
+
+    &:hover:not(.nt-switch-disabled):not(.nt-switch-readonly),
+    &:active:not(.nt-switch-disabled):not(.nt-switch-readonly) {
+        input:checked ~ .nt-switch-track .nt-switch-handle {
+            @include nt-switch-handle-motion;
+            @include nt-switch-handle-transform($nt-switch-handle-selected-x, $nt-switch-handle-size-pressed-scale);
+        }
+    }
+
+    &.nt-switch-invalid {
+        --nt-switch-selected-track-color: var(--nt-switch-error-color);
+        --nt-switch-selected-state-layer-color: var(--nt-switch-error-color);
+        --nt-switch-focus-indicator-color: var(--nt-switch-error-color);
+        --nt-switch-unselected-handle-color: var(--nt-switch-error-color);
+        --nt-switch-unselected-outline-color: var(--nt-switch-error-color);
+        --nt-switch-state-layer-color: var(--nt-switch-error-color);
+    }
+
+    &.nt-switch-disabled {
+        .nt-switch-label {
+            cursor: default;
+        }
+
+        .nt-switch-label-text {
+            color: color-mix(in srgb, var(--nt-switch-label-color) #{$nt-switch-disabled-opacity * 100%}, transparent);
+        }
+
+        .nt-switch-leading,
+        .nt-switch-trailing {
+            color: color-mix(in srgb, var(--nt-switch-icon-color) #{$nt-switch-disabled-opacity * 100%}, transparent);
+        }
+
+        .nt-switch-track {
+            border-color: color-mix(in srgb, var(--nt-switch-disabled-track-color) #{$nt-switch-disabled-opacity * 100%}, transparent);
+            background-color: color-mix(in srgb, var(--nt-switch-disabled-track-color) 12%, transparent);
+        }
+
+        .nt-switch-handle {
+            background-color: color-mix(in srgb, var(--nt-switch-disabled-handle-color) #{$nt-switch-disabled-opacity * 100%}, transparent);
+
+            @include nt-switch-handle-transform($nt-switch-disabled-handle-x, $nt-switch-handle-size-off-scale);
+        }
+
+        input:checked ~ .nt-switch-track .nt-switch-handle {
+            @include nt-switch-handle-transform(calc(#{$nt-switch-handle-selected-x} - #{$nt-switch-disabled-handle-x-offset}), 1);
+        }
+
+        .nt-switch-handle-icon {
+            stroke: var(--nt-switch-disabled-icon-color);
+        }
+    }
+
+    &.nt-switch-readonly {
+        .nt-switch-label {
+            cursor: default;
+        }
+    }
+
+    &.nt-switch-has-leading-icon .nt-switch-supporting-row {
+        padding-inline-start: $nt-switch-supporting-offset-with-leading;
+    }
+
+    &.nt-switch-standard {
+        .nt-switch-touch-target {
+            width: $nt-switch-touch-target-width-standard;
+            height: $nt-switch-touch-target-height-standard;
+        }
+
+        .nt-switch-state-layer {
+            width: $nt-switch-state-layer-size-standard;
+            height: $nt-switch-state-layer-size-standard;
+
+            @include nt-switch-state-layer-transform(-$nt-switch-state-layer-selected-x-standard);
+        }
+
+        input:checked ~ .nt-switch-state-layer {
+            @include nt-switch-state-layer-transform($nt-switch-state-layer-selected-x-standard);
+        }
+
+        input:checked ~ .nt-switch-track .nt-switch-handle {
+            @include nt-switch-handle-transform($nt-switch-handle-selected-x-standard, 1);
+        }
+
+        .nt-switch-track {
+            width: $nt-switch-track-width-standard;
+            height: $nt-switch-track-height-standard;
+            border-radius: calc($nt-switch-track-height-standard / 2);
+        }
+
+        .nt-switch-handle {
+            top: calc(50% - (#{$nt-switch-handle-size-standard} / 2));
+            left: $nt-switch-handle-offset-standard;
+            width: $nt-switch-handle-size-standard;
+            height: $nt-switch-handle-size-standard;
+        }
+
+        .nt-switch-handle-icon {
+            width: $nt-switch-handle-icon-size-standard;
+            height: $nt-switch-handle-icon-size-standard;
+        }
+
+        &:hover:not(.nt-switch-disabled):not(.nt-switch-readonly),
+        &:active:not(.nt-switch-disabled):not(.nt-switch-readonly) {
+            input:checked ~ .nt-switch-track .nt-switch-handle {
+                @include nt-switch-handle-motion;
+                @include nt-switch-handle-transform($nt-switch-handle-selected-x-standard, $nt-switch-handle-size-pressed-scale);
+            }
+        }
+
+        &.nt-switch-disabled {
+            .nt-switch-handle {
+                @include nt-switch-handle-transform($nt-switch-disabled-handle-x, $nt-switch-handle-size-off-scale);
+            }
+
+            input:checked ~ .nt-switch-track .nt-switch-handle {
+                @include nt-switch-handle-transform(calc(#{$nt-switch-handle-selected-x-standard} - #{$nt-switch-disabled-handle-x-offset}), 1);
+            }
+        }
+    }
+
+    &.nt-switch-dense {
+        --nt-switch-external-icon-size: #{$nt-switch-external-icon-size-dense};
+
+        .nt-switch-touch-target {
+            width: $nt-switch-touch-target-width-dense;
+            height: $nt-switch-touch-target-height-dense;
+        }
+
+        .nt-switch-state-layer {
+            width: $nt-switch-state-layer-size-dense;
+            height: $nt-switch-state-layer-size-dense;
+
+            @include nt-switch-state-layer-transform(-$nt-switch-state-layer-selected-x-dense);
+        }
+
+        input:checked ~ .nt-switch-state-layer {
+            @include nt-switch-state-layer-transform($nt-switch-state-layer-selected-x-dense);
+        }
+
+        input:checked ~ .nt-switch-track .nt-switch-handle {
+            @include nt-switch-handle-transform($nt-switch-handle-selected-x-dense, 1);
+        }
+
+        .nt-switch-track {
+            width: $nt-switch-track-width-dense;
+            height: $nt-switch-track-height-dense;
+            border-radius: calc($nt-switch-track-height-dense / 2);
+        }
+
+        .nt-switch-handle {
+            top: calc(50% - (#{$nt-switch-handle-size-dense} / 2));
+            left: $nt-switch-handle-offset-dense;
+            width: $nt-switch-handle-size-dense;
+            height: $nt-switch-handle-size-dense;
+
+            @include nt-switch-handle-transform(0, $nt-switch-handle-size-dense-off-scale);
+        }
+
+        .nt-switch-handle-icon {
+            width: $nt-switch-handle-icon-size-dense;
+            height: $nt-switch-handle-icon-size-dense;
+        }
+
+        .nt-switch-label-text {
+            @include typescale.nt-body-medium;
+        }
+
+        .nt-switch-supporting-row {
+            margin-top: $nt-switch-supporting-gap-dense;
+            padding-inline-start: 0;
+        }
+
+        &.nt-switch-has-leading-icon .nt-switch-supporting-row {
+            padding-inline-start: calc($nt-switch-external-icon-size-dense + $nt-switch-gap);
+        }
+
+        &:hover:not(.nt-switch-disabled):not(.nt-switch-readonly),
+        &:active:not(.nt-switch-disabled):not(.nt-switch-readonly) {
+            .nt-switch-handle {
+                @include nt-switch-handle-motion;
+                @include nt-switch-handle-transform(0, $nt-switch-handle-size-dense-pressed-scale);
+            }
+        }
+
+        &:hover:not(.nt-switch-disabled):not(.nt-switch-readonly),
+        &:active:not(.nt-switch-disabled):not(.nt-switch-readonly) {
+            input:checked ~ .nt-switch-track .nt-switch-handle {
+                @include nt-switch-handle-motion;
+                @include nt-switch-handle-transform($nt-switch-handle-selected-x-dense, $nt-switch-handle-size-dense-pressed-scale);
+            }
+        }
+
+        &.nt-switch-disabled {
+            .nt-switch-handle {
+                @include nt-switch-handle-transform($nt-switch-disabled-handle-x, $nt-switch-handle-size-dense-off-scale);
+            }
+
+            input:checked ~ .nt-switch-track .nt-switch-handle {
+                @include nt-switch-handle-transform(calc(#{$nt-switch-handle-selected-x-dense} - #{$nt-switch-disabled-handle-x-offset}), 1);
+            }
+        }
+    }
+
+    &.nt-switch-trailing-control {
+        display: flex;
+        width: 100%;
+        max-width: 100%;
+
+        .nt-switch-label {
+            width: 100%;
+            max-width: 100%;
+            gap: $nt-switch-trailing-gap;
+            padding-inline: $nt-switch-trailing-padding-inline;
+            box-sizing: border-box;
+        }
+
+        .nt-switch-touch-target {
+            order: 4;
+            margin-inline-start: auto;
+        }
+
+        .nt-switch-leading {
+            order: 0;
+        }
+
+        .nt-switch-label-text {
+            order: 1;
+            flex: 1 1 auto;
+        }
+
+        .nt-switch-trailing {
+            order: 2;
+        }
+
+        .nt-switch-supporting-row {
+            padding-inline: $nt-switch-trailing-padding-inline;
+        }
+
+        &.nt-switch-has-leading-icon .nt-switch-supporting-row {
+            padding-inline-start: calc($nt-switch-trailing-padding-inline + $nt-switch-external-icon-size + $nt-switch-trailing-gap);
+        }
+    }
+
+    &.nt-switch-trailing-control.nt-switch-dense.nt-switch-has-leading-icon {
+        .nt-switch-supporting-row {
+            padding-inline-start: calc($nt-switch-trailing-padding-inline + $nt-switch-external-icon-size-dense + $nt-switch-trailing-gap);
+        }
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nt-switch {
+        .nt-switch-state-layer,
+        .nt-switch-track,
+        .nt-switch-handle,
+        .nt-switch-handle-icon {
+            transition-duration: 0ms;
+            animation-duration: 0ms;
+        }
+    }
+}

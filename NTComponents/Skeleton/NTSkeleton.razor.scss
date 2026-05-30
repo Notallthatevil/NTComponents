@@ -1,0 +1,89 @@
+@use '../Styles/_Variables/_colors.scss' as colors;
+@use '../Styles/_Variables/_motion.scss' as motion;
+
+$nt-skeleton-wave-duration: motion.$nt-motion-duration-extra_long_4;
+$nt-skeleton-pulse-duration: motion.$nt-motion-duration-long_2;
+
+.nt-skeleton {
+    --nt-skeleton-default-highlight-color: color-mix(in srgb, #{colors.$tnt-color-on-surface} 8%, var(--nt-skeleton-container-color));
+
+    display: block;
+    position: relative;
+    box-sizing: border-box;
+    inline-size: var(--nt-skeleton-width, 100%);
+    block-size: var(--nt-skeleton-height, 1rem);
+    min-inline-size: 0;
+    overflow: hidden;
+    background-color: var(--nt-skeleton-container-color);
+    color: transparent;
+    pointer-events: none;
+    user-select: none;
+
+    &.nt-skeleton-text {
+        block-size: var(--nt-skeleton-height, 1em);
+        transform-origin: center left;
+    }
+
+    &.nt-skeleton-rectangle {
+        block-size: var(--nt-skeleton-height, 80px);
+    }
+
+    &.nt-skeleton-circle {
+        inline-size: var(--nt-skeleton-width, 40px);
+        block-size: var(--nt-skeleton-height, var(--nt-skeleton-width, 40px));
+        flex: 0 0 auto;
+    }
+
+    &.nt-skeleton-has-content {
+        inline-size: var(--nt-skeleton-width, fit-content);
+        block-size: var(--nt-skeleton-height, auto);
+    }
+
+    &.nt-skeleton-wave::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        transform: translateX(-100%);
+        background: linear-gradient(
+            90deg,
+            transparent 0%,
+            var(--nt-skeleton-highlight-color, var(--nt-skeleton-default-highlight-color)) 50%,
+            transparent 100%
+        );
+        animation: nt-skeleton-wave $nt-skeleton-wave-duration motion.$nt-motion-easing-standard infinite;
+    }
+
+    &.nt-skeleton-pulse {
+        animation: nt-skeleton-pulse $nt-skeleton-pulse-duration motion.$nt-motion-easing-standard infinite alternate;
+    }
+
+    .nt-skeleton-content {
+        display: block;
+        visibility: hidden;
+    }
+}
+
+@keyframes nt-skeleton-wave {
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+@keyframes nt-skeleton-pulse {
+    100% {
+        opacity: 0.62;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nt-skeleton {
+        &.nt-skeleton-wave::after {
+            animation: none;
+            opacity: 0;
+        }
+
+        &.nt-skeleton-pulse {
+            animation: none;
+        }
+    }
+}

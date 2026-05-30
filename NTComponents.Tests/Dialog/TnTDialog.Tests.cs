@@ -345,7 +345,7 @@ public class TnTDialog_Tests : BunitContext {
         var dialog = await _dialogService.OpenAsync<TestDialogComponent>(options);
 
         // Assert
-        var divider = component.FindComponent<TnTDivider>();
+        var divider = component.FindComponent<NTDivider>();
         divider.Should().NotBeNull();
     }
 

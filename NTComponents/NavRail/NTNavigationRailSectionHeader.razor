@@ -1,0 +1,15 @@
+@namespace NTComponents
+@using NTComponents.Core
+@inherits TnTComponentBase
+
+<div @attributes="AdditionalAttributes"
+     class="@ElementClass"
+     style="@ElementStyle"
+     role="heading"
+     aria-level="@AriaLevel"
+     lang="@EffectiveElementLang"
+     title="@EffectiveElementTitle"
+     id="@EffectiveElementId"
+     @ref="Element">
+    <span class="nt-navigation-rail-section-header-label">@Label</span>
+</div>

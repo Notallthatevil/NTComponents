@@ -74,9 +74,9 @@ public partial class TnTCarouselItem {
     private TnTCarousel _carousel { get; set; } = default!;
 
     /// <summary>
-    ///     Returns true when the parent carousel's appearance flags indicate hero layout.
+    ///     Returns true when the parent carousel uses a hero-style layout.
     /// </summary>
-    private bool _hero => _carousel?.Appearance.HasFlag(CarouselAppearance.Hero) == true;
+    private bool _hero => _carousel?.Appearance is CarouselAppearance.Hero or CarouselAppearance.CenterAlignedHero;
 
 
     /// <inheritdoc />

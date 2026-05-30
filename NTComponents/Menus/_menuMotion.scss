@@ -1,0 +1,7 @@
+@use '../Styles/_Variables/_motion.scss' as motion;
+
+// Material 3 menu motion pairings.
+// Menus enter with deceleration and exit faster with acceleration so dismissal
+// does not feel sluggish.
+$nt-menu-enter-transition: motion.$nt-motion-duration-medium_1 motion.$nt-motion-easing-standard-decelerate;
+$nt-menu-exit-transition: motion.$nt-motion-duration-short_4 motion.$nt-motion-easing-standard-accelerate;

@@ -390,6 +390,17 @@ app.MapGet("/api/uploads/progress/{uploadId}/net9", async (HttpContext context, 
     }
 });
 
+app.MapPost("/api/uploads/static-test", async (HttpRequest request, CancellationToken cancellationToken) => {
+    var form = await request.ReadFormAsync(cancellationToken);
+    var file = form.Files.GetFile("staticFile");
+
+    if (file is null) {
+        return Results.BadRequest(new UploadError("missing_file", "staticFile is required."));
+    }
+
+    return Results.Json(new StaticUploadResult(file.Name, file.FileName, file.Length, file.ContentType));
+}).DisableAntiforgery();
+
 #if NET10_0_OR_GREATER
 app.MapGet("/api/uploads/progress/{uploadId}/net10", (string uploadId, CancellationToken cancellationToken) => {
     if (!IsValidUploadId(uploadId)) {
@@ -654,6 +665,8 @@ public sealed record UploadProgressEvent(
     DateTimeOffset TimestampUtc);
 
 public sealed record UploadError(string Code, string Message);
+
+public sealed record StaticUploadResult(string FieldName, string FileName, long Size, string ContentType);
 
 internal sealed class UploadValidationException : Exception {
     public UploadValidationException(int statusCode, string code, string message) : base(message) {

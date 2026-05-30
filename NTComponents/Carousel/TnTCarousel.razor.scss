@@ -1,4 +1,11 @@
-$gapSize: var(--tnt-carousel-item-gap, 8px);
+@use 'sass:map';
+@use '../Styles/_Variables/_colors.scss' as colors;
+@use '../Styles/_Variables/_corner-radius.scss' as corners;
+@use '../Styles/_Variables/_elevation.scss' as elevation;
+@use '../Styles/_Variables/_motion.scss' as motion;
+@use '../Styles/_Variables/_typescale.scss' as typescale;
+
+$tnt-carousel-state-transition: motion.$nt-motion-duration-short_3 motion.$nt-motion-easing-standard;
 
 .tnt-carousel {
     position: relative;
@@ -8,6 +15,12 @@ $gapSize: var(--tnt-carousel-item-gap, 8px);
     box-sizing: border-box;
     height: 700px;
     width: 100%;
+    background-color: colors.$tnt-color-transparent;
+    box-shadow: map.get(elevation.$elevation-shadows, 0);
+    color: colors.$tnt-color-on-surface;
+    transition: background-color $tnt-carousel-state-transition, box-shadow $tnt-carousel-state-transition, color $tnt-carousel-state-transition;
+
+    @include typescale.nt-body-large;
 
     &.tnt-carousel-snapping {
         &:not(.tnt-carousel-centered) {
@@ -35,8 +48,8 @@ $gapSize: var(--tnt-carousel-item-gap, 8px);
         overflow-y: hidden;
         display: flex;
         flex-flow: row nowrap;
-        gap: $gapSize;
-        border-radius: 28px;
+        gap: 8px;
+        border-radius: corners.$nt-corner-radius-extra-large;
         -ms-overflow-style: none;
         scrollbar-width: none;
         cursor: grab;
@@ -47,21 +60,6 @@ $gapSize: var(--tnt-carousel-item-gap, 8px);
         }
         &::-webkit-scrollbar {
             display: none;
-        }
-    }
-
-    ::deep .tnt-carousel-button {
-        position: absolute;
-        z-index: 998;
-
-        &.tnt-carousel-prev-button {
-            left: 16px;
-            top: 50%;
-        }
-
-        &.tnt-carousel-next-button {
-            right: 16px;
-            top: 50%;
         }
     }
 }

@@ -1,0 +1,40 @@
+@namespace NTComponents
+@using NTComponents.Core
+@inherits TnTDisposableComponentBase
+
+@if (Show) {
+    <div @attributes="@AdditionalAttributes"
+         class="@ElementClass"
+         style="@ElementStyle"
+         id="@ElementId"
+         lang="@ElementLang"
+         title="@ElementTitle"
+         role="@EffectiveRole"
+         aria-label="@EffectiveAriaLabel"
+         aria-labelledby="@EffectiveAriaLabelledBy"
+         autofocus="@(AutoFocus == true ? "autofocus" : null)"
+         data-animate="@Animate.ToString().ToLowerInvariant()"
+         data-shape-sequence="@ShapeSequenceValue"
+         data-shape-interval-ms="@EffectiveAnimationDurationMs"
+         data-transition-duration-ms="@ShapeTransitionDuration.ToMilliseconds()"
+         @ref="Element">
+        <nt-shape class="nt-loader-shape"
+                  aria-hidden="true"
+                  data-shape="@((int)_initialShape)"
+                  data-animate-shape-changes="@Animate.ToString().ToLowerInvariant()"
+                  data-transition-duration-ms="@ShapeTransitionDuration.ToMilliseconds()"
+                  data-transition-easing="@((int)ShapeTransitionEasing)"
+                  data-clip-id="@ShapeClipPathId">
+            <svg class="nt-shape-defs" viewBox="0 0 1 1" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+                <defs>
+                    <clipPath id="@ShapeClipPathId" clipPathUnits="objectBoundingBox">
+                        <path class="nt-shape-path" d="@InitialShapePathData"></path>
+                    </clipPath>
+                </defs>
+            </svg>
+            <div class="nt-shape-content" style="@ShapeContentStyle"></div>
+        </nt-shape>
+    </div>
+
+    <TnTPageScript Src="@JsModulePath" />
+}

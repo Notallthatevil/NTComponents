@@ -1,0 +1,145 @@
+@use '../Styles/_Variables/_colors.scss' as colors;
+@use '../Styles/_Variables/_motion.scss' as motion;
+@use '../Styles/_Variables/_screen-width.scss' as screen-width;
+@use './layoutRegion' as region;
+@use './layoutVariables' as layout;
+
+.nt-layout {
+    background: var(--nt-layout-background-color, #{colors.$tnt-color-background});
+    block-size: auto;
+    box-sizing: border-box;
+    color: var(--nt-layout-text-color, #{colors.$tnt-color-on-background});
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    inline-size: 100%;
+    min-block-size: 0;
+    min-inline-size: 0;
+    overflow: clip;
+    transition: background-color motion.$nt-motion-duration-short_3 motion.$nt-motion-easing-standard, color motion.$nt-motion-duration-short_3 motion.$nt-motion-easing-standard;
+
+    &:not(.nt-layout-nested):first-child {
+        min-block-size: 100dvh;
+    }
+
+    &:has(> .nt-navigation-rail),
+    &:has(> .nt-navigation-rail-modal-placeholder) {
+        align-items: stretch;
+        display: grid;
+        grid-template-areas:
+            "rail gap header"
+            "rail gap body"
+            "rail gap footer";
+        grid-template-columns: auto layout.$nt-layout-navigation-rail-body-gap minmax(0, 1fr);
+        grid-template-rows: layout.$nt-layout-header-height layout.$nt-layout-body-height layout.$nt-layout-footer-height;
+        min-block-size: 100dvh;
+    }
+
+    &.nt-layout-nested {
+        block-size: 100%;
+        max-block-size: 100%;
+        min-block-size: 0;
+
+        &:has(> .nt-navigation-rail),
+        &:has(> .nt-navigation-rail-modal-placeholder) {
+            block-size: 100%;
+            max-block-size: 100%;
+            min-block-size: 0;
+        }
+
+        ::deep > .nt-navigation-rail,
+        ::deep > .nt-navigation-rail-modal-placeholder {
+            block-size: 100%;
+            max-block-size: 100%;
+            min-block-size: 0;
+        }
+    }
+
+    &:has(> .nt-header-fixed-position),
+    &:has(> .nt-footer-fixed-position) {
+        block-size: 100dvh;
+        max-block-size: 100dvh;
+        min-block-size: 0;
+        overflow: clip;
+
+        ::deep > .nt-body {
+            @include region.body-scroll-container(auto, none);
+        }
+    }
+
+    ::deep > .nt-navigation-rail {
+        flex: 0 0 auto;
+        grid-area: rail;
+    }
+
+    ::deep > .nt-navigation-rail-modal-placeholder {
+        grid-area: rail;
+    }
+
+    ::deep > .nt-body,
+    ::deep > .nt-layout {
+        flex: 1 1 auto;
+        min-inline-size: 0;
+    }
+
+    ::deep > .nt-body {
+        grid-area: body;
+    }
+
+    ::deep > .nt-layout {
+        grid-area: body;
+    }
+
+    ::deep > .nt-header,
+    ::deep > .nt-footer {
+        flex: 0 0 auto;
+    }
+
+    ::deep > .nt-header {
+        grid-area: header;
+    }
+
+    ::deep > .nt-header-fixed-position {
+        inset-block-start: 0;
+        position: sticky;
+        z-index: 1;
+    }
+
+    ::deep > .nt-footer {
+        grid-area: footer;
+    }
+
+    ::deep > .nt-footer-fixed-position {
+        inset-block-end: 0;
+        position: sticky;
+        z-index: 1;
+    }
+
+    &:has(> .nt-navigation-rail-hide-when-collapsed),
+    &:has(> .nt-navigation-rail-modal-placeholder-hide-when-collapsed) {
+        grid-template-columns: auto 0 minmax(0, 1fr);
+    }
+
+    &:has(> .nt-navigation-rail-hide-menu-button),
+    &:has(> .nt-navigation-rail-hide-when-collapsed),
+    &:has(> .nt-navigation-rail-modal-placeholder-hide-when-collapsed) {
+        ::deep > .nt-header {
+            padding-inline-start: layout.$nt-layout-xs-navigation-trigger-reserved-inline-size;
+        }
+    }
+}
+
+@media #{screen-width.$extra-small-only} {
+    .nt-layout:has(> .nt-navigation-rail-hide-on-xs),
+    .nt-layout:has(> .nt-navigation-rail-modal-placeholder-hide-on-xs) {
+        grid-template-columns: auto 0 minmax(0, 1fr);
+    }
+
+    .nt-layout:has(> .nt-navigation-rail-xs-menu-button),
+    .nt-layout:has(> .nt-navigation-rail-hide-on-xs),
+    .nt-layout:has(> .nt-navigation-rail-modal-placeholder-hide-on-xs) {
+        ::deep > .nt-header {
+            padding-inline-start: layout.$nt-layout-xs-navigation-trigger-reserved-inline-size;
+        }
+    }
+}

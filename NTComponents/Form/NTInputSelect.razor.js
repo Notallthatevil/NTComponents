@@ -6,7 +6,9 @@ function createState(element) {
     }
 
     const state = {
+        disposed: false,
         dotNetRef: null,
+        element,
         frameId: null,
         lastDropdown: null,
         mouseDownInside: false,
@@ -19,10 +21,10 @@ function createState(element) {
 
     state.schedulePositionUpdate = event => schedulePositionUpdate(element, event);
     state.onMouseDown = event => {
-        state.mouseDownInside = element.contains(event.target);
+        state.mouseDownInside = containsEventTarget(element, event.target);
     };
     state.onClick = event => {
-        const isClickInside = element.contains(event.target);
+        const isClickInside = containsEventTarget(element, event.target);
         if (!state.mouseDownInside && !isClickInside) {
             closeDropdownFromOutsideInteraction(state);
         }
@@ -30,7 +32,7 @@ function createState(element) {
         state.mouseDownInside = false;
     };
     state.onFocusIn = event => {
-        if (element.contains(event.target)) {
+        if (containsEventTarget(element, event.target)) {
             return;
         }
 
@@ -65,10 +67,28 @@ function createState(element) {
     return state;
 }
 
+function containsEventTarget(element, target) {
+    return target instanceof Node && element.contains(target);
+}
+
 function closeDropdownFromOutsideInteraction(state) {
-    if (state.dotNetRef?.invokeMethodAsync) {
-        state.dotNetRef.invokeMethodAsync('CloseDropdownFromJs');
+    if (state.disposed || !state.element?.isConnected || !state.dotNetRef?.invokeMethodAsync) {
+        return;
     }
+
+    state.dotNetRef.invokeMethodAsync('CloseDropdownFromJs')
+        .catch(error => {
+            if (!isDisposedInteropError(error)) {
+                setTimeout(() => { throw error; }, 0);
+            }
+        });
+}
+
+function isDisposedInteropError(error) {
+    const message = error?.message ?? `${error}`;
+    return message.includes('dispatcher is no longer available')
+        || message.includes('Cannot send data if the connection is not in the')
+        || message.includes('JSDisconnectedException');
 }
 
 function schedulePositionUpdate(element, event = null) {
@@ -242,8 +262,12 @@ export function onDispose(element) {
         return;
     }
 
+    state.disposed = true;
+    state.dotNetRef = null;
+
     if (state.frameId !== null) {
         cancelAnimationFrame(state.frameId);
+        state.frameId = null;
     }
 
     window.removeEventListener('resize', state.schedulePositionUpdate);

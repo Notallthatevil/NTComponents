@@ -1,0 +1,17 @@
+@namespace NTComponents
+@inherits NTPageScriptViewBase<NTSupportingPaneView>
+
+<div @attributes="ElementAttributes"
+     data-nt-supporting-pane-view
+     data-nt-supporting-pane-mode="@Mode"
+     @ref="Element">
+    <section class="nt-view-pane nt-supporting-pane-view-primary" aria-label="@PrimaryPaneLabel">
+        @Primary
+    </section>
+
+    <aside class="nt-view-pane nt-supporting-pane-view-supporting" aria-label="@SupportingPaneLabel">
+        @Supporting
+    </aside>
+</div>
+
+@PageScript

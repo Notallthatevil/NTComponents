@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using Bunit;
 using Xunit;
 
+#pragma warning disable CS0618
+
 namespace NTComponents.Tests.Anchor;
 
 public class TnTNavLink_Tests : BunitContext {
@@ -186,3 +188,5 @@ public class TnTNavLink_Tests : BunitContext {
         cut.Markup.Should().Contain("--tnt-anchor-tint-color:var(--tnt-color-surface-tint);");
     }
 }
+
+#pragma warning restore CS0618

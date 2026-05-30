@@ -1,0 +1,7 @@
+@use '../Styles/_Variables/_motion.scss' as motion;
+
+// Material 3 button motion pairings.
+// State changes stay quick with standard easing. Shape morphs use the M3
+// emphasized curve.
+$nt-button-state-transition: motion.$nt-motion-duration-short_3 motion.$nt-motion-easing-standard;
+$nt-button-shape-transition: motion.$nt-motion-duration-short_4 motion.$nt-motion-easing-emphasized;

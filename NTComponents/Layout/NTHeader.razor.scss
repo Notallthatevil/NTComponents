@@ -1,0 +1,9 @@
+@use '../Styles/_Variables/_colors.scss' as colors;
+@use './layoutRegion' as region;
+@use './layoutVariables' as layout;
+
+.nt-header {
+    background: var(--nt-header-background-color, #{colors.$tnt-color-surface});
+    color: var(--nt-header-text-color, #{colors.$tnt-color-on-surface});
+    @include region.fixed-height-region(layout.$nt-layout-header-height);
+}

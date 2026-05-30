@@ -1,0 +1,27 @@
+@page "/nav-rail-e2e-test"
+@rendermode InteractiveAuto
+@using NTComponents
+
+<div style="display: flex; min-block-size: 720px;">
+    <NTNavigationRail AriaLabel="E2E primary navigation"
+                      ShowDivider="true"
+                      data-testid="nav-rail-under-test">
+        <NTNavigationRailItem Label="Home"
+                              Href="/nav-rail-e2e-test"
+                              Icon="MaterialIcon.Home"
+                              Selected="true"
+                              data-testid="nav-rail-home-item" />
+        <NTNavigationRailItem Label="Components"
+                              Href="/components"
+                              Icon="MaterialIcon.Widgets"
+                              data-testid="nav-rail-components-item" />
+        <NTNavigationRailItem Label="Reference"
+                              Href="/reference"
+                              Icon="MaterialIcon.Article"
+                              data-testid="nav-rail-reference-item" />
+    </NTNavigationRail>
+
+    <main style="padding: 32px;">
+        <h1>Navigation rail E2E test</h1>
+    </main>
+</div>

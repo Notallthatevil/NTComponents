@@ -1,0 +1,47 @@
+@page "/docs/components"
+@inject DocumentationCatalog DocumentationCatalog
+
+<PageTitle>Components | NTComponents</PageTitle>
+
+<section class="docs-page">
+    <header class="docs-hero">
+        <p class="docs-kicker @NTTypography.LabelLarge.ToCssClass()">Components</p>
+        <h1 class="@NTTypography.HeadlineLarge.ToCssClass()">Documented components</h1>
+        <p class="@NTTypography.BodyLarge.ToCssClass()">
+            Component pages are discovered from the NTComponents assembly and rendered from the generated documentation
+            model. Each page shares the same overview, sandbox, Razor, and API reference templates.
+        </p>
+    </header>
+
+    @foreach (var componentGroup in DocumentationCatalog.ComponentTypes.GroupBy(typePage => typePage.ComponentGroup)) {
+        <section class="doc-group-panel doc-section">
+            <div class="doc-section-heading">
+                <h2 class="@NTTypography.TitleLarge.ToCssClass()">@componentGroup.Key</h2>
+                <p class="@NTTypography.BodyMedium.ToCssClass()">
+                    @componentGroup.Count() documented component@(componentGroup.Count() == 1 ? string.Empty : "s") discovered in this group.
+                </p>
+            </div>
+
+            <div class="doc-type-list">
+                @foreach (var typePage in componentGroup) {
+                    <NTCard class="doc-type-row" href="@($"/docs/components/{typePage.Slug}")" Variant="NTCardVariant.Outlined">
+                        <div>
+                            <div class="doc-row-title">
+                                <strong class="@NTTypography.TitleMedium.ToCssClass()">@typePage.Name</strong>
+                                <span class="doc-type-kind @NTTypography.LabelLarge.ToCssClass()">@typePage.Parameters.Count parameters</span>
+                                @if (typePage.ComponentType?.ContainsGenericParameters == true) {
+                                    <span class="doc-type-kind @NTTypography.LabelLarge.ToCssClass()">Generic</span>
+                                }
+                            </div>
+                            <p class="doc-type-full-name @NTTypography.BodySmall.ToCssClass()">@typePage.FullName</p>
+                            @if (typePage.Content.SummaryParagraphs.Count > 0) {
+                                <p class="@NTTypography.BodyMedium.ToCssClass()">@((MarkupString)typePage.Content.SummaryParagraphs[0])</p>
+                            }
+                        </div>
+                        <span class="doc-type-open @NTTypography.LabelLarge.ToCssClass()">Open</span>
+                    </NTCard>
+                }
+            </div>
+        </section>
+    }
+</section>

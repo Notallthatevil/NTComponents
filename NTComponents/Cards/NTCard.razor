@@ -1,0 +1,42 @@
+@namespace NTComponents
+@using NTComponents.Core
+@inherits TnTComponentBase
+
+@if (RendersAnchor) {
+    <a @attributes="RenderedAdditionalAttributes"
+       class="@ElementClass"
+       style="@ElementStyle"
+       autofocus="@AutoFocus"
+       lang="@ElementLang"
+       title="@ElementTitle"
+       id="@ElementId"
+       @ref="Element">
+        @ChildContent
+    </a>
+}
+else if (RendersButton) {
+    <button @attributes="RenderedAdditionalAttributes"
+            class="@ElementClass"
+            style="@ElementStyle"
+            type="button"
+            autofocus="@AutoFocus"
+            lang="@ElementLang"
+            title="@ElementTitle"
+            id="@ElementId"
+            @onclick="OnClickCallback"
+            @ref="Element">
+        @ChildContent
+    </button>
+}
+else {
+    <div @attributes="RenderedAdditionalAttributes"
+         class="@ElementClass"
+         style="@ElementStyle"
+         autofocus="@AutoFocus"
+         lang="@ElementLang"
+         title="@ElementTitle"
+         id="@ElementId"
+         @ref="Element">
+        @ChildContent
+    </div>
+}

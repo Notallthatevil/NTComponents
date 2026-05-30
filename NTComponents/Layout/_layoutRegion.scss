@@ -1,0 +1,15 @@
+@mixin fixed-height-region($height) {
+    box-sizing: border-box;
+    block-size: $height;
+    flex: 0 0 $height;
+    min-inline-size: 0;
+    overflow: clip;
+}
+
+@mixin body-scroll-container($block-size: 100%, $max-block-size: 100%) {
+    block-size: $block-size;
+    max-block-size: $max-block-size;
+    min-block-size: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+}

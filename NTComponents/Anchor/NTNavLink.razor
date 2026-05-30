@@ -1,0 +1,31 @@
+@namespace NTComponents
+@using NTComponents.Core
+@using NTComponents.Interfaces
+@inherits NavLink
+@implements ITnTComponentBase
+
+<a @attributes="RenderedAdditionalAttributes"
+   class="@ElementClass"
+   style="@ElementStyle"
+   lang="@ElementLang"
+   id="@ElementId"
+   title="@ElementTitle"
+   autofocus="@AutoFocus"
+   aria-disabled="@AriaDisabled"
+   aria-current="@AriaCurrent"
+   tabindex="@RenderedTabIndex"
+   @onclick:stopPropagation="StopPropagation"
+   @onclick:preventDefault="Disabled"
+   @ref="Element">
+    @if (EnableRipple && UsesButtonChrome) {
+        @NTRipple.Render()
+    }
+
+    @if (LeadingIcon is not null) {
+        <span class="nt-nav-link-icon" aria-hidden="true">
+            @LeadingIcon.Render()
+        </span>
+    }
+
+    <span class="nt-nav-link-label">@Label</span>
+</a>

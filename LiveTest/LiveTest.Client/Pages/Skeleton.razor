@@ -1,16 +1,175 @@
 @page "/skeleton"
-@using LiveTest.Client.Components
+@rendermode InteractiveAuto
 @using NTComponents
 <h3>Skeleton</h3>
 
+<section style="display:grid; gap:1.5rem; max-width:64rem;">
+    <div style="display:grid; grid-template-columns:minmax(0, 1.2fr) minmax(18rem, .8fr); gap:1.5rem; align-items:start;">
+        <div style="display:grid; gap:1rem;">
+            <div style="display:grid; gap:1rem; min-height:18rem; padding:1.5rem; border:1px solid var(--tnt-color-outline-variant); border-radius:1.25rem; background:var(--tnt-color-surface-container-lowest);">
+                <p style="margin:0; color:var(--tnt-color-on-surface-variant);">Preview</p>
 
-<TnTSkeleton Appearance="SkeletonAppearance.Round" />
-<TnTSkeleton BackgroundColor="TnTColor.Tertiary" AnimatedColor="@TnTColor.OnTertiary" />
-<TnTSkeleton style="width:20rem; height:2rem;" />
-<TnTSkeleton AnimatedColor="@null"/>
+                <NTSkeleton Show="@show"
+                            Shape="@shape"
+                            Animation="@animation"
+                            CornerRadius="@cornerRadius"
+                            ContainerColor="@containerColor"
+                            HighlightColor="@EffectiveHighlightColor"
+                            Width="@EffectiveWidth"
+                            Height="@EffectiveHeight">
+                    <article style="display:grid; gap:.75rem; padding:1rem; border:1px solid var(--tnt-color-outline-variant); border-radius:1rem; background:var(--tnt-color-surface); max-width:32rem;">
+                        @if (showAvatar) {
+                            <div style="display:flex; gap:.75rem; align-items:center;">
+                                <div style="width:2.5rem; height:2.5rem; border-radius:50%; background:var(--tnt-color-primary-container);"></div>
+                                <div>
+                                    <h4 style="margin:0;">Loaded content</h4>
+                                    <p style="margin:.125rem 0 0; color:var(--tnt-color-on-surface-variant);">Single markup branch</p>
+                                </div>
+                            </div>
+                        }
+                        else {
+                            <h4 style="margin:0;">Loaded content</h4>
+                        }
 
-@* <StreamedComponent /> *@
+                        <p style="margin:0;">@PreviewCopy</p>
+
+                        @if (showActions) {
+                            <div style="display:flex; gap:.5rem; flex-wrap:wrap; margin-top:.25rem;">
+                                <button type="button" style="border:0; border-radius:999px; padding:.625rem 1rem; background:var(--tnt-color-primary); color:var(--tnt-color-on-primary);">Primary</button>
+                                <button type="button" style="border:1px solid var(--tnt-color-outline); border-radius:999px; padding:.625rem 1rem; background:transparent; color:var(--tnt-color-primary);">Secondary</button>
+                            </div>
+                        }
+                    </article>
+                </NTSkeleton>
+            </div>
+
+            <div style="display:grid; gap:1rem;">
+                <p style="margin:0; color:var(--tnt-color-on-surface-variant);">Common compositions</p>
+                <NTSkeleton Width="65%" />
+                <NTSkeleton Shape="NTSkeletonShape.Rectangle" Height="8rem" CornerRadius="NTCornerRadius.Large" />
+                <div style="display:flex; gap:1rem; align-items:center;">
+                    <NTSkeleton Shape="NTSkeletonShape.Circle" Width="3rem" />
+                    <div style="display:grid; gap:.5rem; flex:1;">
+                        <NTSkeleton />
+                        <NTSkeleton Width="45%" Animation="NTSkeletonAnimation.Pulse" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="display:grid; gap:1rem; padding:1.25rem; border:1px solid var(--tnt-color-outline-variant); border-radius:1.25rem; background:var(--tnt-color-surface);">
+            <label style="display:flex; gap:.5rem; align-items:center;">
+                <input type="checkbox" @bind="show" />
+                Show skeleton
+            </label>
+
+            <label style="display:grid; gap:.35rem;">
+                Shape
+                <select @bind="shape">
+                    @foreach (var option in Enum.GetValues<NTSkeletonShape>()) {
+                        <option value="@option">@option</option>
+                    }
+                </select>
+            </label>
+
+            <label style="display:grid; gap:.35rem;">
+                Animation
+                <select @bind="animation">
+                    @foreach (var option in Enum.GetValues<NTSkeletonAnimation>()) {
+                        <option value="@option">@option</option>
+                    }
+                </select>
+            </label>
+
+            <label style="display:grid; gap:.35rem;">
+                Corner radius
+                <select @bind="cornerRadius" disabled="@(shape == NTSkeletonShape.Circle)">
+                    @foreach (var option in Enum.GetValues<NTCornerRadius>()) {
+                        <option value="@option">@option</option>
+                    }
+                </select>
+            </label>
+
+            <label style="display:grid; gap:.35rem;">
+                Container color
+                <select @bind="containerColor">
+                    @foreach (var option in ColorOptions) {
+                        <option value="@option">@option</option>
+                    }
+                </select>
+            </label>
+
+            <label style="display:flex; gap:.5rem; align-items:center;">
+                <input type="checkbox" @bind="useHighlightColor" />
+                Custom highlight
+            </label>
+
+            <label style="display:grid; gap:.35rem;">
+                Highlight color
+                <select @bind="highlightColor" disabled="@(!useHighlightColor)">
+                    @foreach (var option in ColorOptions) {
+                        <option value="@option">@option</option>
+                    }
+                </select>
+            </label>
+
+            <label style="display:flex; gap:.5rem; align-items:center;">
+                <input type="checkbox" @bind="useExplicitSize" />
+                Explicit size
+            </label>
+
+            <label style="display:grid; gap:.35rem;">
+                Width: @widthRem rem
+                <input type="range" min="8" max="42" @bind="widthRem" disabled="@(!useExplicitSize)" />
+            </label>
+
+            <label style="display:grid; gap:.35rem;">
+                Height: @heightPx px
+                <input type="range" min="24" max="260" @bind="heightPx" disabled="@(!useExplicitSize)" />
+            </label>
+
+            <label style="display:flex; gap:.5rem; align-items:center;">
+                <input type="checkbox" @bind="showAvatar" />
+                Avatar content
+            </label>
+
+            <label style="display:flex; gap:.5rem; align-items:center;">
+                <input type="checkbox" @bind="showActions" />
+                Action buttons
+            </label>
+        </div>
+    </div>
+</section>
 
 @code {
+    private bool show = true;
+    private bool showActions = true;
+    private bool showAvatar = true;
+    private bool useExplicitSize;
+    private bool useHighlightColor;
+    private int heightPx = 144;
+    private int widthRem = 28;
+    private NTCornerRadius cornerRadius = NTCornerRadius.Large;
+    private NTSkeletonAnimation animation = NTSkeletonAnimation.Wave;
+    private NTSkeletonShape shape = NTSkeletonShape.Rectangle;
+    private TnTColor containerColor = TnTColor.SurfaceContainerHighest;
+    private TnTColor highlightColor = TnTColor.SurfaceContainerLow;
 
+    private static readonly TnTColor[] ColorOptions = [
+        TnTColor.SurfaceContainerLow,
+        TnTColor.SurfaceContainer,
+        TnTColor.SurfaceContainerHigh,
+        TnTColor.SurfaceContainerHighest,
+        TnTColor.PrimaryContainer,
+        TnTColor.SecondaryContainer,
+        TnTColor.TertiaryContainer
+    ];
+
+    private TnTColor? EffectiveHighlightColor => useHighlightColor ? highlightColor : null;
+    private string? EffectiveWidth => useExplicitSize ? $"{widthRem}rem" : null;
+    private string? EffectiveHeight => useExplicitSize && shape != NTSkeletonShape.Circle ? $"{heightPx}px" : null;
+
+    private string PreviewCopy => show
+        ? "The child content is hidden but still reserves its natural layout when explicit sizing is off."
+        : "The same child content is now rendered directly because Show is false.";
 }

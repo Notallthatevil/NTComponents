@@ -1,17 +1,94 @@
 @page "/dialog"
 @using NTComponents
-@inject ITnTDialogService DialogService
-@rendermode InteractiveAuto
 <h3>Dialog</h3>
-<LiveTest.Client.Components.DialogComponent />
+<LiveTest.Client.Components.DialogComponent @rendermode="InteractiveAuto" />
 
+<LiveTest.Client.Components.TnTConfirmationButton @rendermode="InteractiveAuto" />
 
-<TnTButton OnClickCallback="@OpenConfirmationDialog">
-	Confirmation
-</TnTButton>
-@code {
-	private async Task OpenConfirmationDialog()
-	{
-		await DialogService.OpenConfirmationDialogAsync(EventCallback.Empty);
-	}
-}
+<button type="button" command="show-modal" commandfor="native-nt-dialog">Open native NT dialog</button>
+
+<NTDialog Id="native-nt-dialog"
+          Title="Native NT dialog"
+          SupportingText="Opened with native HTML command attributes and no component service.">
+    <p>This dialog is owned by the page and can open in static markup where the browser supports dialog commands.</p>
+</NTDialog>
+
+<button type="button" command="show-modal" commandfor="large-nt-dialog">Open large NT dialog</button>
+
+<NTDialog Id="large-nt-dialog"
+          Title="Large body dialog"
+          SupportingText="This dialog has enough content to verify constrained height and native dialog scrolling.">
+    <ChildContent>
+        @for (var index = 1; index <= 18; index++) {
+            <p>
+                Section @index: Dialog content stays owned by the page, so long-form copy, forms, lists, and mixed Razor content can render normally inside the native modal surface.
+                This paragraph intentionally adds enough text to make the dialog body taller than the viewport and exercise the container's scroll behavior.
+            </p>
+        }
+    </ChildContent>
+
+    <Buttons>
+        <button type="button" class="nt-dialog-button" command="request-close" commandfor="large-nt-dialog">Close</button>
+    </Buttons>
+</NTDialog>
+
+<button type="button" command="show-modal" commandfor="icon-nt-dialog">Open icon NT dialog</button>
+
+<NTDialog Id="icon-nt-dialog"
+          Title="Icon dialog"
+          SupportingText="A basic dialog with optional icon content rendered above the headline.">
+    <Icon>
+        <span class="material-symbols-sharp">info</span>
+    </Icon>
+
+    <ChildContent>
+        <p>The icon is supplied as a render fragment, so callers can provide a Material Symbols icon or any other accessible decorative content.</p>
+    </ChildContent>
+
+    <Buttons>
+        <button type="button" class="nt-dialog-button" command="request-close" commandfor="icon-nt-dialog">Got it</button>
+    </Buttons>
+</NTDialog>
+
+<button type="button" command="show-modal" commandfor="stacked-parent-nt-dialog">Open stacked NT dialog</button>
+
+<NTDialog Id="stacked-parent-nt-dialog"
+          Title="Stacked parent dialog"
+          SupportingText="This dialog stays open while a second modal dialog is opened above it.">
+    <ChildContent>
+        <p>The parent owns its content and remains in the native top layer underneath the child dialog.</p>
+        <button type="button" command="show-modal" commandfor="stacked-child-nt-dialog">Open child dialog</button>
+    </ChildContent>
+
+    <Buttons>
+        <button type="button" class="nt-dialog-button" command="request-close" commandfor="stacked-parent-nt-dialog">Close parent</button>
+    </Buttons>
+</NTDialog>
+
+<NTDialog Id="stacked-child-nt-dialog"
+          Title="Stacked child dialog"
+          SupportingText="Closing this dialog returns focus and context to the still-open parent dialog.">
+    <ChildContent>
+        <p>The child dialog is a separate NTDialog instance opened from inside the parent dialog.</p>
+    </ChildContent>
+
+    <Buttons>
+        <button type="button" class="nt-dialog-button" command="request-close" commandfor="stacked-child-nt-dialog">Close child</button>
+    </Buttons>
+</NTDialog>
+
+<LiveTest.Client.Components.NTDialogDemo DialogId="auto-nt-dialog"
+                                         ButtonLabel="Open NT dialog"
+                                         @rendermode="InteractiveAuto" />
+<LiveTest.Client.Components.NTDialogDemo DialogId="server-nt-dialog"
+                                         ButtonLabel="Open server NT dialog"
+                                         Title="Server NT dialog"
+                                         SupportingText="Opened from an Interactive Server component using a dialog reference."
+                                         ButtonVariant="NTButtonVariant.Outlined"
+                                         @rendermode="@(new InteractiveServerRenderMode(prerender: false))" />
+<LiveTest.Client.Components.NTDialogDemo DialogId="wasm-nt-dialog"
+                                         ButtonLabel="Open WASM NT dialog"
+                                         Title="WASM NT dialog"
+                                         SupportingText="Opened from an Interactive WebAssembly component using a dialog reference."
+                                         ButtonVariant="NTButtonVariant.Outlined"
+                                         @rendermode="@(new InteractiveWebAssemblyRenderMode(prerender: false))" />

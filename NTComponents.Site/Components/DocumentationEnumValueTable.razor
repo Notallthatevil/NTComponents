@@ -1,0 +1,46 @@
+@using NTComponents.Site.Documentation
+
+@if (Values.Count > 0) {
+    <section class="doc-section doc-group-panel" id="@SectionId">
+        <div class="doc-section-heading">
+            <h2 class="@NTTypography.TitleLarge.ToCssClass()">Enum Values</h2>
+            <p class="@NTTypography.BodyMedium.ToCssClass()">
+                All documented enum values discovered from the generated source model.
+            </p>
+        </div>
+
+        <div class="doc-table-wrap">
+            <table class="doc-table">
+                <thead>
+                    <tr>
+                        <th class="@NTTypography.LabelLarge.ToCssClass()">Value</th>
+                        <th class="@NTTypography.LabelLarge.ToCssClass()">Documentation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var value in Values) {
+                        <tr id="@value.AnchorId">
+                            <td class="doc-table-value">
+                                <div class="doc-table-value-content">
+                                    <code>@value.Name</code>
+                                    <div class="doc-table-signature @NTTypography.BodySmall.ToCssClass()">@value.Signature</div>
+                                </div>
+                            </td>
+                            <td>
+                                <DocumentationContentView Content="value.Content" Compact="true" />
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+}
+
+@code {
+    [Parameter]
+    public string? SectionId { get; set; }
+
+    [Parameter, EditorRequired]
+    public IReadOnlyList<DocumentationMemberPage> Values { get; set; } = Array.Empty<DocumentationMemberPage>();
+}

@@ -1,0 +1,86 @@
+@namespace NTComponents
+@typeparam TNumber
+@inherits NTFormControlBaseCore<TNumber>
+
+@{
+    var errorText = CurrentErrorText;
+    var hasErrorText = !string.IsNullOrWhiteSpace(errorText);
+    var supportingText = hasErrorText ? null : CurrentSupportingText;
+    var hasSupportingText = !string.IsNullOrWhiteSpace(supportingText);
+}
+
+<div class="@BuildRootClass(hasErrorText)" style="@ElementStyle">
+    <TnTPageScript Src="@JsModulePath" />
+
+    <label class="nt-slider-label" for="@InputId" title="@ElementTitle" lang="@ElementLang">
+        <span class="nt-slider-content">
+            @if (!string.IsNullOrWhiteSpace(Label)) {
+                <span class="nt-slider-label-text" id="@LabelId">@Label</span>
+            }
+
+            <span class="nt-slider-control">
+                <span class="nt-slider-track" aria-hidden="true">
+                    <span class="nt-slider-inactive-track-start"></span>
+                    <span class="nt-slider-active-track"></span>
+                    <span class="nt-slider-inactive-track-end"></span>
+                    @if (ShouldRenderInsetIcon) {
+                        <span class="@InsetIconClass">
+                            @InsetIcon!.Render()
+                        </span>
+                    }
+                    @if (ShouldRenderStops) {
+                        <span class="nt-slider-stops">
+                            @foreach (var stop in StopIndexes) {
+                                <span class="@BuildStopClass(stop)" style="@BuildStopStyle(stop)"></span>
+                            }
+                        </span>
+                    }
+                </span>
+                <input @attributes="InputAttributes"
+                       id="@InputId"
+                       data-nt-slider-input="true"
+                       name="@InputElementName"
+                       type="range"
+                       min="@FormatValue(EffectiveMin)"
+                       max="@FormatValue(EffectiveMax)"
+                       step="@StepAttribute"
+                       value="@FormatValue(EffectiveValue)"
+                       disabled="@(FieldDisabled || FieldReadOnly)"
+                       autofocus="@AutoFocus"
+                       aria-orientation="@AriaOrientation"
+                       aria-labelledby="@LabelReference"
+                       aria-describedby="@BuildDescribedBy(hasErrorText, hasSupportingText)"
+                       aria-invalid="@(hasErrorText ? "true" : "false")"
+                       aria-errormessage="@(hasErrorText ? ErrorTextId : null)"
+                       @oninput="@InputEventCallback"
+                       @onchange="@ChangeEventCallback"
+                       @onblur="OnBlurAsync"
+                       @ref="Element" />
+                @if (ShowValueIndicator) {
+                    <output class="nt-slider-value-indicator" for="@InputId" aria-hidden="true">@FormatValue(EffectiveValue)</output>
+                }
+            </span>
+        </span>
+    </label>
+
+    @if (hasErrorText || hasSupportingText) {
+        <div class="nt-slider-supporting-row">
+            @if (hasErrorText) {
+                <span class="nt-slider-supporting nt-slider-error-text" id="@ErrorTextId" role="alert">
+                    @errorText
+                </span>
+            }
+            else if (hasSupportingText) {
+                <span class="nt-slider-supporting" id="@SupportingTextId">
+                    @supportingText
+                </span>
+            }
+        </div>
+    }
+
+    @if (ShouldRenderReadOnlyFormPostValue) {
+        <input type="hidden"
+               name="@ElementName"
+               value="@FormatValue(EffectiveValue)" />
+    }
+</div>

@@ -1,0 +1,119 @@
+@namespace NTComponents
+@using Microsoft.AspNetCore.Components.Rendering
+@inherits NTFieldBase<string?>
+
+@{
+    var errorText = CurrentErrorText;
+    var hasErrorText = !string.IsNullOrWhiteSpace(errorText);
+}
+
+<div class="@GetRootClass(hasErrorText)" style="@ElementStyle">
+    @{
+        var supportingText = hasErrorText ? null : CurrentSupportingText;
+        var hasSupportingText = !string.IsNullOrWhiteSpace(supportingText);
+        var listboxId = ListboxId;
+    }
+
+    <div class="nt-input-container-overflow">
+        <label class="nt-input-container" for="@InputId" title="@ElementTitle" lang="@ElementLang">
+            <span class="nt-input-background" aria-hidden="true"></span>
+            <span class="nt-input-state-layer" aria-hidden="true"></span>
+
+            @if (EffectiveAppearance == NTFormAppearance.Filled) {
+                <span class="nt-input-active-indicator" aria-hidden="true"></span>
+            }
+
+            @if (EffectiveAppearance == NTFormAppearance.Outlined) {
+                <span class="nt-input-outline" aria-hidden="true">
+                    <span class="nt-input-outline-start"></span>
+                    <span class="nt-input-outline-notch">
+                        @if (HasLabel) {
+                            <span class="nt-input-outline-label">@Label</span>
+                        }
+                    </span>
+                    <span class="nt-input-outline-end"></span>
+                </span>
+            }
+
+            <span class="nt-input-field">
+                @if (LeadingIcon is not null) {
+                    <span class="nt-input-leading" aria-hidden="true">
+                        @LeadingIcon.Render()
+                    </span>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(PrefixText)) {
+                    <span class="nt-input-prefix" id="@PrefixId">@PrefixText</span>
+                }
+
+                <span class="nt-input-control-container">
+                    <input @attributes="ControlAttributes"
+                           id="@InputId"
+                           type="text"
+                           title="@FieldIdentifier.FieldName"
+                           autofocus="@AutoFocus"
+                           autocomplete="@AutoComplete"
+                           name="@ElementName"
+                           readonly="@FieldReadOnly"
+                           disabled="@FieldDisabled"
+                           required="@IsRequired"
+                           placeholder="@EffectivePlaceholder"
+                           aria-describedby="@BuildDescribedBy(hasErrorText, hasSupportingText)"
+                           aria-invalid="@(hasErrorText ? "true" : "false")"
+                           aria-errormessage="@(hasErrorText ? ErrorTextId : null)"
+                           aria-autocomplete="list"
+                           aria-controls="@listboxId"
+                           aria-expanded="false"
+                           aria-haspopup="listbox"
+                           role="combobox"
+                           class="@AutocompleteControlClass"
+                           data-nt-autocomplete-input="true"
+                           value="@CurrentValueAsString"
+                           @onchange="OnChangeAsync"
+                           @onblur="OnBlurAsync"
+                           @ref="Element" />
+
+                    @if (HasLabel) {
+                        <span class="nt-input-label" id="@LabelId">@Label</span>
+                    }
+                </span>
+
+                @if (!string.IsNullOrWhiteSpace(SuffixText)) {
+                    <span class="nt-input-suffix" id="@SuffixId">@SuffixText</span>
+                }
+
+                @{
+                    var trailingAdornment = CreateTrailingAdornmentState(hasErrorText);
+                }
+
+                @if (trailingAdornment.Icon is not null) {
+                    <span class="@trailingAdornment.Class" aria-label="@trailingAdornment.AriaLabel" aria-hidden="@trailingAdornment.AriaHidden">
+                        @trailingAdornment.Icon.Render()
+                    </span>
+                }
+            </span>
+        </label>
+
+        <div class="nt-combobox-menu" hidden aria-hidden="true" data-nt-autocomplete-menu="true">
+            <script type="application/json" data-nt-autocomplete-options="true">@((MarkupString)AutocompleteOptionsJson)</script>
+            <ul class="nt-combobox-list" id="@listboxId" role="listbox" aria-label="@ListboxLabel">
+            </ul>
+            <div class="nt-combobox-empty" role="status" hidden>@EmptyText</div>
+        </div>
+    </div>
+
+    @if (hasErrorText || hasSupportingText || HasSupportingRowContent) {
+        <div class="nt-input-supporting-row">
+            @if (hasErrorText) {
+                <span class="nt-input-supporting nt-input-error-text" id="@ErrorTextId" role="alert">
+                    @errorText
+                </span>
+            }
+            else if (hasSupportingText) {
+                <span class="nt-input-supporting" id="@SupportingTextId">
+                    @supportingText
+                </span>
+            }
+        </div>
+    }
+</div>

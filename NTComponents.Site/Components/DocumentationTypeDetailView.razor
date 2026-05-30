@@ -1,0 +1,204 @@
+@using NTComponents.Site.Documentation
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
+
+<section class="docs-page docs-detail-page">
+    <header class="docs-hero">
+        <a class="doc-back-link @NTTypography.LabelLarge.ToCssClass()" href="@BackHref">@BackLabel</a>
+        <div class="doc-title-row">
+            <span class="doc-type-kind @NTTypography.LabelLarge.ToCssClass()">@TypePage.Kind</span>
+            @if (TypePage.IsComponent) {
+                <span class="doc-feature-flag @NTTypography.LabelLarge.ToCssClass()">Component</span>
+            }
+            @if (TypePage.IsFeatured) {
+                <span class="doc-feature-flag @NTTypography.LabelLarge.ToCssClass()">Featured</span>
+            }
+            @if (TypePage.IsObsolete) {
+                <span class="doc-obsolete-flag @NTTypography.LabelLarge.ToCssClass()">Obsolete</span>
+            }
+        </div>
+        <h1 class="@NTTypography.HeadlineLarge.ToCssClass()">@TypePage.Name</h1>
+        <p class="doc-type-full-name @NTTypography.BodyMedium.ToCssClass()">@TypePage.FullName</p>
+        <code class="doc-signature">@TypePage.Declaration</code>
+    </header>
+
+    <div class="doc-detail-layout">
+        <div class="doc-detail-main">
+            <section class="doc-section doc-group-panel" id="overview">
+                <div class="doc-section-heading">
+                    <h2 class="@NTTypography.TitleLarge.ToCssClass()">Overview</h2>
+                </div>
+
+                @if (TypePage.IsObsolete) {
+                    <div class="doc-obsolete-callout" role="note">
+                        <strong class="@NTTypography.TitleSmall.ToCssClass()">Obsolete</strong>
+                        <p class="@NTTypography.BodyMedium.ToCssClass()">
+                            @(string.IsNullOrWhiteSpace(TypePage.ObsoleteMessage) ? "This type is marked obsolete." : TypePage.ObsoleteMessage)
+                        </p>
+                    </div>
+                }
+
+                <DocumentationContentView Content="TypePage.Content" />
+            </section>
+
+            @if (DemoComponentType is not null) {
+                <DocumentationComponentDemo TypePage="TypePage" ComponentType="DemoComponentType" />
+            }
+            else if (TypePage.IsComponent) {
+                <section class="doc-section doc-group-panel" id="sandbox">
+                    <div class="doc-section-heading">
+                        <h2 class="@NTTypography.TitleLarge.ToCssClass()">Sandbox</h2>
+                        <p class="@NTTypography.BodyMedium.ToCssClass()">
+                            This component cannot be instantiated automatically because it is generic or requires context supplied by a parent component.
+                        </p>
+                    </div>
+                </section>
+            }
+
+            @if (TypePage.Kind == "enum") {
+                <DocumentationEnumValueTable SectionId="enum-values" Values="TypePage.Fields" />
+            }
+            else {
+                @if (TypePage.IsComponent) {
+                    <DocumentationMemberGroup Title="Parameters"
+                                              Description="Configurable component parameters discovered from the generated source model."
+                                              OwnerTypeFullName="TypePage.FullName"
+                                              RenderAsTable="true"
+                                              SectionId="parameters"
+                                              Members="TypePage.Parameters" />
+
+                    <DocumentationMemberGroup Title="Cascading Parameters"
+                                              Description="Cascading values consumed from parent components or framework context."
+                                              OwnerTypeFullName="TypePage.FullName"
+                                              RenderAsTable="true"
+                                              SectionId="cascading-parameters"
+                                              Members="TypePage.CascadingParameters" />
+                }
+
+                <DocumentationMemberGroup Title="Fields"
+                                          Description="Field documentation discovered from the generated source model."
+                                          OwnerTypeFullName="TypePage.FullName"
+                                          RenderAsTable="true"
+                                          SectionId="fields"
+                                          Members="TypePage.Fields" />
+            }
+
+            <DocumentationMemberGroup Title="Properties"
+                                      Description="Property documentation discovered from the generated source model."
+                                      OwnerTypeFullName="TypePage.FullName"
+                                      RenderAsTable="true"
+                                      SectionId="properties"
+                                      Members="GetDisplayedProperties()" />
+
+            <DocumentationMemberGroup Title="Methods"
+                                      Description="Public-facing method documentation discovered from the generated source model."
+                                      OwnerTypeFullName="TypePage.FullName"
+                                      SectionId="methods"
+                                      Members="TypePage.Methods" />
+        </div>
+
+        @if (GetOutlineItems().Count > 0) {
+            <aside class="doc-detail-sidebar">
+                <div class="doc-outline">
+                    <p class="doc-outline-title @NTTypography.LabelLarge.ToCssClass()">On this page</p>
+
+                    @foreach (var item in GetOutlineItems()) {
+                        <a class="doc-outline-link @NTTypography.BodySmall.ToCssClass()"
+                           href="@($"#{item.FragmentId}")"
+                           @onclick:preventDefault="true"
+                           @onclick="() => ScrollToFragmentAsync(item.FragmentId)">
+                            @item.Label
+                        </a>
+                    }
+                </div>
+            </aside>
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter, EditorRequired]
+    public string BackHref { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public string BackLabel { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public DocumentationTypePage TypePage { get; set; } = default!;
+
+    [Parameter]
+    public Type? DemoComponentType { get; set; }
+
+    private string? _lastHandledFragmentId;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender) {
+        var fragmentId = GetCurrentFragmentId();
+        if (!string.IsNullOrWhiteSpace(fragmentId) && !string.Equals(fragmentId, _lastHandledFragmentId, StringComparison.Ordinal)) {
+            await ScrollToFragmentAsync(fragmentId, updateHistory: false);
+            _lastHandledFragmentId = fragmentId;
+        }
+    }
+
+    private string? GetCurrentFragmentId() {
+        var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+        return string.IsNullOrWhiteSpace(uri.Fragment)
+            ? null
+            : uri.Fragment.TrimStart('#');
+    }
+
+    private IReadOnlyList<(string FragmentId, string Label)> GetOutlineItems() {
+        var items = new List<(string FragmentId, string Label)> {
+            ("overview", "Overview")
+        };
+
+        if (DemoComponentType is not null) {
+            items.Add(("demo", "Sandbox"));
+        }
+        else if (TypePage.IsComponent) {
+            items.Add(("sandbox", "Sandbox"));
+        }
+
+        if (TypePage.Kind == "enum" && TypePage.Fields.Count > 0) {
+            items.Add(("enum-values", "Enum values"));
+        }
+
+        if (TypePage.IsComponent && TypePage.Parameters.Count > 0) {
+            items.Add(("parameters", "Parameters"));
+        }
+
+        if (TypePage.IsComponent && TypePage.CascadingParameters.Count > 0) {
+            items.Add(("cascading-parameters", "Cascading parameters"));
+        }
+
+        if (TypePage.Kind != "enum" && TypePage.Fields.Count > 0) {
+            items.Add(("fields", "Fields"));
+        }
+
+        if (GetDisplayedProperties().Count > 0) {
+            items.Add(("properties", "Properties"));
+        }
+
+        if (TypePage.Methods.Count > 0) {
+            items.Add(("methods", "Methods"));
+        }
+
+        return items;
+    }
+
+    private IReadOnlyList<DocumentationMemberPage> GetDisplayedProperties() {
+        return TypePage.IsComponent
+            ? TypePage.Properties
+                .Where(property => !property.IsParameter && !property.IsCascadingParameter)
+                .ToArray()
+            : TypePage.Properties;
+    }
+
+    private async Task ScrollToFragmentAsync(string fragmentId, bool updateHistory = true) {
+        if (string.IsNullOrWhiteSpace(fragmentId)) {
+            return;
+        }
+
+        await JSRuntime.InvokeVoidAsync("ntDocs.scrollToFragment", fragmentId, updateHistory);
+        _lastHandledFragmentId = fragmentId;
+    }
+}

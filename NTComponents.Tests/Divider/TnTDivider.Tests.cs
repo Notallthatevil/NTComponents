@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Components;
 
 namespace NTComponents.Tests.Divider;
 
+#pragma warning disable CS0618 // TnTDivider is obsolete but remains covered for compatibility.
+
 public class TnTDivider_Tests : BunitContext {
 
     [Fact]
@@ -338,3 +340,5 @@ public class TnTDivider_Tests : BunitContext {
         style.Should().Contain("--tnt-divider-color:var(--tnt-color-on-primary)");
     }
 }
+
+#pragma warning restore CS0618

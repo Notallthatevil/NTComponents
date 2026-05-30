@@ -8,6 +8,7 @@ namespace NTComponents;
 /// <summary>
 ///     Represents a card component with customizable appearance, background color, border radius, elevation, text alignment, and text color.
 /// </summary>
+[Obsolete("Use NTCard instead.")]
 public partial class TnTCard {
 
     /// <summary>

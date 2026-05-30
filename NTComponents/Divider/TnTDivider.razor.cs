@@ -7,6 +7,7 @@ namespace NTComponents;
 /// <summary>
 ///     Represents a divider component with customizable color, margin, and orientation.
 /// </summary>
+[Obsolete("Use NTDivider instead.")]
 public partial class TnTDivider {
 
     /// <summary>

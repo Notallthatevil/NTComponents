@@ -1,0 +1,84 @@
+@using NTComponents
+
+<NTButton Label="@ButtonLabel" Variant="@ButtonVariant" OnClickCallback="@OpenDialog" />
+
+<NTDialog @ref="_dialog"
+          Id="@DialogId"
+          Title="@Title"
+          SupportingText="@SupportingText"
+          OnOpen="@HandleOpen"
+          OnOpening="@HandleOpening"
+          OnOpened="@HandleOpened"
+          OnClose="@HandleClose"
+          OnClosing="@HandleClosing"
+          OnClosed="@HandleClosed">
+    <ChildContent>
+        <p>@Body</p>
+    </ChildContent>
+
+    <Buttons>
+        <button type="button" class="nt-dialog-button" command="request-close" commandfor="@DialogId" value="cancel">Cancel</button>
+        <button type="button" class="nt-dialog-button" command="request-close" commandfor="@DialogId" value="ok">OK</button>
+    </Buttons>
+</NTDialog>
+
+<p class="nt-dialog-demo-status">@_status</p>
+
+@code {
+    private NTDialog? _dialog;
+    private string _status = "Idle";
+
+    [Parameter]
+    public string Body { get; set; } = "This content is owned by the page component and rendered as normal Razor child content.";
+
+    [Parameter]
+    public string ButtonLabel { get; set; } = "Open NT dialog";
+
+    [Parameter]
+    public NTButtonVariant ButtonVariant { get; set; } = NTButtonVariant.Filled;
+
+    [Parameter]
+    public string DialogId { get; set; } = "owned-nt-dialog";
+
+    [Parameter]
+    public string SupportingText { get; set; } = "Opened through a component reference without a dialog provider.";
+
+    [Parameter]
+    public string Title { get; set; } = "NT dialog";
+
+    private Task HandleOpen(NTDialogEventArgs args) {
+        _status = $"OnOpen {args.DialogId}";
+        return Task.CompletedTask;
+    }
+
+    private Task HandleOpening(NTDialogEventArgs args) {
+        _status = $"OnOpening {args.DialogId}";
+        return Task.CompletedTask;
+    }
+
+    private Task HandleOpened(NTDialogEventArgs args) {
+        _status = $"OnOpened {args.DialogId}";
+        return Task.CompletedTask;
+    }
+
+    private Task HandleClose(NTDialogEventArgs args) {
+        _status = $"OnClose {args.DialogId}";
+        return Task.CompletedTask;
+    }
+
+    private Task HandleClosing(NTDialogEventArgs args) {
+        _status = $"OnClosing {args.DialogId}";
+        return Task.CompletedTask;
+    }
+
+    private Task HandleClosed(NTDialogEventArgs args) {
+        _status = $"OnClosed {args.DialogId} {args.ReturnValue}";
+        return Task.CompletedTask;
+    }
+
+    private async Task OpenDialog() {
+        if (_dialog is not null) {
+            await _dialog.OpenAsync();
+        }
+    }
+}

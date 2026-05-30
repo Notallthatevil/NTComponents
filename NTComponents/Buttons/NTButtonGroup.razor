@@ -14,51 +14,46 @@
 			 role="group"
 			 aria-label="@AriaLabel">
 
-			@foreach (var item in _items) {
-				@if (string.IsNullOrEmpty(item.Label) && item.StartIcon is not null && item.EndIcon is null) {
-					<TnTImageButton class="@($"btn-group-btn{(IsSelectedItem(item) ? " btn-group-selected" : null)}")"
-									Appearance="@Appearance"
-									BackgroundColor="@GetItemBackgroundColor(item)"
-									TextColor="@GetItemTextColor(item)"
-									TintColor="@GetItemTintColor(item)"
-									OnTintColor="@GetItemOnTintColor(item)"
-									ButtonSize="@ButtonSize"
-									Shape="@GetItemShape(item)"
-									StopPropagation="@StopPropagation"
-									Disabled="@IsButtonDisabled(item)"
-									EnableRipple="@EnableRipple"
-									Icon="@item.StartIcon"
-									OnClickCallback="@(() => HandleItemClickAsync(item))" />
-				}
-				else {
-					<TnTButton class="@($"btn-group-btn{(IsSelectedItem(item) ? " btn-group-selected" : null)}")"
-							   Appearance="@Appearance"
-							   BackgroundColor="@GetItemBackgroundColor(item)"
-							   TextColor="@GetItemTextColor(item)"
-							   TintColor="@GetItemTintColor(item)"
-							   OnTintColor="@GetItemOnTintColor(item)"
-							   ButtonSize="@ButtonSize"
-							   Shape="@GetItemShape(item)"
-							   StopPropagation="@StopPropagation"
-							   Disabled="@IsButtonDisabled(item)"
-							   EnableRipple="@EnableRipple"
-							   OnClickCallback="@(() => HandleItemClickAsync(item))">
-						@if (item.StartIcon is not null) {
-							@item.StartIcon.Render()
-						}
-						<span>@item.Label</span>
-						@if (item.EndIcon is not null) {
-							@item.EndIcon.Render()
-						}
-					</TnTButton>
-				}
+			@for (var itemIndex = 0; itemIndex < _items.Count; itemIndex++) {
+				var item = _items[itemIndex];
+				var state = GetItemRenderState(item, itemIndex);
+				<button class="@state.ButtonClass"
+						@key="item.Key"
+						type="button"
+						disabled="@state.IsDisabled"
+						aria-label="@state.AriaLabel"
+						aria-pressed="@state.AriaPressed"
+						@onclick="@(() => HandleItemClickAsync(item))"
+						@onclick:stopPropagation="StopPropagation">
+					@if (IsRippleEnabled) {
+						@ButtonRipple
+					}
+					@if (item.Icon is not null) {
+						<span class="@state.IconClass" aria-hidden="true">
+							@item.Icon.Render()
+						</span>
+					}
+					@if (!state.IsIconOnly) {
+						<span class="nt-button-label">@state.Label</span>
+					}
+				</button>
 			}
 		</div>
+		@if (!IsRippleEnabled) {
+			@ButtonInteractionScript
+		}
 		@if (EditContext is not null) {
 			@if (!string.IsNullOrWhiteSpace(_name)) {
-				<input type="hidden" name="@_name" value="@SelectedKey" />
+				@if (IsMultiSelect) {
+					@foreach (var selectedKey in SelectedKeys) {
+						<input type="hidden" name="@_name" value="@FormatFormValue(selectedKey)" />
+					}
+				}
+				else if (SelectedKey is not null) {
+					<input type="hidden" name="@_name" value="@FormatFormValue(SelectedKey)" />
+				}
 			}
-			<div class="tnt-supporting-text" style="@CssStyleBuilder.Create().AddForegroundColor(TextColor).Build()">
+			<div class="tnt-supporting-text">
 				<ValidationMessage class="tnt-supporting-text tnt-validation-message" For="SelectedKeyExpression" style="@CssStyleBuilder.Create().AddForegroundColor(ErrorColor).Build()"/>
 			</div>
 		}

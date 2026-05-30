@@ -1,0 +1,137 @@
+@page "/loader"
+@rendermode InteractiveAuto
+@using NTComponents
+
+<h3>
+    M3 shape loader
+</h3>
+
+<section style="display:grid; gap:1.25rem; max-width:54rem;">
+    <div style="display:flex; gap:1.5rem; align-items:center; flex-wrap:wrap; min-height:8rem; padding:1.5rem; border:1px solid var(--tnt-color-outline-variant); border-radius:.5rem; background:var(--tnt-color-surface-container-lowest);">
+        @if (showLoader) {
+            <NTLoader Variant="@variant"
+                      Size="@size"
+                      SizeValue="@EffectiveSizeValue"
+                      Color="@indicatorColor"
+                      ContainerColor="@containerColor"
+                      Animate="@animate"
+                      AnimationDuration="@TimeSpan.FromMilliseconds(animationDuration)"
+                      AriaLabel="Loading preview" />
+        }
+    </div>
+
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(14rem, 1fr)); gap:1rem; padding:1.25rem; border:1px solid var(--tnt-color-outline-variant); border-radius:.5rem; background:var(--tnt-color-surface);">
+        <label style="display:flex; gap:.5rem; align-items:center;">
+            <input type="checkbox" @bind="showLoader" />
+            Show loader
+        </label>
+
+        <label style="display:flex; gap:.5rem; align-items:center;">
+            <input type="checkbox" @bind="animate" />
+            Animate
+        </label>
+
+        <label style="display:grid; gap:.35rem;">
+            Variant
+            <select @bind="variant">
+                @foreach (var option in Enum.GetValues<NTLoaderVariant>()) {
+                    <option value="@option">@option</option>
+                }
+            </select>
+        </label>
+
+        <label style="display:grid; gap:.35rem;">
+            Size
+            <select @bind="size" disabled="@useCustomSize">
+                @foreach (var option in Enum.GetValues<Size>()) {
+                    <option value="@option">@option</option>
+                }
+            </select>
+        </label>
+
+        <label style="display:flex; gap:.5rem; align-items:center;">
+            <input type="checkbox" @bind="useCustomSize" />
+            Custom size
+        </label>
+
+        <label style="display:grid; gap:.35rem;">
+            Size: @customSize px
+            <input type="range" min="24" max="128" @bind="customSize" disabled="@(!useCustomSize)" />
+        </label>
+
+        <label style="display:grid; gap:.35rem;">
+            Step duration: @animationDuration ms
+            <input type="range" min="400" max="1800" step="50" @bind="animationDuration" />
+        </label>
+
+        <label style="display:grid; gap:.35rem;">
+            Indicator color
+            <select @bind="indicatorColor">
+                @foreach (var option in ColorOptions) {
+                    <option value="@option">@option</option>
+                }
+            </select>
+        </label>
+
+        <label style="display:grid; gap:.35rem;">
+            Container color
+            <select @bind="containerColor" disabled="@(variant != NTLoaderVariant.Contained)">
+                @foreach (var option in ContainerColorOptions) {
+                    <option value="@option">@option</option>
+                }
+            </select>
+        </label>
+    </div>
+
+    <div style="display:grid; gap:1rem;">
+        <h4 style="margin:0;">Sizes</h4>
+        <div style="display:flex; gap:1.5rem; align-items:center; flex-wrap:wrap;">
+            <NTLoader Size="Size.Smallest" AriaLabel="Smallest shape loader" />
+            <NTLoader Size="Size.Small" Color="TnTColor.Secondary" AriaLabel="Small shape loader" />
+            <NTLoader Size="Size.Medium" Color="TnTColor.Primary" AriaLabel="Medium shape loader" />
+            <NTLoader Size="Size.Large" Color="TnTColor.Tertiary" AriaLabel="Large shape loader" />
+            <NTLoader Size="Size.Largest" Color="TnTColor.Success" AriaLabel="Largest shape loader" />
+        </div>
+    </div>
+
+    <div style="display:grid; gap:1rem;">
+        <h4 style="margin:0;">Variants</h4>
+        <div style="display:flex; gap:1.5rem; align-items:center; flex-wrap:wrap;">
+            <NTLoader Variant="NTLoaderVariant.Uncontained" AriaLabel="Uncontained shape loader" />
+            <NTLoader Variant="NTLoaderVariant.Contained" Color="TnTColor.Tertiary" ContainerColor="TnTColor.TertiaryContainer" AriaLabel="Contained shape loader" />
+            <NTLoader Variant="NTLoaderVariant.Contained" Color="TnTColor.Error" ContainerColor="TnTColor.ErrorContainer" Animate="false" AriaLabel="Paused contained shape loader" />
+        </div>
+    </div>
+</section>
+
+@code {
+    private bool animate = true;
+    private bool showLoader = true;
+    private bool useCustomSize;
+    private int animationDuration = 1250;
+    private int customSize = 72;
+    private NTLoaderVariant variant = NTLoaderVariant.Uncontained;
+    private Size size = Size.Medium;
+    private TnTColor indicatorColor = TnTColor.Primary;
+    private TnTColor containerColor = TnTColor.PrimaryContainer;
+
+    private static readonly TnTColor[] ColorOptions = [
+        TnTColor.Primary,
+        TnTColor.Secondary,
+        TnTColor.Tertiary,
+        TnTColor.Success,
+        TnTColor.Warning,
+        TnTColor.Error
+    ];
+
+    private static readonly TnTColor[] ContainerColorOptions = [
+        TnTColor.PrimaryContainer,
+        TnTColor.SecondaryContainer,
+        TnTColor.TertiaryContainer,
+        TnTColor.ErrorContainer,
+        TnTColor.SurfaceContainerHigh,
+        TnTColor.SurfaceContainerHighest
+    ];
+
+    private string? EffectiveSizeValue => useCustomSize ? $"{customSize}px" : null;
+}

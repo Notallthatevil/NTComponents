@@ -1,0 +1,52 @@
+@namespace NTComponents
+@using NTComponents.Core
+@inherits TnTPageScriptComponent<NTDialog>
+
+<dialog @ref="Element"
+        @attributes="AdditionalAttributes"
+        id="@ResolvedElementId"
+        class="@ElementClass"
+        style="@ElementStyle"
+        title="@ElementTitle"
+        lang="@ElementLang"
+        autofocus="@AutoFocus"
+        aria-labelledby="@TitleId"
+        aria-describedby="@SupportingTextId"
+        data-nt-dialog="true"
+        data-nt-dialog-close-on-backdrop="@CloseOnBackdropAttribute"
+        data-nt-dialog-close-on-escape="@CloseOnEscapeAttribute"
+        open="@(Open ? "open" : null)">
+    @if (Icon is not null) {
+        <div class="nt-dialog-icon" aria-hidden="true">
+            @Icon
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Title) || ShowCloseButton) {
+        <header class="nt-dialog-header">
+            @if (!string.IsNullOrWhiteSpace(Title)) {
+                <h2 id="@TitleId" class="nt-dialog-title">@Title</h2>
+            }
+
+            @if (ShowCloseButton) {
+                <button type="button" class="nt-dialog-icon-button" command="request-close" commandfor="@ResolvedElementId" aria-label="@CloseButtonAriaLabel">
+                    <span class="material-symbols-sharp" aria-hidden="true">close</span>
+                </button>
+            }
+        </header>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(SupportingText) || ChildContent is not null) {
+        <div class="nt-dialog-content">
+            @if (!string.IsNullOrWhiteSpace(SupportingText)) {
+                <p id="@SupportingTextId" class="nt-dialog-supporting-text">@SupportingText</p>
+            }
+            @ChildContent
+        </div>
+    }
+
+    <footer class="nt-dialog-actions">
+        @(Buttons ?? DefaultButtons)
+    </footer>
+</dialog>
+@PageScript

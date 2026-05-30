@@ -1,0 +1,33 @@
+@page "/docs/reference/{Slug}"
+@inject DocumentationCatalog DocumentationCatalog
+
+<PageTitle>@(TypePage is null ? "Reference | NTComponents" : $"{TypePage.Name} | NTComponents Reference")</PageTitle>
+
+@if (TypePage is null) {
+    <section class="docs-page">
+        <header class="docs-hero">
+            <p class="docs-kicker @NTTypography.LabelLarge.ToCssClass()">Generated Reference</p>
+            <h1 class="@NTTypography.DisplaySmall.ToCssClass()">Documentation not found</h1>
+            <p class="@NTTypography.BodyLarge.ToCssClass()">
+                The requested documentation page was not found in the generated documentation model.
+            </p>
+            <a class="doc-back-link @NTTypography.LabelLarge.ToCssClass()" href="/docs/reference">Back to reference index</a>
+        </header>
+    </section>
+}
+else {
+    <DocumentationTypeDetailView TypePage="TypePage"
+                                 BackHref="/docs/reference"
+                                 BackLabel="Back to reference index" />
+}
+
+@code {
+    [Parameter]
+    public string Slug { get; set; } = string.Empty;
+
+    private DocumentationTypePage? TypePage { get; set; }
+
+    protected override void OnParametersSet() {
+        TypePage = DocumentationCatalog.TryGetReferenceType(Slug, out var typePage) ? typePage : null;
+    }
+}

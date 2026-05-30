@@ -209,7 +209,7 @@ public class BasicConfirmationDialog_Tests : BunitContext {
         var buttonContainer = component.Find(".tnt-basic-confirmation-dialog-buttons");
         buttonContainer.Should().NotBeNull();
 
-        var divider = component.Find(".tnt-divider");
+        var divider = component.Find(".nt-divider");
         divider.Should().NotBeNull();
     }
 
@@ -307,11 +307,11 @@ public class BasicConfirmationDialog_Tests : BunitContext {
         });
 
         // Assert
-        var divider = component.FindComponent<TnTDivider>();
+        var divider = component.FindComponent<NTDivider>();
         divider.Should().NotBeNull();
 
         // Check that the divider has the correct style attribute from the rendered markup
-        var dividerElement = component.Find(".tnt-divider");
+        var dividerElement = component.Find(".nt-divider");
         dividerElement.Should().NotBeNull();
     }
 

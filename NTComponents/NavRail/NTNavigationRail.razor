@@ -1,0 +1,81 @@
+@namespace NTComponents
+@using NTComponents.Core
+@inherits TnTPageScriptComponent<NTNavigationRail>
+
+@if (ShouldRenderExternalMenuButton) {
+    <button class="@ExternalMenuButtonClass"
+            id="@ExternalMenuButtonId"
+            type="button"
+            aria-label="@MenuAriaLabel"
+            aria-expanded="@IsExpandedText"
+            aria-controls="@EffectiveElementId"
+            data-permanent
+            data-nt-navigation-rail-external-trigger="true"
+            data-nt-navigation-rail-expanded-label="@MenuAriaLabelWhenExpanded"
+            data-nt-navigation-rail-collapsed-label="@MenuAriaLabel"
+            data-nt-navigation-rail-expanded-icon="@EffectiveExpandedMenuIcon.Icon"
+            data-nt-navigation-rail-collapsed-icon="@EffectiveCollapsedMenuIcon.Icon">
+        @NTRipple.RenderHost()
+        <span class="nt-navigation-rail-menu-icon" aria-hidden="true">
+            @EffectiveMenuIcon.Render()
+        </span>
+    </button>
+}
+
+<nav @attributes="AdditionalAttributes"
+     class="@ElementClass"
+     style="@ElementStyle"
+     aria-label="@AriaLabel"
+     lang="@ElementLang"
+     title="@ElementTitle"
+     id="@EffectiveElementId"
+     data-nt-navigation-rail-open-by-default="@OpenByDefaultText"
+     data-permanent
+     @ref="Element">
+    <CascadingValue Value="this" IsFixed="true">
+        @if (Menu is not null || ShouldRenderDefaultMenuButton) {
+            <div class="nt-navigation-rail-menu">
+                @if (Menu is not null) {
+                    @Menu
+                } else if (ShouldRenderDefaultMenuButton) {
+                    <button class="nt-navigation-rail-menu-button"
+                       type="button"
+                       aria-label="@MenuAriaLabel"
+                       aria-expanded="@IsExpandedText"
+                       aria-controls="@EffectiveElementId"
+                       data-nt-navigation-rail-expanded-label="@MenuAriaLabelWhenExpanded"
+                       data-nt-navigation-rail-collapsed-label="@MenuAriaLabel"
+                       data-nt-navigation-rail-expanded-icon="@EffectiveExpandedMenuIcon.Icon"
+                       data-nt-navigation-rail-collapsed-icon="@EffectiveCollapsedMenuIcon.Icon">
+                        @NTRipple.RenderHost()
+                        <span class="nt-navigation-rail-menu-icon" aria-hidden="true">
+                            @EffectiveMenuIcon.Render()
+                        </span>
+                    </button>
+                }
+            </div>
+        }
+
+        @if (Header is not null || Fab is not null) {
+            <div class="nt-navigation-rail-header">
+                @Header
+                @if (Fab is not null) {
+                    <div class="nt-navigation-rail-fab">
+                        @Fab
+                    </div>
+                }
+            </div>
+        }
+
+        <div class="nt-navigation-rail-items">
+            @ChildContent
+        </div>
+
+        @if (Footer is not null) {
+            <div class="nt-navigation-rail-footer">
+                @Footer
+            </div>
+        }
+        @PageScript
+    </CascadingValue>
+</nav>

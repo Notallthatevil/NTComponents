@@ -1,16 +1,103 @@
 @inherits LayoutComponentBase
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
+@implements IDisposable
+@inject DocumentationCatalog DocumentationCatalog
+@inject NavigationManager NavigationManager
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+<NTLayout class="site-shell">
+    <NTNavigationRail AriaLabel="Primary"
+                      ShowMenuButton="true"
+                      MenuAriaLabel="Expand navigation rail"
+                      MenuAriaLabelWhenExpanded="Collapse navigation rail"
+                      ShowDivider="true"
+                      OpenByDefault="true"
+                      HideRailOnXSScreens="true"
+                      class="site-nav-rail">
+        <NTNavigationRailItem Label="Home"
+                              Value="home"
+                              Href="/"
+                              Icon="MaterialIcon.Home"
+                              Match="NavLinkMatch.All" />
+        <NTNavigationRailSectionHeader Label="Browse" />
+        <NTNavigationRailGroup Label="Components"
+                               Icon="MaterialIcon.Widgets"
+                               Expanded="@IsComponentsSection">
+            <NTNavigationRailItem Label="All components"
+                                  Value="components"
+                                  Href="/docs/components"
+                                  Icon="MaterialIcon.Widgets"
+                                  Match="NavLinkMatch.All" />
+            <NTNavigationRailSectionHeader Label="Component groups" />
+            @foreach (var componentGroup in DocumentationCatalog.ComponentTypes.GroupBy(typePage => typePage.ComponentGroup).Take(6)) {
+                <NTNavigationRailGroup Label="@componentGroup.Key"
+                                       Icon="MaterialIcon.Widgets"
+                                       Expanded="@IsComponentsSection">
+                    @foreach (var componentType in componentGroup.Take(8)) {
+                        <NTNavigationRailItem Label="@componentType.Name"
+                                              Href="@($"/docs/components/{componentType.Slug}")"
+                                              Icon="MaterialIcon.Widgets" />
+                    }
+                </NTNavigationRailGroup>
+            }
+        </NTNavigationRailGroup>
+        <NTNavigationRailGroup Label="Reference"
+                               Icon="MaterialIcon.MenuBook"
+                               Expanded="@IsReferenceSection">
+            <NTNavigationRailItem Label="All reference"
+                                  Value="reference"
+                                  Href="/docs/reference"
+                                  Icon="MaterialIcon.MenuBook"
+                                  Match="NavLinkMatch.All" />
+            <NTNavigationRailSectionHeader Label="Foundations" />
+            <NTNavigationRailGroup Label="Foundations"
+                                   Icon="MaterialIcon.Token"
+                                   Expanded="@IsReferenceSection">
+                @foreach (var featuredType in DocumentationCatalog.FeaturedTypes) {
+                    <NTNavigationRailItem Label="@featuredType.Name"
+                                          Href="@($"/docs/reference/{featuredType.Slug}")"
+                                          Icon="MaterialIcon.Article" />
+                }
+            </NTNavigationRailGroup>
+        </NTNavigationRailGroup>
+    </NTNavigationRail>
+
+    <NTHeader class="site-header" BackgroundColor="TnTColor.PrimaryContainer" TextColor="TnTColor.OnPrimaryContainer">
+        <div class="site-header-inner">
+            <a class="site-brand @NTTypography.TitleMedium.ToCssClass()" href="">NTComponents</a>
         </div>
+    </NTHeader>
 
-        <article class="content px-4">
+    <NTBody class="site-main" BackgroundColor="TnTColor.SecondaryContainer" TextColor="TnTColor.OnSecondaryContainer">
+        <div class="site-main-inner">
             @Body
-        </article>
-    </main>
-</div>
+        </div>
+    </NTBody>
+
+    <NTFooter class="site-footer" BackgroundColor="TnTColor.TertiaryContainer" TextColor="TnTColor.OnTertiaryContainer">
+        <div class="site-footer-inner">
+            <span>NTComponents</span>
+            <span>Material 3 component library</span>
+        </div>
+    </NTFooter>
+</NTLayout>
+
+@code {
+    private bool IsComponentsSection => GetCurrentPath().StartsWith("docs/components", StringComparison.OrdinalIgnoreCase);
+    private bool IsReferenceSection => GetCurrentPath().StartsWith("docs/reference", StringComparison.OrdinalIgnoreCase);
+
+    public void Dispose() {
+        NavigationManager.LocationChanged -= HandleLocationChanged;
+    }
+
+    protected override void OnInitialized() {
+        NavigationManager.LocationChanged += HandleLocationChanged;
+    }
+
+    private string GetCurrentPath() {
+        var relativePath = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        return relativePath.Split(['?', '#'], 2)[0].Trim('/');
+    }
+
+    private void HandleLocationChanged(object? sender, LocationChangedEventArgs args) {
+        InvokeAsync(StateHasChanged);
+    }
+}

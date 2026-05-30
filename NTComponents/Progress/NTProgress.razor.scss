@@ -1,0 +1,534 @@
+.nt-progress {
+    display: inline-grid;
+    place-items: center;
+    box-sizing: border-box;
+    color: var(--nt-progress-indicator-color);
+    vertical-align: middle;
+    --nt-progress-track-color: var(--tnt-color-secondary-container);
+
+    &.tnt-size-xs {
+        --nt-progress-size: 24px;
+        --nt-progress-linear-size: 96px;
+        --nt-progress-linear-height: 4px;
+        --nt-progress-ring-size: 24px;
+        --nt-progress-ring-thickness: 8px;
+        --nt-progress-ring-gap-value: 7.074;
+        --nt-progress-ring-determinate-gap-value: 8.842;
+        --nt-progress-ring-wave-gap-value: 5.158;
+    }
+
+    &.tnt-size-s {
+        --nt-progress-size: 40px;
+        --nt-progress-linear-size: 160px;
+        --nt-progress-linear-height: 4px;
+        --nt-progress-ring-size: 40px;
+        --nt-progress-ring-thickness: 8px;
+        --nt-progress-ring-gap-value: 7.074;
+        --nt-progress-ring-determinate-gap-value: 8.842;
+        --nt-progress-ring-wave-gap-value: 3.537;
+    }
+
+    &.tnt-size-m {
+        --nt-progress-size: 48px;
+        --nt-progress-linear-size: 240px;
+        --nt-progress-linear-height: 4px;
+        --nt-progress-ring-size: 40px;
+        --nt-progress-ring-thickness: 8px;
+        --nt-progress-ring-gap-value: 7.074;
+        --nt-progress-ring-determinate-gap-value: 8.842;
+        --nt-progress-ring-wave-gap-value: 3.537;
+    }
+
+    &.tnt-size-l {
+        --nt-progress-size: 64px;
+        --nt-progress-linear-size: 320px;
+        --nt-progress-linear-height: 6px;
+        --nt-progress-ring-size: 64px;
+        --nt-progress-ring-thickness: 8px;
+        --nt-progress-ring-gap-value: 5.526;
+        --nt-progress-ring-determinate-gap-value: 6.631;
+        --nt-progress-ring-wave-gap-value: 2.763;
+    }
+
+    &.tnt-size-xl {
+        --nt-progress-size: 88px;
+        --nt-progress-linear-size: 480px;
+        --nt-progress-linear-height: 8px;
+        --nt-progress-ring-size: 88px;
+        --nt-progress-ring-thickness: 8px;
+        --nt-progress-ring-gap-value: 4.823;
+        --nt-progress-ring-determinate-gap-value: 4.823;
+        --nt-progress-ring-wave-gap-value: 2.412;
+    }
+
+    &.nt-progress-linear {
+        --nt-progress-linear-track-start: 0;
+        --nt-progress-linear-track-end: 0;
+        --nt-progress-linear-track-size: 100%;
+        --nt-progress-linear-active-size: 0;
+        --nt-progress-indeterminate-active-start: -10%;
+        --nt-progress-indeterminate-exit-start: calc(100% + var(--nt-progress-linear-height, 4px));
+        --nt-progress-indeterminate-active-size: 10%;
+        --nt-progress-indeterminate-active-scale: 0.1;
+        inline-size: calc(100% - (4px * 2));
+        max-inline-size: 100%;
+        min-inline-size: 0;
+        block-size: var(--nt-progress-linear-height, 4px);
+        margin-inline: 4px;
+        overflow: clip;
+        contain: layout paint;
+
+        .nt-progress-track {
+            display: block;
+            position: relative;
+            width: 100%;
+            height: 100%;
+            inline-size: 100%;
+            block-size: 100%;
+            border-radius: 999px;
+            clip-path: inset(0 round 999px);
+            overflow: clip;
+            contain: layout paint;
+        }
+
+        .nt-progress-track-segment,
+        .nt-progress-active-track,
+        .nt-progress-stop {
+            position: absolute;
+            display: block;
+            block-size: var(--nt-progress-linear-height, 4px);
+            border-radius: 999px;
+        }
+
+        .nt-progress-track-segment {
+            inset-block-start: 0;
+            inset-inline-start: var(--nt-progress-linear-track-start);
+            inline-size: var(--nt-progress-linear-track-size);
+            background-color: var(--nt-progress-track-color);
+        }
+
+        .nt-progress-active-track,
+        .nt-progress-stop {
+            background-color: var(--nt-progress-indicator-color);
+        }
+
+        &.nt-progress-track-hidden .nt-progress-track-segment {
+            background-color: transparent;
+        }
+
+        &.nt-progress-determinate .nt-progress-active-track {
+            inset-block-start: 0;
+            inset-inline-start: 0;
+            inline-size: var(--nt-progress-linear-active-size);
+        }
+
+        &.nt-progress-determinate.nt-progress-started {
+            --nt-progress-linear-active-size: max(var(--nt-progress-linear-height, 4px), var(--nt-progress-active-percentage, 0%));
+            --nt-progress-linear-track-start: calc(var(--nt-progress-linear-active-size) + 4px);
+            --nt-progress-linear-track-end: calc(4px + var(--nt-progress-linear-height, 4px));
+            --nt-progress-linear-track-size: max(0px, calc(100% - var(--nt-progress-linear-track-start) - var(--nt-progress-linear-track-end)));
+        }
+
+        &.nt-progress-determinate.nt-progress-track-hidden {
+            --nt-progress-linear-track-end: 0;
+        }
+
+        &.nt-progress-determinate.nt-progress-complete {
+            --nt-progress-linear-active-size: 100%;
+            --nt-progress-linear-track-start: 100%;
+            --nt-progress-linear-track-end: 0;
+            --nt-progress-linear-track-size: 0;
+        }
+
+        &.nt-progress-indeterminate .nt-progress-active-track {
+            inset-block-start: 0;
+            inset-inline-start: 0;
+            inline-size: 100%;
+            transform: translateX(var(--nt-progress-indeterminate-active-start)) scaleX(var(--nt-progress-indeterminate-active-scale));
+            transform-origin: left center;
+            will-change: transform;
+        }
+
+        &.nt-progress-indeterminate .nt-progress-track-segment {
+            inline-size: 100%;
+            mask-image: linear-gradient(
+                to right,
+                #000 0,
+                #000 max(0px, calc(var(--nt-progress-indeterminate-active-start) - 4px)),
+                transparent max(0px, calc(var(--nt-progress-indeterminate-active-start) - 4px)),
+                transparent min(100%, calc(var(--nt-progress-indeterminate-active-start) + var(--nt-progress-indeterminate-active-size) + 4px)),
+                #000 min(100%, calc(var(--nt-progress-indeterminate-active-start) + var(--nt-progress-indeterminate-active-size) + 4px)),
+                #000 100%
+            );
+            -webkit-mask-image: linear-gradient(
+                to right,
+                #000 0,
+                #000 max(0px, calc(var(--nt-progress-indeterminate-active-start) - 4px)),
+                transparent max(0px, calc(var(--nt-progress-indeterminate-active-start) - 4px)),
+                transparent min(100%, calc(var(--nt-progress-indeterminate-active-start) + var(--nt-progress-indeterminate-active-size) + 4px)),
+                #000 min(100%, calc(var(--nt-progress-indeterminate-active-start) + var(--nt-progress-indeterminate-active-size) + 4px)),
+                #000 100%
+            );
+        }
+
+        .nt-progress-stop {
+            inset-block-start: 0;
+            inset-inline-end: 0;
+            inline-size: var(--nt-progress-linear-height, 4px);
+            border-radius: 50%;
+        }
+
+        &.nt-progress-animated.nt-progress-indeterminate {
+            animation: nt-progress-linear-indeterminate-active 3.2s infinite linear;
+        }
+
+        &.nt-progress-sine-wave {
+            block-size: calc(var(--nt-progress-linear-height, 4px) + 6px);
+
+            .nt-progress-track-segment,
+            .nt-progress-stop {
+                inset-block-start: 3px;
+            }
+
+            .nt-progress-active-track {
+                inset-block-start: 0;
+                block-size: 100%;
+                background-color: transparent;
+                overflow: hidden;
+            }
+
+            .nt-progress-sine-wave-svg {
+                display: block;
+                inline-size: 4080px;
+                block-size: 100%;
+                will-change: transform;
+            }
+
+            .nt-progress-sine-wave-path {
+                fill: none;
+                stroke: var(--nt-progress-indicator-color);
+                stroke-linecap: round;
+                stroke-width: var(--nt-progress-linear-height, 4px);
+            }
+
+            &.nt-progress-animated .nt-progress-sine-wave-svg {
+                animation: nt-progress-linear-wave-phase 1s infinite linear;
+            }
+
+            &.nt-progress-indeterminate .nt-progress-active-track {
+                inset-inline-start: var(--nt-progress-indeterminate-active-start);
+                inline-size: var(--nt-progress-indeterminate-active-size);
+                transform: none;
+            }
+        }
+    }
+
+    &.nt-progress-ring {
+        --nt-progress-ring-diameter: clamp(24px, var(--nt-progress-size, var(--nt-progress-ring-size, 40px)), 240px);
+        inline-size: var(--nt-progress-ring-diameter);
+        block-size: var(--nt-progress-ring-diameter);
+        transform-origin: center;
+
+        .nt-progress-track {
+            display: block;
+            width: 100%;
+            height: 100%;
+            inline-size: 100%;
+            block-size: 100%;
+            overflow: visible;
+        }
+
+        .nt-progress-track-segment,
+        .nt-progress-active-track {
+            fill: none;
+            stroke-linecap: round;
+            stroke-width: var(--nt-progress-ring-thickness, 8px);
+            transform-box: view-box;
+            transform-origin: center;
+            transform: rotate(-90deg);
+        }
+
+        .nt-progress-track-segment {
+            stroke: var(--nt-progress-track-color);
+        }
+
+        .nt-progress-active-track {
+            stroke: var(--nt-progress-indicator-color);
+        }
+
+        &.nt-progress-track-hidden .nt-progress-track-segment {
+            stroke: transparent;
+        }
+
+        &.nt-progress-determinate {
+            --nt-progress-ring-determinate-half-gap-value: calc(var(--nt-progress-ring-determinate-gap-value, 8.842) / 2);
+            --nt-progress-ring-determinate-track-start: max(
+                calc(var(--nt-progress-active-value, 0) + var(--nt-progress-ring-determinate-half-gap-value)),
+                calc(var(--nt-progress-ring-determinate-gap-value, 8.842) * 1.5)
+            );
+        }
+
+        &.nt-progress-determinate .nt-progress-active-track {
+            stroke-dasharray: max(0, calc(var(--nt-progress-active-value, 0) - var(--nt-progress-ring-determinate-gap-value, 8.842))) 100;
+            stroke-dashoffset: calc(var(--nt-progress-ring-determinate-half-gap-value) * -1);
+        }
+
+        &.nt-progress-determinate .nt-progress-track-segment {
+            opacity: clamp(0, calc(100 - var(--nt-progress-active-value, 0) - var(--nt-progress-ring-determinate-gap-value, 8.842)), 1);
+            stroke-dasharray: max(0, calc(100 - var(--nt-progress-ring-determinate-track-start) - var(--nt-progress-ring-determinate-half-gap-value))) 100;
+            stroke-dashoffset: max(-100, calc(var(--nt-progress-ring-determinate-track-start) * -1));
+        }
+
+        &.nt-progress-determinate:not(.nt-progress-started) .nt-progress-active-track {
+            stroke: transparent;
+        }
+
+        &.nt-progress-determinate:not(.nt-progress-started) .nt-progress-track-segment {
+            stroke-dasharray: 100 100;
+            stroke-dashoffset: 0;
+        }
+
+        &.nt-progress-complete .nt-progress-active-track {
+            stroke-dasharray: 100 100;
+        }
+
+        &.nt-progress-complete .nt-progress-track-segment {
+            stroke-dasharray: 0 100;
+        }
+
+        &.nt-progress-indeterminate {
+            --nt-progress-ring-indeterminate-active-size: 2.778;
+        }
+
+        &.nt-progress-indeterminate .nt-progress-track-segment {
+            stroke-dasharray: max(0, calc(100 - var(--nt-progress-ring-indeterminate-active-size) - (min(var(--nt-progress-ring-gap-value, 7.074), var(--nt-progress-ring-indeterminate-active-size)) * 2))) 100;
+            stroke-dashoffset: calc((var(--nt-progress-ring-indeterminate-active-size) + min(var(--nt-progress-ring-gap-value, 7.074), var(--nt-progress-ring-indeterminate-active-size))) * -1);
+        }
+
+        &.nt-progress-indeterminate .nt-progress-track-segment-wrap {
+            stroke-dasharray: 0 100;
+            stroke-dashoffset: 0;
+        }
+
+        &.nt-progress-indeterminate .nt-progress-active-track {
+            stroke-dasharray: var(--nt-progress-ring-indeterminate-active-size) 100;
+            stroke-dashoffset: 0;
+        }
+
+        &.nt-progress-indeterminate .nt-progress-active-track-wrap {
+            stroke-dasharray: 0 100;
+            stroke-dashoffset: 0;
+        }
+
+        &.nt-progress-animated.nt-progress-indeterminate {
+            animation: nt-progress-ring-indeterminate-active 750ms infinite linear alternate;
+        }
+
+        &.nt-progress-animated.nt-progress-indeterminate .nt-progress-track {
+            animation: nt-progress-ring-indeterminate-rotate 6s infinite cubic-bezier(0.3, 0.6, 1, 1);
+            transform-box: view-box;
+            transform-origin: center;
+        }
+    }
+
+    &.nt-progress-ring.nt-progress-sine-wave {
+        --nt-progress-ring-thickness: 4px;
+        --nt-progress-ring-gap-value: var(--nt-progress-ring-wave-gap-value, 3.537);
+        --nt-progress-ring-determinate-gap-value: var(--nt-progress-ring-wave-gap-value, 3.537);
+        --nt-progress-ring-wave-path-length: calc(var(--nt-progress-ring-diameter) * 2.97341);
+        --nt-progress-ring-wave-path-percent: calc(var(--nt-progress-ring-diameter) * 0.0297341);
+    }
+
+    &.nt-progress-ring.nt-progress-sine-wave .nt-progress-sine-wave-path {
+        fill: none;
+        opacity: 0;
+        stroke: var(--nt-progress-indicator-color);
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: var(--nt-progress-ring-thickness, 8px);
+        stroke-dashoffset: 0;
+        transform: rotate(-90deg);
+        transform-box: view-box;
+        transform-origin: center;
+        vector-effect: non-scaling-stroke;
+    }
+
+    &.nt-progress-ring.nt-progress-sine-wave .nt-progress-sine-wave-path:first-of-type {
+        opacity: 1;
+    }
+
+    &.nt-progress-ring.nt-progress-sine-wave.nt-progress-animated .nt-progress-sine-wave-path {
+        animation: nt-progress-ring-wave-frame 1s infinite step-end;
+        animation-delay: calc(var(--nt-progress-ring-wave-frame-index, 0) * -125ms);
+    }
+
+    &.nt-progress-ring.nt-progress-sine-wave.nt-progress-determinate .nt-progress-sine-wave-path {
+        stroke-dasharray: calc(var(--nt-progress-active-value, 0) * var(--nt-progress-ring-wave-path-percent)) var(--nt-progress-ring-wave-path-length);
+    }
+
+    &.nt-progress-ring.nt-progress-sine-wave.nt-progress-indeterminate .nt-progress-sine-wave-path {
+        stroke-dasharray: calc(var(--nt-progress-ring-indeterminate-active-size) * var(--nt-progress-ring-wave-path-percent)) var(--nt-progress-ring-wave-path-length);
+    }
+
+    &.nt-progress-ring.nt-progress-sine-wave.nt-progress-complete .nt-progress-sine-wave-path {
+        stroke-dasharray: var(--nt-progress-ring-wave-path-length) var(--nt-progress-ring-wave-path-length);
+    }
+
+    .nt-progress-sine-wave-track {
+        display: block;
+        overflow: visible;
+    }
+
+    .nt-progress-sine-wave-path {
+        fill: none;
+        stroke: var(--nt-progress-indicator-color);
+        stroke-width: var(--nt-progress-linear-height, 4px);
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        vector-effect: non-scaling-stroke;
+    }
+}
+
+@keyframes nt-progress-linear-wave-phase {
+    100% {
+        transform: translateX(-40px);
+    }
+}
+
+@keyframes nt-progress-ring-wave-frame {
+    0%,
+    12.499% {
+        opacity: 1;
+    }
+
+    12.5%,
+    100% {
+        opacity: 0;
+    }
+}
+
+@keyframes nt-progress-linear-indeterminate-active {
+    0% {
+        --nt-progress-indeterminate-active-start: -10%;
+        --nt-progress-indeterminate-active-size: 10%;
+        --nt-progress-indeterminate-active-scale: 0.1;
+        animation-timing-function: linear;
+    }
+
+    31.24% {
+        --nt-progress-indeterminate-active-start: var(--nt-progress-indeterminate-exit-start);
+        --nt-progress-indeterminate-active-size: 43.333%;
+        --nt-progress-indeterminate-active-scale: 0.43333;
+        animation-timing-function: step-end;
+    }
+
+    31.25% {
+        --nt-progress-indeterminate-active-start: -43.333%;
+        --nt-progress-indeterminate-active-size: 43.333%;
+        --nt-progress-indeterminate-active-scale: 0.43333;
+        animation-timing-function: linear;
+    }
+
+    62.49% {
+        --nt-progress-indeterminate-active-start: var(--nt-progress-indeterminate-exit-start);
+        --nt-progress-indeterminate-active-size: 76.667%;
+        --nt-progress-indeterminate-active-scale: 0.76667;
+        animation-timing-function: step-end;
+    }
+
+    62.5% {
+        --nt-progress-indeterminate-active-start: -76.667%;
+        --nt-progress-indeterminate-active-size: 76.667%;
+        --nt-progress-indeterminate-active-scale: 0.76667;
+        animation-timing-function: linear;
+    }
+
+    93.75% {
+        --nt-progress-indeterminate-active-start: var(--nt-progress-indeterminate-exit-start);
+        --nt-progress-indeterminate-active-size: 110%;
+        --nt-progress-indeterminate-active-scale: 1.1;
+    }
+
+    100% {
+        --nt-progress-indeterminate-active-start: var(--nt-progress-indeterminate-exit-start);
+        --nt-progress-indeterminate-active-size: 10%;
+        --nt-progress-indeterminate-active-scale: 0.1;
+    }
+}
+
+@keyframes nt-progress-ring-indeterminate-active {
+    0% {
+        --nt-progress-ring-indeterminate-active-size: 2.778;
+        animation-timing-function: linear;
+    }
+
+    100% {
+        --nt-progress-ring-indeterminate-active-size: 75;
+    }
+}
+
+@keyframes nt-progress-ring-indeterminate-rotate {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    12.5% {
+        transform: rotate(180deg);
+        animation-timing-function: linear;
+    }
+
+    25% {
+        transform: rotate(630deg);
+    }
+
+    37.5% {
+        transform: rotate(810deg);
+        animation-timing-function: linear;
+    }
+
+    50% {
+        transform: rotate(1260deg);
+    }
+
+    62.5% {
+        transform: rotate(1440deg);
+        animation-timing-function: linear;
+    }
+
+    75% {
+        transform: rotate(1890deg);
+    }
+
+    87.5% {
+        transform: rotate(2070deg);
+        animation-timing-function: linear;
+    }
+
+    100% {
+        transform: rotate(2520deg);
+    }
+}
+
+@property --nt-progress-indeterminate-active-start {
+    syntax: "<length-percentage>";
+    inherits: true;
+    initial-value: -10%;
+}
+
+@property --nt-progress-indeterminate-active-size {
+    syntax: "<length-percentage>";
+    inherits: true;
+    initial-value: 10%;
+}
+
+@property --nt-progress-indeterminate-active-scale {
+    syntax: "<number>";
+    inherits: true;
+    initial-value: 0.1;
+}
+
+@property --nt-progress-ring-indeterminate-active-size {
+    syntax: "<number>";
+    inherits: true;
+    initial-value: 2.778;
+}

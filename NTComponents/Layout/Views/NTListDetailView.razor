@@ -1,0 +1,21 @@
+@namespace NTComponents
+@inherits NTPageScriptViewBase<NTListDetailView>
+
+<div @attributes="ElementAttributes" data-detail-visible="@DetailVisible.ToString().ToLowerInvariant()" @ref="Element">
+    <section class="nt-view-pane nt-list-detail-view-list" aria-label="@ListPaneLabel">
+        @List
+    </section>
+
+    <section class="nt-view-pane nt-list-detail-view-detail" aria-label="@DetailPaneLabel">
+        @DetailHeader
+
+        @if (Detail is not null) {
+            @Detail
+        }
+        else {
+            @EmptyDetail
+        }
+    </section>
+</div>
+
+@PageScript

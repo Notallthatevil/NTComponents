@@ -1,0 +1,86 @@
+@page "/docs/reference"
+@inject DocumentationCatalog DocumentationCatalog
+
+<PageTitle>Reference | NTComponents</PageTitle>
+
+<section class="docs-page">
+    <header class="docs-hero">
+        <p class="docs-kicker @NTTypography.LabelLarge.ToCssClass()">Generated Reference</p>
+        <h1 class="@NTTypography.HeadlineLarge.ToCssClass()">Source-generated API reference</h1>
+        <p class="@NTTypography.BodyLarge.ToCssClass()">
+            These pages are built from the XML documentation captured by the NTComponents source generator. The site
+            discovers documented types from the generated model and renders them with shared loops over the same
+            documentation data.
+        </p>
+    </header>
+
+    @if (DocumentationCatalog.FeaturedTypes.Count > 0) {
+        <section class="doc-group-panel doc-section">
+            <div class="doc-section-heading">
+                <h2 class="@NTTypography.TitleLarge.ToCssClass()">Featured foundations</h2>
+                <p class="@NTTypography.BodyMedium.ToCssClass()">
+                    The current reference focus is the shared enums that drive cards, elevation, typography, and color.
+                </p>
+            </div>
+
+            <div class="doc-type-list">
+                @foreach (var typePage in DocumentationCatalog.FeaturedTypes) {
+                    <NTCard class="doc-type-row" href="@($"/docs/reference/{typePage.Slug}")" Variant="NTCardVariant.Outlined">
+                        <div>
+                            <div class="doc-row-title">
+                                <strong class="@NTTypography.TitleMedium.ToCssClass()">@typePage.Name</strong>
+                                <span class="doc-type-kind @NTTypography.LabelLarge.ToCssClass()">@typePage.Kind</span>
+                            </div>
+                            <p class="doc-type-full-name @NTTypography.BodySmall.ToCssClass()">@typePage.FullName</p>
+                            @if (typePage.Content.SummaryParagraphs.Count > 0) {
+                                <p class="@NTTypography.BodyMedium.ToCssClass()">@((MarkupString)typePage.Content.SummaryParagraphs[0])</p>
+                            }
+                        </div>
+                        <span class="doc-type-open @NTTypography.LabelLarge.ToCssClass()">Open</span>
+                    </NTCard>
+                }
+            </div>
+        </section>
+    }
+
+    @foreach (var typeGroup in DocumentationCatalog.ReferenceTypes.GroupBy(typePage => typePage.Kind)) {
+        <section class="doc-group-panel doc-section">
+            <div class="doc-section-heading">
+                <h2 class="@NTTypography.TitleLarge.ToCssClass()">@GetGroupTitle(typeGroup.Key)</h2>
+                <p class="@NTTypography.BodyMedium.ToCssClass()">@GetGroupDescription(typeGroup.Key)</p>
+            </div>
+
+            <div class="doc-type-list">
+                @foreach (var typePage in typeGroup) {
+                    <NTCard class="doc-type-row" href="@($"/docs/reference/{typePage.Slug}")" Variant="NTCardVariant.Outlined">
+                        <div>
+                            <h3 class="@NTTypography.TitleMedium.ToCssClass()">@typePage.Name</h3>
+                            <p class="doc-type-full-name @NTTypography.BodySmall.ToCssClass()">@typePage.FullName</p>
+                        </div>
+                        <span class="doc-type-open @NTTypography.LabelLarge.ToCssClass()">Open</span>
+                    </NTCard>
+                }
+            </div>
+        </section>
+    }
+</section>
+
+@code {
+    private static string GetGroupDescription(string kind) {
+        return kind switch {
+            "enum" => "Enumerations expose shared tokens, roles, and constrained configuration values across the library.",
+            "class" => "Classes represent components, helpers, and runtime types discovered in the generated documentation model.",
+            "struct" => "Structs capture value types that are documented and available to consumers.",
+            _ => "Documented types discovered from the generated source model."
+        };
+    }
+
+    private static string GetGroupTitle(string kind) {
+        return kind switch {
+            "enum" => "Enums",
+            "class" => "Classes",
+            "struct" => "Structs",
+            _ => "Types"
+        };
+    }
+}

@@ -66,4 +66,51 @@ public class GeneratedCodeDocumentation_Tests {
         buttonType.Should().NotBeNull();
         inheritedElementTitleProperty.Should().NotBeNull();
     }
+
+    [Fact]
+    public void Model_Groups_Component_Parameters() {
+        // Arrange
+        var model = GeneratedCodeDocumentation.Model;
+
+        // Act
+        var buttonType = model.Types.FirstOrDefault(x => x.FullName == "NTComponents.TnTButton");
+        var buttonSizeParameter = buttonType?.Parameters.FirstOrDefault(x => x.Name == "ButtonSize");
+
+        // Assert
+        buttonType.Should().NotBeNull();
+        buttonType!.Parameters.Should().OnlyContain(x => x.IsParameter);
+        buttonSizeParameter.Should().NotBeNull();
+        buttonSizeParameter!.Summary.Should().Contain("The size of the button.");
+    }
+
+    [Fact]
+    public void Model_Groups_Cascading_Parameters() {
+        // Arrange
+        var model = GeneratedCodeDocumentation.Model;
+
+        // Act
+        var accordionType = model.Types.FirstOrDefault(x => x.FullName == "NTComponents.TnTAccordion");
+        var parentAccordion = accordionType?.CascadingParameters.FirstOrDefault(x => x.Name == "_parentAccordion");
+
+        // Assert
+        accordionType.Should().NotBeNull();
+        accordionType!.CascadingParameters.Should().OnlyContain(x => x.IsCascadingParameter);
+        parentAccordion.Should().NotBeNull();
+        parentAccordion!.Summary.Should().Contain("Gets or sets the parent accordion.");
+    }
+
+    [Fact]
+    public void Model_Identifies_Obsolete_Types() {
+        // Arrange
+        var model = GeneratedCodeDocumentation.Model;
+
+        // Act
+        var cardType = model.Types.FirstOrDefault(x => x.FullName == "NTComponents.TnTCard");
+
+        // Assert
+        cardType.Should().NotBeNull();
+        cardType!.IsObsolete.Should().BeTrue();
+        cardType.ObsoleteMessage.Should().Be("Use NTCard instead.");
+        cardType.IsObsoleteError.Should().BeFalse();
+    }
 }

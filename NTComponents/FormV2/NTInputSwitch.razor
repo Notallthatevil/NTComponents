@@ -1,0 +1,91 @@
+@namespace NTComponents
+@inherits NTBooleanInputBase
+
+@{
+    var errorText = CurrentErrorText;
+    var hasErrorText = !string.IsNullOrWhiteSpace(errorText);
+}
+
+<div class="@BuildRootClass(hasErrorText)" style="@_elementStyle">
+    @{
+        var supportingText = hasErrorText ? null : CurrentSupportingText;
+        var hasSupportingText = !string.IsNullOrWhiteSpace(supportingText);
+    }
+
+    <label class="nt-switch-label" for="@InputId" title="@ElementTitle" lang="@ElementLang">
+        @if (LeadingIcon is not null) {
+            <span class="nt-switch-leading" aria-hidden="true">
+                @LeadingIcon.Render()
+            </span>
+        }
+
+        <span class="nt-switch-touch-target">
+            <input @attributes="InputAttributes"
+                   id="@InputId"
+                   name="@ElementName"
+                   type="checkbox"
+                   role="switch"
+                   value="true"
+                   checked="@CurrentValue"
+                   disabled="@(FieldDisabled || FieldReadOnly)"
+                   autofocus="@AutoFocus"
+                   aria-checked="@(CurrentValue ? "true" : "false")"
+                   aria-describedby="@BuildDescribedBy(hasErrorText, hasSupportingText)"
+                   aria-invalid="@(hasErrorText ? "true" : "false")"
+                   aria-errormessage="@(hasErrorText ? ErrorTextId : null)"
+                   aria-required="@(Required ? "true" : null)"
+                   @onchange="OnChangeAsync"
+                   @onblur="OnBlurAsync"
+                   @ref="Element" />
+            <span class="nt-switch-state-layer" aria-hidden="true"></span>
+            <span class="nt-switch-track" aria-hidden="true">
+                <span class="nt-switch-handle">
+                    @if (ShowHandleIcon) {
+                        <svg class="nt-switch-handle-icon nt-switch-handle-icon-on" viewBox="0 0 18 18" focusable="false" aria-hidden="true">
+                            <path d="M4 9.5 L7.5 13 L14 5.5"></path>
+                        </svg>
+                        <svg class="nt-switch-handle-icon nt-switch-handle-icon-off" viewBox="0 0 18 18" focusable="false" aria-hidden="true">
+                            <path d="M5 5 L13 13 M13 5 L5 13"></path>
+                        </svg>
+                    }
+                </span>
+            </span>
+        </span>
+
+        @if (!string.IsNullOrWhiteSpace(Label)) {
+            <span class="nt-switch-label-text" id="@LabelId">@Label</span>
+        }
+
+        @if (TrailingIcon is not null) {
+            <span class="nt-switch-trailing" aria-hidden="true">
+                @TrailingIcon.Render()
+            </span>
+        }
+    </label>
+
+    @if (hasErrorText || hasSupportingText) {
+        <div class="nt-switch-supporting-row">
+            @if (hasErrorText) {
+                <span class="nt-switch-supporting nt-switch-error-text" id="@ErrorTextId" role="alert">
+                    @errorText
+                </span>
+            }
+            else if (hasSupportingText) {
+                <span class="nt-switch-supporting" id="@SupportingTextId">
+                    @supportingText
+                </span>
+            }
+        </div>
+    }
+
+    @if (ShouldRenderReadOnlyFormPostValue) {
+        <input type="hidden"
+               name="@ElementName"
+               value="@FormPostValue" />
+    }
+    else if (ShouldRenderFormPostFallback) {
+        <input type="hidden"
+               name="@ElementName"
+               value="false" />
+    }
+</div>

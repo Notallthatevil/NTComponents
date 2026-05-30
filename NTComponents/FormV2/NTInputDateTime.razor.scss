@@ -1,0 +1,655 @@
+@use '../Styles/_Variables/_colors.scss' as colors;
+@use '../Styles/_Variables/_corner-radius.scss' as corners;
+@use '../Styles/_Variables/_elevation.scss' as elevation;
+@use '../Styles/_Variables/_measurements.scss' as measurements;
+@use '../Styles/_Variables/_motion.scss' as motion;
+@use '../Styles/_Variables/_typescale.scss' as typescale;
+
+$nt-dtp-motion-duration: motion.$nt-motion-duration-short_3;
+$nt-dtp-motion-easing: motion.$nt-motion-easing-standard;
+$nt-dtp-container-width: 360px;
+$nt-dtp-modal-width: 360px;
+$nt-dtp-clock-size: 256px;
+$nt-dtp-touch-target: 48px;
+$nt-dtp-date-cell-size: 40px;
+$nt-dtp-picker-grid-gap: 6px;
+$nt-dtp-picker-option-column: calc((100% - (#{$nt-dtp-picker-grid-gap} * 2)) / 3);
+$nt-dtp-picker-option-radius: calc(#{$nt-dtp-touch-target} / 2);
+$nt-dtp-time-input-width: 96px;
+$nt-dtp-time-input-height: 72px;
+$nt-dtp-period-selector-width: 52px;
+$nt-dtp-trigger-top-comfortable: 28px;
+$nt-dtp-trigger-top-standard: 21px;
+$nt-dtp-trigger-top-dense: 14px;
+
+.nt-input-date-time {
+    position: relative;
+    width: 100%;
+    min-width: 0;
+
+    ::deep .nt-input {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    &.nt-input-date-time-custom-picker {
+        ::deep .nt-input-field {
+            padding-inline-end: 52px;
+        }
+
+        .tnt-dtp-trigger {
+            inset-block-start: $nt-dtp-trigger-top-standard;
+        }
+    }
+
+    &.nt-input-date-time-comfortable {
+        .tnt-dtp-trigger {
+            inset-block-start: $nt-dtp-trigger-top-comfortable;
+        }
+    }
+
+    &.nt-input-date-time-dense {
+        .tnt-dtp-trigger {
+            inset-block-start: $nt-dtp-trigger-top-dense;
+        }
+    }
+
+    .tnt-dtp-trigger {
+        position: absolute;
+        inset-inline-end: 12px;
+        z-index: 3;
+        display: inline-grid;
+        place-items: center;
+        width: $nt-dtp-touch-target;
+        height: $nt-dtp-touch-target;
+        border: 0;
+        border-radius: 50%;
+        appearance: none;
+        -webkit-appearance: none;
+        margin: 0;
+        padding: 0;
+        background-color: transparent;
+        color: var(--nt-input-icon-color, #{colors.$tnt-color-on-surface-variant});
+        cursor: pointer;
+        transform: translateY(-50%);
+        transition: background-color $nt-dtp-motion-duration $nt-dtp-motion-easing,
+            color $nt-dtp-motion-duration $nt-dtp-motion-easing,
+            opacity $nt-dtp-motion-duration $nt-dtp-motion-easing;
+
+        &:hover {
+            background-color: color-mix(in srgb, var(--nt-input-state-layer-color, #{colors.$tnt-color-on-surface}) 8%, transparent);
+            color: var(--nt-input-text-color, #{colors.$tnt-color-on-surface});
+        }
+
+        &:focus-visible {
+            outline: 2px solid var(--nt-input-focus-color, #{colors.$tnt-color-primary});
+            outline-offset: 2px;
+        }
+
+        &:disabled {
+            cursor: default;
+            opacity: 0.38;
+        }
+    }
+
+    .tnt-dtp-trigger-icon {
+        pointer-events: none;
+    }
+
+    ::deep input {
+        min-width: 0;
+        max-width: 100%;
+        width: 100%;
+
+        &[data-tnt-dtp-input='true'] {
+
+            &[type='date'],
+            &[type='month'],
+            &[type='datetime-local'],
+            &[type='text'],
+            &[type='time'] {
+                appearance: none;
+                -webkit-appearance: none;
+                -moz-appearance: textfield;
+            }
+
+            &::-webkit-calendar-picker-indicator,
+            &::-webkit-time-picker-indicator {
+                display: none;
+                pointer-events: none;
+            }
+
+            &::-webkit-calendar-picker-indicator {
+                display: none;
+                pointer-events: none;
+            }
+        }
+    }
+}
+
+.tnt-dtp-overlay {
+    --tnt-dtp-modal-breakpoint: #{measurements.$small-screen};
+    position: fixed;
+    z-index: 10000;
+    left: -9999px;
+    top: -9999px;
+    display: none;
+    width: min($nt-dtp-container-width, calc(100vw - 16px));
+    visibility: hidden;
+
+    &.tnt-dtp-open {
+        display: block;
+    }
+
+    &.tnt-dtp-modal {
+        inset: 0;
+        left: 0;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 100vw;
+        width: 100dvw;
+        max-width: none;
+        height: 100vh;
+        height: 100dvh;
+        padding: 12px;
+        box-sizing: border-box;
+        overflow: hidden;
+        background-color: color-mix(in srgb, colors.$tnt-color-scrim 32%, transparent);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        align-items: center;
+        justify-content: center;
+
+        &.tnt-dtp-open {
+            display: flex;
+        }
+
+        .tnt-dtp-surface {
+            width: min($nt-dtp-modal-width, 100%);
+            max-width: 100%;
+            max-height: 100%;
+            overflow: auto;
+            border-radius: corners.$nt-corner-radius-extra-large;
+        }
+
+        .tnt-dtp-header {
+            display: block;
+        }
+
+        .tnt-dtp-actions {
+            border-top: 1px solid color-mix(in srgb, colors.$tnt-color-outline 50%, transparent);
+        }
+    }
+
+    .tnt-dtp-surface {
+        border-radius: corners.$nt-corner-radius-large;
+        overflow: hidden;
+        background-color: colors.$tnt-color-surface-container-high;
+        color: colors.$tnt-color-on-surface;
+        @include elevation.tnt-elevation(3, false);
+    }
+
+    .tnt-dtp-header {
+        display: none;
+        padding: 12px 16px 10px 16px;
+        background-color: colors.$tnt-color-primary-container;
+        color: colors.$tnt-color-on-primary-container;
+        border-bottom: 1px solid color-mix(in srgb, colors.$tnt-color-on-primary-container 18%, transparent);
+
+        .tnt-dtp-headline {
+            @include typescale.tnt-title-large;
+        }
+
+        .tnt-dtp-subhead {
+            @include typescale.tnt-body-medium;
+            opacity: 0.9;
+            margin-top: 4px;
+        }
+    }
+
+    .tnt-dtp-content {
+        padding: 12px 16px 4px;
+        display: grid;
+        gap: 12px;
+    }
+
+    .tnt-dtp-date-panel {
+        display: grid;
+        gap: 8px;
+    }
+
+    .tnt-dtp-calendar-nav {
+        display: grid;
+        grid-template-columns: $nt-dtp-touch-target 1fr $nt-dtp-touch-target;
+        align-items: center;
+        gap: 8px;
+
+        .tnt-dtp-month-label {
+            text-align: center;
+            @include typescale.tnt-title-medium;
+        }
+    }
+
+    .tnt-dtp-nav-button {
+        border: none;
+        border-radius: 999px;
+        width: $nt-dtp-touch-target;
+        height: $nt-dtp-touch-target;
+        cursor: pointer;
+        background-color: transparent;
+        color: colors.$tnt-color-on-surface-variant;
+        @include typescale.tnt-title-medium;
+
+        &:hover,
+        &:focus-visible {
+            background-color: color-mix(in srgb, colors.$tnt-color-primary 14%, transparent);
+            color: colors.$tnt-color-on-surface;
+        }
+    }
+
+    .tnt-dtp-weekdays {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        text-align: center;
+        color: colors.$tnt-color-on-surface-variant;
+        @include typescale.tnt-label-small;
+
+        span {
+            display: block;
+            padding: 2px 0;
+        }
+    }
+
+    .tnt-dtp-day-grid {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: 0;
+    }
+
+    .tnt-dtp-day {
+        border: none;
+        width: 100%;
+        min-height: $nt-dtp-date-cell-size;
+        border-radius: 999px;
+        cursor: pointer;
+        background-color: transparent;
+        color: colors.$tnt-color-on-surface;
+        transition: background-color 160ms ease, color 160ms ease;
+        @include typescale.tnt-label-medium;
+
+        &:hover,
+        &:focus-visible {
+            background-color: color-mix(in srgb, colors.$tnt-color-primary 16%, transparent);
+        }
+
+        &.tnt-dtp-outside-month {
+            color: color-mix(in srgb, colors.$tnt-color-on-surface-variant 55%, transparent);
+        }
+
+        &.tnt-dtp-today {
+            outline: 1px solid colors.$tnt-color-primary;
+            outline-offset: -1px;
+        }
+
+        &.tnt-dtp-selected-day {
+            background-color: colors.$tnt-color-primary;
+            color: colors.$tnt-color-on-primary;
+        }
+
+        &:disabled {
+            cursor: not-allowed;
+            opacity: 0.35;
+        }
+    }
+
+    .tnt-dtp-month-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: $nt-dtp-picker-grid-gap;
+    }
+
+    .tnt-dtp-month-option,
+    .tnt-dtp-year-option {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-sizing: border-box;
+        border: none;
+        min-height: $nt-dtp-touch-target;
+        border-radius: $nt-dtp-picker-option-radius;
+        cursor: pointer;
+        background-color: transparent;
+        color: colors.$tnt-color-on-surface;
+        transition: background-color 160ms ease, color 160ms ease;
+        @include typescale.tnt-label-medium;
+
+        &:hover,
+        &:focus-visible {
+            background-color: color-mix(in srgb, colors.$tnt-color-primary 16%, transparent);
+        }
+
+        &:disabled {
+            cursor: not-allowed;
+            opacity: 0.35;
+        }
+
+        &.tnt-dtp-today,
+        &.tnt-dtp-current-year {
+            outline: 1px solid colors.$tnt-color-primary;
+            outline-offset: -1px;
+        }
+
+        &.tnt-dtp-selected-day,
+        &.tnt-dtp-selected-year {
+            background-color: colors.$tnt-color-primary;
+            color: colors.$tnt-color-on-primary;
+        }
+    }
+
+    .tnt-dtp-time-panel {
+        border-top: 1px solid color-mix(in srgb, colors.$tnt-color-outline 50%, transparent);
+        padding: 12px 8px 0;
+    }
+
+    .tnt-dtp-time-fields {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        align-items: start;
+    }
+
+    .tnt-dtp-time-field {
+        display: grid;
+        width: $nt-dtp-time-input-width;
+        gap: 4px;
+
+        span {
+            color: colors.$tnt-color-on-surface-variant;
+            @include typescale.tnt-label-small;
+        }
+
+        input {
+            width: 100%;
+            height: $nt-dtp-time-input-height;
+            box-sizing: border-box;
+            border: 1px solid colors.$tnt-color-outline-variant;
+            border-radius: 12px;
+            background-color: colors.$tnt-color-surface-container-low;
+            color: colors.$tnt-color-on-surface;
+            padding: 8px 10px;
+            outline: none;
+            text-align: center;
+            @include typescale.tnt-body-large;
+
+            &:focus-visible {
+                border-color: colors.$tnt-color-primary;
+                box-shadow: 0 0 0 1px colors.$tnt-color-primary;
+            }
+        }
+    }
+
+    .tnt-dtp-year-panel {
+        display: none;
+    }
+
+    .tnt-dtp-year-list {
+        display: grid;
+        grid-template-columns: $nt-dtp-picker-option-column;
+        justify-content: center;
+        gap: $nt-dtp-picker-grid-gap;
+        max-block-size: 280px;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        padding: 2px;
+        scrollbar-width: thin;
+    }
+
+    .tnt-dtp-year-option {
+        inline-size: 100%;
+        @include typescale.tnt-title-medium;
+    }
+
+    .tnt-dtp-menu-buttons {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 6px;
+        inline-size: 100%;
+        min-width: 0;
+    }
+
+    .tnt-dtp-menu-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        min-width: 0;
+        max-width: 100%;
+        min-height: 36px;
+        border: 1px solid color-mix(in srgb, colors.$tnt-color-outline-variant 72%, transparent);
+        border-radius: measurements.$tnt-pill-border-radius-small;
+        padding: 0 10px 0 16px;
+        background-color: colors.$tnt-color-surface-container-highest;
+        color: colors.$tnt-color-on-surface;
+        cursor: pointer;
+        transition: background-color $nt-dtp-motion-duration $nt-dtp-motion-easing,
+            border-color $nt-dtp-motion-duration $nt-dtp-motion-easing,
+            color $nt-dtp-motion-duration $nt-dtp-motion-easing;
+        @include typescale.tnt-title-medium;
+
+        span {
+            min-width: max-content;
+            white-space: nowrap;
+        }
+
+        &:first-child {
+            flex: 0 0 auto;
+        }
+
+        &:last-child {
+            flex: 0 0 auto;
+        }
+
+        &:hover,
+        &:focus-visible {
+            border-color: color-mix(in srgb, colors.$tnt-color-primary 54%, colors.$tnt-color-outline-variant);
+            background-color: color-mix(in srgb, colors.$tnt-color-primary 12%, colors.$tnt-color-surface-container-highest);
+            color: colors.$tnt-color-primary;
+        }
+    }
+
+    .tnt-dtp-menu-button-icon {
+        flex: 0 0 auto;
+        font-size: 20px;
+        line-height: 1;
+        color: colors.$tnt-color-on-surface-variant;
+        transition: color $nt-dtp-motion-duration $nt-dtp-motion-easing,
+            transform $nt-dtp-motion-duration $nt-dtp-motion-easing;
+    }
+
+    .tnt-dtp-menu-button:hover,
+    .tnt-dtp-menu-button:focus-visible {
+        .tnt-dtp-menu-button-icon {
+            color: colors.$tnt-color-primary;
+            transform: translateY(1px);
+        }
+    }
+
+    .tnt-dtp-time-separator {
+        height: $nt-dtp-time-input-height;
+        display: inline-flex;
+        align-items: center;
+        color: colors.$tnt-color-on-surface;
+        @include typescale.tnt-display-small;
+    }
+
+    .tnt-dtp-meridiem-field {
+        display: grid;
+        grid-template-rows: 1fr 1fr;
+        width: $nt-dtp-period-selector-width;
+        height: $nt-dtp-time-input-height;
+        border: 1px solid colors.$tnt-color-outline-variant;
+        border-radius: 8px;
+        overflow: hidden;
+        background-color: colors.$tnt-color-surface-container-low;
+    }
+
+    .tnt-dtp-meridiem-button {
+        border: none;
+        margin: 0;
+        background-color: transparent;
+        color: colors.$tnt-color-on-surface-variant;
+        cursor: pointer;
+        @include typescale.tnt-label-small;
+
+        &:not(:first-child) {
+            border-top: 1px solid colors.$tnt-color-outline-variant;
+        }
+
+        &.tnt-dtp-meridiem-selected {
+            background-color: colors.$tnt-color-primary;
+            color: colors.$tnt-color-on-primary;
+        }
+
+        &:hover,
+        &:focus-visible {
+            background-color: color-mix(in srgb, colors.$tnt-color-primary 14%, transparent);
+            color: colors.$tnt-color-on-surface;
+        }
+
+        &.tnt-dtp-meridiem-selected:hover,
+        &.tnt-dtp-meridiem-selected:focus-visible {
+            background-color: colors.$tnt-color-primary;
+            color: colors.$tnt-color-on-primary;
+        }
+    }
+
+    .tnt-dtp-actions {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding: 4px 12px 12px 12px;
+        border-top: 0;
+    }
+
+    .tnt-dtp-action-group {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: nowrap;
+        white-space: nowrap;
+    }
+
+    .tnt-dtp-action-button {
+        border: none;
+        border-radius: 20px;
+        padding: 6px 10px;
+        cursor: pointer;
+        transition: background-color 180ms ease, color 180ms ease, box-shadow 180ms ease;
+        @include typescale.tnt-label-large;
+
+        &:focus-visible {
+            outline: 2px solid color-mix(in srgb, colors.$tnt-color-primary 50%, transparent);
+            outline-offset: 1px;
+        }
+    }
+
+    .tnt-dtp-text-button {
+        background-color: transparent;
+        color: colors.$tnt-color-primary;
+
+        &:hover {
+            background-color: color-mix(in srgb, colors.$tnt-color-primary 14%, transparent);
+        }
+    }
+
+    .tnt-dtp-tonal-button {
+        background-color: colors.$tnt-color-secondary-container;
+        color: colors.$tnt-color-on-secondary-container;
+
+        &:hover {
+            background-color: color-mix(in srgb, colors.$tnt-color-secondary-container 70%, colors.$tnt-color-secondary);
+        }
+    }
+
+    .tnt-dtp-filled-button {
+        background-color: colors.$tnt-color-primary;
+        color: colors.$tnt-color-on-primary;
+
+        &:hover {
+            background-color: color-mix(in srgb, colors.$tnt-color-primary 82%, colors.$tnt-color-on-primary 18%);
+        }
+    }
+
+    &.tnt-dtp-mode-time {
+        .tnt-dtp-date-panel,
+        .tnt-dtp-month-panel {
+            display: none;
+        }
+    }
+
+    &.tnt-dtp-mode-date {
+        .tnt-dtp-month-panel,
+        .tnt-dtp-year-panel,
+        .tnt-dtp-time-panel {
+            display: none;
+        }
+    }
+
+    &.tnt-dtp-mode-datetime {
+        .tnt-dtp-month-panel,
+        .tnt-dtp-year-panel {
+            display: none;
+        }
+    }
+
+    &.tnt-dtp-view-month {
+        .tnt-dtp-date-panel {
+            display: none;
+        }
+
+        .tnt-dtp-time-panel {
+            display: none;
+        }
+
+        .tnt-dtp-month-panel {
+            display: grid;
+        }
+    }
+
+    &.tnt-dtp-view-year {
+        .tnt-dtp-date-panel,
+        .tnt-dtp-month-panel,
+        .tnt-dtp-time-panel {
+            display: none;
+        }
+
+        .tnt-dtp-year-panel {
+            display: block;
+        }
+    }
+
+    &.tnt-dtp-mode-month {
+        .tnt-dtp-date-panel,
+        .tnt-dtp-time-panel,
+        .tnt-dtp-year-panel {
+            display: none;
+        }
+    }
+
+    @media (max-width: 520px) {
+        width: calc(100vw - 16px);
+
+        .tnt-dtp-content {
+            padding: 12px;
+        }
+
+        .tnt-dtp-time-fields {
+            flex-wrap: wrap;
+        }
+    }
+}

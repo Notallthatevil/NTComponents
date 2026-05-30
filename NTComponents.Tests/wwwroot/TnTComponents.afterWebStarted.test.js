@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import { afterWebStarted } from '../../NTComponents/wwwroot/NTComponents.lib.module.js';
+import { afterStarted, afterWebStarted } from '../../NTComponents/wwwroot/NTComponents.lib.module.js';
 
 // Test setup
 if (!global.NTComponents) {
@@ -46,6 +46,87 @@ describe('afterWebStarted', () => {
       }
    });
 
+   test('afterStarted uses the same startup path for non-web renderers', () => {
+      const blazor = { addEventListener: jest.fn() };
+
+      expect(() => afterStarted(blazor)).not.toThrow();
+
+      expect(blazor.addEventListener).toHaveBeenCalledWith('enhancedload', expect.any(Function));
+      expect(customElements.get('tnt-page-script')).not.toBeUndefined();
+   });
+
+   test('connected page-script updates already loaded modules', async () => {
+      const blazor = { addEventListener: jest.fn() };
+      const counterName = `__pageScriptCounter_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      const scriptSource = `globalThis.${counterName} = globalThis.${counterName} ?? { dispose: 0, disposeTags: [], load: 0, loadTags: [], update: 0, updateTags: [] };
+export function onLoad(element) { globalThis.${counterName}.load++; globalThis.${counterName}.loadTags.push(element?.tagName ?? null); }
+export function onUpdate(element) { globalThis.${counterName}.update++; globalThis.${counterName}.updateTags.push(element?.tagName ?? null); }
+export function onDispose(element) { globalThis.${counterName}.dispose++; globalThis.${counterName}.disposeTags.push(element?.tagName ?? null); }`;
+      const scriptUrl = `data:text/javascript;charset=utf-8,${encodeURIComponent(scriptSource)}`;
+
+      afterStarted(blazor);
+
+      const first = document.createElement('tnt-page-script');
+      first.setAttribute('src', scriptUrl);
+      document.body.appendChild(first);
+
+      await waitFor(() => globalThis[counterName]?.update === 1);
+
+      const second = document.createElement('tnt-page-script');
+      second.setAttribute('src', scriptUrl);
+      document.body.appendChild(second);
+
+      await waitFor(() => globalThis[counterName]?.update === 2);
+
+      first.remove();
+      await waitFor(() => globalThis[counterName]?.dispose === 1);
+      second.remove();
+      await waitFor(() => globalThis[counterName]?.dispose === 2);
+
+      expect(globalThis[counterName]).toEqual({
+         dispose: 2,
+         disposeTags: ['TNT-PAGE-SCRIPT', 'TNT-PAGE-SCRIPT'],
+         load: 1,
+         loadTags: ['TNT-PAGE-SCRIPT'],
+         update: 2,
+         updateTags: ['TNT-PAGE-SCRIPT', 'TNT-PAGE-SCRIPT']
+      });
+
+      delete globalThis[counterName];
+   });
+
+   test('moving a connected page-script host does not dispose its module', async () => {
+      const blazor = { addEventListener: jest.fn() };
+      const counterName = `__pageScriptMoveCounter_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      const scriptSource = `globalThis.${counterName} = globalThis.${counterName} ?? { dispose: 0, load: 0, update: 0 };
+export function onLoad() { globalThis.${counterName}.load++; }
+export function onUpdate() { globalThis.${counterName}.update++; }
+export function onDispose() { globalThis.${counterName}.dispose++; }`;
+      const scriptUrl = `data:text/javascript;charset=utf-8,${encodeURIComponent(scriptSource)}`;
+
+      afterStarted(blazor);
+
+      const host = document.createElement('section');
+      const script = document.createElement('tnt-page-script');
+      script.setAttribute('src', scriptUrl);
+      host.appendChild(script);
+      document.body.appendChild(host);
+
+      await waitFor(() => globalThis[counterName]?.update === 1);
+
+      const dialog = document.createElement('dialog');
+      document.body.appendChild(dialog);
+      dialog.append(host);
+      await new Promise(resolve => setTimeout(resolve, 0));
+
+      expect(globalThis[counterName].dispose).toBe(0);
+
+      host.remove();
+      await waitFor(() => globalThis[counterName]?.dispose === 1);
+
+      delete globalThis[counterName];
+   });
+
    test('handles missing tnt-body gracefully', () => {
       const blazor = { addEventListener: jest.fn() };
       try {
@@ -79,3 +160,15 @@ describe('afterWebStarted', () => {
       expect(blazor.addEventListener).not.toThrow();
    });
 });
+
+async function waitFor(predicate) {
+   for (let attempt = 0; attempt < 20; attempt++) {
+      if (predicate()) {
+         return;
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 0));
+   }
+
+   throw new Error('Condition was not met before timeout.');
+}

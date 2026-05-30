@@ -1,0 +1,9 @@
+@use 'NTInputBase.razor';
+@use 'NTMenuField' as menu;
+
+@include menu.nt-menu-field(
+    $root-selector: '.nt-input.nt-autocomplete',
+    $control-selector: '.nt-autocomplete-control',
+    $indicator-selector: '.nt-autocomplete-indicator',
+    $condensed-class: 'nt-autocomplete-menu-items-condensed'
+);

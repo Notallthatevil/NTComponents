@@ -1,0 +1,24 @@
+@namespace NTComponents
+@using NTComponents.Core
+@inherits TnTComponentBase
+
+@if (Show) {
+    <div @attributes="AdditionalAttributes"
+         class="@ElementClass"
+         style="@ElementStyle"
+         lang="@ElementLang"
+         title="@ElementTitle"
+         id="@ElementId"
+         autofocus="@AutoFocus"
+         aria-hidden="@AriaHidden"
+         @ref="Element">
+        @if (ChildContent is not null) {
+            <span class="nt-skeleton-content">
+                @ChildContent
+            </span>
+        }
+    </div>
+}
+else {
+    @ChildContent
+}

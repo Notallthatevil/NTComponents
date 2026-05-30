@@ -137,6 +137,7 @@ public class MaterialIcon_Tests : BunitContext {
 
     [Theory]
     [InlineData(IconAppearance.Default, "material-symbols-outlined")]
+    [InlineData(IconAppearance.Filled, "material-symbols-outlined")]
     [InlineData(IconAppearance.Outlined, "material-symbols-outlined")]
     [InlineData(IconAppearance.Round, "material-symbols-rounded")]
     [InlineData(IconAppearance.Sharp, "material-symbols-sharp")]
@@ -177,6 +178,17 @@ public class MaterialIcon_Tests : BunitContext {
 
         // Assert
         cut.Find("span").GetAttribute("class")!.Should().Contain("material-symbols-outlined");
+    }
+
+    [Fact]
+    public void Render_WithAppearance_Filled_AddsMaterialSymbolsFillAxis() {
+        // Arrange & Act
+        var cut = Render<MaterialIcon>(p => p.Add(c => c.Appearance, IconAppearance.Filled).Add(c => c.Icon, "favorite"));
+
+        // Assert
+        var icon = cut.Find("span");
+        icon.GetAttribute("class")!.Should().Contain("material-symbols-outlined");
+        icon.GetAttribute("style").Should().Contain("font-variation-settings:'FILL' 1");
     }
 
     [Fact]
