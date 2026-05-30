@@ -116,6 +116,7 @@ public partial class NTSnackbar(INTSnackbarService service) {
     private static string GetSnackbarAttributesClass(INTSnackbar snackbar) {
         return CssClassBuilder.Create()
             .AddClass("nt-snackbar")
+            .AddElevation(NTElevation.Medium)
             .AddClass("nt-closing", snackbar.Closing)
             .Build() ?? string.Empty;
     }
