@@ -1,3 +1,5 @@
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.JSInterop;
 using NTComponents.Snackbar;
 
 namespace NTComponents.Tests.Snackbar;
@@ -5,12 +7,22 @@ namespace NTComponents.Tests.Snackbar;
 /// <summary>
 ///     Unit tests for <see cref="NTSnackbarService" />.
 /// </summary>
-public class NTSnackbarService_Tests {
+public class NTSnackbarService_Tests : BunitContext {
+    private object? _queuedOptions;
+
+    public NTSnackbarService_Tests() {
+        var module = JSInterop.SetupModule(NTSnackbar.JsModulePathValue);
+        module.Setup<string>("queueSnackbar", invocation => {
+            _queuedOptions = invocation.Arguments[0];
+            return true;
+        }).SetResult("queued");
+        module.Setup<bool>("closeSnackbarFromBlazor", _ => true).SetResult(true);
+    }
 
     [Fact]
     public void Constructor_InitializesCorrectly() {
         // Arrange & Act
-        var service = new NTSnackbarService();
+        var service = CreateService();
 
         // Assert
         service.Should().NotBeNull();
@@ -19,13 +31,12 @@ public class NTSnackbarService_Tests {
     }
 
     [Fact]
-    public async Task ShowAsync_UsesMaterial3Defaults_WhenNoActionIsProvided() {
+    public async Task ShowAsync_QueuesSnackbarThroughJavaScript_WithMaterial3Defaults() {
         // Arrange
-        var service = new NTSnackbarService();
-        INTSnackbar? createdSnackbar = null;
-
-        service.OnOpen += (snackbar) => {
-            createdSnackbar = snackbar;
+        var service = CreateService();
+        INTSnackbar? openedSnackbar = null;
+        service.OnOpen += snackbar => {
+            openedSnackbar = snackbar;
             return Task.CompletedTask;
         };
 
@@ -33,62 +44,64 @@ public class NTSnackbarService_Tests {
         await service.ShowAsync("Saved");
 
         // Assert
-        createdSnackbar.Should().NotBeNull();
-        createdSnackbar!.Message.Should().Be("Saved");
-        createdSnackbar.Timeout.Should().Be(6);
-        createdSnackbar.ShowClose.Should().BeFalse();
-        createdSnackbar.BackgroundColor.Should().Be(TnTColor.InverseSurface);
-        createdSnackbar.TextColor.Should().Be(TnTColor.InverseOnSurface);
-        createdSnackbar.ActionColor.Should().Be(TnTColor.InversePrimary);
-        createdSnackbar.HasAction.Should().BeFalse();
+        openedSnackbar.Should().NotBeNull();
+        openedSnackbar!.Message.Should().Be("Saved");
+        openedSnackbar.Timeout.Should().Be(6);
+        openedSnackbar.ShowClose.Should().BeFalse();
+        openedSnackbar.BackgroundColor.Should().Be(TnTColor.InverseSurface);
+        openedSnackbar.TextColor.Should().Be(TnTColor.InverseOnSurface);
+        openedSnackbar.ActionColor.Should().Be(TnTColor.InversePrimary);
+        openedSnackbar.HasAction.Should().BeFalse();
+
+        GetOption<string>("Message").Should().Be("Saved");
+        GetOption<double>("Timeout").Should().Be(6);
+        GetOption<bool>("ShowClose").Should().BeFalse();
+        GetOption<string>("BackgroundColor").Should().Be("var(--tnt-color-inverse-surface)");
+        GetOption<string>("TextColor").Should().Be("var(--tnt-color-inverse-on-surface)");
+        GetOption<string>("ActionColor").Should().Be("var(--tnt-color-inverse-primary)");
+        JSInterop.VerifyInvoke("import", 1);
+        JSInterop.VerifyInvoke("queueSnackbar", 1);
     }
 
     [Fact]
-    public async Task ShowAsync_WithAction_UsesPersistentActionDefaults() {
+    public async Task ShowAsync_WithAction_PassesDotNetCallbackOptions() {
         // Arrange
-        var service = new NTSnackbarService();
-        INTSnackbar? createdSnackbar = null;
-
-        service.OnOpen += (snackbar) => {
-            createdSnackbar = snackbar;
-            return Task.CompletedTask;
-        };
+        var service = CreateService();
 
         // Act
         await service.ShowAsync("Email archived", "Undo", () => Task.CompletedTask);
 
         // Assert
-        createdSnackbar.Should().NotBeNull();
-        createdSnackbar!.HasAction.Should().BeTrue();
-        createdSnackbar.ActionLabel.Should().Be("Undo");
-        createdSnackbar.Timeout.Should().Be(0);
-        createdSnackbar.ShowClose.Should().BeTrue();
+        service.ActiveSnackbar.Should().NotBeNull();
+        service.ActiveSnackbar!.HasAction.Should().BeTrue();
+        GetOption<string>("ActionLabel").Should().Be("Undo");
+        GetOption<bool>("ShowClose").Should().BeTrue();
+        GetOption<double>("Timeout").Should().Be(0);
+        GetOption<object>("DotNetReference").Should().NotBeNull();
+        GetOption<string>("DotNetActionMethod").Should().Be(nameof(NTSnackbarService.InvokeActionFromJavaScript));
+        GetOption<string>("DotNetCloseMethod").Should().Be(nameof(NTSnackbarService.NotifyClosedFromJavaScript));
     }
 
     [Fact]
     public async Task ShowAsync_HonorsExplicitOverrides_WhenActionIsProvided() {
         // Arrange
-        var service = new NTSnackbarService();
-        INTSnackbar? createdSnackbar = null;
-
-        service.OnOpen += (snackbar) => {
-            createdSnackbar = snackbar;
-            return Task.CompletedTask;
-        };
+        var service = CreateService();
 
         // Act
-        await service.ShowAsync("Saved", "Undo", () => Task.CompletedTask, timeout: 9, showClose: false);
+        await service.ShowAsync("Saved", "Undo", () => Task.CompletedTask, timeout: 9, showClose: false, backgroundColor: TnTColor.Primary, textColor: TnTColor.OnPrimary, actionColor: TnTColor.Secondary);
 
         // Assert
-        createdSnackbar.Should().NotBeNull();
-        createdSnackbar!.Timeout.Should().Be(9);
-        createdSnackbar.ShowClose.Should().BeFalse();
+        GetOption<double>("Timeout").Should().Be(9);
+        GetOption<bool>("ShowClose").Should().BeFalse();
+        GetOption<string>("BackgroundColor").Should().Be("var(--tnt-color-primary)");
+        GetOption<string>("TextColor").Should().Be("var(--tnt-color-on-primary)");
+        GetOption<string>("ActionColor").Should().Be("var(--tnt-color-secondary)");
     }
 
     [Fact]
     public async Task ShowAsync_Throws_WhenActionDefinitionIsIncomplete() {
         // Arrange
-        var service = new NTSnackbarService();
+        var service = CreateService();
 
         // Act
         var labelOnly = () => service.ShowAsync("Saved", actionLabel: "Undo");
@@ -97,64 +110,37 @@ public class NTSnackbarService_Tests {
         // Assert
         await labelOnly.Should().ThrowAsync<ArgumentException>();
         await callbackOnly.Should().ThrowAsync<ArgumentException>();
+        JSInterop.Invocations.Should().NotContain(invocation => invocation.Identifier == "queueSnackbar");
     }
 
     [Fact]
-    public async Task ShowAsync_QueuesSnackbars_AndOpensNextAfterClose() {
+    public async Task CloseAsync_ClosesSnackbarThroughJavaScript_AndRaisesClose() {
         // Arrange
-        var service = new NTSnackbarService();
-        var openedMessages = new List<string>();
-
-        service.OnOpen += (snackbar) => {
-            openedMessages.Add(snackbar.Message);
+        var service = CreateService();
+        var closeCount = 0;
+        service.OnClose += _ => {
+            closeCount++;
             return Task.CompletedTask;
         };
 
-        // Act
-        await service.ShowAsync("First");
-        await service.ShowAsync("Second");
-        await service.CloseAsync(service.ActiveSnackbar!);
-
-        // Assert
-        openedMessages.Should().Equal("First", "Second");
-        service.ActiveSnackbar.Should().NotBeNull();
-        service.ActiveSnackbar!.Message.Should().Be("Second");
-    }
-
-    [Fact]
-    public async Task CloseAsync_FiresCloseBeforeOpeningNextSnackbar() {
-        // Arrange
-        var service = new NTSnackbarService();
-        var eventLog = new List<string>();
-
-        service.OnClose += (snackbar) => {
-            eventLog.Add($"close:{snackbar.Message}");
-            return Task.CompletedTask;
-        };
-
-        service.OnOpen += (snackbar) => {
-            eventLog.Add($"open:{snackbar.Message}");
-            return Task.CompletedTask;
-        };
-
-        await service.ShowAsync("First");
-        await service.ShowAsync("Second");
+        await service.ShowAsync("Saved");
 
         // Act
         await service.CloseAsync(service.ActiveSnackbar!);
 
         // Assert
-        eventLog.Should().Equal("open:First", "close:First", "open:Second");
+        closeCount.Should().Be(1);
+        service.ActiveSnackbar.Should().BeNull();
+        JSInterop.VerifyInvoke("closeSnackbarFromBlazor", 1);
     }
 
     [Fact]
     public async Task InvokeActionAsync_ExecutesCallback_AndClosesSnackbar() {
         // Arrange
-        var service = new NTSnackbarService();
+        var service = CreateService();
         var callbackInvoked = false;
         var closeCount = 0;
-
-        service.OnClose += (_) => {
+        service.OnClose += _ => {
             closeCount++;
             return Task.CompletedTask;
         };
@@ -171,83 +157,79 @@ public class NTSnackbarService_Tests {
         callbackInvoked.Should().BeTrue();
         closeCount.Should().Be(1);
         service.ActiveSnackbar.Should().BeNull();
+        JSInterop.VerifyInvoke("closeSnackbarFromBlazor", 1);
     }
 
     [Fact]
-    public async Task InvokeActionAsync_WithoutAction_DoesNothing() {
+    public async Task InvokeActionFromJavaScript_ExecutesCallback_WithoutClosingImmediately() {
         // Arrange
-        var service = new NTSnackbarService();
+        var service = CreateService();
+        var callbackInvoked = false;
+        await service.ShowAsync("Email archived", "Undo", () => {
+            callbackInvoked = true;
+            return Task.CompletedTask;
+        });
 
-        await service.ShowAsync("Saved");
-        var activeSnackbar = service.ActiveSnackbar;
+        var snackbarId = ((NTSnackbarService.NTSnackbarImplementation)service.ActiveSnackbar!).Id;
 
         // Act
-        await service.InvokeActionAsync(activeSnackbar!);
+        await service.InvokeActionFromJavaScript(snackbarId);
 
         // Assert
-        service.ActiveSnackbar.Should().BeSameAs(activeSnackbar);
+        callbackInvoked.Should().BeTrue();
+        service.ActiveSnackbar.Should().NotBeNull();
+        JSInterop.Invocations.Count(invocation => invocation.Identifier == "closeSnackbarFromBlazor").Should().Be(0);
     }
 
     [Fact]
-    public async Task InvokeActionAsync_WhenActionThrows_DoesNotCloseSnackbar() {
+    public async Task NotifyClosedFromJavaScript_RemovesSnackbar_AndRaisesClose() {
         // Arrange
-        var service = new NTSnackbarService();
+        var service = CreateService();
         var closeCount = 0;
-
-        service.OnClose += (_) => {
+        service.OnClose += _ => {
             closeCount++;
             return Task.CompletedTask;
         };
 
-        await service.ShowAsync("Email archived", "Undo", () => throw new InvalidOperationException("boom"));
+        await service.ShowAsync("Saved");
+        var snackbarId = ((NTSnackbarService.NTSnackbarImplementation)service.ActiveSnackbar!).Id;
 
         // Act
-        var action = () => service.InvokeActionAsync(service.ActiveSnackbar!);
+        await service.NotifyClosedFromJavaScript(snackbarId);
+
+        // Assert
+        closeCount.Should().Be(1);
+        service.ActiveSnackbar.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task InvokeActionFromJavaScript_WhenActionThrows_DoesNotCloseSnackbar() {
+        // Arrange
+        var service = CreateService();
+        await service.ShowAsync("Email archived", "Undo", () => throw new InvalidOperationException("boom"));
+        var snackbarId = ((NTSnackbarService.NTSnackbarImplementation)service.ActiveSnackbar!).Id;
+
+        // Act
+        var action = () => service.InvokeActionFromJavaScript(snackbarId);
 
         // Assert
         await action.Should().ThrowAsync<InvalidOperationException>();
-        closeCount.Should().Be(0);
         service.ActiveSnackbar.Should().NotBeNull();
-        service.ActiveSnackbar!.Message.Should().Be("Email archived");
     }
 
     [Fact]
     public async Task CloseAsync_UntrackedSnackbar_DoesNothing() {
         // Arrange
-        var service = new NTSnackbarService();
-
-        await service.ShowAsync("First");
-        await service.ShowAsync("Second");
-
-        var currentSnackbar = service.ActiveSnackbar;
+        var service = CreateService();
+        await service.ShowAsync("Tracked");
 
         // Act
-        await service.CloseAsync(new NTSnackbarService.NTSnackbarImplementation { Message = "Not tracked" });
+        await service.CloseAsync(new NTSnackbarService.NTSnackbarImplementation { Id = "missing", Message = "Not tracked" });
 
         // Assert
-        service.ActiveSnackbar.Should().BeSameAs(currentSnackbar);
-        service.ActiveSnackbar!.Message.Should().Be("First");
-    }
-
-    [Fact]
-    public async Task CloseAsync_WhenNoQueuedSnackbar_ClearsActiveSnackbar() {
-        // Arrange
-        var service = new NTSnackbarService();
-        var closeCount = 0;
-
-        service.OnClose += (_) => {
-            closeCount++;
-            return Task.CompletedTask;
-        };
-
-        await service.ShowAsync("Only");
-
-        // Act
-        await service.CloseAsync(service.ActiveSnackbar!);
-
-        // Assert
-        closeCount.Should().Be(1);
-        service.ActiveSnackbar.Should().BeNull();
+        service.ActiveSnackbar.Should().NotBeNull();
+        service.ActiveSnackbar!.Message.Should().Be("Tracked");
+        JSInterop.Invocations.Count(invocation => invocation.Identifier == "closeSnackbarFromBlazor").Should().Be(0);
     }
 
     [Fact]
@@ -264,5 +246,14 @@ public class NTSnackbarService_Tests {
         snackbar.ActionColor.Should().Be(TnTColor.InversePrimary);
         snackbar.HasAction.Should().BeFalse();
         snackbar.Closing.Should().BeFalse();
+    }
+
+    private NTSnackbarService CreateService() {
+        return new NTSnackbarService(Services.GetRequiredService<IJSRuntime>());
+    }
+
+    private T? GetOption<T>(string propertyName) {
+        _queuedOptions.Should().NotBeNull();
+        return (T?)_queuedOptions!.GetType().GetProperty(propertyName)!.GetValue(_queuedOptions);
     }
 }
