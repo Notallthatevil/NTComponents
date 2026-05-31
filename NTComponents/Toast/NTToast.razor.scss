@@ -1,0 +1,239 @@
+@use '../Styles/_Variables/_interactable.scss' as interactable;
+@use '../Styles/_Variables/_corner-radius.scss' as corner-radius;
+@use '../Styles/_Variables/_measurements.scss' as measurements;
+@use '../Styles/_Variables/_motion.scss' as motion;
+@use '../Styles/_Variables/_typescale.scss' as typescale;
+
+$background-color: var(--nt-toast-background-color, var(--nt-toast-variant-background-color, var(--tnt-color-surface-container-high)));
+$text-color: var(--nt-toast-text-color, var(--nt-toast-variant-text-color, var(--tnt-color-on-surface)));
+$icon-color: var(--nt-toast-icon-color, var(--nt-toast-variant-icon-color, var(--tnt-color-primary)));
+$container-edge-offset: 16px;
+$container-edge-offset-medium: 24px;
+$container-inline-size: 360px;
+$container-shape: corner-radius.$nt-corner-radius-medium;
+$stack-gap: 8px;
+$toast-min-block-size: 64px;
+
+.nt-toast-container {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: $stack-gap;
+    inline-size: min($container-inline-size, calc(100vw - (#{$container-edge-offset} * 2)));
+    pointer-events: none;
+    position: fixed;
+    z-index: 1001;
+
+    &.nt-toast-top-left-corner {
+        align-items: flex-start;
+        left: $container-edge-offset;
+        top: $container-edge-offset;
+    }
+
+    &.nt-toast-top-right-corner {
+        align-items: flex-end;
+        right: $container-edge-offset;
+        top: $container-edge-offset;
+    }
+
+    &.nt-toast-bottom-left-corner {
+        align-items: flex-start;
+        bottom: $container-edge-offset;
+        flex-direction: column-reverse;
+        left: $container-edge-offset;
+    }
+
+    &.nt-toast-bottom-right-corner {
+        align-items: flex-end;
+        bottom: $container-edge-offset;
+        flex-direction: column-reverse;
+        right: $container-edge-offset;
+    }
+
+    ::deep {
+        .nt-toast {
+            animation: ntToastEnter motion.$nt-motion-duration-short_4 motion.$nt-motion-easing-standard;
+            background-color: $background-color;
+            border-radius: $container-shape;
+            box-sizing: border-box;
+            color: $text-color;
+            display: grid;
+            gap: 2px 12px;
+            grid-template-columns: auto minmax(0, 1fr) auto;
+            inline-size: 100%;
+            min-block-size: $toast-min-block-size;
+            padding: 12px 8px 12px 16px;
+            pointer-events: auto;
+
+            &.nt-closing {
+                animation: ntToastExit motion.$nt-motion-duration-short_3 motion.$nt-motion-easing-standard-accelerate forwards;
+            }
+
+            &.nt-toast-success {
+                --nt-toast-variant-background-color: var(--tnt-color-success-container);
+                --nt-toast-variant-icon-color: var(--tnt-color-success);
+                --nt-toast-variant-text-color: var(--tnt-color-on-success-container);
+            }
+
+            &.nt-toast-info {
+                --nt-toast-variant-background-color: var(--tnt-color-info-container);
+                --nt-toast-variant-icon-color: var(--tnt-color-info);
+                --nt-toast-variant-text-color: var(--tnt-color-on-info-container);
+            }
+
+            &.nt-toast-warning {
+                --nt-toast-variant-background-color: var(--tnt-color-warning-container);
+                --nt-toast-variant-icon-color: var(--tnt-color-warning);
+                --nt-toast-variant-text-color: var(--tnt-color-on-warning-container);
+            }
+
+            &.nt-toast-error {
+                --nt-toast-variant-background-color: var(--tnt-color-error-container);
+                --nt-toast-variant-icon-color: var(--tnt-color-error);
+                --nt-toast-variant-text-color: var(--tnt-color-on-error-container);
+            }
+
+            &.nt-toast-assert {
+                --nt-toast-variant-background-color: var(--tnt-color-assert-container);
+                --nt-toast-variant-icon-color: var(--tnt-color-assert);
+                --nt-toast-variant-text-color: var(--tnt-color-on-assert-container);
+            }
+
+            .nt-toast-icon {
+                color: $icon-color;
+                grid-column: 1;
+                grid-row: 1 / span 2;
+                line-height: 24px;
+                padding-block-start: 2px;
+            }
+
+            .nt-toast-title {
+                @include typescale.tnt-title-small;
+                grid-column: 2;
+                grid-row: 1;
+                min-width: 0;
+                overflow-wrap: anywhere;
+            }
+
+            .nt-toast-message {
+                @include typescale.tnt-body-medium;
+                color: color-mix(in srgb, $text-color 82%, transparent);
+                grid-column: 2;
+                grid-row: 2;
+                min-width: 0;
+                overflow-wrap: anywhere;
+            }
+
+            .nt-toast-close {
+                @include interactable.tnt-interactable($text-color, null, false);
+                align-items: center;
+                background: transparent;
+                border: none;
+                border-radius: corner-radius.$nt-corner-radius-full;
+                box-sizing: border-box;
+                color: $text-color;
+                display: inline-flex;
+                grid-column: 3;
+                grid-row: 1 / span 2;
+                height: 40px;
+                justify-content: center;
+                margin: -4px 0 0 0;
+                padding: 0;
+                width: 40px;
+
+                .tnt-icon {
+                    font-size: 20px;
+                }
+            }
+
+            .nt-toast-progress {
+                background-color: $icon-color;
+                block-size: 3px;
+                border-radius: 999px;
+                grid-column: 1 / -1;
+                grid-row: 3;
+                inline-size: 100%;
+                margin-block-start: 6px;
+                transform-origin: left center;
+            }
+
+            &.nt-toast-has-timeout {
+                .nt-toast-progress {
+                    animation: ntToastProgress var(--nt-toast-timeout) linear forwards;
+                }
+            }
+        }
+    }
+}
+
+@media #{measurements.$medium-and-up} {
+    .nt-toast-container {
+        inline-size: min($container-inline-size, calc(100vw - (#{$container-edge-offset-medium} * 2)));
+
+        &.nt-toast-top-left-corner {
+            left: $container-edge-offset-medium;
+            top: $container-edge-offset-medium;
+        }
+
+        &.nt-toast-top-right-corner {
+            right: $container-edge-offset-medium;
+            top: $container-edge-offset-medium;
+        }
+
+        &.nt-toast-bottom-left-corner {
+            bottom: $container-edge-offset-medium;
+            left: $container-edge-offset-medium;
+        }
+
+        &.nt-toast-bottom-right-corner {
+            bottom: $container-edge-offset-medium;
+            right: $container-edge-offset-medium;
+        }
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nt-toast-container {
+        ::deep {
+            .nt-toast,
+            .nt-toast.nt-closing,
+            .nt-toast.nt-toast-has-timeout .nt-toast-progress {
+                animation: none;
+            }
+        }
+    }
+}
+
+@keyframes ntToastEnter {
+    0% {
+        opacity: 0;
+        transform: translateY(8px) scale(0.98);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes ntToastExit {
+    0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateY(8px) scale(0.98);
+    }
+}
+
+@keyframes ntToastProgress {
+    0% {
+        transform: scaleX(1);
+    }
+
+    100% {
+        transform: scaleX(0);
+    }
+}

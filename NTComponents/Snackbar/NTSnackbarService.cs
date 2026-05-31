@@ -84,7 +84,7 @@ internal sealed class NTSnackbarService(IJSRuntime _jsRuntime) : INTSnackbarServ
             Message = message,
             ActionLabel = actionLabel,
             ActionCallback = actionCallback,
-            Timeout = timeout ?? (hasAction ? 0 : 6),
+            Timeout = timeout ?? (hasAction ? 0 : 4),
             ShowClose = showClose ?? hasAction,
             BackgroundColor = backgroundColor,
             TextColor = textColor,
@@ -182,7 +182,7 @@ internal sealed class NTSnackbarService(IJSRuntime _jsRuntime) : INTSnackbarServ
         public string Id { get; set; } = string.Empty;
         public string Message { get; set; } = default!;
         public bool ShowClose { get; set; }
-        public double Timeout { get; set; } = 6;
+        public double Timeout { get; set; } = 4;
         public TnTColor TextColor { get; set; } = TnTColor.InverseOnSurface;
     }
 

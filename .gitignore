@@ -389,3 +389,4 @@ coverlet.runsettings
 /NTComponents/Dialog/NTDialog.razor.js
 /NTComponents/FormV2/NTInputRangeSlider.razor.js
 /NTComponents/Snackbar/NTSnackbar.razor.js
+/NTComponents/Toast/NTToast.razor.js

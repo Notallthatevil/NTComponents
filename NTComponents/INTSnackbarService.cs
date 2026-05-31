@@ -44,14 +44,14 @@ public interface INTSnackbarService
     Task InvokeActionAsync(INTSnackbar snackbar);
 
     /// <summary>
-    ///     Shows a snackbar. By default, snackbars without actions auto-dismiss after 6 seconds, while
+    ///     Shows a snackbar. By default, snackbars without actions auto-dismiss after 4 seconds, while
     ///     action snackbars remain visible until acted on or dismissed.
     /// </summary>
     /// <param name="message">The snackbar supporting text.</param>
     /// <param name="actionLabel">Optional action label. Must be provided with <paramref name="actionCallback" />.</param>
     /// <param name="actionCallback">Optional action callback. Must be provided with <paramref name="actionLabel" />.</param>
     /// <param name="timeout">
-    ///     Optional timeout in seconds. When null, defaults to 6 seconds for non-action snackbars and 0 for action snackbars.
+    ///     Optional timeout in seconds. When null, defaults to 4 seconds for non-action snackbars and 0 for action snackbars.
     /// </param>
     /// <param name="showClose">
     ///     Optional close-affordance flag. When null, defaults to false for non-action snackbars and true for action snackbars.

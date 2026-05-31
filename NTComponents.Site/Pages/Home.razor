@@ -1,5 +1,6 @@
 @page "/"
 @inject DocumentationCatalog DocumentationCatalog
+@inject INTToastService ToastService
 
 <PageTitle>NTComponents.Site</PageTitle>
 
@@ -15,6 +16,8 @@
             <a class="docs-primary-link @NTTypography.LabelLarge.ToCssClass()" href="/docs/components">Open components</a>
             <a class="docs-primary-link @NTTypography.LabelLarge.ToCssClass()" href="/docs/reference">Open reference index</a>
             <button type="button" class="docs-primary-link @NTTypography.LabelLarge.ToCssClass()" onclick="window.NTSnackbar.queueSnackbar('Static SSR snackbar')">Show SSR snackbar</button>
+            <button type="button" class="docs-primary-link @NTTypography.LabelLarge.ToCssClass()" onclick="window.NTToast?.queueToast({ title: 'Static toast', message: 'Triggered from native JavaScript.', variant: 'info' })">Show JS toast</button>
+            <button type="button" class="docs-primary-link @NTTypography.LabelLarge.ToCssClass()" @onclick="ShowServiceToasts">Show service toasts</button>
         </div>
     </header>
 
@@ -93,3 +96,11 @@
         </div>
     </section>
 </section>
+
+@code {
+    private async Task ShowServiceToasts() {
+        await ToastService.ShowSuccessAsync("Saved", "The service called the NTToast JavaScript bridge.");
+        await ToastService.ShowWarningAsync("Review needed", "This warning is stacked with the success toast.");
+        await ToastService.ShowAssertAsync("Assertion", "Assert messages use the assert color roles.");
+    }
+}

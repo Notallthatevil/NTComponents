@@ -1,0 +1,655 @@
+type Maybe<T> = T | null | undefined;
+export type ToastInput = string | ToastOptions;
+export type ToastVariant = 'default' | 'success' | 'info' | 'warning' | 'error' | 'assert';
+
+interface NTToastHostElement extends HTMLElement {
+    __ntToastState?: NTToastHostState;
+}
+
+interface NTToastPageScriptElement extends HTMLElement {
+    __ntToastHost?: NTToastHostElement;
+}
+
+interface NTToastHostState {
+    activeToasts: ToastRecord[];
+    queue: ToastRecord[];
+}
+
+interface ToastRecord {
+    backgroundColor: string | null;
+    closeAnimationTimeout: number | null;
+    closeTimeout: number | null;
+    dotNetCloseMethod: string | null;
+    dotNetReference: DotNetToastReference | null;
+    element: HTMLElement | null;
+    icon: string | null;
+    iconColor: string | null;
+    id: string;
+    isClosing: boolean;
+    message: string | null;
+    showClose: boolean;
+    textColor: string | null;
+    timeout: number;
+    title: string;
+    variant: ToastVariant;
+}
+
+export interface ToastOptions {
+    backgroundColor?: string | null;
+    dotNetCloseMethod?: string | null;
+    dotNetReference?: DotNetToastReference | null;
+    host?: HTMLElement | string | null;
+    icon?: string | null;
+    iconColor?: string | null;
+    id?: string | null;
+    message?: string | null;
+    showClose?: boolean | null;
+    textColor?: string | null;
+    timeout?: number | null;
+    title: string;
+    variant?: ToastVariant | string | null;
+}
+
+export interface NTToastBridge {
+    addToast(messageOrOptions: ToastInput, options?: Partial<ToastOptions>): string;
+    clearToasts(host?: HTMLElement | string | null): void;
+    clearToastsFromBlazor(ids: string[]): number;
+    closeToast(id?: string, host?: HTMLElement | string | null): boolean;
+    closeToastFromBlazor(id: string, host?: HTMLElement | string | null): boolean;
+    queueToast(messageOrOptions: ToastInput, options?: Partial<ToastOptions>): string;
+}
+
+export interface DotNetToastReference {
+    invokeMethodAsync<T>(methodName: string, ...args: unknown[]): Promise<T>;
+}
+
+declare global {
+    interface Window {
+        NTToast?: NTToastBridge;
+    }
+}
+
+const toastHostSelector = '[data-nt-toast-host="true"]';
+const closeDelayMilliseconds = 150;
+const defaultTimeoutSeconds = 4;
+const maxPendingToasts = 50;
+const maxQueuedToasts = 50;
+const maxVisibleToasts = 5;
+const pendingToasts: ToastRecord[] = [];
+const hostStates = new WeakMap<NTToastHostElement, NTToastHostState>();
+const registeredHosts = new Set<NTToastHostElement>();
+let defaultHost: NTToastHostElement | null = null;
+let nextToastId = 0;
+
+const variantDefaults: Record<ToastVariant, Pick<ToastRecord, 'backgroundColor' | 'icon' | 'iconColor' | 'textColor'>> = {
+    default: {
+        backgroundColor: null,
+        icon: 'info',
+        iconColor: null,
+        textColor: null
+    },
+    success: {
+        backgroundColor: null,
+        icon: 'check_circle',
+        iconColor: null,
+        textColor: null
+    },
+    info: {
+        backgroundColor: null,
+        icon: 'info',
+        iconColor: null,
+        textColor: null
+    },
+    warning: {
+        backgroundColor: null,
+        icon: 'warning',
+        iconColor: null,
+        textColor: null
+    },
+    error: {
+        backgroundColor: null,
+        icon: 'error',
+        iconColor: null,
+        textColor: null
+    },
+    assert: {
+        backgroundColor: null,
+        icon: 'rule',
+        iconColor: null,
+        textColor: null
+    }
+};
+
+function getHosts(root: Maybe<Element | Document>): NTToastHostElement[] {
+    const scope = root ?? document;
+    if (scope instanceof HTMLElement && scope.localName === 'tnt-page-script') {
+        const pageScript = scope as NTToastPageScriptElement;
+        if (pageScript.__ntToastHost) {
+            return [pageScript.__ntToastHost];
+        }
+
+        const sibling = scope.previousElementSibling;
+        if (sibling instanceof HTMLElement && sibling.matches(toastHostSelector)) {
+            pageScript.__ntToastHost = sibling as NTToastHostElement;
+            return [pageScript.__ntToastHost];
+        }
+
+        return [];
+    }
+
+    const hosts = scope instanceof HTMLElement && scope.matches(toastHostSelector) ? [scope as NTToastHostElement] : [];
+    hosts.push(...Array.from(scope.querySelectorAll<NTToastHostElement>(toastHostSelector)));
+    return hosts;
+}
+
+function getHost(host?: HTMLElement | string | null): NTToastHostElement | null {
+    if (host instanceof HTMLElement) {
+        return host.matches(toastHostSelector) ? host as NTToastHostElement : null;
+    }
+
+    if (typeof host === 'string' && host.length > 0) {
+        const element = document.getElementById(host);
+        return element instanceof HTMLElement && element.matches(toastHostSelector) ? element as NTToastHostElement : null;
+    }
+
+    if (defaultHost?.isConnected) {
+        return defaultHost;
+    }
+
+    defaultHost = document.querySelector<NTToastHostElement>(toastHostSelector);
+    return defaultHost;
+}
+
+function getOrCreateState(host: NTToastHostElement): NTToastHostState {
+    const existingState = hostStates.get(host);
+    if (existingState) {
+        return existingState;
+    }
+
+    const state: NTToastHostState = {
+        activeToasts: [],
+        queue: []
+    };
+
+    host.__ntToastState = state;
+    hostStates.set(host, state);
+    return state;
+}
+
+function normalizeVariant(variant: string | null | undefined): ToastVariant {
+    const value = variant?.toLowerCase();
+    return value === 'success' || value === 'info' || value === 'warning' || value === 'error' || value === 'assert'
+        ? value
+        : 'default';
+}
+
+function normalizeToast(messageOrOptions: ToastInput, options?: Partial<ToastOptions>): ToastRecord {
+    const source = typeof messageOrOptions === 'string'
+        ? { ...options, title: messageOrOptions }
+        : { ...messageOrOptions, ...options };
+    const variant = normalizeVariant(source.variant);
+    const defaults = variantDefaults[variant];
+
+    return {
+        backgroundColor: source.backgroundColor ?? defaults.backgroundColor,
+        closeAnimationTimeout: null,
+        closeTimeout: null,
+        dotNetCloseMethod: source.dotNetCloseMethod ?? null,
+        dotNetReference: source.dotNetReference ?? null,
+        element: null,
+        icon: source.icon === '' ? null : source.icon ?? defaults.icon,
+        iconColor: source.iconColor ?? defaults.iconColor,
+        id: source.id?.trim() || `nt-toast-js-${++nextToastId}`,
+        isClosing: false,
+        message: source.message ?? null,
+        showClose: source.showClose ?? true,
+        textColor: source.textColor ?? defaults.textColor,
+        timeout: typeof source.timeout === 'number' ? source.timeout : defaultTimeoutSeconds,
+        title: source.title,
+        variant
+    };
+}
+
+function setStyleVariables(element: HTMLElement, toast: ToastRecord): void {
+    if (toast.backgroundColor) {
+        element.style.setProperty('--nt-toast-background-color', toast.backgroundColor);
+    }
+    if (toast.textColor) {
+        element.style.setProperty('--nt-toast-text-color', toast.textColor);
+    }
+    if (toast.iconColor) {
+        element.style.setProperty('--nt-toast-icon-color', toast.iconColor);
+    }
+    if (toast.timeout > 0) {
+        element.style.setProperty('--nt-toast-timeout', `${toast.timeout}s`);
+    }
+}
+
+function createIcon(iconName: string, className: string): HTMLElement {
+    const icon = document.createElement('span');
+    icon.className = `tnt-icon material-symbols-outlined mi-medium ${className}`;
+    icon.setAttribute('aria-hidden', 'true');
+    icon.textContent = iconName;
+    return icon;
+}
+
+function notifyToastClosed(toast: ToastRecord): void {
+    if (!toast.dotNetReference || !toast.dotNetCloseMethod) {
+        return;
+    }
+
+    void toast.dotNetReference.invokeMethodAsync<void>(toast.dotNetCloseMethod, toast.id)
+        .catch(error => reportToastError('Failed to notify toast close.', error));
+}
+
+function notifyToastsClosed(toasts: Iterable<ToastRecord>): void {
+    for (const toast of toasts) {
+        notifyToastClosed(toast);
+    }
+}
+
+function releaseToastReference(toast: ToastRecord): void {
+    toast.dotNetCloseMethod = null;
+    toast.dotNetReference = null;
+}
+
+function reportToastError(message: string, error: unknown): void {
+    console.error(message, error);
+}
+
+function removePendingToast(id: string, notifyDotNet: boolean): boolean {
+    const existingIndex = pendingToasts.findIndex(toast => toast.id === id);
+    if (existingIndex < 0) {
+        return false;
+    }
+
+    const removedToasts = pendingToasts.splice(existingIndex, 1);
+    const removedToast = removedToasts[0];
+    if (removedToast) {
+        if (notifyDotNet) {
+            notifyToastClosed(removedToast);
+        } else {
+            releaseToastReference(removedToast);
+        }
+    }
+
+    return true;
+}
+
+function trimToastQueue(queue: ToastRecord[], maxCount: number): void {
+    while (queue.length > maxCount) {
+        const toast = queue.shift();
+        if (toast) {
+            notifyToastClosed(toast);
+        }
+    }
+}
+
+function getRegisteredHosts(): NTToastHostElement[] {
+    const hosts: NTToastHostElement[] = [];
+    for (const host of Array.from(registeredHosts)) {
+        if (!host.isConnected) {
+            disposeHost(host);
+            continue;
+        }
+
+        hosts.push(host);
+    }
+
+    return hosts;
+}
+
+function findHostByToastId(id: string): NTToastHostElement | null {
+    for (const host of getRegisteredHosts()) {
+        const state = hostStates.get(host);
+        if (state?.activeToasts.some(toast => toast.id === id) || state?.queue.some(toast => toast.id === id)) {
+            return host;
+        }
+    }
+
+    return null;
+}
+
+function createToastElement(host: NTToastHostElement, state: NTToastHostState, toast: ToastRecord): HTMLElement {
+    const toastElement = document.createElement('div');
+    toastElement.id = toast.id;
+    toastElement.className = `nt-toast nt-toast-${toast.variant} nt-elevation-medium${toast.timeout > 0 ? ' nt-toast-has-timeout' : ''}`;
+    toastElement.setAttribute('role', toast.variant === 'error' || toast.variant === 'assert' ? 'alert' : 'status');
+    toastElement.setAttribute('aria-live', toast.variant === 'error' || toast.variant === 'assert' ? 'assertive' : 'polite');
+    toastElement.setAttribute('aria-atomic', 'true');
+    setStyleVariables(toastElement, toast);
+
+    if (toast.icon) {
+        toastElement.appendChild(createIcon(toast.icon, 'nt-toast-icon'));
+    }
+
+    const title = document.createElement('div');
+    title.className = 'nt-toast-title';
+    title.textContent = toast.title;
+    toastElement.appendChild(title);
+
+    if (toast.message) {
+        const message = document.createElement('div');
+        message.className = 'nt-toast-message';
+        message.textContent = toast.message;
+        toastElement.appendChild(message);
+    }
+
+    if (toast.showClose) {
+        const close = document.createElement('button');
+        close.className = 'nt-toast-close tnt-interactable';
+        close.type = 'button';
+        close.setAttribute('aria-label', 'Dismiss notification');
+        close.appendChild(createIcon('close', ''));
+        close.addEventListener('click', () => closeToastRecord(host, state, toast));
+        toastElement.appendChild(close);
+    }
+
+    if (toast.timeout > 0) {
+        const progress = document.createElement('div');
+        progress.className = 'nt-toast-progress';
+        progress.setAttribute('aria-hidden', 'true');
+        toastElement.appendChild(progress);
+    }
+
+    toast.element = toastElement;
+    return toastElement;
+}
+
+function tryShowNext(host: NTToastHostElement): void {
+    const state = getOrCreateState(host);
+    let activeVisibleCount = state.activeToasts.reduce((count, toast) => toast.isClosing ? count : count + 1, 0);
+    while (activeVisibleCount < maxVisibleToasts && state.queue.length > 0) {
+        const toast = state.queue.shift();
+        if (!toast) {
+            return;
+        }
+
+        const element = createToastElement(host, state, toast);
+        state.activeToasts.push(toast);
+        host.appendChild(element);
+
+        if (toast.timeout > 0) {
+            toast.closeTimeout = window.setTimeout(() => closeToastRecord(host, state, toast), toast.timeout * 1000);
+        }
+
+        activeVisibleCount++;
+    }
+}
+
+function closeToastRecord(host: NTToastHostElement, state: NTToastHostState, toast: ToastRecord, notifyDotNet = true): boolean {
+    if (toast.isClosing || !toast.element) {
+        return false;
+    }
+
+    if (toast.closeTimeout !== null) {
+        window.clearTimeout(toast.closeTimeout);
+        toast.closeTimeout = null;
+    }
+
+    toast.isClosing = true;
+    const toastElement = toast.element;
+    toastElement.classList.add('nt-closing');
+    if (!notifyDotNet) {
+        releaseToastReference(toast);
+    }
+
+    let hasClosed = false;
+    const finishClose = () => {
+        if (hasClosed) {
+            return;
+        }
+
+        hasClosed = true;
+        toastElement.removeEventListener('animationend', handleAnimationDone);
+        toastElement.removeEventListener('animationcancel', handleAnimationDone);
+        if (toast.closeAnimationTimeout !== null) {
+            window.clearTimeout(toast.closeAnimationTimeout);
+        }
+
+        toastElement.remove();
+        toast.element = null;
+        toast.closeAnimationTimeout = null;
+        const existingIndex = state.activeToasts.indexOf(toast);
+        if (existingIndex >= 0) {
+            state.activeToasts.splice(existingIndex, 1);
+        }
+        if (notifyDotNet) {
+            notifyToastClosed(toast);
+        }
+        if (host.isConnected) {
+            tryShowNext(host);
+        }
+    };
+    const handleAnimationDone = (event: AnimationEvent) => {
+        if (event.target === toastElement) {
+            finishClose();
+        }
+    };
+
+    toastElement.addEventListener('animationend', handleAnimationDone);
+    toastElement.addEventListener('animationcancel', handleAnimationDone);
+    toast.closeAnimationTimeout = window.setTimeout(finishClose, closeDelayMilliseconds);
+
+    return true;
+}
+
+function flushPendingToasts(): void {
+    const host = getHost();
+    if (!host || pendingToasts.length === 0) {
+        return;
+    }
+
+    const state = getOrCreateState(host);
+    state.queue.push(...pendingToasts.splice(0));
+    trimToastQueue(state.queue, maxQueuedToasts);
+    tryShowNext(host);
+}
+
+function initializeHost(host: NTToastHostElement): void {
+    registeredHosts.add(host);
+    getOrCreateState(host);
+    defaultHost = host;
+    flushPendingToasts();
+}
+
+function disposeHost(host: NTToastHostElement): void {
+    const state = hostStates.get(host);
+    if (!state) {
+        return;
+    }
+
+    const closedToasts = [...state.activeToasts, ...state.queue];
+    for (const toast of closedToasts) {
+        if (toast.closeTimeout !== null) {
+            window.clearTimeout(toast.closeTimeout);
+            toast.closeTimeout = null;
+        }
+        if (toast.closeAnimationTimeout !== null) {
+            window.clearTimeout(toast.closeAnimationTimeout);
+            toast.closeAnimationTimeout = null;
+        }
+        toast.element?.remove();
+        toast.element = null;
+    }
+
+    state.activeToasts.length = 0;
+    state.queue.length = 0;
+    delete host.__ntToastState;
+    hostStates.delete(host);
+    registeredHosts.delete(host);
+    notifyToastsClosed(closedToasts);
+
+    if (defaultHost === host) {
+        defaultHost = null;
+    }
+}
+
+export function queueToast(messageOrOptions: ToastInput, options?: Partial<ToastOptions>): string {
+    const host = typeof messageOrOptions === 'string' ? getHost(options?.host) : getHost(options?.host ?? messageOrOptions.host);
+    const toast = normalizeToast(messageOrOptions, options);
+
+    if (!host) {
+        pendingToasts.push(toast);
+        trimToastQueue(pendingToasts, maxPendingToasts);
+        return toast.id;
+    }
+
+    const state = getOrCreateState(host);
+    state.queue.push(toast);
+    trimToastQueue(state.queue, maxQueuedToasts);
+    tryShowNext(host);
+    return toast.id;
+}
+
+export function addToast(messageOrOptions: ToastInput, options?: Partial<ToastOptions>): string {
+    return queueToast(messageOrOptions, options);
+}
+
+function closeToastCore(id?: string, host?: HTMLElement | string | null, notifyDotNet = true): boolean {
+    const resolvedHost = id && !host ? findHostByToastId(id) ?? getHost(host) : getHost(host);
+    if (!resolvedHost) {
+        return id ? removePendingToast(id, notifyDotNet) : false;
+    }
+
+    const state = getOrCreateState(resolvedHost);
+    const activeToast = id ? state.activeToasts.find(toast => toast.id === id) : state.activeToasts.at(-1);
+    if (activeToast) {
+        return closeToastRecord(resolvedHost, state, activeToast, notifyDotNet);
+    }
+
+    if (!id) {
+        return false;
+    }
+
+    const existingIndex = state.queue.findIndex(toast => toast.id === id);
+    if (existingIndex < 0) {
+        return removePendingToast(id, notifyDotNet);
+    }
+
+    const removedToasts = state.queue.splice(existingIndex, 1);
+    const removedToast = removedToasts[0];
+    if (removedToast) {
+        if (notifyDotNet) {
+            notifyToastClosed(removedToast);
+        } else {
+            releaseToastReference(removedToast);
+        }
+    }
+    return true;
+}
+
+export function closeToast(id?: string, host?: HTMLElement | string | null): boolean {
+    return closeToastCore(id, host);
+}
+
+export function closeToastFromBlazor(id: string, host?: HTMLElement | string | null): boolean {
+    return closeToastCore(id, host, false);
+}
+
+export function clearToasts(host?: HTMLElement | string | null): void {
+    notifyToastsClosed(pendingToasts);
+    pendingToasts.length = 0;
+
+    if (!host) {
+        for (const registeredHost of getRegisteredHosts()) {
+            clearHostToasts(registeredHost);
+        }
+        return;
+    }
+
+    const resolvedHost = getHost(host);
+    if (resolvedHost) {
+        clearHostToasts(resolvedHost);
+    }
+}
+
+function clearHostToasts(host: NTToastHostElement): void {
+    const state = getOrCreateState(host);
+    const closedToasts = [...state.activeToasts, ...state.queue];
+    for (const toast of closedToasts) {
+        if (toast.closeTimeout !== null) {
+            window.clearTimeout(toast.closeTimeout);
+            toast.closeTimeout = null;
+        }
+        if (toast.closeAnimationTimeout !== null) {
+            window.clearTimeout(toast.closeAnimationTimeout);
+            toast.closeAnimationTimeout = null;
+        }
+        toast.element?.remove();
+        toast.element = null;
+        toast.isClosing = false;
+    }
+
+    state.activeToasts.length = 0;
+    state.queue.length = 0;
+    notifyToastsClosed(closedToasts);
+}
+
+export function clearToastsFromBlazor(ids: string[]): number {
+    const idsToClear = new Set(ids);
+    if (idsToClear.size === 0) {
+        return 0;
+    }
+
+    let clearedCount = 0;
+    for (let index = pendingToasts.length - 1; index >= 0; index--) {
+        const toast = pendingToasts[index];
+        if (toast && idsToClear.has(toast.id)) {
+            pendingToasts.splice(index, 1);
+            releaseToastReference(toast);
+            clearedCount++;
+        }
+    }
+
+    for (const host of getRegisteredHosts()) {
+        const state = getOrCreateState(host);
+        for (const toast of [...state.activeToasts]) {
+            if (idsToClear.has(toast.id) && closeToastRecord(host, state, toast, false)) {
+                clearedCount++;
+            }
+        }
+
+        for (let index = state.queue.length - 1; index >= 0; index--) {
+            const toast = state.queue[index];
+            if (toast && idsToClear.has(toast.id)) {
+                state.queue.splice(index, 1);
+                releaseToastReference(toast);
+                clearedCount++;
+            }
+        }
+    }
+
+    return clearedCount;
+}
+
+export function onDispose(element?: Maybe<Element>): void {
+    for (const host of getHosts(element)) {
+        disposeHost(host);
+    }
+
+    if (element instanceof HTMLElement && element.localName === 'tnt-page-script') {
+        delete (element as NTToastPageScriptElement).__ntToastHost;
+    }
+}
+
+export function onLoad(element?: Maybe<Element>): void {
+    for (const host of getHosts(element)) {
+        initializeHost(host);
+    }
+}
+
+export function onUpdate(element?: Maybe<Element>): void {
+    for (const host of getHosts(element)) {
+        initializeHost(host);
+    }
+}
+
+window.NTToast = {
+    addToast,
+    clearToastsFromBlazor,
+    clearToasts,
+    closeToastFromBlazor,
+    closeToast,
+    queueToast
+};

@@ -12,6 +12,45 @@ NTComponents is a Blazor WebAssembly project that provides a set of reusable UI 
 - **Grid**: A data grid component modified from FluentDataGrid.
 - **Scheduler**: A scheduler component with week view and event management.
 
+## Toast Notifications
+
+Place one `NTToast` near the route or layout level. The component is static-rendering friendly and loads the JavaScript bridge used by both browser JavaScript and `INTToastService`.
+
+```razor
+<NTToast />
+```
+
+Use `INTToastService` from interactive Blazor code:
+
+```razor
+@inject INTToastService ToastService
+
+<button @onclick="SaveAsync">Save</button>
+
+@code {
+    private async Task SaveAsync() {
+        await ToastService.ShowSuccessAsync("Saved", "Your changes were saved.");
+    }
+}
+```
+
+For static SSR markup or native HTML handlers, call the JavaScript bridge directly and guard the call in case the module has not loaded yet:
+
+```html
+<button onclick="window.NTToast?.queueToast({ title: 'Saved', message: 'Your changes were saved.', variant: 'success' })">
+    Save
+</button>
+```
+
+JavaScript options are `title`, `message`, `variant`, `timeout`, `showClose`, `icon`, `backgroundColor`, `textColor`, and `iconColor`. Variants are `default`, `success`, `info`, `warning`, `error`, and `assert`.
+
+Best practices:
+- Use `NTToast` with `INTToastService`; legacy `TnTToast` uses `ITnTToastService` and is a separate host/service pair.
+- Prefer semantic helpers such as `ShowSuccessAsync`, `ShowInfoAsync`, `ShowWarningAsync`, `ShowErrorAsync`, and `ShowAssertAsync`.
+- Keep toast copy short and status-focused.
+- Let the default four-second timeout handle normal messages. Use `timeout: 0` only when explicit dismissal is required.
+- Use `error` or `assert` only for high-priority messages because they use assertive accessibility announcements.
+
 ## Getting Started
 
 ### Prerequisites

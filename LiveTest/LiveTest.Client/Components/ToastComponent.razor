@@ -1,49 +1,69 @@
 @using NTComponents
 
+<div class="toast-demo-actions">
+    <button type="button" @onclick="ShowBasic">
+        Show Basic
+    </button>
 
+    <button type="button" @onclick="ShowInfo">
+        Show Info
+    </button>
 
-<NTComponents.TnTButton OnClickCallback="ShowBasic">
-    Show Basic
-</NTComponents.TnTButton>
+    <button type="button" @onclick="ShowSuccess">
+        Show Success
+    </button>
 
-<NTComponents.TnTButton OnClickCallback="ShowInfo">
-    Show Info
-</NTComponents.TnTButton>
+    <button type="button" @onclick="ShowWarning">
+        Show Warning
+    </button>
 
-<NTComponents.TnTButton OnClickCallback="ShowSuccess">
-    Show Success
-</NTComponents.TnTButton>
+    <button type="button" @onclick="ShowError">
+        Show Error
+    </button>
 
-<NTComponents.TnTButton OnClickCallback="ShowWarning">
-    Show Warning
-</NTComponents.TnTButton>
+    <button type="button" @onclick="ShowAssert">
+        Show Assert
+    </button>
 
-<NTComponents.TnTButton OnClickCallback="ShowError">
-    Show Error
-</NTComponents.TnTButton>
-
+    <button type="button" @onclick="ShowStack">
+        Show Stack
+    </button>
+</div>
 
 @code {
     [Inject]
-    private ITnTToastService _service { get; set; } = default!;
+    private INTToastService _service { get; set; } = default!;
 
     private async Task ShowBasic() {
-        await _service.ShowAsync("My title", "My longer message description that takes up space My longer message description that takes up space My longer message description that takes up space My longer message description that takes up space");
+        await _service.ShowAsync("Basic toast", "Default toasts use the neutral Material color roles.");
     }
 
     private async Task ShowInfo() {
-        await _service.ShowInfoAsync("My title", "My longer message description that takes up space");
+        await _service.ShowInfoAsync("Information", "The service calls the NTToast JavaScript bridge.");
     }
 
     private async Task ShowSuccess() {
-        await _service.ShowSuccessAsync("My title", "My longer message description that takes up space");
-
+        await _service.ShowSuccessAsync("Saved", "Your changes were saved.");
     }
+
     private async Task ShowWarning() {
-        await _service.ShowWarningAsync("My title", "My longer message description that takes up space");
-
+        await _service.ShowWarningAsync("Review needed", "This warning toast uses the warning color roles.");
     }
+
     private async Task ShowError() {
-        await _service.ShowErrorAsync("My title", "My longer message description that takes up space", timeout: 10000);
+        await _service.ShowErrorAsync("Failed", "Error toasts use assertive live-region behavior.", timeout: 0);
+    }
+
+    private async Task ShowAssert() {
+        await _service.ShowAssertAsync("Assertion", "Assert toasts are for high-priority validation messages.");
+    }
+
+    private async Task ShowStack() {
+        await _service.ShowSuccessAsync("Queued 1", "Visible immediately.");
+        await _service.ShowInfoAsync("Queued 2", "Visible immediately.");
+        await _service.ShowWarningAsync("Queued 3", "Visible immediately.");
+        await _service.ShowErrorAsync("Queued 4", "Visible immediately.");
+        await _service.ShowAssertAsync("Queued 5", "Visible immediately.");
+        await _service.ShowAsync("Queued 6", "This waits until another toast closes.");
     }
 }

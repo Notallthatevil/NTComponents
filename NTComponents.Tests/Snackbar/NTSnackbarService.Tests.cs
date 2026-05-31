@@ -48,7 +48,7 @@ public class NTSnackbarService_Tests : BunitContext {
         // Assert
         openedSnackbar.Should().NotBeNull();
         openedSnackbar!.Message.Should().Be("Saved");
-        openedSnackbar.Timeout.Should().Be(6);
+        openedSnackbar.Timeout.Should().Be(4);
         openedSnackbar.ShowClose.Should().BeFalse();
         openedSnackbar.BackgroundColor.Should().Be(TnTColor.InverseSurface);
         openedSnackbar.TextColor.Should().Be(TnTColor.InverseOnSurface);
@@ -56,7 +56,7 @@ public class NTSnackbarService_Tests : BunitContext {
         openedSnackbar.HasAction.Should().BeFalse();
 
         GetOption<string>("Message").Should().Be("Saved");
-        GetOption<double>("Timeout").Should().Be(6);
+        GetOption<double>("Timeout").Should().Be(4);
         GetOption<bool>("ShowClose").Should().BeFalse();
         GetOption<string>("BackgroundColor").Should().Be("var(--tnt-color-inverse-surface)");
         GetOption<string>("TextColor").Should().Be("var(--tnt-color-inverse-on-surface)");
@@ -264,7 +264,7 @@ public class NTSnackbarService_Tests : BunitContext {
 
         // Assert
         snackbar.Message.Should().BeNullOrEmpty();
-        snackbar.Timeout.Should().Be(6);
+        snackbar.Timeout.Should().Be(4);
         snackbar.ShowClose.Should().BeFalse();
         snackbar.BackgroundColor.Should().Be(TnTColor.InverseSurface);
         snackbar.TextColor.Should().Be(TnTColor.InverseOnSurface);
