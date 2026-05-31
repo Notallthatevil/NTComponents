@@ -1,10 +1,12 @@
 @use '../Styles/_Variables/_interactable.scss' as interactable;
 @use '../Styles/_Variables/_measurements.scss' as measurements;
+@use '../Styles/_Variables/_motion.scss' as motion;
 @use '../Styles/_Variables/_typescale.scss' as typescale;
 
-$background-color: var(--nt-snackbar-background-color);
-$text-color: var(--nt-snackbar-text-color);
-$action-color: var(--nt-snackbar-action-color);
+$background-color: var(--nt-snackbar-background-color, var(--tnt-color-inverse-surface));
+$text-color: var(--nt-snackbar-text-color, var(--tnt-color-inverse-on-surface));
+$action-color: var(--nt-snackbar-action-color, var(--tnt-color-inverse-primary));
+$container-shape: 4px;
 
 .nt-snackbar-container {
     --nt-snackbar-edge-offset: 16px;
@@ -87,14 +89,13 @@ $action-color: var(--nt-snackbar-action-color);
         }
 
         .nt-snackbar {
-            animation: ntSnackbarSlideIn 200ms ease-out;
-            transition: transform 200ms ease-out, opacity 200ms linear;
+            animation: ntSnackbarRollUp motion.$nt-motion-duration-short_4 motion.$nt-motion-easing-standard;
             background-color: $background-color;
             color: $text-color;
-            border-radius: 4px;
+            border-radius: $container-shape;
             box-sizing: border-box;
             display: flex;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
             align-items: center;
             gap: 4px 8px;
             min-height: 48px;
@@ -105,13 +106,12 @@ $action-color: var(--nt-snackbar-action-color);
             pointer-events: auto;
 
             &.nt-closing {
-                opacity: 0;
-                transform: translateY(16px);
+                animation: ntSnackbarRollDown motion.$nt-motion-duration-short_3 motion.$nt-motion-easing-standard-accelerate forwards;
             }
 
             .nt-snackbar-message {
                 @include typescale.tnt-body-medium;
-                flex: 1 1 16rem;
+                flex: 1 1 auto;
                 min-width: 0;
                 overflow-wrap: anywhere;
                 padding: 10px 0;
@@ -120,11 +120,12 @@ $action-color: var(--nt-snackbar-action-color);
             .nt-snackbar-actions {
                 display: flex;
                 flex: 0 1 auto;
-                flex-wrap: wrap;
+                flex-wrap: nowrap;
                 align-items: center;
                 justify-content: flex-end;
                 gap: 4px;
                 margin-left: auto;
+                white-space: nowrap;
             }
 
             .nt-snackbar-action,
@@ -175,14 +176,26 @@ $action-color: var(--nt-snackbar-action-color);
     }
 }
 
-@keyframes ntSnackbarSlideIn {
+@keyframes ntSnackbarRollUp {
     0% {
         opacity: 0;
-        transform: translateY(16px);
+        clip-path: inset(100% 0 0 0 round #{$container-shape});
     }
 
     100% {
         opacity: 1;
-        transform: translateY(0);
+        clip-path: inset(0 0 0 0 round #{$container-shape});
+    }
+}
+
+@keyframes ntSnackbarRollDown {
+    0% {
+        opacity: 1;
+        clip-path: inset(0 0 0 0 round #{$container-shape});
+    }
+
+    100% {
+        opacity: 0;
+        clip-path: inset(100% 0 0 0 round #{$container-shape});
     }
 }

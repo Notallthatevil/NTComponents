@@ -8,6 +8,7 @@ namespace NTComponents.Tests.Snackbar;
 ///     Unit tests for <see cref="NTSnackbarService" />.
 /// </summary>
 public class NTSnackbarService_Tests : BunitContext {
+    private bool _closeShouldFail;
     private object? _queuedOptions;
 
     public NTSnackbarService_Tests() {
@@ -16,7 +17,8 @@ public class NTSnackbarService_Tests : BunitContext {
             _queuedOptions = invocation.Arguments[0];
             return true;
         }).SetResult("queued");
-        module.Setup<bool>("closeSnackbarFromBlazor", _ => true).SetResult(true);
+        module.Setup<bool>("closeSnackbarFromBlazor", _ => !_closeShouldFail).SetResult(true);
+        module.Setup<bool>("closeSnackbarFromBlazor", _ => _closeShouldFail).SetResult(false);
     }
 
     [Fact]
@@ -131,6 +133,29 @@ public class NTSnackbarService_Tests : BunitContext {
         // Assert
         closeCount.Should().Be(1);
         service.ActiveSnackbar.Should().BeNull();
+        JSInterop.VerifyInvoke("closeSnackbarFromBlazor", 1);
+    }
+
+    [Fact]
+    public async Task CloseAsync_WhenJavaScriptDoesNotClose_KeepsSnackbarTracked() {
+        // Arrange
+        var service = CreateService();
+        var closeCount = 0;
+        service.OnClose += _ => {
+            closeCount++;
+            return Task.CompletedTask;
+        };
+
+        await service.ShowAsync("Saved");
+        _closeShouldFail = true;
+
+        // Act
+        await service.CloseAsync(service.ActiveSnackbar!);
+
+        // Assert
+        closeCount.Should().Be(0);
+        service.ActiveSnackbar.Should().NotBeNull();
+        service.ActiveSnackbar!.Message.Should().Be("Saved");
         JSInterop.VerifyInvoke("closeSnackbarFromBlazor", 1);
     }
 

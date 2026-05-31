@@ -33,12 +33,16 @@ internal sealed class NTSnackbarService(IJSRuntime _jsRuntime) : INTSnackbarServ
     public event INTSnackbarService.OnOpenCallback? OnOpen;
 
     public async Task CloseAsync(INTSnackbar snackbar) {
-        if (snackbar is not NTSnackbarImplementation implementation || !RemoveTrackedSnackbar(implementation.Id, out var trackedSnackbar)) {
+        if (snackbar is not NTSnackbarImplementation implementation || !TryGetTrackedSnackbar(implementation.Id, out var trackedSnackbar)) {
             return;
         }
 
         var module = await GetModuleAsync();
-        await module.InvokeAsync<bool>("closeSnackbarFromBlazor", trackedSnackbar.Id);
+        var closed = await module.InvokeAsync<bool>("closeSnackbarFromBlazor", trackedSnackbar.Id);
+        if (!closed || !RemoveTrackedSnackbar(trackedSnackbar.Id, out trackedSnackbar)) {
+            return;
+        }
+
         await (OnClose?.Invoke(trackedSnackbar) ?? Task.CompletedTask);
     }
 
