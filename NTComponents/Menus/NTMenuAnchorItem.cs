@@ -90,6 +90,13 @@ public class NTMenuAnchorItem : Microsoft.AspNetCore.Components.IComponent, INTM
     /// <inheritdoc />
     public Task SetParametersAsync(ParameterView parameters) {
         var previousParent = Parent;
+        var previousAriaLabel = AriaLabel;
+        var previousDisabled = Disabled;
+        var previousHref = Href;
+        var previousIcon = Icon;
+        var previousLabel = Label;
+        var previousSelected = Selected;
+        var previousTarget = Target;
         parameters.SetParameterProperties(this);
 
         if (Parent is null) {
@@ -109,7 +116,13 @@ public class NTMenuAnchorItem : Microsoft.AspNetCore.Components.IComponent, INTM
             Parent.RegisterMenuItem(this);
             _registeredParent = Parent;
         }
+        else if (_registeredParent is not null && RenderedStateChanged(previousAriaLabel, previousDisabled, previousHref, previousIcon, previousLabel, previousSelected, previousTarget)) {
+            Parent.NotifyMenuItemChanged(this);
+        }
 
         return Task.CompletedTask;
     }
+
+    private bool RenderedStateChanged(string? previousAriaLabel, bool previousDisabled, string previousHref, TnTIcon? previousIcon, string previousLabel, bool previousSelected, string? previousTarget) =>
+        previousAriaLabel != AriaLabel || previousDisabled != Disabled || previousHref != Href || !Equals(previousIcon, Icon) || previousLabel != Label || previousSelected != Selected || previousTarget != Target;
 }

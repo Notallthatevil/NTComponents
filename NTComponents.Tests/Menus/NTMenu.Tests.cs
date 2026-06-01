@@ -1,5 +1,6 @@
 using System.Reflection;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Rendering;
 
 namespace NTComponents.Tests.Menus;
 
@@ -74,6 +75,22 @@ public class NTMenu_Tests : BunitContext {
     }
 
     [Fact]
+    public void Registered_Button_Items_Update_Selected_Class_When_Parameters_Change() {
+        var cut = Render<MenuSelectionHost>();
+
+        cut.FindAll(".nt-menu-item")[0].ClassList.Should().Contain("nt-menu-item-selected");
+
+        cut.Instance.SelectRestaurants();
+
+        cut.WaitForAssertion(() => {
+            var items = cut.FindAll(".nt-menu-item");
+            items[0].ClassList.Should().NotContain("nt-menu-item-selected");
+            items[1].ClassList.Should().Contain("nt-menu-item-selected");
+            items[1].GetAttribute("aria-selected").Should().Be("true");
+        });
+    }
+
+    [Fact]
     public void Label_Item_Requires_Label() {
         var item = new NTMenuLabelItem {
             Parent = new NTMenu()
@@ -83,5 +100,34 @@ public class NTMenu_Tests : BunitContext {
 
         render.Should().Throw<InvalidOperationException>()
             .WithMessage("*NTMenuLabelItem requires a non-empty Label*");
+    }
+
+    private sealed class MenuSelectionHost : ComponentBase {
+        private string _selected = "All";
+
+        public void SelectRestaurants() {
+            _selected = "Restaurants";
+            InvokeAsync(StateHasChanged).GetAwaiter().GetResult();
+        }
+
+        protected override void BuildRenderTree(RenderTreeBuilder builder) {
+            builder.OpenComponent<NTMenu>(0);
+            builder.AddAttribute(1, nameof(NTMenu.ElementId), "category-menu");
+            builder.AddAttribute(2, nameof(NTMenu.AriaLabel), "Category");
+            builder.AddAttribute(3, nameof(NTMenu.ChildContent), (RenderFragment)BuildMenuItems);
+            builder.CloseComponent();
+        }
+
+        private void BuildMenuItems(RenderTreeBuilder builder) {
+            builder.OpenComponent<NTMenuButtonItem>(0);
+            builder.AddAttribute(1, nameof(NTMenuButtonItem.Label), "All categories");
+            builder.AddAttribute(2, nameof(NTMenuButtonItem.Selected), _selected == "All");
+            builder.CloseComponent();
+
+            builder.OpenComponent<NTMenuButtonItem>(3);
+            builder.AddAttribute(4, nameof(NTMenuButtonItem.Label), "Restaurants");
+            builder.AddAttribute(5, nameof(NTMenuButtonItem.Selected), _selected == "Restaurants");
+            builder.CloseComponent();
+        }
     }
 }

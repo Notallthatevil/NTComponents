@@ -247,6 +247,12 @@ public partial class NTMenu {
         }
     }
 
+    internal void NotifyMenuItemChanged(INTMenuItem item) {
+        if (item is not null && _menuItems.Contains(item)) {
+            _ = InvokeAsync(StateHasChanged);
+        }
+    }
+
     internal RenderFragment RenderMenuItemContent(INTMenuItem item, TnTIcon? trailingIcon = null) => builder => {
         builder.AddContent(0, ButtonRipple);
 

@@ -228,6 +228,12 @@ export class NTMenu extends HTMLElement {
         this.getItems()[0]?.focus();
     }
 
+    private focusInitialItem(): void {
+        const items = this.getItems();
+        const selectedItem = items.find(item => item.classList.contains('nt-menu-item-selected') || item.getAttribute('aria-selected') === 'true');
+        (selectedItem ?? items[0])?.focus();
+    }
+
     private focusMatchingItem(key: string): void {
         const search = key.toLocaleLowerCase();
         const items = this.getItems();
@@ -423,7 +429,7 @@ export class NTMenu extends HTMLElement {
         this.setAnchorPressed(isOpen);
 
         if (isOpen) {
-            const focus = () => this.focusFirstItem();
+            const focus = () => this.focusInitialItem();
             if (typeof window.requestAnimationFrame === 'function') {
                 window.requestAnimationFrame(focus);
             } else {

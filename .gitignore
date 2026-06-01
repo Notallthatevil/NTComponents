@@ -361,6 +361,7 @@ MigrationBackup/
 
 *.css
 */compilerconfig.json
+!NTComponents/compilerconfig.json
 */compilerconfig.json.defaults
 coverlet.runsettings
 /NTComponents/Editors/NTRichTextEditor.razor.js

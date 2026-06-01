@@ -1,0 +1,245 @@
+@namespace NTComponents
+@using NTComponents.Core
+@inherits TnTComponentBase
+
+<span @attributes="AdditionalAttributes"
+      class="@ElementClass"
+      style="@ElementStyle"
+      id="@ElementId"
+      title="@ElementTitle"
+      lang="@ElementLang"
+      @ref="Element">
+    @if (EffectiveSelectable) {
+        <label class="nt-chip-control" aria-disabled="@AriaDisabled">
+            <input class="nt-chip-selection-input"
+                   type="checkbox"
+                   name="@ElementName"
+                   value="@bool.TrueString"
+                   checked="@BindConverter.FormatValue(CurrentSelected)"
+                   disabled="@Disabled"
+                   autofocus="@AutoFocus"
+                   aria-label="@AriaLabel"
+                   @onchange="HandleSelectedChangedAsync" />
+            <span class="@ContainerClass">
+                @if (EffectiveLeadingIcon is not null) {
+                    <span class="@LeadingIconClass" aria-hidden="true">
+                        @EffectiveLeadingIcon.Render()
+                    </span>
+                }
+                <span class="nt-chip-label">@Label</span>
+                @if (EffectiveTrailingIcon is not null) {
+                    <span class="nt-chip-icon nt-chip-trailing" aria-hidden="true">
+                        @EffectiveTrailingIcon.Render()
+                    </span>
+                }
+            </span>
+        </label>
+    }
+    else if (ShowRemoveButton && HasPrimaryAction) {
+        <span class="nt-chip-control nt-chip-composite-control">
+            <span class="@ContainerClass">
+                @if (HasMenu) {
+                    <button class="nt-chip-primary-action"
+                            id="@MenuButtonId"
+                            style="@MenuButtonStyle"
+                            type="button"
+                            disabled="@Disabled"
+                            autofocus="@AutoFocus"
+                            aria-label="@AriaLabel"
+                            aria-haspopup="menu"
+                            aria-controls="@MenuId"
+                            aria-expanded="false"
+                            aria-pressed="@SelectedAriaPressed"
+                            popovertarget="@MenuPopoverTarget"
+                            popovertargetaction="toggle"
+                            @onclick="@MenuClickCallback"
+                            @onkeydown="@RemoveKeyDownCallback">
+                        @if (EffectiveLeadingIcon is not null) {
+                            <span class="@LeadingIconClass" aria-hidden="true">
+                                @EffectiveLeadingIcon.Render()
+                            </span>
+                        }
+                        <span class="nt-chip-label">@Label</span>
+                        @if (EffectiveTrailingIcon is not null) {
+                            <span class="nt-chip-icon nt-chip-trailing" aria-hidden="true">
+                                @EffectiveTrailingIcon.Render()
+                            </span>
+                        }
+                    </button>
+                }
+                else if (!string.IsNullOrWhiteSpace(Href)) {
+                    <a class="nt-chip-primary-action"
+                       href="@EffectiveHref"
+                       target="@Target"
+                       rel="@Rel"
+                       aria-label="@AriaLabel"
+                       aria-disabled="@AriaDisabled"
+                       tabindex="@DisabledTabIndex"
+                       @onclick="@LinkClickCallback"
+                       @onkeydown="@RemoveKeyDownCallback">
+                        @if (EffectiveLeadingIcon is not null) {
+                            <span class="@LeadingIconClass" aria-hidden="true">
+                                @EffectiveLeadingIcon.Render()
+                            </span>
+                        }
+                        <span class="nt-chip-label">@Label</span>
+                        @if (EffectiveTrailingIcon is not null) {
+                            <span class="nt-chip-icon nt-chip-trailing" aria-hidden="true">
+                                @EffectiveTrailingIcon.Render()
+                            </span>
+                        }
+                    </a>
+                }
+                else {
+                    <button class="nt-chip-primary-action"
+                            type="@Type.ToHtmlAttribute()"
+                            name="@ElementName"
+                            disabled="@Disabled"
+                            autofocus="@AutoFocus"
+                            aria-label="@AriaLabel"
+                            @onclick="@ActionClickCallback"
+                            @onkeydown="@RemoveKeyDownCallback">
+                        @if (EffectiveLeadingIcon is not null) {
+                            <span class="@LeadingIconClass" aria-hidden="true">
+                                @EffectiveLeadingIcon.Render()
+                            </span>
+                        }
+                        <span class="nt-chip-label">@Label</span>
+                        @if (EffectiveTrailingIcon is not null) {
+                            <span class="nt-chip-icon nt-chip-trailing" aria-hidden="true">
+                                @EffectiveTrailingIcon.Render()
+                            </span>
+                        }
+                    </button>
+                }
+                <button class="nt-chip-remove"
+                        type="button"
+                        disabled="@Disabled"
+                        aria-label="@EffectiveRemoveAriaLabel"
+                        @onclick="HandleRemoveAsync"
+                        @onkeydown="@RemoveKeyDownCallback"
+                        @onclick:stopPropagation="true">
+                    @MaterialIcon.Close.Render()
+                </button>
+            </span>
+        </span>
+    }
+    else if (ShowRemoveButton) {
+        <span class="nt-chip-control nt-chip-static-control">
+            <span class="@ContainerClass">
+                @if (EffectiveLeadingIcon is not null) {
+                    <span class="@LeadingIconClass" aria-hidden="true">
+                        @EffectiveLeadingIcon.Render()
+                    </span>
+                }
+                <span class="nt-chip-label">@Label</span>
+                @if (EffectiveTrailingIcon is not null) {
+                    <span class="nt-chip-icon nt-chip-trailing" aria-hidden="true">
+                        @EffectiveTrailingIcon.Render()
+                    </span>
+                }
+                <button class="nt-chip-remove"
+                        type="button"
+                        disabled="@Disabled"
+                        aria-label="@EffectiveRemoveAriaLabel"
+                        @onclick="HandleRemoveAsync"
+                        @onkeydown="@RemoveKeyDownCallback"
+                        @onclick:stopPropagation="true">
+                    @MaterialIcon.Close.Render()
+                </button>
+            </span>
+        </span>
+    }
+    else if (HasMenu) {
+        <button class="nt-chip-control"
+                id="@MenuButtonId"
+                style="@MenuButtonStyle"
+                type="button"
+                disabled="@Disabled"
+                autofocus="@AutoFocus"
+                aria-label="@AriaLabel"
+                aria-haspopup="menu"
+                aria-controls="@MenuId"
+                aria-expanded="false"
+                aria-pressed="@SelectedAriaPressed"
+                popovertarget="@MenuPopoverTarget"
+                popovertargetaction="toggle"
+                @onclick="@MenuClickCallback"
+                @onkeydown="@RemoveKeyDownCallback">
+            <span class="@ContainerClass">
+                @if (EffectiveLeadingIcon is not null) {
+                    <span class="@LeadingIconClass" aria-hidden="true">
+                        @EffectiveLeadingIcon.Render()
+                    </span>
+                }
+                <span class="nt-chip-label">@Label</span>
+                @if (EffectiveTrailingIcon is not null) {
+                    <span class="nt-chip-icon nt-chip-trailing" aria-hidden="true">
+                        @EffectiveTrailingIcon.Render()
+                    </span>
+                }
+            </span>
+        </button>
+    }
+    else if (!string.IsNullOrWhiteSpace(Href)) {
+        <a class="nt-chip-control"
+           href="@EffectiveHref"
+           target="@Target"
+           rel="@Rel"
+           aria-label="@AriaLabel"
+           aria-disabled="@AriaDisabled"
+           tabindex="@DisabledTabIndex"
+           @onclick="@LinkClickCallback"
+           @onkeydown="@RemoveKeyDownCallback">
+            <span class="@ContainerClass">
+                @if (EffectiveLeadingIcon is not null) {
+                    <span class="@LeadingIconClass" aria-hidden="true">
+                        @EffectiveLeadingIcon.Render()
+                    </span>
+                }
+                <span class="nt-chip-label">@Label</span>
+                @if (EffectiveTrailingIcon is not null) {
+                    <span class="nt-chip-icon nt-chip-trailing" aria-hidden="true">
+                        @EffectiveTrailingIcon.Render()
+                    </span>
+                }
+            </span>
+        </a>
+    }
+    else {
+        <button class="nt-chip-control"
+                type="@Type.ToHtmlAttribute()"
+                name="@ElementName"
+                disabled="@Disabled"
+                autofocus="@AutoFocus"
+                aria-label="@AriaLabel"
+                @onclick="@ActionClickCallback"
+                @onkeydown="@RemoveKeyDownCallback">
+            <span class="@ContainerClass">
+                @if (EffectiveLeadingIcon is not null) {
+                    <span class="@LeadingIconClass" aria-hidden="true">
+                        @EffectiveLeadingIcon.Render()
+                    </span>
+                }
+                <span class="nt-chip-label">@Label</span>
+                @if (EffectiveTrailingIcon is not null) {
+                    <span class="nt-chip-icon nt-chip-trailing" aria-hidden="true">
+                        @EffectiveTrailingIcon.Render()
+                    </span>
+                }
+            </span>
+        </button>
+    }
+
+    @if (HasMenu) {
+        <NTMenu ElementId="@MenuId"
+                class="nt-chip-menu-panel"
+                AnchorName="@MenuAnchorName"
+                AnchorSelector="@MenuAnchorSelector"
+                Appearance="@MenuAppearance"
+                AriaLabel="@EffectiveMenuAriaLabel"
+                CloseOnContentClick="@CloseOnMenuContentClick">
+            @MenuContent
+        </NTMenu>
+    }
+</span>
