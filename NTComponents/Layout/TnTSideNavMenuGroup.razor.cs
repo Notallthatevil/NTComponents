@@ -11,6 +11,7 @@ namespace NTComponents;
 ///     A collapsible navigation group component for side navigation menus.
 /// </summary>
 /// <remarks>Provides a toggleable group of navigation items with an expandable/collapsible section.</remarks>
+[Obsolete("TnTSideNavMenuGroup is obsolete. Use NTNavigationRailGroup instead.")]
 public partial class TnTSideNavMenuGroup {
 
     /// <inheritdoc />

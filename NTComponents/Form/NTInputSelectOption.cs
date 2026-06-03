@@ -1,3 +1,4 @@
+#pragma warning disable CS0618
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
 using System.Diagnostics.CodeAnalysis;
@@ -8,6 +9,7 @@ namespace NTComponents;
 ///     Declares a single option inside <see cref="NTInputSelect{TInputType}" />.
 /// </summary>
 /// <typeparam name="TInputType">The bound value type.</typeparam>
+[System.Obsolete("This legacy Form element is obsolete. Use the NT form components instead.")]
 public sealed class NTInputSelectOption<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TInputType> : ComponentBase, IDisposable {
 
     /// <summary>

@@ -1,0 +1,43 @@
+@namespace NTComponents
+@typeparam TValue
+
+<label class="@BuildRootClass()" for="@InputId" title="@ElementTitle" lang="@ElementLang">
+    @if (LeadingIcon is not null) {
+        <span class="nt-radio-option-leading" aria-hidden="true">
+            @LeadingIcon.Render()
+        </span>
+    }
+
+    <span class="nt-radio-option-main">
+        <span class="nt-radio-touch-target">
+            <input @attributes="InputAttributes"
+                   id="@InputId"
+                   name="@Group.RadioName"
+                   type="radio"
+                   value="@ValueAsString"
+                   checked="@IsSelected"
+                   disabled="@(Group.IsGroupDisabled || Group.IsGroupReadOnly || Disabled || ReadOnly)"
+                   required="@Group.IsRequired"
+                   aria-describedby="@SupportingTextId"
+                   @onchange="OnChangeAsync"
+                   @ref="Element" />
+            <span class="nt-radio-option-state-layer" aria-hidden="true"></span>
+            <span class="nt-radio-option-icon" aria-hidden="true"></span>
+        </span>
+
+        <span class="nt-radio-option-content">
+            @if (!string.IsNullOrWhiteSpace(Label)) {
+                <span class="nt-radio-option-label" id="@LabelId">@Label</span>
+            }
+            @if (!string.IsNullOrWhiteSpace(SupportingText)) {
+                <span class="nt-radio-option-supporting" id="@SupportingTextId">@SupportingText</span>
+            }
+        </span>
+    </span>
+
+    @if (TrailingIcon is not null) {
+        <span class="nt-radio-option-trailing" aria-hidden="true">
+            @TrailingIcon.Render()
+        </span>
+    }
+</label>

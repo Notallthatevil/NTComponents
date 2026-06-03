@@ -116,6 +116,7 @@ function onEnhancedLoad() {
 
     window.NTComponents?.setupRipple?.();
     enhanceAutocompleteInputs();
+    enhanceAnimationWrappers();
 }
 
 function enhanceAutocompleteInputs() {
@@ -123,7 +124,17 @@ function enhanceAutocompleteInputs() {
         return;
     }
 
-    import('./FormV2/NTAutocomplete.razor.js')
+    import('./Form/NTAutocomplete.razor.js')
+        .then(module => module.enhanceAll?.(document))
+        .catch(() => { });
+}
+
+function enhanceAnimationWrappers() {
+    if (!document.querySelector('[data-nt-animation="true"]')) {
+        return;
+    }
+
+    import('./Animation/NTAnimation.razor.js')
         .then(module => module.enhanceAll?.(document))
         .catch(() => { });
 }
@@ -936,6 +947,7 @@ function startBlazorComponents(blazor) {
     window.NTComponents?.setupRipple?.();
     setupBodyFillRemaining();
     enhanceAutocompleteInputs();
+    enhanceAnimationWrappers();
 }
 
 export function afterWebStarted(blazor) {
@@ -1028,7 +1040,7 @@ const resetAccordionElement = (accordion) => {
 };
 
 
-window.NTComponents = {
+window.NTComponents = Object.assign(window.NTComponents || {}, {
     customAttribute: "tntid",
     addHidden: (element) => {
         if (element && element.classList && !element.classList.contains('tnt-hidden')) {
@@ -1368,21 +1380,77 @@ window.NTComponents = {
         const group = event.currentTarget;
         if (!group) return;
 
-        // Number keys 1-9
+        const radios = Array.from(group.querySelectorAll('input[type="radio"]'));
+        if (radios.length === 0) return;
+
+        const isGroupDisabled = group.disabled || group.classList.contains('tnt-disabled') || group.classList.contains('nt-radio-disabled') || !!group.closest?.('.nt-radio-disabled');
+        const isGroupReadOnly = group.classList.contains('tnt-readonly') || group.classList.contains('nt-radio-readonly') || !!group.closest?.('.nt-radio-readonly');
+        const canUseRadio = (radio) => radio && !radio.disabled && !radio.readOnly && !isGroupDisabled && !isGroupReadOnly;
+        const getOption = (radio) => radio?.closest?.('.nt-radio-option, .tnt-radio-input');
+        const clearHighlightedRadios = () => {
+            group.querySelectorAll('.nt-radio-option-highlighted').forEach(option => {
+                option.classList.remove('nt-radio-option-highlighted');
+                option.removeAttribute('data-nt-radio-highlighted');
+            });
+        };
+        const getHighlightedRadio = () => {
+            const highlightedOption = group.querySelector('.nt-radio-option-highlighted');
+            const highlightedRadio = highlightedOption?.querySelector?.('input[type="radio"]');
+            if (highlightedRadio) return highlightedRadio;
+            if (group.contains(document.activeElement) && document.activeElement?.matches?.('input[type="radio"]')) return document.activeElement;
+            return radios.find(radio => radio.checked) ?? radios[0];
+        };
+        const highlightRadio = (radio) => {
+            clearHighlightedRadios();
+
+            const option = getOption(radio);
+            option?.classList.add('nt-radio-option-highlighted');
+            option?.setAttribute('data-nt-radio-highlighted', 'true');
+            radio.focus?.();
+        };
+        const selectRadio = (radio) => {
+            if (!canUseRadio(radio)) return false;
+            radio.click();
+            if (!radio.checked) {
+                radio.checked = true;
+                radio.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+            clearHighlightedRadios();
+            group.focus?.({ preventScroll: true });
+            return true;
+        };
+
         if (event.key >= '1' && event.key <= '9') {
-            const index = parseInt(event.key) - 1;
-            const radios = group.querySelectorAll('input[type="radio"]');
+            const radio = radios[parseInt(event.key, 10) - 1];
+            if (selectRadio(radio)) {
+                event.preventDefault();
+            }
+            return;
+        }
 
-            if (index < radios.length) {
-                const radio = radios[index];
-                // Check if the individual radio or the group fieldset is disabled/readonly
-                const isDisabled = radio.disabled || group.disabled || group.classList.contains('tnt-disabled');
-                const isReadOnly = radio.readOnly || group.classList.contains('tnt-readonly');
+        const navigationKeys = ['ArrowDown', 'ArrowRight', 'ArrowUp', 'ArrowLeft', 'Home', 'End'];
+        if (navigationKeys.includes(event.key)) {
+            const currentRadio = getHighlightedRadio();
+            const currentIndex = Math.max(0, radios.indexOf(currentRadio));
+            const nextIndex = event.key === 'Home'
+                ? 0
+                : event.key === 'End'
+                    ? radios.length - 1
+                    : event.key === 'ArrowDown' || event.key === 'ArrowRight'
+                        ? (currentIndex + 1) % radios.length
+                        : (currentIndex - 1 + radios.length) % radios.length;
+            const nextRadio = radios[nextIndex];
 
-                if (radio && !isDisabled && !isReadOnly) {
-                    radio.click();
-                    event.preventDefault();
-                }
+            if (canUseRadio(nextRadio)) {
+                highlightRadio(nextRadio);
+                event.preventDefault();
+            }
+            return;
+        }
+
+        if (event.key === ' ' || event.key === 'Spacebar') {
+            if (selectRadio(getHighlightedRadio())) {
+                event.preventDefault();
             }
         }
     },
@@ -1395,4 +1463,4 @@ window.NTComponents = {
             dispose: () => document.removeEventListener('tnt-theme-changed', callback)
         };
     }
-}
+});

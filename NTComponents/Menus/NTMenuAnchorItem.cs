@@ -124,5 +124,5 @@ public class NTMenuAnchorItem : Microsoft.AspNetCore.Components.IComponent, INTM
     }
 
     private bool RenderedStateChanged(string? previousAriaLabel, bool previousDisabled, string previousHref, TnTIcon? previousIcon, string previousLabel, bool previousSelected, string? previousTarget) =>
-        previousAriaLabel != AriaLabel || previousDisabled != Disabled || previousHref != Href || !Equals(previousIcon, Icon) || previousLabel != Label || previousSelected != Selected || previousTarget != Target;
+        previousAriaLabel != AriaLabel || previousDisabled != Disabled || previousHref != Href || !NTMenu.IconStateEquals(previousIcon, Icon) || previousLabel != Label || previousSelected != Selected || previousTarget != Target;
 }

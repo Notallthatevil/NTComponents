@@ -235,6 +235,26 @@ public partial class NTMenu {
         await item.OnClickCallback.InvokeAsync(args);
     }
 
+    internal static bool IconStateEquals(TnTIcon? previousIcon, TnTIcon? currentIcon) {
+        if (ReferenceEquals(previousIcon, currentIcon)) {
+            return true;
+        }
+
+        if (previousIcon is null || currentIcon is null) {
+            return false;
+        }
+
+        return previousIcon.GetType() == currentIcon.GetType()
+            && previousIcon.Icon == currentIcon.Icon
+            && previousIcon.Appearance == currentIcon.Appearance
+            && previousIcon.Color == currentIcon.Color
+            && previousIcon.Size == currentIcon.Size
+            && previousIcon.ElementId == currentIcon.ElementId
+            && previousIcon.ElementLang == currentIcon.ElementLang
+            && previousIcon.ElementTitle == currentIcon.ElementTitle
+            && AdditionalAttributesEqual(previousIcon.AdditionalAttributes, currentIcon.AdditionalAttributes);
+    }
+
     internal bool IsMenuItemDisabled(INTMenuItem item) => Disabled || item.Disabled;
 
     /// <summary>
@@ -293,6 +313,24 @@ public partial class NTMenu {
                 yield return new KeyValuePair<string, object>(attribute.Key, attribute.Value);
             }
         }
+    }
+
+    private static bool AdditionalAttributesEqual(IReadOnlyDictionary<string, object>? previousAttributes, IReadOnlyDictionary<string, object>? currentAttributes) {
+        if (ReferenceEquals(previousAttributes, currentAttributes)) {
+            return true;
+        }
+
+        if (previousAttributes is null || currentAttributes is null || previousAttributes.Count != currentAttributes.Count) {
+            return false;
+        }
+
+        foreach (var attribute in previousAttributes) {
+            if (!currentAttributes.TryGetValue(attribute.Key, out var currentValue) || !Equals(attribute.Value, currentValue)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static string? GetMenuItemAdditionalClass(INTMenuItem item) =>

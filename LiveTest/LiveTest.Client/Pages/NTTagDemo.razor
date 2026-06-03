@@ -1,0 +1,241 @@
+@page "/tags"
+@using NTComponents
+@rendermode InteractiveAuto
+
+<PageTitle>Tags</PageTitle>
+
+<style>
+    .tag-demo {
+        display: grid;
+        gap: 1.5rem;
+        max-width: 72rem;
+    }
+
+    .tag-demo h1,
+    .tag-demo h2,
+    .tag-demo h3,
+    .tag-demo p {
+        margin: 0;
+    }
+
+    .tag-demo .header {
+        display: grid;
+        gap: .5rem;
+    }
+
+    .tag-demo .surface {
+        display: grid;
+        gap: 1.25rem;
+        padding: 1.25rem;
+        border: 1px solid var(--tnt-color-outline-variant);
+        border-radius: .5rem;
+        background: var(--tnt-color-surface);
+        color: var(--tnt-color-on-surface);
+    }
+
+    .tag-demo .muted {
+        color: var(--tnt-color-on-surface-variant);
+    }
+
+    .tag-demo .tag-set {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .625rem;
+        align-items: center;
+    }
+
+    .tag-demo .controls {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+        gap: 1rem;
+    }
+
+    .tag-demo label {
+        display: grid;
+        gap: .35rem;
+        color: var(--tnt-color-on-surface-variant);
+    }
+
+    .tag-demo input,
+    .tag-demo select {
+        min-block-size: 2.5rem;
+        padding: .5rem .75rem;
+        border: 1px solid var(--tnt-color-outline);
+        border-radius: .25rem;
+        color: var(--tnt-color-on-surface);
+        background: var(--tnt-color-surface-container-lowest);
+    }
+
+    .tag-demo .preview {
+        display: grid;
+        place-items: center;
+        min-block-size: 8rem;
+        padding: 1.25rem;
+        border-radius: .5rem;
+        background: var(--tnt-color-surface-container-lowest);
+    }
+
+    .tag-demo .records {
+        display: grid;
+        gap: .75rem;
+    }
+
+    .tag-demo .record {
+        display: grid;
+        grid-template-columns: minmax(12rem, 1fr) minmax(14rem, 2fr);
+        gap: 1rem;
+        align-items: center;
+        padding-block: .75rem;
+        border-block-end: 1px solid var(--tnt-color-outline-variant);
+    }
+
+    .tag-demo .record:last-child {
+        border-block-end: 0;
+    }
+
+    .tag-demo .record-title {
+        display: grid;
+        gap: .25rem;
+        min-inline-size: 0;
+    }
+
+    @@media (max-width: 42rem) {
+        .tag-demo .record {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="tag-demo">
+    <div class="header">
+        <h1>NTTag</h1>
+        <p class="muted">Passive labels for compact status, category, and metadata display.</p>
+    </div>
+
+    <section class="surface" aria-labelledby="tag-status-title">
+        <h2 id="tag-status-title">Status Set</h2>
+        <div class="tag-set" data-testid="nt-tag-status-set">
+            @foreach (var tag in StatusTags) {
+                <NTTag @key="tag.Label" Label="@tag.Label" BackgroundColor="@tag.BackgroundColor" TextColor="@tag.TextColor" Elevation="@tag.Elevation" />
+            }
+        </div>
+    </section>
+
+    <section class="surface" aria-labelledby="tag-playground-title">
+        <h2 id="tag-playground-title">Playground</h2>
+
+        <div class="controls">
+            <label>
+                Label
+                <input @bind="PlaygroundLabel" maxlength="32" aria-label="Tag label" />
+            </label>
+
+            <label>
+                Color
+                <select @bind="SelectedColorName">
+                    @foreach (var option in ColorOptions) {
+                        <option value="@option.Name">@option.Name</option>
+                    }
+                </select>
+            </label>
+
+            <label>
+                Elevation
+                <select @bind="SelectedElevation">
+                    @foreach (var elevation in ElevationOptions) {
+                        <option value="@elevation">@elevation</option>
+                    }
+                </select>
+            </label>
+
+            <label>
+                Text alignment
+                <select @bind="SelectedTextAlignment">
+                    @foreach (var alignment in Enum.GetValues<TextAlign>()) {
+                        <option value="@alignment">@alignment</option>
+                    }
+                </select>
+            </label>
+        </div>
+
+        <div class="preview" data-testid="nt-tag-playground">
+            <NTTag Label="@EffectivePlaygroundLabel" BackgroundColor="@SelectedColor.BackgroundColor" TextColor="@SelectedColor.TextColor" Elevation="@SelectedElevation" TextAlignment="@SelectedTextAlignment" />
+        </div>
+    </section>
+
+    <section class="surface" aria-labelledby="tag-metadata-title">
+        <h2 id="tag-metadata-title">Metadata Rows</h2>
+        <div class="records">
+            @foreach (var record in Records) {
+                <div class="record" @key="record.Title">
+                    <div class="record-title">
+                        <h3>@record.Title</h3>
+                        <p class="muted">@record.Description</p>
+                    </div>
+                    <div class="tag-set" aria-label="@($"{record.Title} tags")">
+                        @foreach (var tag in record.Tags) {
+                            <NTTag @key="tag.Label" Label="@tag.Label" BackgroundColor="@tag.BackgroundColor" TextColor="@tag.TextColor" Elevation="@tag.Elevation" />
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </section>
+</div>
+
+@code {
+    private static readonly TagColorOption[] ColorOptions = [
+        new("Secondary", TnTColor.SecondaryContainer, TnTColor.OnSecondaryContainer),
+        new("Success", TnTColor.SuccessContainer, TnTColor.OnSuccessContainer),
+        new("Warning", TnTColor.WarningContainer, TnTColor.OnWarningContainer),
+        new("Error", TnTColor.ErrorContainer, TnTColor.OnErrorContainer),
+        new("Info", TnTColor.InfoContainer, TnTColor.OnInfoContainer),
+        new("Assert", TnTColor.AssertContainer, TnTColor.OnAssertContainer)
+    ];
+
+    private static readonly int[] ElevationOptions = [0, 1, 2, 3];
+
+    private static readonly TagSample[] StatusTags = [
+        new("Draft", TnTColor.SecondaryContainer, TnTColor.OnSecondaryContainer, 1),
+        new("Approved", TnTColor.SuccessContainer, TnTColor.OnSuccessContainer, 1),
+        new("Blocked", TnTColor.ErrorContainer, TnTColor.OnErrorContainer, 1),
+        new("In review", TnTColor.InfoContainer, TnTColor.OnInfoContainer, 1),
+        new("External", TnTColor.AssertContainer, TnTColor.OnAssertContainer, 1),
+        new("SLA risk", TnTColor.WarningContainer, TnTColor.OnWarningContainer, 1)
+    ];
+
+    private static readonly MetadataRecord[] Records = [
+        new("Release candidate", "Build 2026.06.02 is waiting on final checks.", [
+            new("RC", TnTColor.InfoContainer, TnTColor.OnInfoContainer, 0),
+            new("QA", TnTColor.SecondaryContainer, TnTColor.OnSecondaryContainer, 0),
+            new("Risk low", TnTColor.SuccessContainer, TnTColor.OnSuccessContainer, 0)
+        ]),
+        new("Customer escalation", "Open support case with ownership assigned.", [
+            new("P1", TnTColor.ErrorContainer, TnTColor.OnErrorContainer, 0),
+            new("Support", TnTColor.AssertContainer, TnTColor.OnAssertContainer, 0),
+            new("SLA risk", TnTColor.WarningContainer, TnTColor.OnWarningContainer, 0)
+        ]),
+        new("Content review", "Documentation update queued for publishing.", [
+            new("Docs", TnTColor.SecondaryContainer, TnTColor.OnSecondaryContainer, 0),
+            new("Review", TnTColor.InfoContainer, TnTColor.OnInfoContainer, 0)
+        ])
+    ];
+
+    private string PlaygroundLabel { get; set; } = "Ready";
+
+    private int SelectedElevation { get; set; } = 1;
+
+    private string SelectedColorName { get; set; } = ColorOptions[0].Name;
+
+    private TextAlign SelectedTextAlignment { get; set; } = TextAlign.Center;
+
+    private string EffectivePlaygroundLabel => string.IsNullOrWhiteSpace(PlaygroundLabel) ? "Tag" : PlaygroundLabel.Trim();
+
+    private TagColorOption SelectedColor => ColorOptions.First(option => option.Name == SelectedColorName);
+
+    private sealed record TagColorOption(string Name, TnTColor BackgroundColor, TnTColor TextColor);
+
+    private sealed record TagSample(string Label, TnTColor BackgroundColor, TnTColor TextColor, int Elevation);
+
+    private sealed record MetadataRecord(string Title, string Description, TagSample[] Tags);
+}

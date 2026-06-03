@@ -7,6 +7,7 @@ namespace NTComponents.Core;
 /// <summary>
 ///     A component that handles external click events.
 /// </summary>
+[Obsolete("TnTExternalClickHandler is obsolete. Use component-owned external click handling instead.")]
 [method: DynamicDependency(nameof(OnClick))]
 public partial class TnTExternalClickHandler() : TnTPageScriptComponent<TnTExternalClickHandler> {
 

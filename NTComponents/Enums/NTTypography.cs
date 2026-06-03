@@ -5,7 +5,7 @@ namespace NTComponents;
 /// </summary>
 /// <remarks>
 ///     <para>
-///         These values map directly to the <c>nt-*</c> typography utility classes emitted by <see cref="TnTMeasurements" />. Each role represents a complete typography recipe, not just a font size.
+///         These values map directly to the <c>nt-*</c> typography utility classes emitted by <see cref="NTHeadDependencies" />. Each role represents a complete typography recipe, not just a font size.
 ///     </para>
 ///     <para>A typography role defines the font reference, font weight, font size, line height, and letter spacing together so type remains consistent across the system.</para>
 ///     <para>

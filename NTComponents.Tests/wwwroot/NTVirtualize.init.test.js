@@ -1,5 +1,7 @@
 import { jest } from '@jest/globals';
-import { init, updateRenderState } from '../../NTComponents/Virtualization/NTVirtualize.razor.js';
+import { init, onDispose, updateRenderState } from '../../NTComponents/Virtualization/NTVirtualize.razor.js';
+
+let dotNetRefId = 0;
 
 describe('NTVirtualize.init', () => {
     let intersectionObservers;
@@ -108,7 +110,7 @@ describe('NTVirtualize.init', () => {
 
         const dotNetRef = {
             _callDispatcher: {},
-            _id: 'virtualize-test',
+            _id: `virtualize-test-${++dotNetRefId}`,
             invokeMethodAsync: jest.fn(),
             dispose: jest.fn(),
         };
@@ -137,5 +139,70 @@ describe('NTVirtualize.init', () => {
         // itemsAfter = max(0, 100 - 22 - 0) = 78
         // bottomSpacerSize = 78 * 20 = 1560
         expect(dotNetRef.invokeMethodAsync).toHaveBeenCalledWith('LoadItems', 0, 1560, 0, 22);
+    });
+
+    test('recalculates the bottom spacer when total count becomes available', () => {
+        const { topSpacer, bottomSpacer, dotNetRef, scrollAncestor } = createVirtualizedElements('auto');
+        scrollAncestor.style.maxHeight = '864px';
+        Object.defineProperty(scrollAncestor, 'clientHeight', { configurable: true, value: 672 });
+
+        init(dotNetRef, topSpacer, bottomSpacer, 48, 3, 100);
+
+        intersectionObservers[0].callback([
+            { target: bottomSpacer, isIntersecting: true },
+        ]);
+
+        expect(dotNetRef.invokeMethodAsync).toHaveBeenCalledWith('LoadItems', 0, 0, 0, 24);
+        dotNetRef.invokeMethodAsync.mockClear();
+
+        updateRenderState(dotNetRef, 10000, 24, 0);
+
+        expect(dotNetRef.invokeMethodAsync).toHaveBeenCalledWith('LoadItems', 0, 478848, 0, 24);
+    });
+
+    test('recalculates visible range when the scroll container moves through an already intersecting spacer', () => {
+        const originalRequestAnimationFrame = window.requestAnimationFrame;
+        const originalCancelAnimationFrame = window.cancelAnimationFrame;
+        window.requestAnimationFrame = callback => {
+            callback(0);
+            return 1;
+        };
+        window.cancelAnimationFrame = jest.fn();
+
+        try {
+            const { topSpacer, bottomSpacer, dotNetRef, scrollAncestor } = createVirtualizedElements('auto');
+            scrollAncestor.style.maxHeight = '400px';
+            Object.defineProperty(scrollAncestor, 'clientHeight', { configurable: true, value: 400 });
+
+            init(dotNetRef, topSpacer, bottomSpacer, 20, 1, 100);
+            updateRenderState(dotNetRef, 1000, 0, 0);
+            dotNetRef.invokeMethodAsync.mockClear();
+
+            scrollAncestor.scrollTop = 240;
+            scrollAncestor.dispatchEvent(new Event('scroll'));
+
+            expect(dotNetRef.invokeMethodAsync).toHaveBeenCalledWith('LoadItems', 220, 19340, 11, 22);
+        }
+        finally {
+            window.requestAnimationFrame = originalRequestAnimationFrame;
+            window.cancelAnimationFrame = originalCancelAnimationFrame;
+        }
+    });
+
+    test('disposes observers and restores scroll overflow anchoring without disposing dotnet reference', () => {
+        const { topSpacer, bottomSpacer, dotNetRef, scrollAncestor } = createVirtualizedElements('auto');
+        scrollAncestor.style.overflowAnchor = 'auto';
+
+        init(dotNetRef, topSpacer, bottomSpacer, 20, 1, 100);
+
+        expect(scrollAncestor.style.overflowAnchor).toBe('none');
+
+        onDispose(topSpacer, dotNetRef);
+
+        expect(intersectionObservers[0].disconnect).toHaveBeenCalled();
+        expect(mutationObservers[0].disconnect).toHaveBeenCalled();
+        expect(mutationObservers[1].disconnect).toHaveBeenCalled();
+        expect(scrollAncestor.style.overflowAnchor).toBe('auto');
+        expect(dotNetRef.dispose).not.toHaveBeenCalled();
     });
 });

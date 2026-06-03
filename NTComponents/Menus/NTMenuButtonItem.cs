@@ -120,5 +120,5 @@ public class NTMenuButtonItem : Microsoft.AspNetCore.Components.IComponent, INTM
     }
 
     private bool RenderedStateChanged(string? previousAriaLabel, bool previousDisabled, TnTIcon? previousIcon, string previousLabel, bool previousSelected) =>
-        previousAriaLabel != AriaLabel || previousDisabled != Disabled || !Equals(previousIcon, Icon) || previousLabel != Label || previousSelected != Selected;
+        previousAriaLabel != AriaLabel || previousDisabled != Disabled || !NTMenu.IconStateEquals(previousIcon, Icon) || previousLabel != Label || previousSelected != Selected;
 }

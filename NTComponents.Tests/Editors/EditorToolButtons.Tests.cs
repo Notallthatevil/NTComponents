@@ -15,6 +15,7 @@ public class EditorToolButtons_Tests : BunitContext {
         buttonElement.GetAttribute("aria-haspopup").Should().Be("dialog");
         buttonElement.GetAttribute("aria-expanded").Should().Be("false");
         buttonElement.GetAttribute("aria-pressed").Should().Be("false");
+        buttonElement.QuerySelector(".tnt-rich-text-editor-toolbar-icon")!.HasAttribute("title").Should().BeFalse();
     }
 
     [Fact]
@@ -30,6 +31,7 @@ public class EditorToolButtons_Tests : BunitContext {
         buttonElement.GetAttribute("aria-haspopup").Should().Be("dialog");
         buttonElement.GetAttribute("aria-expanded").Should().Be("false");
         buttonElement.GetAttribute("aria-pressed").Should().Be("false");
+        buttonElement.QuerySelector(".tnt-rich-text-editor-toolbar-icon")!.HasAttribute("title").Should().BeFalse();
     }
 
     [Fact]
@@ -45,6 +47,7 @@ public class EditorToolButtons_Tests : BunitContext {
         buttonElement.GetAttribute("aria-haspopup").Should().Be("dialog");
         buttonElement.GetAttribute("aria-expanded").Should().Be("false");
         buttonElement.GetAttribute("aria-pressed").Should().Be("false");
+        buttonElement.QuerySelector(".tnt-rich-text-editor-toolbar-icon")!.HasAttribute("title").Should().BeFalse();
     }
 
     [Fact]
@@ -60,6 +63,7 @@ public class EditorToolButtons_Tests : BunitContext {
         buttonElement.GetAttribute("aria-haspopup").Should().Be("dialog");
         buttonElement.GetAttribute("aria-expanded").Should().Be("false");
         buttonElement.GetAttribute("aria-pressed").Should().Be("false");
+        buttonElement.QuerySelector(".tnt-rich-text-editor-toolbar-icon")!.HasAttribute("title").Should().BeFalse();
     }
 
     [Fact]
@@ -75,5 +79,6 @@ public class EditorToolButtons_Tests : BunitContext {
         buttonElement.GetAttribute("aria-haspopup").Should().Be("dialog");
         buttonElement.GetAttribute("aria-expanded").Should().Be("false");
         buttonElement.GetAttribute("aria-pressed").Should().Be("false");
+        buttonElement.QuerySelector(".tnt-rich-text-editor-toolbar-icon")!.HasAttribute("title").Should().BeFalse();
     }
 }

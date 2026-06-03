@@ -1,0 +1,72 @@
+@using NTComponents.Core
+@inherits TnTComponentBase
+@namespace NTComponents
+
+<nt-tab-view @attributes="AdditionalAttributes"
+             id="@ResolvedElementId"
+             class="@ElementClass"
+             style="@ElementStyle"
+             title="@ElementTitle"
+             lang="@ElementLang"
+             name="@Name"
+             @ref="Element"
+             data-nt-tab-view="true"
+             data-nt-tab-view-name="@Name"
+             data-nt-tab-query-parameter="@ResolvedQueryParameterName"
+             data-nt-tab-update-query="@UpdateQueryAttribute">
+    <CascadingValue Value="this" IsFixed="true">
+        @{
+            ResetRenderSequence();
+        }
+        <DeferRendering>
+            <div class="nt-tab-view-header" data-nt-tab-view-header>
+                <div class="nt-tab-view-tablist" role="tablist" aria-label="@AriaLabel">
+                    @{
+                        var selectedTab = GetInitiallySelectedTab();
+                    }
+                    @for (var index = 0; index < OrderedTabs.Count; index++) {
+                        var tab = OrderedTabs[index];
+                        var selected = ReferenceEquals(tab, selectedTab);
+
+                        <button type="button"
+                                id="@tab.ResolvedTabId"
+                                class="@BuildTabClass(tab, selected)"
+                                role="tab"
+                                aria-selected="@(selected ? "true" : "false")"
+                                aria-controls="@tab.ResolvedPanelId"
+                                aria-label="@tab.ResolvedAriaLabel"
+                                aria-disabled="@(tab.Disabled ? "true" : null)"
+                                disabled="@(tab.Disabled ? true : null)"
+                                tabindex="@(selected && !tab.Disabled ? "0" : "-1")"
+                                data-nt-tab-button="true"
+                                data-nt-tab-value="@tab.ResolvedValue"
+                                data-nt-tab-index="@index">
+                            <span class="nt-tab-view-state-layer" aria-hidden="true"></span>
+                            @NTRipple.Render()
+                            <span class="nt-tab-view-content nt-tab-view-indicator-target">
+                                @if (tab.Icon is not null) {
+                                    <span class="nt-tab-view-icon" aria-hidden="true">@tab.Icon.Render()</span>
+                                }
+                                <span class="nt-tab-view-label">@tab.Label</span>
+                            </span>
+
+                            @if (tab.HeaderTooltip is not null) {
+                                <TnTTooltip>
+                                    @tab.HeaderTooltip
+                                </TnTTooltip>
+                            }
+                        </button>
+                    }
+                    <span class="nt-tab-view-active-indicator" aria-hidden="true" data-nt-tab-indicator>
+                        <span class="nt-tab-view-active-indicator-shape"></span>
+                    </span>
+                </div>
+            </div>
+        </DeferRendering>
+
+        <div class="nt-tab-view-panels">
+            @ChildContent
+        </div>
+    </CascadingValue>
+</nt-tab-view>
+<TnTPageScript Src="@JsModulePathValue" />

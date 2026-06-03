@@ -118,7 +118,6 @@ public class NTMenuSubMenuItem : Microsoft.AspNetCore.Components.IComponent, INT
     public Task SetParametersAsync(ParameterView parameters) {
         var previousParent = Parent;
         var previousAriaLabel = AriaLabel;
-        var previousChildContent = ChildContent;
         var previousDisabled = Disabled;
         var previousIcon = Icon;
         var previousLabel = Label;
@@ -138,13 +137,13 @@ public class NTMenuSubMenuItem : Microsoft.AspNetCore.Components.IComponent, INT
             Parent.RegisterMenuItem(this);
             _registeredParent = Parent;
         }
-        else if (_registeredParent is not null && RenderedStateChanged(previousAriaLabel, previousChildContent, previousDisabled, previousIcon, previousLabel, previousSelected)) {
+        else if (_registeredParent is not null && RenderedStateChanged(previousAriaLabel, previousDisabled, previousIcon, previousLabel, previousSelected)) {
             Parent.NotifyMenuItemChanged(this);
         }
 
         return Task.CompletedTask;
     }
 
-    private bool RenderedStateChanged(string? previousAriaLabel, RenderFragment? previousChildContent, bool previousDisabled, TnTIcon? previousIcon, string previousLabel, bool previousSelected) =>
-        previousAriaLabel != AriaLabel || previousChildContent != ChildContent || previousDisabled != Disabled || !Equals(previousIcon, Icon) || previousLabel != Label || previousSelected != Selected;
+    private bool RenderedStateChanged(string? previousAriaLabel, bool previousDisabled, TnTIcon? previousIcon, string previousLabel, bool previousSelected) =>
+        previousAriaLabel != AriaLabel || previousDisabled != Disabled || !NTMenu.IconStateEquals(previousIcon, Icon) || previousLabel != Label || previousSelected != Selected;
 }

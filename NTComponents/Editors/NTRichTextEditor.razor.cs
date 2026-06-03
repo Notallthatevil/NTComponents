@@ -6,6 +6,7 @@ using NTComponents.Core;
 using NTComponents.Ext;
 using NTComponents.Interfaces;
 using System.Diagnostics.CodeAnalysis;
+using System.Text;
 
 namespace NTComponents;
 
@@ -14,8 +15,40 @@ namespace NTComponents;
 /// only supplies parameters, markup metadata, and optional interactive callbacks.
 /// </summary>
 public partial class NTRichTextEditor : ITnTPageScriptComponent<NTRichTextEditor> {
+    private static readonly HashSet<string> RichTextEditorExplicitControlAttributeNames = new(StringComparer.OrdinalIgnoreCase) {
+        "aria-describedby",
+        "aria-errormessage",
+        "aria-invalid",
+        "aria-label",
+        "aria-labelledby",
+        "autofocus",
+        "class",
+        "contenteditable",
+        "data-bind-on-input",
+        "data-editable",
+        "data-empty",
+        "data-maxlength",
+        "data-placeholder",
+        "id",
+        "lang",
+        "maxlength",
+        "minlength",
+        "name",
+        "onkeydown",
+        "placeholder",
+        "readonly",
+        "required",
+        "role",
+        "spellcheck",
+        "style",
+        "tabindex",
+        "title",
+        "type",
+        "value"
+    };
 
     private readonly IJSRuntime _jsRuntime;
+    private ElementReference _editorElement;
 
     /// <summary>
     /// Gets the .NET object reference used for JavaScript interop.
@@ -30,8 +63,51 @@ public partial class NTRichTextEditor : ITnTPageScriptComponent<NTRichTextEditor
     /// <inheritdoc />
     public string? JsModulePath => "./_content/NTComponents/Editors/NTRichTextEditor.razor.js";
 
-    /// <inheritdoc />
-    public override InputType Type => InputType.TextArea;
+    string? ITnTComponentBase.ElementClass => GetRootClass(!string.IsNullOrWhiteSpace(CurrentErrorText));
+
+    string? ITnTComponentBase.ElementStyle => ElementStyle;
+
+    /// <summary>
+    /// Gets the editor input type for compatibility with earlier rich editor callers.
+    /// </summary>
+    public InputType Type => InputType.TextArea;
+
+    /// <summary>
+    /// Gets or sets an explicit error message for compatibility with the legacy form field API.
+    /// Prefer <see cref="NTFormControlBaseCore{TValue}.ErrorText" /> for new code.
+    /// </summary>
+    [Parameter]
+    public string? ErrorMessage { get; set; }
+
+    /// <summary>
+    /// Gets or sets the legacy end icon alias. Prefer <see cref="NTFormControlBase{TValue}.TrailingIcon" /> for new code.
+    /// </summary>
+    [Parameter]
+    public TnTIcon? EndIcon { get; set; }
+
+    /// <summary>
+    /// Gets or sets the legacy character-counter alias. Prefer <see cref="NTInputBase{TValue}.ShowCharacterCounter" /> for new code.
+    /// </summary>
+    [Parameter]
+    public bool? ShowInputLength { get; set; }
+
+    /// <summary>
+    /// Gets or sets the legacy start icon alias. Prefer <see cref="NTFormControlBase{TValue}.LeadingIcon" /> for new code.
+    /// </summary>
+    [Parameter]
+    public TnTIcon? StartIcon { get; set; }
+
+    /// <summary>
+    /// Gets or sets tooltip content for compatibility with the legacy form field API.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? Tooltip { get; set; }
+
+    /// <summary>
+    /// Gets or sets the tooltip icon for compatibility with the legacy form field API.
+    /// </summary>
+    [Parameter]
+    public TnTIcon TooltipIcon { get; set; } = MaterialIcon.Help;
 
     private MarkupString _markupValue;
 
@@ -105,11 +181,11 @@ public partial class NTRichTextEditor : ITnTPageScriptComponent<NTRichTextEditor
     /// Gets the default tool plugins used by the editor.
     /// </summary>
     public static readonly IReadOnlyList<INTRichTextEditorTool> DefaultTools = [
-            new NTRichTextEditorTool("image", CreateToolPanelTemplate<EditorToolImagePanel>(), "./_content/NTComponents/Editors/Tool/EditorToolImageButton.razor.js"),
-            new NTRichTextEditorTool("table", CreateToolPanelTemplate<EditorToolTablePanel>(), "./_content/NTComponents/Editors/Tool/EditorToolTableButton.razor.js"),
-            new NTRichTextEditorTool("textColor", CreateToolPanelTemplate<EditorToolTextColorPanel>(), "./_content/NTComponents/Editors/Tool/EditorToolTextColorButton.razor.js"),
-            new NTRichTextEditorTool("link", CreateToolPanelTemplate<EditorToolLinkPanel>(), "./_content/NTComponents/Editors/Tool/EditorToolLinkButton.razor.js"),
-            new NTRichTextEditorTool("iframe", CreateToolPanelTemplate<EditorToolIframePanel>(), "./_content/NTComponents/Editors/Tool/EditorToolIframeButton.razor.js")
+            new NTRichTextEditorTool("image", CreateToolPanelTemplate<EditorToolImagePanel>()),
+            new NTRichTextEditorTool("table", CreateToolPanelTemplate<EditorToolTablePanel>()),
+            new NTRichTextEditorTool("textColor", CreateToolPanelTemplate<EditorToolTextColorPanel>()),
+            new NTRichTextEditorTool("link", CreateToolPanelTemplate<EditorToolLinkPanel>()),
+            new NTRichTextEditorTool("iframe", CreateToolPanelTemplate<EditorToolIframePanel>())
         ];
 
     /// <summary>
@@ -119,7 +195,20 @@ public partial class NTRichTextEditor : ITnTPageScriptComponent<NTRichTextEditor
 
     private IReadOnlyList<INTRichTextEditorTool> _activeToolsToRender = Array.Empty<INTRichTextEditorTool>();
 
-    private IReadOnlyDictionary<string, object>? _editorAttributes;
+    /// <inheritdoc />
+    protected override IEnumerable<string> ExplicitControlAttributeNames => RichTextEditorExplicitControlAttributeNames;
+
+    /// <inheritdoc />
+    protected override bool UsesSeparateFormPostValue => true;
+
+    /// <inheritdoc />
+    protected override string InputIdPrefix => "nt-rich-text-editor";
+
+    private int? MaxLength => TryParseAdditionalAttributeInteger("maxlength");
+
+    private string RichTextAriaLabel => Label ?? Placeholder ?? FieldIdentifier.FieldName;
+
+    private string RichTextPlaceholder => string.IsNullOrWhiteSpace(Placeholder) ? "Start typing" : Placeholder;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="NTRichTextEditor" /> class.
@@ -180,17 +269,44 @@ public partial class NTRichTextEditor : ITnTPageScriptComponent<NTRichTextEditor
 
     /// <inheritdoc />
     protected override void OnParametersSet() {
+        if (ErrorText is null && ErrorMessage is not null) {
+            ErrorText = ErrorMessage;
+        }
+
+        if (LeadingIcon is null && StartIcon is not null) {
+            LeadingIcon = StartIcon;
+        }
+
+        if (TrailingIcon is null && EndIcon is not null) {
+            TrailingIcon = EndIcon;
+        }
+
+        if (ShowInputLength.HasValue) {
+            ShowCharacterCounter = ShowInputLength.Value;
+        }
+
+        TooltipIcon.Tooltip = Tooltip;
+        TooltipIcon.AdditionalClass = "tnt-tooltip-icon";
+        TooltipIcon.Size = IconSize.Small;
+
         base.OnParametersSet();
 
         _activeToolsToRender = (Tools ?? DefaultTools)
             .Where(tool => HasToolbarAction(tool.Action))
             .ToArray();
 
-        _editorAttributes = AdditionalAttributes?
-            .Where(kvp => kvp.Key is not ("autocomplete" or "autofocus" or "class" or "disabled" or "id" or "lang" or "maxlength" or "minlength" or "name" or "placeholder" or "readonly" or "required" or "style" or "title" or "type" or "value"))
-            .ToDictionary();
-
         PageScript = CreatePageScript(_activeToolsToRender);
+    }
+
+    /// <inheritdoc />
+    protected override void BuildAdditionalRootClasses(StringBuilder builder) {
+        builder.Append(" nt-rich-text-editor");
+        builder.Append(" nt-textarea");
+
+        if (TryGetAdditionalAttribute("class", out var additionalClass) && !string.IsNullOrWhiteSpace(additionalClass?.ToString())) {
+            builder.Append(' ');
+            builder.Append(additionalClass);
+        }
     }
 
     /// <inheritdoc />
@@ -207,7 +323,7 @@ public partial class NTRichTextEditor : ITnTPageScriptComponent<NTRichTextEditor
         }
 
         try {
-            await IsolatedJsModule.InvokeVoidAsync("focusEditor", Element);
+            await IsolatedJsModule.InvokeVoidAsync("focusEditor", _editorElement);
         }
         catch (JSDisconnectedException) {
             // JS runtime was disconnected, safe to ignore.
@@ -226,10 +342,10 @@ public partial class NTRichTextEditor : ITnTPageScriptComponent<NTRichTextEditor
         try {
             if (firstRender) {
                 IsolatedJsModule = await _jsRuntime.ImportIsolatedJs(this, JsModulePath);
-                await (IsolatedJsModule?.InvokeVoidAsync("onLoad", Element, DotNetObjectRef) ?? ValueTask.CompletedTask);
+                await (IsolatedJsModule?.InvokeVoidAsync("onLoad", _editorElement, DotNetObjectRef) ?? ValueTask.CompletedTask);
             }
 
-            await (IsolatedJsModule?.InvokeVoidAsync("onUpdate", Element, DotNetObjectRef) ?? ValueTask.CompletedTask);
+            await (IsolatedJsModule?.InvokeVoidAsync("onUpdate", _editorElement, DotNetObjectRef) ?? ValueTask.CompletedTask);
         }
         catch (JSDisconnectedException) {
             // JS runtime was disconnected, safe to ignore during render.
@@ -303,7 +419,7 @@ public partial class NTRichTextEditor : ITnTPageScriptComponent<NTRichTextEditor
     protected virtual async ValueTask DisposeAsyncCore() {
         if (IsolatedJsModule is not null) {
             try {
-                await IsolatedJsModule.InvokeVoidAsync("onDispose", Element, DotNetObjectRef);
+                await IsolatedJsModule.InvokeVoidAsync("onDispose", _editorElement, DotNetObjectRef);
                 await IsolatedJsModule.DisposeAsync().ConfigureAwait(false);
             }
             catch (JSDisconnectedException) {
@@ -325,6 +441,14 @@ public partial class NTRichTextEditor : ITnTPageScriptComponent<NTRichTextEditor
 
         _markupValue = nextMarkupValue;
         await MarkupValueChanged.InvokeAsync(_markupValue);
+    }
+
+    private int? TryParseAdditionalAttributeInteger(string name) {
+        if (!TryGetAdditionalAttribute(name, out var value)) {
+            return null;
+        }
+
+        return int.TryParse(value?.ToString(), out var result) ? result : null;
     }
 
     private RenderFragment CreatePageScript(IReadOnlyList<INTRichTextEditorTool> activeToolsToRender) => builder => {

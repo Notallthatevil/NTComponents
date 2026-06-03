@@ -1,0 +1,51 @@
+@use '../../../NTComponents/Styles/_Variables/_colors.scss' as colors;
+@use '../../../NTComponents/Styles/_Variables/_typescale.scss' as typescale;
+
+.rich-text-editor-form {
+    display: grid;
+    gap: 12px;
+    min-width: 0;
+}
+
+.rich-text-editor-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.rich-text-editor-status {
+    @include typescale.nt-body-small;
+
+    min-height: 16px;
+    color: colors.$tnt-color-on-surface-variant;
+}
+
+.rich-text-editor-output {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+
+    summary {
+        @include typescale.nt-label-large;
+
+        cursor: pointer;
+        color: colors.$tnt-color-primary;
+    }
+
+    pre {
+        @include typescale.nt-body-small;
+
+        box-sizing: border-box;
+        min-width: 0;
+        max-width: 100%;
+        max-height: 220px;
+        margin: 0;
+        padding: 12px;
+        overflow: auto;
+        color: colors.$tnt-color-on-surface;
+        white-space: pre-wrap;
+        border-radius: 8px;
+        background: colors.$tnt-color-surface-container;
+    }
+}

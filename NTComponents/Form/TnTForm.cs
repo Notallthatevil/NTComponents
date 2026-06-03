@@ -1,3 +1,4 @@
+#pragma warning disable CS0618
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Rendering;
@@ -9,6 +10,7 @@ namespace NTComponents;
 /// Defines the contract for a TnT form, exposing appearance, disabled, and read-only state. Implementations provide
 /// metadata for form rendering and state management in NTComponents.
 /// </summary>
+[System.Obsolete("This legacy Form element is obsolete. Use the NT form components instead.")]
 public interface ITnTForm {
 
     /// <summary>
@@ -35,6 +37,7 @@ public interface ITnTForm {
 /// inherited.
 /// </summary>
 [ExcludeFromCodeCoverage]
+[System.Obsolete("This legacy Form element is obsolete. Use the NT form components instead.")]
 public sealed class TnTForm : EditForm, ITnTForm {
 
     /// <inheritdoc />
@@ -83,6 +86,7 @@ public sealed class TnTForm : EditForm, ITnTForm {
 /// <summary>
 /// Specifies the appearance of a form.
 /// </summary>
+[System.Obsolete("This legacy Form element is obsolete. Use the NT form components instead.")]
 public enum FormAppearance {
 
     /// <summary>

@@ -8,6 +8,7 @@ namespace NTComponents.Grid.Infrastructure;
 ///     Provides internal state and logic for a <see cref="TnTDataGrid{TGridItem}" /> component, including column registration, sorting, pagination, and item management.
 /// </summary>
 /// <typeparam name="TGridItem">The type of data represented by each row in the grid.</typeparam>
+[Obsolete("This legacy grid API is obsolete. Use NTDataGrid, NTPropertyColumn, and NTTemplateColumn instead.")]
 internal sealed class TnTInternalGridContext<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields)] TGridItem>(TnTDataGrid<TGridItem> _grid) {
 
     /// <summary>

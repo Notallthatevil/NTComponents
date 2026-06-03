@@ -10,7 +10,7 @@ public class NTTextArea_Tests : BunitContext {
     public NTTextArea_Tests() {
         SetRendererInfo(new RendererInfo("WebAssembly", true));
 
-        var module = JSInterop.SetupModule("./_content/NTComponents/FormV2/NTTextArea.razor.js");
+        var module = JSInterop.SetupModule("./_content/NTComponents/Form/NTTextArea.razor.js");
         module.SetupVoid("onLoad", _ => true).SetVoidResult();
         module.SetupVoid("onUpdate", _ => true).SetVoidResult();
         module.SetupVoid("onDispose", _ => true).SetVoidResult();
@@ -39,7 +39,7 @@ public class NTTextArea_Tests : BunitContext {
     public void JsModulePath_Returns_TextArea_Module_Path() {
         var cut = RenderTextArea();
 
-        cut.Instance.JsModulePath.Should().Be("./_content/NTComponents/FormV2/NTTextArea.razor.js");
+        cut.Instance.JsModulePath.Should().Be("./_content/NTComponents/Form/NTTextArea.razor.js");
     }
 
     [Fact]
@@ -158,7 +158,7 @@ public class NTTextArea_Tests : BunitContext {
         cut.Find("textarea").GetAttribute("data-nt-textarea-max-visible-lines").Should().Be("5");
         cut.Find("textarea").GetAttribute("rows").Should().Be("2");
         cut.Find("textarea").HasAttribute("oninput").Should().BeFalse();
-        cut.Find("tnt-page-script").GetAttribute("src").Should().Be("./_content/NTComponents/FormV2/NTTextArea.razor.js");
+        cut.Find("tnt-page-script").GetAttribute("src").Should().Be("./_content/NTComponents/Form/NTTextArea.razor.js");
     }
 
     [Fact]

@@ -9,34 +9,39 @@
      hidden
      aria-hidden="true">
     <div class="tnt-rich-text-editor-inline-tool-fields">
-        <label class="tnt-rich-text-editor-inline-tool-field">
-            <span>Iframe URL</span>
-            <input type="url"
-                   data-role="iframe-url"
-                   placeholder="https://example.com/embed"
-                   disabled="@Disabled" />
-        </label>
-        <label class="tnt-rich-text-editor-inline-tool-field">
-            <span>Title</span>
-            <input type="text"
-                   data-role="iframe-title"
-                   placeholder="Embedded content"
-                   disabled="@Disabled" />
-        </label>
-        <label class="tnt-rich-text-editor-inline-tool-field">
-            <span>Width</span>
-            <input type="text"
-                   data-role="iframe-width"
-                   placeholder="100%"
-                   disabled="@Disabled" />
-        </label>
-        <label class="tnt-rich-text-editor-inline-tool-field">
-            <span>Height</span>
-            <input type="text"
-                   data-role="iframe-height"
-                   placeholder="315"
-                   disabled="@Disabled" />
-        </label>
+        <NTInputText Label="Iframe URL"
+                     @bind-Value="_iframeUrl"
+                     Appearance="NTFormAppearance.Outlined"
+                     Density="NTFormDensity.Dense"
+                     InputType="TextInputType.Url"
+                     Placeholder="https://example.com/embed"
+                     Disabled="@Disabled"
+                     SubmitValue="false"
+                     data-role="iframe-url" />
+        <NTInputText Label="Title"
+                     @bind-Value="_iframeTitle"
+                     Appearance="NTFormAppearance.Outlined"
+                     Density="NTFormDensity.Dense"
+                     Placeholder="Embedded content"
+                     Disabled="@Disabled"
+                     SubmitValue="false"
+                     data-role="iframe-title" />
+        <NTInputText Label="Width"
+                     @bind-Value="_iframeWidth"
+                     Appearance="NTFormAppearance.Outlined"
+                     Density="NTFormDensity.Dense"
+                     Placeholder="100%"
+                     Disabled="@Disabled"
+                     SubmitValue="false"
+                     data-role="iframe-width" />
+        <NTInputText Label="Height"
+                     @bind-Value="_iframeHeight"
+                     Appearance="NTFormAppearance.Outlined"
+                     Density="NTFormDensity.Dense"
+                     Placeholder="315"
+                     Disabled="@Disabled"
+                     SubmitValue="false"
+                     data-role="iframe-height" />
     </div>
     <div class="tnt-rich-text-editor-inline-tool-actions">
         <button type="button"
@@ -55,6 +60,11 @@
 </div>
 
 @code {
+    private string? _iframeUrl;
+    private string? _iframeTitle;
+    private string? _iframeWidth;
+    private string? _iframeHeight;
+
     [Parameter]
     public bool Disabled { get; set; }
 }

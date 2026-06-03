@@ -1,0 +1,107 @@
+@use '../Styles/_Variables/_colors.scss' as colors;
+@use '../Styles/_Variables/_corner-radius.scss' as radius;
+@use '../Styles/_Variables/_motion.scss' as motion;
+@use '../Styles/_Variables/_typescale.scss' as typescale;
+@use '../Styles/_Variables/_elevation.scss' as elevation;
+
+$nt-tooltip-z-index: var(--nt-tooltip-z-index, 10000);
+$nt-tooltip-viewport-margin: var(--nt-tooltip-viewport-margin, 8px);
+$nt-tooltip-position-offset: var(--nt-tooltip-position-offset, 8px);
+
+$nt-tooltip-plain-min-height: var(--nt-tooltip-plain-min-height, 24px);
+$nt-tooltip-plain-padding-block: var(--nt-tooltip-plain-padding-block, 4px);
+$nt-tooltip-plain-padding-inline: var(--nt-tooltip-plain-padding-inline, 8px);
+$nt-tooltip-plain-container-color: var(--nt-tooltip-plain-container-color, #{colors.$tnt-color-inverse-surface});
+$nt-tooltip-plain-label-color: var(--nt-tooltip-plain-label-color, #{colors.$tnt-color-inverse-on-surface});
+$nt-tooltip-plain-container-shape: var(--nt-tooltip-plain-container-shape, #{radius.$nt-corner-radius-extra-small});
+$nt-tooltip-plain-max-width: min(var(--nt-tooltip-plain-max-width, 200px), calc(100vw - 16px));
+
+$nt-tooltip-rich-padding-block: var(--nt-tooltip-rich-padding-block, 12px);
+$nt-tooltip-rich-padding-inline: var(--nt-tooltip-rich-padding-inline, 16px);
+$nt-tooltip-rich-container-color: var(--nt-tooltip-rich-container-color, #{colors.$tnt-color-surface-container});
+$nt-tooltip-rich-label-color: var(--nt-tooltip-rich-label-color, #{colors.$tnt-color-on-surface-variant});
+$nt-tooltip-rich-container-shape: var(--nt-tooltip-rich-container-shape, #{radius.$nt-corner-radius-small});
+$nt-tooltip-rich-max-width: min(var(--nt-tooltip-rich-max-width, 320px), calc(100vw - 16px));
+$nt-tooltip-rich-content-gap: var(--nt-tooltip-rich-content-gap, 4px);
+
+$nt-tooltip-show-duration: var(--nt-tooltip-show-duration, #{motion.$nt-motion-duration-short_3});
+$nt-tooltip-hide-duration: var(--nt-tooltip-hide-duration, #{motion.$nt-motion-duration-short_2});
+$nt-tooltip-easing: var(--nt-tooltip-easing, #{motion.$nt-motion-easing-standard});
+
+$tooltip-bg-color: var(--nt-tooltip-background-color, #{$nt-tooltip-plain-container-color});
+$tooltip-text-color: var(--nt-tooltip-text-color, #{$nt-tooltip-plain-label-color});
+$tooltip-border-color: var(--nt-tooltip-border-color, transparent);
+$tooltip-border-width: var(--nt-tooltip-border-width, 0px);
+
+.nt-tooltip {
+    position: fixed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    min-height: $nt-tooltip-plain-min-height;
+    max-width: $nt-tooltip-plain-max-width;
+    padding: $nt-tooltip-plain-padding-block $nt-tooltip-plain-padding-inline;
+    border: $tooltip-border-width solid $tooltip-border-color;
+    border-radius: $nt-tooltip-plain-container-shape;
+    background-color: $tooltip-bg-color;
+    color: $tooltip-text-color;
+    pointer-events: none;
+    contain: layout paint style;
+    opacity: 0;
+    visibility: hidden;
+    z-index: $nt-tooltip-z-index;
+    transition: opacity $nt-tooltip-hide-duration $nt-tooltip-easing, visibility 0s linear $nt-tooltip-hide-duration;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    left: -9999px;
+    top: -9999px;
+    --nt-tooltip-position-offset: #{$nt-tooltip-position-offset};
+    --nt-tooltip-viewport-margin: #{$nt-tooltip-viewport-margin};
+
+    @include typescale.tnt-body-small;
+
+    .nt-tooltip-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: $nt-tooltip-rich-content-gap;
+    }
+
+    &.nt-tooltip-visible {
+        opacity: 1;
+        visibility: visible;
+        transition-duration: $nt-tooltip-show-duration, 0s;
+        transition-delay: 0s, 0s;
+    }
+
+    &.nt-tooltip-rich {
+        --nt-tooltip-background-color: #{$nt-tooltip-rich-container-color};
+        --nt-tooltip-text-color: #{$nt-tooltip-rich-label-color};
+
+        align-items: flex-start;
+        justify-content: flex-start;
+        min-height: auto;
+        max-width: $nt-tooltip-rich-max-width;
+        padding: $nt-tooltip-rich-padding-block $nt-tooltip-rich-padding-inline;
+        border-radius: $nt-tooltip-rich-container-shape;
+        text-align: start;
+
+        @include elevation.tnt-elevation(2, false);
+        @include typescale.tnt-body-medium;
+
+        .nt-tooltip-content {
+            align-items: flex-start;
+            justify-content: flex-start;
+        }
+    }
+
+    ::deep .nt-tooltip-title,
+    ::deep [data-tooltip-title] {
+        margin: 0;
+        color: inherit;
+
+        @include typescale.tnt-title-small;
+    }
+}

@@ -7,7 +7,7 @@ using System.Linq.Expressions;
 namespace NTComponents.Tests.Form;
 
 public class NTAutocomplete_Tests : BunitContext {
-    private const string JsModulePath = "./_content/NTComponents/FormV2/NTAutocomplete.razor.js";
+    private const string JsModulePath = "./_content/NTComponents/Form/NTAutocomplete.razor.js";
 
     private static readonly IReadOnlyList<NTAutocompleteOption> Options = [
         new("Austin", "Austin") {

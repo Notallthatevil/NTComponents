@@ -1,0 +1,61 @@
+@use '../Styles/_Variables/_motion.scss' as motion;
+
+$nt-animation-enter-duration: var(--nt-animation-enter-duration, #{motion.$nt-motion-duration-medium_4});
+$nt-animation-exit-duration: var(--nt-animation-exit-duration, #{motion.$nt-motion-duration-short_4});
+$nt-animation-enter-easing: var(--nt-animation-enter-easing, #{motion.$nt-motion-easing-emphasized-decelerate});
+$nt-animation-exit-easing: var(--nt-animation-exit-easing, #{motion.$nt-motion-easing-emphasized-accelerate});
+$nt-animation-delay: var(--nt-animation-delay, 0ms);
+$nt-animation-distance: var(--nt-animation-distance, 24px);
+
+.nt-animation {
+    --nt-animation-enter-opacity: 1;
+    --nt-animation-exit-opacity: 0;
+    --nt-animation-enter-transform: translate3d(0, 0, 0);
+    --nt-animation-exit-transform: translate3d(0, 0, 0);
+
+    display: block;
+    opacity: var(--nt-animation-enter-opacity);
+    transform: var(--nt-animation-enter-transform);
+    will-change: auto;
+
+    &.nt-animation-slide-in-from-top {
+        --nt-animation-exit-transform: translate3d(0, calc(#{$nt-animation-distance} * -1), 0);
+    }
+
+    &.nt-animation-slide-in-from-bottom {
+        --nt-animation-exit-transform: translate3d(0, #{$nt-animation-distance}, 0);
+    }
+
+    &.nt-animation-slide-in-from-left {
+        --nt-animation-exit-transform: translate3d(calc(#{$nt-animation-distance} * -1), 0, 0);
+    }
+
+    &.nt-animation-slide-in-from-right {
+        --nt-animation-exit-transform: translate3d(#{$nt-animation-distance}, 0, 0);
+    }
+
+    &.nt-animation-enhanced {
+        opacity: var(--nt-animation-exit-opacity);
+        transform: var(--nt-animation-exit-transform);
+        transition-delay: $nt-animation-delay;
+        transition-duration: $nt-animation-exit-duration;
+        transition-property: opacity, transform;
+        transition-timing-function: $nt-animation-exit-easing;
+        will-change: opacity, transform;
+    }
+
+    &.nt-animation-visible {
+        opacity: var(--nt-animation-enter-opacity);
+        transform: var(--nt-animation-enter-transform);
+        transition-duration: $nt-animation-enter-duration;
+        transition-timing-function: $nt-animation-enter-easing;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        &.nt-animation-enhanced,
+        &.nt-animation-visible {
+            transform: none;
+            transition-duration: motion.$nt-motion-duration-short_2;
+        }
+    }
+}

@@ -20,6 +20,7 @@ namespace NTComponents;
 /// <remarks>
 ///     Implementations of this interface should provide the necessary logic to handle form interactions, including managing the state of the form fields and invoking callbacks on submission events.
 /// </remarks>
+[Obsolete("ITnTWizardFormStep is obsolete. Use INTWizardFormStep instead.")]
 public interface ITnTWizardFormStep {
 
     /// <summary>
@@ -77,6 +78,7 @@ public interface ITnTWizardFormStep {
 /// <summary>
 ///     Represents a wizard step that contains a form in the NTComponents library.
 /// </summary>
+[Obsolete("TnTWizardFormStep is obsolete. Use NTWizardFormStep instead.")]
 public class TnTWizardFormStep : TnTWizardStepBase, ITnTWizardFormStep {
 
     /// <inheritdoc />

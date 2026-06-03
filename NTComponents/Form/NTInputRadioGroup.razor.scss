@@ -1,0 +1,309 @@
+@use '../Styles/_Variables/_colors.scss' as colors;
+@use '../Styles/_Variables/_corner-radius.scss' as corners;
+@use '../Styles/_Variables/_motion.scss' as motion;
+@use '../Styles/_Variables/_typescale.scss' as typescale;
+
+$nt-radio-motion-duration: motion.$nt-motion-duration-short_3;
+$nt-radio-motion-easing: motion.$nt-motion-easing-standard;
+$nt-radio-field-padding-inline: 14px;
+$nt-radio-field-padding-block: 10px;
+$nt-radio-field-padding-inline-standard: 10px;
+$nt-radio-field-padding-block-standard: 6px;
+$nt-radio-field-padding-inline-comfortable: 16px;
+$nt-radio-field-padding-block-comfortable: 12px;
+$nt-radio-field-padding-inline-dense: 6px;
+$nt-radio-field-padding-block-dense: 3px;
+$nt-radio-field-gap: 2px;
+$nt-radio-field-gap-standard: 1px;
+$nt-radio-field-gap-dense: 1px;
+$nt-radio-active-indicator-width: 1px;
+$nt-radio-active-indicator-width-focused: 2px;
+$nt-radio-outline-width: 1px;
+$nt-radio-outline-width-focused: 2px;
+$nt-radio-filled-legend-offset: 6px;
+$nt-radio-supporting-margin-top: 4px;
+$nt-radio-supporting-margin-top-standard: 3px;
+$nt-radio-supporting-margin-top-dense: 2px;
+$nt-radio-supporting-padding-inline: 16px;
+$nt-radio-supporting-padding-inline-standard: 10px;
+$nt-radio-state-layer-hover-opacity: 0.08;
+$nt-radio-disabled-container-opacity: 0.04;
+$nt-radio-disabled-content-opacity: 0.38;
+$nt-radio-disabled-outline-opacity: 0.12;
+
+.nt-radio {
+    --nt-radio-active-indicator-color: #{colors.$tnt-color-on-surface-variant};
+    --nt-radio-container-color: #{colors.$tnt-color-surface-container-highest};
+    --nt-radio-disabled-container-color: #{colors.$tnt-color-on-surface};
+    --nt-radio-disabled-content-color: #{colors.$tnt-color-on-surface};
+    --nt-radio-disabled-outline-color: #{colors.$tnt-color-on-surface};
+    --nt-radio-error-color: #{colors.$tnt-color-error};
+    --nt-radio-focus-color: #{colors.$tnt-color-primary};
+    --nt-radio-hover-active-indicator-color: #{colors.$tnt-color-on-surface};
+    --nt-radio-hover-outline-color: #{colors.$tnt-color-on-surface};
+    --nt-radio-label-color: #{colors.$tnt-color-on-surface-variant};
+    --nt-radio-outline-color: #{colors.$tnt-color-outline};
+    --nt-radio-selected-color: var(--nt-radio-focus-color);
+    --nt-radio-selected-state-layer-color: var(--nt-radio-selected-color);
+    --nt-radio-state-layer-color: #{colors.$tnt-color-on-surface};
+    --nt-radio-supporting-text-color: #{colors.$tnt-color-on-surface-variant};
+    --nt-radio-unselected-color: #{colors.$tnt-color-on-surface-variant};
+
+    display: inline-flex;
+    flex-direction: column;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    color: var(--nt-radio-label-color);
+
+    .nt-radio-fieldset {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: $nt-radio-field-gap;
+        box-sizing: border-box;
+        min-width: 0;
+        margin: 0;
+        padding: $nt-radio-field-padding-block $nt-radio-field-padding-inline;
+        overflow: hidden;
+        border: 0;
+        border-radius: corners.$nt-corner-radius-extra-small;
+        color: var(--nt-radio-label-color);
+        transition:
+            border-color $nt-radio-motion-duration $nt-radio-motion-easing,
+            color $nt-radio-motion-duration $nt-radio-motion-easing;
+    }
+
+    .nt-radio-background,
+    .nt-radio-state-layer,
+    .nt-radio-active-indicator {
+        position: absolute;
+        pointer-events: none;
+    }
+
+    .nt-radio-background,
+    .nt-radio-state-layer {
+        inset: 0;
+        border-radius: inherit;
+    }
+
+    .nt-radio-state-layer {
+        opacity: 0;
+        transition: opacity $nt-radio-motion-duration $nt-radio-motion-easing;
+    }
+
+    .nt-radio-active-indicator {
+        display: none;
+        inset-inline: 0;
+        inset-block-end: 0;
+        z-index: 1;
+        width: 100%;
+
+        &::before,
+        &::after {
+            position: absolute;
+            inset-inline: 0;
+            inset-block-end: 0;
+            width: 100%;
+            content: '';
+            border-block-end-style: solid;
+        }
+
+        &::before {
+            border-block-end-color: var(--nt-radio-active-indicator-color);
+            border-block-end-width: $nt-radio-active-indicator-width;
+        }
+
+        &::after {
+            border-block-end-color: var(--nt-radio-focus-color);
+            border-block-end-width: $nt-radio-active-indicator-width-focused;
+            transform: scaleX(0);
+            transform-origin: center;
+            transition: transform $nt-radio-motion-duration $nt-radio-motion-easing;
+        }
+    }
+
+    .nt-radio-legend {
+        @include typescale.nt-body-small;
+
+        position: relative;
+        z-index: 2;
+        max-width: 100%;
+        padding-inline: 4px;
+        overflow: hidden;
+        color: var(--nt-radio-label-color);
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .nt-radio-options {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        min-width: 0;
+    }
+
+    .nt-radio-supporting-row {
+        margin-block-start: $nt-radio-supporting-margin-top;
+        padding-inline: $nt-radio-supporting-padding-inline;
+    }
+
+    .nt-radio-supporting {
+        @include typescale.nt-body-small;
+
+        color: var(--nt-radio-supporting-text-color);
+    }
+
+    .nt-radio-error-text {
+        color: var(--nt-radio-error-color);
+    }
+
+    &.nt-radio-filled {
+        .nt-radio-fieldset {
+            background-color: var(--nt-radio-container-color);
+            border-radius: corners.$nt-corner-radius-extra-small corners.$nt-corner-radius-extra-small corners.$nt-corner-radius-none corners.$nt-corner-radius-none;
+        }
+
+        .nt-radio-background {
+            background-color: var(--nt-radio-container-color);
+        }
+
+        .nt-radio-state-layer {
+            background-color: var(--nt-radio-state-layer-color);
+        }
+
+        .nt-radio-active-indicator {
+            display: block;
+        }
+
+        .nt-radio-legend {
+            inset-block-start: $nt-radio-filled-legend-offset;
+        }
+
+        &:not(.nt-radio-disabled):hover {
+            .nt-radio-state-layer {
+                opacity: $nt-radio-state-layer-hover-opacity;
+            }
+
+            .nt-radio-active-indicator::before {
+                border-block-end-color: var(--nt-radio-hover-active-indicator-color);
+            }
+        }
+    }
+
+    &.nt-radio-outlined {
+        .nt-radio-fieldset {
+            overflow: visible;
+            border: $nt-radio-outline-width solid var(--nt-radio-outline-color);
+        }
+
+        &:not(.nt-radio-disabled):hover .nt-radio-fieldset {
+            border-color: var(--nt-radio-hover-outline-color);
+        }
+    }
+
+    &:focus-within:not(.nt-radio-disabled) {
+        .nt-radio-legend {
+            color: var(--nt-radio-focus-color);
+        }
+
+        .nt-radio-active-indicator::after {
+            transform: scaleX(1);
+        }
+    }
+
+    &.nt-radio-outlined:focus-within:not(.nt-radio-disabled) .nt-radio-fieldset {
+        border-color: var(--nt-radio-focus-color);
+        border-width: $nt-radio-outline-width-focused;
+    }
+
+    &.nt-radio-invalid {
+        --nt-radio-active-indicator-color: var(--nt-radio-error-color);
+        --nt-radio-focus-color: var(--nt-radio-error-color);
+        --nt-radio-hover-active-indicator-color: var(--nt-radio-error-color);
+        --nt-radio-hover-outline-color: var(--nt-radio-error-color);
+        --nt-radio-label-color: var(--nt-radio-error-color);
+        --nt-radio-outline-color: var(--nt-radio-error-color);
+        --nt-radio-selected-color: var(--nt-radio-error-color);
+        --nt-radio-selected-state-layer-color: var(--nt-radio-error-color);
+        --nt-radio-unselected-color: var(--nt-radio-error-color);
+    }
+
+    &.nt-radio-disabled {
+        pointer-events: none;
+
+        .nt-radio-background {
+            background-color: var(--nt-radio-disabled-container-color);
+            opacity: $nt-radio-disabled-container-opacity;
+        }
+
+        .nt-radio-fieldset,
+        .nt-radio-legend,
+        .nt-radio-supporting {
+            color: var(--nt-radio-disabled-content-color);
+            opacity: $nt-radio-disabled-content-opacity;
+        }
+
+        .nt-radio-fieldset {
+            border-color: var(--nt-radio-disabled-outline-color);
+        }
+
+        &.nt-radio-outlined .nt-radio-fieldset {
+            opacity: 1;
+            border-color: color-mix(in srgb, var(--nt-radio-disabled-outline-color) #{$nt-radio-disabled-outline-opacity * 100%}, transparent);
+        }
+    }
+
+    &.nt-radio-readonly .nt-radio-fieldset {
+        cursor: default;
+    }
+
+    &.nt-radio-standard {
+        .nt-radio-fieldset {
+            gap: $nt-radio-field-gap-standard;
+            padding: $nt-radio-field-padding-block-standard $nt-radio-field-padding-inline-standard;
+        }
+
+        .nt-radio-supporting-row {
+            margin-block-start: $nt-radio-supporting-margin-top-standard;
+            padding-inline: $nt-radio-supporting-padding-inline-standard;
+        }
+    }
+
+    &.nt-radio-comfortable .nt-radio-fieldset {
+        padding: $nt-radio-field-padding-block-comfortable $nt-radio-field-padding-inline-comfortable;
+    }
+
+    &.nt-radio-dense {
+        .nt-radio-fieldset {
+            gap: $nt-radio-field-gap-dense;
+            padding: $nt-radio-field-padding-block-dense $nt-radio-field-padding-inline-dense;
+        }
+
+        .nt-radio-legend,
+        .nt-radio-supporting {
+            @include typescale.nt-label-small;
+        }
+
+        .nt-radio-legend {
+            padding-inline: 2px;
+        }
+
+        .nt-radio-supporting-row {
+            margin-block-start: $nt-radio-supporting-margin-top-dense;
+            padding-inline: $nt-radio-field-padding-inline-dense;
+        }
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nt-radio {
+        .nt-radio-fieldset,
+        .nt-radio-state-layer,
+        .nt-radio-active-indicator::after {
+            transition-duration: 0ms;
+        }
+    }
+}

@@ -64,3 +64,9 @@ NTC1058 | Usage | Warning | Disabled NTNavLink cannot be kept in the tab order w
 NTC1059 | Usage | Warning | NTInputText PhoneMask is ignored unless InputType is TextInputType.Tel.
 NTC1060 | Usage | Warning | NTInputText PhoneMask should contain at least one digit placeholder.
 NTC1061 | Usage | Warning | NTInputBase-derived components own core native input attributes.
+NTC1062 | Usage | Warning | Validation-bound NT inputs require ValueExpression when Value or ValueChanged is set.
+NTC1063 | Usage | Warning | NTInputCheckbox and NTInputSwitch required validation should use Required instead of a raw required attribute.
+NTC1064 | Usage | Warning | NTForm RequiredSupportingText cannot be empty when ShowRequiredSupportingText is enabled.
+NTC1065 | Usage | Warning | NTDataGrid requires either Items or ItemsProvider, not both.
+NTC1066 | Usage | Warning | NTDataGrid requires Items or ItemsProvider.
+NTC1067 | Usage | Warning | NTDataGrid does not support using Virtualize and ShowPagination together.

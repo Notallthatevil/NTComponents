@@ -52,13 +52,8 @@ public class NTRichTextEditor_Tests : BunitContext {
         var cut = RenderEditor();
 
         var pageScripts = cut.FindAll("tnt-page-script");
-        pageScripts.Should().HaveCount(6);
-        pageScripts.Select(script => script.GetAttribute("src")).Should().Contain("./_content/NTComponents/Editors/NTRichTextEditor.razor.js");
-        pageScripts.Select(script => script.GetAttribute("src")).Should().Contain("./_content/NTComponents/Editors/Tool/EditorToolImageButton.razor.js");
-        pageScripts.Select(script => script.GetAttribute("src")).Should().Contain("./_content/NTComponents/Editors/Tool/EditorToolTableButton.razor.js");
-        pageScripts.Select(script => script.GetAttribute("src")).Should().Contain("./_content/NTComponents/Editors/Tool/EditorToolTextColorButton.razor.js");
-        pageScripts.Select(script => script.GetAttribute("src")).Should().Contain("./_content/NTComponents/Editors/Tool/EditorToolLinkButton.razor.js");
-        pageScripts.Select(script => script.GetAttribute("src")).Should().Contain("./_content/NTComponents/Editors/Tool/EditorToolIframeButton.razor.js");
+        pageScripts.Should().HaveCount(1);
+        pageScripts.Select(script => script.GetAttribute("src")).Should().Equal("./_content/NTComponents/Editors/NTRichTextEditor.razor.js");
     }
 
     [Fact]
@@ -78,8 +73,10 @@ public class NTRichTextEditor_Tests : BunitContext {
         cut.Find(".tnt-rich-text-editor-toolbar-button[data-command='textColor']").GetAttribute("title").Should().Be("Ctrl+Alt+X");
         cut.Find(".tnt-rich-text-editor-toolbar-button[data-command='link']").GetAttribute("title").Should().Be("Ctrl+K");
         cut.Find(".tnt-rich-text-editor-toolbar-button[data-command='alignCenter']").GetAttribute("title").Should().Be("Ctrl+Shift+E");
+        cut.Find(".tnt-rich-text-editor-toolbar-button[data-command='image']").GetAttribute("title").Should().Be("Ctrl+Alt+M");
         cut.Find(".tnt-rich-text-editor-toolbar-button[data-command='table']").GetAttribute("title").Should().Be("Ctrl+Alt+T");
         cut.Find(".tnt-rich-text-editor-toolbar-button[data-command='iframe']").GetAttribute("title").Should().Be("Ctrl+Alt+F");
+        cut.FindAll(".tnt-rich-text-editor-toolbar .tnt-rich-text-editor-toolbar-icon").Should().OnlyContain(icon => !icon.HasAttribute("title"));
         cut.Find("[data-role='image-editor']").Should().NotBeNull();
         cut.Find("[data-tool-command='image']").Should().NotBeNull();
         cut.Find("[data-role='image-url']").GetAttribute("type").Should().Be("url");
@@ -105,6 +102,8 @@ public class NTRichTextEditor_Tests : BunitContext {
         cut.Find("[data-role='iframe-width']").GetAttribute("type").Should().Be("text");
         cut.Find("[data-role='iframe-height']").GetAttribute("type").Should().Be("text");
         cut.Find(".tnt-rich-text-editor-hidden-input").GetAttribute("type").Should().Be("hidden");
+        cut.Find(".tnt-rich-text-editor-hidden-input").GetAttribute("name").Should().Contain(nameof(RichTextEditorModel.Value));
+        cut.FindAll("[data-tool-command] input").Should().OnlyContain(input => !input.HasAttribute("name"));
         cut.Find(".tnt-rich-text-editor-surface").GetAttribute("data-placeholder").Should().Be("Write something");
     }
 
@@ -229,21 +228,26 @@ public class NTRichTextEditor_Tests : BunitContext {
             .Add(x => x.SupportingText, "Helpful text")
             .Add(x => x.ErrorMessage, "Broken"));
 
-        var supportingText = cut.Find(".tnt-supporting-text");
-        supportingText.TextContent.Should().Contain("Helpful text");
-        supportingText.TextContent.Should().Contain("Broken");
+        cut.Find(".nt-input-error-text").TextContent.Should().Contain("Broken");
+        cut.FindAll(".nt-input-supporting:not(.nt-input-error-text)").Should().BeEmpty();
     }
 
     [Fact]
-    public void ValidationMessage_Renders_When_EditContext_Present() {
+    public async Task ValidationMessage_Renders_When_EditContext_Present() {
         var model = new RichTextEditorModel();
         var editContext = new EditContext(model);
 
+        var messageStore = new ValidationMessageStore(editContext);
         var cut = Render<NTRichTextEditor>(parameters => parameters
             .Add(x => x.ValueExpression, () => model.Value)
             .AddCascadingValue(editContext));
 
-        cut.Find(".tnt-supporting-text").Should().NotBeNull();
+        await cut.InvokeAsync(() => {
+            messageStore.Add(new FieldIdentifier(model, nameof(RichTextEditorModel.Value)), "Required");
+            editContext.NotifyValidationStateChanged();
+        });
+
+        cut.WaitForAssertion(() => cut.Find(".nt-input-error-text").TextContent.Should().Contain("Required"));
     }
 
     [Fact]
@@ -263,7 +267,7 @@ public class NTRichTextEditor_Tests : BunitContext {
             editContext.NotifyValidationStateChanged();
         });
 
-        cut.WaitForAssertion(() => cut.Find("nt-rich-text-editor").ClassList.Should().Contain("invalid"));
+        cut.WaitForAssertion(() => cut.Find(".nt-input.nt-rich-text-editor").ClassList.Should().Contain("nt-input-invalid"));
     }
 
     [Fact]
@@ -288,7 +292,7 @@ public class NTRichTextEditor_Tests : BunitContext {
         editor.GetAttribute("data-custom").Should().Be("kept");
         editor.HasAttribute("placeholder").Should().BeFalse();
         editor.HasAttribute("maxlength").Should().BeFalse();
-        editor.ClassName.Should().Contain("filtered-class");
+        cut.Find(".nt-input.nt-rich-text-editor").ClassName.Should().Contain("filtered-class");
     }
 
     [Fact]
@@ -318,8 +322,8 @@ public class NTRichTextEditor_Tests : BunitContext {
             .Add(x => x.Value, "Text")
             .AddUnmatched("maxlength", "10"));
 
-        cut.Find(".tnt-start-icon").Should().NotBeNull();
-        cut.Find(".tnt-end-icon").Should().NotBeNull();
+        cut.Find(".nt-input-leading").Should().NotBeNull();
+        cut.Find(".nt-input-trailing").Should().NotBeNull();
         cut.Find(".tnt-tooltip-icon").Should().NotBeNull();
 
         var surface = cut.Find(".tnt-rich-text-editor-surface");
@@ -328,7 +332,7 @@ public class NTRichTextEditor_Tests : BunitContext {
         surface.GetAttribute("tabindex").Should().Be("-1");
         surface.GetAttribute("aria-label").Should().Contain(nameof(RichTextEditorModel.Value));
 
-        cut.Find(".tnt-input-length").TextContent.Should().Be("4/10");
+        cut.Find(".nt-input-counter").TextContent.Should().Be("4/10");
         cut.FindAll(".tnt-rich-text-editor-toolbar-button").Should().OnlyContain(button => button.HasAttribute("disabled"));
         cut.Find("[data-role='image-url']").HasAttribute("disabled").Should().BeTrue();
     }
@@ -371,10 +375,12 @@ public class NTRichTextEditor_Tests : BunitContext {
         var actionFallbackButton = cut.Find(".tnt-rich-text-editor-toolbar-button[data-command='underline']");
         actionFallbackButton.GetAttribute("aria-label").Should().Be("underline");
         actionFallbackButton.GetAttribute("title").Should().Be("underline");
+        cut.Find(".tnt-rich-text-editor-toolbar-button[data-command='underline'] .tnt-rich-text-editor-toolbar-icon").HasAttribute("title").Should().BeFalse();
 
         var defaultFallbackButton = cut.Find(".toolbar-fallback-button");
         defaultFallbackButton.GetAttribute("aria-label").Should().Be("Rich text editor action");
         defaultFallbackButton.GetAttribute("title").Should().Be("Rich text editor action");
+        cut.Find(".toolbar-fallback-button .tnt-rich-text-editor-toolbar-icon").HasAttribute("title").Should().BeFalse();
     }
 
     [Fact]

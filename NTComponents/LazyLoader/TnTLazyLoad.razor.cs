@@ -10,6 +10,7 @@ namespace NTComponents;
 ///     A component that lazily loads its child content.
 /// </summary>
 /// <remarks>Initializes a new instance of the <see cref="TnTLazyLoad" /> class.</remarks>
+[Obsolete("TnTLazyLoad is obsolete.")]
 [method: DynamicDependency(nameof(BeginLoad))]
 public partial class TnTLazyLoad() {
 

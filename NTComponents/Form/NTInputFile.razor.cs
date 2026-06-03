@@ -1,3 +1,4 @@
+#pragma warning disable CS0618
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Web;
@@ -885,6 +886,7 @@ public partial class NTInputFile : IAsyncDisposable {
 /// <summary>
 ///     Represents a file involved in an <see cref="NTInputFile" /> operation.
 /// </summary>
+[System.Obsolete("This legacy Form element is obsolete. Use the NT form components instead.")]
 public sealed class NTInputFileEventArgs : EventArgs {
 
     /// <summary>
@@ -946,6 +948,7 @@ public sealed class NTInputFileEventArgs : EventArgs {
 /// <summary>
 ///     Represents the UI details for a file progress item in <see cref="NTInputFile" />.
 /// </summary>
+[System.Obsolete("This legacy Form element is obsolete. Use the NT form components instead.")]
 public readonly record struct NTInputFileProgressDetails {
 
     /// <summary>
@@ -982,6 +985,7 @@ public readonly record struct NTInputFileProgressDetails {
 /// <summary>
 ///     File metadata summary.
 /// </summary>
+[System.Obsolete("This legacy Form element is obsolete. Use the NT form components instead.")]
 public readonly record struct NTUploadedFileDetails {
     /// <summary>
     ///     File name.
@@ -999,6 +1003,7 @@ public readonly record struct NTUploadedFileDetails {
     public required string ContentType { get; init; }
 }
 
+[System.Obsolete("This legacy Form element is obsolete. Use the NT form components instead.")]
 internal sealed class NTInputFileProgressTrackingReadStream : Stream {
     private readonly Stream _inner;
     private readonly Func<int, Task> _onBytesRead;

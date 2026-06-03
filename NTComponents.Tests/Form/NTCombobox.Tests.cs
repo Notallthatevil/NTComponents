@@ -5,7 +5,7 @@ using System.Linq.Expressions;
 namespace NTComponents.Tests.Form;
 
 public class NTCombobox_Tests : BunitContext {
-    private const string JsModulePath = "./_content/NTComponents/FormV2/NTCombobox.razor.js";
+    private const string JsModulePath = "./_content/NTComponents/Form/NTCombobox.razor.js";
 
     private static readonly IReadOnlyList<NTComboboxOption<string>> Options = [
         new("design", "Design") {

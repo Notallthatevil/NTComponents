@@ -1,104 +1,101 @@
 @page "/datagrid"
-@using LiveTest.Client.Components
 @using NTComponents
 @rendermode InteractiveWebAssembly
 
-@if (RendererInfo.IsInteractive) {
+<main style="display: grid; gap: 24px; padding: 16px;">
+    <header>
+        <h1>NTDataGrid</h1>
+        <p>Direct and provider-backed demos for the new grid component.</p>
+    </header>
 
-	<label>
+    <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+        <label style="display: inline-flex; gap: 8px; align-items: center;">
+            <input type="checkbox" @bind="_striped" />
+            Striped
+        </label>
+        <label style="display: inline-flex; gap: 8px; align-items: center;">
+            <input type="checkbox" @bind="_compact" />
+            Compact
+        </label>
+    </div>
 
-		<input type="checkbox" @bind="_a" /> Stripped
-	</label>
-	<label>
-		<input type="checkbox" @bind="_b" /> Compact
-	</label>
-	<label>
-		<input type="checkbox" @bind="_c" /> TableLayoutFixed
-	</label>
+    <section style="display: grid; gap: 12px;">
+        <h2>Direct items</h2>
+        <NTDataGrid TItem="DataGridItem"
+                    Items="@Items"
+                    Caption="Direct IQueryable source"
+                    Density="@(_compact ? NTDataGridDensity.Compact : NTDataGridDensity.Standard)"
+                    Appearance="@(_striped ? NTDataGridAppearance.Striped : NTDataGridAppearance.Default)"
+                    RowKey="item => item.Id"
+                    OnRowClicked="ItemClicked">
+            <NTPropertyColumn TItem="DataGridItem" TValue="int" Title="Id" Property="item => item.Id" Width="96px" TextAlign="TextAlign.Right" HeaderTextAlign="TextAlign.Right" InitialSortDirection="SortDirection.Ascending" />
+            <NTPropertyColumn TItem="DataGridItem" TValue="string" Title="Customer" Property="item => item.Customer" MinWidth="220px" />
+            <NTPropertyColumn TItem="DataGridItem" TValue="DateTime" Title="Created" Property="item => item.Created" Format="MMM d, yyyy" MinWidth="160px" />
+            <NTPropertyColumn TItem="DataGridItem" TValue="decimal" Title="Amount" Property="item => item.Amount" Format="C" TextAlign="TextAlign.Right" HeaderTextAlign="TextAlign.Right" />
+            <NTTemplateColumn TItem="DataGridItem" Title="Action">
+                <button type="button" class="nt-data-grid-demo-action" @onclick="@(() => ActionClicked(context))" @onclick:stopPropagation="true" @onkeydown:stopPropagation="true">Open</button>
+            </NTTemplateColumn>
+        </NTDataGrid>
+    </section>
 
-	<div style="height: 60vh; overflow-y:scroll">
-		<TnTDataGrid Items="@Items" OnRowClicked="RowClicked" BackgroundColor="TnTColor.SecondaryContainer" TextColor="TnTColor.OnSecondaryContainer" TGridItem="DataGridItem" DataGridAppearance="@BuildAppearance()">
-			<TnTPropertyColumn Property="@(x => x.Column1)" Sortable="true" IsDefaultSortColumn="true" Width="600" />
-			<TnTPropertyColumn Property="@(x => x.Column2)" Sortable="true" TextAlign="TextAlign.Center" IsDefaultSortColumn="true" HeaderAlignment="TextAlign.Left"  MaxWidth="75" ShowContentAsTooltip="true" />
-			<TnTPropertyColumn Property="@(x => x.Column3)" Format="MM/yyyy" HeaderAlignment="TextAlign.Right" MaxWidth="50" />
-			<TnTTemplateColumn>
-				<TnTButton Appearance="ButtonAppearance.Text" TextColor="TnTColor.OnSurface" BackgroundColor="TnTColor.Surface" StopPropagation="true" OnClickCallback="@(() => ItemClicked(context))">
-					<MaterialIcon Icon="@MaterialIcon.Edit" />
-					Edit
-				</TnTButton>
-			</TnTTemplateColumn>
-		</TnTDataGrid>
-	</div>
-}
-else {
-	<TnTSkeleton style="height: 60vh" />
-}
-
+    <section style="display: grid; gap: 12px;">
+        <h2>Provider items</h2>
+        <NTDataGrid TItem="DataGridItem"
+                    ItemsProvider="Provider"
+                    Caption="Provider first window"
+                    PageSize="8"
+                    QueryParameterPrefix="provider-grid"
+                    Appearance="NTDataGridAppearance.Striped"
+                    RowKey="item => item.Id"
+                    OnRowClicked="ItemClicked">
+            <NTPropertyColumn TItem="DataGridItem" TValue="int" Title="Id" Property="item => item.Id" Width="96px" TextAlign="TextAlign.Right" HeaderTextAlign="TextAlign.Right" />
+            <NTPropertyColumn TItem="DataGridItem" TValue="string" Title="Customer" Property="item => item.Customer" MinWidth="220px" InitialSortDirection="SortDirection.Ascending" />
+            <NTPropertyColumn TItem="DataGridItem" TValue="DateTime" Title="Created" Property="item => item.Created" Format="MMM d, yyyy" MinWidth="160px" />
+            <NTPropertyColumn TItem="DataGridItem" TValue="decimal" Title="Amount" Property="item => item.Amount" Format="C" TextAlign="TextAlign.Right" HeaderTextAlign="TextAlign.Right" />
+        </NTDataGrid>
+    </section>
+</main>
 
 @code {
-	[Inject]
-	private ITnTToastService _service { get; set; }
+    [Inject]
+    private INTToastService ToastService { get; set; } = default!;
 
-	private int _count;
+    [Inject]
+    private INTSnackbarService SnackbarService { get; set; } = default!;
 
-	private IQueryable<DataGridItem>? Items;
-	private static object _locker = new();
-	private static List<DataGridItem> _items;
-	protected override Task OnInitializedAsync() {
-		lock (_locker) {
-			if (_items == null) {
-				var list = new List<DataGridItem>();
-				foreach (var i in Enumerable.Range(1, 50)) {
-					list.Add(new DataGridItem() {
-						Column1 = Random.Shared.Next(1, 10),
-						Column2 = string.Join('\n', Enumerable.Range(1, 20).Select(_ => Guid.NewGuid().ToString())),
-						Column3 = new DateTime(Random.Shared.Next(1, 10000), Random.Shared.Next(1, 13), Random.Shared.Next(1, 29))
-					});
-				}
-				_items = list;
-			}
-			Items = _items.AsQueryable();
-		}
+    private readonly IQueryable<DataGridItem> Items = BuildItems().AsQueryable();
+    private bool _compact;
+    private bool _striped = true;
 
-		return Task.CompletedTask;
-	}
+    private async ValueTask<NTItemsProviderResult<DataGridItem>> Provider(NTDataGridItemsProviderRequest<DataGridItem> request) {
+        await Task.Delay(150, request.CancellationToken);
+        var items = ApplyRequest(Items, request).ToArray();
+        return new NTItemsProviderResult<DataGridItem>(items, Items.Count());
+    }
 
-	private async Task RowClicked(DataGridItem item) {
-		await _service.ShowAsync("Row clicked", item.Column1.ToString());
-	}
+    private async Task ItemClicked(DataGridItem item) => await ToastService.ShowInfoAsync("NTDataGrid", $"Opened row {item.Id}");
 
-	private async Task ItemClicked(DataGridItem item) {
-		await _service.ShowAsync("Item clicked", item.Column2);
-	}
+    private async Task ActionClicked(DataGridItem item) => await SnackbarService.ShowAsync($"Opened action for row {item.Id}");
 
-	public class DataGridItem {
+    private static IEnumerable<DataGridItem> ApplyRequest(IEnumerable<DataGridItem> source, NTDataGridItemsProviderRequest<DataGridItem> request) {
+        foreach (var sort in request.Sorts.Reverse()) {
+            source = sort.PropertyName switch {
+                nameof(DataGridItem.Id) => sort.Direction == SortDirection.Descending ? source.OrderByDescending(item => item.Id) : source.OrderBy(item => item.Id),
+                nameof(DataGridItem.Customer) => sort.Direction == SortDirection.Descending ? source.OrderByDescending(item => item.Customer) : source.OrderBy(item => item.Customer),
+                nameof(DataGridItem.Created) => sort.Direction == SortDirection.Descending ? source.OrderByDescending(item => item.Created) : source.OrderBy(item => item.Created),
+                nameof(DataGridItem.Amount) => sort.Direction == SortDirection.Descending ? source.OrderByDescending(item => item.Amount) : source.OrderBy(item => item.Amount),
+                _ => source
+            };
+        }
 
-		public int Column1 { get; set; }
+        var window = source.Skip(request.StartIndex);
+        return request.Count is > 0 ? window.Take(request.Count.Value) : window;
+    }
 
-		public string Column2 { get; set; } = default!;
+    private static List<DataGridItem> BuildItems() =>
+        Enumerable.Range(1, 50)
+            .Select(index => new DataGridItem(index, $"Customer {index:000}", DateTime.Today.AddDays(-index), index * 23.45m))
+            .ToList();
 
-		public DateTime Column3 { get; set; }
-	}
-
-	private bool _a;
-	private bool _b;
-	private bool _c;
-
-	private DataGridAppearance BuildAppearance() {
-		DataGridAppearance appearance = DataGridAppearance.Default;
-		if (_a) {
-			appearance |= DataGridAppearance.Stripped;
-		}
-		if (_b) {
-			appearance |= DataGridAppearance.Compact;
-		}
-		if (_c) {
-			appearance |= DataGridAppearance.TableLayoutFixed;
-		}
-		return appearance;
-	}
-
-
+    public sealed record DataGridItem(int Id, string Customer, DateTime Created, decimal Amount);
 }
-
-

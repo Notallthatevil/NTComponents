@@ -1,0 +1,74 @@
+@use '../Styles/_Variables/_corner-radius.scss' as corners;
+@use '../Styles/_Variables/_elevation.scss' as elevation;
+@use '../Styles/_Variables/_motion.scss' as motion;
+
+$state-transition: motion.$nt-motion-duration-short_3 motion.$nt-motion-easing-standard;
+
+.nt-accordion {
+    display: flex;
+    flex-direction: column;
+    min-inline-size: 0;
+    overflow: visible;
+
+    ::deep .nt-accordion-item {
+        border-radius: 0;
+
+        &:first-child {
+            border-start-start-radius: corners.$nt-corner-radius-medium;
+            border-start-end-radius: corners.$nt-corner-radius-medium;
+        }
+
+        &:last-child {
+            border-end-start-radius: corners.$nt-corner-radius-medium;
+            border-end-end-radius: corners.$nt-corner-radius-medium;
+        }
+
+        & + .nt-accordion-item {
+            margin-block-start: -1px;
+        }
+    }
+
+    &.nt-accordion-outlined {
+        --nt-accordion-item-border-color: var(--nt-accordion-outline-color, var(--tnt-color-outline));
+        --nt-accordion-header-color: transparent;
+        --nt-accordion-content-color: transparent;
+
+        ::deep .nt-accordion-item-content {
+            border-block-start: 1px solid var(--nt-accordion-outline-color, var(--tnt-color-outline));
+        }
+    }
+
+    &.nt-accordion-elevated {
+        --nt-accordion-item-border-color: transparent;
+        --nt-accordion-header-color: var(--tnt-color-surface-container-low);
+
+        ::deep .nt-accordion-item {
+            @include elevation.tnt-elevation(1, false);
+        }
+    }
+
+    &.nt-accordion-separated {
+        gap: 8px;
+
+        ::deep .nt-accordion-item {
+            border-radius: corners.$nt-corner-radius-medium;
+            transition: border-radius $state-transition, box-shadow $state-transition;
+
+            & + .nt-accordion-item {
+                margin-block-start: 0;
+            }
+        }
+    }
+
+    &.nt-accordion-compact.nt-accordion-separated {
+        gap: 4px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nt-accordion {
+        ::deep .nt-accordion-item {
+            transition: none;
+        }
+    }
+}

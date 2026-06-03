@@ -76,8 +76,8 @@
     "inputFile": "Dialog/NTDialog.razor.scss"
   },
   {
-    "outputFile": "FormV2/NTInputDateTime.razor.css",
-    "inputFile": "FormV2/NTInputDateTime.razor.scss"
+    "outputFile": "Form/NTInputDateTime.razor.css",
+    "inputFile": "Form/NTInputDateTime.razor.scss"
   },
   {
     "outputFile": "Form/TnTInputRadioGroup.razor.css",
@@ -106,6 +106,10 @@
   {
     "outputFile": "wwwroot/nt-ripple.css",
     "inputFile": "wwwroot/nt-ripple.scss"
+  },
+  {
+    "outputFile": "wwwroot/nt-measurements.css",
+    "inputFile": "wwwroot/nt-measurements.scss"
   },
   {
     "outputFile": "Buttons/NTButton.razor.css",

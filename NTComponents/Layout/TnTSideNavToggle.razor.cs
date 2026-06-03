@@ -10,6 +10,7 @@ namespace NTComponents;
 /// <summary>
 ///     Toggle button for the side navigation component.
 /// </summary>
+[Obsolete("TnTSideNavToggle is obsolete. Use NTNavigationRail instead.")]
 public partial class TnTSideNavToggle {
 
     /// <inheritdoc />

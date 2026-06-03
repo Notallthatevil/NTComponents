@@ -13,7 +13,7 @@
         aria-pressed="false"
         disabled="@Disabled">
     @if (Button.Icon is not null) {
-        @Button.Icon.Render("tnt-rich-text-editor-toolbar-icon")
+        @Button.Icon.Render("tnt-rich-text-editor-toolbar-icon", suppressTitle: true)
     }
     @if (!string.IsNullOrWhiteSpace(Button.Text)) {
         <span class="tnt-rich-text-editor-toolbar-button-text">@Button.Text</span>

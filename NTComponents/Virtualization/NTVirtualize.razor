@@ -16,63 +16,53 @@
 			throw oldRefreshException;
 		}
 
+		var beforeSpacerSize = Math.Max(0, _spacerBeforeSize);
 		builder.OpenElement(0, SpacerElement);
-		builder.AddAttribute(10, "style", GetSpacerStyle(_spacerBeforeSize));
+		builder.AddAttribute(5, "class", "nt-virtualize-spacer");
+		builder.AddAttribute(10, "style", GetBeforeSpacerStyle());
 		builder.AddAttribute(20, "aria-hidden", "true");
 		builder.AddElementReferenceCapture(3, elementReference => Element = elementReference);
+		builder.AddContent(30, SpacerTemplate, new PlaceholderContext(_itemsBefore + 1, beforeSpacerSize));
 		builder.CloseElement();
 
-		var lastItemIndex = Math.Min(_itemsBefore + _visibleItemCapacity, _itemCount);
-		var renderIndex = _itemsBefore;
-		var placeholdersBeforeCount = Math.Min(_loadedItemsStartIndex, lastItemIndex);
-
-		builder.OpenRegion(30);
-
-		// Render placeholders before the loaded items.
-		for (; renderIndex < placeholdersBeforeCount; renderIndex++) {
-			// This is a rare case where it's valid for the sequence number to be programmatically incremented.
-			// This is only true because we know for certain that no other content will be alongside it.
-			builder.AddContent(renderIndex, LoadingTemplate, new PlaceholderContext(renderIndex + 2, _itemSize));
+		var requestedLastItemIndex = _itemsBefore + _visibleItemCapacity;
+		var lastItemIndex = _loading && _itemCount == 0 ? requestedLastItemIndex : Math.Min(requestedLastItemIndex, _itemCount);
+		var preloadedPlaceholderCount = 0;
+		if (!_loading && _itemCache.Count > 0) {
+			preloadedPlaceholderCount = GetPreloadedPlaceholderCount(lastItemIndex);
 		}
 
-		builder.CloseRegion();
+		var renderLastItemIndex = lastItemIndex + preloadedPlaceholderCount;
 
 		_lastRenderedItemCount = 0;
+		_lastRenderedPlaceholderCount = 0;
 
-		if (_loadedItems != null && !_loading && _itemCount == 0 && EmptyTemplate is not null) {
+		if (!_loading && _itemCount == 0 && EmptyTemplate is not null) {
 			builder.AddContent(40, EmptyTemplate);
 		}
-		else if (_loadedItems != null && ItemTemplate is not null) {
-			var itemsToShow = _loadedItems
-				.Skip(_itemsBefore - _loadedItemsStartIndex)
-				.Take(lastItemIndex - _itemsBefore);
+		else if (ItemTemplate is not null) {
 			builder.OpenRegion(50);
 
-			// Render the loaded items.
-			foreach (var item in itemsToShow) {
-				ItemTemplate(item)(builder);
-				_lastRenderedItemCount++;
+			for (var renderIndex = _itemsBefore; renderIndex < renderLastItemIndex; renderIndex++) {
+				if (_itemCache.TryGetValue(renderIndex, out var item)) {
+					ItemTemplate(item)(builder);
+					_lastRenderedItemCount++;
+				}
+				else {
+					builder.AddContent(renderIndex, LoadingTemplate, new PlaceholderContext(renderIndex + 2, _itemSize));
+					_lastRenderedPlaceholderCount++;
+				}
 			}
-
-			renderIndex += _lastRenderedItemCount;
 
 			builder.CloseRegion();
 		}
 
-		_lastRenderedPlaceholderCount = Math.Max(0, lastItemIndex - _itemsBefore - _lastRenderedItemCount);
-
-		builder.OpenRegion(60);
-		// Render the placeholders after the loaded items.
-		for (; renderIndex < lastItemIndex; renderIndex++) {
-			builder.AddContent(renderIndex, LoadingTemplate, new PlaceholderContext(renderIndex + 2, _itemSize));
-		}
-
-
-		builder.CloseRegion();
-
+		var afterSpacerSize = GetAdjustedSpacerAfterSize(preloadedPlaceholderCount);
 		builder.OpenElement(70, SpacerElement);
+		builder.AddAttribute(75, "class", "nt-virtualize-spacer");
 		builder.AddAttribute(80, "aria-hidden", "true");
-		builder.AddAttribute(90, "style", GetSpacerStyle(_spacerAfterSize));
+		builder.AddAttribute(90, "style", GetAfterSpacerStyle(preloadedPlaceholderCount));
+		builder.AddContent(95, SpacerTemplate, new PlaceholderContext(renderLastItemIndex + 1, afterSpacerSize));
 		builder.AddElementReferenceCapture(100, elementReference => _afterPlaceholder = elementReference);
 		builder.CloseElement();
 	}

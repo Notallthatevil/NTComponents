@@ -8,6 +8,7 @@
 		<OutputType>Exe</OutputType>
 		<WarningLevel>8</WarningLevel>
 		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+		<NoWarn>$(NoWarn);CS0618</NoWarn>
 	</PropertyGroup>
 
 	<ItemGroup>

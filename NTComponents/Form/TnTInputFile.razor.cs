@@ -22,6 +22,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE
  */
+#pragma warning disable CS0618
 
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
@@ -666,6 +667,7 @@ public partial class TnTInputFile {
 /// <summary>
 ///     Represents a buffer containing bytes read from an uploaded file.
 /// </summary>
+[System.Obsolete("This legacy Form element is obsolete. Use the NT form components instead.")]
 public class TnTInputFileBuffer(byte[] data, int bytesRead) {
 
     /// <summary>
@@ -699,6 +701,7 @@ public class TnTInputFileBuffer(byte[] data, int bytesRead) {
 /// <summary>
 ///     Provides event data for file upload operations in <see cref="TnTInputFile" />.
 /// </summary>
+[System.Obsolete("This legacy Form element is obsolete. Use the NT form components instead.")]
 public sealed class TnTInputFileEventArgs : EventArgs {
 
     /// <summary>
@@ -770,6 +773,7 @@ public sealed class TnTInputFileEventArgs : EventArgs {
 /// <summary>
 ///     Represents the progress details of a file being uploaded.
 /// </summary>
+[System.Obsolete("This legacy Form element is obsolete. Use the NT form components instead.")]
 public readonly record struct ProgressFileDetails {
     /// <summary>
     ///     Gets the index of the file in the upload process.
@@ -790,6 +794,7 @@ public readonly record struct ProgressFileDetails {
 /// <summary>
 ///     Represents the details of a file that has been uploaded.
 /// </summary>
+[System.Obsolete("This legacy Form element is obsolete. Use the NT form components instead.")]
 public record struct UploadedFileDetails {
     /// <summary>
     ///     Gets the name of the uploaded file.
@@ -810,6 +815,7 @@ public record struct UploadedFileDetails {
 /// <summary>
 ///     Specifies the mode for handling input files.
 /// </summary>
+[System.Obsolete("This legacy Form element is obsolete. Use the NT form components instead.")]
 public enum InputFileMode {
 
     /// <summary>

@@ -1,0 +1,20 @@
+@namespace NTComponents
+@using NTComponents.Core
+@inherits TnTComponentBase
+
+<div @attributes="AdditionalAttributes"
+     class="@ElementClass"
+     style="@ElementStyle"
+     id="@ElementId"
+     lang="@ElementLang"
+     title="@ElementTitle"
+     data-nt-animation="true"
+     data-nt-animation-animate-out="@AnimateOut.ToString().ToLowerInvariant()"
+     data-nt-animation-once="@Once.ToString().ToLowerInvariant()"
+     data-nt-animation-threshold="@ThresholdValue"
+     data-nt-animation-root-margin="@RootMargin"
+     @ref="Element">
+    @ChildContent
+</div>
+
+<TnTPageScript Src="@JsModulePath" />

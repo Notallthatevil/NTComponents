@@ -1,0 +1,41 @@
+@use 'NTInputBase.razor';
+@use 'NTMenuField' as menu;
+
+@include menu.nt-menu-field(
+    $root-selector: '.nt-input.nt-typeahead',
+    $control-selector: '.nt-typeahead-control',
+    $indicator-selector: '.nt-typeahead-indicator, .nt-typeahead-progress',
+    $condensed-class: 'nt-typeahead-menu-items-condensed'
+);
+
+.nt-input.nt-typeahead {
+    .nt-typeahead-control {
+        &::-webkit-search-cancel-button,
+        &::-webkit-search-decoration,
+        &::-webkit-search-results-button,
+        &::-webkit-search-results-decoration {
+            display: none;
+            -webkit-appearance: none;
+        }
+
+        &::-ms-clear,
+        &::-ms-reveal {
+            display: none;
+            inline-size: 0;
+            block-size: 0;
+        }
+    }
+
+    .nt-typeahead-progress {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+
+        .nt-progress {
+            --nt-progress-size: 24px;
+            --nt-progress-ring-size: 24px;
+            --nt-progress-ring-thickness: 3px;
+        }
+    }
+}

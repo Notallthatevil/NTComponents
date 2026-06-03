@@ -1,3 +1,4 @@
+#pragma warning disable CS0618
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using System.Diagnostics;
@@ -10,6 +11,7 @@ namespace NTComponents;
 ///     A custom input component for handling various DateTime types.
 /// </summary>
 /// <typeparam name="DateTimeType">The type of the DateTime value.</typeparam>
+[System.Obsolete("This legacy Form element is obsolete. Use the NT form components instead.")]
 public class TnTInputDateTime<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] DateTimeType> : TnTInputBase<DateTimeType> {
 
     /// <summary>

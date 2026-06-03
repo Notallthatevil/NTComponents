@@ -1,0 +1,607 @@
+@page "/nt-wizard"
+@using System.ComponentModel.DataAnnotations
+@using NTComponents
+@rendermode InteractiveAuto
+
+<PageTitle>NTWizard</PageTitle>
+
+<style>
+    .wizard-demo {
+        display: grid;
+        gap: 1.5rem;
+        inline-size: 100%;
+        max-inline-size: 100%;
+        min-width: 0;
+    }
+
+    .wizard-demo h1,
+    .wizard-demo h2,
+    .wizard-demo h3,
+    .wizard-demo p {
+        margin: 0;
+    }
+
+    .wizard-demo .header {
+        display: grid;
+        gap: .5rem;
+    }
+
+    .wizard-demo .muted {
+        color: var(--tnt-color-on-surface-variant);
+    }
+
+    .wizard-demo .controls {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .wizard-demo .controls label {
+        display: grid;
+        gap: .35rem;
+    }
+
+    .wizard-demo select {
+        min-block-size: 2.5rem;
+        padding: .5rem .75rem;
+        border: 1px solid var(--tnt-color-outline);
+        border-radius: .25rem;
+        color: var(--tnt-color-on-surface);
+        background: var(--tnt-color-surface-container-lowest);
+    }
+
+    .wizard-demo .comparison {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 1rem;
+        min-width: 0;
+    }
+
+    .wizard-demo .scenario-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 1rem;
+        min-width: 0;
+    }
+
+    .wizard-demo .surface {
+        box-sizing: border-box;
+        display: grid;
+        gap: 1rem;
+        inline-size: 100%;
+        min-height: 32rem;
+        min-width: 0;
+        padding: 1rem;
+        border: 1px solid var(--tnt-color-outline-variant);
+        border-radius: .5rem;
+        background: var(--tnt-color-surface);
+        color: var(--tnt-color-on-surface);
+    }
+
+    .wizard-demo .wizard-shell {
+        box-sizing: border-box;
+        inline-size: 100%;
+        min-height: 26rem;
+        min-width: 0;
+        overflow-x: clip;
+    }
+
+    .wizard-demo .compact-shell {
+        min-height: 24rem;
+    }
+
+    .wizard-demo .constrained-shell {
+        inline-size: 100%;
+        min-height: 20rem;
+        min-width: 0;
+        overflow-x: clip;
+    }
+
+    .wizard-demo .status {
+        padding: .75rem;
+        border: 1px solid var(--tnt-color-outline-variant);
+        border-radius: .375rem;
+        color: var(--tnt-color-on-surface-variant);
+        background: var(--tnt-color-surface-container-low);
+    }
+
+    .wizard-demo .step-content {
+        display: grid;
+        gap: .75rem;
+    }
+
+    .wizard-demo .long-token {
+        overflow-wrap: anywhere;
+    }
+
+    @@media (max-width: 58rem) {
+        .wizard-demo .comparison {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="wizard-demo">
+    <div class="header">
+        <h1>NTWizard</h1>
+        <p class="muted">Full-width demos for the legacy wizard, NT wizard, and NT wizard feature permutations.</p>
+    </div>
+
+    <div class="controls">
+        <label>
+            Layout
+            <select @bind="_layoutDirection" data-testid="wizard-layout-select">
+                @foreach (var layoutDirection in Enum.GetValues<LayoutDirection>()) {
+                    <option value="@layoutDirection">@layoutDirection</option>
+                }
+            </select>
+        </label>
+    </div>
+
+    <div class="comparison">
+        <section class="surface" aria-labelledby="legacy-wizard-title">
+            <div>
+                <h2 id="legacy-wizard-title">TnTWizard</h2>
+                <p class="muted">Legacy implementation.</p>
+            </div>
+            <div class="wizard-shell" data-testid="legacy-wizard-demo">
+                <TnTWizard Title="Wizard" LayoutDirection="@_layoutDirection" HideStepsInsteadOfRemovingFromDom="true">
+                    <TnTWizardStep Title="Details" SubTitle="Start here" Icon="@MaterialIcon.Search">
+                        <div class="step-content">
+                            <h3>Project details</h3>
+                            <p class="muted">Collect the basic information for the workflow.</p>
+                        </div>
+                    </TnTWizardStep>
+                    <TnTWizardStep Title="Settings" SubTitle="Configure">
+                        <div class="step-content">
+                            <h3>Settings</h3>
+                            <p class="muted">Choose defaults and review access.</p>
+                        </div>
+                    </TnTWizardStep>
+                    <TnTWizardStep Title="Review" SubTitle="Confirm">
+                        <div class="step-content">
+                            <h3>Review</h3>
+                            <p class="muted">Confirm the setup before submitting.</p>
+                        </div>
+                    </TnTWizardStep>
+                </TnTWizard>
+            </div>
+        </section>
+
+        <section class="surface" aria-labelledby="nt-wizard-title">
+            <div>
+                <h2 id="nt-wizard-title">NTWizard</h2>
+                <p class="muted">NT implementation using NT classes, tokens, buttons, and form shell.</p>
+            </div>
+            <div class="wizard-shell" data-testid="nt-wizard-demo">
+                <NTWizard Title="Wizard" LayoutDirection="@_layoutDirection" HideStepsInsteadOfRemovingFromDom="true">
+                    <NTWizardStep Title="Details" SubTitle="Start here" Icon="@MaterialIcon.Search">
+                        <div class="step-content">
+                            <h3>Project details</h3>
+                            <p class="muted">Collect the basic information for the workflow.</p>
+                        </div>
+                    </NTWizardStep>
+                    <NTWizardStep Title="Settings" SubTitle="Configure">
+                        <div class="step-content">
+                            <h3>Settings</h3>
+                            <p class="muted">Choose defaults and review access.</p>
+                        </div>
+                    </NTWizardStep>
+                    <NTWizardStep Title="Review" SubTitle="Confirm">
+                        <div class="step-content">
+                            <h3>Review</h3>
+                            <p class="muted">Confirm the setup before submitting.</p>
+                        </div>
+                    </NTWizardStep>
+                </NTWizard>
+            </div>
+        </section>
+    </div>
+
+    <section class="surface" aria-labelledby="nt-wizard-form-title">
+        <div>
+            <h2 id="nt-wizard-form-title">NTForm Step</h2>
+            <p class="muted">The NT wizard form step uses NTForm and NT input components.</p>
+        </div>
+        <div class="wizard-shell" data-testid="nt-wizard-form-demo">
+            <NTWizard Title="Account Setup" LayoutDirection="LayoutDirection.Horizontal" HideStepsInsteadOfRemovingFromDom="true" InvalidFormButtonBehavior="NTWizardInvalidFormButtonBehavior.DisableButtons">
+                <NTWizardFormStep Title="Account"
+                                  SubTitle="Required"
+                                  Model="@_account"
+                                  Appearance="NTFormAppearance.Outlined"
+                                  Density="NTFormDensity.Standard"
+                                  ShowRequiredSupportingText="true">
+                    <NTInputText @bind-Value="_account.Name" Label="Name" Placeholder="Enter a name" />
+                </NTWizardFormStep>
+                <NTWizardStep Title="Review" SubTitle="Submit">
+                    <div class="step-content">
+                        <h3>Ready</h3>
+                        <p class="muted">The form data is ready to submit.</p>
+                    </div>
+                </NTWizardStep>
+            </NTWizard>
+        </div>
+    </section>
+
+    <section class="surface" aria-labelledby="nt-wizard-permutations-title">
+        <div>
+            <h2 id="nt-wizard-permutations-title">NTWizard Permutations</h2>
+            <p class="muted">Feature coverage for navigation, state, button, DOM, and form options.</p>
+        </div>
+        <div class="scenario-grid">
+            <div class="wizard-shell compact-shell" data-testid="nt-wizard-permutation-states">
+                <NTWizard Title="Step States" NavigationMode="NTWizardNavigationMode.Free" LayoutDirection="LayoutDirection.Horizontal" PushNavigationToBottom="false" VerticalOnSmallScreens="false">
+                    <NTWizardStep Title="Current" SubTitle="Active" Icon="@MaterialIcon.Search">
+                        <div class="step-content">
+                            <h3>Current state</h3>
+                            <p class="muted">The active step.</p>
+                        </div>
+                    </NTWizardStep>
+                    <NTWizardStep Title="Completed" SubTitle="Done" Completed="true" Icon="@MaterialIcon.Check">
+                        <div class="step-content">
+                            <h3>Completed state</h3>
+                        </div>
+                    </NTWizardStep>
+                    <NTWizardStep Title="Error" SubTitle="Invalid" HasError="true" Icon="@MaterialIcon.Error">
+                        <div class="step-content">
+                            <h3>Invalid state</h3>
+                        </div>
+                    </NTWizardStep>
+                    <NTWizardStep Title="Skipped" SubTitle="Optional" Optional="true" Skipped="true">
+                        <div class="step-content">
+                            <h3>Skipped state</h3>
+                        </div>
+                    </NTWizardStep>
+                    <NTWizardStep Title="Disabled" SubTitle="Locked" Disabled="true">
+                        <div class="step-content">
+                            <h3>Disabled state</h3>
+                        </div>
+                    </NTWizardStep>
+                </NTWizard>
+            </div>
+
+            <div class="wizard-shell compact-shell" data-testid="nt-wizard-permutation-inline-buttons">
+                <NTWizard Title="Inline Progress Buttons" LayoutDirection="LayoutDirection.Horizontal" PushNavigationToBottom="false">
+                    <NTWizardStep Title="Inline Details" SubTitle="Compact">
+                        <div class="step-content">
+                            <h3>Inline details</h3>
+                            <p class="muted">Next Step renders directly under this content.</p>
+                        </div>
+                    </NTWizardStep>
+                    <NTWizardStep Title="Inline Submit" SubTitle="Finish">
+                        <div class="step-content">
+                            <h3>Inline submit</h3>
+                            <p class="muted">Submit stays close to the final content.</p>
+                        </div>
+                    </NTWizardStep>
+                </NTWizard>
+            </div>
+
+            <div class="wizard-shell compact-shell constrained-shell" data-testid="nt-wizard-permutation-constrained-parent">
+                <NTWizard Title="Constrained Parent Wizard With A Long Header" LayoutDirection="LayoutDirection.Horizontal" PushNavigationToBottom="false" VerticalOnSmallScreens="false">
+                    <NTWizardStep Title="Extremely Long Introductory Step Title" SubTitle="Long supporting label" Icon="@MaterialIcon.Search">
+                        <div class="step-content">
+                            <h3>Constrained parent</h3>
+                            <p class="muted long-token">LongUnbrokenWizardContentTokenThatShouldWrapInsideTheWizardInsteadOfForcingTheParentToScrollHorizontally</p>
+                        </div>
+                    </NTWizardStep>
+                    <NTWizardStep Title="Second Step With A Long Name" SubTitle="Another long label">
+                        <div class="step-content">
+                            <h3>Second step</h3>
+                        </div>
+                    </NTWizardStep>
+                    <NTWizardStep Title="Final Confirmation Step" SubTitle="Submit">
+                        <div class="step-content">
+                            <h3>Final step</h3>
+                        </div>
+                    </NTWizardStep>
+                </NTWizard>
+            </div>
+
+            <div class="wizard-shell compact-shell" data-testid="nt-wizard-permutation-controlled">
+                <div class="controls" aria-label="Controlled wizard navigation">
+                    <button type="button" @onclick="() => _controlledStepIndex = 0">One</button>
+                    <button type="button" @onclick="() => _controlledStepIndex = 1">Two</button>
+                    <button type="button" @onclick="() => _controlledStepIndex = 2">Three</button>
+                </div>
+                <NTWizard Title="Controlled Flow"
+                          LayoutDirection="LayoutDirection.Horizontal"
+                          @bind-ActiveStepIndex="_controlledStepIndex"
+                          OnNextButtonClicked="HandleControlledNextAsync"
+                          OnPreviousButtonClicked="HandleControlledPreviousAsync"
+                          OnStepChanged="HandleControlledStepChangedAsync"
+                          OnSubmitCallback="HandleControlledSubmitAsync">
+                    <NTWizardStep Title="Controlled One">
+                        <div class="step-content">
+                            <h3>Controlled one</h3>
+                        </div>
+                    </NTWizardStep>
+                    <NTWizardStep Title="Controlled Two">
+                        <div class="step-content">
+                            <h3>Controlled two</h3>
+                        </div>
+                    </NTWizardStep>
+                    <NTWizardStep Title="Controlled Three">
+                        <div class="step-content">
+                            <h3>Controlled three</h3>
+                        </div>
+                    </NTWizardStep>
+                </NTWizard>
+                <p class="status" data-testid="nt-wizard-controlled-status">@_controlledStatus</p>
+            </div>
+
+            <div class="wizard-shell compact-shell" data-testid="nt-wizard-permutation-guarded">
+                <NTWizard Title="Guarded Flow" LayoutDirection="LayoutDirection.Horizontal" OnStepChanging="RejectGuardedStepChangeAsync" OnStepChanged="HandleGuardedStepChangedAsync">
+                    <NTWizardStep Title="Guarded Start">
+                        <div class="step-content">
+                            <h3>Guarded start</h3>
+                        </div>
+                    </NTWizardStep>
+                    <NTWizardStep Title="Guarded Target">
+                        <div class="step-content">
+                            <h3>Guarded target</h3>
+                        </div>
+                    </NTWizardStep>
+                </NTWizard>
+                <p class="status" data-testid="nt-wizard-guarded-status">@_guardedStatus</p>
+            </div>
+
+            <div class="wizard-shell compact-shell" data-testid="nt-wizard-permutation-disabled-buttons">
+                <NTWizard Title="Next Disabled" LayoutDirection="LayoutDirection.Horizontal" NextButtonDisabled="true">
+                    <NTWizardStep Title="Cannot Progress">
+                        <div class="step-content">
+                            <h3>Next disabled</h3>
+                        </div>
+                    </NTWizardStep>
+                    <NTWizardStep Title="Next Target">
+                        <div class="step-content">
+                            <h3>Next target</h3>
+                        </div>
+                    </NTWizardStep>
+                </NTWizard>
+                <NTWizard Title="Previous Disabled" LayoutDirection="LayoutDirection.Horizontal" ActiveStepIndex="1" PreviousButtonDisabled="true">
+                    <NTWizardStep Title="Previous Source">
+                        <div class="step-content">
+                            <h3>Previous source</h3>
+                        </div>
+                    </NTWizardStep>
+                    <NTWizardStep Title="Cannot Go Back">
+                        <div class="step-content">
+                            <h3>Previous disabled</h3>
+                        </div>
+                    </NTWizardStep>
+                </NTWizard>
+                <NTWizard Title="Submit Disabled" LayoutDirection="LayoutDirection.Horizontal" SubmitButtonDisabled="true" OnSubmitCallback="HandleDisabledSubmitAsync">
+                    <NTWizardStep Title="Cannot Submit">
+                        <div class="step-content">
+                            <h3>Submit disabled</h3>
+                        </div>
+                    </NTWizardStep>
+                </NTWizard>
+                <p class="status" data-testid="nt-wizard-disabled-submit-status">@_disabledSubmitStatus</p>
+            </div>
+
+            <div class="wizard-shell compact-shell" data-testid="nt-wizard-permutation-dom">
+                <NTWizard Title="Hidden DOM" LayoutDirection="LayoutDirection.Horizontal" HideStepsInsteadOfRemovingFromDom="true">
+                    <NTWizardStep Title="Visible Panel">
+                        <div class="step-content" data-testid="nt-wizard-hidden-visible-panel">
+                            <h3>Visible panel</h3>
+                        </div>
+                    </NTWizardStep>
+                    <NTWizardStep Title="Retained Panel">
+                        <div class="step-content" data-testid="nt-wizard-hidden-retained-panel">
+                            <h3>Retained panel</h3>
+                        </div>
+                    </NTWizardStep>
+                </NTWizard>
+                <NTWizard Title="Removed DOM" LayoutDirection="LayoutDirection.Horizontal">
+                    <NTWizardStep Title="Rendered Panel">
+                        <div class="step-content" data-testid="nt-wizard-removed-rendered-panel">
+                            <h3>Rendered panel</h3>
+                        </div>
+                    </NTWizardStep>
+                    <NTWizardStep Title="Deferred Panel">
+                        <div class="step-content" data-testid="nt-wizard-removed-deferred-panel">
+                            <h3>Deferred panel</h3>
+                        </div>
+                    </NTWizardStep>
+                </NTWizard>
+            </div>
+
+            <div class="wizard-shell compact-shell" data-testid="nt-wizard-permutation-no-skip">
+                <NTWizard Title="No Optional Skip" LayoutDirection="LayoutDirection.Horizontal" AllowSkippingOptionalSteps="false">
+                    <NTWizardStep Title="Optional Locked" Optional="true">
+                        <div class="step-content">
+                            <h3>Optional locked</h3>
+                            <p class="muted">This optional step must use Next Step.</p>
+                        </div>
+                    </NTWizardStep>
+                    <NTWizardStep Title="No Skip Target">
+                        <div class="step-content">
+                            <h3>No skip target</h3>
+                        </div>
+                    </NTWizardStep>
+                </NTWizard>
+            </div>
+
+            <div class="wizard-shell compact-shell" data-testid="nt-wizard-permutation-gray-form">
+                <NTWizard Title="Gray Invalid Form" LayoutDirection="LayoutDirection.Horizontal" InvalidFormButtonBehavior="NTWizardInvalidFormButtonBehavior.GrayOutOnly">
+                    <NTWizardFormStep Title="Gray Form" Model="@_grayAccount" OnInvalidSubmitCallback="HandleGrayInvalidSubmitAsync" RequiredSupportingText="Needed before continuing" ShowRequiredSupportingText="true">
+                        <NTInputText @bind-Value="_grayAccount.Name" Label="Gray Name" Placeholder="Leave empty to test invalid" />
+                    </NTWizardFormStep>
+                    <NTWizardStep Title="Gray Review">
+                        <div class="step-content">
+                            <h3>Gray review</h3>
+                        </div>
+                    </NTWizardStep>
+                </NTWizard>
+                <p class="status" data-testid="nt-wizard-gray-form-status">@_grayFormStatus</p>
+            </div>
+
+            <div class="wizard-shell compact-shell" data-testid="nt-wizard-permutation-form-options">
+                <NTWizard Title="Form Options" LayoutDirection="LayoutDirection.Horizontal" InvalidFormButtonBehavior="NTWizardInvalidFormButtonBehavior.DisableButtons">
+                    <NTWizardFormStep Title="Options"
+                                      Model="@_optionsAccount"
+                                      Appearance="NTFormAppearance.Filled"
+                                      Density="NTFormDensity.Dense"
+                                      FormName="nt-wizard-options-form"
+                                      IncludeDataAnnotationsValidator="false"
+                                      ReadOnly="true"
+                                      ShowRequiredSupportingText="true"
+                                      ValidateOnInput="false"
+                                      RequiredSupportingText="Options required"
+                                      OnValidSubmitCallback="HandleOptionsValidSubmitAsync">
+                        <NTInputText @bind-Value="_optionsAccount.Name" Label="Options Name" Placeholder="Read-only value" />
+                    </NTWizardFormStep>
+                    <NTWizardStep Title="Options Review">
+                        <div class="step-content">
+                            <h3>Options review</h3>
+                        </div>
+                    </NTWizardStep>
+                </NTWizard>
+                <p class="status" data-testid="nt-wizard-options-form-status">@_optionsFormStatus</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="surface" aria-labelledby="nt-wizard-e2e-title">
+        <div>
+            <h2 id="nt-wizard-e2e-title">NTWizard E2E</h2>
+            <p class="muted">Browser-level state, navigation, and validation scenarios.</p>
+        </div>
+        <div class="wizard-shell" data-testid="nt-wizard-e2e-linear">
+            <NTWizard Title="Linear Flow" LayoutDirection="LayoutDirection.Horizontal" OnStepSkipped="HandleE2EStepSkippedAsync">
+                <NTWizardStep Title="Optional Intro" SubTitle="Can skip" Optional="true">
+                    <div class="step-content">
+                        <h3>Optional intro</h3>
+                        <p class="muted">This step can be skipped without being completed.</p>
+                    </div>
+                </NTWizardStep>
+                <NTWizardStep Title="Disabled Step" SubTitle="Unavailable" Disabled="true">
+                    <div class="step-content">
+                        <h3>Disabled step</h3>
+                        <p class="muted">This step should never become current.</p>
+                    </div>
+                </NTWizardStep>
+                <NTWizardStep Title="Review Flow" SubTitle="Enabled">
+                    <div class="step-content">
+                        <h3>Review flow</h3>
+                        <p class="muted">Disabled steps are skipped when progressing.</p>
+                    </div>
+                </NTWizardStep>
+            </NTWizard>
+            <p data-testid="nt-wizard-e2e-skip-status">Skipped: @_e2eSkippedStepIndex</p>
+        </div>
+        <div class="wizard-shell" data-testid="nt-wizard-e2e-free">
+            <NTWizard Title="Free Flow" LayoutDirection="LayoutDirection.Horizontal" NavigationMode="NTWizardNavigationMode.Free">
+                <NTWizardStep Title="Free One">
+                    <div class="step-content">
+                        <h3>Free one</h3>
+                    </div>
+                </NTWizardStep>
+                <NTWizardStep Title="Free Two">
+                    <div class="step-content">
+                        <h3>Free two</h3>
+                    </div>
+                </NTWizardStep>
+                <NTWizardStep Title="Free Three">
+                    <div class="step-content">
+                        <h3>Free three</h3>
+                    </div>
+                </NTWizardStep>
+            </NTWizard>
+        </div>
+        <div class="wizard-shell" data-testid="nt-wizard-e2e-validation">
+            <NTWizard Title="Validation Flow" LayoutDirection="LayoutDirection.Horizontal">
+                <NTWizardStep Title="Validate Me" ValidateAsync="RejectE2EValidationAsync">
+                    <div class="step-content">
+                        <h3>Validate me</h3>
+                        <p class="muted" data-testid="nt-wizard-e2e-validation-status">@_e2eValidationStatus</p>
+                    </div>
+                </NTWizardStep>
+                <NTWizardStep Title="Blocked Target">
+                    <div class="step-content">
+                        <h3>Blocked target</h3>
+                    </div>
+                </NTWizardStep>
+            </NTWizard>
+        </div>
+    </section>
+</div>
+
+@code {
+    private LayoutDirection _layoutDirection = LayoutDirection.Vertical;
+    private AccountModel _account = new();
+    private AccountModel _grayAccount = new();
+    private AccountModel _optionsAccount = new() { Name = "Read only" };
+    private int _controlledStepIndex;
+    private string _controlledStatus = "Controlled: 0";
+    private string _guardedStatus = "Guard: waiting";
+    private string _disabledSubmitStatus = "Submit disabled";
+    private string _grayFormStatus = "Gray form waiting";
+    private string _optionsFormStatus = "Options form waiting";
+    private int _e2eSkippedStepIndex = -1;
+    private string _e2eValidationStatus = "Not validated";
+
+    private Task HandleControlledNextAsync(int stepIndex) {
+        _controlledStatus = $"Next requested: {stepIndex}";
+        return Task.CompletedTask;
+    }
+
+    private Task HandleControlledPreviousAsync(int stepIndex) {
+        _controlledStatus = $"Previous requested: {stepIndex}";
+        return Task.CompletedTask;
+    }
+
+    private Task HandleControlledStepChangedAsync(NTWizardStepChangedEventArgs args) {
+        _controlledStatus = $"Changed: {args.PreviousStepIndex}->{args.CurrentStepIndex}";
+        return Task.CompletedTask;
+    }
+
+    private Task HandleControlledSubmitAsync() {
+        _controlledStatus = "Submitted controlled flow";
+        return Task.CompletedTask;
+    }
+
+    private async Task<bool> RejectGuardedStepChangeAsync(NTWizardStepChangeContext context) {
+        _guardedStatus = $"Guard blocked: {context.FromStepIndex}->{context.ToStepIndex}";
+        await InvokeAsync(StateHasChanged);
+        return false;
+    }
+
+    private Task HandleGuardedStepChangedAsync(NTWizardStepChangedEventArgs args) {
+        _guardedStatus = $"Guard changed: {args.PreviousStepIndex}->{args.CurrentStepIndex}";
+        return Task.CompletedTask;
+    }
+
+    private Task HandleDisabledSubmitAsync() {
+        _disabledSubmitStatus = "Submit callback should not run while disabled";
+        return Task.CompletedTask;
+    }
+
+    private Task HandleGrayInvalidSubmitAsync(object model) {
+        _grayFormStatus = "Gray form invalid";
+        return Task.CompletedTask;
+    }
+
+    private Task HandleOptionsValidSubmitAsync(object model) {
+        _optionsFormStatus = "Options form valid";
+        return Task.CompletedTask;
+    }
+
+    private Task HandleE2EStepSkippedAsync(int stepIndex) {
+        _e2eSkippedStepIndex = stepIndex;
+        return Task.CompletedTask;
+    }
+
+    private Task<bool> RejectE2EValidationAsync() {
+        _e2eValidationStatus = "Validation rejected";
+        return Task.FromResult(false);
+    }
+
+    private sealed class AccountModel {
+        [Required]
+        public string Name { get; set; } = string.Empty;
+    }
+}

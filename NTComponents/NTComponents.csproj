@@ -15,6 +15,7 @@
 		<EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
 		<WarningLevel>8</WarningLevel>
 		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+		<NoWarn>$(NoWarn);CS0618</NoWarn>
 		<PackageId>NTComponents</PackageId>
 		<Authors>NT Technologies</Authors>
 		<Description>Collection of Material-design inspired Blazor UI components for Web and WebAssembly projects. Designed for .NET 9 and .NET 10.</Description>

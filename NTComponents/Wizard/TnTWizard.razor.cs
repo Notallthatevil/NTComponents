@@ -9,6 +9,7 @@ namespace NTComponents;
 /// <summary>
 ///     Represents a wizard component that manages multiple steps and provides navigation between them.
 /// </summary>
+[Obsolete("TnTWizard is obsolete. Use NTWizard instead.")]
 public partial class TnTWizard : TnTComponentBase, IDisposable {
 
     /// <summary>
@@ -374,6 +375,7 @@ public partial class TnTWizard : TnTComponentBase, IDisposable {
 /// <summary>
 ///     Defines how wizard progression buttons should behave when the current form step is invalid.
 /// </summary>
+[Obsolete("TnTWizardInvalidFormButtonBehavior is obsolete. Use NTWizardInvalidFormButtonBehavior instead.")]
 public enum TnTWizardInvalidFormButtonBehavior {
 
     /// <summary>

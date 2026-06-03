@@ -17,6 +17,7 @@ namespace NTComponents.Grid.Columns;
 /// <typeparam name="TGridItem">The type of data represented by each row in the grid.</typeparam>
 [CascadingTypeParameter(nameof(TGridItem))]
 [DebuggerDisplay("Title = {Title}, Order = {Order}, Sortable = {Sortable}, IsSortedOn = {IsSortedOn}")]
+[Obsolete("This legacy grid API is obsolete. Use NTDataGrid, NTPropertyColumn, and NTTemplateColumn instead.")]
 public abstract partial class TnTColumnBase<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields)] TGridItem> : TnTComponentBase, ITnTComponentBase, IDisposable {
     /// <inheritdoc />
     public override string? ElementClass => CssClassBuilder.Create()

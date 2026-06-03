@@ -1,0 +1,16 @@
+@namespace NTComponents
+@using NTComponents.Core
+@inherits TnTComponentBase
+
+<CascadingValue Value="this">
+    <div @attributes="AdditionalAttributes"
+         class="@ElementClass"
+         style="@ElementStyle"
+         title="@ElementTitle"
+         id="@ElementId"
+         lang="@ElementLang"
+         autofocus="@AutoFocus"
+         @ref="Element">
+        @ChildContent
+    </div>
+</CascadingValue>

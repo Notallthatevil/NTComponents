@@ -13,6 +13,7 @@ namespace NTComponents;
 /// <summary>
 ///     Represents a navigation link (anchor) component specifically designed for side navigation menus.
 /// </summary>
+[Obsolete("TnTSideNavLink is obsolete. Use NTNavigationRailItem instead.")]
 public partial class TnTSideNavLink {
 
     /// <inheritdoc />

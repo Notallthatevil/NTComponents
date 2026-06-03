@@ -146,21 +146,26 @@ public abstract class TnTIcon : TnTComponentBase {
     ///     Creates a render fragment for this icon.
     /// </summary>
     /// <returns>A <see cref="RenderFragment" /> that can be used to render this icon.</returns>
-    public RenderFragment Render(string? additionalClass = null) {
-        if (additionalClass is not null) {
-            AdditionalClass = additionalClass;
-        }
-        return new(BuildRenderTree);
+    public RenderFragment Render(string? additionalClass = null, bool suppressTitle = false) {
+        return new(builder => {
+            if (additionalClass is not null) {
+                AdditionalClass = additionalClass;
+            }
+
+            BuildRenderTree(builder, suppressTitle);
+        });
     }
 
     /// <inheritdoc />
-    protected override void BuildRenderTree(RenderTreeBuilder builder) {
+    protected override void BuildRenderTree(RenderTreeBuilder builder) => BuildRenderTree(builder, suppressTitle: false);
+
+    private void BuildRenderTree(RenderTreeBuilder builder, bool suppressTitle) {
         builder.OpenElement(0, "span");
         builder.AddMultipleAttributes(10, AdditionalAttributes);
         builder.AddAttribute(20, "class", ElementClass);
         builder.AddAttribute(30, "style", ElementStyle);
         builder.AddAttribute(40, "id", ElementId);
-        builder.AddAttribute(50, "title", Tooltip is null ? ElementTitle ?? Icon : null);
+        builder.AddAttribute(50, "title", !suppressTitle && Tooltip is null ? ElementTitle ?? Icon : null);
         builder.AddElementReferenceCapture(60, e => Element = e);
 
         if (Tooltip is not null) {

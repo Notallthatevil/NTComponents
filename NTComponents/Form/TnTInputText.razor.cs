@@ -1,3 +1,4 @@
+#pragma warning disable CS0618
 using Microsoft.AspNetCore.Components;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
@@ -12,6 +13,7 @@ namespace NTComponents;
 ///     Prefer the most specific input type that matches the requested data. Specific native types help browsers present the
 ///     right keyboard, autofill, and built-in validation behavior.
 /// </remarks>
+[System.Obsolete("This legacy Form element is obsolete. Use the NT form components instead.")]
 public enum TextInputType {
 
     /// <summary>
@@ -88,6 +90,7 @@ public partial class TnTInputText {
 /// <summary>
 ///     Provides extension methods for the <see cref="TextInputType" /> enum.
 /// </summary>
+[System.Obsolete("This legacy Form element is obsolete. Use the NT form components instead.")]
 public static class TextInputTypeExt {
 
     /// <summary>

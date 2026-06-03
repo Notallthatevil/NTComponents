@@ -1,86 +1,279 @@
 @page "/typeahead"
-@using LiveTest.Client.Components
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Components.Forms
 @using NTComponents
 @rendermode InteractiveServer
 
-<h3>Typeahead</h3>
+<style>
+    .typeahead-demo {
+        display: grid;
+        gap: 1.5rem;
+        inline-size: 100%;
+        max-inline-size: 72rem;
+        min-width: 0;
+    }
 
-<label>
-	Appearance
-	<select @bind="@Appearance">
-		@foreach (var appearance in Enum.GetValues<FormAppearance>()) {
-			<option value="@appearance">@appearance</option>
-		}
-	</select>
-</label>
+    .typeahead-demo .header,
+    .typeahead-demo .controls,
+    .typeahead-demo .surface,
+    .typeahead-demo .status {
+        min-width: 0;
+    }
 
-<TnTTypeahead TItem="Item" ItemsLookupFunc="SearchFunc" Label="Typeahead" Appearance="@Appearance" ItemSelectedCallback="@((Item item) => SelectedItems.Add(item))" SupportingText="Support" ErrorMessage="My Error Message" >
-	<Tooltip>My tooltip</Tooltip>
-	<ResultTemplate>
-		@context.Name @context.Email
-	</ResultTemplate>
-</TnTTypeahead>
+    .typeahead-demo .header {
+        display: grid;
+        gap: 0.25rem;
+    }
 
-@foreach (var item in SelectedItems) {
-	<span>
-		@item.Name @item.Age
-	</span>
-}
+    .typeahead-demo h1,
+    .typeahead-demo h2,
+    .typeahead-demo p {
+        margin: 0;
+    }
 
-<br />
-<br />
-<br />
-<br />
-Value: @_value
-<br />
-<br />
-<br />
-<br />
+    .typeahead-demo .muted {
+        color: var(--tnt-color-on-surface-variant);
+    }
 
+    .typeahead-demo .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        align-items: end;
+    }
 
-<TnTTypeahead TItem="Item" Value="_value" ValueChanged="@(v => _value = v)" ItemsLookupFunc="SearchFunc" Appearance="@Appearance" ValueToStringFunc="@(item => item.Name)" ResetValueOnSelect="false" ItemSelectedCallback="@((Item item) => SelectedItems.Add(item))" />
+    .typeahead-demo .control {
+        display: grid;
+        gap: 0.25rem;
+        min-inline-size: 12rem;
+    }
 
-@foreach (var item in SelectedItems) {
-	<span>
-		@item.Name @item.Age
-	</span>
-}
+    .typeahead-demo select {
+        min-block-size: 2.5rem;
+        border: 1px solid var(--tnt-color-outline);
+        border-radius: 4px;
+        padding-inline: 0.75rem;
+        color: var(--tnt-color-on-surface);
+        background: var(--tnt-color-surface);
+    }
+
+    .typeahead-demo .surface {
+        display: grid;
+        gap: 1rem;
+        border: 1px solid var(--tnt-color-outline-variant);
+        border-radius: 8px;
+        padding: 1rem;
+        background: var(--tnt-color-surface);
+    }
+
+    .typeahead-demo .form-grid {
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+        align-items: start;
+    }
+
+    .typeahead-demo .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        justify-content: end;
+    }
+
+    .typeahead-demo .status {
+        display: grid;
+        gap: 0.5rem;
+        border-inline-start: 4px solid var(--tnt-color-primary);
+        padding: 0.75rem 1rem;
+        background: var(--tnt-color-surface-container);
+    }
+
+    .typeahead-demo .selected-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .typeahead-demo .selected-list li {
+        border: 1px solid var(--tnt-color-outline-variant);
+        border-radius: 9999px;
+        padding: 0.25rem 0.75rem;
+        color: var(--tnt-color-on-secondary-container);
+        background: var(--tnt-color-secondary-container);
+    }
+</style>
+
+<div class="typeahead-demo">
+    <div class="header">
+        <h1>NTTypeahead</h1>
+        <p class="muted">Async search field bound to a selected item and validated through NTForm.</p>
+    </div>
+
+    <div class="controls">
+        <label class="control">
+            Appearance
+            <select @bind="_appearance" data-testid="typeahead-appearance">
+                @foreach (var appearance in Enum.GetValues<NTFormAppearance>()) {
+                    <option value="@appearance">@appearance</option>
+                }
+            </select>
+        </label>
+
+        <label class="control">
+            Density
+            <select @bind="_density" data-testid="typeahead-density">
+                @foreach (var density in Enum.GetValues<NTFormDensity>()) {
+                    <option value="@density">@density</option>
+                }
+            </select>
+        </label>
+    </div>
+
+    <section class="surface" aria-labelledby="typeahead-form-title">
+        <div class="header">
+            <h2 id="typeahead-form-title">Validated NTForm</h2>
+            <p class="muted">Submit without selecting a customer to see required validation. Typing after a selection clears the selected value.</p>
+        </div>
+
+        <NTForm Model="_model"
+                Appearance="_appearance"
+                Density="_density"
+                ShowRequiredSupportingText="true"
+                OnValidSubmit="OnValidSubmitAsync"
+                OnInvalidSubmit="OnInvalidSubmitAsync"
+                data-testid="nt-typeahead-form">
+            <DataAnnotationsValidator />
+
+            <div class="form-grid">
+                <NTTypeahead TItem="Customer"
+                             @bind-Value="_model.Customer"
+                             @bind-SearchText="_customerSearchText"
+                             ItemsLookupFunc="SearchCustomersAsync"
+                             ItemTextSelector="@(customer => customer.Name)"
+                             ItemSupportingTextSelector="@(customer => $"{customer.Email} - {customer.Region}")"
+                             ItemSelectedCallback="OnCustomerSelectedAsync"
+                             Label="Customer"
+                             Placeholder="Search customers"
+                             SupportingText="Search by name, email, or region"
+                             required
+                             data-testid="nt-typeahead-customer">
+                    <ResultTemplate Context="customer">
+                        <span class="nt-combobox-option-content">
+                            <span class="nt-combobox-option-label">@customer.Name</span>
+                            <span class="nt-combobox-option-supporting">@customer.Email - @customer.Region</span>
+                        </span>
+                    </ResultTemplate>
+                </NTTypeahead>
+
+                <NTTypeahead TItem="Customer"
+                             @bind-Value="_model.Reviewer"
+                             @bind-SearchText="_reviewerSearchText"
+                             ItemsLookupFunc="SearchCustomersAsync"
+                             ItemTextSelector="@(customer => customer.Name)"
+                             ItemSupportingTextSelector="@(customer => customer.Region)"
+                             Label="Reviewer"
+                             Placeholder="Optional reviewer"
+                             MenuItemAppearance="NTMenuItemAppearance.Condensed"
+                             MinimumSearchLength="2"
+                             data-testid="nt-typeahead-reviewer" />
+            </div>
+
+            <div class="actions">
+                <NTButton Type="ButtonType.Submit" Variant="NTButtonVariant.Filled" Label="Submit" />
+                <NTButton Type="ButtonType.Button" Variant="NTButtonVariant.Outlined" Label="Reset" OnClickCallback="@(_ => ResetAsync())" />
+            </div>
+        </NTForm>
+    </section>
+
+    <section class="status" aria-live="polite" data-testid="nt-typeahead-status">
+        <strong>@_status</strong>
+        <span>Selected customer: @(_model.Customer?.Name ?? "None")</span>
+        <span>Customer search text: @(_customerSearchText ?? "None")</span>
+        <span>Reviewer: @(_model.Reviewer?.Name ?? "None")</span>
+        <span>Reviewer search text: @(_reviewerSearchText ?? "None")</span>
+        @if (_selectedCustomers.Count > 0) {
+            <ul class="selected-list" aria-label="Selection history">
+                @foreach (var customer in _selectedCustomers) {
+                    <li>@customer.Name</li>
+                }
+            </ul>
+        }
+    </section>
+</div>
 
 @code {
-    private string? _value;
+    private readonly List<Customer> _customers = [
+        new("Ada Lovelace", "ada@example.com", "Engineering"),
+        new("Grace Hopper", "grace@example.com", "Platform"),
+        new("Katherine Johnson", "katherine@example.com", "Analytics"),
+        new("Mary Jackson", "mary@example.com", "Operations"),
+        new("Dorothy Vaughan", "dorothy@example.com", "Research"),
+        new("Margaret Hamilton", "margaret@example.com", "Infrastructure"),
+        new("Radia Perlman", "radia@example.com", "Networking"),
+        new("Annie Easley", "annie@example.com", "Reliability")
+    ];
 
-	private IQueryable<Item> Items = new List<Item>().AsQueryable();
+    private readonly List<Customer> _selectedCustomers = [];
+    private TypeaheadDemoModel _model = new();
+    private NTFormAppearance _appearance = NTFormAppearance.Outlined;
+    private NTFormDensity _density = NTFormDensity.Standard;
+    private string? _customerSearchText;
+    private string? _reviewerSearchText;
+    private string _status = "No submission yet";
 
-    private List<Item> SelectedItems = new List<Item>();
-	private FormAppearance Appearance = FormAppearance.Outlined;
+    private async Task<IEnumerable<Customer>> SearchCustomersAsync(string? search, CancellationToken cancellationToken) {
+        await Task.Delay(180, cancellationToken);
+        if (string.IsNullOrWhiteSpace(search)) {
+            return [];
+        }
 
-	private class Item {
-		public required string Name { get; set; }
-		public required string Email { get; set; }
-		public required int Age { get; set; }
-	}
+        return _customers
+            .Where(customer => customer.Name.Contains(search, StringComparison.OrdinalIgnoreCase)
+                || customer.Email.Contains(search, StringComparison.OrdinalIgnoreCase)
+                || customer.Region.Contains(search, StringComparison.OrdinalIgnoreCase))
+            .Take(6);
+    }
 
-	protected override void OnInitialized() {
-		base.OnInitialized();
+    private Task OnCustomerSelectedAsync(Customer? customer) {
+        if (customer is not null) {
+            _selectedCustomers.Insert(0, customer);
+            if (_selectedCustomers.Count > 5) {
+                _selectedCustomers.RemoveAt(_selectedCustomers.Count - 1);
+            }
+        }
 
-		var items = new List<Item>();
-		foreach (var index in Enumerable.Range(1, 100)) {
-			items.Add(new Item {
-				Name = $"Name {index}",
-				Email = $"Email {index}",
-				Age = index
-			});
-		}
+        _status = customer is null ? "Selection cleared" : $"Selected {customer.Name}";
+        return Task.CompletedTask;
+    }
 
-		Items = items.AsQueryable();
-	}
+    private Task OnValidSubmitAsync(EditContext context) {
+        _status = $"Valid submit for {_model.Customer?.Name}";
+        return Task.CompletedTask;
+    }
 
-	private async Task<IEnumerable<Item>> SearchFunc(string? search, CancellationToken cancellationToken = default) {
-		await Task.Delay(10000, cancellationToken);
-        if (!string.IsNullOrWhiteSpace(search)) {
-			return Items.Where(x => x.Name.Contains(search, StringComparison.OrdinalIgnoreCase));
-		}
-		return Array.Empty<Item>();
-	}
+    private Task OnInvalidSubmitAsync(EditContext context) {
+        _status = "Invalid submit: select a customer";
+        return Task.CompletedTask;
+    }
 
+    private Task ResetAsync() {
+        _model = new TypeaheadDemoModel();
+        _customerSearchText = null;
+        _reviewerSearchText = null;
+        _selectedCustomers.Clear();
+        _status = "Demo reset";
+        return Task.CompletedTask;
+    }
+
+    private sealed class TypeaheadDemoModel {
+        [Required]
+        public Customer? Customer { get; set; }
+
+        public Customer? Reviewer { get; set; }
+    }
+
+    private sealed record Customer(string Name, string Email, string Region);
 }

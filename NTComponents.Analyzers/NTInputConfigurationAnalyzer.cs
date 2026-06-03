@@ -15,6 +15,9 @@ public sealed class NTInputConfigurationAnalyzer : DiagnosticAnalyzer {
     public const string PhoneMaskRequiresTelDiagnosticId = "NTC1059";
     public const string InvalidPhoneMaskDiagnosticId = "NTC1060";
     public const string ComponentOwnedInputAttributeDiagnosticId = "NTC1061";
+    public const string MissingValueExpressionDiagnosticId = "NTC1062";
+    public const string BooleanInputRequiredAttributeDiagnosticId = "NTC1063";
+    public const string EmptyRequiredSupportingTextDiagnosticId = "NTC1064";
 
     private static readonly ImmutableDictionary<string, string> ComponentOwnedInputAttributes = ImmutableDictionary.CreateRange(
         StringComparer.Ordinal,
@@ -58,11 +61,38 @@ public sealed class NTInputConfigurationAnalyzer : DiagnosticAnalyzer {
         DiagnosticSeverity.Warning,
         isEnabledByDefault: true);
 
+    private static readonly DiagnosticDescriptor MissingValueExpressionRule = new(
+        MissingValueExpressionDiagnosticId,
+        "Validation-bound NT inputs require ValueExpression",
+        "{0} sets Value or ValueChanged without ValueExpression; use @bind-Value or provide ValueExpression so EditContext validation can associate messages with the field",
+        "Usage",
+        DiagnosticSeverity.Warning,
+        isEnabledByDefault: true);
+
+    private static readonly DiagnosticDescriptor BooleanInputRequiredAttributeRule = new(
+        BooleanInputRequiredAttributeDiagnosticId,
+        "Use Required for NT boolean input validation",
+        "Use Required on {0} instead of a raw 'required' attribute so the component can add EditContext validation messages",
+        "Usage",
+        DiagnosticSeverity.Warning,
+        isEnabledByDefault: true);
+
+    private static readonly DiagnosticDescriptor EmptyRequiredSupportingTextRule = new(
+        EmptyRequiredSupportingTextDiagnosticId,
+        "NTForm required supporting text cannot be empty",
+        "NTForm has ShowRequiredSupportingText enabled but RequiredSupportingText is empty",
+        "Usage",
+        DiagnosticSeverity.Warning,
+        isEnabledByDefault: true);
+
     /// <inheritdoc />
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => [
         PhoneMaskRequiresTelRule,
         InvalidPhoneMaskRule,
-        ComponentOwnedInputAttributeRule
+        ComponentOwnedInputAttributeRule,
+        MissingValueExpressionRule,
+        BooleanInputRequiredAttributeRule,
+        EmptyRequiredSupportingTextRule
     ];
 
     /// <inheritdoc />
@@ -71,15 +101,18 @@ public sealed class NTInputConfigurationAnalyzer : DiagnosticAnalyzer {
         context.EnableConcurrentExecution();
         context.RegisterCompilationStartAction(static startContext => {
             var inputBaseType = startContext.Compilation.GetTypeByMetadataName("NTComponents.NTInputBase`1");
-            if (inputBaseType is null) {
+            var formControlBaseType = startContext.Compilation.GetTypeByMetadataName("NTComponents.NTFormControlBaseCore`1");
+            var formType = startContext.Compilation.GetTypeByMetadataName("NTComponents.NTForm");
+            if (inputBaseType is null && formControlBaseType is null && formType is null) {
                 return;
             }
 
             var inputTextType = startContext.Compilation.GetTypeByMetadataName("NTComponents.NTInputText");
+            var booleanInputBaseType = startContext.Compilation.GetTypeByMetadataName("NTComponents.NTBooleanInputBase");
             var textInputType = startContext.Compilation.GetTypeByMetadataName("NTComponents.TextInputType");
 
             startContext.RegisterSyntaxNodeAction(
-                nodeContext => AnalyzeExecutableNode(nodeContext, inputBaseType, inputTextType, textInputType),
+                nodeContext => AnalyzeExecutableNode(nodeContext, inputBaseType, formControlBaseType, inputTextType, booleanInputBaseType, formType, textInputType),
                 Microsoft.CodeAnalysis.CSharp.SyntaxKind.MethodDeclaration,
                 Microsoft.CodeAnalysis.CSharp.SyntaxKind.ConstructorDeclaration,
                 Microsoft.CodeAnalysis.CSharp.SyntaxKind.LocalFunctionStatement,
@@ -91,8 +124,11 @@ public sealed class NTInputConfigurationAnalyzer : DiagnosticAnalyzer {
 
     private static void AnalyzeExecutableNode(
         SyntaxNodeAnalysisContext context,
-        INamedTypeSymbol inputBaseType,
+        INamedTypeSymbol? inputBaseType,
+        INamedTypeSymbol? formControlBaseType,
         INamedTypeSymbol? inputTextType,
+        INamedTypeSymbol? booleanInputBaseType,
+        INamedTypeSymbol? formType,
         INamedTypeSymbol? textInputType) {
         var bodyNode = GetBodyNode(context.Node);
         if (bodyNode is null) {
@@ -107,7 +143,7 @@ public sealed class NTInputConfigurationAnalyzer : DiagnosticAnalyzer {
         var stack = new Stack<ComponentFrame>();
 
         foreach (var invocation in invocations) {
-            if (TryGetOpenedComponent(invocation, context.SemanticModel, inputBaseType, inputTextType, out var componentFrame)) {
+            if (TryGetOpenedComponent(invocation, context.SemanticModel, inputBaseType, formControlBaseType, inputTextType, booleanInputBaseType, formType, out var componentFrame)) {
                 stack.Push(componentFrame);
                 continue;
             }
@@ -118,14 +154,14 @@ public sealed class NTInputConfigurationAnalyzer : DiagnosticAnalyzer {
                 }
 
                 var frame = stack.Pop();
-                if (frame.IsInputComponent) {
+                if (frame.IsAnalyzedComponent) {
                     AnalyzeComponentFrame(context, frame, textInputType);
                 }
 
                 continue;
             }
 
-            if (stack.Count == 0 || !stack.Peek().IsInputComponent) {
+            if (stack.Count == 0 || !stack.Peek().IsAnalyzedComponent) {
                 continue;
             }
 
@@ -136,7 +172,18 @@ public sealed class NTInputConfigurationAnalyzer : DiagnosticAnalyzer {
     }
 
     private static void AnalyzeComponentFrame(SyntaxNodeAnalysisContext context, ComponentFrame frame, INamedTypeSymbol? textInputType) {
-        AnalyzeComponentOwnedInputAttributes(context, frame);
+        if (frame.IsValidationInputComponent) {
+            AnalyzeComponentOwnedInputAttributes(context, frame);
+            AnalyzeValueExpression(context, frame);
+        }
+
+        if (frame.Kind == ComponentKind.BooleanInput) {
+            AnalyzeBooleanRequiredAttribute(context, frame);
+        }
+
+        if (frame.Kind == ComponentKind.Form) {
+            AnalyzeRequiredSupportingText(context, frame);
+        }
 
         if (frame.Kind == ComponentKind.InputText && textInputType is not null) {
             AnalyzePhoneMask(context, frame, textInputType);
@@ -174,6 +221,42 @@ public sealed class NTInputConfigurationAnalyzer : DiagnosticAnalyzer {
         }
     }
 
+    private static void AnalyzeValueExpression(SyntaxNodeAnalysisContext context, ComponentFrame frame) {
+        if (frame.Attributes.ContainsKey("ValueExpression")) {
+            return;
+        }
+
+        var hasValue = frame.Attributes.TryGetValue("Value", out var valueAttribute);
+        var hasValueChanged = frame.Attributes.TryGetValue("ValueChanged", out var valueChangedAttribute);
+        if (!hasValue && !hasValueChanged) {
+            return;
+        }
+
+        var diagnosticLocation = hasValueChanged ? valueChangedAttribute.Location : valueAttribute.Location;
+        context.ReportDiagnostic(Diagnostic.Create(MissingValueExpressionRule, diagnosticLocation, frame.ComponentName));
+    }
+
+    private static void AnalyzeBooleanRequiredAttribute(SyntaxNodeAnalysisContext context, ComponentFrame frame) {
+        if (!frame.Attributes.TryGetValue("required", out var requiredAttribute)) {
+            return;
+        }
+
+        context.ReportDiagnostic(Diagnostic.Create(BooleanInputRequiredAttributeRule, requiredAttribute.Location, frame.ComponentName));
+    }
+
+    private static void AnalyzeRequiredSupportingText(SyntaxNodeAnalysisContext context, ComponentFrame frame) {
+        if (!frame.Attributes.TryGetValue("ShowRequiredSupportingText", out var showRequiredSupportingText)
+            || !IsTrueConstant(showRequiredSupportingText.Operation)
+            || !frame.Attributes.TryGetValue("RequiredSupportingText", out var requiredSupportingText)) {
+            return;
+        }
+
+        if (IsNullConstant(requiredSupportingText.Operation)
+            || (TryGetStringConstant(requiredSupportingText.Operation, out var text) && string.IsNullOrWhiteSpace(text))) {
+            context.ReportDiagnostic(Diagnostic.Create(EmptyRequiredSupportingTextRule, requiredSupportingText.Location));
+        }
+    }
+
     private static string? GetEffectiveTextInputType(ComponentFrame frame, INamedTypeSymbol textInputType) {
         if (!frame.Attributes.TryGetValue("InputType", out var inputType)) {
             return "Text";
@@ -208,8 +291,11 @@ public sealed class NTInputConfigurationAnalyzer : DiagnosticAnalyzer {
     private static bool TryGetOpenedComponent(
         InvocationExpressionSyntax invocation,
         SemanticModel semanticModel,
-        INamedTypeSymbol inputBaseType,
+        INamedTypeSymbol? inputBaseType,
+        INamedTypeSymbol? formControlBaseType,
         INamedTypeSymbol? inputTextType,
+        INamedTypeSymbol? booleanInputBaseType,
+        INamedTypeSymbol? formType,
         out ComponentFrame componentFrame) {
         componentFrame = default!;
 
@@ -235,8 +321,19 @@ public sealed class NTInputConfigurationAnalyzer : DiagnosticAnalyzer {
         }
 
         var isInputText = inputTextType is not null && SymbolEqualityComparer.Default.Equals(openedComponentType, inputTextType);
-        var isInputBase = IsOrDerivesFrom(openedComponentType, inputBaseType);
-        var kind = isInputText ? ComponentKind.InputText : isInputBase ? ComponentKind.InputBase : ComponentKind.Other;
+        var isBooleanInput = booleanInputBaseType is not null && IsOrDerivesFrom(openedComponentType, booleanInputBaseType);
+        var isForm = formType is not null && SymbolEqualityComparer.Default.Equals(openedComponentType, formType);
+        var isInputBase = inputBaseType is not null && IsOrDerivesFrom(openedComponentType, inputBaseType);
+        var isFormControlBase = formControlBaseType is not null && IsOrDerivesFrom(openedComponentType, formControlBaseType);
+        var kind = isInputText
+            ? ComponentKind.InputText
+            : isBooleanInput
+                ? ComponentKind.BooleanInput
+                : isForm
+                    ? ComponentKind.Form
+                    : isInputBase || isFormControlBase
+                        ? ComponentKind.FormControl
+                        : ComponentKind.Other;
         componentFrame = new ComponentFrame(kind, openedComponentType.Name, invocation.GetLocation());
         return true;
     }
@@ -290,6 +387,11 @@ public sealed class NTInputConfigurationAnalyzer : DiagnosticAnalyzer {
     private static bool IsNullConstant(IOperation? operation) {
         operation = UnwrapOperation(operation);
         return operation?.ConstantValue.HasValue == true && operation.ConstantValue.Value is null;
+    }
+
+    private static bool IsTrueConstant(IOperation? operation) {
+        operation = UnwrapOperation(operation);
+        return operation?.ConstantValue.HasValue == true && operation.ConstantValue.Value is true;
     }
 
     private static bool TryGetStringConstant(IOperation? operation, out string value) {
@@ -366,8 +468,10 @@ public sealed class NTInputConfigurationAnalyzer : DiagnosticAnalyzer {
 
     private enum ComponentKind {
         Other,
-        InputBase,
-        InputText
+        FormControl,
+        InputText,
+        BooleanInput,
+        Form
     }
 
     private sealed class ComponentFrame(ComponentKind kind, string componentName, Location location) {
@@ -377,7 +481,9 @@ public sealed class NTInputConfigurationAnalyzer : DiagnosticAnalyzer {
 
         public ComponentKind Kind { get; } = kind;
 
-        public bool IsInputComponent => Kind is ComponentKind.InputBase or ComponentKind.InputText;
+        public bool IsAnalyzedComponent => Kind is ComponentKind.FormControl or ComponentKind.InputText or ComponentKind.BooleanInput or ComponentKind.Form;
+
+        public bool IsValidationInputComponent => Kind is ComponentKind.FormControl or ComponentKind.InputText or ComponentKind.BooleanInput;
 
         public Location Location { get; } = location;
     }

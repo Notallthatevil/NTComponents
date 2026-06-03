@@ -946,6 +946,48 @@
                             ErrorText="@ErrorText"
                             AdditionalAttributes="@CheckboxAttributes" />
 
+                <NTInputRadioGroup TValue="string"
+                                   @bind-Value="_model.ContactMethod"
+                                   Appearance="@FieldAppearanceOverride"
+                                   ActiveIndicatorColor="@ActiveIndicatorColorOverride"
+                                   BackgroundColor="@BackgroundColorOverride"
+                                   Density="@FieldDensityOverride"
+                                   Disabled="@FieldDisabledOverride"
+                                   DisabledContainerColor="@DisabledContainerColorOverride"
+                                   DisabledContentColor="@DisabledContentColorOverride"
+                                   DisabledOutlineColor="@DisabledOutlineColorOverride"
+                                   ErrorColor="@ErrorColorOverride"
+                                   FocusColor="@FocusColorOverride"
+                                   HoverActiveIndicatorColor="@HoverActiveIndicatorColorOverride"
+                                   HoverOutlineColor="@HoverOutlineColorOverride"
+                                   Label="@RadioGroupLabel"
+                                   LabelColor="@LabelColorOverride"
+                                   OutlineColor="@OutlineColorOverride"
+                                   ReadOnly="@FieldReadOnlyOverride"
+                                   SelectedColor="@ActiveIndicatorColorOverride"
+                                   SelectedStateLayerColor="@StateLayerColorOverride"
+                                   StateLayerColor="@StateLayerColorOverride"
+                                   SupportingText="@RadioGroupSupportingText"
+                                   SupportingTextColor="@SupportingTextColorOverride"
+                                   UnselectedColor="@OutlineColorOverride"
+                                   ErrorText="@ErrorText"
+                                   AdditionalAttributes="@RadioGroupAttributes">
+                    <NTInputRadio TValue="string"
+                                  Value="@("email")"
+                                  Label="Email"
+                                  LeadingIcon="@RadioLeadingIcon"
+                                  SupportingText="Best for detailed updates" />
+                    <NTInputRadio TValue="string"
+                                  Value="@("sms")"
+                                  Label="SMS"
+                                  SupportingText="Best for urgent notifications" />
+                    <NTInputRadio TValue="string"
+                                  Value="@("phone")"
+                                  Label="Phone"
+                                  TrailingIcon="@RadioTrailingIcon"
+                                  SupportingText="Use for scheduled calls" />
+                </NTInputRadioGroup>
+
                 <NTInputSwitch @bind-Value="_model.NotificationsEnabled"
                                Density="@FieldDensityOverride"
                                Disabled="@FieldDisabledOverride"
@@ -1243,6 +1285,10 @@
     private string? CheckboxSupportingText => _showSupportingText ? "Required only when checkbox required is enabled" : null;
     private TnTIcon? CheckboxLeadingIcon => _showLeadingIcon ? MaterialIcon.VerifiedUser : null;
     private TnTIcon? CheckboxTrailingIcon => _showTrailingIcon ? MaterialIcon.Info : null;
+    private TnTIcon? RadioLeadingIcon => _showLeadingIcon ? MaterialIcon.AlternateEmail : null;
+    private TnTIcon? RadioTrailingIcon => _showTrailingIcon ? MaterialIcon.Info : null;
+    private string? RadioGroupLabel => _showLabel ? "Contact method" : null;
+    private string? RadioGroupSupportingText => _showSupportingText ? "Press 1-3 to select; arrow keys highlight and Space selects." : null;
     private string? SwitchLabel => _showLabel ? "Notifications" : null;
     private string? SwitchSupportingText => _showSupportingText ? "Applies immediately" : null;
     private TnTIcon? SwitchLeadingIcon => _showLeadingIcon ? MaterialIcon.Notifications : null;
@@ -1511,6 +1557,7 @@
         $"Tags: {string.Join(", ", _model.Tags)}",
         $"City: {_model.City}",
         $"Accepted: {_model.Accepted}",
+        $"Contact method: {_model.ContactMethod}",
         $"Checkbox variant: {_checkboxVariant}",
         $"Checkbox required: {_checkboxRequired}",
         $"Checkbox indeterminate: {_checkboxIndeterminate}",
@@ -1654,6 +1701,19 @@
         }
     }
 
+    private IReadOnlyDictionary<string, object> RadioGroupAttributes {
+        get {
+            var attributes = new Dictionary<string, object> {
+                ["data-field"] = "contact-method"
+            };
+            if (!_showLabel) {
+                attributes["aria-label"] = "Contact method";
+            }
+
+            return attributes;
+        }
+    }
+
     private IReadOnlyDictionary<string, object> SwitchAttributes {
         get {
             var attributes = new Dictionary<string, object>();
@@ -1742,6 +1802,8 @@
         public string? City { get; set; }
 
         public bool Accepted { get; set; }
+
+        public string ContactMethod { get; set; } = "email";
 
         public bool NotificationsEnabled { get; set; }
 

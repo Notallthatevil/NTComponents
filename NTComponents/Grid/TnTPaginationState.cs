@@ -7,11 +7,13 @@ namespace NTComponents.Grid;
 /// </summary>
 /// <param name="paginationState">The pagination state.</param>
 /// <returns>A task representing the asynchronous operation.</returns>
+[Obsolete("This legacy grid API is obsolete. Use NTDataGrid, NTPropertyColumn, and NTTemplateColumn instead.")]
 internal delegate Task TotalItemCountChangedAsync(TnTPaginationState paginationState);
 
 /// <summary>
 ///     Represents the pagination state for a grid, including current page, items per page, and total item count.
 /// </summary>
+[Obsolete("This legacy grid API is obsolete. Use NTDataGrid, NTPropertyColumn, and NTTemplateColumn instead.")]
 public class TnTPaginationState {
 
     /// <summary>
@@ -96,4 +98,5 @@ public class TnTPaginationState {
 /// </summary>
 /// <param name="paginationState">The pagination state.</param>
 /// <returns>A task representing the asynchronous operation.</returns>
+[Obsolete("This legacy grid API is obsolete. Use NTDataGrid, NTPropertyColumn, and NTTemplateColumn instead.")]
 internal delegate Task CurrentPageChangedAsync(TnTPaginationState paginationState);

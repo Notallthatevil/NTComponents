@@ -279,6 +279,31 @@ public class TnTIcon_Tests : BunitContext {
     }
 
     [Fact]
+    public void Render_WithSuppressedTitle_DoesNotSetTitleAttribute() {
+        // Arrange
+        var icon = new TestIcon("image");
+
+        // Act
+        var cut = Render(icon.Render(suppressTitle: true));
+
+        // Assert
+        cut.Find("span").HasAttribute("title").Should().BeFalse();
+    }
+
+    [Fact]
+    public void Render_WithSuppressedTitle_DoesNotPersistToNextRender() {
+        // Arrange
+        var icon = new TestIcon("image");
+
+        // Act
+        Render(icon.Render(suppressTitle: true));
+        var cut = Render(icon.Render());
+
+        // Assert
+        cut.Find("span").GetAttribute("title").Should().Be("image");
+    }
+
+    [Fact]
     public void Render_WithIcon_RendersIconContent() {
         // Arrange
         var icon = new TestIcon("search");

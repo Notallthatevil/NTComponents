@@ -13,15 +13,15 @@ async function importModule(relativePath) {
 }
 
 describe('NTRichTextEditor tool registry', () => {
-  let libraryModule;
+  let editorModule;
 
   beforeAll(async () => {
-    libraryModule = await importModule('NTComponents/wwwroot/NTComponents.lib.module.js');
+    editorModule = await importModule('NTComponents/Editors/NTRichTextEditor.razor.js');
   });
 
   test('registers tools, notifies on change, and reuses per-editor tool state', () => {
     const changed = [];
-    libraryModule.setRichTextEditorToolRegistryChangedCallback(() => changed.push('changed'));
+    editorModule.setRichTextEditorToolRegistryChangedCallback(() => changed.push('changed'));
 
     const command = `registry-${Date.now()}-${Math.random().toString(16).slice(2)}`;
     const tool = {
@@ -31,25 +31,25 @@ describe('NTRichTextEditor tool registry', () => {
       unbind: jest.fn()
     };
 
-    const registeredTool = libraryModule.registerRichTextEditorTool(tool);
+    const registeredTool = editorModule.registerRichTextEditorTool(tool);
     expect(registeredTool).toBe(tool);
     expect(changed).toEqual(['changed']);
-    expect(libraryModule.getRichTextEditorTool(command)).toBe(tool);
-    expect(libraryModule.getRichTextEditorTool('missing-command')).toBeNull();
+    expect(editorModule.getRichTextEditorTool(command)).toBe(tool);
+    expect(editorModule.getRichTextEditorTool('missing-command')).toBeNull();
 
     const editorState = {
       selectionRange: null,
       toolStates: new Map()
     };
 
-    const firstState = libraryModule.getRichTextEditorToolState(editorState, tool);
-    const secondState = libraryModule.getRichTextEditorToolState(editorState, tool);
+    const firstState = editorModule.getRichTextEditorToolState(editorState, tool);
+    const secondState = editorModule.getRichTextEditorToolState(editorState, tool);
     expect(firstState).toBe(secondState);
     expect(tool.createState).toHaveBeenCalledTimes(1);
 
     const element = document.createElement('nt-rich-text-editor');
     const host = { getSurface: jest.fn(() => null) };
-    const context = libraryModule.createRichTextEditorToolContext(element, editorState, host, tool);
+    const context = editorModule.createRichTextEditorToolContext(element, editorState, host, tool);
     expect(context).toEqual({
       element,
       editorState,

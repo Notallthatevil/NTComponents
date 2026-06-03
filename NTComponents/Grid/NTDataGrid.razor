@@ -1,0 +1,156 @@
+@namespace NTComponents
+@typeparam TItem where TItem : class
+@using NTComponents.Virtualization
+
+<CascadingValue Value="this" IsFixed="true">
+    <div hidden>
+        @ChildContent
+    </div>
+</CascadingValue>
+
+<div @attributes="_rootAttributes" class="@RootClass" style="@_style">
+    <div class="nt-data-grid-scroll" style="@ScrollStyle">
+        <table class="nt-data-grid-table">
+            @if (!string.IsNullOrWhiteSpace(Caption)) {
+                <caption>@Caption</caption>
+            }
+            @if (_columns.Count > 0) {
+                <colgroup>
+                    @foreach (var column in _columns) {
+                        <col style="@GetColumnStyle(column)" />
+                    }
+                </colgroup>
+            }
+            <thead>
+                <tr>
+                    @foreach (var column in _columns) {
+                        <th scope="col" class="@GetHeaderCellClass(column)" aria-sort="@GetAriaSort(column)">
+                            @if (CanSort(column)) {
+                                var sortDirection = GetSortDirection(column);
+                                var sortOrder = GetSortOrder(column);
+                                <a class="@GetSortLinkClass(column)"
+                                   href="@BuildSortHref(column)"
+                                   @onclick="() => SortByColumnAsync(column)"
+                                   @onclick:preventDefault="true">
+                                    <span class="nt-data-grid-header-title">@column.HeaderTitle</span>
+                                    @if (sortDirection is not null) {
+                                        <span class="nt-data-grid-sort-state">
+                                            @if (ShouldShowSortOrder(sortOrder)) {
+                                                <span class="nt-data-grid-sort-order" aria-label="@($"Sort priority {sortOrder}")">@sortOrder</span>
+                                            }
+                                            <MaterialIcon class="@GetSortIndicatorClass(sortDirection.Value)" Icon="@GetSortIndicator()" Size="IconSize.Small" aria-hidden="true" />
+                                        </span>
+                                    }
+                                </a>
+                            }
+                            else {
+                                <span class="nt-data-grid-header-label">@column.HeaderTitle</span>
+                            }
+                        </th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @if (Virtualize) {
+                    <NTVirtualize @key="_virtualizeVersion"
+                                  TItem="TItem"
+                                  ItemsProvider="ProvideVirtualizedItemsAsync"
+                                  ItemSize="ResolvedVirtualizationItemSize"
+                                  OverscanCount="VirtualizationOverscanCount"
+                                  PlaceholderPreloadWindowCount="VirtualizationPlaceholderPreloadWindowCount"
+                                  BackgroundPreloadWindowCount="VirtualizationBackgroundPreloadWindowCount"
+                                  RevalidateCachedItems="VirtualizationRevalidateCachedItems"
+                                  MaxCachedItemCount="VirtualizationMaxCachedItemCount"
+                                  SpacerElement="tr">
+                        <SpacerTemplate>
+                            @RenderSpacerCell(context)
+                        </SpacerTemplate>
+                        <ItemTemplate>
+                            @RenderRow(context)
+                        </ItemTemplate>
+                        <LoadingTemplate>
+                            @RenderLoadingRow(context)
+                        </LoadingTemplate>
+                        <EmptyTemplate>
+                            @RenderEmptyRow()
+                        </EmptyTemplate>
+                    </NTVirtualize>
+                }
+                else if (_loadedItems.Count > 0) {
+                    @foreach (var item in _loadedItems) {
+                        @RenderRow(item)
+                    }
+                }
+                else {
+                    @RenderEmptyRow()
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (ShowPagination) {
+        <nav class="nt-data-grid-pagination" aria-label="@PaginationAriaLabel">
+            <label class="nt-data-grid-page-size">
+                <span>Rows per page</span>
+                <select value="@CurrentPageSize" @onchange="ChangePageSizeAsync">
+                    @foreach (var pageSizeOption in GetResolvedPageSizeOptions()) {
+                        <option value="@pageSizeOption">@pageSizeOption</option>
+                    }
+                </select>
+            </label>
+            <div class="nt-data-grid-pagination-buttons">
+                <a class="@GetPaginationButtonClass(!CanGoToPreviousPage, false, "pagination-first-page")"
+                   href="@BuildPageHref(0)"
+                   title="First page"
+                   aria-label="First page"
+                   aria-disabled="@(!CanGoToPreviousPage).ToString().ToLowerInvariant()"
+                   @onclick="() => GoToPageAsync(0)"
+                   @onclick:preventDefault="true">
+                    <MaterialIcon Icon="@MaterialIcon.FirstPage" Size="IconSize.Small" />
+                </a>
+                <a class="@GetPaginationButtonClass(!CanGoToPreviousPage, false, "pagination-previous-page")"
+                   href="@BuildPageHref(CurrentPageIndex - 1)"
+                   title="Previous page"
+                   aria-label="Previous page"
+                   aria-disabled="@(!CanGoToPreviousPage).ToString().ToLowerInvariant()"
+                   @onclick="() => GoToPageAsync(CurrentPageIndex - 1)"
+                   @onclick:preventDefault="true">
+                    <MaterialIcon Icon="@MaterialIcon.ChevronLeft" Size="IconSize.Small" />
+                </a>
+
+                @if (_totalItemCount > 0) {
+                    @foreach (var pageIndex in GetVisiblePageIndices()) {
+                        var isCurrentPage = CurrentPageIndex == pageIndex;
+                        <a class="@GetPaginationButtonClass(false, isCurrentPage)"
+                           href="@BuildPageHref(pageIndex)"
+                           title="@($"Page {pageIndex + 1}")"
+                           aria-label="@($"Page {pageIndex + 1}")"
+                           aria-current="@(isCurrentPage ? "page" : null)"
+                           aria-disabled="@isCurrentPage.ToString().ToLowerInvariant()"
+                           @onclick="() => GoToPageAsync(pageIndex)"
+                           @onclick:preventDefault="true">@(pageIndex + 1)</a>
+                    }
+                }
+
+                <a class="@GetPaginationButtonClass(!CanGoToNextPage, false, "pagination-next-page")"
+                   href="@BuildPageHref(CurrentPageIndex + 1)"
+                   title="Next page"
+                   aria-label="Next page"
+                   aria-disabled="@(!CanGoToNextPage).ToString().ToLowerInvariant()"
+                   @onclick="() => GoToPageAsync(CurrentPageIndex + 1)"
+                   @onclick:preventDefault="true">
+                    <MaterialIcon Icon="@MaterialIcon.ChevronRight" Size="IconSize.Small" />
+                </a>
+                <a class="@GetPaginationButtonClass(!CanGoToNextPage, false, "pagination-last-page")"
+                   href="@BuildPageHref(PageCount - 1)"
+                   title="Last page"
+                   aria-label="Last page"
+                   aria-disabled="@(!CanGoToNextPage).ToString().ToLowerInvariant()"
+                   @onclick="() => GoToPageAsync(PageCount - 1)"
+                   @onclick:preventDefault="true">
+                    <MaterialIcon Icon="@MaterialIcon.LastPage" Size="IconSize.Small" />
+                </a>
+            </div>
+        </nav>
+    }
+</div>

@@ -91,6 +91,48 @@ public class NTMenu_Tests : BunitContext {
     }
 
     [Fact]
+    public void Button_Item_Does_Not_Report_Rendered_State_Change_For_Equivalent_Regenerated_Icons() {
+        var item = new NTMenuButtonItem {
+            Icon = MaterialIcon.Edit,
+            Label = "Rename"
+        };
+
+        RenderedStateChanged(item, MaterialIcon.Edit, "Rename").Should().BeFalse();
+    }
+
+    [Fact]
+    public void Anchor_Item_Does_Not_Report_Rendered_State_Change_For_Equivalent_Regenerated_Icons() {
+        var item = new NTMenuAnchorItem {
+            Href = "/nt-menu",
+            Icon = MaterialIcon.OpenInNew,
+            Label = "Open"
+        };
+
+        RenderedStateChanged(item, MaterialIcon.OpenInNew, "Open", "/nt-menu").Should().BeFalse();
+    }
+
+    [Fact]
+    public void SubMenu_Item_Does_Not_Report_Rendered_State_Change_For_Equivalent_Regenerated_Icons_Or_ChildContent_Delegates() {
+        var item = new NTMenuSubMenuItem {
+            ChildContent = builder => builder.AddContent(0, "Share"),
+            Icon = MaterialIcon.Share,
+            Label = "Share"
+        };
+
+        RenderedStateChanged(item, MaterialIcon.Share, "Share").Should().BeFalse();
+    }
+
+    [Fact]
+    public void Button_Item_Reports_Rendered_State_Change_For_Different_Icon_State() {
+        var item = new NTMenuButtonItem {
+            Icon = MaterialIcon.Edit,
+            Label = "Rename"
+        };
+
+        RenderedStateChanged(item, MaterialIcon.ContentCopy, "Rename").Should().BeTrue();
+    }
+
+    [Fact]
     public void Label_Item_Requires_Label() {
         var item = new NTMenuLabelItem {
             Parent = new NTMenu()
@@ -100,6 +142,27 @@ public class NTMenu_Tests : BunitContext {
 
         render.Should().Throw<InvalidOperationException>()
             .WithMessage("*NTMenuLabelItem requires a non-empty Label*");
+    }
+
+    private static bool RenderedStateChanged(NTMenuButtonItem item, TnTIcon? previousIcon, string previousLabel) {
+        var method = typeof(NTMenuButtonItem).GetMethod("RenderedStateChanged", BindingFlags.Instance | BindingFlags.NonPublic);
+
+        method.Should().NotBeNull();
+        return (bool)method!.Invoke(item, [item.AriaLabel, item.Disabled, previousIcon, previousLabel, item.Selected])!;
+    }
+
+    private static bool RenderedStateChanged(NTMenuAnchorItem item, TnTIcon? previousIcon, string previousLabel, string previousHref) {
+        var method = typeof(NTMenuAnchorItem).GetMethod("RenderedStateChanged", BindingFlags.Instance | BindingFlags.NonPublic);
+
+        method.Should().NotBeNull();
+        return (bool)method!.Invoke(item, [item.AriaLabel, item.Disabled, previousHref, previousIcon, previousLabel, item.Selected, item.Target])!;
+    }
+
+    private static bool RenderedStateChanged(NTMenuSubMenuItem item, TnTIcon? previousIcon, string previousLabel) {
+        var method = typeof(NTMenuSubMenuItem).GetMethod("RenderedStateChanged", BindingFlags.Instance | BindingFlags.NonPublic);
+
+        method.Should().NotBeNull();
+        return (bool)method!.Invoke(item, [item.AriaLabel, item.Disabled, previousIcon, previousLabel, item.Selected])!;
     }
 
     private sealed class MenuSelectionHost : ComponentBase {

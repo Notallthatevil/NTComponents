@@ -2,6 +2,8 @@ namespace NTComponents.Tests.Editors;
 
 public class EditorToolPanels_Tests : BunitContext {
 
+    public EditorToolPanels_Tests() => SetRendererInfo(new Microsoft.AspNetCore.Components.RendererInfo("Static", false));
+
     [Fact]
     public void ImagePanel_Renders_Expected_Interactive_Fields() {
         var cut = Render<EditorToolImagePanel>(parameters => parameters.Add(x => x.Disabled, false));
@@ -16,6 +18,7 @@ public class EditorToolPanels_Tests : BunitContext {
         cut.Find("[data-role='image-height']").GetAttribute("type").Should().Be("number");
         cut.Find("[data-role='image-apply']").TextContent.Should().Contain("Insert image");
         cut.Find("[data-role='image-cancel']").TextContent.Should().Contain("Cancel");
+        AssertToolInputsAreNotSubmitted(cut);
         cut.FindAll("[disabled]").Should().BeEmpty();
     }
 
@@ -39,6 +42,7 @@ public class EditorToolPanels_Tests : BunitContext {
         cut.Find("[data-role='table-border-color']").GetAttribute("type").Should().Be("color");
         cut.Find("[data-role='table-apply']").TextContent.Should().Contain("Apply table");
         cut.Find("[data-role='table-cancel']").TextContent.Should().Contain("Cancel");
+        AssertToolInputsAreNotSubmitted(cut);
         cut.FindAll("[disabled]").Should().BeEmpty();
     }
 
@@ -58,6 +62,7 @@ public class EditorToolPanels_Tests : BunitContext {
         cut.Find("[data-role='text-color-value']").GetAttribute("type").Should().Be("color");
         cut.Find("[data-role='text-color-apply']").TextContent.Should().Contain("Apply color");
         cut.Find("[data-role='text-color-cancel']").TextContent.Should().Contain("Cancel");
+        AssertToolInputsAreNotSubmitted(cut);
         cut.FindAll("[disabled]").Should().BeEmpty();
     }
 
@@ -78,6 +83,7 @@ public class EditorToolPanels_Tests : BunitContext {
         cut.Find("[data-role='link-text']").GetAttribute("type").Should().Be("text");
         cut.Find("[data-role='link-apply']").TextContent.Should().Contain("Apply link");
         cut.Find("[data-role='link-cancel']").TextContent.Should().Contain("Cancel");
+        AssertToolInputsAreNotSubmitted(cut);
         cut.FindAll("[disabled]").Should().BeEmpty();
     }
 
@@ -100,6 +106,7 @@ public class EditorToolPanels_Tests : BunitContext {
         cut.Find("[data-role='iframe-height']").GetAttribute("type").Should().Be("text");
         cut.Find("[data-role='iframe-apply']").TextContent.Should().Contain("Apply iframe");
         cut.Find("[data-role='iframe-cancel']").TextContent.Should().Contain("Cancel");
+        AssertToolInputsAreNotSubmitted(cut);
         cut.FindAll("[disabled]").Should().BeEmpty();
     }
 
@@ -109,4 +116,7 @@ public class EditorToolPanels_Tests : BunitContext {
 
         cut.FindAll("input, button").Should().OnlyContain(element => element.HasAttribute("disabled"));
     }
+
+    private static void AssertToolInputsAreNotSubmitted<TComponent>(IRenderedComponent<TComponent> cut) where TComponent : Microsoft.AspNetCore.Components.IComponent =>
+        cut.FindAll("[data-tool-command] input").Should().OnlyContain(input => !input.HasAttribute("name"));
 }

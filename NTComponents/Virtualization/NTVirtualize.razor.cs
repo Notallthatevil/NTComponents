@@ -14,6 +14,9 @@ namespace NTComponents;
 /// <typeparam name="TItem">The type of the items to be virtualized.</typeparam>
 [method: DynamicDependency(nameof(LoadItems))]
 public partial class NTVirtualize<TItem>() : TnTPageScriptComponent<NTVirtualize<TItem>> {
+    private readonly Dictionary<int, TItem> _itemCache = [];
+    private readonly List<int> _cacheIndexesToRemove = [];
+    private readonly List<int> _trimCandidateIndexes = [];
 
     /// <inheritdoc />
     public override string? ElementClass => throw new NotSupportedException();
@@ -55,6 +58,12 @@ public partial class NTVirtualize<TItem>() : TnTPageScriptComponent<NTVirtualize
     public RenderFragment<PlaceholderContext>? LoadingTemplate { get; set; }
 
     /// <summary>
+    ///     Gets or sets optional content rendered inside each spacer element.
+    /// </summary>
+    [Parameter]
+    public RenderFragment<PlaceholderContext>? SpacerTemplate { get; set; }
+
+    /// <summary>
     ///     <para>Gets or sets the maximum number of items that will be rendered, even if the client reports that its viewport is large enough to show more. The default value is 100.</para>
     ///     <para>
     ///         This should only be used as a safeguard against excessive memory usage or large data loads. Do not set this to a smaller number than you expect to fit on a realistic-sized window,
@@ -72,6 +81,33 @@ public partial class NTVirtualize<TItem>() : TnTPageScriptComponent<NTVirtualize
     public int OverscanCount { get; set; } = 3;
 
     /// <summary>
+    ///     Gets or sets how many additional visible windows of loading placeholders are rendered after the loaded item range.
+    /// </summary>
+    /// <remarks>
+    ///     The default value of 1 renders up to one extra visible window of placeholders, so the user can scroll into already-rendered skeletons while the next item request is being triggered.
+    /// </remarks>
+    [Parameter]
+    public int PlaceholderPreloadWindowCount { get; set; } = 1;
+
+    /// <summary>
+    ///     Gets or sets how many additional visible windows are fetched in the background after the visible item range.
+    /// </summary>
+    [Parameter]
+    public int BackgroundPreloadWindowCount { get; set; }
+
+    /// <summary>
+    ///     Gets or sets whether cached visible ranges are re-fetched in the background and replaced when the provider returns newer items.
+    /// </summary>
+    [Parameter]
+    public bool RevalidateCachedItems { get; set; }
+
+    /// <summary>
+    ///     Gets or sets the maximum number of items kept in the virtualizer cache.
+    /// </summary>
+    [Parameter]
+    public int MaxCachedItemCount { get; set; } = 1_000;
+
+    /// <summary>
     ///     <para>
     ///         Gets or sets the tag name of the HTML element that will be used as the virtualization spacer. One such element will be rendered before the visible items, and one more after them, using
     ///         an explicit "height" style to control the scroll range.
@@ -85,14 +121,26 @@ public partial class NTVirtualize<TItem>() : TnTPageScriptComponent<NTVirtualize
     public string SpacerElement { get; set; } = "div";
 
     private ElementReference _afterPlaceholder;
+    private string _afterSpacerStyle = string.Empty;
+    private float _afterSpacerStyleSize = -1f;
+    private string _beforeSpacerStyle = string.Empty;
+    private float _beforeSpacerStyleSize = -1f;
+    private string _defaultPlaceholderStyle = string.Empty;
+    private float _defaultPlaceholderStyleItemSize = -1f;
     private int _itemCount;
     private int _itemsBefore;
     private float _itemSize;
     private int _lastRenderedItemCount;
     private int _lastRenderedPlaceholderCount;
-    private IEnumerable<TItem>? _loadedItems;
-    private int _loadedItemsStartIndex;
+    private int _lastReportedItemCount = -1;
+    private int _lastReportedRenderedItemCount = -1;
+    private int _lastReportedRenderedPlaceholderCount = -1;
+    private NTVirtualizeItemsProvider<TItem>? _lastItemsProvider;
     private bool _loading;
+    private CancellationTokenSource? _prefetchCts;
+    private CancellationTokenSource? _revalidateCts;
+    private int _revalidatingCount;
+    private int _revalidatingStartIndex = -1;
     private CancellationTokenSource? _refreshCts;
     private Exception? _refreshException;
     private float _spacerAfterSize;
@@ -125,10 +173,12 @@ public partial class NTVirtualize<TItem>() : TnTPageScriptComponent<NTVirtualize
             _visibleItemCapacity = resolvedCount;
             _spacerBeforeSize = resolvedSpacerBeforeSize;
             _spacerAfterSize = resolvedSpacerAfterSize;
+            _prefetchCts?.Cancel();
+            _revalidateCts?.Cancel();
             var refreshTask = RefreshDataCoreAsync(renderOnSuccess: true);
 
             if (!refreshTask.IsCompleted) {
-                StateHasChanged();
+                _ = InvokeAsync(StateHasChanged);
             }
         }
     }
@@ -137,13 +187,24 @@ public partial class NTVirtualize<TItem>() : TnTPageScriptComponent<NTVirtualize
     ///     Asynchronously refreshes the underlying data and re-renders the component when the refresh completes.
     /// </summary>
     /// <returns>A task that represents the asynchronous refresh operation.</returns>
-    public async Task RefreshDataAsync() => await RefreshDataCoreAsync(renderOnSuccess: true);
+    public async Task RefreshDataAsync() {
+        ClearCachedItems(cancelForegroundRefresh: true);
+        await RefreshDataCoreAsync(renderOnSuccess: true);
+    }
+
+    /// <inheritdoc />
+    protected override void Dispose(bool disposing) {
+        if (disposing) {
+            CancelAllWork();
+        }
+
+        base.Dispose(disposing);
+    }
 
     /// <inheritdoc />
     protected override async ValueTask DisposeAsyncCore() {
+        CancelAllWork();
         await base.DisposeAsyncCore();
-        _refreshCts?.Cancel();
-        _refreshCts?.Dispose();
     }
 
     /// <inheritdoc />
@@ -154,7 +215,14 @@ public partial class NTVirtualize<TItem>() : TnTPageScriptComponent<NTVirtualize
                 await IsolatedJsModule.InvokeVoidAsync("init", DotNetObjectRef, Element, _afterPlaceholder, _itemSize, OverscanCount, MaxItemCount);
             }
 
-            await IsolatedJsModule.InvokeVoidAsync("updateRenderState", DotNetObjectRef, _itemCount, _lastRenderedItemCount, _lastRenderedPlaceholderCount);
+            if (_itemCount != _lastReportedItemCount
+                || _lastRenderedItemCount != _lastReportedRenderedItemCount
+                || _lastRenderedPlaceholderCount != _lastReportedRenderedPlaceholderCount) {
+                _lastReportedItemCount = _itemCount;
+                _lastReportedRenderedItemCount = _lastRenderedItemCount;
+                _lastReportedRenderedPlaceholderCount = _lastRenderedPlaceholderCount;
+                await IsolatedJsModule.InvokeVoidAsync("updateRenderState", DotNetObjectRef, _itemCount, _lastRenderedItemCount, _lastRenderedPlaceholderCount);
+            }
         }
     }
 
@@ -168,41 +236,187 @@ public partial class NTVirtualize<TItem>() : TnTPageScriptComponent<NTVirtualize
         if (_itemSize <= 0) {
             _itemSize = ItemSize;
         }
+        else if (!ItemSize.Equals(_itemSize)) {
+            _itemSize = ItemSize;
+            ClearCachedItems(cancelForegroundRefresh: true);
+            ResetReportedRenderState();
+        }
 
         if (ItemsProvider is null) {
             throw new InvalidOperationException($"{nameof(NTVirtualize<>)} requires the '{nameof(ItemsProvider)}' parameter to be specified and non-null.");
         }
 
+        if (_lastItemsProvider is not null && ItemsProvider != _lastItemsProvider) {
+            SetItemCount(0);
+            ClearCachedItems(cancelForegroundRefresh: true);
+            ResetReportedRenderState();
+        }
+
+        _lastItemsProvider = ItemsProvider;
         LoadingTemplate ??= DefaultPlaceholder;
     }
 
-    private static string GetSpacerStyle(float spacerSize) {
+    private static string CreateSpacerStyle(float spacerSize) => $"height: {Math.Max(0, spacerSize).ToString(CultureInfo.InvariantCulture)}px; flex-shrink: 0;";
+
+    private static string GetCachedSpacerStyle(float spacerSize, ref float cachedSpacerSize, ref string cachedStyle) {
         spacerSize = Math.Max(0, spacerSize);
-        return $"height: {spacerSize.ToString(CultureInfo.InvariantCulture)}px; flex-shrink: 0;";
+        if (!spacerSize.Equals(cachedSpacerSize)) {
+            cachedSpacerSize = spacerSize;
+            cachedStyle = CreateSpacerStyle(spacerSize);
+        }
+
+        return cachedStyle;
+    }
+
+    private string GetAfterSpacerStyle(int preloadedPlaceholderCount) => GetCachedSpacerStyle(GetAdjustedSpacerAfterSize(preloadedPlaceholderCount), ref _afterSpacerStyleSize, ref _afterSpacerStyle);
+
+    private string GetBeforeSpacerStyle() => GetCachedSpacerStyle(_spacerBeforeSize, ref _beforeSpacerStyleSize, ref _beforeSpacerStyle);
+
+    private float GetAdjustedSpacerAfterSize(int preloadedPlaceholderCount) =>
+        Math.Max(0, _spacerAfterSize - Math.Max(0, preloadedPlaceholderCount) * _itemSize);
+
+    private int GetPreloadedPlaceholderCount(int lastItemIndex) {
+        if (_itemCount <= 0 || _visibleItemCapacity <= 0 || PlaceholderPreloadWindowCount <= 0) {
+            return 0;
+        }
+
+        var remainingItemCount = Math.Max(0, _itemCount - Math.Max(0, lastItemIndex));
+        var requestedPlaceholderCount = _visibleItemCapacity * PlaceholderPreloadWindowCount;
+        return Math.Min(remainingItemCount, requestedPlaceholderCount);
+    }
+
+    private int GetBackgroundPreloadCount(int lastItemIndex) {
+        if (_itemCount <= 0 || _visibleItemCapacity <= 0 || BackgroundPreloadWindowCount <= 0) {
+            return 0;
+        }
+
+        var remainingItemCount = Math.Max(0, _itemCount - Math.Max(0, lastItemIndex));
+        var requestedItemCount = _visibleItemCapacity * BackgroundPreloadWindowCount;
+        return Math.Min(remainingItemCount, requestedItemCount);
+    }
+
+    private bool TryGetMissingRange(int startIndex, int count, out int missingStartIndex, out int missingCount) {
+        missingStartIndex = -1;
+        var missingEndIndex = -1;
+        var lastIndex = Math.Max(0, startIndex) + Math.Max(0, count);
+
+        for (var index = Math.Max(0, startIndex); index < lastIndex; index++) {
+            if (_itemCache.ContainsKey(index)) {
+                continue;
+            }
+
+            if (missingStartIndex < 0) {
+                missingStartIndex = index;
+            }
+
+            missingEndIndex = index;
+        }
+
+        missingCount = missingStartIndex < 0 ? 0 : missingEndIndex - missingStartIndex + 1;
+        return missingCount > 0;
+    }
+
+    private void StoreItems(int startIndex, IReadOnlyCollection<TItem> items) {
+        var index = Math.Max(0, startIndex);
+        foreach (var item in items) {
+            _itemCache[index++] = item;
+        }
+
+        TrimItemCache();
+    }
+
+    private void SetItemCount(int totalItemCount) {
+        _itemCount = Math.Max(0, totalItemCount);
+        _cacheIndexesToRemove.Clear();
+        foreach (var index in _itemCache.Keys) {
+            if (index >= _itemCount) {
+                _cacheIndexesToRemove.Add(index);
+            }
+        }
+
+        foreach (var index in _cacheIndexesToRemove) {
+            _itemCache.Remove(index);
+        }
+    }
+
+    private void TrimItemCache() {
+        var minimumCacheSize = Math.Max(1, _visibleItemCapacity * Math.Max(1, PlaceholderPreloadWindowCount + BackgroundPreloadWindowCount + 1));
+        var maxCachedItemCount = Math.Max(minimumCacheSize, MaxCachedItemCount);
+        if (_itemCache.Count <= maxCachedItemCount) {
+            return;
+        }
+
+        var activeStartIndex = Math.Max(0, _itemsBefore);
+        var activeEndIndex = activeStartIndex + Math.Max(0, _visibleItemCapacity) + GetPreloadedPlaceholderCount(activeStartIndex + Math.Max(0, _visibleItemCapacity));
+        var activeCenterIndex = activeStartIndex + Math.Max(0, activeEndIndex - activeStartIndex) / 2;
+        _trimCandidateIndexes.Clear();
+        foreach (var index in _itemCache.Keys) {
+            if (index < activeStartIndex || index >= activeEndIndex) {
+                _trimCandidateIndexes.Add(index);
+            }
+        }
+
+        _trimCandidateIndexes.Sort((left, right) => Math.Abs(right - activeCenterIndex).CompareTo(Math.Abs(left - activeCenterIndex)));
+        foreach (var index in _trimCandidateIndexes) {
+            if (_itemCache.Count <= maxCachedItemCount) {
+                return;
+            }
+
+            _itemCache.Remove(index);
+        }
+    }
+
+    private void ClearCachedItems(bool cancelForegroundRefresh) {
+        _itemCache.Clear();
+        CancelAndDispose(ref _prefetchCts);
+        CancelAndDispose(ref _revalidateCts);
+        _revalidatingStartIndex = -1;
+        _revalidatingCount = 0;
+
+        if (cancelForegroundRefresh) {
+            CancelAndDispose(ref _refreshCts);
+        }
     }
 
     private RenderFragment DefaultPlaceholder(PlaceholderContext context) => (builder) => {
         builder.OpenComponent<TnTSkeleton>(0);
-        builder.AddAttribute(10, "style", $"height: {_itemSize.ToString(CultureInfo.InvariantCulture)}px; flex-shrink: 0;");
+        builder.AddAttribute(10, "style", GetDefaultPlaceholderStyle());
         builder.CloseComponent();
     };
 
+    private string GetDefaultPlaceholderStyle() {
+        if (!_itemSize.Equals(_defaultPlaceholderStyleItemSize)) {
+            _defaultPlaceholderStyleItemSize = _itemSize;
+            _defaultPlaceholderStyle = CreateSpacerStyle(_itemSize);
+        }
+
+        return _defaultPlaceholderStyle;
+    }
+
     private async ValueTask RefreshDataCoreAsync(bool renderOnSuccess) {
-        _refreshCts?.Cancel();
-        CancellationToken cancellationToken;
+        CancelAndDispose(ref _refreshCts);
 
-        _refreshCts = new CancellationTokenSource();
-        cancellationToken = _refreshCts.Token;
-        _loading = true;
-
-        // Fetch items that we're going to render. _itemsBefore is already adjusted for overscan on the left, and _visibleItemCapacity already accounts for overscan on both sides. Load exactly what
-        // we're rendering.
+        // Fetch only the missing part of the active range. Cached rows keep rendering while the missing rows remain placeholders.
         var startIndex = _itemsBefore;
         var count = _visibleItemCapacity;
+        if (!TryGetMissingRange(startIndex, count, out var missingStartIndex, out var missingCount)) {
+            _loading = false;
+            StartBackgroundPreload();
+            StartBackgroundRevalidation(startIndex, count);
+            if (renderOnSuccess) {
+                await InvokeAsync(StateHasChanged);
+            }
+
+            return;
+        }
+
+        _refreshCts = new CancellationTokenSource();
+        var cancellationToken = _refreshCts.Token;
+        _loading = true;
 
         var request = new NTVirtualizeItemsProviderRequest<TItem> {
-            Count = count,
-            StartIndex = startIndex,
+            Count = missingCount,
+            StartIndex = missingStartIndex,
             CancellationToken = cancellationToken
         };
 
@@ -211,17 +425,19 @@ public partial class NTVirtualize<TItem>() : TnTPageScriptComponent<NTVirtualize
 
             // Only apply result if the task was not canceled.
             if (!cancellationToken.IsCancellationRequested) {
-                _itemCount = result.TotalItemCount;
-                _loadedItems = result.Items;
-                _loadedItemsStartIndex = request.StartIndex;
+                SetItemCount(result.TotalItemCount);
+                UpdateSpacerAfterSizeFromItemCount();
+                StoreItems(request.StartIndex, result.Items);
                 _loading = false;
 
                 if (renderOnSuccess) {
                     await InvokeAsync(StateHasChanged);
                 }
+
+                StartBackgroundPreload();
             }
         }
-        catch (OperationCanceledException oce) when (oce.CancellationToken == cancellationToken) { } // No-op; we canceled the operation, so it's fine to suppress this exception
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { } // No-op; we canceled the operation, so it's fine to suppress this exception
         catch (Exception e) {
             // Cache this exception so the renderer can throw it.
             _refreshException = e;
@@ -229,6 +445,134 @@ public partial class NTVirtualize<TItem>() : TnTPageScriptComponent<NTVirtualize
             // Re-render the component to throw the exception.
             await InvokeAsync(StateHasChanged);
         }
+    }
+
+    private void StartBackgroundPreload() {
+        if (_loading || ItemsProvider is null || _itemCount <= 0 || _visibleItemCapacity <= 0) {
+            return;
+        }
+
+        var activeLastItemIndex = Math.Min(_itemsBefore + _visibleItemCapacity, _itemCount);
+        var preloadCount = GetBackgroundPreloadCount(activeLastItemIndex);
+        if (!TryGetMissingRange(activeLastItemIndex, preloadCount, out var missingStartIndex, out var missingCount)) {
+            return;
+        }
+
+        CancelAndDispose(ref _prefetchCts);
+        _prefetchCts = new CancellationTokenSource();
+        _ = InvokeAsync(() => PreloadItemsAsync(missingStartIndex, missingCount, _prefetchCts.Token));
+    }
+
+    private async Task PreloadItemsAsync(int startIndex, int count, CancellationToken cancellationToken) {
+        try {
+            var result = await ItemsProvider!(new NTVirtualizeItemsProviderRequest<TItem> {
+                Count = count,
+                StartIndex = startIndex,
+                CancellationToken = cancellationToken
+            });
+
+            if (!cancellationToken.IsCancellationRequested) {
+                SetItemCount(result.TotalItemCount);
+                UpdateSpacerAfterSizeFromItemCount();
+                StoreItems(startIndex, result.Items);
+                if (RangeIntersectsCurrentRender(startIndex, count)) {
+                    await InvokeAsync(StateHasChanged);
+                }
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
+        catch {
+            // Background preloads are opportunistic. The foreground load path will surface provider failures when the range is actually requested.
+        }
+    }
+
+    private void StartBackgroundRevalidation(int startIndex, int count) {
+        if (!RevalidateCachedItems || _loading || ItemsProvider is null || _itemCount <= 0 || count <= 0) {
+            return;
+        }
+
+        var resolvedStartIndex = Math.Max(0, startIndex);
+        var resolvedCount = Math.Min(Math.Max(0, count), Math.Max(0, _itemCount - resolvedStartIndex));
+        if (resolvedCount <= 0) {
+            return;
+        }
+
+        if (_revalidatingStartIndex == resolvedStartIndex && _revalidatingCount == resolvedCount) {
+            return;
+        }
+
+        CancelAndDispose(ref _revalidateCts);
+        _revalidateCts = new CancellationTokenSource();
+        _revalidatingStartIndex = resolvedStartIndex;
+        _revalidatingCount = resolvedCount;
+        _ = InvokeAsync(() => RevalidateItemsAsync(resolvedStartIndex, resolvedCount, _revalidateCts.Token));
+    }
+
+    private async Task RevalidateItemsAsync(int startIndex, int count, CancellationToken cancellationToken) {
+        try {
+            var result = await ItemsProvider!(new NTVirtualizeItemsProviderRequest<TItem> {
+                Count = count,
+                StartIndex = startIndex,
+                CancellationToken = cancellationToken
+            });
+
+            if (!cancellationToken.IsCancellationRequested) {
+                SetItemCount(result.TotalItemCount);
+                UpdateSpacerAfterSizeFromItemCount();
+                StoreItems(startIndex, result.Items);
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
+        catch {
+            // Revalidation is opportunistic. Cached rows stay visible and the foreground load path remains responsible for surfacing provider failures.
+        }
+        finally {
+            if (_revalidatingStartIndex == startIndex && _revalidatingCount == count) {
+                _revalidatingStartIndex = -1;
+                _revalidatingCount = 0;
+            }
+        }
+    }
+
+    private void UpdateSpacerAfterSizeFromItemCount() {
+        if (_itemCount <= 0 || _visibleItemCapacity <= 0) {
+            _spacerAfterSize = 0;
+            return;
+        }
+
+        var itemsAfter = Math.Max(0, _itemCount - _visibleItemCapacity - _itemsBefore);
+        _spacerAfterSize = itemsAfter * _itemSize;
+    }
+
+    private bool RangeIntersectsCurrentRender(int startIndex, int count) {
+        if (count <= 0) {
+            return false;
+        }
+
+        var visibleLastItemIndex = Math.Min(_itemsBefore + _visibleItemCapacity, _itemCount);
+        var renderLastItemIndex = visibleLastItemIndex + GetPreloadedPlaceholderCount(visibleLastItemIndex);
+        return startIndex < renderLastItemIndex && startIndex + count > _itemsBefore;
+    }
+
+    private void ResetReportedRenderState() {
+        _lastReportedItemCount = -1;
+        _lastReportedRenderedItemCount = -1;
+        _lastReportedRenderedPlaceholderCount = -1;
+    }
+
+    private void CancelAllWork() {
+        CancelAndDispose(ref _prefetchCts);
+        CancelAndDispose(ref _revalidateCts);
+        CancelAndDispose(ref _refreshCts);
+        _revalidatingStartIndex = -1;
+        _revalidatingCount = 0;
+    }
+
+    private static void CancelAndDispose(ref CancellationTokenSource? cancellationTokenSource) {
+        cancellationTokenSource?.Cancel();
+        cancellationTokenSource?.Dispose();
+        cancellationTokenSource = null;
     }
 }
 

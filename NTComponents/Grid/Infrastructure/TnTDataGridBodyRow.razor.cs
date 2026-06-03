@@ -8,6 +8,7 @@ namespace NTComponents.Grid.Infrastructure;
 ///     Represents a row in the data grid body for a specific grid item.
 /// </summary>
 /// <typeparam name="TGridItem">The type of the grid item displayed in this row.</typeparam>
+[Obsolete("This legacy grid API is obsolete. Use NTDataGrid, NTPropertyColumn, and NTTemplateColumn instead.")]
 public partial class TnTDataGridBodyRow<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields)] TGridItem> {
 
     /// <summary>

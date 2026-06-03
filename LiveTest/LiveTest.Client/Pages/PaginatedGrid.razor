@@ -1,116 +1,84 @@
 @page "/paginated"
 @using NTComponents
-@using NTComponents.Core
-@using NTComponents.Extensions
-@using NTComponents.Grid
 @rendermode InteractiveServer
 
-<div>
-    <label>
+<main style="display: grid; gap: 24px; padding: 16px;">
+    <header>
+        <h1>NTDataGrid pagination</h1>
+        <p>Pagination renders normal query-string links for static SSR and updates in place after interactivity.</p>
+    </header>
+
+    <label style="display: inline-flex; gap: 8px; align-items: center;">
+        <input type="checkbox" @bind="_empty" />
         Empty
-        <input type="checkbox" @bind-value="_empty" />
     </label>
-</div>
 
-<div style="height: 60vh; overflow-y:scroll">
-    <TnTDataGrid Items="@(_empty? Array.Empty<DataGridItem>().AsQueryable() : Items)" AllowMultiSort="false" Pagination="_paginationState" OnRowClicked="RowClicked" TGridItem="DataGridItem" DataGridAppearance="DataGridAppearance.Stripped" Resizable="true">
-        <TnTPropertyColumn Property="@(x => x.Column1)" Sortable="true" />
-        <TnTPropertyColumn Property="@(x => x.Column2)" Sortable="true" TextAlign="TextAlign.Center" HeaderAlignment="TextAlign.Left" />
-        <TnTPropertyColumn Property="@(x => x.Column3)" Format="MM/yyyy" HeaderAlignment="TextAlign.Right" />
-        <TnTTemplateColumn>
-            <TnTButton OnClickCallback="() => ItemClicked(context)" Appearance="ButtonAppearance.Text" TextColor="TnTColor.OnSurface" BackgroundColor="TnTColor.Surface" StopPropagation="true">
-                <MaterialIcon Icon="@MaterialIcon.Edit" />
-                Edit
-            </TnTButton>
-        </TnTTemplateColumn>
-    </TnTDataGrid>
-</div>
-<NTComponents.TnTPaginationButtons PaginationState="@_paginationState" />
+    <NTDataGrid TItem="DataGridItem"
+                Items="@(_empty ? Array.Empty<DataGridItem>().AsQueryable() : Items)"
+                Caption="Paginated direct source"
+                ShowPagination="true"
+                PageSize="10"
+                PageSizeOptions="@PageSizes"
+                Appearance="NTDataGridAppearance.Striped"
+                QueryParameterPrefix="direct-page"
+                TotalItemCountChanged="count => _directTotal = count">
+        <NTPropertyColumn TItem="DataGridItem" TValue="int" Title="Id" Property="item => item.Id" Width="96px" TextAlign="TextAlign.Right" HeaderTextAlign="TextAlign.Right" />
+        <NTPropertyColumn TItem="DataGridItem" TValue="string" Title="Customer" Property="item => item.Customer" MinWidth="220px" />
+        <NTPropertyColumn TItem="DataGridItem" TValue="DateTime" Title="Created" Property="item => item.Created" Format="MMM d, yyyy" MinWidth="160px" />
+        <NTPropertyColumn TItem="DataGridItem" TValue="decimal" Title="Amount" Property="item => item.Amount" Format="C" TextAlign="TextAlign.Right" HeaderTextAlign="TextAlign.Right" />
+    </NTDataGrid>
 
+    <p>Direct total: @_directTotal</p>
 
-<h3>
-    Virtualized
-</h3>
-<div style="height: 60vh; overflow-y:scroll">
-    <TnTDataGrid ItemsProvider="@_provider" Pagination="_paginationState" OnRowClicked="RowClicked" TGridItem="DataGridItem" DataGridAppearance="DataGridAppearance.Stripped" Resizable="true">
-        <TnTPropertyColumn Property="@(x => x.Column1)" Sortable="true" />
-        <TnTPropertyColumn Property="@(x => x.Column2)" Sortable="true" TextAlign="TextAlign.Center" HeaderAlignment="TextAlign.Left" />
-        <TnTPropertyColumn Property="@(x => x.Column3)" Format="MM/yyyy" HeaderAlignment="TextAlign.Right" />
-        <TnTTemplateColumn>
-            <TnTButton OnClickCallback="() => ItemClicked(context)" Appearance="ButtonAppearance.Text" TextColor="TnTColor.OnSurface" BackgroundColor="TnTColor.Surface" StopPropagation="true">
-                <MaterialIcon Icon="@MaterialIcon.Edit" />
-                Edit
-            </TnTButton>
-        </TnTTemplateColumn>
-    </TnTDataGrid>
-</div>
-<NTComponents.TnTPaginationButtons PaginationState="@_paginationState" />
+    <NTDataGrid TItem="DataGridItem"
+                ItemsProvider="Provider"
+                Caption="Paginated provider source"
+                ShowPagination="true"
+                PageSize="10"
+                PageSizeOptions="@PageSizes"
+                Density="NTDataGridDensity.Compact"
+                QueryParameterPrefix="provider-page"
+                TotalItemCountChanged="count => _providerTotal = count">
+        <NTPropertyColumn TItem="DataGridItem" TValue="int" Title="Id" Property="item => item.Id" Width="96px" TextAlign="TextAlign.Right" HeaderTextAlign="TextAlign.Right" />
+        <NTPropertyColumn TItem="DataGridItem" TValue="string" Title="Customer" Property="item => item.Customer" MinWidth="220px" InitialSortDirection="SortDirection.Ascending" />
+        <NTPropertyColumn TItem="DataGridItem" TValue="DateTime" Title="Created" Property="item => item.Created" Format="MMM d, yyyy" MinWidth="160px" />
+        <NTPropertyColumn TItem="DataGridItem" TValue="decimal" Title="Amount" Property="item => item.Amount" Format="C" TextAlign="TextAlign.Right" HeaderTextAlign="TextAlign.Right" />
+    </NTDataGrid>
 
+    <p>Provider total: @_providerTotal</p>
+</main>
 
 @code {
-    [Inject]
-    private ITnTToastService _service { get; set; }
-
-    private TnTPaginationState _paginationState = new() {
-        ItemsPerPage = 10
-    };
-
+    private static readonly IReadOnlyList<int> PageSizes = [5, 10, 20];
+    private readonly IQueryable<DataGridItem> Items = BuildItems().AsQueryable();
     private bool _empty;
-    private int _count;
-    private TnTGridItemsProvider<DataGridItem> _provider = default!;
+    private int _directTotal;
+    private int _providerTotal;
 
-    private IQueryable<DataGridItem>? Items;
-    private static object _locker = new();
-    private static List<DataGridItem> _items;
-    protected override async Task OnInitializedAsync() {
-        lock (_locker) {
-            if (_items == null) {
-                var list = new List<DataGridItem>();
-                foreach (var i in Enumerable.Range(1, 1000)) {
-                    list.Add(new DataGridItem() {
-                        Column1 = Random.Shared.Next(1, 1000),
-                        Column2 = Guid.NewGuid().ToString(),
-                        Column3 = new DateTime(Random.Shared.Next(1, 10000), Random.Shared.Next(1, 13), Random.Shared.Next(1, 29))
-                    });
-                }
-                _items = list;
-            }
-            Items = _items.AsQueryable();
+    private async ValueTask<NTItemsProviderResult<DataGridItem>> Provider(NTDataGridItemsProviderRequest<DataGridItem> request) {
+        await Task.Delay(150, request.CancellationToken);
+        var items = ApplyRequest(Items, request).ToArray();
+        return _empty ? new NTItemsProviderResult<DataGridItem>([], 0) : new NTItemsProviderResult<DataGridItem>(items, Items.Count());
+    }
+
+    private static IEnumerable<DataGridItem> ApplyRequest(IEnumerable<DataGridItem> source, NTDataGridItemsProviderRequest<DataGridItem> request) {
+        foreach (var sort in request.Sorts.Reverse()) {
+            source = sort.PropertyName switch {
+                nameof(DataGridItem.Id) => sort.Direction == SortDirection.Descending ? source.OrderByDescending(item => item.Id) : source.OrderBy(item => item.Id),
+                nameof(DataGridItem.Customer) => sort.Direction == SortDirection.Descending ? source.OrderByDescending(item => item.Customer) : source.OrderBy(item => item.Customer),
+                nameof(DataGridItem.Created) => sort.Direction == SortDirection.Descending ? source.OrderByDescending(item => item.Created) : source.OrderBy(item => item.Created),
+                nameof(DataGridItem.Amount) => sort.Direction == SortDirection.Descending ? source.OrderByDescending(item => item.Amount) : source.OrderBy(item => item.Amount),
+                _ => source
+            };
         }
 
-        _provider = async request => {
-            await Task.Delay(1500);
-            var items = Items.Apply(request);
-
-            if (_empty) {
-                return new();
-            }
-
-            return new NTComponents.Virtualization.TnTItemsProviderResult<DataGridItem> {
-                Items = items.ToList(),
-                TotalItemCount = Items.Count()
-            };
-        };
-
-        await _paginationState.SetTotalItemCountAsync(Items.Count());
+        return source.Skip(request.StartIndex).Take(request.Count ?? 10);
     }
 
-    private async Task RowClicked(DataGridItem item) {
-        await _service.ShowAsync("Row clicked", item.Column1.ToString());
-    }
+    private static List<DataGridItem> BuildItems() =>
+        Enumerable.Range(1, 120)
+            .Select(index => new DataGridItem(index, $"Customer {index:000}", DateTime.Today.AddDays(-index), index * 19.95m))
+            .ToList();
 
-    private async Task ItemClicked(DataGridItem item) {
-        await _service.ShowAsync("Item clicked", item.Column2);
-    }
-
-    public class DataGridItem {
-
-        public int Column1 { get; set; }
-
-        public string Column2 { get; set; } = default!;
-
-        public DateTime Column3 { get; set; }
-    }
-
-
+    public sealed record DataGridItem(int Id, string Customer, DateTime Created, decimal Amount);
 }

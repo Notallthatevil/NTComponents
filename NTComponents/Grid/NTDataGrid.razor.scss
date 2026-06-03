@@ -1,0 +1,481 @@
+@use '../Styles/_Variables/_colors.scss' as colors;
+@use '../Styles/_Variables/_corner-radius.scss' as corners;
+@use '../Styles/_Variables/_motion.scss' as motion;
+@use '../Styles/_Variables/_typescale.scss' as typescale;
+
+$nt-data-grid-row-size: 36px;
+$nt-data-grid-compact-row-size: 28px;
+$nt-data-grid-pagination-min-block-size: 48px;
+$nt-data-grid-page-size-select-min-block-size: 32px;
+$nt-data-grid-page-button-size: 24px;
+$nt-data-grid-sort-order-min-inline-size: 16px;
+$nt-data-grid-sort-indicator-size: 18px;
+$nt-data-grid-page-button-font-size: 12px;
+$nt-data-grid-border-size: 1px;
+$nt-data-grid-grid-shape: corners.$nt-corner-radius-small;
+$nt-data-grid-interactive-shape: corners.$nt-corner-radius-small;
+$nt-data-grid-select-shape: corners.$nt-corner-radius-extra-small;
+$nt-data-grid-spacing-xs: 2px;
+$nt-data-grid-spacing-sm: 4px;
+$nt-data-grid-spacing-md: 8px;
+$nt-data-grid-spacing-lg: 12px;
+$nt-data-grid-spacing-xl: 16px;
+$nt-data-grid-sort-title-padding: 2px;
+$nt-data-grid-sort-title-sorted-padding: 30px;
+$nt-data-grid-sort-title-multi-sorted-padding: 50px;
+$nt-data-grid-select-trailing-padding: 28px;
+$nt-data-grid-sticky-header-z-index: 2;
+$nt-data-grid-hover-state-opacity: 8%;
+$nt-data-grid-row-stripe-opacity: 5%;
+$nt-data-grid-row-focus-opacity: 8%;
+$nt-data-grid-striped-hover-state-opacity: 10%;
+$nt-data-grid-disabled-content-opacity: 38%;
+$nt-data-grid-disabled-container-opacity: 12%;
+$nt-data-grid-row-background-transition: motion.$nt-motion-duration-short_2 motion.$nt-motion-easing-standard;
+$nt-data-grid-focus-outline-offset: 2px;
+$nt-data-grid-spacer-border-offset: 1px;
+$nt-data-grid-zero: 0;
+$nt-data-grid-percent-zero: 0%;
+$nt-data-grid-full-size: 100%;
+$nt-data-grid-spacer-highlight-position: 50%;
+$nt-data-grid-spacer-animation-distance: 100%;
+$nt-data-grid-spacer-animation-size: 200%;
+$nt-data-grid-spacer-animation-duration: motion.$nt-motion-duration-extra_long_2 + motion.$nt-motion-duration-extra_long_1;
+
+.nt-data-grid {
+    @include typescale.nt-body-medium;
+
+    --nt-data-grid-row-size: #{$nt-data-grid-row-size};
+
+    color: colors.$tnt-color-on-surface;
+    background: colors.$tnt-color-surface;
+    border: $nt-data-grid-border-size solid colors.$tnt-color-outline-variant;
+    border-radius: $nt-data-grid-grid-shape;
+    overflow: hidden;
+}
+
+.nt-data-grid-scroll {
+    overflow: auto;
+    background: colors.$tnt-color-surface;
+}
+
+.nt-data-grid-table {
+    inline-size: $nt-data-grid-full-size;
+    min-inline-size: $nt-data-grid-full-size;
+    border-collapse: collapse;
+    table-layout: auto;
+    background: colors.$tnt-color-surface;
+
+    caption {
+        @include typescale.nt-title-medium;
+
+        padding: $nt-data-grid-spacing-xl;
+        text-align: start;
+        color: colors.$tnt-color-on-surface;
+        background: colors.$tnt-color-surface-container-low;
+    }
+}
+
+.nt-data-grid-header-cell,
+.nt-data-grid ::deep .nt-data-grid-cell {
+    box-sizing: border-box;
+    text-align: start;
+    vertical-align: middle;
+    border-block-end: $nt-data-grid-border-size solid colors.$tnt-color-outline-variant;
+}
+
+.nt-data-grid-header-cell {
+    @include typescale.nt-label-large;
+
+    position: sticky;
+    inset-block-start: $nt-data-grid-zero;
+    z-index: $nt-data-grid-sticky-header-z-index;
+    block-size: $nt-data-grid-row-size;
+    color: colors.$tnt-color-on-surface-variant;
+    background: colors.$tnt-color-surface-container-low;
+    font-weight: 600;
+    white-space: nowrap;
+
+    &:not(:last-child) {
+        border-inline-end: $nt-data-grid-border-size solid colors.$tnt-color-outline-variant;
+    }
+}
+
+.nt-data-grid ::deep .nt-data-grid-cell {
+    block-size: $nt-data-grid-row-size;
+    color: colors.$tnt-color-on-surface;
+    background: var(--nt-data-grid-row-background, #{colors.$tnt-color-surface});
+    transition: background-color $nt-data-grid-row-background-transition;
+}
+
+.nt-data-grid ::deep .nt-data-grid-row {
+    --nt-data-grid-row-background: #{colors.$tnt-color-surface};
+}
+
+.nt-data-grid.nt-data-grid-striped ::deep .nt-data-grid-row-striped-even {
+    --nt-data-grid-row-background: color-mix(in srgb, #{colors.$tnt-color-on-surface} #{$nt-data-grid-row-stripe-opacity}, #{colors.$tnt-color-surface});
+}
+
+.nt-data-grid ::deep .nt-data-grid-row-clickable {
+    cursor: pointer;
+    outline: none;
+
+    &:hover {
+        --nt-data-grid-row-background: color-mix(in srgb, #{colors.$tnt-color-on-surface} #{$nt-data-grid-hover-state-opacity}, #{colors.$tnt-color-surface});
+    }
+
+    &:focus-visible {
+        --nt-data-grid-row-background: color-mix(in srgb, #{colors.$tnt-color-primary} #{$nt-data-grid-row-focus-opacity}, #{colors.$tnt-color-surface});
+    }
+
+    &:focus-visible .nt-data-grid-cell {
+        box-shadow: inset $nt-data-grid-zero $nt-data-grid-zero $nt-data-grid-zero $nt-data-grid-focus-outline-offset colors.$tnt-color-primary;
+    }
+}
+
+.nt-data-grid.nt-data-grid-striped ::deep .nt-data-grid-row-clickable:hover {
+    --nt-data-grid-row-background: color-mix(in srgb, #{colors.$tnt-color-on-surface} #{$nt-data-grid-striped-hover-state-opacity}, #{colors.$tnt-color-surface});
+}
+
+.nt-data-grid-compact {
+    --nt-data-grid-row-size: #{$nt-data-grid-compact-row-size};
+
+    .nt-data-grid-header-cell {
+        block-size: $nt-data-grid-compact-row-size;
+    }
+
+    ::deep .nt-data-grid-cell {
+        block-size: $nt-data-grid-compact-row-size;
+    }
+
+    .nt-data-grid-sort-link,
+    .nt-data-grid-header-label {
+        min-block-size: $nt-data-grid-compact-row-size;
+    }
+}
+
+.nt-data-grid-sort-link,
+.nt-data-grid-header-label {
+    display: inline-flex;
+    inline-size: $nt-data-grid-full-size;
+    min-block-size: $nt-data-grid-row-size;
+    align-items: center;
+    gap: $nt-data-grid-spacing-md;
+    color: inherit;
+    text-decoration: none;
+    text-align: inherit;
+}
+
+.nt-data-grid-sort-link {
+    position: relative;
+    border-radius: $nt-data-grid-interactive-shape;
+    outline: none;
+
+    &:hover {
+        background: color-mix(in srgb, #{colors.$tnt-color-on-surface} #{$nt-data-grid-hover-state-opacity}, transparent);
+    }
+
+    &:focus-visible {
+        outline: $nt-data-grid-focus-outline-offset solid colors.$tnt-color-primary;
+        outline-offset: $nt-data-grid-focus-outline-offset;
+    }
+}
+
+.nt-data-grid-header-title {
+    flex: 1 1 auto;
+    min-inline-size: $nt-data-grid-zero;
+    overflow: hidden;
+    padding-inline: $nt-data-grid-sort-title-padding;
+    text-align: inherit;
+    text-overflow: ellipsis;
+}
+
+.nt-data-grid-sort-link-sorted .nt-data-grid-header-title {
+    padding-inline-end: $nt-data-grid-sort-title-sorted-padding;
+}
+
+.nt-data-grid-sort-link-multi-sorted .nt-data-grid-header-title {
+    padding-inline-end: $nt-data-grid-sort-title-multi-sorted-padding;
+}
+
+.nt-data-grid-header-label,
+.nt-data-grid ::deep .nt-data-grid-cell-content {
+    box-sizing: border-box;
+    inline-size: $nt-data-grid-full-size;
+    padding-inline: $nt-data-grid-sort-title-padding;
+    text-align: inherit;
+}
+
+.nt-data-grid-sort-state {
+    position: absolute;
+    inset-inline-end: $nt-data-grid-zero;
+    display: inline-flex;
+    align-items: center;
+    gap: $nt-data-grid-spacing-xs;
+}
+
+.nt-data-grid-sort-order {
+    @include typescale.nt-label-small;
+
+    min-inline-size: $nt-data-grid-sort-order-min-inline-size;
+    text-align: center;
+    color: inherit;
+}
+
+.nt-data-grid-sort-indicator {
+    font-size: $nt-data-grid-sort-indicator-size;
+    line-height: 1;
+    color: inherit;
+    pointer-events: none;
+    transform-origin: center;
+
+    &-ascending {
+        transform: rotate(180deg);
+    }
+}
+
+.nt-data-grid-header-cell {
+    &.nt-data-grid-align-left {
+        .nt-data-grid-sort-link,
+        .nt-data-grid-header-label {
+            justify-content: flex-start;
+        }
+    }
+
+    &.nt-data-grid-align-center {
+        .nt-data-grid-sort-link,
+        .nt-data-grid-header-label {
+            justify-content: center;
+        }
+    }
+
+    &.nt-data-grid-align-right {
+        .nt-data-grid-sort-link,
+        .nt-data-grid-header-label {
+            justify-content: flex-end;
+        }
+    }
+
+    &.nt-data-grid-align-justify {
+        .nt-data-grid-sort-link,
+        .nt-data-grid-header-label {
+            justify-content: space-between;
+        }
+    }
+}
+
+.nt-data-grid ::deep .nt-data-grid-row-empty {
+    td {
+        @include typescale.nt-body-medium;
+
+        block-size: $nt-data-grid-row-size;
+        padding: $nt-data-grid-spacing-xl;
+        text-align: center;
+        color: colors.$tnt-color-on-surface-variant;
+        border-block-end: $nt-data-grid-border-size solid colors.$tnt-color-outline-variant;
+        background: colors.$tnt-color-surface;
+    }
+}
+
+.nt-data-grid ::deep .nt-data-grid-row-placeholder {
+    block-size: var(--nt-data-grid-placeholder-row-height, var(--nt-data-grid-row-size));
+
+    td {
+        @include typescale.nt-body-medium;
+
+        block-size: var(--nt-data-grid-placeholder-row-height, var(--nt-data-grid-row-size));
+        box-sizing: border-box;
+        padding-block: $nt-data-grid-zero;
+        padding-inline: $nt-data-grid-spacing-xs;
+        text-align: center;
+        color: colors.$tnt-color-on-surface-variant;
+        border-block-end: $nt-data-grid-border-size solid colors.$tnt-color-outline-variant;
+        background: colors.$tnt-color-surface;
+    }
+}
+
+.nt-data-grid.nt-data-grid-compact {
+    ::deep .nt-data-grid-row-empty {
+        td {
+            block-size: $nt-data-grid-compact-row-size;
+        }
+    }
+
+    ::deep .nt-data-grid-row-placeholder {
+        block-size: var(--nt-data-grid-placeholder-row-height, var(--nt-data-grid-row-size));
+
+        td {
+            block-size: var(--nt-data-grid-placeholder-row-height, var(--nt-data-grid-row-size));
+        }
+    }
+}
+
+.nt-data-grid ::deep .nt-data-grid-cell-placeholder {
+    padding-block: $nt-data-grid-zero;
+    padding-inline: $nt-data-grid-spacing-xs;
+    block-size: var(--nt-data-grid-placeholder-row-height, var(--nt-data-grid-row-size));
+}
+
+.nt-data-grid ::deep .nt-data-grid-row-skeleton {
+    display: block;
+    block-size: var(--nt-data-grid-placeholder-row-height, var(--nt-data-grid-row-size));
+    min-block-size: var(--nt-data-grid-placeholder-row-height, var(--nt-data-grid-row-size));
+    inline-size: $nt-data-grid-full-size;
+}
+
+.nt-data-grid ::deep .nt-data-grid-row-skeleton .nt-skeleton {
+    display: block;
+    block-size: var(--nt-data-grid-placeholder-row-height, var(--nt-data-grid-row-size));
+    min-block-size: var(--nt-data-grid-placeholder-row-height, var(--nt-data-grid-row-size));
+}
+
+.nt-data-grid-virtualized ::deep .nt-virtualize-spacer {
+    background-color: colors.$tnt-color-surface;
+    background-image:
+        linear-gradient(
+            90deg,
+            transparent $nt-data-grid-percent-zero,
+            color-mix(in srgb, #{colors.$tnt-color-on-surface} #{$nt-data-grid-row-stripe-opacity}, transparent) $nt-data-grid-spacer-highlight-position,
+            transparent $nt-data-grid-spacer-animation-distance
+        ),
+        repeating-linear-gradient(
+            to bottom,
+            colors.$tnt-color-surface-container-highest $nt-data-grid-zero calc(var(--nt-data-grid-row-size) - #{$nt-data-grid-spacer-border-offset}),
+            colors.$tnt-color-outline-variant calc(var(--nt-data-grid-row-size) - #{$nt-data-grid-spacer-border-offset}) var(--nt-data-grid-row-size)
+        );
+    background-position: -#{$nt-data-grid-spacer-animation-distance} $nt-data-grid-zero, $nt-data-grid-zero $nt-data-grid-zero;
+    background-size: $nt-data-grid-spacer-animation-size $nt-data-grid-spacer-animation-distance, $nt-data-grid-spacer-animation-distance var(--nt-data-grid-row-size);
+    animation: nt-data-grid-spacer-skeleton $nt-data-grid-spacer-animation-duration linear infinite;
+
+    .nt-data-grid-spacer-cell {
+        padding: $nt-data-grid-zero;
+        border: $nt-data-grid-zero;
+        background: inherit;
+        background-image: inherit;
+        background-position: inherit;
+        background-size: inherit;
+        animation: inherit;
+    }
+}
+
+@keyframes nt-data-grid-spacer-skeleton {
+    #{$nt-data-grid-spacer-animation-distance} {
+        background-position: $nt-data-grid-spacer-animation-distance $nt-data-grid-zero, $nt-data-grid-zero $nt-data-grid-zero;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nt-data-grid-virtualized ::deep .nt-virtualize-spacer {
+        animation: none;
+    }
+}
+
+.nt-data-grid-pagination {
+    @include typescale.nt-label-large;
+
+    display: flex;
+    min-block-size: $nt-data-grid-pagination-min-block-size;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: $nt-data-grid-spacing-md $nt-data-grid-spacing-lg;
+    padding: $nt-data-grid-spacing-md;
+    color: colors.$tnt-color-on-surface-variant;
+    background: colors.$tnt-color-surface-container-low;
+    border-block-start: $nt-data-grid-border-size solid colors.$tnt-color-outline-variant;
+}
+
+.nt-data-grid-page-size {
+    display: inline-flex;
+    align-items: center;
+    gap: $nt-data-grid-spacing-md;
+    margin-inline-end: auto;
+
+    select {
+        @include typescale.nt-label-large;
+
+        min-block-size: $nt-data-grid-page-size-select-min-block-size;
+        padding-block: $nt-data-grid-spacing-sm;
+        padding-inline: $nt-data-grid-spacing-md $nt-data-grid-select-trailing-padding;
+        color: colors.$tnt-color-on-surface;
+        background: colors.$tnt-color-surface;
+        border: $nt-data-grid-border-size solid colors.$tnt-color-outline;
+        border-radius: $nt-data-grid-select-shape;
+    }
+}
+
+.nt-data-grid-pagination-buttons {
+    display: flex;
+    flex-direction: row;
+    justify-content: end;
+
+    .pagination-btn {
+        @include typescale.tnt-label-large;
+
+        display: inline-flex;
+        block-size: $nt-data-grid-page-button-size;
+        inline-size: $nt-data-grid-page-button-size;
+        min-block-size: $nt-data-grid-page-button-size;
+        min-inline-size: $nt-data-grid-page-button-size;
+        align-items: center;
+        justify-content: center;
+        margin: $nt-data-grid-zero;
+        padding: $nt-data-grid-zero;
+        color: colors.$tnt-color-on-primary-container;
+        background: colors.$tnt-color-primary-container;
+        border-radius: corners.$nt-corner-radius-none;
+        font-size: $nt-data-grid-page-button-font-size;
+        line-height: $nt-data-grid-page-button-size;
+        text-align: center;
+        text-decoration: none;
+        vertical-align: middle;
+        outline: none;
+
+        &:hover {
+            background: color-mix(in srgb, #{colors.$tnt-color-on-primary-container} #{$nt-data-grid-hover-state-opacity}, #{colors.$tnt-color-primary-container});
+        }
+
+        &:focus-visible {
+            outline: $nt-data-grid-focus-outline-offset solid colors.$tnt-color-primary;
+            outline-offset: $nt-data-grid-focus-outline-offset;
+        }
+
+        &:active,
+        &:focus {
+            border-radius: corners.$nt-corner-radius-none;
+        }
+
+        &.current-page {
+            color: colors.$tnt-color-on-primary;
+            background: colors.$tnt-color-primary;
+            opacity: 1;
+            pointer-events: none;
+        }
+
+        &.tnt-disabled {
+            color: color-mix(in srgb, #{colors.$tnt-color-on-surface} #{$nt-data-grid-disabled-content-opacity}, transparent);
+            background: color-mix(in srgb, #{colors.$tnt-color-on-surface} #{$nt-data-grid-disabled-container-opacity}, transparent);
+            pointer-events: none;
+        }
+
+        .tnt-icon {
+            font-size: $nt-data-grid-sort-indicator-size;
+        }
+    }
+}
+
+.nt-data-grid ::deep .nt-data-grid-align-left {
+    text-align: left;
+}
+
+.nt-data-grid ::deep .nt-data-grid-align-center {
+    text-align: center;
+}
+
+.nt-data-grid ::deep .nt-data-grid-align-right {
+    text-align: right;
+}
+
+.nt-data-grid ::deep .nt-data-grid-align-justify {
+    text-align: justify;
+}
