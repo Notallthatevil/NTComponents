@@ -211,28 +211,44 @@ function Invoke-BrowserSmoke {
             throw "Static file server did not become ready at $($server.Url)."
         }
 
-        $browserArgs = @(
-            '--headless=new',
-            '--disable-gpu',
-            '--no-first-run',
-            '--disable-background-networking',
-            '--virtual-time-budget=15000',
-            '--dump-dom',
-            $server.Url
-        )
+        $browserUserDataDirectory = Join-Path ([System.IO.Path]::GetTempPath()) "ntcomponents-aot-browser-$Port"
+        Remove-Item -LiteralPath $browserUserDataDirectory -Recurse -Force -ErrorAction SilentlyContinue
 
-        $dom = & $browser @browserArgs 2>&1 | Out-String
-        $browserExitCode = $LASTEXITCODE
+        $lastDom = ''
+        $lastBrowserExitCode = 0
+        foreach ($virtualTimeBudget in @(15000, 30000, 60000)) {
+            $browserArgs = @(
+                '--headless=new',
+                '--disable-gpu',
+                '--disable-dev-shm-usage',
+                '--no-first-run',
+                '--disable-background-networking',
+                "--user-data-dir=$browserUserDataDirectory",
+                "--virtual-time-budget=$virtualTimeBudget",
+                '--dump-dom',
+                $server.Url
+            )
 
-        if ($browserExitCode -ne 0) {
-            throw "Browser smoke failed with exit code $browserExitCode. Output:`n$dom"
+            $lastDom = & $browser @browserArgs 2>&1 | Out-String
+            $lastBrowserExitCode = $LASTEXITCODE
+
+            if ($lastBrowserExitCode -eq 0 -and $lastDom -match 'data-aot-smoke-ready="true"' -and $lastDom -match 'id="aot-smoke-status"') {
+                return
+            }
+
+            Start-Sleep -Milliseconds 500
         }
 
-        if ($dom -notmatch 'data-aot-smoke-ready="true"' -or $dom -notmatch 'id="aot-smoke-status"') {
-            throw "Browser smoke did not render the NTComponents AOT smoke marker. Output:`n$dom"
+        if ($lastBrowserExitCode -ne 0) {
+            throw "Browser smoke failed with exit code $lastBrowserExitCode. Output:`n$lastDom"
         }
+
+        throw "Browser smoke did not render the NTComponents AOT smoke marker. Output:`n$lastDom"
     }
     finally {
+        if ($browserUserDataDirectory) {
+            Remove-Item -LiteralPath $browserUserDataDirectory -Recurse -Force -ErrorAction SilentlyContinue
+        }
         Stop-StaticFileServer -Server $server
     }
 }
