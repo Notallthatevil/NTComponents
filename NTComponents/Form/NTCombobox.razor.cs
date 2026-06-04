@@ -5,6 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -33,6 +34,10 @@ namespace NTComponents;
 ///     </para>
 /// </remarks>
 /// <typeparam name="TValue">The option value type.</typeparam>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.InteractiveRequired,
+    CompatibilitySummary = "Requires browser enhancement for its multi-select combobox workflow.",
+    CompatibilityDetails = "Static SSR renders the current selection and hidden form values, but opening, filtering, and toggling options depend on the JavaScript module and Blazor callbacks.")]
 public partial class NTCombobox<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TValue> : IAsyncDisposable {
     private const string JsModulePath = "./_content/NTComponents/Form/NTCombobox.razor.js";
     private static readonly HashSet<string> ComboboxExplicitControlAttributeNames = new(StringComparer.OrdinalIgnoreCase) {

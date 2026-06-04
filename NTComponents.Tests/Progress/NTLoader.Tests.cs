@@ -85,7 +85,7 @@ public class NTLoader_Tests : BunitContext {
     public void Emits_Page_Script_For_Static_And_Interactive_Rendering() {
         var cut = Render<NTLoader>();
 
-        cut.Instance.Should().BeAssignableTo<ITnTPageScriptComponent<NTLoader>>();
+        cut.Instance.Should().BeAssignableTo<INTPageScriptComponent<NTLoader>>();
         cut.FindAll("tnt-page-script")
             .Select(script => script.GetAttribute("src"))
             .Should()

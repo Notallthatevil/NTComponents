@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components.Web;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -21,6 +22,10 @@ namespace NTComponents;
 ///         currency precision match the expected locale.
 ///     </para>
 /// </remarks>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Renders useful static HTML and adds Blazor behavior when interactive.",
+    CompatibilityDetails = "Static SSR preserves the rendered markup and native browser behavior. EventCallback handlers, bound state updates, and live validation require an interactive render mode.")]
 public class NTInputCurrency : NTInputNumeric<decimal> {
     private CultureInfo _cultureInfo = CultureInfo.GetCultureInfo("en-US");
     private CultureInfo _formatCultureInfo = CultureInfo.GetCultureInfo("en-US");

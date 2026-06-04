@@ -1,0 +1,105 @@
+@namespace NTComponents.Site.Components
+@using NTComponents.GeneratedDocumentation
+@inject DocumentationCatalog Catalog
+
+@if (Properties.Count == 0 && Fields.Count == 0) {
+    <p class="docs-muted">No documented public or protected members in this group.</p>
+}
+else {
+    <div class="docs-table-wrap">
+        <table class="docs-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Summary</th>
+                    <th>Declaring type</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var property in Properties) {
+                    <tr id="@BuildAnchorId(property.Name)">
+                        <td>
+                            <code>@property.Name</code>
+                            <span class="docs-member-tags">
+                                @if (property.IsParameter) {
+                                    <span>Parameter</span>
+                                }
+                                @if (property.IsCascadingParameter) {
+                                    <span>Cascading</span>
+                                }
+                                @if (property.IsEditorRequired) {
+                                    <span>Required</span>
+                                }
+                                @if (property.IsObsolete) {
+                                    <span>Obsolete</span>
+                                }
+                            </span>
+                        </td>
+                        <td>@RenderTypeLink(property.TypeDisplayName, property.TypeFullName)</td>
+                        <td><DocumentationText XmlDocumentation="@property.XmlDocumentation" Fallback="@property.Summary" /></td>
+                        <td class="docs-muted">@RenderTypeLink(ShortTypeName(property.DeclaringTypeFullName), property.DeclaringTypeFullName)</td>
+                    </tr>
+                }
+                @foreach (var field in Fields) {
+                    <tr id="@BuildAnchorId(field.Name)">
+                        <td>
+                            <code>@field.Name</code>
+                            <span class="docs-member-tags">
+                                <span>Field</span>
+                                @if (!string.IsNullOrWhiteSpace(field.ConstantValue)) {
+                                    <span>@field.ConstantValue</span>
+                                }
+                                @if (field.IsObsolete) {
+                                    <span>Obsolete</span>
+                                }
+                            </span>
+                        </td>
+                        <td>@RenderTypeLink(field.TypeDisplayName, field.TypeFullName)</td>
+                        <td><DocumentationText XmlDocumentation="@field.XmlDocumentation" Fallback="@field.Summary" /></td>
+                        <td class="docs-muted">@RenderTypeLink(ShortTypeName(field.DeclaringTypeFullName), field.DeclaringTypeFullName)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public IReadOnlyList<PropertyDocumentation> Properties { get; set; } = [];
+
+    [Parameter]
+    public IReadOnlyList<FieldDocumentation> Fields { get; set; } = [];
+
+    [Parameter]
+    public string? AnchorPrefix { get; set; }
+
+    private string BuildAnchorId(string name) {
+        var memberSlug = DocumentationCatalog.CreateSlug(name);
+        return string.IsNullOrWhiteSpace(AnchorPrefix) ? memberSlug : $"{AnchorPrefix}-{memberSlug}";
+    }
+
+    private static string ShortTypeName(string fullName) {
+        var index = fullName.LastIndexOf('.');
+        return index < 0 ? fullName : fullName[(index + 1)..];
+    }
+
+    private RenderFragment RenderTypeLink(string label, string typeFullName) => builder => {
+        var href = Catalog.GetTypeUrl(typeFullName);
+        if (href is null) {
+            builder.OpenElement(0, "code");
+            builder.AddContent(1, label);
+            builder.CloseElement();
+            return;
+        }
+
+        builder.OpenElement(2, "a");
+        builder.AddAttribute(3, "class", "docs-inline-link");
+        builder.AddAttribute(4, "href", href);
+        builder.OpenElement(5, "code");
+        builder.AddContent(6, label);
+        builder.CloseElement();
+        builder.CloseElement();
+    };
+}

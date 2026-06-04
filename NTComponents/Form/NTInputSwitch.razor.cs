@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components.Forms;
 using NTComponents.Core;
 using System.Text;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -24,6 +25,10 @@ namespace NTComponents;
 ///         application surfaces, but should be an opt-in layout choice rather than the default.
 ///     </para>
 /// </remarks>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.SsrCompatible,
+    CompatibilitySummary = "Renders native form markup that works with static SSR and form posts.",
+    CompatibilityDetails = "The native control can participate in static SSR and normal form posts. Blazor binding callbacks and live validation updates require interactivity or a subsequent render.")]
 public partial class NTInputSwitch {
     private const string RootClassBase = "nt-switch";
     private static readonly string[] SwitchExplicitInputAttributeNames = [.. CommonExplicitInputAttributeNames, "role"];

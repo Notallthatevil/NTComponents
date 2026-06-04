@@ -1,12 +1,17 @@
 using Microsoft.AspNetCore.Components;
 using NTComponents.Core;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
 ///     Material 3 tooltip component that displays passive contextual information when users hover over or focus on an element.
 /// </summary>
-public partial class NTTooltip : TnTPageScriptComponent<NTTooltip> {
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Renders tooltip content statically and enhances visibility and positioning with JavaScript.",
+    CompatibilityDetails = "Static SSR emits the tooltip content. Hover and focus triggering, placement, dismissal, and show-hide timing depend on the isolated browser module.")]
+public partial class NTTooltip : NTPageScriptComponent<NTTooltip> {
 
     private IReadOnlyDictionary<string, object>? _additionalAttributesWithoutInternalId;
     private string? _elementClass;
@@ -91,13 +96,13 @@ public partial class NTTooltip : TnTPageScriptComponent<NTTooltip> {
     }
 
     private IReadOnlyDictionary<string, object>? GetAdditionalAttributesWithoutInternalId() {
-        if (AdditionalAttributes is null || !AdditionalAttributes.ContainsKey(TnTComponentBase._tnTCustomIdentifierAttribute)) {
+        if (AdditionalAttributes is null || !AdditionalAttributes.ContainsKey(NTComponentBase._tnTCustomIdentifierAttribute)) {
             return AdditionalAttributes;
         }
 
         var attributes = new Dictionary<string, object>(AdditionalAttributes.Count - 1);
         foreach (var attribute in AdditionalAttributes) {
-            if (attribute.Key != TnTComponentBase._tnTCustomIdentifierAttribute) {
+            if (attribute.Key != NTComponentBase._tnTCustomIdentifierAttribute) {
                 attributes[attribute.Key] = attribute.Value;
             }
         }

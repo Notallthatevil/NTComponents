@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -11,6 +12,10 @@ namespace NTComponents;
 ///     Use <see cref="NTInputText" /> for single-line text entry. Choose the most specific <see cref="InputType" /> value
 ///     so browsers can provide the right keyboard, autofill, validation hints, and built-in behavior for the requested data.
 /// </remarks>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Renders a native text input for static SSR and form posts.",
+    CompatibilityDetails = "The control emits native text input markup, labels, supporting text, and named values. Live binding, validation updates, and specialized client-side formatting require interactive enhancement or form post handling.")]
 public partial class NTInputText {
 
     /// <summary>

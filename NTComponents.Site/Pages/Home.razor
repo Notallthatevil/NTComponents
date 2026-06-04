@@ -1,106 +1,49 @@
 @page "/"
-@inject DocumentationCatalog DocumentationCatalog
-@inject INTToastService ToastService
+@inject DocumentationCatalog Catalog
 
-<PageTitle>NTComponents.Site</PageTitle>
-
-<section class="docs-page docs-page-home">
-    <header class="docs-hero">
-        <p class="docs-kicker @NTTypography.LabelLarge.ToCssClass()">NTComponents Documentation</p>
-        <h1 class="@NTTypography.HeadlineLarge.ToCssClass()">Dynamic component docs generated from source</h1>
-        <p class="@NTTypography.BodyLarge.ToCssClass()">
-            Browse component sandboxes, generated Razor examples, and API reference pages built from the same XML
-            documentation that ships with the component library.
-        </p>
+<main class="docs-page docs-home">
+    <section class="docs-hero">
+        <div>
+            <p class="docs-kicker">NTComponents documentation</p>
+            <h1>Material 3 Blazor components generated from source docs</h1>
+            <p>Explore @Catalog.Components.Count NT component pages, live automatic sandboxes, API members, render compatibility tags, and referenced enums/constants.</p>
+        </div>
         <div class="docs-actions">
-            <a class="docs-primary-link @NTTypography.LabelLarge.ToCssClass()" href="/docs/components">Open components</a>
-            <a class="docs-primary-link @NTTypography.LabelLarge.ToCssClass()" href="/docs/reference">Open reference index</a>
-            <button type="button" class="docs-primary-link @NTTypography.LabelLarge.ToCssClass()" onclick="window.NTSnackbar.queueSnackbar('Static SSR snackbar')">Show SSR snackbar</button>
-            <button type="button" class="docs-primary-link @NTTypography.LabelLarge.ToCssClass()" onclick="window.NTToast?.queueToast({ title: 'Static toast', message: 'Triggered from native JavaScript.', variant: 'info' })">Show JS toast</button>
-            <button type="button" class="docs-primary-link @NTTypography.LabelLarge.ToCssClass()" @onclick="ShowServiceToasts">Show service toasts</button>
+            <NTNavLink Label="Browse components" Variant="NTNavLinkVariant.Filled" AdditionalAttributes="@Href("/components")" />
+            <NTNavLink Label="Enums and constants" Variant="NTNavLinkVariant.Outlined" AdditionalAttributes="@Href("/reference/enums")" />
         </div>
-    </header>
+    </section>
 
-    <section class="doc-group-panel doc-section">
-        <div class="doc-section-heading">
-            <h2 class="@NTTypography.TitleLarge.ToCssClass()">Featured foundations</h2>
-            <p class="@NTTypography.BodyMedium.ToCssClass()">
-                These pages are discovered from the generated documentation model and rendered through the same shared
-                reference components.
-            </p>
-        </div>
+    <section class="docs-stat-grid">
+        <NTCard>
+            <h2>@Catalog.Components.Count</h2>
+            <p>NT component pages</p>
+        </NTCard>
+        <NTCard>
+            <h2>@Catalog.ReferenceGroups.Sum(group => group.Count())</h2>
+            <p>Referenced enum and constant types</p>
+        </NTCard>
+        <NTCard>
+            <h2>@Catalog.Components.Count(component => component.Type.IsSsrCompatible)</h2>
+            <p>Marked SSR compatible or progressive</p>
+        </NTCard>
+    </section>
 
-        <div class="doc-type-list">
-            @foreach (var typePage in DocumentationCatalog.FeaturedTypes) {
-                <NTCard class="doc-type-row" href="@($"/docs/reference/{typePage.Slug}")" Variant="NTCardVariant.Outlined">
-                    <div>
-                        <div class="doc-row-title">
-                            <strong class="@NTTypography.TitleMedium.ToCssClass()">@typePage.Name</strong>
-                            <span class="doc-type-kind @NTTypography.LabelLarge.ToCssClass()">@typePage.Kind</span>
-                        </div>
-                        <p class="doc-type-full-name @NTTypography.BodySmall.ToCssClass()">@typePage.FullName</p>
-                        @if (typePage.Content.SummaryParagraphs.Count > 0) {
-                            <p class="@NTTypography.BodyMedium.ToCssClass()">@((MarkupString)typePage.Content.SummaryParagraphs[0])</p>
-                        }
-                    </div>
-                    <span class="doc-type-open @NTTypography.LabelLarge.ToCssClass()">Open</span>
+    <section class="docs-section">
+        <h2>Component Families</h2>
+        <div class="docs-family-grid">
+            @foreach (var group in Catalog.ComponentGroups) {
+                <NTCard AdditionalAttributes="@Href("/components")">
+                    <h3>@group.Key</h3>
+                    <p>@group.Count() components</p>
                 </NTCard>
             }
         </div>
     </section>
-
-    @if (DocumentationCatalog.ComponentTypes.Count > 0) {
-        <section class="doc-group-panel doc-section">
-            <div class="doc-section-heading">
-                <h2 class="@NTTypography.TitleLarge.ToCssClass()">Components</h2>
-                <p class="@NTTypography.BodyMedium.ToCssClass()">
-                    Component pages are discovered dynamically from the NTComponents assembly and get shared sandbox,
-                    Razor, parameter, property, field, and method sections.
-                </p>
-            </div>
-
-            <div class="doc-type-list">
-                @foreach (var typePage in DocumentationCatalog.ComponentTypes) {
-                    <NTCard class="doc-type-row" href="@($"/docs/components/{typePage.Slug}")" Variant="NTCardVariant.Outlined">
-                        <div>
-                            <div class="doc-row-title">
-                                <strong class="@NTTypography.TitleMedium.ToCssClass()">@typePage.Name</strong>
-                                <span class="doc-type-kind @NTTypography.LabelLarge.ToCssClass()">@typePage.Kind</span>
-                            </div>
-                            <p class="doc-type-full-name @NTTypography.BodySmall.ToCssClass()">@typePage.FullName</p>
-                            @if (typePage.Content.SummaryParagraphs.Count > 0) {
-                                <p class="@NTTypography.BodyMedium.ToCssClass()">@((MarkupString)typePage.Content.SummaryParagraphs[0])</p>
-                            }
-                        </div>
-                        <span class="doc-type-open @NTTypography.LabelLarge.ToCssClass()">Open</span>
-                    </NTCard>
-                }
-            </div>
-        </section>
-    }
-
-    <section class="doc-group-panel doc-section">
-        <div class="doc-section-heading">
-            <h2 class="@NTTypography.TitleLarge.ToCssClass()">What you get</h2>
-        </div>
-
-        <div class="doc-plain-grid">
-            <NTCard class="doc-note">
-                <strong class="@NTTypography.TitleMedium.ToCssClass()">Single source of truth</strong>
-                <p class="@NTTypography.BodyMedium.ToCssClass()">Type pages, enum values, component parameters, and member docs come from the generated documentation model.</p>
-            </NTCard>
-            <NTCard class="doc-note">
-                <strong class="@NTTypography.TitleMedium.ToCssClass()">Live configuration</strong>
-                <p class="@NTTypography.BodyMedium.ToCssClass()">Component pages use shared sandbox controls to preview supported parameters and generate copyable Razor.</p>
-            </NTCard>
-        </div>
-    </section>
-</section>
+</main>
 
 @code {
-    private async Task ShowServiceToasts() {
-        await ToastService.ShowSuccessAsync("Saved", "The service called the NTToast JavaScript bridge.");
-        await ToastService.ShowWarningAsync("Review needed", "This warning is stacked with the success toast.");
-        await ToastService.ShowAssertAsync("Assertion", "Assert messages use the assert color roles.");
-    }
+    private static IReadOnlyDictionary<string, object> Href(string href) => new Dictionary<string, object> {
+        ["href"] = href
+    };
 }

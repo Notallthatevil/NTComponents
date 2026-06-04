@@ -1,12 +1,17 @@
 using Microsoft.AspNetCore.Components;
 using NTComponents.Core;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
 ///     Base class for Material 3 canonical view components.
 /// </summary>
-public abstract class NTCanonicalViewBase : TnTComponentBase {
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.SsrCompatible,
+    CompatibilitySummary = "Renders useful static HTML without requiring Blazor interactivity.",
+    CompatibilityDetails = "Static SSR preserves the component structure, styling, and accessibility semantics. Dynamic parameter changes require a new render.")]
+public abstract class NTCanonicalViewBase : NTComponentBase {
 
     /// <inheritdoc />
     public override string? ElementClass => _elementClass;

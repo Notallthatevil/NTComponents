@@ -3,12 +3,17 @@ using Microsoft.AspNetCore.Components.Forms;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
 ///     A Material 3 aligned native date/time input.
 /// </summary>
 /// <typeparam name="DateTimeType">The date/time value type.</typeparam>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Renders native date and time input markup and enhances custom picker behavior with script.",
+    CompatibilityDetails = "Static SSR emits native date/time-compatible input attributes for form posts. The custom picker, live parsing, and validation updates require browser or Blazor enhancement.")]
 public partial class NTInputDateTime<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] DateTimeType> {
 
     private const string JsModulePath = "./_content/NTComponents/Form/NTInputDateTime.razor.js";

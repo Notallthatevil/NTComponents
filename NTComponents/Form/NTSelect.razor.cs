@@ -5,6 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -37,6 +38,10 @@ namespace NTComponents;
 ///     </para>
 /// </remarks>
 /// <typeparam name="TValue">The selected value type.</typeparam>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.SsrCompatible,
+    CompatibilitySummary = "Renders a native select that works with static SSR and form posts.",
+    CompatibilityDetails = "The component intentionally uses a real HTML select and native option content. Blazor binding callbacks and live validation updates still require interactivity or form post handling.")]
 public partial class NTSelect<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TValue> {
     private static readonly Type NullableValueType = Nullable.GetUnderlyingType(typeof(TValue)) ?? typeof(TValue);
 

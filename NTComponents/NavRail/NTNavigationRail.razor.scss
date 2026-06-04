@@ -359,7 +359,7 @@ $nt-navigation-rail-modal-width: min($nt-navigation-rail-expanded-width, 88vw);
     flex: 1 1 auto;
     flex-direction: column;
     gap: $nt-navigation-rail-item-gap;
-    justify-content: safe center;
+    justify-content: flex-start;
     min-block-size: 0;
     min-inline-size: 0;
     overflow-x: hidden;

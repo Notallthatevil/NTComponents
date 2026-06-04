@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using NTComponents.Core;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -25,7 +26,11 @@ namespace NTComponents;
 ///         separation from a visually busy surface.
 ///     </para>
 /// </remarks>
-public partial class NTIconButton : TnTComponentBase {
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Renders useful static HTML and adds Blazor behavior when interactive.",
+    CompatibilityDetails = "Static SSR preserves the rendered markup and native browser behavior. EventCallback handlers, bound state updates, and live validation require an interactive render mode.")]
+public partial class NTIconButton : NTComponentBase {
 
     /// <summary>
     ///     Gets or sets the accessible name announced for the icon-only button.

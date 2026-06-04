@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components;
 using NTComponents.Core;
 using NTComponents.Toast;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -30,6 +31,10 @@ namespace NTComponents;
 ///         Prefer semantic variants and short status text. Use <code>timeout: 0</code> only when the user must explicitly dismiss the message.
 ///     </para>
 /// </remarks>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Renders a toast host and registers the browser toast bridge.",
+    CompatibilityDetails = "Static SSR emits the host container and page script. Displaying queued toasts requires the browser module or the interactive toast service after the page reaches the browser.")]
 public partial class NTToast {
     /// <summary>
     ///     The static web asset path for the toast JavaScript module.

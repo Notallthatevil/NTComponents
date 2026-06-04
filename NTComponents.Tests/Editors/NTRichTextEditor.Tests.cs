@@ -28,7 +28,7 @@ public class NTRichTextEditor_Tests : BunitContext {
     public void Component_Implements_PageScript_Component_Interface() {
         var cut = RenderEditor();
 
-        cut.Instance.Should().BeAssignableTo<NTComponents.Interfaces.ITnTPageScriptComponent<NTRichTextEditor>>();
+        cut.Instance.Should().BeAssignableTo<NTComponents.Interfaces.INTPageScriptComponent<NTRichTextEditor>>();
         cut.Instance.Should().BeAssignableTo<IAsyncDisposable>();
         cut.Instance.Should().BeAssignableTo<IDisposable>();
     }

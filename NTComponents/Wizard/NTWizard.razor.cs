@@ -4,12 +4,17 @@ using Microsoft.AspNetCore.Components.Web;
 using NTComponents.Core;
 using NTComponents.Wizard;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
 ///     Represents an NT-styled wizard component that manages multiple steps and provides navigation between them.
 /// </summary>
-public partial class NTWizard : TnTComponentBase, IDisposable {
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.InteractiveRequired,
+    CompatibilitySummary = "Requires Blazor interactivity for step navigation and submission workflow.",
+    CompatibilityDetails = "The initial step can render statically, but next, previous, skip, validation, and submit callbacks depend on component state and an interactive render mode.")]
+public partial class NTWizard : NTComponentBase, IDisposable {
 
     /// <summary>
     ///     The child content to be rendered inside the wizard.

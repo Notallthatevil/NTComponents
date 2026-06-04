@@ -2,7 +2,7 @@
 @using NTComponents.Core
 @using NTComponents.Wizard
 @namespace NTComponents
-@inherits TnTComponentBase
+@inherits NTComponentBase
 
 <div @attributes="AdditionalAttributes" class="@ElementClass" style="@ElementStyle" id="@ElementId" title="@ElementTitle" @onkeypress="HandleKeyPressAsync" @ref="Element">
     @if (!string.IsNullOrWhiteSpace(Title)) {

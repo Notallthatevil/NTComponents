@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
 using NTComponents.Core;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -11,7 +12,11 @@ namespace NTComponents;
 ///     Navigation rail items are static-SSR compatible. Provide <see cref="Href" /> for route navigation. Items without <see cref="Href" /> render as native buttons so apps can opt into
 ///     server-backed form behavior through additional attributes, but the component does not attach Blazor click handlers or JavaScript.
 /// </remarks>
-public partial class NTNavigationRailItem : TnTComponentBase {
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.SsrCompatible,
+    CompatibilitySummary = "Renders native navigation links or buttons for static SSR.",
+    CompatibilityDetails = "Href-backed items navigate as ordinary anchors and button items can participate in native forms through attributes. Route-selected state updates require a new render.")]
+public partial class NTNavigationRailItem : NTComponentBase {
 
     /// <summary>
     ///     Optional active icon. When omitted for a selected Material icon, the icon is rendered with the rail's selected filled-symbol class.

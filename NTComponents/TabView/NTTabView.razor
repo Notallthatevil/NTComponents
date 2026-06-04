@@ -1,5 +1,5 @@
 @using NTComponents.Core
-@inherits TnTComponentBase
+@inherits NTComponentBase
 @namespace NTComponents
 
 <nt-tab-view @attributes="AdditionalAttributes"
@@ -51,9 +51,9 @@
                             </span>
 
                             @if (tab.HeaderTooltip is not null) {
-                                <TnTTooltip>
+                                <NTTooltip>
                                     @tab.HeaderTooltip
-                                </TnTTooltip>
+                                </NTTooltip>
                             }
                         </button>
                     }
@@ -69,4 +69,4 @@
         </div>
     </CascadingValue>
 </nt-tab-view>
-<TnTPageScript Src="@JsModulePathValue" />
+<NTPageScript Src="@JsModulePathValue" />

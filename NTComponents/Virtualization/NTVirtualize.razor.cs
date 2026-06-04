@@ -6,6 +6,7 @@ using NTComponents.Virtualization;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -13,7 +14,11 @@ namespace NTComponents;
 /// </summary>
 /// <typeparam name="TItem">The type of the items to be virtualized.</typeparam>
 [method: DynamicDependency(nameof(LoadItems))]
-public partial class NTVirtualize<TItem>() : TnTPageScriptComponent<NTVirtualize<TItem>> {
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.InteractiveRequired,
+    CompatibilitySummary = "Requires browser measurement and Blazor item-provider callbacks.",
+    CompatibilityDetails = "Virtualization depends on JavaScript measurement, JSInvokable refresh callbacks, and ItemsProvider execution after render. Static SSR cannot provide the scrolling data window contract.")]
+public partial class NTVirtualize<TItem>() : NTPageScriptComponent<NTVirtualize<TItem>> {
     private readonly Dictionary<int, TItem> _itemCache = [];
     private readonly List<int> _cacheIndexesToRemove = [];
     private readonly List<int> _trimCandidateIndexes = [];

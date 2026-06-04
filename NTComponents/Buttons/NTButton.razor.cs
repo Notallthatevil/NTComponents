@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using NTComponents.CodeDocumentation;
 using NTComponents.Core;
 
 namespace NTComponents;
@@ -14,7 +15,11 @@ namespace NTComponents;
 ///     transparent container, while filled, tonal, and elevated buttons need a visible container color. Text color must remain visible against the chosen container. Toggle behavior is supported for
 ///     contained and outlined buttons, but not for text buttons. Keep every button's activation target at least 48 by 48 CSS pixels, even when the visible container is smaller.
 /// </remarks>
-public partial class NTButton : TnTComponentBase {
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Renders a native button in static SSR and adds Blazor callbacks when interactive.",
+    CompatibilityDetails = "Use AdditionalAttributes for native HTML attributes in static SSR. Blazor EventCallback parameters require an interactive render mode.")]
+public partial class NTButton : NTComponentBase {
 
     /// <summary>
     ///     Gets or sets an optional override for the button container color.

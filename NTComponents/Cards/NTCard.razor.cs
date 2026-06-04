@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using NTComponents.Core;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -18,7 +19,7 @@ namespace NTComponents;
 ///     </para>
 ///     <para>
 ///         Prefer one interaction model per card. Either make the card surface directly actionable by providing <see cref="OnClickCallback" /> or an <c>href</c> in <see
-///         cref="TnTComponentBase.AdditionalAttributes" />, or leave the container non-actionable and place buttons, links, or menus inside the content. Avoid stacking a primary actionable surface
+///         cref="NTComponentBase.AdditionalAttributes" />, or leave the container non-actionable and place buttons, links, or menus inside the content. Avoid stacking a primary actionable surface
 ///         with competing nested primary actions unless those inner actions are clearly secondary.
 ///     </para>
 ///     <para>
@@ -30,7 +31,11 @@ namespace NTComponents;
 ///         cref="NTTypography.BodyMedium" /> for supporting text. Keep the heading compact enough that the card still reads as a contained surface rather than a full page section.
 ///     </para>
 /// </remarks>
-public partial class NTCard : TnTComponentBase {
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Renders card content, native anchors, and static surfaces in SSR.",
+    CompatibilityDetails = "Non-actionable cards and href-backed cards work in static SSR. EventCallback-based card actions require an interactive render mode.")]
+public partial class NTCard : NTComponentBase {
 
     /// <summary>
     ///     Override for the card container color.

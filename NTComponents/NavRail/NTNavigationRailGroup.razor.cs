@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using NTComponents.Core;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -10,7 +11,11 @@ namespace NTComponents;
 ///     Groups render as temporary popover surfaces while the rail is collapsed. When the rail is expanded, the same content becomes an inline disclosure region that can contain destinations or
 ///     additional nested groups.
 /// </remarks>
-public partial class NTNavigationRailGroup : TnTComponentBase {
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.InteractiveRequired,
+    CompatibilitySummary = "Requires navigation-rail browser enhancement for group expansion.",
+    CompatibilityDetails = "The group content is rendered, but the trigger does not have a complete native fallback target. Expanded inline groups, collapsed-rail popovers, and nested group behavior depend on NTNavigationRail script.")]
+public partial class NTNavigationRailGroup : NTComponentBase {
 
     /// <summary>
     ///     Accessible label override. Omit when <see cref="Label" /> already describes the group.

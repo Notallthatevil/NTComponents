@@ -3,12 +3,17 @@ using Microsoft.AspNetCore.Components.Rendering;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
 ///     Meant to be placed in the head section of App.razor to include necessary dependencies for NTComponents.
 /// </summary>
 [ExcludeFromCodeCoverage]
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.SsrCompatible,
+    CompatibilitySummary = "Renders head dependency links during static SSR.",
+    CompatibilityDetails = "The component emits stylesheet, font, and script dependencies as head content without needing an interactive render mode.")]
 public class NTHeadDependencies : IComponent {
     private const string DefaultTokenScope = ":root";
     private const string DarkThemeMedia = "(prefers-color-scheme: dark)";

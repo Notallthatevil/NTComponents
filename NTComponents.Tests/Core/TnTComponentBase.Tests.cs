@@ -7,9 +7,9 @@ using NTComponents.Core;
 namespace NTComponents.Tests.Core;
 
 /// <summary>
-///     Unit tests for <see cref="TnTComponentBase" />.
+///     Unit tests for <see cref="NTComponentBase" />.
 /// </summary>
-public class TnTComponentBaseTests : BunitContext {
+public class NTComponentBaseTests : BunitContext {
 
     [Fact]
     public void Abstract_properties_are_required() {
@@ -79,7 +79,7 @@ public class TnTComponentBaseTests : BunitContext {
     }
 
     /// <summary>
-    ///     Minimal concrete implementation for testing <see cref="TnTComponentBase" />.
+    ///     Minimal concrete implementation for testing <see cref="NTComponentBase" />.
     /// </summary>
     private class TestComponent : TnTComponentBase {
         public override string? ElementClass => "test-class";

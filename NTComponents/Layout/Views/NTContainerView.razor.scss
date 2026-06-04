@@ -143,6 +143,7 @@
 @media #{screen-width.$medium-and-up} {
     .nt-container-view {
         .nt-container-view-quick-nav {
+            max-width: 160px;
             position: sticky;
             z-index: 1;
             inset-block-start: calc(var(--tnt-header-height, 0px) + #{view.$gap});

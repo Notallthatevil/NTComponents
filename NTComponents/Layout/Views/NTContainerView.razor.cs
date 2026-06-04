@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using NTComponents.Core;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -14,6 +15,10 @@ namespace NTComponents;
 /// inside the container. </para> <para> Do not use this view to create cards, panels, or visual surfaces. It controls
 /// only horizontal placement and width.</para>
 /// </remarks>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Renders useful static markup and enhances behavior with browser JavaScript.",
+    CompatibilityDetails = "Static SSR emits the component shell and accessible markup. The browser module adds richer behavior after the page reaches the browser.")]
 public partial class NTContainerView {
 
     /// <inheritdoc />

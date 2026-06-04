@@ -226,9 +226,9 @@ public class TnTInputText_Tests : BunitContext {
         var cut = RenderInputText();
         var label = cut.Find("label");
 
-        // Assert TnTInputBase implements ITnTComponentBase but doesn't inherit from TnTComponentBase so it doesn't automatically get the tntid attribute This test should verify that the component
+        // Assert TnTInputBase implements INTComponentBase but doesn't inherit from NTComponentBase so it doesn't automatically get the tntid attribute This test should verify that the component
         // follows the expected interface pattern
-        cut.Instance.Should().BeAssignableTo<ITnTComponentBase>();
+        cut.Instance.Should().BeAssignableTo<INTComponentBase>();
     }
 
     [Fact]

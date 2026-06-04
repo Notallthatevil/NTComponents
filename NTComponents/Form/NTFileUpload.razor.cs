@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -14,6 +15,10 @@ namespace NTComponents;
 ///     InteractiveServer and InteractiveWebAssembly uploads. The component opens a progress-aware stream and the consumer
 ///     decides where that stream is copied, posted, scanned, encrypted, or otherwise processed.
 /// </remarks>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Renders a native file-input fallback and enhances upload processing when interactive.",
+    CompatibilityDetails = "Static SSR can emit the file input shell for native form posts. Blazor IBrowserFile processing, progress reporting, and upload callbacks require an interactive render mode.")]
 public partial class NTFileUpload {
     private static readonly TimeSpan MinimumProcessingIndicatorDuration = TimeSpan.FromMilliseconds(150);
 

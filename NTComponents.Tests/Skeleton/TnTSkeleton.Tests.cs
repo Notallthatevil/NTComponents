@@ -178,21 +178,21 @@ public class TnTSkeleton_Tests : BunitContext {
     }
 
     [Fact]
-    public void Component_Implements_ITnTComponentBase() {
+    public void Component_Implements_INTComponentBase() {
         // Act
         var cut = Render<TnTSkeleton>();
 
         // Assert
-        cut.Instance.Should().BeAssignableTo<ITnTComponentBase>();
+        cut.Instance.Should().BeAssignableTo<INTComponentBase>();
     }
 
     [Fact]
-    public void Component_Inherits_From_TnTComponentBase() {
+    public void Component_Inherits_From_NTComponentBase() {
         // Act
         var cut = Render<TnTSkeleton>();
 
         // Assert
-        cut.Instance.Should().BeAssignableTo<TnTComponentBase>();
+        cut.Instance.Should().BeAssignableTo<NTComponentBase>();
     }
 
     [Fact]

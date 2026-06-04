@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Rendering;
 using System.Diagnostics.CodeAnalysis;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -20,6 +21,10 @@ namespace NTComponents;
 ///     </para>
 /// </remarks>
 [ExcludeFromCodeCoverage]
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.SsrCompatible,
+    CompatibilitySummary = "Renders form markup for static SSR.",
+    CompatibilityDetails = "The form can participate in native posts when controls emit names. EditContext validation events, submit callbacks, and bound model updates require an interactive render mode.")]
 public sealed class NTForm : EditForm {
     private readonly RenderFragment _childContent;
 

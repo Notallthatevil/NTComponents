@@ -1,12 +1,17 @@
 using Microsoft.AspNetCore.Components;
 using NTComponents.Core;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
 ///     Native SSR-compatible disclosure item for <see cref="NTAccordion" />.
 /// </summary>
-public partial class NTAccordionItem : TnTComponentBase {
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.SsrCompatible,
+    CompatibilitySummary = "Renders a native disclosure item that works in static SSR.",
+    CompatibilityDetails = "Enabled items render details and summary elements, so the browser owns disclosure behavior without an interactive render mode.")]
+public partial class NTAccordionItem : NTComponentBase {
 
     /// <summary>
     ///     Item body content rendered after the summary row.

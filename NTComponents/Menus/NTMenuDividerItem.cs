@@ -2,11 +2,16 @@ using System.ComponentModel;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
 ///     Represents a visual divider that registers itself with an <see cref="NTMenu" />.
 /// </summary>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.SsrCompatible,
+    CompatibilitySummary = "Renders useful static HTML without requiring Blazor interactivity.",
+    CompatibilityDetails = "Static SSR preserves the component structure, styling, and accessibility semantics. Dynamic parameter changes require a new render.")]
 public class NTMenuDividerItem : Microsoft.AspNetCore.Components.IComponent, INTMenuItem, IDisposable {
     private NTMenu? _registeredParent;
 

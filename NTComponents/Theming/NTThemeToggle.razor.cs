@@ -1,10 +1,15 @@
 using Microsoft.AspNetCore.Components;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
 ///     Preferred NTComponents theme toggle component.
 /// </summary>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.InteractiveRequired,
+    CompatibilitySummary = "Requires browser JavaScript for theme selection and persistence.",
+    CompatibilityDetails = "The toggle depends on its page script, theme stylesheet switching, storage, and system-theme media queries. Static SSR can only render the initial selector shell.")]
 public partial class NTThemeToggle {
 
     /// <summary>

@@ -18,7 +18,7 @@ public class NTNavigationRail_Tests : BunitContext {
         var cut = Render<NTNavigationRail>(parameters => parameters
             .Add(x => x.AriaLabel, "Primary"));
 
-        cut.Instance.Should().BeAssignableTo<TnTPageScriptComponent<NTNavigationRail>>();
+        cut.Instance.Should().BeAssignableTo<NTPageScriptComponent<NTNavigationRail>>();
     }
 
     [Theory]

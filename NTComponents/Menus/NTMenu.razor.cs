@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components.Web;
 using NTComponents.Core;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -30,6 +31,10 @@ namespace NTComponents;
 /// &lt;/NTMenu&gt;
 ///     </code>
 /// </remarks>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Renders native popover menu markup and enhances placement and keyboard behavior.",
+    CompatibilityDetails = "Static SSR emits the menu surface, popover attributes, and item markup. The browser module enhances anchoring, submenu behavior, focus, and item-click closing.")]
 public partial class NTMenu {
 
     /// <summary>

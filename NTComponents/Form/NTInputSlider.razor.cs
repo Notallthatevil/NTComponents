@@ -7,6 +7,7 @@ using System.Globalization;
 using System.Numerics;
 using System.Text;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -18,6 +19,10 @@ namespace NTComponents;
 ///     JavaScript. Set <see cref="BindOnInput" /> to <see langword="false" /> only when updates should wait until change.
 /// </remarks>
 /// <typeparam name="TNumber">The numeric value type.</typeparam>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Renders a native range input for static SSR and enhances slider visuals with script.",
+    CompatibilityDetails = "The slider emits native range input markup and a named value when configured. Browser scripting keeps visual tracks and value indicators synchronized; live binding requires interactivity.")]
 public partial class NTInputSlider<TNumber> where TNumber : struct, INumber<TNumber> {
     private const string SliderJsModulePath = "./_content/NTComponents/Form/NTInputSlider.razor.js";
     private static readonly HashSet<string> ExplicitInputAttributeNames = new(StringComparer.OrdinalIgnoreCase) {

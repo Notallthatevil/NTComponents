@@ -2,6 +2,7 @@ using System.Globalization;
 using Microsoft.AspNetCore.Components;
 using NTComponents.Core;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -17,7 +18,11 @@ namespace NTComponents;
 ///         wrapper reveals once and stops observing.
 ///     </para>
 /// </remarks>
-public partial class NTAnimation : TnTComponentBase {
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Renders content statically and enhances viewport-triggered animation with JavaScript.",
+    CompatibilityDetails = "Child content renders in static SSR. The page script adds IntersectionObserver-driven animation behavior after the page reaches the browser.")]
+public partial class NTAnimation : NTComponentBase {
     private const string AnimationJsModulePath = "./_content/NTComponents/Animation/NTAnimation.razor.js";
 
     /// <summary>

@@ -1,11 +1,16 @@
 using Microsoft.AspNetCore.Components;
 using System.Linq.Expressions;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
 ///     Base type for columns rendered by <see cref="NTDataGrid{TItem}" />.
 /// </summary>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Participates in parent component rendering and inherits the parent interaction model.",
+    CompatibilityDetails = "Column definitions participate in parent grid rendering without their own browser APIs. User-driven sort, row, paging, or virtualization behavior depends on the parent grid render mode.")]
 public abstract class NTDataGridColumn<TItem> : ComponentBase, IDisposable where TItem : class {
     private string? _sortStateSignature;
     private string? _stateSignature;

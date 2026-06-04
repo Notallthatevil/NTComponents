@@ -1,10 +1,15 @@
 using Microsoft.AspNetCore.Components;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
 ///     Renders a template-only column.
 /// </summary>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Participates in parent component rendering and inherits the parent interaction model.",
+    CompatibilityDetails = "The templates are rendered by the parent grid into static markup. Interactive row, sort, paging, or virtualized behavior depends on the parent grid render mode.")]
 public sealed class NTTemplateColumn<TItem> : NTDataGridColumn<TItem> where TItem : class {
     /// <summary>
     ///     Gets or sets whether the column can be sorted.

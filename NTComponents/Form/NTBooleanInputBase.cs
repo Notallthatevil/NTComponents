@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using System.Diagnostics.CodeAnalysis;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -12,6 +13,10 @@ namespace NTComponents;
 ///     required validation, and common labeling/supporting text parameters. Visual structure, color parameters, variants,
 ///     and Material measurements remain owned by each concrete component.
 /// </remarks>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.SsrCompatible,
+    CompatibilitySummary = "Renders native form markup that works with static SSR and form posts.",
+    CompatibilityDetails = "The native control can participate in static SSR and normal form posts. Blazor binding callbacks and live validation updates require interactivity or a subsequent render.")]
 public abstract class NTBooleanInputBase : NTFormControlBase<bool>, IDisposable {
     /// <summary>
     ///     Gets the native input attributes owned by all boolean inputs.

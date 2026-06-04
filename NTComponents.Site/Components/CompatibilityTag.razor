@@ -1,0 +1,31 @@
+@namespace NTComponents.Site.Components
+@using NTComponents
+@using NTComponents.GeneratedDocumentation
+
+<NTTag Label="@Label" BackgroundColor="@BackgroundColor" TextColor="@TextColor" Elevation="0" />
+
+@code {
+    [Parameter, EditorRequired]
+    public TypeDocumentation Type { get; set; } = default!;
+
+    private string Label => Type.RenderCompatibility switch {
+        "SsrCompatible" => "SSR compatible",
+        "ProgressivelyEnhanced" => "Progressive SSR",
+        "InteractiveRequired" => "Interactive required",
+        _ => "SSR unknown"
+    };
+
+    private TnTColor BackgroundColor => Type.RenderCompatibility switch {
+        "SsrCompatible" => TnTColor.SuccessContainer,
+        "ProgressivelyEnhanced" => TnTColor.SecondaryContainer,
+        "InteractiveRequired" => TnTColor.ErrorContainer,
+        _ => TnTColor.SurfaceContainerHighest
+    };
+
+    private TnTColor TextColor => Type.RenderCompatibility switch {
+        "SsrCompatible" => TnTColor.OnSuccessContainer,
+        "ProgressivelyEnhanced" => TnTColor.OnSecondaryContainer,
+        "InteractiveRequired" => TnTColor.OnErrorContainer,
+        _ => TnTColor.OnSurfaceVariant
+    };
+}

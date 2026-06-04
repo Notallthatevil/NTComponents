@@ -3,11 +3,16 @@ using System.Diagnostics;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
 ///     Represents a navigation item that registers itself with an <see cref="NTFabMenu" />.
 /// </summary>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Participates in parent component rendering and inherits the parent interaction model.",
+    CompatibilityDetails = "The item contributes anchor metadata to NTFabMenu. Native anchor behavior can work in static SSR while menu lifecycle behavior depends on the parent enhancement.")]
 public sealed partial class NTFabMenuAnchorItem : Microsoft.AspNetCore.Components.IComponent, IFabMenuItem, IDisposable {
     private NTFabMenu? _registeredParent;
 

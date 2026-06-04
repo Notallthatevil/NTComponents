@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Components;
 using NTComponents.Core;
 using NTComponents.Ext;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -25,6 +26,10 @@ namespace NTComponents;
 ///         Use <see cref="TrackVisible" /> sparingly. It is intended for embedded circular indicators, such as progress inside buttons, where the surrounding component supplies enough contrast.
 ///     </para>
 /// </remarks>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.SsrCompatible,
+    CompatibilitySummary = "Renders progress markup and CSS-only animation without JavaScript.",
+    CompatibilityDetails = "Static SSR emits the progress role, ARIA values, SVG or track markup, and CSS variables. Later progress changes require a new render or external script updates.")]
 public partial class NTProgress : TnTDisposableComponentBase {
 
     /// <summary>

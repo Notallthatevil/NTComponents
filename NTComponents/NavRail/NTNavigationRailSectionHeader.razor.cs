@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using NTComponents.Core;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -9,7 +10,11 @@ namespace NTComponents;
 /// <remarks>
 ///     Section headers are static content. The navigation rail browser module decides when they are visible in expanded rail or popover presentation.
 /// </remarks>
-public partial class NTNavigationRailSectionHeader : TnTComponentBase {
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.SsrCompatible,
+    CompatibilitySummary = "Renders useful static HTML without requiring Blazor interactivity.",
+    CompatibilityDetails = "Static SSR preserves the component structure, styling, and accessibility semantics. Dynamic parameter changes require a new render.")]
+public partial class NTNavigationRailSectionHeader : NTComponentBase {
 
     /// <summary>
     ///     Heading level exposed to assistive technologies.

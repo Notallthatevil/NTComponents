@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -13,6 +14,10 @@ namespace NTComponents;
 ///     directly.
 /// </remarks>
 /// <typeparam name="TValue">The input value type.</typeparam>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Renders native text-field input structure for static SSR.",
+    CompatibilityDetails = "Derived inputs emit named native controls, labels, and supporting text. Live binding, validation, and browser-specific enhancements require interactivity or form post handling.")]
 public abstract partial class NTInputBase<TValue> : NTFieldBase<TValue> {
     private static readonly HashSet<string> InputExplicitControlAttributeNames = new(StringComparer.OrdinalIgnoreCase) {
         "id",

@@ -1,6 +1,6 @@
 @namespace NTComponents
 @using NTComponents.Core
-@inherits TnTComponentBase
+@inherits NTComponentBase
 
 <button @attributes="AdditionalAttributes"
 		class="@ElementClass"
@@ -16,9 +16,9 @@
 		@onclick:stopPropagation="StopPropagation"
 		@ref="Element">
 	@if (Tooltip is not null) {
-		<TnTTooltip>
+		<NTTooltip>
 			@Tooltip
-		</TnTTooltip>
+		</NTTooltip>
 	}
 
 	@if (EnableRipple) {

@@ -8,6 +8,7 @@ namespace NTComponents;
 /// <summary>
 ///     Represents a column component in a grid layout system. This component follows a 12-column grid system with responsive behavior across different screen sizes.
 /// </summary>
+[Obsolete("TnTColumn is obsolete.")]
 public partial class TnTColumn {
 
     /// <summary>

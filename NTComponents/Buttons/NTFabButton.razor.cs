@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using NTComponents.Core;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -12,7 +13,11 @@ namespace NTComponents;
 ///     Use <see cref="NTFabButton" /> for the single most important constructive action on a screen. The icon is always required. When <see cref="Label" /> is supplied the button renders as an
 ///     extended FAB; otherwise it renders as an icon-only FAB and requires <see cref="AriaLabel" />.
 /// </remarks>
-public partial class NTFabButton : TnTComponentBase {
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Renders useful static HTML and adds Blazor behavior when interactive.",
+    CompatibilityDetails = "Static SSR preserves the rendered markup and native browser behavior. EventCallback handlers, bound state updates, and live validation require an interactive render mode.")]
+public partial class NTFabButton : NTComponentBase {
 
     /// <summary>
     ///     Gets or sets the accessible name announced for icon-only FABs or a more descriptive name for extended FABs.

@@ -2,11 +2,16 @@ using Microsoft.AspNetCore.Components;
 using System.Globalization;
 using System.Linq.Expressions;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
 ///     Renders a column bound to a property expression.
 /// </summary>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Participates in parent component rendering and inherits the parent interaction model.",
+    CompatibilityDetails = "The column can contribute header and cell content to the parent grid during static SSR. Sorting and grid state changes depend on the parent grid render mode.")]
 public sealed class NTPropertyColumn<TItem, TValue> : NTDataGridColumn<TItem> where TItem : class {
     private Func<TItem, TValue>? _accessor;
     private string? _accessorExpressionText;

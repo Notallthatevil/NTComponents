@@ -5,6 +5,7 @@ using NTComponents.Core;
 using NTComponents.Virtualization;
 using System.Globalization;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -41,6 +42,10 @@ public enum NTDataGridAppearance {
 /// A Material 3 aligned data grid for direct, provider, paginated, and virtualized data.
 /// </summary>
 [CascadingTypeParameter(nameof(TItem))]
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Renders grid markup in static SSR and enhances sorting, paging, and virtualization interactively.",
+    CompatibilityDetails = "Static SSR can emit the current table rows and query-link sorting or paging. Interactive sorting, paging, row callbacks, and Virtualize mode require an interactive render mode or browser enhancement.")]
 public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
     private readonly List<NTDataGridColumn<TItem>> _columns = [];
     private readonly List<TItem> _loadedItems = [];

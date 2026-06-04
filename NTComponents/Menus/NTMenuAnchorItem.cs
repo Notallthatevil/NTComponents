@@ -2,11 +2,16 @@ using System.ComponentModel;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
 ///     Represents a navigation item that registers itself with an <see cref="NTMenu" />.
 /// </summary>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Participates in parent component rendering and inherits the parent interaction model.",
+    CompatibilityDetails = "The parent menu can emit a usable anchor in static SSR. Menu closing, submenu coordination, and focus behavior are enhanced by the parent menu script.")]
 public class NTMenuAnchorItem : Microsoft.AspNetCore.Components.IComponent, INTMenuItem, IDisposable {
     private NTMenu? _registeredParent;
 

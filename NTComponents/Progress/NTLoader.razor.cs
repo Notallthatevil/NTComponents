@@ -5,6 +5,7 @@ using NTComponents.Core;
 using NTComponents.Ext;
 using NTComponents.Interfaces;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -24,7 +25,11 @@ namespace NTComponents;
 ///         sequence has no visible morphing.
 ///     </para>
 /// </remarks>
-public partial class NTLoader : TnTDisposableComponentBase, ITnTPageScriptComponent<NTLoader> {
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Renders an accessible static loader and enhances shape motion with JavaScript.",
+    CompatibilityDetails = "Static SSR emits the progressbar shell, initial shape, ARIA attributes, and data attributes. The isolated module drives morphing shape animation after the page reaches the browser.")]
+public partial class NTLoader : TnTDisposableComponentBase, INTPageScriptComponent<NTLoader> {
 
     /// <summary>
     ///     Whether the loading indicator motion is active.

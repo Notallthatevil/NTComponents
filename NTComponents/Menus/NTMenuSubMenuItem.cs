@@ -2,11 +2,16 @@ using System.ComponentModel;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
 ///     Represents a menu item that opens a nested submenu.
 /// </summary>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Participates in parent component rendering and inherits the parent interaction model.",
+    CompatibilityDetails = "Static SSR can emit the submenu surface and trigger. Hover, keyboard, focus, and closing behavior are enhanced by the parent menu script.")]
 public class NTMenuSubMenuItem : Microsoft.AspNetCore.Components.IComponent, INTMenuItem, IDisposable {
     private readonly string _componentId = $"nt-menu-submenu-{Guid.NewGuid():N}";
     private NTMenu? _registeredParent;

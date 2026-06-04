@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using NTComponents.Core;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -19,6 +20,10 @@ namespace NTComponents;
 ///         cref="NTSupportingPaneView" /> for those patterns.
 ///     </para>
 /// </remarks>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.SsrCompatible,
+    CompatibilitySummary = "Renders useful static HTML without requiring Blazor interactivity.",
+    CompatibilityDetails = "Static SSR preserves the component structure, styling, and accessibility semantics. Dynamic parameter changes require a new render.")]
 public partial class NTFeedView {
 
     /// <summary>

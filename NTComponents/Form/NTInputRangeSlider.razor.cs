@@ -6,6 +6,7 @@ using System.Globalization;
 using System.Numerics;
 using System.Text;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -17,6 +18,10 @@ namespace NTComponents;
 ///     semantics. Material guidance recommends horizontal range sliders; vertical orientation is intentionally omitted.
 /// </remarks>
 /// <typeparam name="TNumber">The numeric value type.</typeparam>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Renders native range inputs for static SSR and enhances slider visuals with script.",
+    CompatibilityDetails = "The component emits native range inputs and named values. Browser scripting keeps visual tracks and value indicators synchronized; live binding requires interactivity.")]
 public partial class NTInputRangeSlider<TNumber> where TNumber : struct, INumber<TNumber> {
     private const string RangeSliderJsModulePath = "./_content/NTComponents/Form/NTInputRangeSlider.razor.js";
     private static readonly HashSet<string> ExplicitInputAttributeNames = new(StringComparer.OrdinalIgnoreCase) {

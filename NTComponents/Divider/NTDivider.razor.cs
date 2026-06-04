@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using NTComponents.Core;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -13,6 +14,10 @@ namespace NTComponents;
 ///         divider is separating related items within a section. Use <see cref="LayoutDirection.Vertical" /> for larger-screen side-by-side layouts.
 ///     </para>
 /// </remarks>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.SsrCompatible,
+    CompatibilitySummary = "Renders useful static HTML without requiring Blazor interactivity.",
+    CompatibilityDetails = "Static SSR preserves the component structure, styling, and accessibility semantics. Dynamic parameter changes require a new render.")]
 public partial class NTDivider {
 
     /// <summary>

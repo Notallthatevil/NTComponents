@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -8,6 +9,10 @@ namespace NTComponents;
 /// <remarks>
 ///     Defaults to <see cref="NTLayoutTag.Footer" />. Set <see cref="NTComponents.Layout.NTLayoutComponentBase.Tag" /> to a neutral or sectioning tag when nesting outside a valid footer context.
 /// </remarks>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.SsrCompatible,
+    CompatibilitySummary = "Renders useful static HTML without requiring Blazor interactivity.",
+    CompatibilityDetails = "Static SSR preserves the component structure, styling, and accessibility semantics. Dynamic parameter changes require a new render.")]
 public partial class NTFooter {
 
     /// <inheritdoc />

@@ -7,12 +7,17 @@ using NTComponents.Ext;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
 ///     A Material 3 aligned async typeahead field that binds a selected item and participates in <see cref="NTForm" /> validation.
 /// </summary>
 /// <typeparam name="TItem">The item type selected by the typeahead.</typeparam>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.InteractiveRequired,
+    CompatibilitySummary = "Requires an interactive render mode for async lookup and selection.",
+    CompatibilityDetails = "The typeahead depends on Blazor events, async lookup callbacks, cancellation, and JavaScript scroll enhancement for its primary suggestion workflow. Static SSR can only render the initial field and submitted value.")]
 public partial class NTTypeahead<TItem> : IAsyncDisposable {
     private const string JsModulePath = "./_content/NTComponents/Form/NTTypeahead.razor.js";
     private static readonly HashSet<string> TypeaheadExplicitControlAttributeNames = new(StringComparer.OrdinalIgnoreCase) {

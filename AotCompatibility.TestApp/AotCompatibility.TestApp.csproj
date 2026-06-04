@@ -1,12 +1,19 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
 
 	<PropertyGroup>
-		<OutputType>Exe</OutputType>
 		<TargetFrameworks>net9.0;net10.0</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
-		<PublishAot>true</PublishAot>
+		<StaticWebAssetProjectMode>Default</StaticWebAssetProjectMode>
 		<TrimmerSingleWarn>false</TrimmerSingleWarn>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(TargetFramework)' == 'net9.0'">
+		<RunAOTCompilation>true</RunAOTCompilation>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(TargetFramework)' == 'net10.0'">
+		<WasmBuildNative>true</WasmBuildNative>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -15,6 +22,14 @@
 		                  ReferenceOutputAssembly="false" />
 		<ProjectReference Include="..\NTComponents\NTComponents.csproj" />
 		<TrimmerRootAssembly Include="NTComponents" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
+		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="9.0.15" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.6" />
 	</ItemGroup>
 
 </Project>

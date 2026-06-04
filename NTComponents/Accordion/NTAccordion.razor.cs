@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using NTComponents.Core;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -19,7 +20,11 @@ namespace NTComponents;
 ///         Native <c>details name</c> grouping is a modern browser feature. Browsers without support still render all items and allow independent expand/collapse behavior.
 ///     </para>
 /// </remarks>
-public partial class NTAccordion : TnTComponentBase {
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.SsrCompatible,
+    CompatibilitySummary = "Renders native disclosure markup that works in static SSR.",
+    CompatibilityDetails = "The component uses native details and summary behavior through NTAccordionItem, so expand and collapse works without Blazor interactivity or JavaScript.")]
+public partial class NTAccordion : NTComponentBase {
 
     /// <summary>
     ///     Optional background color override for item content regions.

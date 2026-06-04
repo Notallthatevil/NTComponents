@@ -8,13 +8,18 @@ using NTComponents.Interfaces;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
 /// Rich text editor shell. Rendering, formatting, SSR enhancement, and tool behavior live in TypeScript; this class
 /// only supplies parameters, markup metadata, and optional interactive callbacks.
 /// </summary>
-public partial class NTRichTextEditor : ITnTPageScriptComponent<NTRichTextEditor> {
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.InteractiveRequired,
+    CompatibilitySummary = "Requires browser and Blazor interactivity for rich text editing.",
+    CompatibilityDetails = "The editor depends on JavaScript interop, contenteditable behavior, and JSInvokable callbacks for its primary editing contract. Static SSR can only emit the initial shell.")]
+public partial class NTRichTextEditor : INTPageScriptComponent<NTRichTextEditor> {
     private static readonly HashSet<string> RichTextEditorExplicitControlAttributeNames = new(StringComparer.OrdinalIgnoreCase) {
         "aria-describedby",
         "aria-errormessage",
@@ -63,9 +68,9 @@ public partial class NTRichTextEditor : ITnTPageScriptComponent<NTRichTextEditor
     /// <inheritdoc />
     public string? JsModulePath => "./_content/NTComponents/Editors/NTRichTextEditor.razor.js";
 
-    string? ITnTComponentBase.ElementClass => GetRootClass(!string.IsNullOrWhiteSpace(CurrentErrorText));
+    string? INTComponentBase.ElementClass => GetRootClass(!string.IsNullOrWhiteSpace(CurrentErrorText));
 
-    string? ITnTComponentBase.ElementStyle => ElementStyle;
+    string? INTComponentBase.ElementStyle => ElementStyle;
 
     /// <summary>
     /// Gets the editor input type for compatibility with earlier rich editor callers.
@@ -334,7 +339,7 @@ public partial class NTRichTextEditor : ITnTPageScriptComponent<NTRichTextEditor
     protected override async Task OnAfterRenderAsync(bool firstRender) {
         await base.OnAfterRenderAsync(firstRender);
 
-        // Static SSR enhancement is handled by TnTPageScript in the browser. The .NET callback bridge is only available once the renderer becomes interactive.
+        // Static SSR enhancement is handled by NTPageScript in the browser. The .NET callback bridge is only available once the renderer becomes interactive.
         if (!RendererInfo.IsInteractive) {
             return;
         }
@@ -452,8 +457,8 @@ public partial class NTRichTextEditor : ITnTPageScriptComponent<NTRichTextEditor
     }
 
     private RenderFragment CreatePageScript(IReadOnlyList<INTRichTextEditorTool> activeToolsToRender) => builder => {
-        builder.OpenComponent<TnTPageScript>(0);
-        builder.AddAttribute(1, nameof(TnTPageScript.Src), JsModulePath);
+        builder.OpenComponent<NTPageScript>(0);
+        builder.AddAttribute(1, nameof(NTPageScript.Src), JsModulePath);
         builder.CloseComponent();
 
         var sequence = 2;
@@ -461,8 +466,8 @@ public partial class NTRichTextEditor : ITnTPageScriptComponent<NTRichTextEditor
                      .Select(tool => tool.JsModulePath)
                      .Where(path => !string.IsNullOrWhiteSpace(path))
                      .Distinct(StringComparer.Ordinal)) {
-            builder.OpenComponent<TnTPageScript>(sequence++);
-            builder.AddAttribute(sequence++, nameof(TnTPageScript.Src), jsModulePath);
+            builder.OpenComponent<NTPageScript>(sequence++);
+            builder.AddAttribute(sequence++, nameof(NTPageScript.Src), jsModulePath);
             builder.CloseComponent();
         }
     };

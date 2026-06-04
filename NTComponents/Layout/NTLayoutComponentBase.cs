@@ -1,12 +1,17 @@
 using Microsoft.AspNetCore.Components;
 using NTComponents.Core;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents.Layout;
 
 /// <summary>
 ///     Base class for modern Material 3 layout region components.
 /// </summary>
-public abstract class NTLayoutComponentBase : TnTComponentBase {
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.SsrCompatible,
+    CompatibilitySummary = "Renders useful static HTML without requiring Blazor interactivity.",
+    CompatibilityDetails = "Static SSR preserves the component structure, styling, and accessibility semantics. Dynamic parameter changes require a new render.")]
+public abstract class NTLayoutComponentBase : NTComponentBase {
 
     private readonly Dictionary<string, object> _elementAttributes = [];
     private string? _elementClass;

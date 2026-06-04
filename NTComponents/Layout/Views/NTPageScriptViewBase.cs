@@ -4,13 +4,18 @@ using NTComponents.Ext;
 using NTComponents.Interfaces;
 using System.Diagnostics.CodeAnalysis;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
 ///     Base class for view components that keep static SSR markup and add an isolated JavaScript enhancement module.
 /// </summary>
 /// <typeparam name="TDerived">The concrete view component type. Must match the derived component type.</typeparam>
-public abstract class NTPageScriptViewBase<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods | DynamicallyAccessedMemberTypes.NonPublicMethods)] TDerived> : NTCanonicalViewBase, ITnTPageScriptComponent<TDerived> where TDerived : ComponentBase {
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Renders useful static markup and enhances behavior with browser JavaScript.",
+    CompatibilityDetails = "Static SSR emits the component shell and accessible markup. The browser module adds richer behavior after the page reaches the browser.")]
+public abstract class NTPageScriptViewBase<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods | DynamicallyAccessedMemberTypes.NonPublicMethods)] TDerived> : NTCanonicalViewBase, INTPageScriptComponent<TDerived> where TDerived : ComponentBase {
 
     /// <inheritdoc />
     public DotNetObjectReference<TDerived>? DotNetObjectRef { get; private set; }
@@ -36,8 +41,8 @@ public abstract class NTPageScriptViewBase<[DynamicallyAccessedMembers(Dynamical
     ///     Gets the page script fragment used to enhance static SSR markup when the page loads in the browser.
     /// </summary>
     protected RenderFragment PageScript => builder => {
-        builder.OpenComponent<TnTPageScript>(0);
-        builder.AddAttribute(1, nameof(TnTPageScript.Src), JsModulePath);
+        builder.OpenComponent<NTPageScript>(0);
+        builder.AddAttribute(1, nameof(NTPageScript.Src), JsModulePath);
         builder.CloseComponent();
     };
 

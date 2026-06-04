@@ -17,10 +17,10 @@ public class NTInputCurrency_Tests : BunitContext {
     }
 
     [Fact]
-    public void Does_Not_Implement_ITnTComponentBase() {
+    public void Does_Not_Implement_INTComponentBase() {
         var cut = RenderInputCurrency();
 
-        cut.Instance.Should().NotBeAssignableTo<NTComponents.Interfaces.ITnTComponentBase>();
+        cut.Instance.Should().NotBeAssignableTo<NTComponents.Interfaces.INTComponentBase>();
     }
 
     [Fact]

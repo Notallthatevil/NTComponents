@@ -1,0 +1,76 @@
+<main class="aot-smoke" data-aot-smoke-ready="true">
+    <h1>NTComponents AOT smoke</h1>
+
+    <section>
+        <h2>Actions</h2>
+        <NTButton Label="Primary action" Variant="NTButtonVariant.Filled" OnClickCallback="HandleButtonClickAsync" />
+        <NTButton Label="@ToggleLabel" Variant="NTButtonVariant.Outlined" IsToggleButton="true" Selected="@_selected" SelectedChanged="HandleSelectedChangedAsync" />
+    </section>
+
+    <section>
+        <h2>Form</h2>
+        <NTForm Model="_model" BindOnInput="true">
+            <NTInputText @bind-Value="_model.Name" Label="Name" Placeholder="Enter a name" SupportingText="AOT-bound text input" />
+            <NTInputText @bind-Value="_model.Phone" Label="Phone" SupportingText="Second bound text input" />
+        </NTForm>
+    </section>
+
+    <section>
+        <h2>Grid</h2>
+        <NTDataGrid TItem="SmokeRow" Items="_rows" Appearance="NTDataGridAppearance.Striped" Density="NTDataGridDensity.Compact">
+            <NTPropertyColumn TItem="SmokeRow" TValue="int" Title="Id" Property="row => row.Id" Width="72px" TextAlign="TextAlign.Right" HeaderTextAlign="TextAlign.Right" />
+            <NTPropertyColumn TItem="SmokeRow" TValue="string" Title="Name" Property="row => row.Name" MinWidth="180px" />
+            <NTPropertyColumn TItem="SmokeRow" TValue="decimal" Title="Amount" Property="row => row.Amount" Format="C" TextAlign="TextAlign.Right" HeaderTextAlign="TextAlign.Right" />
+            <NTTemplateColumn TItem="SmokeRow" Title="State">
+                <span data-aot-smoke-row="@context.Id">@context.Status</span>
+            </NTTemplateColumn>
+        </NTDataGrid>
+    </section>
+
+    <section>
+        <h2>Menu</h2>
+        <NTMenu ElementId="aot-smoke-menu" AriaLabel="AOT smoke menu">
+            <NTMenuLabelItem Label="Smoke menu" />
+            <NTMenuButtonItem Label="Refresh" Icon="MaterialIcon.Refresh" />
+            <NTMenuAnchorItem Label="Documentation link" Icon="MaterialIcon.OpenInNew" Href="/" />
+        </NTMenu>
+    </section>
+
+    <NTToast />
+    <p id="aot-smoke-status">@_status</p>
+</main>
+
+@code {
+    private readonly SmokeModel _model = new() {
+        Name = "AOT user",
+        Phone = "5551234567"
+    };
+
+    private readonly IQueryable<SmokeRow> _rows = new SmokeRow[] {
+        new SmokeRow(1, "Alpha", 120.50m, "Ready"),
+        new SmokeRow(2, "Beta", 240.75m, "Queued")
+    }.AsQueryable();
+
+    private bool _selected;
+    private string _status = "Rendered";
+
+    private string ToggleLabel => _selected ? "Selected" : "Not selected";
+
+    private Task HandleButtonClickAsync(MouseEventArgs args) {
+        _status = "Clicked";
+        return Task.CompletedTask;
+    }
+
+    private Task HandleSelectedChangedAsync(bool selected) {
+        _selected = selected;
+        _status = selected ? "Selected" : "Cleared";
+        return Task.CompletedTask;
+    }
+
+    private sealed class SmokeModel {
+        public string? Name { get; set; }
+        public string? Phone { get; set; }
+    }
+
+    private sealed record SmokeRow(int Id, string Name, decimal Amount, string Status);
+}

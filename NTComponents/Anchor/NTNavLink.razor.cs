@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
 using NTComponents.Core;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -13,6 +14,10 @@ namespace NTComponents;
 ///         cref="NTNavLinkVariant.DefaultAnchor" /> for normal document links and <see cref="NTNavLinkVariant.InlineText" /> for inline text links that should not be underlined.
 ///     </para>
 /// </remarks>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.SsrCompatible,
+    CompatibilitySummary = "Renders a native anchor for static SSR navigation.",
+    CompatibilityDetails = "Href navigation and rendered active state are available in static SSR. Route-aware updates after client navigation require a new render or interactive app shell.")]
 public partial class NTNavLink {
 
     /// <summary>

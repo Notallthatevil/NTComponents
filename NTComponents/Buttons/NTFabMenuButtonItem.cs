@@ -4,11 +4,16 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components.Web;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
 ///     Represents a button action item that registers itself with an <see cref="NTFabMenu" />.
 /// </summary>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Participates in parent component rendering and inherits the parent interaction model.",
+    CompatibilityDetails = "The item contributes button metadata to NTFabMenu. Blazor click callbacks and menu lifecycle behavior require the parent enhancement or interactive rendering.")]
 public sealed partial class NTFabMenuButtonItem : Microsoft.AspNetCore.Components.IComponent, IFabMenuItem, IDisposable {
     private NTFabMenu? _registeredParent;
 

@@ -6,6 +6,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Text.Encodings.Web;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -27,6 +28,10 @@ namespace NTComponents;
 ///         <item>Provide a visible label whenever possible. If a label is intentionally hidden, provide an <c>aria-label</c> through additional attributes.</item>
 ///     </list>
 /// </remarks>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Renders a native text input and enhances local suggestions with JavaScript.",
+    CompatibilityDetails = "Static SSR emits the named input, validation attributes, and suggestion metadata. The browser module adds the suggestion popover, filtering, keyboard navigation, and touched-state synchronization.")]
 public partial class NTAutocomplete : IAsyncDisposable {
     private const string AutocompleteControlBaseClass = "nt-input-control nt-autocomplete-control";
     private const string JsModulePath = "./_content/NTComponents/Form/NTAutocomplete.razor.js";

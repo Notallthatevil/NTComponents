@@ -1,12 +1,17 @@
 using Microsoft.AspNetCore.Components;
 using NTComponents.Core;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
 ///     Clips arbitrary child content to a Material-inspired expressive shape.
 /// </summary>
-public partial class NTShape : TnTPageScriptComponent<NTShape> {
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Renders a static shape and enhances shape transitions with JavaScript.",
+    CompatibilityDetails = "Static SSR emits the initial shape clip path and content. The page script updates path data for animated shape changes after the browser loads.")]
+public partial class NTShape : NTPageScriptComponent<NTShape> {
 
     /// <summary>
     ///     Determines whether shape changes should morph between the current and next path.

@@ -1,10 +1,15 @@
 using Microsoft.AspNetCore.Components;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents.Wizard;
 
 /// <summary>
 ///     Represents the base class for a wizard step in an <see cref="NTWizard" />.
 /// </summary>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.InteractiveRequired,
+    CompatibilitySummary = "Participates in parent component rendering and inherits the parent interaction model.",
+    CompatibilityDetails = "Derived steps participate in NTWizard navigation and validation. The workflow depends on interactive parent wizard state.")]
 public abstract class NTWizardStepBase : ComponentBase, IDisposable {
 
     /// <summary>

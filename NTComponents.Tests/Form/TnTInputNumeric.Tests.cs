@@ -226,7 +226,7 @@ public class TnTInputNumeric_Tests : BunitContext {
         var label = cut.Find("label");
 
         // Assert
-        cut.Instance.Should().BeAssignableTo<ITnTComponentBase>();
+        cut.Instance.Should().BeAssignableTo<INTComponentBase>();
     }
 
     [Fact]

@@ -8,6 +8,7 @@ namespace NTComponents;
 /// <summary>
 ///     A component that represents a row
 /// </summary>
+[Obsolete("TnTRow is obsolete.")]
 public partial class TnTRow  {
 
     /// <inheritdoc />

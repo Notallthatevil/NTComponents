@@ -5,65 +5,14 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
     paths-ignore:
       - '**/*.md'
- 
-env:
-  ARTIFACT_NAME: intersect-uat
+
+permissions:
+  contents: read
+  pull-requests: write
 
 jobs:
-  run-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '8.0.x'
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '9.0.x'
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.0.x'
-
-      - name: Restore dependencies
-        run: dotnet restore
-
-      - name: Install dotnet-coverage
-        run: dotnet tool install --global dotnet-coverage
-
-      - uses: actions/setup-node@v5
-        with:
-          node-version: lts/*
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
-
-      - name: Run all tests
-        #with coverage
-        run: |
-          dotnet test --no-restore --configuration Release 
-          #--collect:"XPlat Code Coverage" --results-directory ./TestResults
-
-      - name: run node tests
-        run: npm test
-
-      # - name: Post coverage summary to PR
-      #   if: github.event_name == 'pull_request'
-      #   uses: 5monkeys/cobertura-action@v13
-      #   with:
-      #     path: ./TestResults/**/*.cobertura.xml
-      #     minimum_coverage: ${{ env.COVERAGE_THRESHOLD }}
-      #     repo_token: ${{ secrets.GITHUB_TOKEN }}
-      #     fail_below_threshold: true
-      #     show_line: true
-      #     show_class_names: true
-      #     only_changed_files: true
+  build-test-pack:
+    if: github.event.pull_request.draft == false
+    uses: ./.github/workflows/build-template.yml
+    with:
+      configuration: Release

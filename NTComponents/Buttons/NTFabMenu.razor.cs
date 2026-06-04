@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
 using NTComponents.Core;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -19,6 +20,10 @@ namespace NTComponents;
 ///         interactive runtime is available.
 ///     </para>
 /// </remarks>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Renders a native popover-backed FAB menu and enhances state sync with JavaScript.",
+    CompatibilityDetails = "Static SSR emits the FAB trigger and popover panel. The browser module adds focus handling, item-click closing, ripple registration, and Blazor expanded-state synchronization.")]
 public partial class NTFabMenu {
 
     /// <summary>

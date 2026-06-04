@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Linq.Expressions;
 using System.Text;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -25,7 +26,11 @@ namespace NTComponents;
 /// <see cref="NTButtonGroupSelectionMode.None" /> for action-only groups. Use <see cref="SelectionRequired" /> only
 /// when clearing all choices would leave the surrounding UI in an invalid or ambiguous state. </para>
 /// </remarks>
-public partial class NTButtonGroup<TObjectType> : TnTComponentBase {
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.InteractiveRequired,
+    CompatibilitySummary = "Requires interactivity for button-group selection changes.",
+    CompatibilityDetails = "Initial buttons and selected values can render statically, but changing selection, hidden selected values, and selection callbacks require an interactive Blazor render mode.")]
+public partial class NTButtonGroup<TObjectType> : NTComponentBase {
 
     /// <summary>
     /// Provides an accessible label for the group container.

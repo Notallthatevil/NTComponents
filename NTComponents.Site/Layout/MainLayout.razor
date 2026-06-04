@@ -1,106 +1,80 @@
 @inherits LayoutComponentBase
-@implements IDisposable
-@inject DocumentationCatalog DocumentationCatalog
-@inject NavigationManager NavigationManager
+@inject DocumentationCatalog Catalog
 
-<NTLayout class="site-shell">
-    <NTNavigationRail AriaLabel="Primary"
-                      ShowMenuButton="true"
-                      MenuAriaLabel="Expand navigation rail"
-                      MenuAriaLabelWhenExpanded="Collapse navigation rail"
-                      ShowDivider="true"
-                      OpenByDefault="true"
-                      HideRailOnXSScreens="true"
-                      class="site-nav-rail">
-        <NTNavigationRailItem Label="Home"
-                              Value="home"
-                              Href="/"
-                              Icon="MaterialIcon.Home"
-                              Match="NavLinkMatch.All" />
-        <NTNavigationRailSectionHeader Label="Browse" />
-        <NTNavigationRailGroup Label="Components"
-                               Icon="MaterialIcon.Widgets"
-                               Expanded="@IsComponentsSection">
-            <NTNavigationRailItem Label="All components"
-                                  Value="components"
-                                  Href="/docs/components"
-                                  Icon="MaterialIcon.Widgets"
-                                  Match="NavLinkMatch.All" />
-            <NTNavigationRailSectionHeader Label="Component groups" />
-            @foreach (var componentGroup in DocumentationCatalog.ComponentTypes.GroupBy(typePage => typePage.ComponentGroup).Take(6)) {
-                <NTNavigationRailGroup Label="@componentGroup.Key"
-                                       Icon="MaterialIcon.Widgets"
-                                       Expanded="@IsComponentsSection">
-                    @foreach (var componentType in componentGroup.Take(8)) {
-                        <NTNavigationRailItem Label="@componentType.Name"
-                                              Href="@($"/docs/components/{componentType.Slug}")"
-                                              Icon="MaterialIcon.Widgets" />
-                    }
-                </NTNavigationRailGroup>
+<NTLayout>
+    <NTNavigationRail AriaLabel="Documentation navigation" OpenByDefault="true" Header="@HeaderContent">
+        <NTNavigationRailItem Label="Home" Href="/" Match="NavLinkMatch.All" Icon="MaterialIcon.Home" />
+        <NTNavigationRailGroup Label="Components" Icon="MaterialIcon.Category" Expanded="true">
+            <NTNavigationRailItem Label="All components" Href="/components" Match="NavLinkMatch.All" Icon="MaterialIcon.Category" />
+            @foreach (var group in Catalog.ComponentGroups) {
+                var components = group.ToArray();
+                if (components.Length == 1) {
+                    var component = components[0];
+                    <NTNavigationRailItem Label="@component.Type.Name" Href="@($"/components/{component.Slug}")" Icon="MaterialIcon.Article" />
+                }
+                else {
+                    <NTNavigationRailGroup Label="@group.Key" Icon="MaterialIcon.Folder">
+                        @foreach (var component in components) {
+                            <NTNavigationRailItem Label="@component.Type.Name" Href="@($"/components/{component.Slug}")" Icon="MaterialIcon.Article" />
+                        }
+                    </NTNavigationRailGroup>
+                }
             }
         </NTNavigationRailGroup>
-        <NTNavigationRailGroup Label="Reference"
-                               Icon="MaterialIcon.MenuBook"
-                               Expanded="@IsReferenceSection">
-            <NTNavigationRailItem Label="All reference"
-                                  Value="reference"
-                                  Href="/docs/reference"
-                                  Icon="MaterialIcon.MenuBook"
-                                  Match="NavLinkMatch.All" />
-            <NTNavigationRailSectionHeader Label="Foundations" />
-            <NTNavigationRailGroup Label="Foundations"
-                                   Icon="MaterialIcon.Token"
-                                   Expanded="@IsReferenceSection">
-                @foreach (var featuredType in DocumentationCatalog.FeaturedTypes) {
-                    <NTNavigationRailItem Label="@featuredType.Name"
-                                          Href="@($"/docs/reference/{featuredType.Slug}")"
-                                          Icon="MaterialIcon.Article" />
+        <NTNavigationRailGroup Label="Enums" Icon="MaterialIcon.DataObject">
+            <NTNavigationRailItem Label="All enums" Href="/reference/enums" Match="NavLinkMatch.All" Icon="MaterialIcon.DataObject" />
+            @foreach (var group in Catalog.EnumGroups) {
+                var references = group.ToArray();
+                if (references.Length == 1) {
+                    var reference = references[0];
+                    <NTNavigationRailItem Label="@reference.Type.Name" Href="@($"/reference/enums/{reference.Slug}")" Icon="MaterialIcon.Article" />
                 }
-            </NTNavigationRailGroup>
+                else {
+                    <NTNavigationRailGroup Label="@group.Key" Icon="MaterialIcon.Folder">
+                        @foreach (var reference in references) {
+                            <NTNavigationRailItem Label="@reference.Type.Name" Href="@($"/reference/enums/{reference.Slug}")" Icon="MaterialIcon.Article" />
+                        }
+                    </NTNavigationRailGroup>
+                }
+            }
+        </NTNavigationRailGroup>
+        <NTNavigationRailGroup Label="Constants" Icon="MaterialIcon.Tag">
+            <NTNavigationRailItem Label="All constants" Href="/reference/constants" Match="NavLinkMatch.All" Icon="MaterialIcon.Tag" />
+            @foreach (var group in Catalog.ConstantGroups) {
+                var references = group.ToArray();
+                if (references.Length == 1) {
+                    var reference = references[0];
+                    <NTNavigationRailItem Label="@reference.Type.Name" Href="@($"/reference/constants/{reference.Slug}")" Icon="MaterialIcon.Article" />
+                }
+                else {
+                    <NTNavigationRailGroup Label="@group.Key" Icon="MaterialIcon.Folder">
+                        @foreach (var reference in references) {
+                            <NTNavigationRailItem Label="@reference.Type.Name" Href="@($"/reference/constants/{reference.Slug}")" Icon="MaterialIcon.Article" />
+                        }
+                    </NTNavigationRailGroup>
+                }
+            }
         </NTNavigationRailGroup>
     </NTNavigationRail>
 
-    <NTHeader class="site-header" BackgroundColor="TnTColor.PrimaryContainer" TextColor="TnTColor.OnPrimaryContainer">
-        <div class="site-header-inner">
-            <a class="site-brand @NTTypography.TitleMedium.ToCssClass()" href="">NTComponents</a>
+    <NTHeader>
+        <div class="docs-topbar">
+            <span class="docs-brand">NTComponents</span>
+            <span class="docs-topbar-subtitle">Material 3 Blazor documentation</span>
         </div>
     </NTHeader>
-
-    <NTBody class="site-main" BackgroundColor="TnTColor.SecondaryContainer" TextColor="TnTColor.OnSecondaryContainer">
-        <div class="site-main-inner">
+    <NTBody>
+        <div class="docs-content">
             @Body
         </div>
     </NTBody>
-
-    <NTFooter class="site-footer" BackgroundColor="TnTColor.TertiaryContainer" TextColor="TnTColor.OnTertiaryContainer">
-        <div class="site-footer-inner">
-            <span>NTComponents</span>
-            <span>Material 3 component library</span>
-        </div>
-    </NTFooter>
 </NTLayout>
 
-<NTSnackbar />
-<NTToast />
-
 @code {
-    private bool IsComponentsSection => GetCurrentPath().StartsWith("docs/components", StringComparison.OrdinalIgnoreCase);
-    private bool IsReferenceSection => GetCurrentPath().StartsWith("docs/reference", StringComparison.OrdinalIgnoreCase);
-
-    public void Dispose() {
-        NavigationManager.LocationChanged -= HandleLocationChanged;
-    }
-
-    protected override void OnInitialized() {
-        NavigationManager.LocationChanged += HandleLocationChanged;
-    }
-
-    private string GetCurrentPath() {
-        var relativePath = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
-        return relativePath.Split(['?', '#'], 2)[0].Trim('/');
-    }
-
-    private void HandleLocationChanged(object? sender, LocationChangedEventArgs args) {
-        InvokeAsync(StateHasChanged);
-    }
+    private static RenderFragment HeaderContent => builder => {
+        builder.OpenElement(0, "div");
+        builder.AddAttribute(1, "class", "docs-rail-brand");
+        builder.AddContent(2, "NT");
+        builder.CloseElement();
+    };
 }

@@ -3,11 +3,16 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components.Web;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
 ///     Represents a button action item that registers itself with an <see cref="NTMenu" />.
 /// </summary>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Participates in parent component rendering and inherits the parent interaction model.",
+    CompatibilityDetails = "The parent menu can emit a button in static SSR. Blazor click callbacks and menu closing behavior require the parent menu enhancement or an interactive render mode.")]
 public class NTMenuButtonItem : Microsoft.AspNetCore.Components.IComponent, INTMenuItem, IDisposable {
     private NTMenu? _registeredParent;
 

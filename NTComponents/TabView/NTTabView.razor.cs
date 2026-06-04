@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using NTComponents.Core;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -16,6 +17,10 @@ namespace NTComponents;
 ///         <see cref="NTTab.Value" /> is <c>history</c>. Use <see cref="QueryParameterName" /> when the URL key should differ from the rendered name.
 ///     </para>
 /// </remarks>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Renders tab markup and enhances selection with TypeScript.",
+    CompatibilityDetails = "Static SSR emits the tablist and initially selected panel. The browser module adds tab switching, query-string updates, keyboard behavior, and active-indicator placement.")]
 public partial class NTTabView {
     /// <summary>
     ///     Gets the isolated JavaScript module path for <see cref="NTTabView" />.

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using NTComponents.Core;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -19,7 +20,11 @@ namespace NTComponents;
 ///         The default colors use Material 3 surface container roles and the animation respects reduced-motion preferences in CSS.
 ///     </para>
 /// </remarks>
-public partial class NTSkeleton : TnTComponentBase {
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.SsrCompatible,
+    CompatibilitySummary = "Renders useful static HTML without requiring Blazor interactivity.",
+    CompatibilityDetails = "Static SSR preserves the component structure, styling, and accessibility semantics. Dynamic parameter changes require a new render.")]
+public partial class NTSkeleton : NTComponentBase {
 
     /// <summary>
     ///     Whether to show the skeleton placeholder instead of rendering <see cref="ChildContent" /> directly.

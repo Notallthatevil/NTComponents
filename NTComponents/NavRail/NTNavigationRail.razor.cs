@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using NTComponents.CodeDocumentation;
 using NTComponents.Core;
 
 namespace NTComponents;
@@ -16,6 +17,10 @@ namespace NTComponents;
 ///         should use an external trigger and temporary modal surface.
 ///     </para>
 /// </remarks>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Renders a semantic nav landmark and progressively enhances rail expansion.",
+    CompatibilityDetails = "Destination links remain usable in static SSR. The browser module enhances the collapse and modal rail affordances when JavaScript is available.")]
 public partial class NTNavigationRail {
 
     /// <summary>

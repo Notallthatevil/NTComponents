@@ -3,7 +3,7 @@ using NTComponents.Core;
 
 namespace NTComponents.Tests.Core;
 
-public class TnTPageScriptComponentTests : BunitContext {
+public class NTPageScriptComponentTests : BunitContext {
 
     [Fact]
     public void Constructor_CreatesDotNetObjectRef() {
@@ -15,7 +15,7 @@ public class TnTPageScriptComponentTests : BunitContext {
     [Fact]
     public void Constructor_ThrowsIfTypeMismatch() {
         var ex = Assert.Throws<InvalidCastException>(() => new InvalidDerived());
-        ex.Message.Should().Contain("TnTPageScriptComponent: TDerived must match the actual derived class type");
+        ex.Message.Should().Contain("NTPageScriptComponent: TDerived must match the actual derived class type");
     }
 
     [Fact]
@@ -77,13 +77,13 @@ public class TnTPageScriptComponentTests : BunitContext {
         rendered.Instance.DotNetObjectRef.Should().NotBeNull();
     }
 
-    private class InvalidDerived : TnTPageScriptComponent<TestPageScriptComponent> {
+    private class InvalidDerived : NTPageScriptComponent<TestPageScriptComponent> {
         public override string? ElementClass => null;
         public override string? ElementStyle => null;
         public override string? JsModulePath => null;
     }
 
-    private class TestPageScriptComponent : TnTPageScriptComponent<TestPageScriptComponent> {
+    private class TestPageScriptComponent : NTPageScriptComponent<TestPageScriptComponent> {
         public override string? ElementClass => null;
         public override string? ElementStyle => null;
         public override string? JsModulePath => "./test.js";

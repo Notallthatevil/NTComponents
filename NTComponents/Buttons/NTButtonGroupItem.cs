@@ -4,11 +4,16 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
 using NTComponents.Core;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
 ///     Represents a button description that registers itself with <see cref="NTButtonGroup{TObjectType}" />.
 /// </summary>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.InteractiveRequired,
+    CompatibilitySummary = "Participates in parent component rendering and inherits the parent interaction model.",
+    CompatibilityDetails = "The item contributes metadata to NTButtonGroup, but selection behavior depends on the interactive parent group.")]
 public sealed partial class NTButtonGroupItem<TObjectType> : Microsoft.AspNetCore.Components.IComponent, IDisposable {
     private NTButtonGroup<TObjectType>? _registeredParent;
 

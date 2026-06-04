@@ -19,7 +19,7 @@ public class NTShape_Tests : BunitContext {
     public void Component_Implements_PageScript_Component_Interface() {
         var cut = RenderShape();
 
-        cut.Instance.Should().BeAssignableTo<NTComponents.Interfaces.ITnTPageScriptComponent<NTShape>>();
+        cut.Instance.Should().BeAssignableTo<NTComponents.Interfaces.INTPageScriptComponent<NTShape>>();
         cut.Instance.Should().BeAssignableTo<IAsyncDisposable>();
         cut.Instance.Should().BeAssignableTo<IDisposable>();
     }

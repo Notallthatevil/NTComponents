@@ -5,6 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using NTComponents.Wizard;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -87,6 +88,10 @@ public interface INTWizardFormStep {
 /// <summary>
 ///     Represents a wizard step that contains an <see cref="NTForm" />.
 /// </summary>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.InteractiveRequired,
+    CompatibilitySummary = "Participates in parent component rendering and inherits the parent interaction model.",
+    CompatibilityDetails = "The step participates in NTWizard navigation and form submit callbacks, which require an interactive render mode for validation and step transitions.")]
 public class NTWizardFormStep : NTWizardStepBase, INTWizardFormStep {
 
     /// <inheritdoc />

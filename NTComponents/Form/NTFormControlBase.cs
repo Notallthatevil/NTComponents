@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Linq.Expressions;
 using System.Text;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -16,6 +17,10 @@ namespace NTComponents;
 ///     control semantics, required behavior, and component-specific color tokens belong in derived classes.
 /// </remarks>
 /// <typeparam name="TValue">The bound value type.</typeparam>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Renders useful static HTML and adds Blazor behavior when interactive.",
+    CompatibilityDetails = "Static SSR preserves the rendered markup and native browser behavior. EventCallback handlers, bound state updates, and live validation require an interactive render mode.")]
 public abstract class NTFormControlBaseCore<TValue> : InputBase<TValue> {
     private string _generatedInputId = "nt-form-control-field";
     private string? _resolvedElementName;
@@ -483,6 +488,10 @@ public abstract class NTFormControlBaseCore<TValue> : InputBase<TValue> {
 ///     Base class for Form controls that participate in an <see cref="NTForm" /> and support leading or trailing icons.
 /// </summary>
 /// <typeparam name="TValue">The bound value type.</typeparam>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Renders useful static HTML and adds Blazor behavior when interactive.",
+    CompatibilityDetails = "Static SSR preserves the rendered markup and native browser behavior. EventCallback handlers, bound state updates, and live validation require an interactive render mode.")]
 public abstract class NTFormControlBase<TValue> : NTFormControlBaseCore<TValue> {
     /// <summary>
     ///     Gets or sets the icon shown before the control content.

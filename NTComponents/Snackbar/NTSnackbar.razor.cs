@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components;
 using NTComponents.Core;
 using NTComponents.Snackbar;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -28,6 +29,10 @@ namespace NTComponents;
 ///         and remain visible until dismissed or acted on.
 ///     </para>
 /// </remarks>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Renders a snackbar host and registers the browser snackbar bridge.",
+    CompatibilityDetails = "Static SSR emits the host container and page script. Displaying queued snackbars requires the browser module or the interactive snackbar service after the page reaches the browser.")]
 public partial class NTSnackbar {
 
     /// <summary>

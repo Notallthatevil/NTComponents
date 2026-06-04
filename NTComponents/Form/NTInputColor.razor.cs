@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -9,6 +10,10 @@ namespace NTComponents;
 ///     Use <see cref="NTInputColor" /> when a field should render the browser's native color picker while keeping the
 ///     Form text-field container, validation, density, and appearance behavior.
 /// </remarks>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Renders useful static HTML and adds Blazor behavior when interactive.",
+    CompatibilityDetails = "Static SSR preserves the rendered markup and native browser behavior. EventCallback handlers, bound state updates, and live validation require an interactive render mode.")]
 public partial class NTInputColor {
 
     /// <inheritdoc />

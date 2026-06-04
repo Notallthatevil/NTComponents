@@ -404,3 +404,7 @@ coverlet.runsettings
 /NTComponents/Animation/NTAnimation.razor.js
 /NTComponents/Form/NTTypeahead.razor.js
 /NTComponents/Form/NTTypeahead.razor.js
+/NTComponents/Virtualization/NTVirtualize.razor.js
+/NTComponents/Virtualization/NTVirtualize.razor.js
+/.playwright-cli
+/docs

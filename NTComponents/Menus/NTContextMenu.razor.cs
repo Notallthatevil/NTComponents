@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using NTComponents.Core;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -10,6 +11,10 @@ namespace NTComponents;
 ///     Use <see cref="TargetContent" /> for the interactive region and <see cref="MenuContent" /> for standard <see cref="NTMenuButtonItem" />, <see cref="NTMenuAnchorItem" />,
 ///     <see cref="NTMenuLabelItem" />, <see cref="NTMenuDividerItem" />, and <see cref="NTMenuSubMenuItem" /> content.
 /// </remarks>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.InteractiveRequired,
+    CompatibilitySummary = "Requires browser event handling for context-menu invocation.",
+    CompatibilityDetails = "The target and menu markup can render statically, but pointer, keyboard, and long-press invocation depend on the isolated JavaScript module.")]
 public partial class NTContextMenu {
 
     /// <summary>

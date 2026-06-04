@@ -18,7 +18,7 @@ public class TnTRippleEffect_Tests : BunitContext {
         // Arrange
         var cut = Render<TnTRippleEffect>();
         // Manually null out IsolatedJsModule to simulate unexpected state
-        var prop = typeof(TnTPageScriptComponent<TnTRippleEffect>).GetProperty("IsolatedJsModule", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+        var prop = typeof(NTPageScriptComponent<TnTRippleEffect>).GetProperty("IsolatedJsModule", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
         if (prop?.CanWrite == true) {
             prop.SetValue(cut.Instance, null);
         }

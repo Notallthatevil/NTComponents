@@ -1,0 +1,188 @@
+name: Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+env:
+  TESTINGPLATFORM_EXITCODE_IGNORE: 8
+
+jobs:
+  publish-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+          submodules: recursive
+
+      - name: Setup .NET SDKs
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+            10.0.x
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: Restore WebAssembly workloads
+        run: dotnet workload restore NTComponents.slnx
+
+      - name: Restore dependencies
+        run: dotnet restore NTComponents.slnx
+
+      - name: Install node dependencies
+        run: npm ci
+
+      - name: Build
+        run: dotnet build NTComponents.slnx --no-restore --configuration Release
+
+      - name: Ensure browsers are installed
+        run: pwsh NTComponents.Tests/bin/Release/net10.0/playwright.ps1 install --with-deps
+
+      - name: Run .NET tests
+        run: dotnet test NTComponents.slnx --no-restore --configuration Release --results-directory ./TestResults -v minimal
+
+      - name: Run node tests
+        run: npm test
+
+      - name: Check if commit has a stable release tag
+        id: check-tags
+        run: |
+          git fetch --tags
+          if git tag --points-at HEAD | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "is_tagged=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_tagged=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Install semantic-release
+        if: steps.check-tags.outputs.is_tagged == 'false'
+        run: |
+          npm install --no-save semantic-release @semantic-release/commit-analyzer @semantic-release/release-notes-generator @semantic-release/github conventional-changelog-conventionalcommits
+
+      - name: Validate NuGet API key
+        if: steps.check-tags.outputs.is_tagged == 'false'
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+          if [ -z "$NUGET_API_KEY" ]; then
+            echo "NUGET_API_KEY secret is missing or unavailable to this workflow."
+            exit 1
+          fi
+
+      - name: Publish stable release
+        if: steps.check-tags.outputs.is_tagged == 'false'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git fetch --tags
+          npx semantic-release
+
+      - name: Resolve stable package version
+        id: release-version
+        if: steps.check-tags.outputs.is_tagged == 'false'
+        run: |
+          set -euo pipefail
+          git fetch --tags
+          release_tag=$(git tag --points-at HEAD | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1 || true)
+          if [ -z "$release_tag" ]; then
+            echo "No stable release tag found on this commit."
+            exit 1
+          fi
+          echo "version=${release_tag#v}" >> $GITHUB_OUTPUT
+
+      - name: Pack NuGet packages
+        if: steps.check-tags.outputs.is_tagged == 'false'
+        run: |
+          set -euo pipefail
+          rm -rf ./artifacts/nuget
+          mkdir -p ./artifacts/nuget
+          dotnet pack ./NTComponents/NTComponents.csproj --no-build --configuration Release --output ./artifacts/nuget /p:PackageVersion=${{ steps.release-version.outputs.version }}
+          dotnet pack ./NTComponents.AspNetCore/NTComponents.AspNetCore.csproj --no-build --configuration Release --output ./artifacts/nuget /p:PackageVersion=${{ steps.release-version.outputs.version }}
+          dotnet pack ./NTComponents.Extensions/NTComponents.Extensions.csproj --no-build --configuration Release --output ./artifacts/nuget /p:PackageVersion=${{ steps.release-version.outputs.version }}
+
+      - name: Publish NuGet packages
+        if: steps.check-tags.outputs.is_tagged == 'false'
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+          dotnet nuget push ./artifacts/nuget/*.nupkg --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
+
+      - name: Unlist older prerelease packages
+        if: steps.check-tags.outputs.is_tagged == 'false'
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+          set -euo pipefail
+          git fetch --tags
+          release_tag=$(git tag --points-at HEAD | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1 || true)
+          if [ -z "$release_tag" ]; then
+            echo "No stable release tag found on this commit; skipping prerelease unlist."
+            exit 0
+          fi
+          release_version="${release_tag#v}"
+          python3 - "$release_version" <<'PY' > prerelease-versions-to-unlist.txt
+          import json
+          import sys
+          import urllib.request
+
+          release = tuple(int(part) for part in sys.argv[1].split("."))
+          packages = ("NTComponents", "NTComponents.AspNetCore", "NTComponents.Extensions")
+
+          def prerelease_is_lower(version):
+              version_without_build = version.split("+", 1)[0]
+              if "-" not in version_without_build:
+                  return False
+              core = version_without_build.split("-", 1)[0]
+              try:
+                  core_parts = tuple(int(part) for part in core.split("."))
+              except ValueError:
+                  return False
+              return core_parts <= release
+
+          for package in packages:
+              url = f"https://api.nuget.org/v3-flatcontainer/{package.lower()}/index.json"
+              with urllib.request.urlopen(url) as response:
+                  versions = json.load(response)["versions"]
+              for version in versions:
+                  if prerelease_is_lower(version):
+                      print(f"{package} {version}")
+          PY
+          if [ ! -s prerelease-versions-to-unlist.txt ]; then
+            echo "No prerelease packages older than $release_version were found."
+            exit 0
+          fi
+          while read -r package version; do
+            echo "Unlisting $package $version"
+            dotnet nuget delete "$package" "$version" --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --non-interactive
+          done < prerelease-versions-to-unlist.txt
+
+      - name: Delete stable tag on failure
+        if: failure() && steps.check-tags.outputs.is_tagged == 'false'
+        run: |
+          set -euo pipefail
+          git fetch --tags
+          tags=$(git tag --points-at HEAD | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' || true)
+          if [ -z "$tags" ]; then
+            echo "No stable release tag found on this commit."
+            exit 0
+          fi
+          for tag in $tags; do
+            echo "Deleting failed stable release tag $tag"
+            git tag -d "$tag" || true
+            git push origin ":refs/tags/$tag"
+          done
+

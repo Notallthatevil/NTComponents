@@ -5,6 +5,7 @@ using Microsoft.JSInterop;
 using NTComponents.Core;
 using NTComponents.Ext;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -32,6 +33,10 @@ namespace NTComponents;
 ///         unsaved work, or application policy requires the dialog to remain open.
 ///     </para>
 /// </remarks>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Renders a native dialog element and enhances lifecycle control with JavaScript.",
+    CompatibilityDetails = "Static SSR can render the dialog markup, including an initially open dialog. Programmatic open and close APIs, cancelable lifecycle callbacks, backdrop behavior, and Escape handling require the browser module.")]
 public partial class NTDialog {
     /// <summary>
     ///     Gets the isolated JavaScript module path for <see cref="NTDialog" />.

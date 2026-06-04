@@ -14,10 +14,11 @@
     <File Path=".github/instructions/tests.instructions.md" />
   </Folder>
   <Folder Name="/Solution Items/workflows/">
-    <File Path=".github/workflows/deploy-to-nuget.yml" />
+    <File Path=".github/workflows/build-template.yml" />
     <File Path=".github/workflows/ensure-aot-build.yml" />
+    <File Path=".github/workflows/publish-prerelease.yml" />
     <File Path=".github/workflows/pr-build.yml" />
-    <File Path=".github/workflows/tag-template.yml" />
+    <File Path=".github/workflows/release.yml" />
   </Folder>
   <Project Path="AotCompatibility.TestApp/AotCompatibility.TestApp.csproj" Id="5fe8afae-706b-4160-a602-2463e8cec5fd" />
   <Project Path="LiveTest/LiveTest.Client/LiveTest.Client.csproj" />

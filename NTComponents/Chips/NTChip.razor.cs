@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using NTComponents.Core;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -16,7 +17,11 @@ namespace NTComponents;
 ///     Filter chips can render a menu through <see cref="MenuContent" />; this uses native popover targeting with <see cref="NTMenu" /> so the chip can open a dropdown from static server-rendered
 ///     markup. See <see cref="NTChipVariant" /> for variant-specific usage guidance and best practices.
 /// </remarks>
-public partial class NTChip : TnTComponentBase {
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Renders native chip buttons, anchors, checkboxes, and popover triggers in static SSR.",
+    CompatibilityDetails = "Static SSR preserves link, button, checkbox, and menu-trigger markup. Blazor callbacks, selected-state binding, removal callbacks, and menu synchronization require interactive enhancement.")]
+public partial class NTChip : NTComponentBase {
     private bool _appearanceWasProvided;
     private bool _backgroundColorWasProvided;
     private bool _disabledBackgroundColorWasProvided;

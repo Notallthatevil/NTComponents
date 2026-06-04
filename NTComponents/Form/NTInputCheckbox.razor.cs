@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Components.Web;
 using NTComponents.Core;
 using System.Text;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -26,6 +27,10 @@ namespace NTComponents;
 ///         be selected, do not rely on color alone to communicate errors, and do not hide the accessible label.
 ///     </para>
 /// </remarks>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.SsrCompatible,
+    CompatibilitySummary = "Renders native form markup that works with static SSR and form posts.",
+    CompatibilityDetails = "The native control can participate in static SSR and normal form posts. Blazor binding callbacks and live validation updates require interactivity or a subsequent render.")]
 public partial class NTInputCheckbox {
     private const string RootClassBase = "nt-checkbox";
     private static readonly string[] CheckboxExplicitInputAttributeNames = [.. CommonExplicitInputAttributeNames, "data-indeterminate"];

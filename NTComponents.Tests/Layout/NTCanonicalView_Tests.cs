@@ -22,7 +22,7 @@ public class NTCanonicalView_Tests : BunitContext {
 
         var view = cut.Find("div.nt-list-detail-view");
 
-        cut.Instance.Should().BeAssignableTo<ITnTPageScriptComponent<NTListDetailView>>();
+        cut.Instance.Should().BeAssignableTo<INTPageScriptComponent<NTListDetailView>>();
         cut.Instance.JsModulePath.Should().Be("./_content/NTComponents/Layout/Views/NTListDetailView.razor.js");
         cut.Instance.IsolatedJsModule.Should().NotBeNull();
         ShouldHaveScopedCssAttribute(view);
@@ -67,7 +67,7 @@ public class NTCanonicalView_Tests : BunitContext {
 
         var view = cut.Find("div.nt-supporting-pane-view");
 
-        cut.Instance.Should().BeAssignableTo<ITnTPageScriptComponent<NTSupportingPaneView>>();
+        cut.Instance.Should().BeAssignableTo<INTPageScriptComponent<NTSupportingPaneView>>();
         cut.Instance.JsModulePath.Should().Be("./_content/NTComponents/Layout/Views/NTSupportingPaneView.razor.js");
         cut.Instance.IsolatedJsModule.Should().NotBeNull();
         ShouldHaveScopedCssAttribute(view);
@@ -108,7 +108,7 @@ public class NTCanonicalView_Tests : BunitContext {
 
         var view = cut.Find("div.nt-container-view");
 
-        cut.Instance.Should().BeAssignableTo<ITnTPageScriptComponent<NTContainerView>>();
+        cut.Instance.Should().BeAssignableTo<INTPageScriptComponent<NTContainerView>>();
         cut.Instance.JsModulePath.Should().Be("./_content/NTComponents/Layout/Views/NTContainerView.razor.js");
         cut.Instance.IsolatedJsModule.Should().NotBeNull();
         ShouldHaveScopedCssAttribute(view);

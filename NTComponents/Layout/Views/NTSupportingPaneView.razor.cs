@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using NTComponents.Core;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -14,6 +15,10 @@ namespace NTComponents;
 ///         cref="NTSupportingPaneViewMode.HideOnSmallScreens" />. Use <see cref="NTMultiPaneView" /> for peer panes and <see cref="NTListDetailView" /> when a list selects a detail.
 ///     </para>
 /// </remarks>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Renders useful static markup and enhances behavior with browser JavaScript.",
+    CompatibilityDetails = "Static SSR emits the component shell and accessible markup. The browser module adds richer behavior after the page reaches the browser.")]
 public partial class NTSupportingPaneView {
 
     /// <inheritdoc />

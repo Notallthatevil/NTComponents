@@ -1,11 +1,16 @@
 using Microsoft.AspNetCore.Components;
 using NTComponents.Core;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
 ///     Content pane and header metadata for <see cref="NTTabView" />.
 /// </summary>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Participates in parent component rendering and inherits the parent interaction model.",
+    CompatibilityDetails = "The selected panel content is present in the static response. Tab switching, query-string activation after load, and keyboard navigation depend on the parent tab-view script.")]
 public partial class NTTab {
     private int _sequence;
 

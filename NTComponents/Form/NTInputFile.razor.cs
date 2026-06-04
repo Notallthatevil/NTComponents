@@ -8,11 +8,16 @@ using NTComponents.Core;
 using NTComponents.Ext;
 using NTComponents.Interfaces;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
 ///     A staged file-upload component that separates file selection from upload processing.
 /// </summary>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Renders a native file-input fallback and enhances file processing when interactive.",
+    CompatibilityDetails = "Static SSR can emit the file input shell for native form posts. Blazor IBrowserFile streams, JavaScript progress state, restore behavior, and upload callbacks require interactivity.")]
 public partial class NTInputFile : IAsyncDisposable {
     private const string JsModulePath = "./_content/NTComponents/Form/NTInputFile.razor.js";
 

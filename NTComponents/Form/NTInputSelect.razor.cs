@@ -9,13 +9,18 @@ using NTComponents.Core;
 using NTComponents.Ext;
 using NTComponents.Interfaces;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
 ///     Represents a searchable single-select input that filters options locally while preserving form binding semantics.
 /// </summary>
 /// <typeparam name="TInputType">The selected value type.</typeparam>
-public partial class NTInputSelect<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TInputType> : ITnTPageScriptComponent<NTInputSelect<TInputType>> {
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.InteractiveRequired,
+    CompatibilitySummary = "Requires interactive Blazor and page script for legacy searchable select behavior.",
+    CompatibilityDetails = "The legacy searchable select can render a static value shell, but dropdown filtering, opening, and selection require interactive Blazor and its page script.")]
+public partial class NTInputSelect<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TInputType> : INTPageScriptComponent<NTInputSelect<TInputType>> {
 
     /// <summary>
     ///     The child options available for selection.
@@ -81,8 +86,8 @@ public partial class NTInputSelect<[DynamicallyAccessedMembers(DynamicallyAccess
     ///     Gets the page script fragment that wires the component's isolated JavaScript module into SSR output.
     /// </summary>
     protected RenderFragment PageScript => builder => {
-        builder.OpenComponent<TnTPageScript>(0);
-        builder.AddAttribute(1, nameof(TnTPageScript.Src), JsModulePath);
+        builder.OpenComponent<NTPageScript>(0);
+        builder.AddAttribute(1, nameof(NTPageScript.Src), JsModulePath);
         builder.CloseComponent();
     };
 

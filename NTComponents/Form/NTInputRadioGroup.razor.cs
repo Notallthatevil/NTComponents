@@ -5,6 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -18,6 +19,10 @@ namespace NTComponents;
 /// </remarks>
 /// <typeparam name="TValue">The selected option value type.</typeparam>
 [CascadingTypeParameter(nameof(TValue))]
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.SsrCompatible,
+    CompatibilitySummary = "Renders native form markup that works with static SSR and form posts.",
+    CompatibilityDetails = "The native control can participate in static SSR and normal form posts. Blazor binding callbacks and live validation updates require interactivity or a subsequent render.")]
 public partial class NTInputRadioGroup<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TValue> : IDisposable {
     private static readonly HashSet<string> GroupExplicitAttributeNames = new(StringComparer.OrdinalIgnoreCase) {
         "id",

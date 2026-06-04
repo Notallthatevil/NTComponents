@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
 using System.Diagnostics.CodeAnalysis;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -10,6 +11,10 @@ namespace NTComponents;
 /// </summary>
 /// <typeparam name="TInputType">The bound value type.</typeparam>
 [System.Obsolete("This legacy Form element is obsolete. Use the NT form components instead.")]
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.InteractiveRequired,
+    CompatibilitySummary = "Participates in parent component rendering and inherits the parent interaction model.",
+    CompatibilityDetails = "The option contributes metadata to NTInputSelect, whose legacy searchable selection behavior requires interactive Blazor and page script support.")]
 public sealed class NTInputSelectOption<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TInputType> : ComponentBase, IDisposable {
 
     /// <summary>

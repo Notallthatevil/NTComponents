@@ -4,12 +4,17 @@ using NTComponents.Core;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
 ///     A radio option for an <see cref="NTInputRadioGroup{TValue}" />.
 /// </summary>
 /// <typeparam name="TValue">The option value type.</typeparam>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.SsrCompatible,
+    CompatibilitySummary = "Renders native form markup that works with static SSR and form posts.",
+    CompatibilityDetails = "The native control can participate in static SSR and normal form posts. Blazor binding callbacks and live validation updates require interactivity or a subsequent render.")]
 public partial class NTInputRadio<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TValue> : ComponentBase, IDisposable {
     private static readonly HashSet<string> InputExplicitAttributeNames = new(StringComparer.OrdinalIgnoreCase) {
         "id",

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components;
 using NTComponents.Core;
 using System.Text;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -13,6 +14,10 @@ namespace NTComponents;
 ///     Concrete components remain responsible for rendering the native control and parsing its value.
 /// </remarks>
 /// <typeparam name="TValue">The field value type.</typeparam>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Renders useful static HTML and adds Blazor behavior when interactive.",
+    CompatibilityDetails = "Static SSR preserves the rendered markup and native browser behavior. EventCallback handlers, bound state updates, and live validation require an interactive render mode.")]
 public abstract class NTFieldBase<TValue> : NTFormControlBase<TValue> {
     private string _appearanceClass = "nt-input-outlined";
     private string _densityClass = "nt-input-standard";

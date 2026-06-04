@@ -6,6 +6,7 @@ namespace NTComponents;
 /// <summary>
 ///     Represents a tooltip component that displays contextual information when users hover over or focus on an element.
 /// </summary>
+[Obsolete("TnTTooltip is obsolete. Use NTTooltip instead.")]
 public partial class TnTTooltip : TnTPageScriptComponent<TnTTooltip> {
 
     /// <summary>

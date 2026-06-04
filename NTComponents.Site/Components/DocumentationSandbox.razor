@@ -1,0 +1,379 @@
+@namespace NTComponents.Site.Components
+@using Microsoft.AspNetCore.Components
+@using NTComponents
+@using NTComponents.Site.Documentation
+@using System.Globalization
+@using System.Text
+
+<div class="docs-sandbox">
+    <div class="docs-sandbox-toolbar">
+        <NTButton Label="Preview" Variant="@(_showMarkup ? NTButtonVariant.Outlined : NTButtonVariant.Filled)" OnClickCallback="_ => ShowPreview()" />
+        <NTButton Label="Razor" Variant="@(_showMarkup ? NTButtonVariant.Filled : NTButtonVariant.Outlined)" OnClickCallback="_ => ShowMarkup()" />
+    </div>
+
+    @if (Sandbox.UnsupportedReason is not null) {
+        <div class="docs-callout">@Sandbox.UnsupportedReason</div>
+    }
+    else if (_showMarkup) {
+        <div class="docs-code-group">
+            <span class="docs-preview-label">Generated markup</span>
+            <pre class="docs-code"><code>@BuildMarkup()</code></pre>
+        </div>
+    }
+    else {
+        <div class="docs-sandbox-grid">
+            <div class="docs-sandbox-preview">
+                <div class="docs-generated-example">
+                    <ErrorBoundary @ref="_errorBoundary">
+                        <ChildContent>
+                            <DynamicComponent Type="@Sandbox.ComponentType" Parameters="@BuildComponentParameters()" />
+                        </ChildContent>
+                        <ErrorContent>
+                            <div class="docs-callout">This component requires additional sample data before it can render in the automatic sandbox.</div>
+                        </ErrorContent>
+                    </ErrorBoundary>
+                </div>
+            </div>
+
+            <div class="docs-sandbox-controls">
+                @foreach (var parameter in Sandbox.Parameters.Where(parameter => parameter.IsControlVisible)) {
+                    <div class="docs-control-row">
+                        @if (!parameter.IsSupported) {
+                            <div>
+                                <strong>@parameter.Property.Name</strong>
+                                <p class="docs-muted">@parameter.UnsupportedReason</p>
+                                <code>@parameter.Property.TypeDisplayName</code>
+                            </div>
+                        }
+                        else {
+                            @switch (parameter.Kind) {
+                                case SandboxParameterKind.Boolean:
+                                    <NTInputSwitch Label="@parameter.Property.Name"
+                                                   ElementId="@BuildControlElementId(parameter)"
+                                                   Value="@GetBool(parameter)"
+                                                   ValueChanged="value => SetValue(parameter, value)"
+                                                   ValueExpression="@(() => _form.BooleanValue)"
+                                                   SubmitValue="false" />
+                                    break;
+                                case SandboxParameterKind.Number:
+                                    <NTInputNumeric TNumber="int"
+                                                    Label="@parameter.Property.Name"
+                                                    ElementId="@BuildControlElementId(parameter)"
+                                                    Value="@GetInt(parameter)"
+                                                    ValueChanged="value => SetValue(parameter, value ?? 0)"
+                                                    ValueExpression="@(() => _form.NumberValue)"
+                                                    SubmitValue="false" />
+                                    break;
+                                case SandboxParameterKind.Enum:
+                                    <NTSelect TValue="string"
+                                              Label="@parameter.Property.Name"
+                                              ElementId="@BuildControlElementId(parameter)"
+                                              Value="@GetEnumString(parameter)"
+                                              ValueChanged="value => SetEnumValue(parameter, value)"
+                                              ValueExpression="@(() => _form.EnumValue)"
+                                              SubmitValue="false">
+                                        @foreach (var option in parameter.Options.OfType<SandboxEnumOption>()) {
+                                            <option value="@option.Label">@option.Label</option>
+                                        }
+                                    </NTSelect>
+                                    break;
+                                case SandboxParameterKind.Icon:
+                                    <NTSelect TValue="string"
+                                              Label="@parameter.Property.Name"
+                                              ElementId="@BuildControlElementId(parameter)"
+                                              Value="@GetIconString(parameter)"
+                                              ValueChanged="value => SetIconValue(parameter, value)"
+                                              ValueExpression="@(() => _form.IconValue)"
+                                              SubmitValue="false">
+                                        @foreach (var option in parameter.Options.OfType<SandboxIconOption>()) {
+                                            <option value="@option.Label">@option.Label</option>
+                                        }
+                                    </NTSelect>
+                                    break;
+                                case SandboxParameterKind.ChildContent:
+                                case SandboxParameterKind.Text:
+                                    <NTInputText Label="@parameter.Property.Name"
+                                                 ElementId="@BuildControlElementId(parameter)"
+                                                 Value="@GetString(parameter)"
+                                                 ValueChanged="value => SetValue(parameter, value ?? string.Empty)"
+                                                 ValueExpression="@(() => _form.TextValue)"
+                                                 SubmitValue="false" />
+                                    break;
+                            }
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private readonly Dictionary<string, object?> _values = new(StringComparer.Ordinal);
+    private readonly HashSet<string> _modifiedParameterNames = new(StringComparer.Ordinal);
+    private readonly SandboxFormModel _form = new();
+    private ErrorBoundary? _errorBoundary;
+    private string? _componentKey;
+    private bool _showMarkup;
+
+    [Parameter, EditorRequired]
+    public ComponentDocumentationEntry Component { get; set; } = default!;
+
+    private SandboxDocumentation Sandbox => Component.Sandbox;
+
+    protected override void OnParametersSet() {
+        if (!string.Equals(_componentKey, Component.Type.FullName, StringComparison.Ordinal)) {
+            _componentKey = Component.Type.FullName;
+            _values.Clear();
+            _modifiedParameterNames.Clear();
+        }
+
+        foreach (var parameter in Sandbox.Parameters.Where(parameter => parameter.IsSupported)) {
+            _values.TryAdd(parameter.Property.Name, parameter.DefaultValue);
+        }
+
+        _errorBoundary?.Recover();
+    }
+
+    private IDictionary<string, object> BuildComponentParameters() {
+        var parameters = new Dictionary<string, object>(StringComparer.Ordinal);
+        if (Sandbox.ComponentType is null) {
+            return parameters;
+        }
+
+        foreach (var parameter in Sandbox.Parameters.Where(parameter => parameter.IsSupported && ShouldIncludeParameter(parameter))) {
+            var property = Sandbox.ComponentType.GetProperty(parameter.Property.Name);
+            if (property is null) {
+                continue;
+            }
+
+            var convertedValue = ConvertValue(parameter, property.PropertyType);
+            if (convertedValue is null && !ShouldPassNullParameter(parameter)) {
+                continue;
+            }
+
+            parameters[parameter.Property.Name] = convertedValue!;
+        }
+
+        return parameters;
+    }
+
+    private object? ConvertValue(SandboxParameterDocumentation parameter, Type targetType) {
+        var value = GetValue(parameter);
+        if (value is null) {
+            return null;
+        }
+
+        if (parameter.Kind == SandboxParameterKind.ChildContent) {
+            return BuildChildContent(parameter);
+        }
+
+        if (parameter.Kind == SandboxParameterKind.Icon && value is SandboxIconOption iconOption) {
+            return iconOption.Icon;
+        }
+
+        if (parameter.Kind == SandboxParameterKind.Enum && value is SandboxEnumOption enumOption) {
+            return enumOption.Value;
+        }
+
+        var nullableTargetType = Nullable.GetUnderlyingType(targetType) ?? targetType;
+        if (nullableTargetType.IsEnum && value.GetType() == nullableTargetType) {
+            return value;
+        }
+
+        if (nullableTargetType == typeof(string)) {
+            return Convert.ToString(value, CultureInfo.InvariantCulture);
+        }
+
+        if (nullableTargetType == typeof(bool)) {
+            return Convert.ToBoolean(value, CultureInfo.InvariantCulture);
+        }
+
+        if (IsNumeric(nullableTargetType)) {
+            return Convert.ChangeType(value, nullableTargetType, CultureInfo.InvariantCulture);
+        }
+
+        return value;
+    }
+
+    private string BuildMarkup() {
+        if (Sandbox.ComponentType is null) {
+            return string.Empty;
+        }
+
+        var tagName = Sandbox.ComponentType.Name.Split('`')[0];
+        var attributes = new List<string>();
+        var childContentBlocks = new List<string>();
+        foreach (var parameter in Sandbox.Parameters.Where(parameter => parameter.IsSupported && ShouldIncludeParameter(parameter))) {
+            if (parameter.Kind == SandboxParameterKind.ChildContent) {
+                var childContentMarkup = BuildChildContentMarkup(parameter);
+                if (!string.IsNullOrWhiteSpace(childContentMarkup)) {
+                    childContentBlocks.Add(childContentMarkup);
+                }
+
+                continue;
+            }
+
+            var formattedValue = FormatMarkupValue(parameter);
+            if (parameter.Kind == SandboxParameterKind.Icon && string.IsNullOrWhiteSpace(formattedValue)) {
+                continue;
+            }
+
+            attributes.Add(FormatMarkupAttribute(parameter, formattedValue));
+        }
+
+        return FormatElementMarkup(tagName, attributes, string.Join("\r\n", childContentBlocks));
+    }
+
+    private static string FormatElementMarkup(string tagName, IReadOnlyList<string> attributes, string childContent) {
+        var builder = new StringBuilder();
+        builder.Append('<').Append(tagName);
+
+        foreach (var attribute in attributes) {
+            builder.AppendLine();
+            builder.Append("    ").Append(attribute);
+        }
+
+        if (string.IsNullOrWhiteSpace(childContent)) {
+            builder.Append(" />");
+            return builder.ToString();
+        }
+
+        builder.AppendLine(">");
+        builder.AppendLine(IndentMarkup(childContent, 1));
+        builder.Append("</").Append(tagName).Append('>');
+        return builder.ToString();
+    }
+
+    private static string IndentMarkup(string markup, int level) {
+        var indent = new string(' ', level * 4);
+        var lines = markup.Replace("\r\n", "\n").Trim('\r', '\n').Split('\n');
+        return string.Join("\r\n", lines.Select(line => $"{indent}{line}"));
+    }
+
+    private bool ShouldIncludeParameter(SandboxParameterDocumentation parameter) =>
+        parameter.Property.IsEditorRequired ||
+        parameter.Kind == SandboxParameterKind.ChildContent ||
+        _modifiedParameterNames.Contains(parameter.Property.Name);
+
+    private bool ShouldPassNullParameter(SandboxParameterDocumentation parameter) =>
+        parameter.Kind == SandboxParameterKind.Enum &&
+        parameter.IsNullable &&
+        _modifiedParameterNames.Contains(parameter.Property.Name);
+
+    private string BuildControlElementId(SandboxParameterDocumentation parameter) =>
+        $"docs-sandbox-{Component.Slug}-{DocumentationCatalog.CreateSlug(parameter.Property.Name)}";
+
+    private RenderFragment BuildChildContent(SandboxParameterDocumentation parameter) =>
+        Component.Type.Name switch {
+            "NTAccordion" => BuildAccordionItems(),
+            _ => BuildTextChildContent(parameter)
+        };
+
+    private RenderFragment BuildTextChildContent(SandboxParameterDocumentation parameter) {
+        var text = BuildRenderFragmentText(parameter);
+        return builder => builder.AddContent(0, text);
+    }
+
+    private static RenderFragment BuildAccordionItems() => builder => {
+        builder.OpenComponent<NTAccordionItem>(0);
+        builder.AddAttribute(1, nameof(NTAccordionItem.Label), "Getting started");
+        builder.AddAttribute(2, nameof(NTAccordionItem.SupportingText), "Native disclosure item");
+        builder.AddAttribute(3, nameof(NTAccordionItem.Open), true);
+        builder.AddAttribute(4, nameof(NTAccordionItem.ChildContent), (RenderFragment)(content => {
+            content.AddContent(0, "Accordion content is generated from the source documentation model.");
+        }));
+        builder.CloseComponent();
+
+        builder.OpenComponent<NTAccordionItem>(5);
+        builder.AddAttribute(6, nameof(NTAccordionItem.Label), "Details");
+        builder.AddAttribute(7, nameof(NTAccordionItem.ChildContent), (RenderFragment)(content => {
+            content.AddContent(0, "Use accordion items for related sections that can expand and collapse.");
+        }));
+        builder.CloseComponent();
+    };
+
+    private string BuildChildContentMarkup(SandboxParameterDocumentation parameter) =>
+        Component.Type.Name switch {
+            "NTAccordion" => "<NTAccordionItem\r\n    Label=\"Getting started\"\r\n    SupportingText=\"Native disclosure item\"\r\n    Open=\"true\">\r\n    Accordion content is generated from the source documentation model.\r\n</NTAccordionItem>\r\n<NTAccordionItem\r\n    Label=\"Details\">\r\n    Use accordion items for related sections that can expand and collapse.\r\n</NTAccordionItem>",
+            _ when string.Equals(parameter.Property.Name, "ChildContent", StringComparison.Ordinal) => BuildRenderFragmentText(parameter),
+            _ => FormatElementMarkup(parameter.Property.Name, [], BuildRenderFragmentText(parameter))
+        };
+
+    private static string BuildRenderFragmentText(SandboxParameterDocumentation parameter) => "Example";
+
+    private string FormatMarkupAttribute(SandboxParameterDocumentation parameter, string formattedValue) =>
+        parameter.Kind switch {
+            SandboxParameterKind.Icon => $"{parameter.Property.Name}=\"@{formattedValue}\"",
+            SandboxParameterKind.Enum when parameter.IsNullable && GetValue(parameter) is SandboxEnumOption { Value: null } => $"{parameter.Property.Name}=\"@null\"",
+            _ => $"{parameter.Property.Name}=\"{formattedValue}\""
+        };
+
+    private string FormatMarkupValue(SandboxParameterDocumentation parameter) {
+        var value = GetValue(parameter);
+        return value switch {
+            null => string.Empty,
+            bool boolValue => boolValue.ToString().ToLowerInvariant(),
+            SandboxEnumOption { Value: null } => string.Empty,
+            SandboxEnumOption enumOption => enumOption.Label,
+            SandboxIconOption { Icon: null } => string.Empty,
+            SandboxIconOption iconOption => iconOption.Label,
+            _ => Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty
+        };
+    }
+
+    private object? GetValue(SandboxParameterDocumentation parameter) {
+        return _values.TryGetValue(parameter.Property.Name, out var value) ? value : parameter.DefaultValue;
+    }
+
+    private bool GetBool(SandboxParameterDocumentation parameter) => GetValue(parameter) as bool? ?? false;
+
+    private int? GetInt(SandboxParameterDocumentation parameter) => GetValue(parameter) as int? ?? 0;
+
+    private string? GetString(SandboxParameterDocumentation parameter) => Convert.ToString(GetValue(parameter), CultureInfo.InvariantCulture);
+
+    private string GetEnumString(SandboxParameterDocumentation parameter) =>
+        GetValue(parameter) is SandboxEnumOption option
+            ? option.Label
+            : Convert.ToString(GetValue(parameter), CultureInfo.InvariantCulture) ?? string.Empty;
+
+    private void SetEnumValue(SandboxParameterDocumentation parameter, string? value) {
+        var selectedOption = parameter.Options.OfType<SandboxEnumOption>().FirstOrDefault(option => string.Equals(option.Label, value, StringComparison.Ordinal));
+        SetValue(parameter, selectedOption ?? parameter.DefaultValue);
+    }
+
+    private string GetIconString(SandboxParameterDocumentation parameter) =>
+        GetValue(parameter) is SandboxIconOption option ? option.Label : string.Empty;
+
+    private void SetIconValue(SandboxParameterDocumentation parameter, string? value) {
+        var selectedOption = parameter.Options.OfType<SandboxIconOption>().FirstOrDefault(option => string.Equals(option.Label, value, StringComparison.Ordinal));
+        SetValue(parameter, selectedOption ?? parameter.DefaultValue);
+    }
+
+    private void SetValue(SandboxParameterDocumentation parameter, object? value) {
+        _values[parameter.Property.Name] = value;
+        _modifiedParameterNames.Add(parameter.Property.Name);
+        _errorBoundary?.Recover();
+    }
+
+    private void ShowPreview() => _showMarkup = false;
+
+    private void ShowMarkup() => _showMarkup = true;
+
+    private static bool IsNumeric(Type type) =>
+        type == typeof(byte) || type == typeof(sbyte) || type == typeof(short) || type == typeof(ushort) ||
+        type == typeof(int) || type == typeof(uint) || type == typeof(long) || type == typeof(ulong) ||
+        type == typeof(float) || type == typeof(double) || type == typeof(decimal);
+
+    private sealed class SandboxFormModel {
+        public bool BooleanValue { get; set; }
+
+        public int? NumberValue { get; set; }
+
+        public string? TextValue { get; set; }
+
+        public string? EnumValue { get; set; }
+
+        public string? IconValue { get; set; }
+    }
+}

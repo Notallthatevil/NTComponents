@@ -133,12 +133,12 @@ public class TnTMarkdownEditor_Tests : BunitContext {
     }
 
     [Fact]
-    public void Inherits_From_TnTPageScriptComponent() {
+    public void Inherits_From_NTPageScriptComponent() {
         // Act
         var cut = Render<TnTMarkdownEditor>();
 
         // Assert
-        cut.Instance.Should().BeAssignableTo<NTComponents.Core.TnTPageScriptComponent<TnTMarkdownEditor>>();
+        cut.Instance.Should().BeAssignableTo<NTComponents.Core.NTPageScriptComponent<TnTMarkdownEditor>>();
     }
 
     [Fact]

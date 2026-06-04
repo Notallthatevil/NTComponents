@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
 using NTComponents.Core;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -22,6 +23,10 @@ namespace NTComponents;
 ///         Elevated split buttons must keep non-zero elevation; other variants must remain flat.
 ///     </para>
 /// </remarks>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Renders native split-button and popover menu markup with browser enhancement.",
+    CompatibilityDetails = "Static SSR emits the leading button, trailing popover trigger, and menu panel. The JavaScript module synchronizes expanded state, focus, and outside-click behavior with Blazor when interactive.")]
 public partial class NTSplitButton {
 
     /// <summary>

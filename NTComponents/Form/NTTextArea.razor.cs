@@ -6,6 +6,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
@@ -21,7 +22,11 @@ namespace NTComponents;
 ///     the initial native <c>rows</c> value, and pass native <c>cols</c>, <c>wrap</c>, and <c>spellcheck</c> attributes
 ///     through <c>AdditionalAttributes</c> when the browser behavior should be explicit.
 /// </remarks>
-public partial class NTTextArea : ITnTPageScriptComponent<NTTextArea> {
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Renders a native textarea and enhances autosizing with JavaScript.",
+    CompatibilityDetails = "Static SSR emits the textarea, labels, supporting text, and named value. Autosize behavior, live binding, and validation updates require browser or Blazor enhancement.")]
+public partial class NTTextArea : INTPageScriptComponent<NTTextArea> {
     private const string TextAreaJsModulePath = "./_content/NTComponents/Form/NTTextArea.razor.js";
 
     private static readonly HashSet<string> TextAreaExplicitControlAttributeNames = new(StringComparer.OrdinalIgnoreCase) {
@@ -57,9 +62,9 @@ public partial class NTTextArea : ITnTPageScriptComponent<NTTextArea> {
     /// <inheritdoc />
     public string? JsModulePath => TextAreaJsModulePath;
 
-    string? ITnTComponentBase.ElementClass => GetRootClass(!string.IsNullOrWhiteSpace(CurrentErrorText));
+    string? INTComponentBase.ElementClass => GetRootClass(!string.IsNullOrWhiteSpace(CurrentErrorText));
 
-    string? ITnTComponentBase.ElementStyle => ElementStyle;
+    string? INTComponentBase.ElementStyle => ElementStyle;
 
     /// <summary>
     ///     Gets the JavaScript runtime for interactive module loading.

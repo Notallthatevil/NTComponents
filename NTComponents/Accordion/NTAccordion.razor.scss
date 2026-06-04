@@ -7,11 +7,13 @@ $state-transition: motion.$nt-motion-duration-short_3 motion.$nt-motion-easing-s
 .nt-accordion {
     display: flex;
     flex-direction: column;
+    inline-size: 100%;
     min-inline-size: 0;
     overflow: visible;
 
     ::deep .nt-accordion-item {
         border-radius: 0;
+        inline-size: 100%;
 
         &:first-child {
             border-start-start-radius: corners.$nt-corner-radius-medium;

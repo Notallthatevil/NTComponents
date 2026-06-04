@@ -1,0 +1,78 @@
+name: Build and Test Template
+
+on:
+  workflow_call:
+    inputs:
+      configuration:
+        required: false
+        type: string
+        default: Release
+
+env:
+  COVERAGE_THRESHOLD: 0
+  TESTINGPLATFORM_EXITCODE_IGNORE: 8
+
+jobs:
+  build-test-pack:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup .NET SDKs
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+            10.0.x
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: Restore WebAssembly workloads
+        run: dotnet workload restore NTComponents.slnx
+
+      - name: Restore dependencies
+        run: dotnet restore NTComponents.slnx
+
+      - name: Install node dependencies
+        run: npm ci
+
+      - name: Build
+        run: dotnet build NTComponents.slnx --no-restore --configuration ${{ inputs.configuration }}
+
+      - name: Ensure browsers are installed
+        run: pwsh NTComponents.Tests/bin/${{ inputs.configuration }}/net10.0/playwright.ps1 install --with-deps
+
+      - name: Install dotnet-coverage
+        run: dotnet tool install --global dotnet-coverage
+
+      - name: Run .NET tests with coverage
+        run: |
+          dotnet-coverage collect --output ./TestResults/coverage.cobertura.xml --output-format cobertura dotnet test NTComponents.slnx --no-restore --configuration ${{ inputs.configuration }} --results-directory ./TestResults -v minimal
+
+      - name: Run node tests
+        run: npm test
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: ./TestResults
+
+      - name: Post coverage summary to PR
+        if: github.event_name == 'pull_request'
+        uses: 5monkeys/cobertura-action@v13
+        with:
+          path: ./TestResults/coverage.cobertura.xml
+          minimum_coverage: ${{ env.COVERAGE_THRESHOLD }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          fail_below_threshold: true
+          show_line: true
+          show_class_names: true
+          only_changed_files: true

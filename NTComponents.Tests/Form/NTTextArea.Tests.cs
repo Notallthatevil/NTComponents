@@ -30,7 +30,7 @@ public class NTTextArea_Tests : BunitContext {
     public void Component_Implements_PageScript_Component_Interface() {
         var cut = RenderTextArea();
 
-        cut.Instance.Should().BeAssignableTo<NTComponents.Interfaces.ITnTPageScriptComponent<NTTextArea>>();
+        cut.Instance.Should().BeAssignableTo<NTComponents.Interfaces.INTPageScriptComponent<NTTextArea>>();
         cut.Instance.Should().BeAssignableTo<IAsyncDisposable>();
         cut.Instance.Should().BeAssignableTo<IDisposable>();
     }

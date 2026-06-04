@@ -2,12 +2,12 @@ using Microsoft.AspNetCore.Components;
 
 namespace NTComponents.Tests.Script;
 
-public class TnTPageScript_Tests : BunitContext {
+public class NTPageScript_Tests : BunitContext {
 
     [Fact]
     public void BuildRenderTree_Uses_Correct_Sequence_Numbers() {
         // This test verifies the internal implementation follows the documented pattern Act
-        var cut = Render<TnTPageScript>(p => p.Add(s => s.Src, "./test.js"));
+        var cut = Render<NTPageScript>(p => p.Add(s => s.Src, "./test.js"));
 
         // Assert We can't directly test sequence numbers, but we can verify the structure is correct
         var element = cut.Find("tnt-page-script");
@@ -18,7 +18,7 @@ public class TnTPageScript_Tests : BunitContext {
     [Fact]
     public void Component_Implements_ComponentBase() {
         // Act
-        var cut = Render<TnTPageScript>(p => p.Add(s => s.Src, "./test.js"));
+        var cut = Render<NTPageScript>(p => p.Add(s => s.Src, "./test.js"));
 
         // Assert
         cut.Instance.Should().BeAssignableTo<ComponentBase>();
@@ -27,7 +27,7 @@ public class TnTPageScript_Tests : BunitContext {
     [Fact]
     public void Component_Only_Renders_Single_Element() {
         // Act
-        var cut = Render<TnTPageScript>(p => p.Add(s => s.Src, "./test.js"));
+        var cut = Render<NTPageScript>(p => p.Add(s => s.Src, "./test.js"));
 
         // Assert
         cut.FindAll("*").Count.Should().Be(1, "because component should only render one element");
@@ -37,7 +37,7 @@ public class TnTPageScript_Tests : BunitContext {
     [Fact]
     public void Element_Has_No_Content() {
         // Act
-        var cut = Render<TnTPageScript>(p => p.Add(s => s.Src, "./test.js"));
+        var cut = Render<NTPageScript>(p => p.Add(s => s.Src, "./test.js"));
         var element = cut.Find("tnt-page-script");
 
         // Assert
@@ -47,7 +47,7 @@ public class TnTPageScript_Tests : BunitContext {
     [Fact]
     public void Element_Has_Only_Src_Attribute_By_Default() {
         // Act
-        var cut = Render<TnTPageScript>(p => p.Add(s => s.Src, "./test.js"));
+        var cut = Render<NTPageScript>(p => p.Add(s => s.Src, "./test.js"));
         var element = cut.Find("tnt-page-script");
 
         // Assert
@@ -59,7 +59,7 @@ public class TnTPageScript_Tests : BunitContext {
     [Fact]
     public void Markup_Structure_Is_Minimal() {
         // Act
-        var cut = Render<TnTPageScript>(p => p.Add(s => s.Src, "./test.js"));
+        var cut = Render<NTPageScript>(p => p.Add(s => s.Src, "./test.js"));
 
         // Assert
         cut.Markup.Should().Be("<tnt-page-script src=\"./test.js\"></tnt-page-script>");
@@ -72,8 +72,8 @@ public class TnTPageScript_Tests : BunitContext {
         const string src2 = "./script2.js";
 
         // Act
-        var cut1 = Render<TnTPageScript>(p => p.Add(s => s.Src, src1));
-        var cut2 = Render<TnTPageScript>(p => p.Add(s => s.Src, src2));
+        var cut1 = Render<NTPageScript>(p => p.Add(s => s.Src, src1));
+        var cut2 = Render<NTPageScript>(p => p.Add(s => s.Src, src2));
 
         // Assert
         cut1.Find("tnt-page-script").GetAttribute("src").Should().Be(src1);
@@ -87,12 +87,12 @@ public class TnTPageScript_Tests : BunitContext {
         const string updatedSrc = "./updated.js";
 
         // Act - Initial render
-        var cut = Render<TnTPageScript>(p => p.Add(s => s.Src, initialSrc));
+        var cut = Render<NTPageScript>(p => p.Add(s => s.Src, initialSrc));
         var element = cut.Find("tnt-page-script");
         element.GetAttribute("src").Should().Be(initialSrc);
 
         // Act - Re-render with updated src by rendering new component
-        var cut2 = Render<TnTPageScript>(p => p.Add(s => s.Src, updatedSrc));
+        var cut2 = Render<NTPageScript>(p => p.Add(s => s.Src, updatedSrc));
         element = cut2.Find("tnt-page-script");
 
         // Assert
@@ -105,7 +105,7 @@ public class TnTPageScript_Tests : BunitContext {
         const string scriptSrc = "./my-script.js";
 
         // Act
-        var cut = Render<TnTPageScript>(p => p.Add(s => s.Src, scriptSrc));
+        var cut = Render<NTPageScript>(p => p.Add(s => s.Src, scriptSrc));
         var element = cut.Find("tnt-page-script");
 
         // Assert
@@ -127,7 +127,7 @@ public class TnTPageScript_Tests : BunitContext {
 
         foreach (var src in testCases) {
             // Act
-            var cut = Render<TnTPageScript>(p => p.Add(s => s.Src, src));
+            var cut = Render<NTPageScript>(p => p.Add(s => s.Src, src));
             var element = cut.Find("tnt-page-script");
 
             // Assert
@@ -138,7 +138,7 @@ public class TnTPageScript_Tests : BunitContext {
     [Fact]
     public void Src_Parameter_Handles_Empty_String() {
         // Act
-        var cut = Render<TnTPageScript>(p => p.Add(s => s.Src, string.Empty));
+        var cut = Render<NTPageScript>(p => p.Add(s => s.Src, string.Empty));
         var element = cut.Find("tnt-page-script");
 
         // Assert
@@ -149,7 +149,7 @@ public class TnTPageScript_Tests : BunitContext {
     [Fact]
     public void Src_Parameter_Handles_Null_Value() {
         // Act
-        var cut = Render<TnTPageScript>(p => p.Add(s => s.Src, null!));
+        var cut = Render<NTPageScript>(p => p.Add(s => s.Src, null!));
         var element = cut.Find("tnt-page-script");
 
         // Assert
@@ -163,7 +163,7 @@ public class TnTPageScript_Tests : BunitContext {
         const string whitespaceSrc = "   ";
 
         // Act
-        var cut = Render<TnTPageScript>(p => p.Add(s => s.Src, whitespaceSrc));
+        var cut = Render<NTPageScript>(p => p.Add(s => s.Src, whitespaceSrc));
         var element = cut.Find("tnt-page-script");
 
         // Assert
@@ -174,7 +174,7 @@ public class TnTPageScript_Tests : BunitContext {
     [Fact]
     public void Src_Parameter_Has_EditorRequired_Attribute() {
         // Arrange & Act
-        var srcProperty = typeof(TnTPageScript).GetProperty(nameof(TnTPageScript.Src));
+        var srcProperty = typeof(NTPageScript).GetProperty(nameof(NTPageScript.Src));
 
         // Assert
         srcProperty.Should().NotBeNull();
@@ -188,7 +188,7 @@ public class TnTPageScript_Tests : BunitContext {
     [Fact]
     public void Src_Parameter_Is_Required() {
         // Arrange & Act
-        var cut = Render<TnTPageScript>();
+        var cut = Render<NTPageScript>();
         var element = cut.Find("tnt-page-script");
 
         // Assert
@@ -203,7 +203,7 @@ public class TnTPageScript_Tests : BunitContext {
     [InlineData("../parent/script.js")]
     public void Theory_Various_Src_Values_Render_Correctly(string srcValue) {
         // Act
-        var cut = Render<TnTPageScript>(p => p.Add(s => s.Src, srcValue));
+        var cut = Render<NTPageScript>(p => p.Add(s => s.Src, srcValue));
         var element = cut.Find("tnt-page-script");
 
         // Assert
