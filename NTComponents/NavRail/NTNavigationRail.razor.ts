@@ -398,7 +398,7 @@ function usesAlwaysHiddenCollapsedModal(rail: NavigationRailElement): boolean {
 
 function usesExpandedItemLayout(rail: NavigationRailElement, expanded: boolean): boolean {
     return expanded
-        || rail.classList.contains('nt-navigation-rail-hide-when-collapsed');
+        || isModalRail(rail);
 }
 
 function focusFirstDestination(rail: NavigationRailElement): void {

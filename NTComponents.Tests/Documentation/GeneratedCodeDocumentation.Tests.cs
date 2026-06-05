@@ -28,7 +28,7 @@ public class GeneratedCodeDocumentation_Tests {
         // Assert
         buttonType.Should().NotBeNull();
         buttonType!.Summary.Should().Contain("Represents a customizable button component.");
-        buttonType.BaseTypeFullName.Should().Be("NTComponents.Core.NTComponentBase");
+        buttonType.BaseTypeFullName.Should().Be("NTComponents.Core.TnTComponentBase");
         buttonSizeProperty.Should().NotBeNull();
         buttonSizeProperty!.Summary.Should().Contain("The size of the button.");
     }
