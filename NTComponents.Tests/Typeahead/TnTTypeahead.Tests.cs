@@ -796,7 +796,7 @@ public class TnTTypeahead_Tests : BunitContext {
     }
 
     [Fact]
-    public void Search_DebouncesProperly() {
+    public async Task Search_DebouncesProperly() {
         // Arrange
         var searchCallCount = 0;
 
@@ -806,17 +806,20 @@ public class TnTTypeahead_Tests : BunitContext {
         }
 
         var cut = RenderTypeahead(CountingSearchFunc, parameters => parameters
-            .Add(p => p.DebounceMilliseconds, 100));
-
-        var input = cut.Find("input");
+            .Add(p => p.DebounceMilliseconds, 500));
 
         // Act
-        input.Input("a");
-        input.Input("ap");
-        input.Input("app");
+        var inputTasks = new[] {
+            cut.InvokeAsync(() => cut.Find("input").Input("a")),
+            cut.InvokeAsync(() => cut.Find("input").Input("ap")),
+            cut.InvokeAsync(() => cut.Find("input").Input("app"))
+        };
 
         // Assert
-        cut.WaitForAssertion(() => searchCallCount.Should().Be(1), TimeSpan.FromSeconds(3));
+        await Task.Delay(750, Xunit.TestContext.Current.CancellationToken);
+        searchCallCount.Should().Be(1);
+        await Task.WhenAll(inputTasks);
+        searchCallCount.Should().Be(1);
     }
 
     [Fact]

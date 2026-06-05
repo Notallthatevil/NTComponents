@@ -54,7 +54,9 @@ jobs:
 
       - name: Run .NET tests with coverage
         run: |
-          dotnet-coverage collect --output ./TestResults/coverage.cobertura.xml --output-format cobertura dotnet test NTComponents.slnx --no-restore --configuration ${{ inputs.configuration }} --results-directory ./TestResults -v minimal
+          dotnet-coverage collect --output ./TestResults/ntcomponents-tests.cobertura.xml --output-format cobertura dotnet test NTComponents.Tests/NTComponents.Tests.csproj --no-restore --configuration ${{ inputs.configuration }} --results-directory ./TestResults -v minimal
+          dotnet-coverage collect --output ./TestResults/analyzers-tests.cobertura.xml --output-format cobertura dotnet test NTComponents.Analyzers.Tests/NTComponents.Analyzers.Tests.csproj --no-restore --configuration ${{ inputs.configuration }} --results-directory ./TestResults -v minimal
+          dotnet-coverage merge ./TestResults/ntcomponents-tests.cobertura.xml ./TestResults/analyzers-tests.cobertura.xml --output ./TestResults/coverage.cobertura.xml --output-format cobertura --remove-input-files
 
       - name: Run node tests
         run: npm test
