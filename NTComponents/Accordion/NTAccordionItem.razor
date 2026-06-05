@@ -1,0 +1,67 @@
+@namespace NTComponents
+@using NTComponents.Core
+@inherits NTComponentBase
+
+@if (Disabled) {
+    <div @attributes="AdditionalAttributes"
+         class="@ElementClass"
+         style="@ElementStyle"
+         title="@ElementTitle"
+         id="@ElementId"
+         lang="@ElementLang"
+         aria-disabled="true"
+         @ref="Element">
+        <div class="nt-accordion-item-summary" id="@SummaryElementId">
+            @SummaryContent
+        </div>
+        @if (RenderedOpen) {
+            @PanelContent
+        }
+    </div>
+}
+else {
+    <details @attributes="AdditionalAttributes"
+             class="@ElementClass"
+             style="@ElementStyle"
+             title="@ElementTitle"
+             id="@ElementId"
+             lang="@ElementLang"
+             name="@EffectiveName"
+             open="@RenderedOpen"
+             @ref="Element">
+        <summary class="nt-accordion-item-summary" id="@SummaryElementId">
+            @SummaryContent
+        </summary>
+        @PanelContent
+    </details>
+}
+
+@code {
+    private RenderFragment SummaryContent => @<text>
+        @if (LeadingIcon is not null) {
+            <span class="nt-accordion-item-leading-icon" aria-hidden="true">
+                @LeadingIcon.Render()
+            </span>
+        }
+        <span class="nt-accordion-item-labels">
+            <span class="nt-accordion-item-label">
+                @if (HeaderContent is not null) {
+                    @HeaderContent
+                }
+                else {
+                    @Label
+                }
+            </span>
+            @if (!string.IsNullOrWhiteSpace(SupportingText)) {
+                <span class="nt-accordion-item-supporting-text">@SupportingText</span>
+            }
+        </span>
+        <span class="nt-accordion-item-expand-icon" aria-hidden="true">
+            @MaterialIcon.ExpandMore.Render()
+        </span>
+    </text>;
+
+    private RenderFragment PanelContent => @<div class="nt-accordion-item-content" role="@PanelRole" aria-labelledby="@SummaryElementId">
+        @ChildContent
+    </div>;
+}

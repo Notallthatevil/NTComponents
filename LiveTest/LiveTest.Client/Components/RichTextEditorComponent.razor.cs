@@ -9,6 +9,13 @@ namespace LiveTest.Client.Components;
 ///     Demonstrates the rich text editor with form validation.
 /// </summary>
 public partial class RichTextEditorComponent : ComponentBase {
+    [Parameter]
+    public string ModeName { get; set; } = "Editor";
+
+    private string EditorId => $"rich-text-editor-{ModeKey}";
+
+    private string ModeKey => ModeName.ToLowerInvariant().Replace(" ", "-", StringComparison.Ordinal);
+
     private RichTextEditorDemoModel Model { get; } = new() {
         Value = """
             # Meeting Notes
@@ -57,6 +64,13 @@ public partial class RichTextEditorComponent : ComponentBase {
 
     private Task HandleValidSubmit(EditContext editContext) {
         SubmitMessage = "Form is valid.";
+        return Task.CompletedTask;
+    }
+
+    private Task Reset(MouseEventArgs args) {
+        Model.Value = string.Empty;
+        SubmitMessage = "Not submitted.";
+        BlurMessage = null;
         return Task.CompletedTask;
     }
 

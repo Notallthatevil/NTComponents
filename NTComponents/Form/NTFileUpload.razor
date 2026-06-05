@@ -1,0 +1,142 @@
+@namespace NTComponents
+@using Microsoft.AspNetCore.Components.Forms
+@inherits NTFieldBase<IReadOnlyList<IBrowserFile>?>
+
+@{
+    var errorText = DisplayErrorText;
+    var hasErrorText = !string.IsNullOrWhiteSpace(errorText);
+    var supportingText = hasErrorText ? null : CurrentSupportingText;
+    var hasSupportingText = !string.IsNullOrWhiteSpace(supportingText);
+    var describedBy = BuildDescribedBy(hasErrorText, hasSupportingText);
+}
+
+<div class="@GetRootClass(hasErrorText)" style="@ElementStyle">
+    <div class="nt-input-container-overflow">
+        <div class="nt-input-container" title="@ElementTitle" lang="@ElementLang">
+            <span class="nt-input-background" aria-hidden="true"></span>
+            <span class="nt-input-state-layer" aria-hidden="true"></span>
+
+            @if (EffectiveAppearance == NTFormAppearance.Filled) {
+                <span class="nt-input-active-indicator" aria-hidden="true"></span>
+            }
+
+            @if (EffectiveAppearance == NTFormAppearance.Outlined) {
+                <span class="nt-input-outline" aria-hidden="true">
+                    <span class="nt-input-outline-start"></span>
+                    <span class="nt-input-outline-notch">
+                        @if (HasLabel) {
+                            <span class="nt-input-outline-label">@Label</span>
+                        }
+                    </span>
+                    <span class="nt-input-outline-end"></span>
+                </span>
+            }
+
+            <span class="nt-input-field">
+                @if (LeadingIcon is not null) {
+                    <span class="nt-input-leading" aria-hidden="true">
+                        @LeadingIcon.Render()
+                    </span>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(PrefixText)) {
+                    <span class="nt-input-prefix" id="@PrefixId">@PrefixText</span>
+                }
+
+                <span class="nt-input-control-container">
+                    <span class="nt-file-upload-choose" aria-hidden="true">@ChooseButtonText</span>
+                    <span class="nt-file-upload-value">@DisplayValue</span>
+                    @if (RendererInfo.IsInteractive) {
+                        <InputFile @key="_inputKey"
+                                   OnChange="OnFilesSelectedAsync"
+                                   @attributes="ControlAttributes"
+                                   id="@InputId"
+                                   name="@ElementName"
+                                   class="@InputClass"
+                                   multiple="@AllowsMultiple"
+                                   accept="@Accept"
+                                   disabled="@IsSelectionDisabled"
+                                   required="@IsRequired"
+                                   aria-labelledby="@InputLabelledBy"
+                                   aria-describedby="@describedBy"
+                                   aria-invalid="@(hasErrorText ? "true" : "false")"
+                                   aria-errormessage="@(hasErrorText ? ErrorTextId : null)"
+                                   @onblur="@OnBlurAsync" />
+                    }
+                    else {
+                        <input @attributes="ControlAttributes"
+                               id="@InputId"
+                               type="file"
+                               name="@ElementName"
+                               class="@InputClass"
+                               multiple="@AllowsMultiple"
+                               accept="@Accept"
+                               disabled="@IsSelectionDisabled"
+                               required="@IsRequired"
+                               aria-labelledby="@InputLabelledBy"
+                               aria-describedby="@describedBy"
+                               aria-invalid="@(hasErrorText ? "true" : "false")"
+                               aria-errormessage="@(hasErrorText ? ErrorTextId : null)"
+                               @onblur="@OnBlurAsync"
+                               @ref="Element" />
+                    }
+                    @if (HasLabel) {
+                        <span class="nt-input-label" id="@LabelId">@Label</span>
+                    }
+                </span>
+
+                @if (!string.IsNullOrWhiteSpace(SuffixText)) {
+                    <span class="nt-input-suffix" id="@SuffixId">@SuffixText</span>
+                }
+
+                @{
+                    var trailingAdornment = CreateTrailingAdornmentState(hasErrorText);
+                }
+
+                @if (trailingAdornment.Icon is not null) {
+                    <span class="@trailingAdornment.Class" aria-label="@trailingAdornment.AriaLabel" aria-hidden="@trailingAdornment.AriaHidden">
+                        @trailingAdornment.Icon.Render()
+                    </span>
+                }
+
+                @if (RendererInfo.IsInteractive && ShowUploadButton && HasUploadHandler) {
+                    <button type="button" class="nt-file-upload-action" disabled="@UploadButtonDisabled" @onclick="UploadAsync">
+                        @UploadButtonText
+                    </button>
+                }
+            </span>
+        </div>
+    </div>
+
+    @if (hasErrorText || hasSupportingText) {
+        <div class="nt-input-supporting-row">
+            @if (hasErrorText) {
+                <span class="nt-input-supporting nt-input-error-text" id="@ErrorTextId" role="alert">
+                    @errorText
+                </span>
+            }
+            else if (hasSupportingText) {
+                <span class="nt-input-supporting" id="@SupportingTextId">
+                    @supportingText
+                </span>
+            }
+        </div>
+    }
+
+    @if (_items.Count > 0) {
+        <div class="nt-file-upload-list">
+            @foreach (var item in _items) {
+                <NTFileUploadItem @key="item.Id"
+                                  BrowserFile="@item.BrowserFile"
+                                  HasError="@item.HasError"
+                                  IsIndeterminate="@item.IsIndeterminate"
+                                  Name="@item.Name"
+                                  Percent="@item.Percent"
+                                  ProgressTemplate="@ProgressTemplate"
+                                  ShouldShowPercent="@item.ShouldShowPercent"
+                                  Size="@item.Size"
+                                  Status="@item.Status" />
+            }
+        </div>
+    }
+</div>

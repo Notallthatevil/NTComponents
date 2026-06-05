@@ -28,6 +28,7 @@ public static class TnTServicesExt {
         options?.Invoke(o);
         return services.AddScoped<ITnTDialogService, TnTDialogService>()
              .AddScoped<INTSnackbarService, NTSnackbarService>()
+             .AddScoped<INTToastService, NTToastService>()
              .AddScoped<ITnTToastService, TnTToastService>()
              .AddScoped<ISessionStorageService, SessionStorageService>()
              .AddScoped<ILocalStorageService, LocalStorageService>()

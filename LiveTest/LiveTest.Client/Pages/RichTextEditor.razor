@@ -1,17 +1,36 @@
 @page "/rich-text-editor"
+@page "/Markdown"
 @using LiveTest.Client.Components
 
-<h3>
-    SSR
-</h3>
-<RichTextEditorComponent />
+<main class="rich-text-editor-page">
+    <header class="rich-text-editor-page-header">
+        <h1>Rich text editor</h1>
+        <p>FormV2-aligned field shell across static SSR, InteractiveServer, and InteractiveWebAssembly render modes.</p>
+    </header>
 
-<h3>
-    Server
-</h3>
-<RichTextEditorComponent @rendermode="InteractiveServer" />
+    <section class="rich-text-editor-grid" aria-label="Rich text editor render mode demos">
+        <article class="rich-text-editor-demo" data-testid="rich-text-editor-ssr">
+            <header>
+                <h2>Static SSR</h2>
+                <p>Enhances from the prerendered page script.</p>
+            </header>
+            <RichTextEditorComponent ModeName="SSR" />
+        </article>
 
-<h3>
-    WASM
-</h3>
-<RichTextEditorComponent @rendermode="InteractiveWebAssembly" />
+        <article class="rich-text-editor-demo" data-testid="rich-text-editor-server">
+            <header>
+                <h2>InteractiveServer</h2>
+                <p>Commits through the server circuit.</p>
+            </header>
+            <RichTextEditorComponent ModeName="Server" @rendermode="InteractiveServer" />
+        </article>
+
+        <article class="rich-text-editor-demo" data-testid="rich-text-editor-wasm">
+            <header>
+                <h2>InteractiveWebAssembly</h2>
+                <p>Commits in the browser after WebAssembly loads.</p>
+            </header>
+            <RichTextEditorComponent ModeName="WASM" @rendermode="InteractiveWebAssembly" />
+        </article>
+    </section>
+</main>

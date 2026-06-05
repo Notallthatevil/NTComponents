@@ -1,0 +1,237 @@
+using Microsoft.JSInterop;
+using NTComponents.Core;
+
+namespace NTComponents.Toast;
+
+/// <summary>
+///     Service for coordinating toast presentation through the toast JavaScript module.
+/// </summary>
+internal sealed class NTToastService(IJSRuntime _jsRuntime) : INTToastService, IAsyncDisposable {
+    private const string _dotNetCloseMethod = nameof(NotifyClosedFromJavaScript);
+    private readonly object _dotNetReferenceLock = new();
+    private readonly Dictionary<string, NTToastImplementation> _toastsById = [];
+    private readonly SemaphoreSlim _moduleLock = new(1, 1);
+    private DotNetObjectReference<NTToastService>? _dotNetReference;
+    private IJSObjectReference? _module;
+
+    internal IReadOnlyList<INTToast> ActiveToasts {
+        get {
+            lock (_toastsById) {
+                return _toastsById.Values.ToArray();
+            }
+        }
+    }
+
+    public event INTToastService.OnCloseCallback? OnClose;
+
+    public event INTToastService.OnOpenCallback? OnOpen;
+
+    public async Task CloseAsync(INTToast toast) {
+        if (toast is not NTToastImplementation implementation || !TryGetTrackedToast(implementation.Id, out var trackedToast)) {
+            return;
+        }
+
+        var module = await GetModuleAsync();
+        var closed = await module.InvokeAsync<bool>("closeToastFromBlazor", trackedToast.Id);
+        if (!closed || !RemoveTrackedToast(trackedToast.Id, out trackedToast)) {
+            return;
+        }
+
+        await (OnClose?.Invoke(trackedToast) ?? Task.CompletedTask);
+    }
+
+    public async ValueTask DisposeAsync() {
+        try {
+            if (_module is not null) {
+                var trackedToastIds = GetTrackedToastIds();
+                if (trackedToastIds.Length > 0) {
+                    await _module.InvokeVoidAsync("clearToastsFromBlazor", trackedToastIds);
+                }
+
+                await _module.DisposeAsync();
+            }
+        }
+        catch (JSDisconnectedException) {
+            // Server circuits can disconnect before scoped services are disposed.
+        }
+
+        ClearTrackedToasts();
+        _module = null;
+        _dotNetReference?.Dispose();
+        _dotNetReference = null;
+        _moduleLock.Dispose();
+    }
+
+    public async Task ShowAsync(string title, string? message = null, NTToastVariant variant = NTToastVariant.Default, int? timeout = null, bool showClose = true, string? icon = null, TnTColor? backgroundColor = null, TnTColor? textColor = null, TnTColor? iconColor = null) {
+        var defaults = NTToastDefaults.ForVariant(variant);
+        var toast = new NTToastImplementation {
+            Id = TnTComponentIdentifier.NewId(),
+            BackgroundColor = backgroundColor ?? defaults.BackgroundColor,
+            Icon = string.IsNullOrWhiteSpace(icon) ? defaults.Icon : icon,
+            IconColor = iconColor ?? defaults.IconColor,
+            Message = message,
+            ShowClose = showClose,
+            TextColor = textColor ?? defaults.TextColor,
+            Timeout = timeout ?? 4,
+            Title = title,
+            Variant = variant
+        };
+
+        TrackToast(toast);
+        try {
+            var module = await GetModuleAsync();
+            await module.InvokeAsync<string>("queueToast", JavaScriptToastOptions.From(toast, DotNetReference, backgroundColor is not null, textColor is not null, iconColor is not null));
+        }
+        catch {
+            RemoveTrackedToast(toast.Id, out _);
+            throw;
+        }
+
+        await (OnOpen?.Invoke(toast) ?? Task.CompletedTask);
+    }
+
+    [JSInvokable]
+    public async Task NotifyClosedFromJavaScript(string id) {
+        if (!RemoveTrackedToast(id, out var toast)) {
+            return;
+        }
+
+        await (OnClose?.Invoke(toast) ?? Task.CompletedTask);
+    }
+
+    private DotNetObjectReference<NTToastService> DotNetReference {
+        get {
+            if (_dotNetReference is not null) {
+                return _dotNetReference;
+            }
+
+            lock (_dotNetReferenceLock) {
+                return _dotNetReference ??= DotNetObjectReference.Create(this);
+            }
+        }
+    }
+
+    private async ValueTask<IJSObjectReference> GetModuleAsync() {
+        if (_module is not null) {
+            return _module;
+        }
+
+        await _moduleLock.WaitAsync();
+        try {
+            try {
+                _module ??= await _jsRuntime.InvokeAsync<IJSObjectReference>("import", NTToast.JsModulePathValue);
+            }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("JavaScript interop", StringComparison.OrdinalIgnoreCase)) {
+                throw new InvalidOperationException("INTToastService requires an interactive Blazor render context. For static SSR markup or prerendered lifecycle code, trigger toasts from browser JavaScript with window.NTToast?.queueToast(...).", ex);
+            }
+
+            return _module;
+        }
+        finally {
+            _moduleLock.Release();
+        }
+    }
+
+    private bool RemoveTrackedToast(string id, out NTToastImplementation toast) {
+        lock (_toastsById) {
+            if (!_toastsById.Remove(id, out var trackedToast)) {
+                toast = default!;
+                return false;
+            }
+
+            toast = trackedToast;
+            return true;
+        }
+    }
+
+    private void ClearTrackedToasts() {
+        lock (_toastsById) {
+            _toastsById.Clear();
+        }
+    }
+
+    private string[] GetTrackedToastIds() {
+        lock (_toastsById) {
+            return _toastsById.Keys.ToArray();
+        }
+    }
+
+    private void TrackToast(NTToastImplementation toast) {
+        lock (_toastsById) {
+            _toastsById[toast.Id] = toast;
+        }
+    }
+
+    private bool TryGetTrackedToast(string id, out NTToastImplementation toast) {
+        lock (_toastsById) {
+            if (!_toastsById.TryGetValue(id, out var trackedToast)) {
+                toast = default!;
+                return false;
+            }
+
+            toast = trackedToast;
+            return true;
+        }
+    }
+
+    /// <summary>
+    ///     Internal toast implementation stored by the toast service.
+    /// </summary>
+    internal sealed class NTToastImplementation : INTToast {
+        public TnTColor BackgroundColor { get; set; } = TnTColor.SurfaceContainerHigh;
+        public string? Icon { get; set; }
+        public TnTColor IconColor { get; set; } = TnTColor.Primary;
+        public string Id { get; set; } = string.Empty;
+        public string? Message { get; set; }
+        public bool ShowClose { get; set; } = true;
+        public TnTColor TextColor { get; set; } = TnTColor.OnSurface;
+        public double Timeout { get; set; } = 4;
+        public string Title { get; set; } = string.Empty;
+        public NTToastVariant Variant { get; set; } = NTToastVariant.Default;
+    }
+
+    private readonly record struct NTToastDefaults(string? Icon, TnTColor BackgroundColor, TnTColor TextColor, TnTColor IconColor) {
+        public static NTToastDefaults ForVariant(NTToastVariant variant) {
+            return variant switch {
+                NTToastVariant.Success => new NTToastDefaults(MaterialIcon.CheckCircle, TnTColor.SuccessContainer, TnTColor.OnSuccessContainer, TnTColor.Success),
+                NTToastVariant.Info => new NTToastDefaults(MaterialIcon.Info, TnTColor.InfoContainer, TnTColor.OnInfoContainer, TnTColor.Info),
+                NTToastVariant.Warning => new NTToastDefaults(MaterialIcon.Warning, TnTColor.WarningContainer, TnTColor.OnWarningContainer, TnTColor.Warning),
+                NTToastVariant.Error => new NTToastDefaults(MaterialIcon.Error, TnTColor.ErrorContainer, TnTColor.OnErrorContainer, TnTColor.Error),
+                NTToastVariant.Assert => new NTToastDefaults(MaterialIcon.Rule, TnTColor.AssertContainer, TnTColor.OnAssertContainer, TnTColor.Assert),
+                _ => new NTToastDefaults(MaterialIcon.Info, TnTColor.SurfaceContainerHigh, TnTColor.OnSurface, TnTColor.Primary)
+            };
+        }
+    }
+
+    private sealed class JavaScriptToastOptions {
+        public required string? BackgroundColor { get; init; }
+        public required string DotNetCloseMethod { get; init; }
+        public required DotNetObjectReference<NTToastService> DotNetReference { get; init; }
+        public required string? Icon { get; init; }
+        public required string? IconColor { get; init; }
+        public required string Id { get; init; }
+        public required string? Message { get; init; }
+        public required bool ShowClose { get; init; }
+        public required string? TextColor { get; init; }
+        public required double Timeout { get; init; }
+        public required string Title { get; init; }
+        public required string Variant { get; init; }
+
+        public static JavaScriptToastOptions From(NTToastImplementation toast, DotNetObjectReference<NTToastService> dotNetReference, bool hasCustomBackgroundColor, bool hasCustomTextColor, bool hasCustomIconColor) {
+            return new JavaScriptToastOptions {
+                BackgroundColor = hasCustomBackgroundColor ? toast.BackgroundColor.ToCssTnTColorVariable() : null,
+                DotNetCloseMethod = _dotNetCloseMethod,
+                DotNetReference = dotNetReference,
+                Icon = toast.Icon,
+                IconColor = hasCustomIconColor ? toast.IconColor.ToCssTnTColorVariable() : null,
+                Id = toast.Id,
+                Message = toast.Message,
+                ShowClose = toast.ShowClose,
+                TextColor = hasCustomTextColor ? toast.TextColor.ToCssTnTColorVariable() : null,
+                Timeout = toast.Timeout,
+                Title = toast.Title,
+                Variant = toast.Variant.ToString().ToLowerInvariant()
+            };
+        }
+    }
+}

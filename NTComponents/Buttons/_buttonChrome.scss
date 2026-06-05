@@ -1,0 +1,139 @@
+@use 'sass:math';
+@use '../Styles/_Variables/_colors.scss' as colors;
+@use '../Styles/_Variables/_corner-radius.scss' as corners;
+@use '../Styles/_Variables/_measurements.scss' as measurements;
+@use '../Styles/_Variables/_typescale.scss' as typescale;
+@use './buttonMotion' as buttonMotion;
+@use './buttonFocusRing' as focus;
+
+$sizes: (
+    xs: (32px, 12px, 4px, 20px, measurements.$tnt-pill-border-radius-xs, corners.$nt-corner-radius-small, corners.$nt-corner-radius-medium, 500, 14px, 20px, 0.1px),
+    s: (40px, 16px, 8px, 20px, measurements.$tnt-pill-border-radius-small, corners.$nt-corner-radius-small, corners.$nt-corner-radius-medium, 500, 14px, 20px, 0.1px),
+    m: (56px, 24px, 8px, 24px, measurements.$tnt-pill-border-radius-medium, corners.$nt-corner-radius-medium, corners.$nt-corner-radius-large, 500, 16px, 24px, 0.15px),
+    l: (96px, 48px, 12px, 32px, measurements.$tnt-pill-border-radius-large, corners.$nt-corner-radius-large, corners.$nt-corner-radius-extra-large, 400, 24px, 32px, 0),
+    xl: (136px, 64px, 16px, 40px, measurements.$tnt-pill-border-radius-xl, corners.$nt-corner-radius-large, corners.$nt-corner-radius-extra-large, 400, 32px, 40px, 0)
+);
+
+@function touch-inset($height) {
+    @if $height < 48px {
+        @return math.div(48px - $height, 2);
+    }
+
+    @return 0px;
+}
+
+@mixin root($background-token, $foreground-token, $default-background, $default-foreground) {
+    align-items: center;
+    appearance: none;
+    background: transparent;
+    border: 0;
+    border-radius: measurements.$tnt-pill-border-radius-small;
+    box-sizing: border-box;
+    color: var(--#{$foreground-token}, #{$default-foreground});
+    cursor: pointer;
+    display: inline-flex;
+    justify-content: center;
+    margin: 0;
+    min-block-size: 48px;
+    min-inline-size: 48px;
+    outline: none;
+    overflow: visible;
+    position: relative;
+    text-decoration: none;
+    transition: border-radius buttonMotion.$nt-button-shape-transition, box-shadow buttonMotion.$nt-button-state-transition, color buttonMotion.$nt-button-state-transition;
+    user-select: none;
+
+    &::after,
+    &::before {
+        border-radius: inherit;
+        content: '';
+        inset-block: touch-inset(40px);
+        inset-inline: 0;
+        pointer-events: none;
+        position: absolute;
+    }
+
+    &::after {
+        background: var(--#{$background-token}, #{$default-background});
+        border: 1px solid transparent;
+        transition: background-color buttonMotion.$nt-button-state-transition, border-color buttonMotion.$nt-button-state-transition, border-radius buttonMotion.$nt-button-shape-transition, box-shadow buttonMotion.$nt-button-state-transition;
+        z-index: 0;
+    }
+
+    &::before {
+        background: currentColor;
+        opacity: 0;
+        transition: border-radius buttonMotion.$nt-button-shape-transition, opacity buttonMotion.$nt-button-state-transition;
+        z-index: 1;
+    }
+
+    &:not(.tnt-disabled):not(:disabled) {
+        &:hover::before {
+            opacity: 0.08;
+        }
+
+        &:focus-visible::before,
+        &:active::before {
+            opacity: 0.1;
+        }
+
+        &:focus-visible {
+            outline: none;
+            z-index: 3;
+
+            &::after {
+                @include focus.nt-button-focus-ring;
+            }
+        }
+    }
+}
+
+@mixin size($square-shape-class, $height, $padding, $gap, $icon-size, $radius, $pressed-radius, $square-radius, $weight, $font-size, $line-height, $tracking) {
+    border-radius: $radius;
+    gap: $gap;
+    height: $height;
+    padding-inline: $padding;
+
+    @include typescale.tnt-typescale($weight, $font-size, $line-height, $tracking);
+
+    &::after,
+    &::before {
+        inset-block: touch-inset($height);
+    }
+
+    &.#{$square-shape-class} {
+        border-radius: $square-radius;
+    }
+
+    &:not(.tnt-disabled):not(:disabled) {
+        &:active,
+        &.nt-button--pressed-shape {
+            border-radius: $pressed-radius;
+        }
+    }
+
+    ::deep {
+        .nt-button-ripple-host {
+            inset-block: touch-inset($height);
+        }
+
+        .tnt-icon {
+            font-size: $icon-size;
+        }
+    }
+}
+
+@mixin ripple-host {
+    ::deep {
+        .nt-button-ripple-host {
+            inset-block: touch-inset(40px);
+            transition: border-radius buttonMotion.$nt-button-shape-transition;
+        }
+
+        .tnt-icon {
+            color: inherit;
+            font-size: 20px;
+            pointer-events: none;
+        }
+    }
+}

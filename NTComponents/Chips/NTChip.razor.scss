@@ -1,0 +1,341 @@
+@use 'sass:map';
+@use '../Styles/_Variables/_colors.scss' as colors;
+@use '../Styles/_Variables/_elevation.scss' as elevation;
+@use '../Styles/_Variables/_typescale.scss' as typescale;
+
+$nt-chip-bg-color: var(--nt-chip-bg, transparent);
+$nt-chip-text-color: var(--nt-chip-fg, #{colors.$tnt-color-on-surface});
+$nt-chip-icon-color: var(--nt-chip-icon, currentColor);
+$nt-chip-outline-color: var(--nt-chip-outline, #{colors.$tnt-color-outline});
+$nt-chip-selected-bg-color: var(--nt-chip-selected-bg, #{colors.$tnt-color-secondary-container});
+$nt-chip-selected-text-color: var(--nt-chip-selected-fg, #{colors.$tnt-color-on-secondary-container});
+$nt-chip-selected-icon-color: var(--nt-chip-selected-icon, #{$nt-chip-selected-text-color});
+$nt-chip-selected-outline-color: var(--nt-chip-selected-outline, transparent);
+$nt-chip-state-layer-color: var(--nt-chip-state-layer, currentColor);
+$nt-chip-selected-state-layer-color: var(--nt-chip-selected-state-layer, currentColor);
+$nt-chip-focus-outline-color: var(--nt-chip-focus-outline, #{colors.$tnt-color-outline});
+$nt-chip-disabled-bg-color: var(--nt-chip-disabled-bg, color-mix(in srgb, #{colors.$tnt-color-on-surface} 12%, transparent));
+$nt-chip-disabled-text-color: var(--nt-chip-disabled-fg, color-mix(in srgb, #{colors.$tnt-color-on-surface} 38%, transparent));
+$nt-chip-disabled-icon-color: var(--nt-chip-disabled-icon, #{$nt-chip-disabled-text-color});
+$nt-chip-disabled-outline-color: var(--nt-chip-disabled-outline, color-mix(in srgb, #{colors.$tnt-color-on-surface} 12%, transparent));
+$nt-chip-height: 32px;
+$nt-chip-target-size: 48px;
+$nt-chip-icon-size: 18px;
+$nt-chip-avatar-size: 24px;
+$nt-chip-border-width: 1px;
+$nt-chip-padding: 16px;
+$nt-chip-icon-padding: 8px;
+$nt-chip-gap: 8px;
+$nt-chip-state-opacity-hover: 0.08;
+$nt-chip-state-opacity-focus: 0.12;
+$nt-chip-state-opacity-pressed: 0.12;
+$nt-chip-elevations: (
+    none: 0,
+    lowest: 1,
+    low: 2,
+    medium: 3,
+    high: 4,
+    highest: 5
+);
+
+.nt-chip {
+    align-items: center;
+    background: transparent;
+    border-radius: var(--nt-sys-shape-corner-small, 8px);
+    box-sizing: border-box;
+    color: $nt-chip-text-color;
+    display: inline-flex;
+    margin: 4px;
+    min-block-size: $nt-chip-target-size;
+    min-inline-size: 0;
+    position: relative;
+    vertical-align: middle;
+
+    .nt-chip-control {
+        align-items: center;
+        appearance: none;
+        background: transparent;
+        border: 0;
+        border-radius: inherit;
+        color: inherit;
+        cursor: pointer;
+        display: inline-flex;
+        font: inherit;
+        margin: 0;
+        min-block-size: $nt-chip-target-size;
+        min-inline-size: 0;
+        padding: 0;
+        position: relative;
+        text-decoration: none;
+    }
+
+    .nt-chip-static-control {
+        cursor: default;
+    }
+
+    .nt-chip-primary-action {
+        align-items: center;
+        appearance: none;
+        background: transparent;
+        border: 0;
+        border-radius: inherit;
+        color: inherit;
+        cursor: pointer;
+        display: inline-flex;
+        flex: 1 1 auto;
+        font: inherit;
+        gap: $nt-chip-gap;
+        margin: 0;
+        min-block-size: $nt-chip-height;
+        min-inline-size: 0;
+        padding: 0;
+        position: relative;
+        text-align: start;
+        text-decoration: none;
+        z-index: 1;
+    }
+
+    .nt-chip-container {
+        align-items: center;
+        background: $nt-chip-bg-color;
+        block-size: $nt-chip-height;
+        border-radius: inherit;
+        box-sizing: border-box;
+        display: inline-flex;
+        gap: $nt-chip-gap;
+        inline-size: 100%;
+        min-inline-size: 0;
+        overflow: hidden;
+        padding-inline: $nt-chip-padding;
+        position: relative;
+        transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, box-shadow 150ms ease;
+
+        &::before {
+            background: $nt-chip-state-layer-color;
+            border-radius: inherit;
+            content: '';
+            inset: 0;
+            opacity: 0;
+            pointer-events: none;
+            position: absolute;
+            transition: opacity 150ms ease;
+        }
+
+        @each $name, $level in $nt-chip-elevations {
+            &.nt-elevation-#{$name} {
+                box-shadow: map.get(elevation.$elevation-shadows, $level);
+            }
+        }
+    }
+
+    &.nt-chip-outlined .nt-chip-container {
+        background: var(--nt-chip-bg, transparent);
+        border: $nt-chip-border-width solid $nt-chip-outline-color;
+    }
+
+    &.nt-chip-elevated .nt-chip-container {
+        background: var(--nt-chip-bg, #{colors.$tnt-color-surface-container-low});
+        border: $nt-chip-border-width solid transparent;
+    }
+
+    &.nt-chip-filter,
+    &.nt-chip-input,
+    &.nt-chip-suggestion {
+        color: var(--nt-chip-fg, #{colors.$tnt-color-on-surface-variant});
+    }
+
+    &.nt-chip-assist .nt-chip-icon {
+        color: var(--nt-chip-icon, #{colors.$tnt-color-primary});
+    }
+
+    &.nt-chip-selected {
+        color: $nt-chip-selected-text-color;
+
+        .nt-chip-container {
+            background: $nt-chip-selected-bg-color;
+
+            &::before {
+                background: $nt-chip-selected-state-layer-color;
+            }
+        }
+
+        .nt-chip-icon,
+        .nt-chip-remove {
+            color: $nt-chip-selected-icon-color;
+        }
+
+    }
+
+    &.nt-chip-selected.nt-chip-outlined .nt-chip-container {
+        border-color: $nt-chip-selected-outline-color;
+    }
+
+    &.nt-chip-with-leading,
+    &.nt-chip-with-trailing,
+    &.nt-chip-removable {
+        .nt-chip-container {
+            padding-inline: $nt-chip-icon-padding;
+        }
+    }
+
+    &.nt-chip-two-action {
+        min-inline-size: 88px;
+
+        .nt-chip-label {
+            min-inline-size: 42px;
+        }
+    }
+
+    .nt-chip-label {
+        @include typescale.nt-label-large;
+
+        min-inline-size: 0;
+        overflow: hidden;
+        position: relative;
+        text-align: start;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        z-index: 1;
+    }
+
+    .nt-chip-icon {
+        align-items: center;
+        block-size: $nt-chip-icon-size;
+        color: $nt-chip-icon-color;
+        display: inline-flex;
+        flex: 0 0 $nt-chip-icon-size;
+        inline-size: $nt-chip-icon-size;
+        justify-content: center;
+        position: relative;
+        z-index: 1;
+    }
+
+    .nt-chip-selection-input {
+        block-size: 1px;
+        inline-size: 1px;
+        opacity: 0;
+        pointer-events: none;
+        position: absolute;
+    }
+
+    .nt-chip-selection-input:checked + .nt-chip-container {
+        background: $nt-chip-selected-bg-color;
+        border-color: $nt-chip-selected-outline-color;
+        color: $nt-chip-selected-text-color;
+
+        &::before {
+            background: $nt-chip-selected-state-layer-color;
+        }
+
+        .nt-chip-icon {
+            color: $nt-chip-selected-icon-color;
+        }
+    }
+
+    .nt-chip-remove {
+        align-items: center;
+        appearance: none;
+        background: transparent;
+        border: 0;
+        border-radius: 50%;
+        color: $nt-chip-icon-color;
+        cursor: pointer;
+        display: inline-flex;
+        flex: 0 0 $nt-chip-height;
+        block-size: $nt-chip-height;
+        inline-size: $nt-chip-height;
+        justify-content: center;
+        min-block-size: $nt-chip-height;
+        padding: 0;
+        position: relative;
+        z-index: 1;
+
+        &::before {
+            background: currentColor;
+            border-radius: inherit;
+            content: '';
+            inset: 4px;
+            opacity: 0;
+            position: absolute;
+            transition: opacity 150ms ease;
+        }
+    }
+
+    ::deep {
+        .tnt-icon {
+            align-items: center;
+            color: inherit;
+            display: inline-flex;
+            font-size: $nt-chip-icon-size;
+            inline-size: $nt-chip-icon-size;
+            justify-content: center;
+            line-height: 1;
+            overflow: hidden;
+        }
+    }
+
+    &.nt-chip-input.nt-chip-with-leading {
+        .nt-chip-leading,
+        .nt-chip-leading ::deep .tnt-icon {
+            block-size: $nt-chip-avatar-size;
+            border-radius: var(--nt-sys-shape-corner-medium, 12px);
+            flex-basis: $nt-chip-avatar-size;
+            font-size: $nt-chip-avatar-size;
+            inline-size: $nt-chip-avatar-size;
+        }
+    }
+
+    &:not(.tnt-disabled) {
+        .nt-chip-control:not(.nt-chip-static-control):hover .nt-chip-container::before,
+        .nt-chip-remove:hover::before {
+            opacity: $nt-chip-state-opacity-hover;
+        }
+
+        .nt-chip-control:not(.nt-chip-static-control):active .nt-chip-container::before,
+        .nt-chip-remove:active::before {
+            opacity: $nt-chip-state-opacity-pressed;
+        }
+
+        .nt-chip-control:focus-visible .nt-chip-container,
+        .nt-chip-primary-action:focus-visible,
+        .nt-chip-selection-input:focus-visible + .nt-chip-container,
+        .nt-chip-remove:focus-visible {
+            outline: 2px solid $nt-chip-focus-outline-color;
+            outline-offset: 2px;
+        }
+
+        .nt-chip-control:focus-visible .nt-chip-container::before,
+        .nt-chip-selection-input:focus-visible + .nt-chip-container::before,
+        .nt-chip-remove:focus-visible::before {
+            opacity: $nt-chip-state-opacity-focus;
+        }
+    }
+
+    &.tnt-disabled {
+        color: $nt-chip-disabled-text-color;
+        cursor: not-allowed;
+
+        .nt-chip-control,
+        .nt-chip-primary-action,
+        .nt-chip-remove {
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .nt-chip-container {
+            background: $nt-chip-disabled-bg-color;
+            border-color: transparent;
+            box-shadow: none;
+        }
+
+        .nt-chip-icon,
+        .nt-chip-remove {
+            color: $nt-chip-disabled-icon-color;
+        }
+
+        &.nt-chip-outlined .nt-chip-container {
+            background: transparent;
+            border-color: $nt-chip-disabled-outline-color;
+        }
+    }
+}

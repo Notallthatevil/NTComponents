@@ -5,6 +5,7 @@ namespace NTComponents.Wizard;
 /// <summary>
 ///     Represents the base class for a wizard step in the NTComponents library.
 /// </summary>
+[Obsolete("TnTWizardStepBase is obsolete. Use NTWizardStepBase instead.")]
 public abstract class TnTWizardStepBase : ComponentBase, IDisposable {
 
     /// <summary>

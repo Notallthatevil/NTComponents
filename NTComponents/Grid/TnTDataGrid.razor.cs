@@ -17,6 +17,7 @@ namespace NTComponents;
 ///     Specifies appearance options for the <see cref="TnTDataGrid{TGridItem}" />.
 /// </summary>
 [Flags]
+[Obsolete("This legacy grid API is obsolete. Use NTDataGrid, NTPropertyColumn, and NTTemplateColumn instead.")]
 public enum DataGridAppearance {
 
     /// <summary>
@@ -61,6 +62,7 @@ public enum SortDirection {
 /// </summary>
 /// <typeparam name="TGridItem">The type of data represented by each row in the grid.</typeparam>
 [CascadingTypeParameter(nameof(TGridItem))]
+[Obsolete("This legacy grid API is obsolete. Use NTDataGrid, NTPropertyColumn, and NTTemplateColumn instead.")]
 public partial class TnTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields)] TGridItem> {
 
     /// <inheritdoc />
@@ -371,4 +373,5 @@ public partial class TnTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessed
 /// <typeparam name="TGridItem">The type of data represented by each row in the grid.</typeparam>
 /// <param name="request">The request parameters.</param>
 /// <returns>A value task containing the result.</returns>
+[Obsolete("This legacy grid API is obsolete. Use NTDataGrid, NTPropertyColumn, and NTTemplateColumn instead.")]
 public delegate ValueTask<TnTItemsProviderResult<TGridItem>> TnTGridItemsProvider<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields)] TGridItem>(TnTGridItemsProviderRequest<TGridItem> request);

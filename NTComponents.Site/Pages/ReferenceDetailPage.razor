@@ -1,0 +1,66 @@
+@page "/reference/{Kind}/{Slug}"
+@inject DocumentationCatalog Catalog
+
+@if (_reference is null) {
+    <main class="docs-page">
+        <h1>Reference type not found</h1>
+        <p>The requested generated reference page does not exist.</p>
+        <NTNavLink Label="Back to reference" Variant="NTNavLinkVariant.Filled" AdditionalAttributes="@Href($"/reference/{RouteKind}")" />
+    </main>
+}
+else {
+    <NTContainerView OnThisPageTitle="@_reference.Type.Name">
+        <main class="docs-page docs-detail-page">
+            <DocumentationPageHeader Kicker="@Title"
+                                     Title="@_reference.Type.Name"
+                                     Meta="@_reference.Type.FullName">
+                <Badges>
+                    <NTTag Label="@_reference.Type.Kind" Elevation="0" />
+                </Badges>
+                <Actions>
+                    <NTNavLink Label="@Title" Variant="NTNavLinkVariant.InlineText" AdditionalAttributes="@Href($"/reference/{_reference.RouteKind}")" />
+                </Actions>
+            </DocumentationPageHeader>
+
+            <section class="docs-section" id="overview">
+                <h2>Overview</h2>
+                <div class="docs-overview docs-overview-single">
+                    <div class="docs-overview-copy">
+                        <DocumentationText XmlDocumentation="@_reference.Type.XmlDocumentation" ElementName="summary" Fallback="@_reference.Type.Summary" CssClass="docs-overview-summary" />
+                        <DocumentationText XmlDocumentation="@_reference.Type.XmlDocumentation" ElementName="remarks" Fallback="@_reference.Type.Remarks" CssClass="docs-overview-remarks" />
+                    </div>
+                </div>
+            </section>
+
+            <section class="docs-section" id="members">
+                <h2>Members</h2>
+                <MemberTable Fields="@_reference.Type.Fields.Where(field => DocumentationCatalog.IsPublicOrProtected(field.Accessibility)).OrderBy(field => field.Name, StringComparer.Ordinal).ToArray()" />
+            </section>
+        </main>
+    </NTContainerView>
+}
+
+@code {
+    private ReferenceDocumentationEntry? _reference;
+
+    [Parameter]
+    public string? Kind { get; set; }
+
+    [Parameter]
+    public string? Slug { get; set; }
+
+    private string RouteKind => string.Equals(Kind, "constants", StringComparison.OrdinalIgnoreCase) ? "constants" : "enums";
+
+    private string Title => RouteKind == "constants" ? "Constants" : "Enums";
+
+    protected override void OnParametersSet() {
+        _reference = Catalog.GetReference(Slug);
+        if (_reference is not null && !string.Equals(_reference.RouteKind, RouteKind, StringComparison.OrdinalIgnoreCase)) {
+            _reference = null;
+        }
+    }
+
+    private static IReadOnlyDictionary<string, object> Href(string href) => new Dictionary<string, object> {
+        ["href"] = href
+    };
+}

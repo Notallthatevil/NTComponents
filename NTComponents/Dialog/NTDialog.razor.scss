@@ -1,0 +1,243 @@
+@use '../Styles/_Variables/_colors.scss' as colors;
+@use '../Styles/_Variables/_corner-radius.scss' as corners;
+@use '../Styles/_Variables/_measurements.scss' as measurements;
+@use '../Styles/_Variables/_motion.scss' as motion;
+@use '../Styles/_Variables/_scrollbar.scss' as scrollbar;
+@use '../Styles/_Variables/_typescale.scss' as typescale;
+
+$nt-dialog-container-shape: corners.$nt-corner-radius-extra-large;
+$nt-dialog-action-button-shape: corners.$nt-corner-radius-large-increased;
+$nt-dialog-icon-button-shape: corners.$nt-corner-radius-full;
+$nt-dialog-container-padding: measurements.$gutter-width;
+$nt-dialog-viewport-margin: $nt-dialog-container-padding * 2;
+$nt-dialog-container-min-inline-size: 280px;
+$nt-dialog-container-max-inline-size: 560px;
+$nt-dialog-divider-size: 1px;
+$nt-dialog-icon-size: 24px;
+$nt-dialog-icon-title-gap: 16px;
+$nt-dialog-title-body-gap: 16px;
+$nt-dialog-body-actions-gap: $nt-dialog-container-padding;
+$nt-dialog-action-gap: 8px;
+$nt-dialog-action-button-height: 40px;
+$nt-dialog-action-button-inline-padding: 12px;
+$nt-dialog-icon-button-size: 48px;
+$nt-dialog-icon-button-offset: -12px;
+$nt-dialog-enter-duration: motion.$nt-motion-duration-medium_4;
+$nt-dialog-enter-easing: motion.$nt-motion-easing-emphasized-decelerate;
+$nt-dialog-exit-duration: motion.$nt-motion-duration-short_4;
+$nt-dialog-exit-easing: motion.$nt-motion-easing-emphasized-accelerate;
+
+.nt-dialog {
+    background-color: colors.$tnt-color-surface-container-high;
+    border: 0;
+    border-radius: $nt-dialog-container-shape;
+    box-sizing: border-box;
+    color: colors.$tnt-color-on-surface;
+    flex-direction: column;
+    inline-size: min(#{$nt-dialog-container-max-inline-size}, calc(100vw - #{$nt-dialog-viewport-margin}));
+    max-block-size: calc(100dvh - #{$nt-dialog-viewport-margin});
+    min-inline-size: min(#{$nt-dialog-container-min-inline-size}, calc(100vw - #{$nt-dialog-viewport-margin}));
+    overflow: hidden;
+    padding: $nt-dialog-container-padding;
+    transform-origin: center;
+
+    &::backdrop {
+        background-color: color-mix(in srgb, #{colors.$tnt-color-scrim} 32%, transparent);
+    }
+
+    &[open] {
+        animation: nt-dialog-enter $nt-dialog-enter-duration $nt-dialog-enter-easing;
+        display: flex;
+    }
+
+    &:not([open]) {
+        display: none;
+    }
+
+    &.nt-dialog-closing {
+        animation: nt-dialog-exit $nt-dialog-exit-duration $nt-dialog-exit-easing forwards;
+        pointer-events: none;
+    }
+
+    &.nt-dialog-closing::backdrop {
+        animation: nt-dialog-backdrop-exit $nt-dialog-exit-duration $nt-dialog-exit-easing forwards;
+    }
+
+    .nt-dialog-header {
+        align-items: start;
+        display: grid;
+        flex: 0 0 auto;
+        gap: $nt-dialog-title-body-gap;
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .nt-dialog-title {
+        @include typescale.nt-headline-small;
+        color: inherit;
+        margin: 0;
+        overflow-wrap: anywhere;
+        text-align: start;
+    }
+
+    &.nt-dialog-has-icon {
+        text-align: center;
+
+        .nt-dialog-header {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .nt-dialog-title {
+            text-align: center;
+        }
+    }
+
+    .nt-dialog-icon {
+        align-items: center;
+        color: #{colors.$tnt-color-secondary};
+        display: flex;
+        flex: 0 0 auto;
+        font-size: $nt-dialog-icon-size;
+        justify-content: center;
+        line-height: 1;
+        margin-block-end: $nt-dialog-icon-title-gap;
+
+        ::deep .material-symbols-sharp,
+        ::deep .material-symbols-outlined,
+        ::deep .material-symbols-rounded {
+            font-size: $nt-dialog-icon-size;
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            line-height: 1;
+        }
+    }
+
+    .nt-dialog-icon-button {
+        align-items: center;
+        background: transparent;
+        border: 0;
+        border-radius: $nt-dialog-icon-button-shape;
+        color: #{colors.$tnt-color-on-surface-variant};
+        cursor: pointer;
+        display: inline-flex;
+        block-size: $nt-dialog-icon-button-size;
+        inline-size: $nt-dialog-icon-button-size;
+        justify-content: center;
+        margin-block-start: $nt-dialog-icon-button-offset;
+        margin-inline-end: $nt-dialog-icon-button-offset;
+        padding: 0;
+
+        &:hover {
+            background-color: color-mix(in srgb, currentColor 8%, transparent);
+        }
+
+        &:focus-visible {
+            outline: 3px solid #{colors.$tnt-color-primary};
+            outline-offset: 2px;
+        }
+    }
+
+    .nt-dialog-supporting-text {
+        @include typescale.nt-body-medium;
+        color: #{colors.$tnt-color-on-surface-variant};
+        margin: 0;
+        overflow-wrap: anywhere;
+    }
+
+    .nt-dialog-content {
+        @include typescale.nt-body-medium;
+        border-block: 0 solid #{colors.$tnt-color-outline-variant};
+        flex: 1 1 auto;
+        margin-block-start: $nt-dialog-title-body-gap;
+        min-block-size: 0;
+        overflow: auto;
+        overscroll-behavior: contain;
+        @include scrollbar.nt-scrollbar;
+
+        &:first-child {
+            margin-block-start: 0;
+        }
+
+        &.nt-dialog-content-scrollable {
+            border-block-width: $nt-dialog-divider-size;
+        }
+    }
+
+    .nt-dialog-actions {
+        align-items: center;
+        display: flex;
+        flex: 0 0 auto;
+        gap: $nt-dialog-action-gap;
+        justify-content: flex-end;
+        margin-block-start: $nt-dialog-body-actions-gap;
+        min-block-size: $nt-dialog-action-button-height;
+
+        ::deep > button,
+        ::deep .nt-dialog-button {
+            @include typescale.nt-label-large;
+            align-items: center;
+            background: transparent;
+            border: 0;
+            border-radius: $nt-dialog-action-button-shape;
+            color: #{colors.$tnt-color-primary};
+            cursor: pointer;
+            display: inline-flex;
+            height: $nt-dialog-action-button-height;
+            justify-content: center;
+            min-height: $nt-dialog-action-button-height;
+            min-block-size: $nt-dialog-action-button-height;
+            padding: 0 $nt-dialog-action-button-inline-padding;
+
+            &:hover {
+                background-color: color-mix(in srgb, currentColor 8%, transparent);
+            }
+
+            &:focus-visible {
+                outline: 3px solid #{colors.$tnt-color-primary};
+                outline-offset: 2px;
+            }
+        }
+    }
+}
+
+@keyframes nt-dialog-enter {
+    0% {
+        opacity: 0;
+        transform: scale(0.82);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes nt-dialog-exit {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    100% {
+        opacity: 0;
+        transform: scale(0.88);
+    }
+}
+
+@keyframes nt-dialog-backdrop-exit {
+    0% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nt-dialog {
+        &[open],
+        &.nt-dialog-closing,
+        &.nt-dialog-closing::backdrop {
+            animation-duration: 1ms;
+        }
+    }
+}

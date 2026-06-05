@@ -1,0 +1,10 @@
+<Project>
+  <PropertyGroup>
+    <DefaultItemExcludes>$(DefaultItemExcludes);obj-codex\**;**\obj-codex\**</DefaultItemExcludes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Update="sasscompiler.json" CopyToPublishDirectory="Never" />
+    <None Update="sasscompiler.json" CopyToPublishDirectory="Never" />
+  </ItemGroup>
+</Project>

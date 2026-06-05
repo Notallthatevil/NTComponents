@@ -1,14 +1,16 @@
-﻿param(
+param(
+    [string[]]$frameworks,
     [string[]]$runtimes,
-    [string[]]$frameworks
+    [switch]$SkipBrowserSmoke
 )
 
-$rootDirectory = $PSScriptRoot
+$ErrorActionPreference = 'Stop'
 
-# Determine target frameworks: prefer explicit parameter, then TARGET_FRAMEWORK env var, then sensible defaults
+$rootDirectory = $PSScriptRoot
+$projectPath = Join-Path $rootDirectory 'AotCompatibility.TestApp/AotCompatibility.TestApp.csproj'
+
 if (-not $frameworks -or $frameworks.Length -eq 0) {
     if ($env:TARGET_FRAMEWORK) {
-        # Allow comma- or semicolon-separated env var values
         $frameworks = $env:TARGET_FRAMEWORK -split '[,;]' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' }
     }
 }
@@ -18,98 +20,302 @@ if ($frameworks -and $frameworks.Length -gt 0) {
     $targetFrameworks = $frameworks
 }
 
-if (-not $runtimes -or $runtimes.Length -eq 0) {
-    # sensible default set of common RIDs to test; adjust if you need a different matrix
-    $runtimes = @(
-        'win-x64',
-        'win-x86',
-        'win-arm64',
-        'linux-x64',
-        'linux-arm',
-        'linux-arm64',
-        'osx-x64',
-        'osx-arm64'
-    )
+if ($runtimes -and $runtimes.Length -gt 0) {
+    Write-Host "Runtime identifiers are ignored for Blazor WebAssembly AOT validation: $($runtimes -join ', ')"
 }
 
-$projectPath = Join-Path $rootDirectory 'AotCompatibility.TestApp/AotCompatibility.TestApp.csproj'
-$actualWarningCount = 0
-$failedRuns = 0
-
-foreach ($framework in $targetFrameworks) {
-    foreach ($rid in $runtimes) {
-        Write-Host "--- Publishing for framework: $framework, runtime: $rid ---"
-
-        # publish and capture output
-        $publishArgs = @(
-            $projectPath,
-            '-nodeReuse:false',
-            '/p:UseSharedCompilation=false',
-            '/p:ExposeExperimentalFeatures=true',
-            '-c', 'Release',
-            '-f', $framework,
-            '-r', $rid,
-            '--self-contained', 'true'
-        )
-
-        # Invoke dotnet publish and capture both stdout and stderr
-        $publishOutput = & dotnet publish @publishArgs 2>&1 | Out-String
-        Write-Host $publishOutput
-
-        foreach ($line in ($publishOutput -split "`r`n")) {
-            if ($line -like "*analysis warning IL*") {
-                Write-Host $line
-                # $actualWarningCount += 1
-            }
-        }
-
-        # determine publish folder and executable name
-        $publishFolder = Join-Path $rootDirectory "AotCompatibility.TestApp/bin/Release/$framework/$rid/publish"
-        if (-not (Test-Path $publishFolder)) {
-            Write-Host "Publish folder not found: $publishFolder"
-            $failedRuns += 1
-            continue
-        }
-
-        pushd $publishFolder | Out-Null
-        try {
-            Write-Host "Executing published test App for framework $framework, runtime $rid..."
-            if ($rid -like 'win*') {
-                # Windows executables
-                .\AotCompatibility.TestApp.exe
-            }
-            else {
-                # Unix-like
-                ./AotCompatibility.TestApp
-            }
-
-            if ($LastExitCode -ne 0) {
-                Write-Host "There was an error while executing AotCompatibility Test App for framework $framework, runtime $rid. LastExitCode is: $LastExitCode"
-                $failedRuns += 1
-            }
-            else {
-                Write-Host "Execution finished successfully for framework $framework, runtime $rid"
-            }
-        }
-        catch {
-            Write-Host "Exception while running published app for framework ${framework}, runtime ${rid}: $_"
-            $failedRuns += 1
-        }
-        finally {
-            popd | Out-Null
-        }
+function Get-FreePort {
+    $listener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Parse('127.0.0.1'), 0)
+    $listener.Start()
+    try {
+        return $listener.LocalEndpoint.Port
+    }
+    finally {
+        $listener.Stop()
     }
 }
 
-Write-Host "Actual analysis warning count is: $actualWarningCount"
+function Get-BrowserExecutable {
+    $candidates = @()
+
+    if ($IsWindows -or [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::Windows)) {
+        $programFiles = [Environment]::GetEnvironmentVariable('ProgramFiles')
+        $programFilesX86 = [Environment]::GetEnvironmentVariable('ProgramFiles(x86)')
+        $localAppData = [Environment]::GetEnvironmentVariable('LOCALAPPDATA')
+
+        $candidates += @(
+            (Join-Path $programFiles 'Microsoft/Edge/Application/msedge.exe'),
+            (Join-Path $programFilesX86 'Microsoft/Edge/Application/msedge.exe'),
+            (Join-Path $programFiles 'Google/Chrome/Application/chrome.exe'),
+            (Join-Path $programFilesX86 'Google/Chrome/Application/chrome.exe'),
+            (Join-Path $localAppData 'Microsoft/Edge/Application/msedge.exe'),
+            (Join-Path $localAppData 'Google/Chrome/Application/chrome.exe')
+        ) | Where-Object { $_ -and $_ -ne '' }
+    }
+
+    foreach ($commandName in @('msedge', 'microsoft-edge', 'google-chrome', 'chrome', 'chromium', 'chromium-browser')) {
+        $command = Get-Command $commandName -ErrorAction SilentlyContinue
+        if ($command) {
+            $candidates += $command.Source
+        }
+    }
+
+    return $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+}
+
+function Start-StaticFileServer {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Root,
+
+        [Parameter(Mandatory = $true)]
+        [int]$Port
+    )
+
+    $stopFile = Join-Path ([System.IO.Path]::GetTempPath()) "ntcomponents-aot-smoke-$Port.stop"
+    if (Test-Path $stopFile) {
+        Remove-Item -LiteralPath $stopFile -Force
+    }
+
+    $job = Start-Job -ArgumentList $Root, $Port, $stopFile -ScriptBlock {
+        param($Root, $Port, $StopFile)
+
+        $listener = [System.Net.HttpListener]::new()
+        $listener.Prefixes.Add("http://127.0.0.1:$Port/")
+        $listener.Start()
+
+        try {
+            $pendingContext = $listener.BeginGetContext($null, $null)
+            while (-not (Test-Path $StopFile)) {
+                if (-not $pendingContext.AsyncWaitHandle.WaitOne(250)) {
+                    continue
+                }
+
+                $context = $listener.EndGetContext($pendingContext)
+                $pendingContext = $listener.BeginGetContext($null, $null)
+                $requestPath = [Uri]::UnescapeDataString($context.Request.Url.AbsolutePath.TrimStart('/'))
+                if ([string]::IsNullOrWhiteSpace($requestPath)) {
+                    $requestPath = 'index.html'
+                }
+
+                $relativePath = $requestPath.Replace('/', [System.IO.Path]::DirectorySeparatorChar)
+                $fullPath = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($Root, $relativePath))
+                $rootPath = [System.IO.Path]::GetFullPath($Root)
+
+                if (-not $fullPath.StartsWith($rootPath, [System.StringComparison]::OrdinalIgnoreCase)) {
+                    $context.Response.StatusCode = 403
+                    $context.Response.Close()
+                    continue
+                }
+
+                if (-not (Test-Path $fullPath)) {
+                    $fullPath = [System.IO.Path]::Combine($rootPath, 'index.html')
+                }
+
+                if (-not (Test-Path $fullPath)) {
+                    $context.Response.StatusCode = 404
+                    $context.Response.Close()
+                    continue
+                }
+
+                $extension = [System.IO.Path]::GetExtension($fullPath).ToLowerInvariant()
+                $contentType = switch ($extension) {
+                    '.html' { 'text/html' }
+                    '.js' { 'text/javascript' }
+                    '.css' { 'text/css' }
+                    '.json' { 'application/json' }
+                    '.wasm' { 'application/wasm' }
+                    default { 'application/octet-stream' }
+                }
+
+                $bytes = [System.IO.File]::ReadAllBytes($fullPath)
+                $context.Response.ContentType = $contentType
+                $context.Response.ContentLength64 = $bytes.Length
+                $context.Response.OutputStream.Write($bytes, 0, $bytes.Length)
+                $context.Response.Close()
+            }
+        }
+        finally {
+            $listener.Stop()
+            $listener.Close()
+        }
+    }
+
+    return @{
+        Job = $job
+        StopFile = $stopFile
+        Url = "http://127.0.0.1:$Port/"
+    }
+}
+
+function Stop-StaticFileServer {
+    param(
+        [Parameter(Mandatory = $true)]
+        $Server
+    )
+
+    New-Item -Path $Server.StopFile -ItemType File -Force | Out-Null
+    Wait-Job $Server.Job -Timeout 5 | Out-Null
+    Stop-Job $Server.Job -ErrorAction SilentlyContinue
+    Remove-Job $Server.Job -Force -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath $Server.StopFile -Force -ErrorAction SilentlyContinue
+}
+
+function Test-PublishedOutput {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$PublishWwwRoot
+    )
+
+    $indexPath = Join-Path $PublishWwwRoot 'index.html'
+    $frameworkDirectory = Join-Path $PublishWwwRoot '_framework'
+    $wasmFiles = Get-ChildItem -Path $frameworkDirectory -Filter '*.wasm' -ErrorAction SilentlyContinue
+
+    if (-not (Test-Path $indexPath)) {
+        throw "Published output is missing index.html: $indexPath"
+    }
+
+    if (-not $wasmFiles) {
+        throw "Published output is missing WebAssembly payloads under: $frameworkDirectory"
+    }
+}
+
+function Invoke-BrowserSmoke {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$PublishWwwRoot
+    )
+
+    $browser = Get-BrowserExecutable
+    if (-not $browser) {
+        throw "No Chromium-based browser was found for the AOT smoke test."
+    }
+
+    $port = Get-FreePort
+    $server = Start-StaticFileServer -Root $PublishWwwRoot -Port $port
+
+    try {
+        $ready = $false
+        for ($attempt = 0; $attempt -lt 20; $attempt++) {
+            try {
+                $null = Invoke-WebRequest -Uri $server.Url -UseBasicParsing -TimeoutSec 5
+                $ready = $true
+                break
+            }
+            catch {
+                Start-Sleep -Milliseconds 250
+            }
+        }
+
+        if (-not $ready) {
+            throw "Static file server did not become ready at $($server.Url)."
+        }
+
+        $browserUserDataDirectory = Join-Path ([System.IO.Path]::GetTempPath()) "ntcomponents-aot-browser-$Port"
+        Remove-Item -LiteralPath $browserUserDataDirectory -Recurse -Force -ErrorAction SilentlyContinue
+
+        $lastDom = ''
+        $lastBrowserExitCode = 0
+        foreach ($virtualTimeBudget in @(15000, 30000, 60000)) {
+            $browserArgs = @(
+                '--headless=new',
+                '--disable-gpu',
+                '--disable-dev-shm-usage',
+                '--no-first-run',
+                '--disable-background-networking',
+                "--user-data-dir=$browserUserDataDirectory",
+                "--virtual-time-budget=$virtualTimeBudget",
+                '--dump-dom',
+                $server.Url
+            )
+
+            $lastDom = & $browser @browserArgs 2>&1 | Out-String
+            $lastBrowserExitCode = $LASTEXITCODE
+
+            if ($lastBrowserExitCode -eq 0 -and $lastDom -match 'data-aot-smoke-ready="true"' -and $lastDom -match 'id="aot-smoke-status"') {
+                return
+            }
+
+            Start-Sleep -Milliseconds 500
+        }
+
+        if ($lastBrowserExitCode -ne 0) {
+            throw "Browser smoke failed with exit code $lastBrowserExitCode. Output:`n$lastDom"
+        }
+
+        throw "Browser smoke did not render the NTComponents AOT smoke marker. Output:`n$lastDom"
+    }
+    finally {
+        if ($browserUserDataDirectory) {
+            Remove-Item -LiteralPath $browserUserDataDirectory -Recurse -Force -ErrorAction SilentlyContinue
+        }
+        Stop-StaticFileServer -Server $server
+    }
+}
+
+$analysisWarningCount = 0
+$failedRuns = 0
+
+foreach ($framework in $targetFrameworks) {
+    Write-Host "--- Publishing Blazor WebAssembly AOT smoke app for framework: $framework ---"
+
+    $publishDirectory = Join-Path $rootDirectory "AotCompatibility.TestApp/bin/Release/$framework/publish"
+    $publishWwwRoot = Join-Path $publishDirectory 'wwwroot'
+
+    if (Test-Path $publishDirectory) {
+        Remove-Item -LiteralPath $publishDirectory -Recurse -Force
+    }
+
+    $publishArgs = @(
+        $projectPath,
+        '-nodeReuse:false',
+        '/p:UseSharedCompilation=false',
+        '-c', 'Release',
+        '-f', $framework
+    )
+
+    $publishOutput = & dotnet publish @publishArgs 2>&1 | Out-String
+    $publishExitCode = $LASTEXITCODE
+    Write-Host $publishOutput
+
+    $warningLines = $publishOutput -split "\r?\n" | Where-Object { $_ -match '\bIL(2|3)\d{3}\b' -and $_ -match 'warning' }
+    foreach ($line in $warningLines) {
+        Write-Host "AOT/trim analysis warning: $line"
+        $analysisWarningCount += 1
+    }
+
+    if ($publishExitCode -ne 0) {
+        Write-Host "Publish failed for framework $framework with exit code $publishExitCode."
+        $failedRuns += 1
+        continue
+    }
+
+    try {
+        Test-PublishedOutput -PublishWwwRoot $publishWwwRoot
+
+        if (-not $SkipBrowserSmoke) {
+            Invoke-BrowserSmoke -PublishWwwRoot $publishWwwRoot
+            Write-Host "Browser smoke finished successfully for framework $framework."
+        }
+    }
+    catch {
+        Write-Host "Validation failed for framework ${framework}: $_"
+        $failedRuns += 1
+    }
+}
+
+Write-Host "AOT/trim analysis warning count is: $analysisWarningCount"
 Write-Host "Failed run count is: $failedRuns"
 
-$expectedWarningCount = 0
-
-if ($actualWarningCount -ne $expectedWarningCount -or $failedRuns -ne 0) {
+if ($analysisWarningCount -ne 0 -or $failedRuns -ne 0) {
     Write-Host "AOT compatibility test FAILED. Warnings or failed runs detected."
     Exit 1
 }
 
-Write-Host "AOT compatibility test PASSED. No analysis warnings and all runs succeeded."
+if ($SkipBrowserSmoke) {
+    Write-Host "AOT compatibility test PASSED. No analysis warnings and all publish checks succeeded. Browser smoke was skipped."
+}
+else {
+    Write-Host "AOT compatibility test PASSED. No analysis warnings and all publish/browser checks succeeded."
+}
 Exit 0

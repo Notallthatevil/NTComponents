@@ -2,12 +2,13 @@
  * @jest-environment jsdom
  */
 import { jest } from '@jest/globals';
+import '../../wwwroot/NTTheme.runtime.js';
 import { onLoad, onUpdate, onDispose } from '../TnTThemeToggle.razor.js';
 
 // Mock global dependencies
-global.NTComponents = {
-    customAttribute: 'tntid'
-};
+window.NTComponents = window.NTComponents || {};
+window.NTComponents.customAttribute = 'tntid';
+global.NTComponents = window.NTComponents;
 
 // Create Jest mocks for localStorage
 const localStorageStorage = {};
@@ -98,9 +99,9 @@ describe('TnTThemeToggle JavaScript Module', () => {
     };
 
     const resolveThemeLinkLoad = () => {
-        const themeLink = document.head.querySelector('link[data-tnt-theme]');
+        const themeLink = document.head.querySelector('link[data-nt-theme-pending]') || document.head.querySelector('link[data-tnt-theme]');
         themeLink?.dispatchEvent(new Event('load'));
-        return themeLink;
+        return document.head.querySelector('link[data-tnt-theme]');
     };
 
     describe('Custom Element Registration', () => {
@@ -244,8 +245,7 @@ describe('TnTThemeToggle JavaScript Module', () => {
             
             expect(mockRemoveItem).toHaveBeenCalledWith('NTComponentsStoredThemeKey');
             expect(mockRemoveItem).toHaveBeenCalledWith('NTComponentsStoredContrastKey');
-            expect(consoleSpy).toHaveBeenCalledWith('Invalid theme stored: INVALID_THEME. Removing from localStorage.');
-            expect(consoleSpy).toHaveBeenCalledWith('Invalid contrast stored: INVALID_CONTRAST. Removing from localStorage.');
+            expect(consoleSpy).not.toHaveBeenCalled();
             
             consoleSpy.mockRestore();
         });
@@ -337,7 +337,6 @@ describe('TnTThemeToggle JavaScript Module', () => {
 
         test('themeContrastSelected handles valid selection', async () => {
             const element = createThemeToggleElement();
-            const mockUpdateThemeAttributes = jest.spyOn(element, 'updateThemeAttributes').mockResolvedValue('DARK');
             const mockEvent = {
                 target: {
                     value: 'DARK-HIGH',
@@ -348,7 +347,9 @@ describe('TnTThemeToggle JavaScript Module', () => {
                 }
             };
             
-            await element.themeContrastSelected(mockEvent);
+            const updatePromise = element.themeContrastSelected(mockEvent);
+            resolveThemeLinkLoad();
+            await updatePromise;
             
             expect(mockSetItem).toHaveBeenCalledWith('NTComponentsStoredThemeKey', 'DARK');
             expect(mockSetItem).toHaveBeenCalledWith('NTComponentsStoredContrastKey', 'HIGH');
@@ -356,7 +357,6 @@ describe('TnTThemeToggle JavaScript Module', () => {
 
         test('themeContrastSelected validates invalid values', async () => {
             const element = createThemeToggleElement();
-            const mockUpdateThemeAttributes = jest.spyOn(element, 'updateThemeAttributes').mockResolvedValue('SYSTEM');
             const mockEvent = {
                 target: {
                     value: 'INVALID-UNKNOWN',
@@ -367,7 +367,9 @@ describe('TnTThemeToggle JavaScript Module', () => {
                 }
             };
             
-            await element.themeContrastSelected(mockEvent);
+            const updatePromise = element.themeContrastSelected(mockEvent);
+            resolveThemeLinkLoad();
+            await updatePromise;
             
             expect(mockSetItem).toHaveBeenCalledWith('NTComponentsStoredThemeKey', 'SYSTEM');
             expect(mockSetItem).toHaveBeenCalledWith('NTComponentsStoredContrastKey', 'DEFAULT');
@@ -440,12 +442,40 @@ describe('TnTThemeToggle JavaScript Module', () => {
             document.head.appendChild(existingLink);
             
             const updatePromise = element.updateThemeLink('/themes/new.css', true);
+
+            const pendingLink = document.head.querySelector('link[data-nt-theme-pending]');
+            expect(pendingLink).not.toBeNull();
+            expect(pendingLink.rel).toBe('preload');
+            expect(pendingLink.as).toBe('style');
+            expect(pendingLink.href).toContain('/themes/new.css');
+            expect(document.head.querySelector('link[data-tnt-theme]')).toBe(existingLink);
+
             resolveThemeLinkLoad();
             await updatePromise;
             
             const linkElement = document.head.querySelector('link[data-tnt-theme]');
-            expect(linkElement).toBe(existingLink);
+            expect(linkElement).not.toBe(existingLink);
             expect(linkElement.href).toContain('/themes/new.css');
+            expect(linkElement.rel).toBe('stylesheet');
+            expect(linkElement.hasAttribute('as')).toBe(false);
+        });
+
+        test('updateThemeLink leaves existing theme active when pending stylesheet errors', async () => {
+            const element = createThemeToggleElement();
+            const existingLink = document.createElement('link');
+            existingLink.setAttribute('data-tnt-theme', 'true');
+            existingLink.href = '/themes/old.css';
+            document.head.appendChild(existingLink);
+
+            const updatePromise = element.updateThemeLink('/themes/missing.css', true);
+            const pendingLink = document.head.querySelector('link[data-nt-theme-pending]');
+
+            pendingLink.dispatchEvent(new Event('error'));
+            await updatePromise;
+
+            expect(document.head.querySelector('link[data-tnt-theme]')).toBe(existingLink);
+            expect(document.head.querySelector('link[data-nt-theme-pending]')).toBeNull();
+            expect(document.head.querySelector('style[data-tnt-theme]')).toBeNull();
         });
 
         test('updateThemeLink keeps critical style until theme stylesheet loads', async () => {
@@ -464,7 +494,7 @@ describe('TnTThemeToggle JavaScript Module', () => {
             expect(document.head.querySelector('style[data-tnt-theme-critical]')).toBeNull();
         });
 
-        test('updateThemeLink removes link and injects fallback when file not found', async () => {
+        test('updateThemeLink keeps existing link when next file is known missing', async () => {
             const element = createThemeToggleElement();
             const injectSpy = jest.spyOn(element, 'injectFallbackStyles');
             
@@ -473,11 +503,12 @@ describe('TnTThemeToggle JavaScript Module', () => {
             existingLink.setAttribute('data-tnt-theme', 'true');
             document.head.appendChild(existingLink);
             
-            await element.updateThemeLink('/themes/missing.css', false);
+            const result = await element.updateThemeLink('/themes/missing.css', false);
             
             const linkElement = document.head.querySelector('link[data-tnt-theme]');
-            expect(linkElement).toBeNull();
-            expect(injectSpy).toHaveBeenCalled();
+            expect(result).toBe(existingLink);
+            expect(linkElement).toBe(existingLink);
+            expect(injectSpy).not.toHaveBeenCalled();
         });
     });
 

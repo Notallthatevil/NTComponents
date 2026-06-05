@@ -1,0 +1,164 @@
+@use 'sass:map';
+@use '../Styles/_Variables/_colors.scss' as colors;
+@use '../Styles/_Variables/_elevation.scss' as elevation;
+@use '../Buttons/buttonChrome' as buttonChrome;
+
+$nt-nav-link-elevations: (
+    none: (rest: 0, hover: 0),
+    lowest: (rest: 1, hover: 2),
+    low: (rest: 2, hover: 3),
+    medium: (rest: 3, hover: 4),
+    high: (rest: 4, hover: 5),
+    highest: (rest: 5, hover: 6)
+);
+
+.nt-nav-link {
+    vertical-align: middle;
+
+    &.nt-nav-link-default-anchor,
+    &.nt-nav-link-inline-text {
+        color: var(--nt-nav-link-fg, LinkText);
+        cursor: pointer;
+        display: inline;
+        font: inherit;
+
+        &:hover {
+            color: var(--nt-nav-link-hover-fg, var(--nt-nav-link-fg, LinkText));
+        }
+
+        &:visited {
+            color: var(--nt-nav-link-visited-fg, VisitedText);
+        }
+
+        &.active.active-fg-color {
+            color: var(--nt-nav-link-active-fg);
+        }
+
+        &.tnt-disabled {
+            color: color-mix(in srgb, #{colors.$tnt-color-on-surface} 38%, transparent);
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .nt-nav-link-label {
+            display: contents;
+        }
+    }
+
+    &.nt-nav-link-default-anchor {
+        text-decoration: underline;
+    }
+
+    &.nt-nav-link-inline-text {
+        text-decoration: none;
+    }
+
+    &.nt-nav-link-button-chrome {
+        @include buttonChrome.root("nt-nav-link-bg", "nt-nav-link-fg", colors.$tnt-color-primary, colors.$tnt-color-on-primary);
+
+        &:not(.tnt-disabled) {
+            &:hover {
+                color: var(--nt-nav-link-hover-fg, var(--nt-nav-link-fg, #{colors.$tnt-color-on-primary}));
+            }
+
+            &.active {
+                color: var(--nt-nav-link-active-fg, var(--nt-nav-link-fg, #{colors.$tnt-color-on-primary}));
+
+                &.active-bg-color::after {
+                    background: var(--nt-nav-link-active-bg);
+                }
+            }
+        }
+
+        @each $size, $tokens in buttonChrome.$sizes {
+            &.tnt-size-#{$size} {
+                @include buttonChrome.size("nt-nav-link-shape-square", $tokens...);
+            }
+        }
+
+        @each $name, $tokens in $nt-nav-link-elevations {
+            &.nt-elevation-#{$name} {
+                box-shadow: none;
+
+                &::after {
+                    box-shadow: map.get(elevation.$elevation-shadows, map.get($tokens, rest));
+                }
+
+                &:not(.tnt-disabled):hover::after {
+                    box-shadow: map.get(elevation.$elevation-shadows, map.get($tokens, hover));
+                }
+            }
+        }
+
+        &.nt-nav-link-text::after {
+            content: none;
+        }
+
+        &.nt-nav-link-text:focus-visible::after {
+            background: transparent;
+            border-color: transparent;
+            content: '';
+        }
+
+        &.nt-nav-link-outlined::after {
+            background: transparent;
+            border-color: colors.$tnt-color-outline;
+        }
+
+        > .nt-nav-link-icon,
+        > .nt-nav-link-label {
+            position: relative;
+            z-index: 2;
+        }
+
+        .nt-nav-link-label {
+            align-items: center;
+            display: inline-flex;
+            min-inline-size: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .nt-nav-link-icon {
+            align-items: center;
+            align-self: center;
+            display: inline-flex;
+            flex: 0 0 auto;
+            justify-content: center;
+            line-height: 1;
+        }
+
+        &.tnt-disabled {
+            box-shadow: none;
+            color: color-mix(in srgb, #{colors.$tnt-color-on-surface} 38%, transparent);
+            cursor: not-allowed;
+            outline: none;
+            pointer-events: none;
+
+            &::after {
+                background: color-mix(in srgb, #{colors.$tnt-color-on-surface} 12%, transparent);
+                border-color: transparent;
+                box-shadow: none;
+            }
+
+            &.nt-nav-link-text::after,
+            &.nt-nav-link-outlined::after {
+                background: transparent;
+            }
+
+            &.nt-nav-link-outlined::after {
+                border-color: color-mix(in srgb, #{colors.$tnt-color-on-surface} 12%, transparent);
+            }
+        }
+
+        @include buttonChrome.ripple-host;
+
+        ::deep {
+            .tnt-icon {
+                display: block;
+                line-height: 1;
+            }
+        }
+    }
+}

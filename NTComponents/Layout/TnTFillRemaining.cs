@@ -7,6 +7,7 @@ namespace NTComponents;
 /// <summary>
 ///     A container that fills the remaining height of the screen.
 /// </summary>
+[Obsolete("TnTFillRemaining is obsolete.")]
 public partial class TnTFillRemaining : TnTComponentBase {
 
     /// <summary>

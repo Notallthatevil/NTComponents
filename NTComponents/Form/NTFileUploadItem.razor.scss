@@ -1,0 +1,49 @@
+@use '../Styles/_Variables/_typescale.scss' as typescale;
+
+$nt-file-upload-item-gap: 4px;
+$nt-file-upload-item-column-gap: 12px;
+$nt-file-upload-status-gap: 6px;
+
+.nt-file-upload-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: $nt-file-upload-item-gap $nt-file-upload-item-column-gap;
+    min-width: 0;
+    color: var(--nt-input-text-color);
+
+    &.nt-file-upload-item-error {
+        .nt-file-upload-status {
+            color: var(--nt-input-error-color);
+        }
+    }
+}
+
+.nt-file-upload-name {
+    @include typescale.nt-body-medium;
+
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.nt-file-upload-status {
+    @include typescale.nt-body-small;
+
+    display: inline-flex;
+    align-items: center;
+    gap: $nt-file-upload-status-gap;
+    color: var(--nt-input-supporting-text-color);
+    white-space: nowrap;
+}
+
+.nt-file-upload-percent {
+    font-variant-numeric: tabular-nums;
+}
+
+.nt-file-upload-progress {
+    grid-column: 1 / -1;
+    display: block;
+    min-width: 0;
+    width: 100%;
+}

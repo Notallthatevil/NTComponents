@@ -1,0 +1,165 @@
+@namespace NTComponents.Site.Components
+@using System.Net
+@using System.Text.RegularExpressions
+@using System.Xml.Linq
+@inject DocumentationCatalog Catalog
+
+@((MarkupString)Html)
+
+@code {
+    [Parameter]
+    public string? XmlDocumentation { get; set; }
+
+    [Parameter]
+    public string? CssClass { get; set; }
+
+    [Parameter]
+    public string ElementName { get; set; } = "summary";
+
+    [Parameter]
+    public string? Fallback { get; set; }
+
+    private string Html => BuildHtml();
+
+    private string BuildHtml() {
+        if (string.IsNullOrWhiteSpace(XmlDocumentation)) {
+            return EncodeParagraph(Fallback);
+        }
+
+        try {
+            var document = XDocument.Parse("<root>" + XmlDocumentation + "</root>");
+            var element = document.Root?.Descendants(ElementName).FirstOrDefault();
+            if (element is null) {
+                return EncodeParagraph(Fallback);
+            }
+
+            var content = RenderElementContent(element);
+            return string.IsNullOrWhiteSpace(content) ? EncodeParagraph(Fallback) : WrapRichText(content);
+        }
+        catch {
+            return EncodeParagraph(Fallback);
+        }
+    }
+
+    private string RenderElementContent(XElement element) {
+        var content = RenderNodes(element.Nodes());
+        if (string.IsNullOrWhiteSpace(content) || ContainsBlockElement(element)) {
+            return content;
+        }
+
+        return $"<p>{content}</p>";
+    }
+
+    private string RenderNodes(IEnumerable<XNode> nodes) {
+        var builder = new System.Text.StringBuilder();
+        foreach (var node in nodes) {
+            switch (node) {
+                case XText text:
+                    builder.Append(WebUtility.HtmlEncode(NormalizeWhitespace(text.Value)));
+                    break;
+                case XElement element:
+                    builder.Append(RenderElement(element));
+                    break;
+            }
+        }
+
+        return builder.ToString().Trim();
+    }
+
+    private string RenderElement(XElement element) {
+        var name = element.Name.LocalName;
+        return name switch {
+            "see" => RenderSee(element),
+            "paramref" or "typeparamref" => RenderCode(element.Attribute("name")?.Value ?? element.Value),
+            "c" => RenderCode(element.Value),
+            "code" => $"<pre class=\"docs-code\"><code>{WebUtility.HtmlEncode(element.Value.Trim())}</code></pre>",
+            "para" => $"<p>{RenderNodes(element.Nodes())}</p>",
+            "list" => RenderList(element),
+            "item" => $"<li>{RenderNodes(element.Nodes())}</li>",
+            "term" => $"<strong>{RenderNodes(element.Nodes())}</strong>",
+            "description" => RenderNodes(element.Nodes()),
+            "br" => "<br />",
+            _ => RenderNodes(element.Nodes())
+        };
+    }
+
+    private string RenderList(XElement element) {
+        var tagName = string.Equals(element.Attribute("type")?.Value, "number", StringComparison.OrdinalIgnoreCase)
+            ? "ol"
+            : "ul";
+        var items = element.Elements("item").Select(RenderListItem);
+        return $"<{tagName}>{string.Join(string.Empty, items)}</{tagName}>";
+    }
+
+    private string RenderListItem(XElement item) {
+        var term = item.Element("term");
+        var description = item.Element("description");
+        if (term is null && description is null) {
+            return $"<li>{RenderNodes(item.Nodes())}</li>";
+        }
+
+        var content = string.Empty;
+        if (term is not null) {
+            content += $"<strong>{RenderNodes(term.Nodes())}</strong>";
+        }
+
+        if (description is not null) {
+            content += string.IsNullOrWhiteSpace(content)
+                ? RenderNodes(description.Nodes())
+                : $"<span>{RenderNodes(description.Nodes())}</span>";
+        }
+
+        return $"<li>{content}</li>";
+    }
+
+    private string RenderSee(XElement element) {
+        var cref = element.Attribute("cref")?.Value;
+        var langword = element.Attribute("langword")?.Value;
+        if (!string.IsNullOrWhiteSpace(langword)) {
+            return RenderCode(langword);
+        }
+
+        var link = Catalog.GetDocumentationLink(cref);
+        var label = link?.Label ?? element.Value;
+        if (string.IsNullOrWhiteSpace(label)) {
+            label = FormatCrefLabel(cref);
+        }
+
+        var encodedLabel = WebUtility.HtmlEncode(label);
+        return link is null
+            ? RenderCode(encodedLabel, alreadyEncoded: true)
+            : $"<a class=\"docs-inline-link\" href=\"{WebUtility.HtmlEncode(link.Href)}\"><code>{encodedLabel}</code></a>";
+    }
+
+    private static string FormatCrefLabel(string? cref) {
+        if (string.IsNullOrWhiteSpace(cref)) {
+            return string.Empty;
+        }
+
+        var normalized = cref.Length > 2 && cref[1] == ':' ? cref[2..] : cref;
+        var index = normalized.LastIndexOf('.');
+        return index < 0 ? normalized : normalized[(index + 1)..];
+    }
+
+    private static string RenderCode(string? value, bool alreadyEncoded = false) {
+        var encoded = alreadyEncoded ? value ?? string.Empty : WebUtility.HtmlEncode(value ?? string.Empty);
+        return $"<code>{encoded}</code>";
+    }
+
+    private string EncodeParagraph(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? string.Empty : WrapRichText($"<p>{WebUtility.HtmlEncode(value)}</p>");
+
+    private string WrapRichText(string content) {
+        var className = string.IsNullOrWhiteSpace(CssClass)
+            ? "docs-rich-text"
+            : $"docs-rich-text {WebUtility.HtmlEncode(CssClass)}";
+        return $"<div class=\"{className}\">{content}</div>";
+    }
+
+    private static bool ContainsBlockElement(XElement element) =>
+        element.Elements().Any(child => child.Name.LocalName is "para" or "code" or "list");
+
+    private static readonly Regex WhitespaceRegex = new(@"\s+", RegexOptions.Compiled);
+
+    private static string NormalizeWhitespace(string value) => WhitespaceRegex.Replace(value, " ");
+}

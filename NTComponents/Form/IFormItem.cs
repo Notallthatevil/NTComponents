@@ -1,3 +1,4 @@
+#pragma warning disable CS0618
 using Microsoft.AspNetCore.Components;
 
 namespace NTComponents.Form;
@@ -10,6 +11,7 @@ namespace NTComponents.Form;
 ///         enable/disable/read-only state, and access to parent form context.
 ///     </para>
 /// </summary>
+[System.Obsolete("This legacy Form element is obsolete. Use the NT form components instead.")]
 public interface IFormItem {
 
     /// <summary>

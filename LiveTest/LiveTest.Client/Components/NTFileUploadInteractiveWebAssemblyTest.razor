@@ -1,0 +1,73 @@
+@using System.Globalization
+@using System.Net.Http.Headers
+@using Microsoft.AspNetCore.Components.Forms
+@using NTComponents
+@inject HttpClient Http
+
+<section id="endpoint-upload-version" style="display:grid;gap:12px;">
+    <h2>InteractiveWebAssembly Endpoint Upload</h2>
+    <NTFileUpload @bind-Value="_files"
+                  ElementId="endpoint-file-upload"
+                  Label="Endpoint upload"
+                  EmptyText="No endpoint file selected"
+                  SupportingText="Uploads through consumer-owned HttpClient stream handling."
+                  MaximumFileSize="52428800"
+                  OnUploadFile="OnUploadFileAsync"
+                  OnProgressChanged="OnProgressChangedAsync"
+                  OnCompleted="OnCompletedAsync" />
+    <output data-testid="endpoint-status">@_status</output>
+    <output data-testid="endpoint-percent">@_percent</output>
+</section>
+
+@code {
+    private IReadOnlyList<IBrowserFile>? _files;
+    private int _percent;
+    private string _status = "Waiting for endpoint upload.";
+
+    protected override Task OnAfterRenderAsync(bool firstRender) {
+        if (!firstRender) {
+            return Task.CompletedTask;
+        }
+
+        _status = "Endpoint ready.";
+        return InvokeAsync(StateHasChanged);
+    }
+
+    private Task OnProgressChangedAsync(NTFileUploadProgressDetails details) {
+        _percent = details.Percent;
+        return InvokeAsync(StateHasChanged);
+    }
+
+    private async Task OnUploadFileAsync(NTFileUploadEventArgs args) {
+        if (args.Stream is null) {
+            _status = "Endpoint upload stream missing.";
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(2));
+        using var formData = new MultipartFormDataContent();
+        using var fileContent = new StreamContent(args.Stream);
+        fileContent.Headers.ContentType = new MediaTypeHeaderValue(string.IsNullOrWhiteSpace(args.ContentType) ? "application/octet-stream" : args.ContentType);
+        fileContent.Headers.ContentLength = args.Size;
+
+        formData.Add(new StringContent(Guid.NewGuid().ToString("N")), "uploadId");
+        formData.Add(new StringContent(args.Size.ToString(CultureInfo.InvariantCulture)), "fileSize");
+        formData.Add(fileContent, "file", args.Name);
+
+        using var response = await Http.PostAsync("api/uploads/process", formData, timeout.Token);
+        if (!response.IsSuccessStatusCode) {
+            throw new InvalidOperationException($"Endpoint upload failed with HTTP {(int)response.StatusCode}.");
+        }
+
+        await Task.Delay(750, timeout.Token);
+    }
+
+    private Task OnCompletedAsync(IReadOnlyList<NTFileUploadEventArgs> uploads) {
+        var upload = uploads.FirstOrDefault();
+        _status = upload is null
+            ? "Endpoint upload completed with no files."
+            : $"Endpoint completed {upload.Name} at {upload.ProgressPercent}%.";
+        return InvokeAsync(StateHasChanged);
+    }
+}

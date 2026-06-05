@@ -1,3 +1,4 @@
+#pragma warning disable CS0618
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Rendering;
@@ -17,6 +18,7 @@ namespace NTComponents;
 /// <summary>
 ///     Represents the different types of input elements that can be used in a form.
 /// </summary>
+[System.Obsolete("This legacy Form element is obsolete. Use the NT form components instead.")]
 public enum InputType {
 
     /// <summary>
@@ -669,6 +671,7 @@ public abstract partial class TnTInputBase<TInputType> : InputBase<TInputType>, 
 /// <summary>
 ///     Provides extension methods for the <see cref="InputType" /> enum.
 /// </summary>
+[System.Obsolete("This legacy Form element is obsolete. Use the NT form components instead.")]
 public static class InputTypeExt {
 
     /// <summary>

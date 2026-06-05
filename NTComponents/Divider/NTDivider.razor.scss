@@ -1,0 +1,40 @@
+@use '../Styles/_Variables/_colors.scss' as colors;
+
+$divider-color: var(--nt-divider-color, #{colors.$tnt-color-outline-variant});
+$divider-inset: 16px;
+
+.nt-divider {
+    display: block;
+    flex: 0 0 auto;
+    box-sizing: border-box;
+    padding: 0;
+    border: 0;
+    margin: 0;
+    background-color: $divider-color;
+
+    &.nt-divider-horizontal {
+        block-size: 1px;
+        inline-size: 100%;
+    }
+
+    &.nt-divider-vertical {
+        align-self: stretch;
+        block-size: 100%;
+        inline-size: 1px;
+        min-block-size: 100%;
+    }
+
+    &.nt-divider-full-width {
+        margin-inline: 0;
+    }
+
+    &.nt-divider-inset {
+        inline-size: calc(100% - #{$divider-inset});
+        margin-inline: $divider-inset 0;
+    }
+
+    &.nt-divider-middle-inset {
+        inline-size: calc(100% - (#{$divider-inset} * 2));
+        margin-inline: $divider-inset;
+    }
+}

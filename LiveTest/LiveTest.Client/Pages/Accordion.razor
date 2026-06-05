@@ -1,83 +1,150 @@
 @page "/accordion"
 @using NTComponents
-@rendermode InteractiveAuto
 
-<TnTAccordion>
-    <TnTAccordionChild OpenByDefault="true">
-        <HeaderTemplate>
-            Title 1
-            <TnTButton OnClickCallback="@(() => Console.WriteLine("HeaderClicked"))" StopPropagation="true">
-                Click me
-            </TnTButton>
-        </HeaderTemplate>
-        <ChildContent>
+<main class="tnt-column gap-24">
+    <section>
+        <h1>Accordion</h1>
+        <p>
+            Native SSR accordion built on details and summary.
+        </p>
+    </section>
 
-        <TnTButton ElementTitle="Button 1">
-            Button 1
-        </TnTButton>
-        <TnTButton ElementTitle="Button 2">
-            Button 2
-        </TnTButton>
-        <TnTButton ElementTitle="Button 3" OnClickCallback="@(() => {
-    Console.WriteLine("Incrementing Count");
-_count++;})">
-            Button 3
-        </TnTButton>
-        @for(var i = 0; i < _count; ++i){
-            <div>
-                I am count @(i + 1)
-            </div>
-        }
-        </ChildContent>
-    </TnTAccordionChild>
-    <TnTAccordionChild Label="Title 2" OpenByDefault="true">
-        <TnTProgressIndicator Appearance="ProgressAppearance.Ring"></TnTProgressIndicator>
-        <TnTProgressIndicator Appearance="ProgressAppearance.Linear"></TnTProgressIndicator>
-    </TnTAccordionChild>
-    <TnTAccordionChild Label="Title 3">
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed nisl enim, lobortis vitae leo quis, vulputate vehicula arcu. Sed purus elit, iaculis non turpis nec, dictum porttitor mi. Vestibulum molestie sapien quis turpis auctor ullamcorper. Ut scelerisque hendrerit sem, eu cursus mi scelerisque pulvinar. Praesent vitae posuere magna. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Vestibulum finibus vitae augue eget convallis. Fusce vitae dictum lectus. Etiam sem sapien, pharetra quis lectus in, tempor auctor sem. Aliquam erat volutpat.
+    <section class="tnt-column gap-16">
+        <h2>Filled</h2>
+        <NTAccordion>
+            <NTAccordionItem Label="Account details" SupportingText="Open by default" LeadingIcon="@MaterialIcon.AccountCircle" Open="true">
+                <p>
+                    Account details use the filled container treatment with native expand and collapse behavior. The disclosure interaction works before Blazor becomes interactive.
+                </p>
+                <div style="min-height: 560px; display: flex; flex-direction: column; gap: 12px;">
+                    <p>
+                        This section is intentionally tall so the open panel exercises the accordion content layout across a long disclosure body.
+                    </p>
+                    <p>
+                        The panel keeps its rounded container, readable content padding, and native details behavior while spanning enough height to make scrolling and surrounding spacing obvious in the demo.
+                    </p>
+                    <p>
+                        Extra vertical content also makes it easier to inspect the shape transition between the summary row and the body surface.
+                    </p>
+                </div>
+                <TnTButton ElementTitle="Edit account">
+                    Edit account
+                </TnTButton>
+            </NTAccordionItem>
+            <NTAccordionItem Label="Notifications" SupportingText="Summary rows support secondary text" LeadingIcon="@MaterialIcon.Notifications">
+                <p>
+                    Use supporting text for short descriptions that help people choose which section to open.
+                </p>
+                <TnTProgressIndicator Appearance="ProgressAppearance.Linear"></TnTProgressIndicator>
+            </NTAccordionItem>
+            <NTAccordionItem Label="Disabled section" SupportingText="Rendered as a static surface" Disabled="true">
+                This content is intentionally hidden while disabled.
+            </NTAccordionItem>
+        </NTAccordion>
+    </section>
 
-        Cras tortor elit, lacinia sit amet leo non, ornare venenatis turpis. Quisque et ligula vel diam egestas lacinia. Suspendisse ut luctus arcu. Praesent erat eros, tincidunt non mi quis, bibendum semper elit. Donec id elit ligula. Praesent non pretium sem. Sed in pharetra risus. Praesent posuere vulputate sodales. Aenean imperdiet, enim ac ultrices lobortis, ligula eros ullamcorper lacus, ut blandit tortor elit convallis massa. Ut nulla urna, finibus sed fringilla nec, pharetra a ex. Donec eget egestas odio. Nunc sodales sed purus iaculis posuere. Aenean interdum dictum sagittis. Integer nulla dui, tincidunt eget orci vehicula, vulputate sollicitudin dolor. Ut tincidunt augue eu dui faucibus tempor. Mauris ac hendrerit erat.
+    <section class="tnt-column gap-16">
+        <h2>Outlined</h2>
+        <NTAccordion Variant="NTAccordionVariant.Outlined" Separated="true">
+            <NTAccordionItem Label="Project overview" SupportingText="Outlined separated surfaces" LeadingIcon="@MaterialIcon.Article" Open="true">
+                <p>
+                    Outlined accordions use transparent surfaces with explicit borders for clear structure on quiet backgrounds.
+                </p>
+            </NTAccordionItem>
+            <NTAccordionItem Label="Team access" SupportingText="Independent expansion" LeadingIcon="@MaterialIcon.Group">
+                <p>
+                    This example leaves multiple sections independent so the outlined treatment can be inspected without grouped behavior.
+                </p>
+            </NTAccordionItem>
+            <NTAccordionItem Label="Audit trail" SupportingText="Rounded item containers" LeadingIcon="@MaterialIcon.History">
+                <p>
+                    The separated layout keeps each item rounded while preserving the same native SSR disclosure behavior.
+                </p>
+            </NTAccordionItem>
+        </NTAccordion>
+    </section>
 
-        Ut suscipit eros ut ante facilisis faucibus. Phasellus ac efficitur eros. Sed laoreet, purus imperdiet viverra gravida, arcu risus euismod nisi, vel vestibulum ipsum velit eget orci. Quisque vitae venenatis nulla, ut aliquet odio. Nam blandit pharetra massa, at cursus risus volutpat sed. Fusce quis convallis orci, tristique efficitur ligula. Sed tempor sed velit quis dictum. Mauris vitae semper nunc, ac vehicula nisi. Morbi sed ex eu dui imperdiet condimentum non non dui. Suspendisse nec lacus rutrum, vulputate velit porttitor, aliquam felis. Morbi molestie finibus luctus.
+    <section class="tnt-column gap-16">
+        <h2>Single Expanded</h2>
+        <NTAccordion LimitToOneExpanded="true" GroupName="accordion-demo-single" Variant="NTAccordionVariant.Outlined">
+            <NTAccordionItem Label="Shipping" SupportingText="Only one item in this group can stay open" Open="true">
+                <p>
+                    The group uses the native details name attribute, so the browser owns the single-expanded behavior without JavaScript.
+                </p>
+            </NTAccordionItem>
+            <NTAccordionItem Label="Billing">
+                <p>
+                    Opening this item closes the other item in the same native group.
+                </p>
+            </NTAccordionItem>
+            <NTAccordionItem Label="Review">
+                <p>
+                    The outlined variant keeps the single-expanded group connected as one accordion stack.
+                </p>
+            </NTAccordionItem>
+        </NTAccordion>
+    </section>
 
-        Integer felis augue, imperdiet id ultrices eget, viverra et ante. Pellentesque vel semper dolor. Vestibulum eleifend rhoncus orci. Cras dictum ipsum nulla, vel eleifend lorem accumsan vitae. Pellentesque tincidunt leo nec ex pellentesque, eu egestas nulla eleifend. Aliquam cursus sollicitudin turpis, sit amet placerat tellus imperdiet nec. Curabitur sit amet finibus sem, sed feugiat velit. In vel metus tincidunt, dictum tellus et, porttitor ex.
+    <section class="tnt-column gap-16">
+        <h2>Elevated</h2>
+        <NTAccordion Variant="NTAccordionVariant.Elevated" HeaderColor="TnTColor.SurfaceContainerLow" ContentColor="TnTColor.SurfaceContainerLowest" Separated="true">
+            <NTAccordionItem Label="Build output" LeadingIcon="@MaterialIcon.Terminal" UseRegionRole="true">
+                <p>
+                    Elevated accordions provide stronger separation for panels embedded in dense app surfaces.
+                </p>
+            </NTAccordionItem>
+            <NTAccordionItem Label="Runtime behavior" LeadingIcon="@MaterialIcon.Speed" UseRegionRole="true">
+                <p>
+                    No page script, JS module, JS-invokable state, or Blazor event callback is required for the panel toggle.
+                </p>
+            </NTAccordionItem>
+        </NTAccordion>
+    </section>
 
-        Maecenas ornare molestie sagittis. Quisque sit amet est eget felis dignissim sagittis et rhoncus augue. Sed nec dui justo. Praesent tincidunt interdum dui. Suspendisse dignissim libero ut mollis tincidunt. Sed eros tortor, euismod nec porttitor sit amet, sodales mattis tortor. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Quisque mattis vel arcu ut tristique.
+    <section class="tnt-column gap-16">
+        <h2>Density</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; align-items: start;">
+            <section class="tnt-column gap-12">
+                <h3>Standard</h3>
+                <NTAccordion LimitToOneExpanded="true" GroupName="accordion-demo-density-standard" Separated="true">
+                    <NTAccordionItem Label="Profile" SupportingText="Supporting text below the label" LeadingIcon="@MaterialIcon.Person" Open="true">
+                        <p>
+                            Standard density keeps the supporting text on its own line with the default summary and content spacing.
+                        </p>
+                    </NTAccordionItem>
+                    <NTAccordionItem Label="Security" SupportingText="Default spacing" LeadingIcon="@MaterialIcon.Lock">
+                        <p>
+                            Standard rows leave more vertical room for scanning and touch input.
+                        </p>
+                    </NTAccordionItem>
+                    <NTAccordionItem Label="Billing" SupportingText="Native grouping" LeadingIcon="@MaterialIcon.Payments">
+                        <p>
+                            Opening this section closes the currently open item in the shared density group.
+                        </p>
+                    </NTAccordionItem>
+                </NTAccordion>
+            </section>
 
-    </TnTAccordionChild>
-</TnTAccordion>
-
-<TnTAccordion LimitToOneExpanded="true">
-    <TnTAccordionChild Label="Title 1" OpenByDefault="true">
-        <TnTButton ElementTitle="Button 1">
-            Button 1
-        </TnTButton>
-        <TnTButton ElementTitle="Button 2">
-            Button 2
-        </TnTButton>
-        <TnTButton ElementTitle="Button 3">
-            Button 3
-        </TnTButton>
-    </TnTAccordionChild>
-    <TnTAccordionChild Label="Title 2" OpenByDefault="true">
-        <TnTProgressIndicator Appearance="ProgressAppearance.Ring"></TnTProgressIndicator>
-        <TnTProgressIndicator Appearance="ProgressAppearance.Linear"></TnTProgressIndicator>
-    </TnTAccordionChild>
-    <TnTAccordionChild Label="Title 3">
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed nisl enim, lobortis vitae leo quis, vulputate vehicula arcu. Sed purus elit, iaculis non turpis nec, dictum porttitor mi. Vestibulum molestie sapien quis turpis auctor ullamcorper. Ut scelerisque hendrerit sem, eu cursus mi scelerisque pulvinar. Praesent vitae posuere magna. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Vestibulum finibus vitae augue eget convallis. Fusce vitae dictum lectus. Etiam sem sapien, pharetra quis lectus in, tempor auctor sem. Aliquam erat volutpat.
-
-        Cras tortor elit, lacinia sit amet leo non, ornare venenatis turpis. Quisque et ligula vel diam egestas lacinia. Suspendisse ut luctus arcu. Praesent erat eros, tincidunt non mi quis, bibendum semper elit. Donec id elit ligula. Praesent non pretium sem. Sed in pharetra risus. Praesent posuere vulputate sodales. Aenean imperdiet, enim ac ultrices lobortis, ligula eros ullamcorper lacus, ut blandit tortor elit convallis massa. Ut nulla urna, finibus sed fringilla nec, pharetra a ex. Donec eget egestas odio. Nunc sodales sed purus iaculis posuere. Aenean interdum dictum sagittis. Integer nulla dui, tincidunt eget orci vehicula, vulputate sollicitudin dolor. Ut tincidunt augue eu dui faucibus tempor. Mauris ac hendrerit erat.
-
-        Ut suscipit eros ut ante facilisis faucibus. Phasellus ac efficitur eros. Sed laoreet, purus imperdiet viverra gravida, arcu risus euismod nisi, vel vestibulum ipsum velit eget orci. Quisque vitae venenatis nulla, ut aliquet odio. Nam blandit pharetra massa, at cursus risus volutpat sed. Fusce quis convallis orci, tristique efficitur ligula. Sed tempor sed velit quis dictum. Mauris vitae semper nunc, ac vehicula nisi. Morbi sed ex eu dui imperdiet condimentum non non dui. Suspendisse nec lacus rutrum, vulputate velit porttitor, aliquam felis. Morbi molestie finibus luctus.
-
-        Integer felis augue, imperdiet id ultrices eget, viverra et ante. Pellentesque vel semper dolor. Vestibulum eleifend rhoncus orci. Cras dictum ipsum nulla, vel eleifend lorem accumsan vitae. Pellentesque tincidunt leo nec ex pellentesque, eu egestas nulla eleifend. Aliquam cursus sollicitudin turpis, sit amet placerat tellus imperdiet nec. Curabitur sit amet finibus sem, sed feugiat velit. In vel metus tincidunt, dictum tellus et, porttitor ex.
-
-        Maecenas ornare molestie sagittis. Quisque sit amet est eget felis dignissim sagittis et rhoncus augue. Sed nec dui justo. Praesent tincidunt interdum dui. Suspendisse dignissim libero ut mollis tincidunt. Sed eros tortor, euismod nec porttitor sit amet, sodales mattis tortor. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Quisque mattis vel arcu ut tristique.
-
-    </TnTAccordionChild>
-</TnTAccordion>
-
-@code {
-    private int _count = 0;
-}
+            <section class="tnt-column gap-12">
+                <h3>Compact</h3>
+                <NTAccordion Appearance="NTAccordionAppearance.Compact" LimitToOneExpanded="true" GroupName="accordion-demo-density-compact" Separated="true">
+                    <NTAccordionItem Label="Profile" SupportingText="Inline supporting text" LeadingIcon="@MaterialIcon.Person">
+                        <p>
+                            Compact density reduces summary and content spacing while keeping supporting text inline.
+                        </p>
+                    </NTAccordionItem>
+                    <NTAccordionItem Label="Security" SupportingText="Dense row" LeadingIcon="@MaterialIcon.Lock">
+                        <p>
+                            Compact rows keep the same native disclosure behavior with less vertical space.
+                        </p>
+                    </NTAccordionItem>
+                    <NTAccordionItem Label="Billing" SupportingText="Native grouping" LeadingIcon="@MaterialIcon.Payments">
+                        <p>
+                            Opening this section closes the currently open item in the shared density group.
+                        </p>
+                    </NTAccordionItem>
+                </NTAccordion>
+            </section>
+        </div>
+    </section>
+</main>

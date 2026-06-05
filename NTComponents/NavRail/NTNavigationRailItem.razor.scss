@@ -1,0 +1,292 @@
+@use '../Styles/_Variables/_colors.scss' as colors;
+@use '../Styles/_Variables/_motion.scss' as motion;
+@use '../Styles/_Variables/_typescale.scss' as typescale;
+
+$nt-navigation-rail-item-state-transition: motion.$nt-motion-duration-short_3 motion.$nt-motion-easing-standard;
+$nt-navigation-rail-item-shape-transition: motion.$nt-motion-duration-short_4 motion.$nt-motion-easing-emphasized;
+
+$nt-navigation-rail-item-height: 64px;
+$nt-navigation-rail-expanded-item-height: 56px;
+$nt-navigation-rail-item-padding-block: 6px;
+$nt-navigation-rail-min-target-size: 48px;
+$nt-navigation-rail-icon-size: 24px;
+$nt-navigation-rail-indicator-width: 56px;
+$nt-navigation-rail-indicator-height: 32px;
+$nt-navigation-rail-indicator-block-start: 6px;
+$nt-navigation-rail-expanded-indicator-margin-inline: 20px;
+$nt-navigation-rail-expanded-indicator-padding: 16px;
+$nt-navigation-rail-collapsed-indicator-margin-inline: 20px;
+$nt-navigation-rail-icon-label-gap: 4px;
+$nt-navigation-rail-horizontal-icon-label-gap: 8px;
+$nt-navigation-rail-collapsed-label-max-width: 72px;
+$nt-navigation-rail-expanded-label-max-width: 256px;
+
+.nt-navigation-rail-item {
+    align-items: stretch;
+    appearance: none;
+    background: transparent;
+    border: 0;
+    box-sizing: border-box;
+    color: colors.$tnt-color-on-surface-variant;
+    cursor: pointer;
+    display: flex;
+    font: inherit;
+    inline-size: 100%;
+    margin: 0;
+    min-block-size: $nt-navigation-rail-item-height;
+    min-inline-size: 0;
+    outline: none;
+    padding: 0;
+    position: relative;
+    text-align: center;
+    text-decoration: none;
+    user-select: none;
+
+    &.tnt-disabled,
+    &:disabled {
+        color: color-mix(in srgb, #{colors.$tnt-color-on-surface} 38%, transparent);
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+
+    &:not(.tnt-disabled):not(:disabled):hover {
+        .nt-navigation-rail-item-body::before {
+            opacity: 0.08;
+        }
+    }
+
+    &:not(.tnt-disabled):not(:disabled):focus-visible {
+        .nt-navigation-rail-item-body::before {
+            opacity: 0.1;
+        }
+
+        .nt-navigation-rail-item-body::after {
+            opacity: 1;
+        }
+    }
+
+    &:not(.tnt-disabled):not(:disabled):active {
+        .nt-navigation-rail-item-body::before {
+            opacity: 0.1;
+        }
+    }
+
+    &.nt-navigation-rail-item-selected {
+        color: var(--nt-navigation-rail-active-color, #{colors.$tnt-color-on-secondary-container});
+
+        .nt-navigation-rail-item-indicator {
+            opacity: 1;
+        }
+    }
+}
+
+.nt-navigation-rail-item-body {
+    align-items: flex-start;
+    border-radius: 999px;
+    box-sizing: border-box;
+    display: flex;
+    flex: 1 1 auto;
+    justify-content: flex-start;
+    min-block-size: $nt-navigation-rail-min-target-size;
+    min-inline-size: $nt-navigation-rail-min-target-size;
+    outline: none;
+    padding-block: $nt-navigation-rail-item-padding-block;
+    padding-inline: 0;
+    position: relative;
+}
+
+.nt-navigation-rail-item-body::before,
+.nt-navigation-rail-item-body::after {
+    border-radius: inherit;
+    content: '';
+    inset: 0;
+    opacity: 0;
+    pointer-events: none;
+    position: absolute;
+    transition: opacity $nt-navigation-rail-item-state-transition;
+}
+
+.nt-navigation-rail-item-body::before {
+    background: var(--nt-navigation-rail-state-layer-color, #{colors.$tnt-color-on-secondary-container});
+    z-index: 1;
+}
+
+.nt-navigation-rail-item-body::after {
+    border: 3px solid color-mix(in srgb, var(--nt-navigation-rail-state-layer-color, #{colors.$tnt-color-on-secondary-container}) 44%, transparent);
+    box-sizing: border-box;
+    z-index: 3;
+}
+
+.nt-navigation-rail-item-content {
+    align-items: start;
+    border-radius: 999px;
+    box-sizing: border-box;
+    display: inline-grid;
+    grid-template-columns: $nt-navigation-rail-indicator-width;
+    grid-template-rows: $nt-navigation-rail-indicator-height $nt-navigation-rail-icon-label-gap auto;
+    inline-size: $nt-navigation-rail-indicator-width;
+    justify-content: start;
+    justify-items: center;
+    margin-inline-start: $nt-navigation-rail-collapsed-indicator-margin-inline;
+    min-block-size: calc($nt-navigation-rail-item-height - ($nt-navigation-rail-item-padding-block * 2));
+    min-inline-size: 0;
+    overflow: visible;
+    padding: 0;
+    position: relative;
+    transition: inline-size $nt-navigation-rail-item-shape-transition, block-size $nt-navigation-rail-item-shape-transition, margin-inline-start $nt-navigation-rail-item-shape-transition, padding $nt-navigation-rail-item-shape-transition;
+    z-index: 2;
+}
+
+.nt-navigation-rail-item-ripple {
+    z-index: 1;
+}
+
+.nt-navigation-rail-item-content::before {
+    background: var(--nt-navigation-rail-indicator-color, #{colors.$tnt-color-secondary-container});
+    border-radius: inherit;
+    content: '';
+    inset: 0;
+    opacity: 0;
+    pointer-events: none;
+    position: absolute;
+    transition: opacity $nt-navigation-rail-item-state-transition;
+    z-index: 0;
+}
+
+.nt-navigation-rail-item-indicator {
+    background: var(--nt-navigation-rail-indicator-color, #{colors.$tnt-color-secondary-container});
+    block-size: $nt-navigation-rail-indicator-height;
+    border-radius: 999px;
+    inline-size: $nt-navigation-rail-indicator-width;
+    opacity: 0;
+    inset-inline-start: $nt-navigation-rail-collapsed-indicator-margin-inline;
+    pointer-events: none;
+    position: absolute;
+    top: $nt-navigation-rail-indicator-block-start;
+    transition: inline-size $nt-navigation-rail-item-shape-transition, block-size $nt-navigation-rail-item-shape-transition, opacity $nt-navigation-rail-item-state-transition;
+    z-index: 0;
+}
+
+.nt-navigation-rail-item-icon {
+    align-items: center;
+    block-size: $nt-navigation-rail-icon-size;
+    color: inherit;
+    display: inline-flex;
+    grid-column: 1;
+    grid-row: 1;
+    align-self: center;
+    inline-size: $nt-navigation-rail-icon-size;
+    justify-content: center;
+    position: relative;
+    transform-origin: center;
+    z-index: 2;
+
+    ::deep {
+        .tnt-icon {
+            color: inherit;
+            font-size: $nt-navigation-rail-icon-size;
+        }
+    }
+}
+
+.nt-navigation-rail-item-label {
+    @include typescale.nt-label-medium;
+
+    color: inherit;
+    display: block;
+    grid-column: 1;
+    grid-row: 3;
+    align-self: start;
+    justify-self: center;
+    max-inline-size: $nt-navigation-rail-collapsed-label-max-width;
+    min-inline-size: 0;
+    hyphens: none;
+    overflow-wrap: normal;
+    text-align: center;
+    transform-origin: center;
+    transition: color $nt-navigation-rail-item-state-transition, max-inline-size $nt-navigation-rail-item-shape-transition, transform $nt-navigation-rail-item-shape-transition;
+    white-space: normal;
+    z-index: 2;
+}
+
+.nt-navigation-rail-item {
+    &.nt-navigation-rail-item-expanded {
+        min-block-size: $nt-navigation-rail-expanded-item-height;
+        text-align: start;
+
+        &.nt-navigation-rail-item-selected {
+            color: var(--nt-navigation-rail-active-color, #{colors.$tnt-color-on-secondary-container});
+
+            .nt-navigation-rail-item-content::before {
+                opacity: 1;
+            }
+
+            .nt-navigation-rail-item-indicator {
+                opacity: 0;
+            }
+        }
+
+        .nt-navigation-rail-item-body {
+            justify-content: flex-start;
+            min-block-size: $nt-navigation-rail-expanded-item-height;
+            padding-block: 0;
+            padding-inline: $nt-navigation-rail-expanded-indicator-margin-inline;
+        }
+
+        .nt-navigation-rail-item-content {
+            column-gap: $nt-navigation-rail-horizontal-icon-label-gap;
+            grid-template-columns: $nt-navigation-rail-icon-size max-content;
+            grid-template-rows: minmax($nt-navigation-rail-icon-size, auto);
+            inline-size: auto;
+            justify-content: flex-start;
+            justify-items: start;
+            margin-inline-start: 0;
+            min-block-size: $nt-navigation-rail-expanded-item-height;
+            padding-block: $nt-navigation-rail-expanded-indicator-padding;
+            padding-inline: $nt-navigation-rail-expanded-indicator-padding;
+            width: fit-content;
+        }
+
+        .nt-navigation-rail-item-indicator {
+            display: none;
+        }
+
+        .nt-navigation-rail-item-label {
+            @include typescale.nt-label-large;
+
+            display: block;
+            grid-column: 2;
+            grid-row: 1;
+            align-self: center;
+            justify-self: start;
+            inline-size: auto;
+            max-inline-size: $nt-navigation-rail-expanded-label-max-width;
+            hyphens: none;
+            overflow-wrap: normal;
+            text-align: start;
+            white-space: normal;
+        }
+
+    }
+
+    &.nt-navigation-rail-item-expanded.nt-navigation-rail-item-indicator-full {
+        .nt-navigation-rail-item-body {
+            padding-inline: 0;
+        }
+
+        .nt-navigation-rail-item-content {
+            width: 100%;
+        }
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nt-navigation-rail-item-body::before,
+    .nt-navigation-rail-item-body::after,
+    .nt-navigation-rail-item-content,
+    .nt-navigation-rail-item-indicator,
+    .nt-navigation-rail-item-label {
+        transition-duration: 1ms;
+        transition-timing-function: linear;
+    }
+}

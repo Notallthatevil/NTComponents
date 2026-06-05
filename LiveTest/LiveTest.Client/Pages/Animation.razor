@@ -1,123 +1,128 @@
 @page "/animation"
+@page "/nt-animation"
+@using NTComponents
 
-<div style="height: 100vh; background-color:red">
+<PageTitle>NTAnimation</PageTitle>
 
+<style>
+    .animation-demo {
+        display: grid;
+        gap: 1.5rem;
+        max-width: 72rem;
+    }
+
+    .animation-demo h1,
+    .animation-demo h2,
+    .animation-demo h3,
+    .animation-demo p {
+        margin: 0;
+    }
+
+    .animation-demo .header {
+        display: grid;
+        gap: .5rem;
+    }
+
+    .animation-demo .surface {
+        display: grid;
+        gap: 1.25rem;
+        padding: 1.25rem;
+        border: 1px solid var(--tnt-color-outline-variant);
+        border-radius: .5rem;
+        background: var(--tnt-color-surface);
+        color: var(--tnt-color-on-surface);
+    }
+
+    .animation-demo .muted {
+        color: var(--tnt-color-on-surface-variant);
+    }
+
+    .animation-demo .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+        gap: 1rem;
+    }
+
+    .animation-demo .sample {
+        display: grid;
+        gap: .5rem;
+        min-block-size: 8rem;
+        padding: 1rem;
+        border: 1px solid var(--tnt-color-outline-variant);
+        border-radius: .5rem;
+        background: var(--tnt-color-surface-container-lowest);
+    }
+
+    .animation-demo .spacer {
+        min-block-size: 50vh;
+        border: 1px dashed var(--tnt-color-outline-variant);
+        border-radius: .5rem;
+        display: grid;
+        place-items: center;
+        color: var(--tnt-color-on-surface-variant);
+    }
+</style>
+
+<div class="animation-demo">
+    <div class="header">
+        <h1>NTAnimation</h1>
+        <p class="muted">Static-rendered viewport animations using Material 3 duration and easing tokens.</p>
+    </div>
+
+    <section class="surface" aria-labelledby="animation-enter-title">
+        <h2 id="animation-enter-title">Enter Motion</h2>
+        <div class="grid">
+            @foreach (var sample in EnterSamples) {
+                <NTAnimation @key="sample.Title" data-testid="@sample.TestId" Animation="@sample.Animation" EnterDuration="@sample.Duration" EnterEasing="@sample.Easing">
+                    <div class="sample">
+                        <h3>@sample.Title</h3>
+                        <p class="muted">@sample.Description</p>
+                    </div>
+                </NTAnimation>
+            }
+        </div>
+    </section>
+
+    <div class="spacer">Scroll to trigger the next group</div>
+
+    <section class="surface" aria-labelledby="animation-out-title">
+        <h2 id="animation-out-title">Animate Out</h2>
+        <div class="grid">
+            @foreach (var sample in ExitSamples) {
+                <NTAnimation @key="sample.Title"
+                             data-testid="@sample.TestId"
+                             Animation="@sample.Animation"
+                             AnimateOut="true"
+                             Once="false"
+                             EnterDuration="NTMotionDuration.Ms400"
+                             ExitDuration="NTMotionDuration.Ms200"
+                             EnterEasing="NTMotionEasing.EmphasizedDecelerate"
+                             ExitEasing="NTMotionEasing.EmphasizedAccelerate"
+                             RootMargin="0px 0px -10% 0px">
+                    <div class="sample">
+                        <h3>@sample.Title</h3>
+                        <p class="muted">@sample.Description</p>
+                    </div>
+                </NTAnimation>
+            }
+        </div>
+    </section>
 </div>
 
-<NTComponents.TnTAnimation Duration="1000" AnimationType="@NTComponents.Animation.FadeIn">
-    <NTComponents.TnTCard>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc malesuada ornare elementum. Vestibulum eget rutrum neque. Pellentesque magna ex, pulvinar vitae mollis vel, laoreet sed sapien. Phasellus mi risus, tristique in mauris at, posuere ornare justo. Sed luctus consequat vulputate. Phasellus condimentum, justo a feugiat dapibus, sem felis porta nunc, sit amet porttitor sapien diam vitae sem. Nullam gravida nibh et ex ultricies, et iaculis erat suscipit. Quisque elementum, lectus vitae viverra ullamcorper, diam massa eleifend ex, sed malesuada nisl risus sed massa. Praesent imperdiet aliquet mattis. Nam at erat at diam laoreet mattis molestie sit amet neque.
+@code {
+    private static readonly AnimationSample[] EnterSamples = [
+        new("animation-fade-in", "Fade in", "Opacity-only reveal for top-level destination changes.", NTAnimationType.FadeIn, NTMotionDuration.Ms250, NTMotionEasing.StandardDecelerate),
+        new("animation-from-bottom", "From bottom", "Common enter pattern for content appearing below the current focus.", NTAnimationType.SlideInFromBottom, NTMotionDuration.Ms400, NTMotionEasing.EmphasizedDecelerate),
+        new("animation-from-left", "From left", "Directional reveal for lateral or previous-position content.", NTAnimationType.SlideInFromLeft, NTMotionDuration.Ms400, NTMotionEasing.EmphasizedDecelerate),
+        new("animation-from-right", "From right", "Directional reveal for lateral or next-position content.", NTAnimationType.SlideInFromRight, NTMotionDuration.Ms400, NTMotionEasing.EmphasizedDecelerate),
+        new("animation-from-top", "From top", "Useful for banners and content associated with the page chrome.", NTAnimationType.SlideInFromTop, NTMotionDuration.Ms300, NTMotionEasing.StandardDecelerate)
+    ];
 
-        Ut ut nulla velit. Sed vestibulum nulla ac tellus sodales consectetur. Curabitur nec porta tortor. Nam vehicula ante ut orci fringilla, nec varius est commodo. Fusce luctus facilisis nunc, ac consectetur nunc semper quis. Pellentesque a sapien vel lectus gravida euismod at at elit. Donec tempus porttitor accumsan. Sed vitae lacinia mauris. Curabitur in blandit augue. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Aliquam sit amet congue enim.
+    private static readonly AnimationSample[] ExitSamples = [
+        new("animation-fade-out", "Fade out", "Leaves the viewport with a short exit transition.", NTAnimationType.FadeIn, NTMotionDuration.Ms400, NTMotionEasing.EmphasizedDecelerate),
+        new("animation-slide-out-down", "Slide out down", "Returns to its offset when it exits the viewport.", NTAnimationType.SlideInFromBottom, NTMotionDuration.Ms400, NTMotionEasing.EmphasizedDecelerate),
+        new("animation-slide-out-right", "Slide out right", "Keeps a directional relationship while leaving.", NTAnimationType.SlideInFromRight, NTMotionDuration.Ms400, NTMotionEasing.EmphasizedDecelerate)
+    ];
 
-        Donec volutpat sem vel diam tincidunt, vitae mollis sem faucibus. Nullam at tellus lacinia, placerat turpis lacinia, scelerisque nulla. Nullam eget diam eu erat fringilla pharetra. Praesent in diam orci. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Ut sit amet ipsum erat. In nec sapien ac orci dapibus vulputate. Curabitur urna nulla, pulvinar a augue sit amet, vulputate molestie purus. Vivamus pretium, erat vel bibendum congue, eros lectus pretium eros, ac convallis arcu lectus vel erat. Donec malesuada, risus sit amet egestas congue, lectus libero molestie magna, non imperdiet lectus urna sit amet sapien. Maecenas tempor lectus nulla, ac gravida ipsum eleifend vel. Nullam rutrum auctor molestie. Aenean dictum mauris turpis, sit amet pellentesque tortor accumsan vitae.
-
-        Suspendisse nec tellus non libero posuere luctus. Donec id ipsum leo. Praesent aliquet sed orci eget mollis. Mauris sit amet nibh at mi suscipit auctor in non est. Sed volutpat feugiat magna. Duis et tortor purus. Proin at enim convallis, faucibus elit nec, auctor nisl. Proin pretium nulla ac purus interdum, non posuere lectus semper.
-
-        In dignissim enim quis velit auctor auctor a eleifend sapien. Sed tempor magna non pharetra luctus. Aliquam sed quam nunc. Fusce quis odio vitae magna mollis eleifend. Praesent ac fringilla elit, sed aliquet neque. Aenean ultricies gravida ultrices. Nulla finibus turpis a tristique interdum.
-    </NTComponents.TnTCard>
-</NTComponents.TnTAnimation>
-
-<NTComponents.TnTAnimation Duration="1000" AnimationType="@NTComponents.Animation.SlideBottom">
-    <NTComponents.TnTCard>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc malesuada ornare elementum. Vestibulum eget rutrum neque. Pellentesque magna ex, pulvinar vitae mollis vel, laoreet sed sapien. Phasellus mi risus, tristique in mauris at, posuere ornare justo. Sed luctus consequat vulputate. Phasellus condimentum, justo a feugiat dapibus, sem felis porta nunc, sit amet porttitor sapien diam vitae sem. Nullam gravida nibh et ex ultricies, et iaculis erat suscipit. Quisque elementum, lectus vitae viverra ullamcorper, diam massa eleifend ex, sed malesuada nisl risus sed massa. Praesent imperdiet aliquet mattis. Nam at erat at diam laoreet mattis molestie sit amet neque.
-
-        Ut ut nulla velit. Sed vestibulum nulla ac tellus sodales consectetur. Curabitur nec porta tortor. Nam vehicula ante ut orci fringilla, nec varius est commodo. Fusce luctus facilisis nunc, ac consectetur nunc semper quis. Pellentesque a sapien vel lectus gravida euismod at at elit. Donec tempus porttitor accumsan. Sed vitae lacinia mauris. Curabitur in blandit augue. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Aliquam sit amet congue enim.
-
-        Donec volutpat sem vel diam tincidunt, vitae mollis sem faucibus. Nullam at tellus lacinia, placerat turpis lacinia, scelerisque nulla. Nullam eget diam eu erat fringilla pharetra. Praesent in diam orci. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Ut sit amet ipsum erat. In nec sapien ac orci dapibus vulputate. Curabitur urna nulla, pulvinar a augue sit amet, vulputate molestie purus. Vivamus pretium, erat vel bibendum congue, eros lectus pretium eros, ac convallis arcu lectus vel erat. Donec malesuada, risus sit amet egestas congue, lectus libero molestie magna, non imperdiet lectus urna sit amet sapien. Maecenas tempor lectus nulla, ac gravida ipsum eleifend vel. Nullam rutrum auctor molestie. Aenean dictum mauris turpis, sit amet pellentesque tortor accumsan vitae.
-
-        Suspendisse nec tellus non libero posuere luctus. Donec id ipsum leo. Praesent aliquet sed orci eget mollis. Mauris sit amet nibh at mi suscipit auctor in non est. Sed volutpat feugiat magna. Duis et tortor purus. Proin at enim convallis, faucibus elit nec, auctor nisl. Proin pretium nulla ac purus interdum, non posuere lectus semper.
-
-        In dignissim enim quis velit auctor auctor a eleifend sapien. Sed tempor magna non pharetra luctus. Aliquam sed quam nunc. Fusce quis odio vitae magna mollis eleifend. Praesent ac fringilla elit, sed aliquet neque. Aenean ultricies gravida ultrices. Nulla finibus turpis a tristique interdum.
-    </NTComponents.TnTCard>
-</NTComponents.TnTAnimation>
-
-
-<NTComponents.TnTAnimation Duration="1000" AnimationType="@NTComponents.Animation.SlideTop">
-    <NTComponents.TnTCard>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc malesuada ornare elementum. Vestibulum eget rutrum neque. Pellentesque magna ex, pulvinar vitae mollis vel, laoreet sed sapien. Phasellus mi risus, tristique in mauris at, posuere ornare justo. Sed luctus consequat vulputate. Phasellus condimentum, justo a feugiat dapibus, sem felis porta nunc, sit amet porttitor sapien diam vitae sem. Nullam gravida nibh et ex ultricies, et iaculis erat suscipit. Quisque elementum, lectus vitae viverra ullamcorper, diam massa eleifend ex, sed malesuada nisl risus sed massa. Praesent imperdiet aliquet mattis. Nam at erat at diam laoreet mattis molestie sit amet neque.
-
-        Ut ut nulla velit. Sed vestibulum nulla ac tellus sodales consectetur. Curabitur nec porta tortor. Nam vehicula ante ut orci fringilla, nec varius est commodo. Fusce luctus facilisis nunc, ac consectetur nunc semper quis. Pellentesque a sapien vel lectus gravida euismod at at elit. Donec tempus porttitor accumsan. Sed vitae lacinia mauris. Curabitur in blandit augue. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Aliquam sit amet congue enim.
-
-        Donec volutpat sem vel diam tincidunt, vitae mollis sem faucibus. Nullam at tellus lacinia, placerat turpis lacinia, scelerisque nulla. Nullam eget diam eu erat fringilla pharetra. Praesent in diam orci. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Ut sit amet ipsum erat. In nec sapien ac orci dapibus vulputate. Curabitur urna nulla, pulvinar a augue sit amet, vulputate molestie purus. Vivamus pretium, erat vel bibendum congue, eros lectus pretium eros, ac convallis arcu lectus vel erat. Donec malesuada, risus sit amet egestas congue, lectus libero molestie magna, non imperdiet lectus urna sit amet sapien. Maecenas tempor lectus nulla, ac gravida ipsum eleifend vel. Nullam rutrum auctor molestie. Aenean dictum mauris turpis, sit amet pellentesque tortor accumsan vitae.
-
-        Suspendisse nec tellus non libero posuere luctus. Donec id ipsum leo. Praesent aliquet sed orci eget mollis. Mauris sit amet nibh at mi suscipit auctor in non est. Sed volutpat feugiat magna. Duis et tortor purus. Proin at enim convallis, faucibus elit nec, auctor nisl. Proin pretium nulla ac purus interdum, non posuere lectus semper.
-
-        In dignissim enim quis velit auctor auctor a eleifend sapien. Sed tempor magna non pharetra luctus. Aliquam sed quam nunc. Fusce quis odio vitae magna mollis eleifend. Praesent ac fringilla elit, sed aliquet neque. Aenean ultricies gravida ultrices. Nulla finibus turpis a tristique interdum.
-    </NTComponents.TnTCard>
-</NTComponents.TnTAnimation>
-
-
-<NTComponents.TnTAnimation Duration="1000" AnimationType="@NTComponents.Animation.SlideLeft">
-    <NTComponents.TnTCard>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc malesuada ornare elementum. Vestibulum eget rutrum neque. Pellentesque magna ex, pulvinar vitae mollis vel, laoreet sed sapien. Phasellus mi risus, tristique in mauris at, posuere ornare justo. Sed luctus consequat vulputate. Phasellus condimentum, justo a feugiat dapibus, sem felis porta nunc, sit amet porttitor sapien diam vitae sem. Nullam gravida nibh et ex ultricies, et iaculis erat suscipit. Quisque elementum, lectus vitae viverra ullamcorper, diam massa eleifend ex, sed malesuada nisl risus sed massa. Praesent imperdiet aliquet mattis. Nam at erat at diam laoreet mattis molestie sit amet neque.
-
-        Ut ut nulla velit. Sed vestibulum nulla ac tellus sodales consectetur. Curabitur nec porta tortor. Nam vehicula ante ut orci fringilla, nec varius est commodo. Fusce luctus facilisis nunc, ac consectetur nunc semper quis. Pellentesque a sapien vel lectus gravida euismod at at elit. Donec tempus porttitor accumsan. Sed vitae lacinia mauris. Curabitur in blandit augue. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Aliquam sit amet congue enim.
-
-        Donec volutpat sem vel diam tincidunt, vitae mollis sem faucibus. Nullam at tellus lacinia, placerat turpis lacinia, scelerisque nulla. Nullam eget diam eu erat fringilla pharetra. Praesent in diam orci. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Ut sit amet ipsum erat. In nec sapien ac orci dapibus vulputate. Curabitur urna nulla, pulvinar a augue sit amet, vulputate molestie purus. Vivamus pretium, erat vel bibendum congue, eros lectus pretium eros, ac convallis arcu lectus vel erat. Donec malesuada, risus sit amet egestas congue, lectus libero molestie magna, non imperdiet lectus urna sit amet sapien. Maecenas tempor lectus nulla, ac gravida ipsum eleifend vel. Nullam rutrum auctor molestie. Aenean dictum mauris turpis, sit amet pellentesque tortor accumsan vitae.
-
-        Suspendisse nec tellus non libero posuere luctus. Donec id ipsum leo. Praesent aliquet sed orci eget mollis. Mauris sit amet nibh at mi suscipit auctor in non est. Sed volutpat feugiat magna. Duis et tortor purus. Proin at enim convallis, faucibus elit nec, auctor nisl. Proin pretium nulla ac purus interdum, non posuere lectus semper.
-
-        In dignissim enim quis velit auctor auctor a eleifend sapien. Sed tempor magna non pharetra luctus. Aliquam sed quam nunc. Fusce quis odio vitae magna mollis eleifend. Praesent ac fringilla elit, sed aliquet neque. Aenean ultricies gravida ultrices. Nulla finibus turpis a tristique interdum.
-    </NTComponents.TnTCard>
-</NTComponents.TnTAnimation>
-
-
-<NTComponents.TnTAnimation Duration="1000" AnimationType="@NTComponents.Animation.SlideRight">
-    <NTComponents.TnTCard>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc malesuada ornare elementum. Vestibulum eget rutrum neque. Pellentesque magna ex, pulvinar vitae mollis vel, laoreet sed sapien. Phasellus mi risus, tristique in mauris at, posuere ornare justo. Sed luctus consequat vulputate. Phasellus condimentum, justo a feugiat dapibus, sem felis porta nunc, sit amet porttitor sapien diam vitae sem. Nullam gravida nibh et ex ultricies, et iaculis erat suscipit. Quisque elementum, lectus vitae viverra ullamcorper, diam massa eleifend ex, sed malesuada nisl risus sed massa. Praesent imperdiet aliquet mattis. Nam at erat at diam laoreet mattis molestie sit amet neque.
-
-        Ut ut nulla velit. Sed vestibulum nulla ac tellus sodales consectetur. Curabitur nec porta tortor. Nam vehicula ante ut orci fringilla, nec varius est commodo. Fusce luctus facilisis nunc, ac consectetur nunc semper quis. Pellentesque a sapien vel lectus gravida euismod at at elit. Donec tempus porttitor accumsan. Sed vitae lacinia mauris. Curabitur in blandit augue. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Aliquam sit amet congue enim.
-
-        Donec volutpat sem vel diam tincidunt, vitae mollis sem faucibus. Nullam at tellus lacinia, placerat turpis lacinia, scelerisque nulla. Nullam eget diam eu erat fringilla pharetra. Praesent in diam orci. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Ut sit amet ipsum erat. In nec sapien ac orci dapibus vulputate. Curabitur urna nulla, pulvinar a augue sit amet, vulputate molestie purus. Vivamus pretium, erat vel bibendum congue, eros lectus pretium eros, ac convallis arcu lectus vel erat. Donec malesuada, risus sit amet egestas congue, lectus libero molestie magna, non imperdiet lectus urna sit amet sapien. Maecenas tempor lectus nulla, ac gravida ipsum eleifend vel. Nullam rutrum auctor molestie. Aenean dictum mauris turpis, sit amet pellentesque tortor accumsan vitae.
-
-        Suspendisse nec tellus non libero posuere luctus. Donec id ipsum leo. Praesent aliquet sed orci eget mollis. Mauris sit amet nibh at mi suscipit auctor in non est. Sed volutpat feugiat magna. Duis et tortor purus. Proin at enim convallis, faucibus elit nec, auctor nisl. Proin pretium nulla ac purus interdum, non posuere lectus semper.
-
-        In dignissim enim quis velit auctor auctor a eleifend sapien. Sed tempor magna non pharetra luctus. Aliquam sed quam nunc. Fusce quis odio vitae magna mollis eleifend. Praesent ac fringilla elit, sed aliquet neque. Aenean ultricies gravida ultrices. Nulla finibus turpis a tristique interdum.
-    </NTComponents.TnTCard>
-</NTComponents.TnTAnimation>
-
-
-<NTComponents.TnTAnimation Duration="1000" AnimationType="@NTComponents.Animation.Flip">
-    <NTComponents.TnTCard>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc malesuada ornare elementum. Vestibulum eget rutrum neque. Pellentesque magna ex, pulvinar vitae mollis vel, laoreet sed sapien. Phasellus mi risus, tristique in mauris at, posuere ornare justo. Sed luctus consequat vulputate. Phasellus condimentum, justo a feugiat dapibus, sem felis porta nunc, sit amet porttitor sapien diam vitae sem. Nullam gravida nibh et ex ultricies, et iaculis erat suscipit. Quisque elementum, lectus vitae viverra ullamcorper, diam massa eleifend ex, sed malesuada nisl risus sed massa. Praesent imperdiet aliquet mattis. Nam at erat at diam laoreet mattis molestie sit amet neque.
-
-        Ut ut nulla velit. Sed vestibulum nulla ac tellus sodales consectetur. Curabitur nec porta tortor. Nam vehicula ante ut orci fringilla, nec varius est commodo. Fusce luctus facilisis nunc, ac consectetur nunc semper quis. Pellentesque a sapien vel lectus gravida euismod at at elit. Donec tempus porttitor accumsan. Sed vitae lacinia mauris. Curabitur in blandit augue. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Aliquam sit amet congue enim.
-
-        Donec volutpat sem vel diam tincidunt, vitae mollis sem faucibus. Nullam at tellus lacinia, placerat turpis lacinia, scelerisque nulla. Nullam eget diam eu erat fringilla pharetra. Praesent in diam orci. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Ut sit amet ipsum erat. In nec sapien ac orci dapibus vulputate. Curabitur urna nulla, pulvinar a augue sit amet, vulputate molestie purus. Vivamus pretium, erat vel bibendum congue, eros lectus pretium eros, ac convallis arcu lectus vel erat. Donec malesuada, risus sit amet egestas congue, lectus libero molestie magna, non imperdiet lectus urna sit amet sapien. Maecenas tempor lectus nulla, ac gravida ipsum eleifend vel. Nullam rutrum auctor molestie. Aenean dictum mauris turpis, sit amet pellentesque tortor accumsan vitae.
-
-        Suspendisse nec tellus non libero posuere luctus. Donec id ipsum leo. Praesent aliquet sed orci eget mollis. Mauris sit amet nibh at mi suscipit auctor in non est. Sed volutpat feugiat magna. Duis et tortor purus. Proin at enim convallis, faucibus elit nec, auctor nisl. Proin pretium nulla ac purus interdum, non posuere lectus semper.
-
-        In dignissim enim quis velit auctor auctor a eleifend sapien. Sed tempor magna non pharetra luctus. Aliquam sed quam nunc. Fusce quis odio vitae magna mollis eleifend. Praesent ac fringilla elit, sed aliquet neque. Aenean ultricies gravida ultrices. Nulla finibus turpis a tristique interdum.
-    </NTComponents.TnTCard>
-</NTComponents.TnTAnimation>
-
-        
-<NTComponents.TnTAnimation Duration="1000" AnimationType="@NTComponents.Animation.RotateClockwise">
-    <NTComponents.TnTCard>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc malesuada ornare elementum. Vestibulum eget rutrum neque. Pellentesque magna ex, pulvinar vitae mollis vel, laoreet sed sapien. Phasellus mi risus, tristique in mauris at, posuere ornare justo. Sed luctus consequat vulputate. Phasellus condimentum, justo a feugiat dapibus, sem felis porta nunc, sit amet porttitor sapien diam vitae sem. Nullam gravida nibh et ex ultricies, et iaculis erat suscipit. Quisque elementum, lectus vitae viverra ullamcorper, diam massa eleifend ex, sed malesuada nisl risus sed massa. Praesent imperdiet aliquet mattis. Nam at erat at diam laoreet mattis molestie sit amet neque.
-
-        Ut ut nulla velit. Sed vestibulum nulla ac tellus sodales consectetur. Curabitur nec porta tortor. Nam vehicula ante ut orci fringilla, nec varius est commodo. Fusce luctus facilisis nunc, ac consectetur nunc semper quis. Pellentesque a sapien vel lectus gravida euismod at at elit. Donec tempus porttitor accumsan. Sed vitae lacinia mauris. Curabitur in blandit augue. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Aliquam sit amet congue enim.
-
-        Donec volutpat sem vel diam tincidunt, vitae mollis sem faucibus. Nullam at tellus lacinia, placerat turpis lacinia, scelerisque nulla. Nullam eget diam eu erat fringilla pharetra. Praesent in diam orci. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Ut sit amet ipsum erat. In nec sapien ac orci dapibus vulputate. Curabitur urna nulla, pulvinar a augue sit amet, vulputate molestie purus. Vivamus pretium, erat vel bibendum congue, eros lectus pretium eros, ac convallis arcu lectus vel erat. Donec malesuada, risus sit amet egestas congue, lectus libero molestie magna, non imperdiet lectus urna sit amet sapien. Maecenas tempor lectus nulla, ac gravida ipsum eleifend vel. Nullam rutrum auctor molestie. Aenean dictum mauris turpis, sit amet pellentesque tortor accumsan vitae.
-
-        Suspendisse nec tellus non libero posuere luctus. Donec id ipsum leo. Praesent aliquet sed orci eget mollis. Mauris sit amet nibh at mi suscipit auctor in non est. Sed volutpat feugiat magna. Duis et tortor purus. Proin at enim convallis, faucibus elit nec, auctor nisl. Proin pretium nulla ac purus interdum, non posuere lectus semper.
-
-        In dignissim enim quis velit auctor auctor a eleifend sapien. Sed tempor magna non pharetra luctus. Aliquam sed quam nunc. Fusce quis odio vitae magna mollis eleifend. Praesent ac fringilla elit, sed aliquet neque. Aenean ultricies gravida ultrices. Nulla finibus turpis a tristique interdum.
-    </NTComponents.TnTCard>
-</NTComponents.TnTAnimation>
-
-
-<NTComponents.TnTAnimation Duration="1000" AnimationType="@NTComponents.Animation.RotateCounterClockwise">
-    <NTComponents.TnTCard>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc malesuada ornare elementum. Vestibulum eget rutrum neque. Pellentesque magna ex, pulvinar vitae mollis vel, laoreet sed sapien. Phasellus mi risus, tristique in mauris at, posuere ornare justo. Sed luctus consequat vulputate. Phasellus condimentum, justo a feugiat dapibus, sem felis porta nunc, sit amet porttitor sapien diam vitae sem. Nullam gravida nibh et ex ultricies, et iaculis erat suscipit. Quisque elementum, lectus vitae viverra ullamcorper, diam massa eleifend ex, sed malesuada nisl risus sed massa. Praesent imperdiet aliquet mattis. Nam at erat at diam laoreet mattis molestie sit amet neque.
-
-        Ut ut nulla velit. Sed vestibulum nulla ac tellus sodales consectetur. Curabitur nec porta tortor. Nam vehicula ante ut orci fringilla, nec varius est commodo. Fusce luctus facilisis nunc, ac consectetur nunc semper quis. Pellentesque a sapien vel lectus gravida euismod at at elit. Donec tempus porttitor accumsan. Sed vitae lacinia mauris. Curabitur in blandit augue. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Aliquam sit amet congue enim.
-
-        Donec volutpat sem vel diam tincidunt, vitae mollis sem faucibus. Nullam at tellus lacinia, placerat turpis lacinia, scelerisque nulla. Nullam eget diam eu erat fringilla pharetra. Praesent in diam orci. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Ut sit amet ipsum erat. In nec sapien ac orci dapibus vulputate. Curabitur urna nulla, pulvinar a augue sit amet, vulputate molestie purus. Vivamus pretium, erat vel bibendum congue, eros lectus pretium eros, ac convallis arcu lectus vel erat. Donec malesuada, risus sit amet egestas congue, lectus libero molestie magna, non imperdiet lectus urna sit amet sapien. Maecenas tempor lectus nulla, ac gravida ipsum eleifend vel. Nullam rutrum auctor molestie. Aenean dictum mauris turpis, sit amet pellentesque tortor accumsan vitae.
-
-        Suspendisse nec tellus non libero posuere luctus. Donec id ipsum leo. Praesent aliquet sed orci eget mollis. Mauris sit amet nibh at mi suscipit auctor in non est. Sed volutpat feugiat magna. Duis et tortor purus. Proin at enim convallis, faucibus elit nec, auctor nisl. Proin pretium nulla ac purus interdum, non posuere lectus semper.
-
-        In dignissim enim quis velit auctor auctor a eleifend sapien. Sed tempor magna non pharetra luctus. Aliquam sed quam nunc. Fusce quis odio vitae magna mollis eleifend. Praesent ac fringilla elit, sed aliquet neque. Aenean ultricies gravida ultrices. Nulla finibus turpis a tristique interdum.
-    </NTComponents.TnTCard>
-</NTComponents.TnTAnimation>
+    private sealed record AnimationSample(string TestId, string Title, string Description, NTAnimationType Animation, NTMotionDuration Duration, NTMotionEasing Easing);
+}

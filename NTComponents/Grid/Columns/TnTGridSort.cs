@@ -9,6 +9,7 @@ namespace NTComponents.Grid;
 ///     Represents sorting rules for a grid of <typeparamref name="TGridItem" /> items. Allows specifying multiple properties and directions for sorting, and supports custom comparers.
 /// </summary>
 /// <typeparam name="TGridItem">The type of items in the grid.</typeparam>
+[Obsolete("This legacy grid API is obsolete. Use NTDataGrid, NTPropertyColumn, and NTTemplateColumn instead.")]
 public sealed class TnTGridSort<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields)] TGridItem> {
 
     /// <summary>

@@ -1,0 +1,100 @@
+@namespace NTComponents
+@using Microsoft.AspNetCore.Components.Forms
+
+<div class="@ItemClass">
+    @if (ProgressTemplate is not null) {
+        @ProgressTemplate(CreateProgressDetails())
+    }
+    else {
+        <span class="nt-file-upload-name">@Name</span>
+        <span class="nt-file-upload-status">
+            <span aria-live="polite" aria-atomic="true">@Status</span>
+            @if (ShouldShowPercent) {
+                <span class="nt-file-upload-percent" aria-hidden="true">@($"{Percent}%")</span>
+            }
+        </span>
+        <span class="nt-file-upload-progress">
+            <NTProgress Variant="NTProgressVariant.Linear"
+                        Value="@(IsIndeterminate ? null : (double?)Percent)"
+                        ProgressColor="@(HasError ? TnTColor.Error : TnTColor.Primary)"
+                        TrackColor="@(HasError ? TnTColor.ErrorContainer : TnTColor.SecondaryContainer)"
+                        TrackVisible="true"
+                        AriaLabel="@ProgressAriaLabel" />
+        </span>
+    }
+</div>
+
+@code {
+    private bool _hasError;
+    private bool _hasRendered;
+    private bool _isIndeterminate;
+    private string? _name;
+    private int _percent;
+    private RenderFragment<NTFileUploadProgressDetails>? _progressTemplate;
+    private bool _shouldShowPercent;
+    private long _size;
+    private string? _status;
+
+    [Parameter]
+    public IBrowserFile BrowserFile { get; set; } = default!;
+
+    [Parameter]
+    public bool HasError { get; set; }
+
+    [Parameter]
+    public bool IsIndeterminate { get; set; }
+
+    [Parameter]
+    public string Name { get; set; } = string.Empty;
+
+    [Parameter]
+    public int Percent { get; set; }
+
+    [Parameter]
+    public RenderFragment<NTFileUploadProgressDetails>? ProgressTemplate { get; set; }
+
+    [Parameter]
+    public bool ShouldShowPercent { get; set; }
+
+    [Parameter]
+    public long Size { get; set; }
+
+    [Parameter]
+    public string Status { get; set; } = string.Empty;
+
+    private string ItemClass => HasError ? "nt-file-upload-item nt-file-upload-item-error" : "nt-file-upload-item";
+
+    private string ProgressAriaLabel => $"{Name} upload progress";
+
+    protected override bool ShouldRender() {
+        var shouldRender = !_hasRendered
+            || _hasError != HasError
+            || _isIndeterminate != IsIndeterminate
+            || !string.Equals(_name, Name, StringComparison.Ordinal)
+            || _percent != Percent
+            || !ReferenceEquals(_progressTemplate, ProgressTemplate)
+            || _shouldShowPercent != ShouldShowPercent
+            || _size != Size
+            || !string.Equals(_status, Status, StringComparison.Ordinal);
+
+        _hasRendered = true;
+        _hasError = HasError;
+        _isIndeterminate = IsIndeterminate;
+        _name = Name;
+        _percent = Percent;
+        _progressTemplate = ProgressTemplate;
+        _shouldShowPercent = ShouldShowPercent;
+        _size = Size;
+        _status = Status;
+        return shouldRender;
+    }
+
+    private NTFileUploadProgressDetails CreateProgressDetails() => new() {
+        BrowserFile = BrowserFile,
+        IsIndeterminate = IsIndeterminate,
+        Name = Name,
+        Percent = Percent,
+        Size = Size,
+        Status = Status
+    };
+}

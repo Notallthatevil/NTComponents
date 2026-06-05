@@ -1,0 +1,89 @@
+// Material 3 motion overview specs for web curve conversions:
+// https://m3.material.io/styles/motion/overview/specs
+//
+// Material 3 easing and duration guidance:
+// https://m3.material.io/styles/motion/easing-and-duration/applying-easing-and-duration
+// https://m3.material.io/styles/motion/easing-and-duration/tokens-specs
+//
+// Material 3 transition guidance:
+// https://m3.material.io/styles/motion/transitions/transition-patterns
+// https://m3.material.io/styles/motion/transitions/applying-transitions
+//
+// Notes
+// - Material 3 transitions still use the legacy easing-and-duration system today,
+//   but the broader motion system is moving toward spring-based motion physics.
+// - Transitions are short animations that connect elements or full-screen views.
+//   They help users understand how an app works and are a high-priority part of
+//   a strong motion implementation.
+// - Well-designed transitions should respect reduced-motion accessibility
+//   settings, remain consistent across similar flows, stabilize layouts during
+//   loading, avoid jarring jump cuts by default, preserve a coherent spatial
+//   model, maintain a unified direction of movement, use clean fades, and keep
+//   a simple style.
+// - When reduced motion is preferred, use subtle fades instead of intense
+//   sliding, scaling, parallax, or shape morphing.
+// - Fully fade old content out before fading new content in. Avoid slow
+//   cross-fades that create distracting overlapping frames.
+// - Skeleton loaders are preferred over content popping or shifting into place.
+//
+// Choosing a motion scheme
+// - Emphasized easing is recommended for most transitions to capture the style
+//   of Material 3.
+// - Standard easing should be used for small utility-focused transitions that
+//   need to stay quick, and is also the fallback on platforms that do not
+//   support emphasized easing directly.
+//
+// Choosing a duration
+// - Smaller transition areas should use shorter durations.
+// - Larger transition areas should use longer durations.
+// - Exit, dismiss, and collapse transitions should usually be shorter.
+// - Entering and persistent-on-screen transitions should usually be longer so
+//   users can focus on what is newly appearing.
+//
+// Transition pattern guidance
+// - Container transform:
+//   Use for hero moments, shallow hierarchies, and seamless detail expansion.
+//   Common with cards, lists, galleries, search boxes, sheets, FABs, and chips.
+//   This is the most expressive pattern and should not be overused in deep or
+//   utility-heavy navigation flows.
+// - Forward and backward:
+//   Use for navigation between consecutive levels of hierarchy. Prefer platform
+//   defaults. Common with lists, cards, buttons, and links.
+// - Lateral:
+//   Use for peer content at the same level of hierarchy, such as tabs,
+//   carousels, and galleries. Avoid using it for hierarchical navigation.
+// - Top level:
+//   Use a quick fade between unrelated top-level destinations such as
+//   navigation bar, navigation rail, and navigation drawer destinations.
+// - Enter and exit:
+//   Use when introducing or removing a component in the context of the current
+//   UI, such as dialogs, menus, snackbars, sheets, drawers, app bars, and
+//   banners. Direction should reinforce the spatial model of the app.
+// - Skeleton loaders:
+//   Use to transition from temporary loading states into final content while
+//   stabilizing layout and reducing perceived latency.
+
+// Material 3 duration tokens.
+$nt-motion-duration-short_1: 50ms;
+$nt-motion-duration-short_2: 100ms;
+$nt-motion-duration-short_3: 150ms;
+$nt-motion-duration-short_4: 200ms;
+$nt-motion-duration-medium_1: 250ms;
+$nt-motion-duration-medium_2: 300ms;
+$nt-motion-duration-medium_3: 350ms;
+$nt-motion-duration-medium_4: 400ms;
+$nt-motion-duration-long_1: 450ms;
+$nt-motion-duration-long_2: 500ms;
+$nt-motion-duration-long_3: 550ms;
+$nt-motion-duration-long_4: 600ms;
+$nt-motion-duration-extra_long_1: 700ms;
+$nt-motion-duration-extra_long_2: 800ms;
+$nt-motion-duration-extra_long_3: 900ms;
+$nt-motion-duration-extra_long_4: 1000ms;
+
+$nt-motion-easing-standard: cubic-bezier(0.2, 0, 0, 1);
+$nt-motion-easing-standard-decelerate: cubic-bezier(0, 0, 0, 1);
+$nt-motion-easing-standard-accelerate: cubic-bezier(0.3, 0, 1, 1);
+$nt-motion-easing-emphasized: $nt-motion-easing-standard;
+$nt-motion-easing-emphasized-decelerate: cubic-bezier(0.05, 0.7, 0.1, 1);
+$nt-motion-easing-emphasized-accelerate: cubic-bezier(0.3, 0, 0.8, 0.15);

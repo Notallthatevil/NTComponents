@@ -8,6 +8,7 @@
 		<OutputType>Exe</OutputType>
 		<WarningLevel>8</WarningLevel>
 		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+		<NoWarn>$(NoWarn);CS0618</NoWarn>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -42,6 +43,9 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\LiveTest\LiveTest\LiveTest.csproj" />
+		<ProjectReference Include="..\NTComponents.Analyzers\NTComponents.Analyzers.csproj"
+		                  OutputItemType="Analyzer"
+		                  ReferenceOutputAssembly="false" />
 		<ProjectReference Include="..\NTComponents\NTComponents.csproj" />
 		<ProjectReference Include="..\NTComponents.AspNetCore\NTComponents.AspNetCore.csproj" />
 		<ProjectReference Include="..\NTComponents.Extensions\NTComponents.Extensions.csproj" />

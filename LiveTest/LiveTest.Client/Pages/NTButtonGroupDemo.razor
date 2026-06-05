@@ -6,8 +6,7 @@
 <div class="nt-button-group-demo">
     <h1>NTButtonGroup</h1>
     <p>
-        Explore the Material-style button group that composes multiple <code>TnTButton</code> elements
-        and mirrors the official Material 3 spec.
+        Explore the Material 3 button group that composes buttons and icon buttons with disconnected or connected behavior.
     </p>
 
     <TnTRow class="nt-button-group-demo__row">
@@ -18,7 +17,7 @@
                 </div>
                 <div class="nt-button-group-demo__controls">
                     <label>
-                        Display style
+                        Variant
                         <select @bind="DisplayType">
                             @foreach (var displayType in Enum.GetValues<NTButtonGroupDisplayType>()) {
                                 <option value="@displayType">@displayType</option>
@@ -34,26 +33,18 @@
                         </select>
                     </label>
                     <label>
-                        Appearance
-                        <select @bind="Appearance">
-                            @foreach (var appearance in Enum.GetValues<ButtonAppearance>()) {
-                                <option value="@appearance">@appearance</option>
+                        Button variant
+                        <select @bind="Variant">
+                            @foreach (var variant in Enum.GetValues<NTButtonVariant>()) {
+                                <option value="@variant">@variant</option>
                             }
                         </select>
                     </label>
                     <label>
-                        Selected appearance
-                        <select @bind="SelectedAppearance">
-                            @foreach (var appearance in Enum.GetValues<ButtonAppearance>()) {
-                                <option value="@appearance">@appearance</option>
-                            }
-                        </select>
-                    </label>
-                    <label>
-                        Background color
-                        <select @bind="BackgroundColor">
-                            @foreach (var color in ColorSwatch) {
-                                <option value="@color">@color</option>
+                        Button shape
+                        <select @bind="Shape">
+                            @foreach (var shape in Enum.GetValues<ButtonShape>()) {
+                                <option value="@shape">@shape</option>
                             }
                         </select>
                     </label>
@@ -80,19 +71,11 @@
                     </label>
                     <label class="nt-button-group-demo__toggle">
                         <input type="checkbox" @bind="UseImages" />
-                        Show images
+                        Include icon-only actions
                     </label>
                     <label class="nt-button-group-demo__toggle">
-                        <input type="checkbox" @bind="UseTintColors" />
-                        Apply tint
-                    </label>
-                    <label class="nt-button-group-demo__toggle">
-                        <input type="checkbox" @bind="UseSelectedTintColors" />
-                        Apply selected tint &amp; on tint
-                    </label>
-                    <label class="nt-button-group-demo__toggle">
-                        <input type="checkbox" @bind="UseSelectedTextColor" />
-                        Apply selected text color
+                        <input type="checkbox" @bind="SelectionRequired" />
+                        Selection required
                     </label>
                 </div>
             </TnTCard>
@@ -119,9 +102,11 @@
             TObjectType="string"
             DisplayType="DisplayType"
             ButtonSize="ButtonSize"
-            Appearance="Appearance"
+            Variant="Variant"
+            Shape="Shape"
             SelectedKey="@SelectedKeyValue"
             SelectedKeyChanged="HandleSelectedKeyChanged"
+            SelectionRequired="SelectionRequired"
             DisableRipple="DisableRipple"
             Disabled="Disabled"
             StopPropagation="StopPropagation"
@@ -130,8 +115,8 @@
                 <NTButtonGroupItem
                     Key="@item.Key"
                     Label="@item.Label"
+                    AriaLabel="@item.AriaLabel"
                     StartIcon="@item.StartIcon"
-                    EndIcon="@item.EndIcon"
                     Disabled="@item.Disabled"
                     IsDefaultSelected="@item.IsDefaultSelected" />
             }

@@ -10,7 +10,7 @@ public class NTTag_Tests : BunitContext {
         // Act
         var cut = Render<NTTag>(p => p
             .Add(tag => tag.AdditionalAttributes, attrs)
-            .AddChildContent("Content"));
+            .Add(tag => tag.Label, "Content"));
         var root = cut.Find("span.nt-tag");
 
         // Assert
@@ -21,7 +21,7 @@ public class NTTag_Tests : BunitContext {
     [Fact]
     public void Default_Style_Includes_Default_Color_Variables() {
         // Act
-        var cut = Render<NTTag>();
+        var cut = Render<NTTag>(p => p.Add(tag => tag.Label, "Content"));
         var style = cut.Find("span.nt-tag").GetAttribute("style");
 
         // Assert
@@ -31,15 +31,34 @@ public class NTTag_Tests : BunitContext {
     }
 
     [Fact]
-    public void Renders_Content_And_Icons() {
+    public void Default_Class_Includes_Default_Elevation() {
         // Act
-        var cut = Render<NTTag>(p => p
-            .Add(tag => tag.StartIcon, MaterialIcon.Article)
-            .Add(tag => tag.EndIcon, MaterialIcon.Close)
-            .AddChildContent("Docs"));
+        var cut = Render<NTTag>(p => p.Add(tag => tag.Label, "Docs"));
 
         // Assert
-        cut.Find("span.nt-tag-content").TextContent.Should().Be("Docs");
-        cut.FindAll(".nt-tag-icon").Count.Should().Be(2);
+        cut.Find("span.nt-tag").GetAttribute("class")!.Should().Contain("tnt-elevation-1");
+    }
+
+    [Fact]
+    public void Elevation_Can_Be_Overridden() {
+        // Act
+        var cut = Render<NTTag>(p => p
+            .Add(tag => tag.Label, "Docs")
+            .Add(tag => tag.Elevation, 3));
+
+        // Assert
+        var cls = cut.Find("span.nt-tag").GetAttribute("class")!;
+        cls.Should().Contain("tnt-elevation-3");
+        cls.Should().NotContain("tnt-elevation-1");
+    }
+
+    [Fact]
+    public void Renders_Label() {
+        // Act
+        var cut = Render<NTTag>(p => p.Add(tag => tag.Label, "Docs"));
+
+        // Assert
+        cut.Find("span.nt-tag-label").TextContent.Should().Be("Docs");
+        cut.FindAll(".nt-tag-icon").Should().BeEmpty();
     }
 }

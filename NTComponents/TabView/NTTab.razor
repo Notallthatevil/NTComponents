@@ -1,0 +1,21 @@
+@namespace NTComponents
+@using NTComponents.Core
+@inherits NTComponentBase
+@implements IDisposable
+
+<section @attributes="AdditionalAttributes"
+         id="@ResolvedPanelId"
+         class="@ElementClass"
+         style="@ElementStyle"
+         title="@ElementTitle"
+         lang="@ElementLang"
+         role="tabpanel"
+         aria-labelledby="@ResolvedTabId"
+         data-nt-tab-panel="true"
+         data-nt-tab-value="@ResolvedValue"
+         data-nt-tab-sequence="@ResolvedSequence"
+         hidden="@(!IsInitiallySelected ? true : null)"
+         tabindex="0"
+         @ref="Element">
+    @ChildContent
+</section>

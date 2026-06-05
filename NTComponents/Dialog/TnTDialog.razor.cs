@@ -158,7 +158,7 @@ public partial class TnTDialog {
                 }
                 builder.CloseElement();
 
-                builder.OpenComponent<TnTDivider>(70);
+                builder.OpenComponent<NTDivider>(70);
                 builder.CloseComponent();
             }
 

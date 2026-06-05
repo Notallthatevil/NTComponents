@@ -1,71 +1,22 @@
-﻿## TnTComponents – Copilot Quick Guide
+# NTComponents Core Instructions
 
-### 0. Prime Directive
-Never assume. Mirror existing patterns. If something is ambiguous, pause and surface the question instead of guessing.
+## Commit Message Guidelines
 
-### 1. Core Principles
-* Small, cohesive, testable components (Material 3 look & feel).
-* Each component lives in its own folder under `TnTComponents/`.
-* Favor consistency over novelty; reuse existing abstractions.
-* No new external packages without explicit approval.
+The key words “MUST”, “MUST NOT”, “REQUIRED”, “SHALL”, “SHALL NOT”, “SHOULD”, “SHOULD NOT”, “RECOMMENDED”, “MAY”, and “OPTIONAL” in this document are to be interpreted as described in [RFC 2119](https://www.ietf.org/rfc/rfc2119.txt).
 
-### 2. Instruction Files – Your Source of Truth
-This repository has detailed instruction files for specific concerns. **Always consult the relevant file for your task:**
-
-* **`./instructions/blazor.instructions.md`** — Apply when creating or modifying `*.razor` files. Covers component markup, dependency injection, no inline `@code`, accessibility, and Blazor conventions.
-* **`./instructions/styles.instructions.md`** — Apply when creating or modifying `*.razor.scss` files. Covers SCSS scoping, shared variables, BEM-like patterns, responsiveness, and asset organization.
-* **`./instructions/code-generation.instructions.md`** — Apply when generating or writing new C# code (`*.cs` files). Covers documentation, testability, abstractions, design, and PR guidance.
-* **`./instructions/tests.instructions.md`** — Apply when creating or modifying `*.Tests.cs` files. Covers test frameworks (xUnit, NSubstitute, AutoFixture, AwesomeAssertions), AAA pattern, naming conventions, and coverage targets.
-
-**Before starting work, identify which instruction file(s) apply and refer to them for deterministic rules and checklists.**
-
-### 3. Creating / Extending a Component
-Required files (per folder):
-* `Name.razor` (markup only – logic goes in code-behind) — see `./instructions/blazor.instructions.md`
-* `Name.razor.cs` (partial class inheriting `TnTComponentBase` unless clearly excluded) — see `./instructions/code-generation.instructions.md`
-* `Name.razor.scss` (author styles here) → compiled to `.razor.css` / `.razor.min.css` — see `./instructions/styles.instructions.md`
-* Optional `Name.razor.js` if JS interop is needed; must export: `onLoad`, `onUpdate`, `onDispose` (see `TabView` example)
-* Corresponding test file `Name.Tests.cs` in `TnTComponents.Tests/` — see `./instructions/tests.instructions.md`
-
-### 4. Dev Workflows
-* Build: `dotnet restore` then `dotnet build` (solution root).
-* Test: `dotnet test` (or narrow scope by project / filter).
-* Manual verification: run `LiveTest` app (client for UI smoke checks).
-* Keep the build green before adding more features—incremental, verified changes.
-* Code coverage: `dotnet test --coverage --coverage-output-format cobertura --coverage-output coverage.cobertura.xml` (output in test project bin folder).
-
-### 5. Quick Reference Checklist
-Before submitting changes:
-- [ ] Consulted relevant instruction file(s) from section 2
-- [ ] Followed file naming and structure conventions
-- [ ] Added/updated tests with new functionality
-- [ ] Component is keyboard accessible and semantic
-- [ ] No hardcoded theme colors (use variables)
-- [ ] No new dependencies without approval
-- [ ] Build passes: `dotnet build`
-- [ ] Tests pass: `dotnet test`
-
-### 6. Reference Maps
-* **Blazor component markup rules:** `./instructions/blazor.instructions.md`
-* **SCSS and styling rules:** `./instructions/styles.instructions.md`
-* **C# code and documentation rules:** `./instructions/code-generation.instructions.md`
-* **Testing framework and conventions:** `./instructions/tests.instructions.md`
-* **Component examples to consult:** `Buttons/`, `Accordion/`, `TabView/` (especially for JS interop pattern).
-
-### 7. Escalation Triggers
-Surface clarification instead of proceeding when:
-* API shape conflicts with an existing analogous component.
-* A feature implies cross-cutting concerns (theming, globalization, virtualization).
-* Requires altering shared base classes.
-* Any instruction file rule is unclear or conflicts with reviewer feedback.
-* You are uncertain about which instruction file(s) apply to your task.
-
----
-### Quick Summary
-1. **Identify your task:** Am I creating/modifying `.razor` files? Styles (`.razor.scss`)? Tests (`.Tests.cs`)? C# code (`.cs`)?
-2. **Consult the right file:** Use the reference maps in section 6 to find the correct instruction file.
-3. **Follow the checklist:** Each instruction file contains a deterministic checklist — use it.
-4. **Mirror existing patterns:** Consistency and cohesion over novelty.
-5. **Ask before guessing:** If a rule is unclear or conflicts, surface it rather than proceeding.
-
-**TL;DR:** Mirror existing component structure; keep logic in code-behind; SCSS only for styling; tests mirror structure; document everything; prefer consistency and accessibility; consult the instruction files for deterministic rules; ask when uncertain.
+1. Commits MUST be prefixed with a type, which consists of a noun, feat, fix, etc., followed by the OPTIONAL scope, OPTIONAL !, and REQUIRED terminal colon and space.
+2. The type feat MUST be used when a commit adds a new feature to your application or library.
+3. The type fix MUST be used when a commit represents a bug fix for your application.
+4. A scope MAY be provided after a type. A scope MUST consist of a noun describing a section of the codebase surrounded by parenthesis, e.g., fix(parser):
+5. A description MUST immediately follow the colon and space after the type/scope prefix. The description is a short summary of the code changes, e.g., fix: array parsing issue when multiple spaces were contained in string.
+6. A longer commit body MAY be provided after the short description, providing additional contextual information about the code changes. The body MUST begin one blank line after the description.
+7. A commit body is free-form and MAY consist of any number of newline separated paragraphs.
+8. One or more footers MAY be provided one blank line after the body. Each footer MUST consist of a word token, followed by either a :<space> or <space># separator, followed by a string value (this is inspired by the [git trailer convention](https://git-scm.com/docs/git-interpret-trailers)).
+9. A footer’s token MUST use - in place of whitespace characters, e.g., Acked-by (this helps differentiate the footer section from a multi-paragraph body). An exception is made for BREAKING CHANGE, which MAY also be used as a token.
+10. A footer’s value MAY contain spaces and newlines, and parsing MUST terminate when the next valid footer token/separator pair is observed.
+11. Breaking changes MUST be indicated in the type/scope prefix of a commit, or as an entry in the footer.
+12. If included as a footer, a breaking change MUST consist of the uppercase text BREAKING CHANGE, followed by a colon, space, and description, e.g., BREAKING CHANGE: environment variables now take precedence over config files.
+13. If included in the type/scope prefix, breaking changes MUST be indicated by a ! immediately before the :. If ! is used, BREAKING CHANGE: MAY be omitted from the footer section, and the commit description SHALL be used to describe the breaking change.
+14. Types other than feat and fix MAY be used in your commit messages, e.g., docs: update ref docs.
+15. The units of information that make up Conventional Commits MUST NOT be treated as case-sensitive by implementors, with the exception of BREAKING CHANGE which MUST be uppercase.
+16. BREAKING-CHANGE MUST be synonymous with BREAKING CHANGE, when used as a token in a footer.

@@ -13,7 +13,7 @@ public sealed partial class MaterialIcon : TnTIcon {
     public override string? ElementClass => CssClassBuilder.Create()
         .AddFromAdditionalAttributes(AdditionalAttributes)
         .AddClass("tnt-icon")
-        .AddClass("material-symbols-outlined", Appearance is IconAppearance.Default or IconAppearance.Outlined)
+        .AddClass("material-symbols-outlined", Appearance is IconAppearance.Default or IconAppearance.Filled or IconAppearance.Outlined)
         .AddClass("material-symbols-sharp", Appearance == IconAppearance.Sharp)
         .AddClass("material-symbols-rounded", Appearance == IconAppearance.Round)
         .AddClass("mi-small", Size == IconSize.Small)
@@ -26,6 +26,7 @@ public sealed partial class MaterialIcon : TnTIcon {
     /// <inheritdoc />
     public override string? ElementStyle => CssStyleBuilder.Create()
         .AddFromAdditionalAttributes(AdditionalAttributes)
+        .AddStyle("font-variation-settings", "'FILL' 1", Appearance == IconAppearance.Filled)
         .Build();
 
     /// <summary>

@@ -1,0 +1,19 @@
+@use '../Styles/_Variables/_colors.scss' as colors;
+@use '../Styles/_Variables/_scrollbar.scss' as scrollbar;
+@use './layoutRegion' as region;
+@use './layoutVariables' as layout;
+
+.nt-body {
+    background: var(--nt-body-background-color, #{colors.$tnt-color-surface});
+    background-clip: padding-box;
+    box-sizing: border-box;
+    color: var(--nt-body-text-color, #{colors.$tnt-color-on-surface});
+    flex: 1 1 auto;
+    min-inline-size: 0;
+    @include region.body-scroll-container;
+    @include scrollbar.nt-scrollbar;
+
+    &.nt-body-rounded {
+        border-radius: layout.$nt-layout-body-corner-radius;
+    }
+}

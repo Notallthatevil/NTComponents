@@ -1,0 +1,45 @@
+@use '../Styles/_Variables/_colors.scss' as colors;
+@use '../Styles/_Variables/_motion.scss' as motion;
+@use '../Styles/_Variables/_typescale.scss' as typescale;
+
+$nt-navigation-rail-section-header-state-transition: motion.$nt-motion-duration-short_3 motion.$nt-motion-easing-standard;
+$nt-navigation-rail-section-header-shape-transition: motion.$nt-motion-duration-short_4 motion.$nt-motion-easing-emphasized;
+
+$nt-navigation-rail-section-header-min-height: 32px;
+$nt-navigation-rail-section-header-padding-block-start: 16px;
+$nt-navigation-rail-section-header-padding-block-end: 4px;
+$nt-navigation-rail-section-header-padding-inline: 36px 24px;
+
+.nt-navigation-rail-section-header {
+    @include typescale.nt-label-large;
+
+    box-sizing: border-box;
+    color: colors.$tnt-color-on-surface-variant;
+    display: none;
+    inline-size: 100%;
+    min-block-size: $nt-navigation-rail-section-header-min-height;
+    min-inline-size: 0;
+    overflow: hidden;
+    padding-block: $nt-navigation-rail-section-header-padding-block-start $nt-navigation-rail-section-header-padding-block-end;
+    padding-inline: $nt-navigation-rail-section-header-padding-inline;
+    text-align: start;
+    transition: opacity $nt-navigation-rail-section-header-state-transition, transform $nt-navigation-rail-section-header-shape-transition;
+}
+
+.nt-navigation-rail-section-header-expanded {
+    display: block;
+}
+
+.nt-navigation-rail-section-header-label {
+    display: block;
+    hyphens: none;
+    overflow-wrap: normal;
+    white-space: normal;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nt-navigation-rail-section-header {
+        transition-duration: 1ms;
+        transition-timing-function: linear;
+    }
+}

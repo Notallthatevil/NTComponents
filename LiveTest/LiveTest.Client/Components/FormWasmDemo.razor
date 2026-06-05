@@ -287,7 +287,13 @@
 			</h3>
 
 			<TnTColumn S="6">
-				<TnTMarkdownEditor @bind-Value="@Input.Area" />
+				<NTRichTextEditor @bind-Value="@Input.Area"
+								  Label="Input area"
+								  Placeholder="Type formatted text"
+								  SupportingText="Rich text editor demo"
+								  LeadingIcon="@MaterialIcon.Notes"
+								  TrailingIcon="@MaterialIcon.EditNote"
+								  BindOnInput="true" />
 			</TnTColumn>
 		</TnTRow>
 

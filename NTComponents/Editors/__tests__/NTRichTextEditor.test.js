@@ -58,6 +58,12 @@ function blur(element) {
   element.dispatchEvent(new FocusEvent('blur', { bubbles: false, cancelable: false }));
 }
 
+async function settleAsync() {
+  await Promise.resolve();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  await Promise.resolve();
+}
+
 function setSurfaceContent(surface, html) {
   surface.innerHTML = html;
 }
@@ -143,20 +149,14 @@ function createEditorFixture({
 
 describe('NTRichTextEditor runtime behavior', () => {
   let editorModule;
-  let libraryModule;
   let selectionState;
   let originalExecCommand;
   let originalFileReader;
+  let originalFetch;
   let originalRequestAnimationFrame;
   let originalCancelAnimationFrame;
 
   beforeAll(async () => {
-    libraryModule = await importModule('NTComponents/wwwroot/NTComponents.lib.module.js');
-    await importModule('NTComponents/Editors/Tool/EditorToolImageButton.razor.js');
-    await importModule('NTComponents/Editors/Tool/EditorToolTableButton.razor.js');
-    await importModule('NTComponents/Editors/Tool/EditorToolTextColorButton.razor.js');
-    await importModule('NTComponents/Editors/Tool/EditorToolLinkButton.razor.js');
-    await importModule('NTComponents/Editors/Tool/EditorToolIframeButton.razor.js');
     editorModule = await importModule('NTComponents/Editors/NTRichTextEditor.razor.js');
   });
 
@@ -235,6 +235,15 @@ describe('NTRichTextEditor runtime behavior', () => {
       }
     };
 
+    originalFetch = global.fetch;
+    global.fetch = jest.fn(async () => ({
+      ok: true,
+      headers: {
+        get: (name) => name.toLowerCase() === 'content-type' ? 'image/png' : null
+      },
+      blob: async () => new Blob(['remote image'], { type: 'image/png' })
+    }));
+
     originalRequestAnimationFrame = window.requestAnimationFrame;
     originalCancelAnimationFrame = window.cancelAnimationFrame;
     window.requestAnimationFrame = (callback) => setTimeout(() => callback(0), 0);
@@ -245,6 +254,7 @@ describe('NTRichTextEditor runtime behavior', () => {
     jest.useRealTimers();
     document.execCommand = originalExecCommand;
     global.FileReader = originalFileReader;
+    global.fetch = originalFetch;
     window.requestAnimationFrame = originalRequestAnimationFrame;
     window.cancelAnimationFrame = originalCancelAnimationFrame;
     document.body.innerHTML = '';
@@ -312,7 +322,7 @@ describe('NTRichTextEditor runtime behavior', () => {
     expect(document.execCommand).not.toHaveBeenCalled();
   });
 
-  test('image tool edits an existing image and populates uploaded file details', () => {
+  test('image tool edits an existing image and populates uploaded file details', async () => {
     const fixture = createEditorFixture();
     editorModule.onLoad(fixture.element, createDotNetRef());
 
@@ -340,17 +350,21 @@ describe('NTRichTextEditor runtime behavior', () => {
       value: [new File(['image'], 'updated-image.png', { type: 'image/png' })]
     });
     fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+    await settleAsync();
 
     expect(urlInput.value).toBe('data:image/png;base64,ZmFrZQ==');
     expect(altInput.value).toBe('Old alt');
 
+    collapseBeforeNode(image);
+    click(fixture.element.querySelector('[data-command="image"]'));
     urlInput.value = 'https://new.example/image.png';
     altInput.value = 'Updated alt';
     widthInput.value = '640';
     heightInput.value = '360';
     click(fixture.element.querySelector('[data-role="image-apply"]'));
+    await settleAsync();
 
-    expect(image.getAttribute('src')).toBe('https://new.example/image.png');
+    expect(image.getAttribute('src')).toBe('data:image/png;base64,ZmFrZQ==');
     expect(image.getAttribute('alt')).toBe('Updated alt');
     expect(image.getAttribute('width')).toBe('640');
     expect(image.getAttribute('height')).toBe('360');
@@ -466,7 +480,7 @@ describe('NTRichTextEditor runtime behavior', () => {
     expect(iframe.getAttribute('loading')).toBe('lazy');
   });
 
-  test('onUpdate binds newly added tool controls on the first sync', () => {
+  test('onUpdate binds newly added tool controls on the first sync', async () => {
     const fixture = createEditorFixture();
     const imageButton = fixture.element.querySelector('[data-command="image"]');
     const imagePanel = fixture.element.querySelector('[data-tool-command="image"]');
@@ -490,10 +504,11 @@ describe('NTRichTextEditor runtime behavior', () => {
 
     fixture.element.querySelector('[data-role="image-url"]').value = 'https://example.com/runtime-image.png';
     click(fixture.element.querySelector('[data-role="image-apply"]'));
+    await settleAsync();
 
     const image = fixture.surface.querySelector('img');
     expect(image).not.toBeNull();
-    expect(image.getAttribute('src')).toBe('https://example.com/runtime-image.png');
+    expect(image.getAttribute('src')).toBe('data:image/png;base64,ZmFrZQ==');
   });
 
   test('onDispose detaches editor listeners so later events do not resync state', () => {
@@ -687,7 +702,7 @@ describe('NTRichTextEditor runtime behavior', () => {
     expect(serialized).toContain('*Italic*');
     expect(serialized).toContain('<u>Underline</u>');
     expect(serialized).toContain('~~Strike~~');
-    expect(serialized).toContain('<span style="color:rgb\\(18, 52, 86\\);">Color</span>');
+    expect(serialized).toContain('<span style="color:#123456;">Color</span>');
     expect(serialized).toContain('<img src="https://example.com/image.png" alt="Alt" width="50" height="60" />');
     expect(serialized).toContain('[Docs](https://example.com/docs)');
     expect(serialized).toContain('```ts');
@@ -821,7 +836,7 @@ describe('NTRichTextEditor runtime behavior', () => {
     expect(window.getSelection().rangeCount).toBe(1);
   });
 
-  test('image tool updates existing images, clears dimensions, autofills alt text, and rejects unsafe urls', () => {
+  test('image tool updates existing images, clears dimensions, autofills alt text, and rejects unsafe urls', async () => {
     const fixture = createEditorFixture();
     editorModule.onLoad(fixture.element, createDotNetRef());
 
@@ -836,18 +851,22 @@ describe('NTRichTextEditor runtime behavior', () => {
       value: [new File(['x'], 'photo.png', { type: 'image/png' })]
     });
     fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+    await settleAsync();
 
     expect(fixture.element.querySelector('[data-role="image-url"]').value).toContain('data:image/png;base64');
     expect(fixture.element.querySelector('[data-role="image-alt"]').value).toBe('photo');
 
+    collapseBeforeNode(image);
+    click(fixture.element.querySelector('[data-command="image"]'));
     fixture.element.querySelector('[data-role="image-url"]').value = 'https://example.com/new.png';
     fixture.element.querySelector('[data-role="image-alt"]').value = 'Updated';
     fixture.element.querySelector('[data-role="image-width"]').value = '';
     fixture.element.querySelector('[data-role="image-height"]').value = '';
     click(fixture.element.querySelector('[data-role="image-apply"]'));
+    await settleAsync();
 
     const updatedImage = fixture.surface.querySelector('img');
-    expect(updatedImage.getAttribute('src')).toBe('https://example.com/new.png');
+    expect(updatedImage.getAttribute('src')).toBe('data:image/png;base64,ZmFrZQ==');
     expect(updatedImage.getAttribute('alt')).toBe('Updated');
     expect(updatedImage.hasAttribute('width')).toBe(false);
     expect(updatedImage.hasAttribute('height')).toBe(false);
@@ -859,7 +878,7 @@ describe('NTRichTextEditor runtime behavior', () => {
     click(fixture.element.querySelector('[data-role="image-apply"]'));
 
     expect(document.activeElement).toBe(imageUrlInput);
-    expect(fixture.surface.querySelector('img').getAttribute('src')).toBe('https://example.com/new.png');
+    expect(fixture.surface.querySelector('img').getAttribute('src')).toBe('data:image/png;base64,ZmFrZQ==');
   });
 
   test('link tool updates existing anchors and falls back to selected text or url when inserting', () => {
@@ -1042,7 +1061,7 @@ describe('NTRichTextEditor runtime behavior', () => {
     expect(document.execCommand).toHaveBeenCalledWith('outdent', false);
   });
 
-  test('image and table tools support cancel, escape, enter, and invalid-input paths', () => {
+  test('image and table tools support cancel, escape, enter, and invalid-input paths', async () => {
     const fixture = createEditorFixture();
     editorModule.onLoad(fixture.element, createDotNetRef());
     const imageToolbarButton = fixture.element.querySelector('[data-command="image"]');
@@ -1075,7 +1094,8 @@ describe('NTRichTextEditor runtime behavior', () => {
     imageUrlInput.value = 'https://example.com/enter.png';
     imageAltInput.value = 'Enter image';
     keydown(imageAltInput, 'Enter');
-    expect(fixture.surface.querySelector('img').getAttribute('src')).toBe('https://example.com/enter.png');
+    await settleAsync();
+    expect(fixture.surface.querySelector('img').getAttribute('src')).toBe('data:image/png;base64,ZmFrZQ==');
 
     setSurfaceContent(fixture.surface, '<p>Table host</p>');
     const tableText = fixture.surface.querySelector('p').firstChild;

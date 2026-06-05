@@ -3,6 +3,7 @@ namespace NTComponents.Core;
 /// <summary>
 ///     Applies a ripple effect to a parent component when the parent is clicked.
 /// </summary>
+[Obsolete("TnTRippleEffect is obsolete. Use NTRipple instead.")]
 public partial class TnTRippleEffect {
 
     /// <inheritdoc />

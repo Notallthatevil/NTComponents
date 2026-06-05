@@ -1,147 +1,106 @@
 @using NTComponents
 @inherits LayoutComponentBase
 
-<TnTLayout>
-    <TnTHeader>
-        <TnTSideNavToggle>
-            <MaterialIcon Icon="@MaterialIcon.Menu" />
-        </TnTSideNavToggle>
-        <TnTThemeToggle />
-        This is my header
-    </TnTHeader>
-    <TnTBody>
-        @Body
-    </TnTBody>
+<NTLayout>
+	<NTNavigationRail AriaLabel="LiveTest primary navigation"
+					  HideRailOnXSScreens="true"
+					  MenuAriaLabel="Expand navigation rail"
+					  MenuAriaLabelWhenExpanded="Collapse navigation rail"
+					  ShowDivider="true"
+					  OpenByDefault="true">
+		<ChildContent>
 
-    <TnTFooter>
-        Footer content
-    </TnTFooter>
-    <TnTSideNav HideOnLargeScreens="true">
-        <h3>
-            My First Headline
-        </h3>
-        <TnTSideNavLink href="/" Match="NavLinkMatch.All" Disabled="true">
-            Home
-        </TnTSideNavLink>
-        <TnTSideNavLink href="/accordion" Icon="@MaterialIcon.MusicNote">
-            Accordion
-        </TnTSideNavLink>
-        <TnTSideNavLink href="/anchors" Icon="@MaterialIcon.Link">
-            Anchors
-        </TnTSideNavLink>
+			<NTNavigationRailSectionHeader Label="LiveTest" />
+			<NTNavigationRailItem Label="Home" Href="/" Match="NavLinkMatch.All" Disabled="true" Icon="MaterialIcon.Home" />
+			<NTNavigationRailItem Label="Accordion" Href="/accordion" Icon="MaterialIcon.MusicNote" />
+			<NTNavigationRailItem Label="NTAnimation" Href="/nt-animation" Icon="MaterialIcon.Animation" />
+			<NTNavigationRailItem Label="Anchors" Href="/anchors" Icon="MaterialIcon.Link" />
 
-        <TnTSideNavMenuGroup Icon="@MaterialIcon.SmartButton" Label="Buttons">
-            <TnTSideNavLink href="/buttons">
-                Buttons
-            </TnTSideNavLink>
-            <TnTSideNavLink href="/imagebuttons" Icon="@MaterialIcon.MusicNote">
-                Image Buttons
-            </TnTSideNavLink>
-            <TnTSideNavLink href="/fabbuttons" Icon="@MaterialIcon.Link">
-                FABs
-            </TnTSideNavLink>
-            <TnTSideNavLink href="/button-group" Icon="@MaterialIcon.ToggleOn">
-                Button Groups
-            </TnTSideNavLink>
-        </TnTSideNavMenuGroup>
-        <TnTSideNavLink href="/carousel" Icon="@MaterialIcon.CarCrash">
-            Carousel
-        </TnTSideNavLink>
-        <TnTSideNavMenuGroup Icon="@MaterialIcon.Addchart" ExpandByDefault="false" Label="Graphs">
-            <TnTSideNavLink href="/line-graph" Icon="@MaterialIcon.ShowChart">
-                Line Graph
-            </TnTSideNavLink>
-            <TnTSideNavLink href="/bar-graph" Icon="@MaterialIcon.BarChart">
-                Bar Graph
-            </TnTSideNavLink>
-            <TnTSideNavLink href="/pie-charts" Icon="@MaterialIcon.InsertChart">
-                Pie Charts
-            </TnTSideNavLink>
-            <TnTSideNavLink href="/tree-map" Icon="@MaterialIcon.AccountTree">
-                Tree Map
-            </TnTSideNavLink>
-            <TnTSideNavLink href="/bubble-chart" Icon="@MaterialIcon.BubbleChart">
-                Bubble Physics
-            </TnTSideNavLink>
-        </TnTSideNavMenuGroup>
-        <TnTSideNavLink href="/chips" Icon="@MaterialIcon.BedroomChild">
-            Chips
-        </TnTSideNavLink>
-        <TnTSideNavLink href="/dialog" Icon="@MaterialIcon.Diamond">
-            Dialogs
-        </TnTSideNavLink>
+			<NTNavigationRailGroup Icon="MaterialIcon.SmartButton" Label="Buttons" Expanded="true">
+				<NTNavigationRailItem Label="Buttons" Href="/buttons" Icon="MaterialIcon.SmartButton" />
+				<NTNavigationRailItem Label="Image Buttons" Href="/imagebuttons" Icon="MaterialIcon.MusicNote" />
+				<NTNavigationRailItem Label="FABs" Href="/fabbuttons" Icon="MaterialIcon.Link" />
+				<NTNavigationRailItem Label="Button Groups" Href="/button-group" Icon="MaterialIcon.ToggleOn" />
+				<NTNavigationRailItem Label="Split Buttons" Href="/split-button" Icon="MaterialIcon.AltRoute" />
+				<NTNavigationRailItem Label="NT FAB Button" Href="/nt-fab-button" Icon="MaterialIcon.Add" />
+				<NTNavigationRailItem Label="NT FAB Menu" Href="/nt-fab-menu" Icon="MaterialIcon.AddCircle" />
+				<NTNavigationRailItem Label="NT Menu" Href="/nt-menu" Icon="MaterialIcon.MenuOpen" />
+				<NTNavigationRailItem Label="NT Context Menu" Href="/nt-context-menu" Icon="MaterialIcon.MoreHoriz" />
+			</NTNavigationRailGroup>
 
-        <TnTSideNavMenuGroup Icon="@MaterialIcon.EditNote" ExpandByDefault="false" Label="Editors">
-            <TnTSideNavLink href="/markdown" Icon="@MaterialIcon.MarkAsUnread">
-                Markdown Editor
-            </TnTSideNavLink>
-            <TnTSideNavLink href="/rich-text-editor" Icon="@MaterialIcon.Edit">
-                Rich Text Editor
-            </TnTSideNavLink>
-        </TnTSideNavMenuGroup>
+			<NTNavigationRailItem Label="Carousel" Href="/carousel" Icon="MaterialIcon.CarCrash" />
 
-        <TnTSideNavLink href="/forms" Icon="@MaterialIcon.FormatAlignCenter">
-            Forms
-        </TnTSideNavLink>
-        <TnTSideNavLink href="/documentation-model" Icon="@MaterialIcon.Info">
-            Generated Docs
-        </TnTSideNavLink>
+			<NTNavigationRailGroup Icon="MaterialIcon.Addchart" Label="Graphs">
+				<NTNavigationRailItem Label="Line Graph" Href="/line-graph" Icon="MaterialIcon.ShowChart" />
+				<NTNavigationRailItem Label="Bar Graph" Href="/bar-graph" Icon="MaterialIcon.BarChart" />
+				<NTNavigationRailItem Label="Pie Charts" Href="/pie-charts" Icon="MaterialIcon.InsertChart" />
+				<NTNavigationRailItem Label="Tree Map" Href="/tree-map" Icon="MaterialIcon.AccountTree" />
+				<NTNavigationRailItem Label="Bubble Physics" Href="/bubble-chart" Icon="MaterialIcon.BubbleChart" />
+			</NTNavigationRailGroup>
 
-        <TnTSideNavMenuGroup Icon="@MaterialIcon.Grid4X4" ExpandByDefault="false" Label="Grids">
-            <TnTSideNavLink href="/datagrid" Icon="@MaterialIcon.GridView">
-                Grid
-            </TnTSideNavLink>
-            <TnTSideNavLink href="/paginated" Icon="@MaterialIcon.GridOn">
-                Paginated Grid
-            </TnTSideNavLink>
-            <TnTSideNavLink href="/virtualizedGrid" Icon="@MaterialIcon.GridGoldenratio">
-                Virtualized Grid
-            </TnTSideNavLink>
-        </TnTSideNavMenuGroup>
-        <TnTSideNavLink href="/nestedLayout" Icon="@MaterialIcon.NestCamWiredStand">
-            Nested Layout
-        </TnTSideNavLink>
-        <TnTSideNavLink href="/progress" Icon="@MaterialIcon.Propane">
-            Progress
-        </TnTSideNavLink>
+			<NTNavigationRailItem Label="Chips" Href="/chips" Icon="MaterialIcon.BedroomChild" />
+			<NTNavigationRailItem Label="Dialogs" Href="/dialog" Icon="MaterialIcon.Diamond" />
+			<NTNavigationRailItem Label="Divider" Href="/divider" Icon="MaterialIcon.HorizontalRule" />
+			<NTNavigationRailItem Label="Tags" Href="/tags" Icon="MaterialIcon.Tag" />
 
-        <TnTSideNavMenuGroup Icon="@MaterialIcon.Schedule" ExpandByDefault="false" Label="Scheduler">
-            <TnTSideNavLink href="/scheduler" Icon="@MaterialIcon.ViewWeek">
-                Weekly Scheduler
-            </TnTSideNavLink>
-        </TnTSideNavMenuGroup>
+			<NTNavigationRailGroup Icon="MaterialIcon.EditNote" Label="Editors">
+				<NTNavigationRailItem Label="Rich Text Editor" Href="/rich-text-editor" Icon="MaterialIcon.Edit" />
+			</NTNavigationRailGroup>
 
-        <TnTSideNavLink href="/skeleton" Icon="@MaterialIcon.ShoppingBasket">
-            Skeleton
-        </TnTSideNavLink>
-        <TnTSideNavLink href="/snackbar" Icon="@MaterialIcon.Sms">
-            Snackbar
-        </TnTSideNavLink>
-        <TnTSideNavLink href="/tabview">
-            TabView
-        </TnTSideNavLink>
-        <TnTSideNavLink href="/toast">
-            Toast
-        </TnTSideNavLink>
-        <TnTSideNavLink href="/externalclick" Icon="@MaterialIcon.Mouse">
-            External Click
-        </TnTSideNavLink>
-        <TnTSideNavLink href="/tooltip" Icon="@MaterialIcon.PanTool">
-            Tooltip
-        </TnTSideNavLink>
-        <TnTSideNavLink href="/typeahead">
-            Typeahead
-        </TnTSideNavLink>
-        <TnTSideNavLink href="/InfiniteScroll" Icon="@MaterialIcon.Info">
-            Virtualize
-        </TnTSideNavLink>
-        <TnTSideNavLink href="/Wizard" Icon="@MaterialIcon.Image">
-            Wizard
-        </TnTSideNavLink>
-    </TnTSideNav>
+			<NTNavigationRailItem Label="Forms" Href="/forms" Icon="MaterialIcon.FormatAlignCenter" />
+			<NTNavigationRailItem Label="Form Fields" Href="/form-fields" Icon="MaterialIcon.FormatAlignCenter" />
+			<NTNavigationRailItem Label="Generated Docs" Href="/documentation-model" Icon="MaterialIcon.Info" />
+			<NTNavigationRailItem Label="Views" Href="/views" Icon="MaterialIcon.Dashboard" />
 
-</TnTLayout>
+			<NTNavigationRailGroup Icon="MaterialIcon.Grid4X4" Label="Grids">
+				<NTNavigationRailItem Label="Grid" Href="/datagrid" Icon="MaterialIcon.GridView" />
+				<NTNavigationRailItem Label="Paginated Grid" Href="/paginated" Icon="MaterialIcon.GridOn" />
+				<NTNavigationRailItem Label="Virtualized Grid" Href="/virtualizedGrid" Icon="MaterialIcon.GridGoldenratio" />
+			</NTNavigationRailGroup>
+
+			<NTNavigationRailItem Label="Nested Layout" Href="/nestedLayout" Icon="MaterialIcon.NestCamWiredStand" />
+			<NTNavigationRailItem Label="Loader" Href="/loader" Icon="MaterialIcon.Pending" />
+			<NTNavigationRailItem Label="Progress" Href="/progress" Icon="MaterialIcon.Propane" />
+
+			<NTNavigationRailGroup Icon="MaterialIcon.Schedule" Label="Scheduler">
+				<NTNavigationRailItem Label="Weekly Scheduler" Href="/scheduler" Icon="MaterialIcon.ViewWeek" />
+			</NTNavigationRailGroup>
+
+			<NTNavigationRailItem Label="Shapes" Href="/shapes" Icon="MaterialIcon.FormatShapes" />
+			<NTNavigationRailItem Label="Skeleton" Href="/skeleton" Icon="MaterialIcon.ShoppingBasket" />
+			<NTNavigationRailItem Label="Snackbar" Href="/snackbar" Icon="MaterialIcon.Sms" />
+			<NTNavigationRailItem Label="TabView" Href="/tabview" Icon="MaterialIcon.Tab" />
+			<NTNavigationRailItem Label="Toast" Href="/toast" Icon="MaterialIcon.Notifications" />
+			<NTNavigationRailItem Label="External Click" Href="/externalclick" Icon="MaterialIcon.Mouse" />
+			<NTNavigationRailItem Label="Tooltip" Href="/tooltip" Icon="MaterialIcon.PanTool" />
+			<NTNavigationRailItem Label="Typeahead" Href="/typeahead" Icon="MaterialIcon.Search" />
+			<NTNavigationRailItem Label="Virtualize" Href="/InfiniteScroll" Icon="MaterialIcon.Info" />
+			<NTNavigationRailItem Label="Wizard" Href="/Wizard" Icon="MaterialIcon.Image" />
+			<NTNavigationRailItem Label="NTWizard" Href="/nt-wizard" Icon="MaterialIcon.Image" />
+		</ChildContent>
+		<Footer>
+			<NTThemeToggle />
+		</Footer>
+		<Header>
+			Test Header
+		</Header>
+	</NTNavigationRail>
+
+	<NTHeader BackgroundColor="TnTColor.PrimaryContainer" TextColor="TnTColor.OnPrimaryContainer">
+		<NTThemeToggle />
+		This is my header
+	</NTHeader>
+
+	<NTBody BackgroundColor="TnTColor.SecondaryContainer" TextColor="TnTColor.OnSecondaryContainer">
+		@Body
+	</NTBody>
+
+	<NTFooter BackgroundColor="TnTColor.TertiaryContainer" TextColor="TnTColor.OnTertiaryContainer">
+		Footer content
+	</NTFooter>
+</NTLayout>
 
 <TnTDialog @rendermode="InteractiveAuto" />
 <TnTToast @rendermode="InteractiveAuto" />
-<NTSnackbar @rendermode="InteractiveAuto" />
+<NTSnackbar />
+<NTToast />

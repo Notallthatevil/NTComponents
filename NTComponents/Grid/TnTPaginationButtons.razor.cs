@@ -7,6 +7,7 @@ namespace NTComponents;
 /// <summary>
 ///     Renders pagination buttons for navigating between pages in a grid.
 /// </summary>
+[Obsolete("This legacy grid API is obsolete. Use NTDataGrid, NTPropertyColumn, and NTTemplateColumn instead.")]
 public partial class TnTPaginationButtons {
 
     /// <summary>

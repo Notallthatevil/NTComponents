@@ -1,5 +1,6 @@
 @namespace NTComponents
 @using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Forms
 
 <div class="tnt-rich-text-editor-inline-tool tnt-rich-text-editor-image-editor"
      data-tool-command="image"
@@ -9,45 +10,56 @@
      hidden
      aria-hidden="true">
     <div class="tnt-rich-text-editor-inline-tool-fields">
-        <label class="tnt-rich-text-editor-inline-tool-field">
-            <span>Image URL</span>
-            <input type="url"
-                   data-role="image-url"
-                   placeholder="https://example.com/image.png"
-                   disabled="@Disabled" />
-        </label>
-        <label class="tnt-rich-text-editor-inline-tool-field">
-            <span>Upload image</span>
-            <input type="file"
-                   data-role="image-file"
-                   accept="image/*"
-                   disabled="@Disabled" />
-        </label>
-        <label class="tnt-rich-text-editor-inline-tool-field">
-            <span>Alt text</span>
-            <input type="text"
-                   data-role="image-alt"
-                   placeholder="Describe the image"
-                   disabled="@Disabled" />
-        </label>
-        <label class="tnt-rich-text-editor-inline-tool-field">
-            <span>Width</span>
-            <input type="number"
-                   data-role="image-width"
-                   min="1"
-                   step="1"
-                   placeholder="Auto"
-                   disabled="@Disabled" />
-        </label>
-        <label class="tnt-rich-text-editor-inline-tool-field">
-            <span>Height</span>
-            <input type="number"
-                   data-role="image-height"
-                   min="1"
-                   step="1"
-                   placeholder="Auto"
-                   disabled="@Disabled" />
-        </label>
+        <NTInputText Label="Image URL"
+                     @bind-Value="_imageUrl"
+                     Appearance="NTFormAppearance.Outlined"
+                     Density="NTFormDensity.Dense"
+                     InputType="TextInputType.Url"
+                     Placeholder="https://example.com/image.png"
+                     Disabled="@Disabled"
+                     SubmitValue="false"
+                     data-role="image-url" />
+        <NTFileUpload Label="Upload image"
+                      Appearance="NTFormAppearance.Outlined"
+                      Density="NTFormDensity.Dense"
+                      @bind-Value="_imageFiles"
+                      Accept="image/*"
+                      EmptyText="No image selected"
+                      ChooseButtonText="Choose image"
+                      ShowUploadButton="false"
+                      Disabled="@Disabled"
+                      SubmitValue="false"
+                      data-role="image-file" />
+        <NTInputText Label="Alt text"
+                     @bind-Value="_imageAlt"
+                     Appearance="NTFormAppearance.Outlined"
+                     Density="NTFormDensity.Dense"
+                     Placeholder="Describe the image"
+                     Disabled="@Disabled"
+                     SubmitValue="false"
+                     data-role="image-alt" />
+        <NTInputNumeric TNumber="int"
+                        Label="Width"
+                        @bind-Value="_imageWidth"
+                        Appearance="NTFormAppearance.Outlined"
+                        Density="NTFormDensity.Dense"
+                        Placeholder="Auto"
+                        Disabled="@Disabled"
+                        min="1"
+                        step="1"
+                        SubmitValue="false"
+                        data-role="image-width" />
+        <NTInputNumeric TNumber="int"
+                        Label="Height"
+                        @bind-Value="_imageHeight"
+                        Appearance="NTFormAppearance.Outlined"
+                        Density="NTFormDensity.Dense"
+                        Placeholder="Auto"
+                        Disabled="@Disabled"
+                        min="1"
+                        step="1"
+                        SubmitValue="false"
+                        data-role="image-height" />
     </div>
     <div class="tnt-rich-text-editor-inline-tool-actions">
         <button type="button"
@@ -66,6 +78,12 @@
 </div>
 
 @code {
+    private string? _imageUrl;
+    private IReadOnlyList<IBrowserFile>? _imageFiles;
+    private string? _imageAlt;
+    private int? _imageWidth;
+    private int? _imageHeight;
+
     [Parameter]
     public bool Disabled { get; set; }
 }

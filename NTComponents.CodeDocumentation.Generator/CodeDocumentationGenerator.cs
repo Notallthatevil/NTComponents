@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.IO;
 using System.Text;
 using System.Xml.Linq;
 using Microsoft.CodeAnalysis;
@@ -14,6 +15,7 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
     private const string AttributeNamespace = "NTCodeDocumentation";
     private const string AttributeName = "GenerateCodeDocumentationAttribute";
     private const string FullyQualifiedAttributeName = AttributeNamespace + "." + AttributeName;
+    private const string DocumentationAttributeFullName = "NTComponents.CodeDocumentation.NTDocumentationAttribute";
 
     private static readonly SymbolDisplayFormat TypeDisplayFormat = new(
         typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
@@ -38,6 +40,12 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         globalNamespaceStyle: SymbolDisplayGlobalNamespaceStyle.OmittedAsContaining,
         typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
         memberOptions: SymbolDisplayMemberOptions.IncludeContainingType | SymbolDisplayMemberOptions.IncludeType,
+        miscellaneousOptions: SymbolDisplayMiscellaneousOptions.UseSpecialTypes | SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers);
+
+    private static readonly SymbolDisplayFormat MemberTypeDisplayFormat = new(
+        globalNamespaceStyle: SymbolDisplayGlobalNamespaceStyle.OmittedAsContaining,
+        typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameOnly,
+        genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters,
         miscellaneousOptions: SymbolDisplayMiscellaneousOptions.UseSpecialTypes | SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers);
 
     public void Initialize(IncrementalGeneratorInitializationContext context) {
@@ -88,6 +96,7 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         var methods = ImmutableArray.CreateBuilder<MethodDocumentationModel>();
         var properties = ImmutableArray.CreateBuilder<PropertyDocumentationModel>();
         var fields = ImmutableArray.CreateBuilder<FieldDocumentationModel>();
+        var xmlDocumentation = GetXmlDocumentation(type, cancellationToken);
 
         foreach (var documentedMember in EnumerateMembersIncludingBaseTypes(type)) {
             cancellationToken.ThrowIfCancellationRequested();
@@ -110,8 +119,14 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
             type.ToDisplayString(TypeDisplayFormat),
             type.BaseType?.ToDisplayString(TypeDisplayFormat) ?? string.Empty,
             type.TypeKind.ToString(),
-            ExtractSummary(GetXmlDocumentation(type, cancellationToken)),
-            GetXmlDocumentation(type, cancellationToken),
+            type.DeclaredAccessibility.ToString(),
+            GetSourceFolder(type),
+            GetSourceFileName(type),
+            ExtractSummary(xmlDocumentation),
+            ExtractRemarks(xmlDocumentation),
+            xmlDocumentation,
+            GetDocumentationMetadata(type),
+            GetObsoleteDocumentation(type),
             methods.ToImmutable().Sort(static (left, right) => CompareBySignatureAndDeclaringType(left.Signature, left.DeclaringTypeFullName, right.Signature, right.DeclaringTypeFullName)),
             properties.ToImmutable().Sort(static (left, right) => CompareBySignatureAndDeclaringType(left.Signature, left.DeclaringTypeFullName, right.Signature, right.DeclaringTypeFullName)),
             fields.ToImmutable().Sort(static (left, right) => CompareBySignatureAndDeclaringType(left.Signature, left.DeclaringTypeFullName, right.Signature, right.DeclaringTypeFullName)));
@@ -122,10 +137,12 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         return new MethodDocumentationModel(
             method.Name,
             method.ToDisplayString(MethodDisplayFormat),
+            method.DeclaredAccessibility.ToString(),
             ExtractSummary(xmlDocumentation),
             xmlDocumentation,
             method.ContainingType?.ToDisplayString(TypeDisplayFormat) ?? string.Empty,
-            isFromBaseType);
+            isFromBaseType,
+            GetObsoleteDocumentation(method));
     }
 
     private static PropertyDocumentationModel BuildPropertyDocumentation(IPropertySymbol property, bool isFromBaseType, CancellationToken cancellationToken) {
@@ -133,10 +150,17 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         return new PropertyDocumentationModel(
             property.Name,
             property.ToDisplayString(PropertyDisplayFormat),
+            property.DeclaredAccessibility.ToString(),
+            property.Type.ToDisplayString(MemberTypeDisplayFormat),
+            property.Type.ToDisplayString(TypeDisplayFormat),
             ExtractSummary(xmlDocumentation),
             xmlDocumentation,
             property.ContainingType?.ToDisplayString(TypeDisplayFormat) ?? string.Empty,
-            isFromBaseType);
+            isFromBaseType,
+            HasAttribute(property, "Microsoft.AspNetCore.Components.ParameterAttribute"),
+            HasAttribute(property, "Microsoft.AspNetCore.Components.CascadingParameterAttribute"),
+            HasAttribute(property, "Microsoft.AspNetCore.Components.EditorRequiredAttribute"),
+            GetObsoleteDocumentation(property));
     }
 
     private static FieldDocumentationModel BuildFieldDocumentation(IFieldSymbol field, bool isFromBaseType, CancellationToken cancellationToken) {
@@ -144,10 +168,15 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         return new FieldDocumentationModel(
             field.Name,
             field.ToDisplayString(FieldDisplayFormat),
+            field.DeclaredAccessibility.ToString(),
+            field.Type.ToDisplayString(MemberTypeDisplayFormat),
+            field.Type.ToDisplayString(TypeDisplayFormat),
+            GetConstantValue(field),
             ExtractSummary(xmlDocumentation),
             xmlDocumentation,
             field.ContainingType?.ToDisplayString(TypeDisplayFormat) ?? string.Empty,
-            isFromBaseType);
+            isFromBaseType,
+            GetObsoleteDocumentation(field));
     }
 
     private static int CompareBySignatureAndDeclaringType(string leftSignature, string leftDeclaringType, string rightSignature, string rightDeclaringType) {
@@ -223,8 +252,18 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         builder.AppendLine("    /// <param name=\"fullName\">The fully qualified type name.</param>");
         builder.AppendLine("    /// <param name=\"baseTypeFullName\">The fully qualified base type name, when available.</param>");
         builder.AppendLine("    /// <param name=\"kind\">The type kind (class, struct, enum).</param>");
+        builder.AppendLine("    /// <param name=\"accessibility\">The declared accessibility.</param>");
+        builder.AppendLine("    /// <param name=\"sourceFolder\">The source folder that contains the type.</param>");
+        builder.AppendLine("    /// <param name=\"sourceFileName\">The source file that declares the type.</param>");
         builder.AppendLine("    /// <param name=\"summary\">The extracted summary text.</param>");
+        builder.AppendLine("    /// <param name=\"remarks\">The extracted remarks text.</param>");
         builder.AppendLine("    /// <param name=\"xmlDocumentation\">The full XML documentation block.</param>");
+        builder.AppendLine("    /// <param name=\"renderCompatibility\">The declared render compatibility.</param>");
+        builder.AppendLine("    /// <param name=\"compatibilitySummary\">The short render compatibility summary.</param>");
+        builder.AppendLine("    /// <param name=\"compatibilityDetails\">The detailed render compatibility guidance.</param>");
+        builder.AppendLine("    /// <param name=\"isObsolete\">Indicates whether the type has the Obsolete attribute.</param>");
+        builder.AppendLine("    /// <param name=\"obsoleteMessage\">The obsolete message, when provided.</param>");
+        builder.AppendLine("    /// <param name=\"isObsoleteError\">Indicates whether use of the obsolete type is treated as an error.</param>");
         builder.AppendLine("    /// <param name=\"methods\">The documented methods.</param>");
         builder.AppendLine("    /// <param name=\"properties\">The documented properties.</param>");
         builder.AppendLine("    /// <param name=\"fields\">The documented fields.</param>");
@@ -233,8 +272,18 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         builder.AppendLine("        string fullName,");
         builder.AppendLine("        string baseTypeFullName,");
         builder.AppendLine("        string kind,");
+        builder.AppendLine("        string accessibility,");
+        builder.AppendLine("        string sourceFolder,");
+        builder.AppendLine("        string sourceFileName,");
         builder.AppendLine("        string summary,");
+        builder.AppendLine("        string remarks,");
         builder.AppendLine("        string xmlDocumentation,");
+        builder.AppendLine("        string renderCompatibility,");
+        builder.AppendLine("        string compatibilitySummary,");
+        builder.AppendLine("        string compatibilityDetails,");
+        builder.AppendLine("        bool isObsolete,");
+        builder.AppendLine("        string obsoleteMessage,");
+        builder.AppendLine("        bool isObsoleteError,");
         builder.AppendLine("        global::System.Collections.Generic.IReadOnlyList<MethodDocumentation> methods,");
         builder.AppendLine("        global::System.Collections.Generic.IReadOnlyList<PropertyDocumentation> properties,");
         builder.AppendLine("        global::System.Collections.Generic.IReadOnlyList<FieldDocumentation> fields) {");
@@ -242,11 +291,27 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         builder.AppendLine("        FullName = fullName;");
         builder.AppendLine("        BaseTypeFullName = baseTypeFullName;");
         builder.AppendLine("        Kind = kind;");
+        builder.AppendLine("        Accessibility = accessibility;");
+        builder.AppendLine("        SourceFolder = sourceFolder;");
+        builder.AppendLine("        SourceFileName = sourceFileName;");
         builder.AppendLine("        Summary = summary;");
+        builder.AppendLine("        Remarks = remarks;");
         builder.AppendLine("        XmlDocumentation = xmlDocumentation;");
+        builder.AppendLine("        RenderCompatibility = renderCompatibility;");
+        builder.AppendLine("        CompatibilitySummary = compatibilitySummary;");
+        builder.AppendLine("        CompatibilityDetails = compatibilityDetails;");
+        builder.AppendLine("        IsSsrCompatible = string.Equals(renderCompatibility, \"SsrCompatible\", global::System.StringComparison.Ordinal) || string.Equals(renderCompatibility, \"ProgressivelyEnhanced\", global::System.StringComparison.Ordinal);");
+        builder.AppendLine("        IsObsolete = isObsolete;");
+        builder.AppendLine("        ObsoleteMessage = obsoleteMessage;");
+        builder.AppendLine("        IsObsoleteError = isObsoleteError;");
         builder.AppendLine("        Methods = methods;");
         builder.AppendLine("        Properties = properties;");
         builder.AppendLine("        Fields = fields;");
+        builder.AppendLine("        Parameters = global::System.Linq.Enumerable.ToArray(global::System.Linq.Enumerable.Where(Properties, static property => property.IsParameter));");
+        builder.AppendLine("        CascadingParameters = global::System.Linq.Enumerable.ToArray(global::System.Linq.Enumerable.Where(Properties, static property => property.IsCascadingParameter));");
+        builder.AppendLine("        ObsoleteMethods = global::System.Linq.Enumerable.ToArray(global::System.Linq.Enumerable.Where(Methods, static method => method.IsObsolete));");
+        builder.AppendLine("        ObsoleteProperties = global::System.Linq.Enumerable.ToArray(global::System.Linq.Enumerable.Where(Properties, static property => property.IsObsolete));");
+        builder.AppendLine("        ObsoleteFields = global::System.Linq.Enumerable.ToArray(global::System.Linq.Enumerable.Where(Fields, static field => field.IsObsolete));");
         builder.AppendLine("    }");
         builder.AppendLine();
         builder.AppendLine("    /// <summary>");
@@ -262,6 +327,18 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         builder.AppendLine("    /// </summary>");
         builder.AppendLine("    public string Kind { get; }");
         builder.AppendLine("    /// <summary>");
+        builder.AppendLine("    /// Gets the declared accessibility.");
+        builder.AppendLine("    /// </summary>");
+        builder.AppendLine("    public string Accessibility { get; }");
+        builder.AppendLine("    /// <summary>");
+        builder.AppendLine("    /// Gets the source folder that contains the type.");
+        builder.AppendLine("    /// </summary>");
+        builder.AppendLine("    public string SourceFolder { get; }");
+        builder.AppendLine("    /// <summary>");
+        builder.AppendLine("    /// Gets the source file that declares the type.");
+        builder.AppendLine("    /// </summary>");
+        builder.AppendLine("    public string SourceFileName { get; }");
+        builder.AppendLine("    /// <summary>");
         builder.AppendLine("    /// Gets the fully qualified base type name, when present.");
         builder.AppendLine("    /// </summary>");
         builder.AppendLine("    public string BaseTypeFullName { get; }");
@@ -270,9 +347,41 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         builder.AppendLine("    /// </summary>");
         builder.AppendLine("    public string Summary { get; }");
         builder.AppendLine("    /// <summary>");
+        builder.AppendLine("    /// Gets the remarks text extracted from XML docs.");
+        builder.AppendLine("    /// </summary>");
+        builder.AppendLine("    public string Remarks { get; }");
+        builder.AppendLine("    /// <summary>");
         builder.AppendLine("    /// Gets the full XML documentation block.");
         builder.AppendLine("    /// </summary>");
         builder.AppendLine("    public string XmlDocumentation { get; }");
+        builder.AppendLine("    /// <summary>");
+        builder.AppendLine("    /// Gets the render compatibility classification.");
+        builder.AppendLine("    /// </summary>");
+        builder.AppendLine("    public string RenderCompatibility { get; }");
+        builder.AppendLine("    /// <summary>");
+        builder.AppendLine("    /// Gets a value indicating whether this type is compatible with static SSR output.");
+        builder.AppendLine("    /// </summary>");
+        builder.AppendLine("    public bool IsSsrCompatible { get; }");
+        builder.AppendLine("    /// <summary>");
+        builder.AppendLine("    /// Gets the short render compatibility summary.");
+        builder.AppendLine("    /// </summary>");
+        builder.AppendLine("    public string CompatibilitySummary { get; }");
+        builder.AppendLine("    /// <summary>");
+        builder.AppendLine("    /// Gets detailed render compatibility guidance.");
+        builder.AppendLine("    /// </summary>");
+        builder.AppendLine("    public string CompatibilityDetails { get; }");
+        builder.AppendLine("    /// <summary>");
+        builder.AppendLine("    /// Gets a value indicating whether this type has the Obsolete attribute.");
+        builder.AppendLine("    /// </summary>");
+        builder.AppendLine("    public bool IsObsolete { get; }");
+        builder.AppendLine("    /// <summary>");
+        builder.AppendLine("    /// Gets the obsolete message, when provided.");
+        builder.AppendLine("    /// </summary>");
+        builder.AppendLine("    public string ObsoleteMessage { get; }");
+        builder.AppendLine("    /// <summary>");
+        builder.AppendLine("    /// Gets a value indicating whether use of this obsolete type is treated as an error.");
+        builder.AppendLine("    /// </summary>");
+        builder.AppendLine("    public bool IsObsoleteError { get; }");
         builder.AppendLine("    /// <summary>");
         builder.AppendLine("    /// Gets documented methods for the type.");
         builder.AppendLine("    /// </summary>");
@@ -285,6 +394,26 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         builder.AppendLine("    /// Gets documented fields for the type.");
         builder.AppendLine("    /// </summary>");
         builder.AppendLine("    public global::System.Collections.Generic.IReadOnlyList<FieldDocumentation> Fields { get; }");
+        builder.AppendLine("    /// <summary>");
+        builder.AppendLine("    /// Gets documented properties marked with the Parameter attribute.");
+        builder.AppendLine("    /// </summary>");
+        builder.AppendLine("    public global::System.Collections.Generic.IReadOnlyList<PropertyDocumentation> Parameters { get; }");
+        builder.AppendLine("    /// <summary>");
+        builder.AppendLine("    /// Gets documented properties marked with the CascadingParameter attribute.");
+        builder.AppendLine("    /// </summary>");
+        builder.AppendLine("    public global::System.Collections.Generic.IReadOnlyList<PropertyDocumentation> CascadingParameters { get; }");
+        builder.AppendLine("    /// <summary>");
+        builder.AppendLine("    /// Gets documented methods marked with the Obsolete attribute.");
+        builder.AppendLine("    /// </summary>");
+        builder.AppendLine("    public global::System.Collections.Generic.IReadOnlyList<MethodDocumentation> ObsoleteMethods { get; }");
+        builder.AppendLine("    /// <summary>");
+        builder.AppendLine("    /// Gets documented properties marked with the Obsolete attribute.");
+        builder.AppendLine("    /// </summary>");
+        builder.AppendLine("    public global::System.Collections.Generic.IReadOnlyList<PropertyDocumentation> ObsoleteProperties { get; }");
+        builder.AppendLine("    /// <summary>");
+        builder.AppendLine("    /// Gets documented fields marked with the Obsolete attribute.");
+        builder.AppendLine("    /// </summary>");
+        builder.AppendLine("    public global::System.Collections.Generic.IReadOnlyList<FieldDocumentation> ObsoleteFields { get; }");
         builder.AppendLine("}");
         builder.AppendLine();
         builder.AppendLine("/// <summary>");
@@ -296,17 +425,25 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         builder.AppendLine("    /// </summary>");
         builder.AppendLine("    /// <param name=\"name\">The method name.</param>");
         builder.AppendLine("    /// <param name=\"signature\">The method signature.</param>");
+        builder.AppendLine("    /// <param name=\"accessibility\">The declared accessibility.</param>");
         builder.AppendLine("    /// <param name=\"summary\">The method summary.</param>");
         builder.AppendLine("    /// <param name=\"xmlDocumentation\">The full XML documentation block.</param>");
         builder.AppendLine("    /// <param name=\"declaringTypeFullName\">The fully qualified type that declares the method.</param>");
         builder.AppendLine("    /// <param name=\"isFromBaseType\">Indicates whether the method was inherited from a base class.</param>");
-        builder.AppendLine("    public MethodDocumentation(string name, string signature, string summary, string xmlDocumentation, string declaringTypeFullName, bool isFromBaseType) {");
+        builder.AppendLine("    /// <param name=\"isObsolete\">Indicates whether the method has the Obsolete attribute.</param>");
+        builder.AppendLine("    /// <param name=\"obsoleteMessage\">The obsolete message, when provided.</param>");
+        builder.AppendLine("    /// <param name=\"isObsoleteError\">Indicates whether use of the obsolete method is treated as an error.</param>");
+        builder.AppendLine("    public MethodDocumentation(string name, string signature, string accessibility, string summary, string xmlDocumentation, string declaringTypeFullName, bool isFromBaseType, bool isObsolete, string obsoleteMessage, bool isObsoleteError) {");
         builder.AppendLine("        Name = name;");
         builder.AppendLine("        Signature = signature;");
+        builder.AppendLine("        Accessibility = accessibility;");
         builder.AppendLine("        Summary = summary;");
         builder.AppendLine("        XmlDocumentation = xmlDocumentation;");
         builder.AppendLine("        DeclaringTypeFullName = declaringTypeFullName;");
         builder.AppendLine("        IsFromBaseType = isFromBaseType;");
+        builder.AppendLine("        IsObsolete = isObsolete;");
+        builder.AppendLine("        ObsoleteMessage = obsoleteMessage;");
+        builder.AppendLine("        IsObsoleteError = isObsoleteError;");
         builder.AppendLine("    }");
         builder.AppendLine();
         builder.AppendLine("    /// <summary>");
@@ -317,6 +454,10 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         builder.AppendLine("    /// Gets the method signature.");
         builder.AppendLine("    /// </summary>");
         builder.AppendLine("    public string Signature { get; }");
+        builder.AppendLine("    /// <summary>");
+        builder.AppendLine("    /// Gets the declared accessibility.");
+        builder.AppendLine("    /// </summary>");
+        builder.AppendLine("    public string Accessibility { get; }");
         builder.AppendLine("    /// <summary>");
         builder.AppendLine("    /// Gets the summary text.");
         builder.AppendLine("    /// </summary>");
@@ -333,6 +474,18 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         builder.AppendLine("    /// Gets a value indicating whether this method is inherited from a base class.");
         builder.AppendLine("    /// </summary>");
         builder.AppendLine("    public bool IsFromBaseType { get; }");
+        builder.AppendLine("    /// <summary>");
+        builder.AppendLine("    /// Gets a value indicating whether this method has the Obsolete attribute.");
+        builder.AppendLine("    /// </summary>");
+        builder.AppendLine("    public bool IsObsolete { get; }");
+        builder.AppendLine("    /// <summary>");
+        builder.AppendLine("    /// Gets the obsolete message, when provided.");
+        builder.AppendLine("    /// </summary>");
+        builder.AppendLine("    public string ObsoleteMessage { get; }");
+        builder.AppendLine("    /// <summary>");
+        builder.AppendLine("    /// Gets a value indicating whether use of this obsolete method is treated as an error.");
+        builder.AppendLine("    /// </summary>");
+        builder.AppendLine("    public bool IsObsoleteError { get; }");
         builder.AppendLine("}");
         builder.AppendLine();
         builder.AppendLine("/// <summary>");
@@ -344,17 +497,35 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         builder.AppendLine("    /// </summary>");
         builder.AppendLine("    /// <param name=\"name\">The property name.</param>");
         builder.AppendLine("    /// <param name=\"signature\">The property signature.</param>");
+        builder.AppendLine("    /// <param name=\"accessibility\">The declared accessibility.</param>");
+        builder.AppendLine("    /// <param name=\"typeDisplayName\">The display name of the property type.</param>");
+        builder.AppendLine("    /// <param name=\"typeFullName\">The fully qualified property type.</param>");
         builder.AppendLine("    /// <param name=\"summary\">The property summary.</param>");
         builder.AppendLine("    /// <param name=\"xmlDocumentation\">The full XML documentation block.</param>");
         builder.AppendLine("    /// <param name=\"declaringTypeFullName\">The fully qualified type that declares the property.</param>");
         builder.AppendLine("    /// <param name=\"isFromBaseType\">Indicates whether the property was inherited from a base class.</param>");
-        builder.AppendLine("    public PropertyDocumentation(string name, string signature, string summary, string xmlDocumentation, string declaringTypeFullName, bool isFromBaseType) {");
+        builder.AppendLine("    /// <param name=\"isParameter\">Indicates whether the property has the Parameter attribute.</param>");
+        builder.AppendLine("    /// <param name=\"isCascadingParameter\">Indicates whether the property has the CascadingParameter attribute.</param>");
+        builder.AppendLine("    /// <param name=\"isEditorRequired\">Indicates whether the property has the EditorRequired attribute.</param>");
+        builder.AppendLine("    /// <param name=\"isObsolete\">Indicates whether the property has the Obsolete attribute.</param>");
+        builder.AppendLine("    /// <param name=\"obsoleteMessage\">The obsolete message, when provided.</param>");
+        builder.AppendLine("    /// <param name=\"isObsoleteError\">Indicates whether use of the obsolete property is treated as an error.</param>");
+        builder.AppendLine("    public PropertyDocumentation(string name, string signature, string accessibility, string typeDisplayName, string typeFullName, string summary, string xmlDocumentation, string declaringTypeFullName, bool isFromBaseType, bool isParameter, bool isCascadingParameter, bool isEditorRequired, bool isObsolete, string obsoleteMessage, bool isObsoleteError) {");
         builder.AppendLine("        Name = name;");
         builder.AppendLine("        Signature = signature;");
+        builder.AppendLine("        Accessibility = accessibility;");
+        builder.AppendLine("        TypeDisplayName = typeDisplayName;");
+        builder.AppendLine("        TypeFullName = typeFullName;");
         builder.AppendLine("        Summary = summary;");
         builder.AppendLine("        XmlDocumentation = xmlDocumentation;");
         builder.AppendLine("        DeclaringTypeFullName = declaringTypeFullName;");
         builder.AppendLine("        IsFromBaseType = isFromBaseType;");
+        builder.AppendLine("        IsParameter = isParameter;");
+        builder.AppendLine("        IsCascadingParameter = isCascadingParameter;");
+        builder.AppendLine("        IsEditorRequired = isEditorRequired;");
+        builder.AppendLine("        IsObsolete = isObsolete;");
+        builder.AppendLine("        ObsoleteMessage = obsoleteMessage;");
+        builder.AppendLine("        IsObsoleteError = isObsoleteError;");
         builder.AppendLine("    }");
         builder.AppendLine();
         builder.AppendLine("    /// <summary>");
@@ -365,6 +536,18 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         builder.AppendLine("    /// Gets the property signature.");
         builder.AppendLine("    /// </summary>");
         builder.AppendLine("    public string Signature { get; }");
+        builder.AppendLine("    /// <summary>");
+        builder.AppendLine("    /// Gets the declared accessibility.");
+        builder.AppendLine("    /// </summary>");
+        builder.AppendLine("    public string Accessibility { get; }");
+        builder.AppendLine("    /// <summary>");
+        builder.AppendLine("    /// Gets the property type display name.");
+        builder.AppendLine("    /// </summary>");
+        builder.AppendLine("    public string TypeDisplayName { get; }");
+        builder.AppendLine("    /// <summary>");
+        builder.AppendLine("    /// Gets the fully qualified property type.");
+        builder.AppendLine("    /// </summary>");
+        builder.AppendLine("    public string TypeFullName { get; }");
         builder.AppendLine("    /// <summary>");
         builder.AppendLine("    /// Gets the summary text.");
         builder.AppendLine("    /// </summary>");
@@ -381,6 +564,30 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         builder.AppendLine("    /// Gets a value indicating whether this property is inherited from a base class.");
         builder.AppendLine("    /// </summary>");
         builder.AppendLine("    public bool IsFromBaseType { get; }");
+        builder.AppendLine("    /// <summary>");
+        builder.AppendLine("    /// Gets a value indicating whether this property has the Parameter attribute.");
+        builder.AppendLine("    /// </summary>");
+        builder.AppendLine("    public bool IsParameter { get; }");
+        builder.AppendLine("    /// <summary>");
+        builder.AppendLine("    /// Gets a value indicating whether this property has the CascadingParameter attribute.");
+        builder.AppendLine("    /// </summary>");
+        builder.AppendLine("    public bool IsCascadingParameter { get; }");
+        builder.AppendLine("    /// <summary>");
+        builder.AppendLine("    /// Gets a value indicating whether this property has the EditorRequired attribute.");
+        builder.AppendLine("    /// </summary>");
+        builder.AppendLine("    public bool IsEditorRequired { get; }");
+        builder.AppendLine("    /// <summary>");
+        builder.AppendLine("    /// Gets a value indicating whether this property has the Obsolete attribute.");
+        builder.AppendLine("    /// </summary>");
+        builder.AppendLine("    public bool IsObsolete { get; }");
+        builder.AppendLine("    /// <summary>");
+        builder.AppendLine("    /// Gets the obsolete message, when provided.");
+        builder.AppendLine("    /// </summary>");
+        builder.AppendLine("    public string ObsoleteMessage { get; }");
+        builder.AppendLine("    /// <summary>");
+        builder.AppendLine("    /// Gets a value indicating whether use of this obsolete property is treated as an error.");
+        builder.AppendLine("    /// </summary>");
+        builder.AppendLine("    public bool IsObsoleteError { get; }");
         builder.AppendLine("}");
         builder.AppendLine();
         builder.AppendLine("/// <summary>");
@@ -392,17 +599,31 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         builder.AppendLine("    /// </summary>");
         builder.AppendLine("    /// <param name=\"name\">The field name.</param>");
         builder.AppendLine("    /// <param name=\"signature\">The field signature.</param>");
+        builder.AppendLine("    /// <param name=\"accessibility\">The declared accessibility.</param>");
+        builder.AppendLine("    /// <param name=\"typeDisplayName\">The display name of the field type.</param>");
+        builder.AppendLine("    /// <param name=\"typeFullName\">The fully qualified field type.</param>");
+        builder.AppendLine("    /// <param name=\"constantValue\">The constant field value, when available.</param>");
         builder.AppendLine("    /// <param name=\"summary\">The field summary.</param>");
         builder.AppendLine("    /// <param name=\"xmlDocumentation\">The full XML documentation block.</param>");
         builder.AppendLine("    /// <param name=\"declaringTypeFullName\">The fully qualified type that declares the field.</param>");
         builder.AppendLine("    /// <param name=\"isFromBaseType\">Indicates whether the field was inherited from a base class.</param>");
-        builder.AppendLine("    public FieldDocumentation(string name, string signature, string summary, string xmlDocumentation, string declaringTypeFullName, bool isFromBaseType) {");
+        builder.AppendLine("    /// <param name=\"isObsolete\">Indicates whether the field has the Obsolete attribute.</param>");
+        builder.AppendLine("    /// <param name=\"obsoleteMessage\">The obsolete message, when provided.</param>");
+        builder.AppendLine("    /// <param name=\"isObsoleteError\">Indicates whether use of the obsolete field is treated as an error.</param>");
+        builder.AppendLine("    public FieldDocumentation(string name, string signature, string accessibility, string typeDisplayName, string typeFullName, string constantValue, string summary, string xmlDocumentation, string declaringTypeFullName, bool isFromBaseType, bool isObsolete, string obsoleteMessage, bool isObsoleteError) {");
         builder.AppendLine("        Name = name;");
         builder.AppendLine("        Signature = signature;");
+        builder.AppendLine("        Accessibility = accessibility;");
+        builder.AppendLine("        TypeDisplayName = typeDisplayName;");
+        builder.AppendLine("        TypeFullName = typeFullName;");
+        builder.AppendLine("        ConstantValue = constantValue;");
         builder.AppendLine("        Summary = summary;");
         builder.AppendLine("        XmlDocumentation = xmlDocumentation;");
         builder.AppendLine("        DeclaringTypeFullName = declaringTypeFullName;");
         builder.AppendLine("        IsFromBaseType = isFromBaseType;");
+        builder.AppendLine("        IsObsolete = isObsolete;");
+        builder.AppendLine("        ObsoleteMessage = obsoleteMessage;");
+        builder.AppendLine("        IsObsoleteError = isObsoleteError;");
         builder.AppendLine("    }");
         builder.AppendLine();
         builder.AppendLine("    /// <summary>");
@@ -413,6 +634,22 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         builder.AppendLine("    /// Gets the field signature.");
         builder.AppendLine("    /// </summary>");
         builder.AppendLine("    public string Signature { get; }");
+        builder.AppendLine("    /// <summary>");
+        builder.AppendLine("    /// Gets the declared accessibility.");
+        builder.AppendLine("    /// </summary>");
+        builder.AppendLine("    public string Accessibility { get; }");
+        builder.AppendLine("    /// <summary>");
+        builder.AppendLine("    /// Gets the field type display name.");
+        builder.AppendLine("    /// </summary>");
+        builder.AppendLine("    public string TypeDisplayName { get; }");
+        builder.AppendLine("    /// <summary>");
+        builder.AppendLine("    /// Gets the fully qualified field type.");
+        builder.AppendLine("    /// </summary>");
+        builder.AppendLine("    public string TypeFullName { get; }");
+        builder.AppendLine("    /// <summary>");
+        builder.AppendLine("    /// Gets the constant value, when available.");
+        builder.AppendLine("    /// </summary>");
+        builder.AppendLine("    public string ConstantValue { get; }");
         builder.AppendLine("    /// <summary>");
         builder.AppendLine("    /// Gets the summary text.");
         builder.AppendLine("    /// </summary>");
@@ -429,6 +666,18 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         builder.AppendLine("    /// Gets a value indicating whether this field is inherited from a base class.");
         builder.AppendLine("    /// </summary>");
         builder.AppendLine("    public bool IsFromBaseType { get; }");
+        builder.AppendLine("    /// <summary>");
+        builder.AppendLine("    /// Gets a value indicating whether this field has the Obsolete attribute.");
+        builder.AppendLine("    /// </summary>");
+        builder.AppendLine("    public bool IsObsolete { get; }");
+        builder.AppendLine("    /// <summary>");
+        builder.AppendLine("    /// Gets the obsolete message, when provided.");
+        builder.AppendLine("    /// </summary>");
+        builder.AppendLine("    public string ObsoleteMessage { get; }");
+        builder.AppendLine("    /// <summary>");
+        builder.AppendLine("    /// Gets a value indicating whether use of this obsolete field is treated as an error.");
+        builder.AppendLine("    /// </summary>");
+        builder.AppendLine("    public bool IsObsoleteError { get; }");
         builder.AppendLine("}");
         builder.AppendLine();
         builder.AppendLine("/// <summary>");
@@ -470,18 +719,32 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         builder.AppendLine($"            {ToLiteral(typeDocumentation.FullName)},");
         builder.AppendLine($"            {ToLiteral(typeDocumentation.BaseTypeFullName)},");
         builder.AppendLine($"            {ToLiteral(typeDocumentation.Kind)},");
+        builder.AppendLine($"            {ToLiteral(typeDocumentation.Accessibility)},");
+        builder.AppendLine($"            {ToLiteral(typeDocumentation.SourceFolder)},");
+        builder.AppendLine($"            {ToLiteral(typeDocumentation.SourceFileName)},");
         builder.AppendLine($"            {ToLiteral(typeDocumentation.Summary)},");
+        builder.AppendLine($"            {ToLiteral(typeDocumentation.Remarks)},");
         builder.AppendLine($"            {ToLiteral(typeDocumentation.XmlDocumentation)},");
+        builder.AppendLine($"            {ToLiteral(typeDocumentation.RenderCompatibility.RenderCompatibility)},");
+        builder.AppendLine($"            {ToLiteral(typeDocumentation.RenderCompatibility.Summary)},");
+        builder.AppendLine($"            {ToLiteral(typeDocumentation.RenderCompatibility.Details)},");
+        builder.AppendLine($"            {ToBooleanLiteral(typeDocumentation.Obsolete.IsObsolete)},");
+        builder.AppendLine($"            {ToLiteral(typeDocumentation.Obsolete.Message)},");
+        builder.AppendLine($"            {ToBooleanLiteral(typeDocumentation.Obsolete.IsError)},");
 
         builder.AppendLine("            new MethodDocumentation[] {");
         foreach (var method in typeDocumentation.Methods) {
             builder.AppendLine("                new MethodDocumentation(");
             builder.AppendLine($"                    {ToLiteral(method.Name)},");
             builder.AppendLine($"                    {ToLiteral(method.Signature)},");
+            builder.AppendLine($"                    {ToLiteral(method.Accessibility)},");
             builder.AppendLine($"                    {ToLiteral(method.Summary)},");
             builder.AppendLine($"                    {ToLiteral(method.XmlDocumentation)},");
             builder.AppendLine($"                    {ToLiteral(method.DeclaringTypeFullName)},");
-            builder.AppendLine($"                    {ToBooleanLiteral(method.IsFromBaseType)}),");
+            builder.AppendLine($"                    {ToBooleanLiteral(method.IsFromBaseType)},");
+            builder.AppendLine($"                    {ToBooleanLiteral(method.Obsolete.IsObsolete)},");
+            builder.AppendLine($"                    {ToLiteral(method.Obsolete.Message)},");
+            builder.AppendLine($"                    {ToBooleanLiteral(method.Obsolete.IsError)}),");
         }
         builder.AppendLine("            },");
 
@@ -490,10 +753,19 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
             builder.AppendLine("                new PropertyDocumentation(");
             builder.AppendLine($"                    {ToLiteral(property.Name)},");
             builder.AppendLine($"                    {ToLiteral(property.Signature)},");
+            builder.AppendLine($"                    {ToLiteral(property.Accessibility)},");
+            builder.AppendLine($"                    {ToLiteral(property.TypeDisplayName)},");
+            builder.AppendLine($"                    {ToLiteral(property.TypeFullName)},");
             builder.AppendLine($"                    {ToLiteral(property.Summary)},");
             builder.AppendLine($"                    {ToLiteral(property.XmlDocumentation)},");
             builder.AppendLine($"                    {ToLiteral(property.DeclaringTypeFullName)},");
-            builder.AppendLine($"                    {ToBooleanLiteral(property.IsFromBaseType)}),");
+            builder.AppendLine($"                    {ToBooleanLiteral(property.IsFromBaseType)},");
+            builder.AppendLine($"                    {ToBooleanLiteral(property.IsParameter)},");
+            builder.AppendLine($"                    {ToBooleanLiteral(property.IsCascadingParameter)},");
+            builder.AppendLine($"                    {ToBooleanLiteral(property.IsEditorRequired)},");
+            builder.AppendLine($"                    {ToBooleanLiteral(property.Obsolete.IsObsolete)},");
+            builder.AppendLine($"                    {ToLiteral(property.Obsolete.Message)},");
+            builder.AppendLine($"                    {ToBooleanLiteral(property.Obsolete.IsError)}),");
         }
         builder.AppendLine("            },");
 
@@ -502,10 +774,17 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
             builder.AppendLine("                new FieldDocumentation(");
             builder.AppendLine($"                    {ToLiteral(field.Name)},");
             builder.AppendLine($"                    {ToLiteral(field.Signature)},");
+            builder.AppendLine($"                    {ToLiteral(field.Accessibility)},");
+            builder.AppendLine($"                    {ToLiteral(field.TypeDisplayName)},");
+            builder.AppendLine($"                    {ToLiteral(field.TypeFullName)},");
+            builder.AppendLine($"                    {ToLiteral(field.ConstantValue)},");
             builder.AppendLine($"                    {ToLiteral(field.Summary)},");
             builder.AppendLine($"                    {ToLiteral(field.XmlDocumentation)},");
             builder.AppendLine($"                    {ToLiteral(field.DeclaringTypeFullName)},");
-            builder.AppendLine($"                    {ToBooleanLiteral(field.IsFromBaseType)}),");
+            builder.AppendLine($"                    {ToBooleanLiteral(field.IsFromBaseType)},");
+            builder.AppendLine($"                    {ToBooleanLiteral(field.Obsolete.IsObsolete)},");
+            builder.AppendLine($"                    {ToLiteral(field.Obsolete.Message)},");
+            builder.AppendLine($"                    {ToBooleanLiteral(field.Obsolete.IsError)}),");
         }
         builder.AppendLine("            });");
         builder.AppendLine();
@@ -621,6 +900,115 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
                method.MethodKind != MethodKind.EventRaise;
     }
 
+    private static bool HasAttribute(ISymbol symbol, string attributeFullName) {
+        foreach (var attribute in symbol.GetAttributes()) {
+            if (string.Equals(attribute.AttributeClass?.ToDisplayString(), attributeFullName, StringComparison.Ordinal)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static ObsoleteDocumentationModel GetObsoleteDocumentation(ISymbol symbol) {
+        foreach (var attribute in symbol.GetAttributes()) {
+            if (!string.Equals(attribute.AttributeClass?.ToDisplayString(), "System.ObsoleteAttribute", StringComparison.Ordinal)) {
+                continue;
+            }
+
+            var message = string.Empty;
+            var isError = false;
+            if (attribute.ConstructorArguments.Length > 0) {
+                message = attribute.ConstructorArguments[0].Value as string ?? string.Empty;
+            }
+
+            if (attribute.ConstructorArguments.Length > 1 &&
+                attribute.ConstructorArguments[1].Value is bool constructorIsError) {
+                isError = constructorIsError;
+            }
+
+            return new ObsoleteDocumentationModel(true, message, isError);
+        }
+
+        return ObsoleteDocumentationModel.None;
+    }
+
+    private static RenderCompatibilityDocumentationModel GetDocumentationMetadata(ISymbol symbol) {
+        foreach (var attribute in symbol.GetAttributes()) {
+            if (!string.Equals(attribute.AttributeClass?.ToDisplayString(), DocumentationAttributeFullName, StringComparison.Ordinal)) {
+                continue;
+            }
+
+            var renderCompatibility = "Unknown";
+            var summary = string.Empty;
+            var details = string.Empty;
+            foreach (var argument in attribute.NamedArguments) {
+                switch (argument.Key) {
+                    case "RenderCompatibility":
+                        renderCompatibility = GetEnumArgumentName(argument.Value) ?? argument.Value.Value?.ToString() ?? "Unknown";
+                        break;
+                    case "CompatibilitySummary":
+                        summary = argument.Value.Value as string ?? string.Empty;
+                        break;
+                    case "CompatibilityDetails":
+                        details = argument.Value.Value as string ?? string.Empty;
+                        break;
+                }
+            }
+
+            return new RenderCompatibilityDocumentationModel(renderCompatibility, summary, details);
+        }
+
+        return RenderCompatibilityDocumentationModel.None;
+    }
+
+    private static string? GetEnumArgumentName(TypedConstant argument) {
+        if (argument.Type is not INamedTypeSymbol enumType || argument.Value is null) {
+            return null;
+        }
+
+        foreach (var member in enumType.GetMembers().OfType<IFieldSymbol>()) {
+            if (member.HasConstantValue && Equals(member.ConstantValue, argument.Value)) {
+                return member.Name;
+            }
+        }
+
+        return null;
+    }
+
+    private static string GetConstantValue(IFieldSymbol field) {
+        if (!field.HasConstantValue) {
+            return string.Empty;
+        }
+
+        return field.ConstantValue switch {
+            null => "null",
+            bool value => value ? "true" : "false",
+            char value => value.ToString(),
+            string value => value,
+            IFormattable value => value.ToString(null, global::System.Globalization.CultureInfo.InvariantCulture),
+            _ => field.ConstantValue.ToString() ?? string.Empty
+        };
+    }
+
+    private static string GetSourceFolder(INamedTypeSymbol type) {
+        var filePath = GetSourceFilePath(type);
+        if (string.IsNullOrWhiteSpace(filePath)) {
+            return string.Empty;
+        }
+
+        var directory = Path.GetDirectoryName(filePath);
+        return string.IsNullOrWhiteSpace(directory) ? string.Empty : Path.GetFileName(directory);
+    }
+
+    private static string GetSourceFileName(INamedTypeSymbol type) {
+        var filePath = GetSourceFilePath(type);
+        return string.IsNullOrWhiteSpace(filePath) ? string.Empty : Path.GetFileName(filePath);
+    }
+
+    private static string GetSourceFilePath(INamedTypeSymbol type) =>
+        type.DeclaringSyntaxReferences.FirstOrDefault()?.SyntaxTree.FilePath ?? string.Empty;
+
     private static IEnumerable<INamedTypeSymbol> EnumerateTypes(INamespaceSymbol namespaceSymbol) {
         foreach (var type in namespaceSymbol.GetTypeMembers()) {
             foreach (var nestedType in EnumerateNestedTypes(type)) {
@@ -649,18 +1037,26 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         symbol.GetDocumentationCommentXml(expandIncludes: true, cancellationToken: cancellationToken) ?? string.Empty;
 
     private static string ExtractSummary(string xmlDocumentation) {
+        return ExtractXmlElement(xmlDocumentation, "summary");
+    }
+
+    private static string ExtractRemarks(string xmlDocumentation) {
+        return ExtractXmlElement(xmlDocumentation, "remarks");
+    }
+
+    private static string ExtractXmlElement(string xmlDocumentation, string elementName) {
         if (string.IsNullOrWhiteSpace(xmlDocumentation)) {
             return string.Empty;
         }
 
         try {
             var document = XDocument.Parse("<root>" + xmlDocumentation + "</root>");
-            var summary = document.Root?.Descendants("summary").FirstOrDefault()?.Value;
-            if (string.IsNullOrWhiteSpace(summary)) {
+            var value = document.Root?.Descendants(elementName).FirstOrDefault()?.Value;
+            if (string.IsNullOrWhiteSpace(value)) {
                 return string.Empty;
             }
 
-            return NormalizeWhitespace(summary!);
+            return NormalizeWhitespace(value!);
         }
         catch {
             return string.Empty;
@@ -725,8 +1121,14 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
             string fullName,
             string baseTypeFullName,
             string kind,
+            string accessibility,
+            string sourceFolder,
+            string sourceFileName,
             string summary,
+            string remarks,
             string xmlDocumentation,
+            RenderCompatibilityDocumentationModel renderCompatibility,
+            ObsoleteDocumentationModel obsolete,
             ImmutableArray<MethodDocumentationModel> methods,
             ImmutableArray<PropertyDocumentationModel> properties,
             ImmutableArray<FieldDocumentationModel> fields) {
@@ -734,8 +1136,14 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
             FullName = fullName;
             BaseTypeFullName = baseTypeFullName;
             Kind = kind;
+            Accessibility = accessibility;
+            SourceFolder = sourceFolder;
+            SourceFileName = sourceFileName;
             Summary = summary;
+            Remarks = remarks;
             XmlDocumentation = xmlDocumentation;
+            RenderCompatibility = renderCompatibility;
+            Obsolete = obsolete;
             Methods = methods;
             Properties = properties;
             Fields = fields;
@@ -749,9 +1157,21 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
 
         public string Kind { get; }
 
+        public string Accessibility { get; }
+
+        public string SourceFolder { get; }
+
+        public string SourceFileName { get; }
+
         public string Summary { get; }
 
+        public string Remarks { get; }
+
         public string XmlDocumentation { get; }
+
+        public RenderCompatibilityDocumentationModel RenderCompatibility { get; }
+
+        public ObsoleteDocumentationModel Obsolete { get; }
 
         public ImmutableArray<MethodDocumentationModel> Methods { get; }
 
@@ -764,21 +1184,27 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         public MethodDocumentationModel(
             string name,
             string signature,
+            string accessibility,
             string summary,
             string xmlDocumentation,
             string declaringTypeFullName,
-            bool isFromBaseType) {
+            bool isFromBaseType,
+            ObsoleteDocumentationModel obsolete) {
             Name = name;
             Signature = signature;
+            Accessibility = accessibility;
             Summary = summary;
             XmlDocumentation = xmlDocumentation;
             DeclaringTypeFullName = declaringTypeFullName;
             IsFromBaseType = isFromBaseType;
+            Obsolete = obsolete;
         }
 
         public string Name { get; }
 
         public string Signature { get; }
+
+        public string Accessibility { get; }
 
         public string Summary { get; }
 
@@ -787,27 +1213,49 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         public string DeclaringTypeFullName { get; }
 
         public bool IsFromBaseType { get; }
+
+        public ObsoleteDocumentationModel Obsolete { get; }
     }
 
     private sealed class PropertyDocumentationModel {
         public PropertyDocumentationModel(
             string name,
             string signature,
+            string accessibility,
+            string typeDisplayName,
+            string typeFullName,
             string summary,
             string xmlDocumentation,
             string declaringTypeFullName,
-            bool isFromBaseType) {
+            bool isFromBaseType,
+            bool isParameter,
+            bool isCascadingParameter,
+            bool isEditorRequired,
+            ObsoleteDocumentationModel obsolete) {
             Name = name;
             Signature = signature;
+            Accessibility = accessibility;
+            TypeDisplayName = typeDisplayName;
+            TypeFullName = typeFullName;
             Summary = summary;
             XmlDocumentation = xmlDocumentation;
             DeclaringTypeFullName = declaringTypeFullName;
             IsFromBaseType = isFromBaseType;
+            IsParameter = isParameter;
+            IsCascadingParameter = isCascadingParameter;
+            IsEditorRequired = isEditorRequired;
+            Obsolete = obsolete;
         }
 
         public string Name { get; }
 
         public string Signature { get; }
+
+        public string Accessibility { get; }
+
+        public string TypeDisplayName { get; }
+
+        public string TypeFullName { get; }
 
         public string Summary { get; }
 
@@ -816,27 +1264,53 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         public string DeclaringTypeFullName { get; }
 
         public bool IsFromBaseType { get; }
+
+        public bool IsParameter { get; }
+
+        public bool IsCascadingParameter { get; }
+
+        public bool IsEditorRequired { get; }
+
+        public ObsoleteDocumentationModel Obsolete { get; }
     }
 
     private sealed class FieldDocumentationModel {
         public FieldDocumentationModel(
             string name,
             string signature,
+            string accessibility,
+            string typeDisplayName,
+            string typeFullName,
+            string constantValue,
             string summary,
             string xmlDocumentation,
             string declaringTypeFullName,
-            bool isFromBaseType) {
+            bool isFromBaseType,
+            ObsoleteDocumentationModel obsolete) {
             Name = name;
             Signature = signature;
+            Accessibility = accessibility;
+            TypeDisplayName = typeDisplayName;
+            TypeFullName = typeFullName;
+            ConstantValue = constantValue;
             Summary = summary;
             XmlDocumentation = xmlDocumentation;
             DeclaringTypeFullName = declaringTypeFullName;
             IsFromBaseType = isFromBaseType;
+            Obsolete = obsolete;
         }
 
         public string Name { get; }
 
         public string Signature { get; }
+
+        public string Accessibility { get; }
+
+        public string TypeDisplayName { get; }
+
+        public string TypeFullName { get; }
+
+        public string ConstantValue { get; }
 
         public string Summary { get; }
 
@@ -845,6 +1319,40 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         public string DeclaringTypeFullName { get; }
 
         public bool IsFromBaseType { get; }
+
+        public ObsoleteDocumentationModel Obsolete { get; }
+    }
+
+    private sealed class ObsoleteDocumentationModel {
+        public static readonly ObsoleteDocumentationModel None = new(false, string.Empty, false);
+
+        public ObsoleteDocumentationModel(bool isObsolete, string message, bool isError) {
+            IsObsolete = isObsolete;
+            Message = message;
+            IsError = isError;
+        }
+
+        public bool IsObsolete { get; }
+
+        public string Message { get; }
+
+        public bool IsError { get; }
+    }
+
+    private sealed class RenderCompatibilityDocumentationModel {
+        public static readonly RenderCompatibilityDocumentationModel None = new("Unknown", string.Empty, string.Empty);
+
+        public RenderCompatibilityDocumentationModel(string renderCompatibility, string summary, string details) {
+            RenderCompatibility = renderCompatibility;
+            Summary = summary;
+            Details = details;
+        }
+
+        public string RenderCompatibility { get; }
+
+        public string Summary { get; }
+
+        public string Details { get; }
     }
 
     private sealed class DocumentedMember {

@@ -1,0 +1,89 @@
+@use 'NTInputBase.razor';
+@use '../Styles/_Variables/_scrollbar.scss' as scrollbar;
+
+$nt-textarea-content-offset-comfortable: 16px;
+$nt-textarea-content-offset-standard: 9px;
+$nt-textarea-content-offset-dense: 4px;
+$nt-textarea-filled-label-space-comfortable: 28px;
+$nt-textarea-filled-label-space-standard: 20px;
+$nt-textarea-filled-label-space-dense: 14px;
+
+.nt-input.nt-textarea {
+    .nt-input-control {
+        appearance: none;
+        display: block;
+        min-height: 0;
+        border: 0;
+        outline: 0;
+        margin: 0;
+        background: transparent;
+        box-shadow: none;
+        overflow: auto;
+        padding-block-start: $nt-textarea-content-offset-standard;
+        line-height: inherit;
+        resize: vertical;
+        scrollbar-gutter: stable;
+        @include scrollbar.nt-scrollbar;
+
+        &:focus,
+        &:focus-visible {
+            outline: 0;
+            box-shadow: none;
+        }
+    }
+
+    &.nt-input-comfortable {
+        .nt-input-control {
+            padding-block-start: $nt-textarea-content-offset-comfortable;
+        }
+    }
+
+    &.nt-input-dense {
+        .nt-input-control {
+            padding-block-start: $nt-textarea-content-offset-dense;
+        }
+    }
+
+    &.nt-input-filled.nt-input-standard:not(.nt-input-no-label):has(.nt-input-control:focus),
+    &.nt-input-filled.nt-input-standard:not(.nt-input-no-label):has(.nt-input-control:not(:placeholder-shown)),
+    &.nt-input-filled.nt-input-standard:not(.nt-input-no-label):has(.nt-input-control:-webkit-autofill),
+    &.nt-input-filled.nt-input-standard.nt-input-has-value:not(.nt-input-no-label),
+    &.nt-input-filled.nt-input-standard.nt-input-has-placeholder:not(.nt-input-no-label) {
+        .nt-input-control {
+            padding-block-start: $nt-textarea-filled-label-space-standard;
+        }
+    }
+
+    &.nt-input-filled.nt-input-comfortable:not(.nt-input-no-label):has(.nt-input-control:focus),
+    &.nt-input-filled.nt-input-comfortable:not(.nt-input-no-label):has(.nt-input-control:not(:placeholder-shown)),
+    &.nt-input-filled.nt-input-comfortable:not(.nt-input-no-label):has(.nt-input-control:-webkit-autofill),
+    &.nt-input-filled.nt-input-comfortable.nt-input-has-value:not(.nt-input-no-label),
+    &.nt-input-filled.nt-input-comfortable.nt-input-has-placeholder:not(.nt-input-no-label) {
+        .nt-input-control {
+            padding-block-start: $nt-textarea-filled-label-space-comfortable;
+        }
+    }
+
+    &.nt-input-filled.nt-input-dense:not(.nt-input-no-label):has(.nt-input-control:focus),
+    &.nt-input-filled.nt-input-dense:not(.nt-input-no-label):has(.nt-input-control:not(:placeholder-shown)),
+    &.nt-input-filled.nt-input-dense:not(.nt-input-no-label):has(.nt-input-control:-webkit-autofill),
+    &.nt-input-filled.nt-input-dense.nt-input-has-value:not(.nt-input-no-label),
+    &.nt-input-filled.nt-input-dense.nt-input-has-placeholder:not(.nt-input-no-label) {
+        .nt-input-control {
+            padding-block-start: $nt-textarea-filled-label-space-dense;
+        }
+    }
+
+    &.nt-textarea-size-by-content {
+        .nt-input-control {
+            resize: none;
+        }
+    }
+
+    &.nt-textarea-autogrow.nt-textarea-enhanced {
+        .nt-input-control {
+            overflow-y: hidden;
+            resize: none;
+        }
+    }
+}

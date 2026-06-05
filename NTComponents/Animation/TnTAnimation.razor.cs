@@ -6,6 +6,7 @@ namespace NTComponents;
 /// <summary>
 ///     Animates the child content when it enters the viewport.
 /// </summary>
+[Obsolete("Use NTAnimation instead.")]
 public partial class TnTAnimation {
 
     /// <summary>

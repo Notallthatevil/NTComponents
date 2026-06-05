@@ -104,12 +104,12 @@ public class TnTProgressIndicator_Tests : BunitContext {
     }
 
     [Fact]
-    public void Component_Inherits_From_TnTComponentBase() {
+    public void Component_Inherits_From_NTComponentBase() {
         // Arrange & Act
         var cut = Render<TnTProgressIndicator>();
 
         // Assert
-        cut.Instance.Should().BeAssignableTo<NTComponents.Core.TnTComponentBase>();
+        cut.Instance.Should().BeAssignableTo<NTComponents.Core.NTComponentBase>();
     }
 
     [Fact]

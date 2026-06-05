@@ -1,0 +1,48 @@
+@namespace NTComponents.Site.Components
+
+<section class="docs-page-header docs-page-header-featured">
+    @if (!string.IsNullOrWhiteSpace(Kicker)) {
+        <p class="docs-kicker">@Kicker</p>
+    }
+
+    <div class="docs-page-header-main">
+        <div class="docs-title-row">
+            <h1>@Title</h1>
+            @Badges
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(Description)) {
+            <p>@Description</p>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(Meta)) {
+            <p class="docs-muted">@Meta</p>
+        }
+    </div>
+
+    @if (Actions is not null) {
+        <div class="docs-header-actions">
+            @Actions
+        </div>
+    }
+</section>
+
+@code {
+    [Parameter]
+    public string? Kicker { get; set; }
+
+    [Parameter, EditorRequired]
+    public string Title { get; set; } = string.Empty;
+
+    [Parameter]
+    public string? Description { get; set; }
+
+    [Parameter]
+    public string? Meta { get; set; }
+
+    [Parameter]
+    public RenderFragment? Badges { get; set; }
+
+    [Parameter]
+    public RenderFragment? Actions { get; set; }
+}

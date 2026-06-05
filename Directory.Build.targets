@@ -1,0 +1,7 @@
+<Project>
+  <Target Name="ExcludeSassCompilerConfigFromPublish" BeforeTargets="_HandleFileConflictsForPublish">
+    <ItemGroup>
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="'%(ResolvedFileToPublish.Filename)%(ResolvedFileToPublish.Extension)' == 'sasscompiler.json'" />
+    </ItemGroup>
+  </Target>
+</Project>

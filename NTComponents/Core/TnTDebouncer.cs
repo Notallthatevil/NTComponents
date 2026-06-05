@@ -44,9 +44,9 @@ public class TnTDebouncer(int millisecondsDelay = 300) : IDisposable {
     /// <returns>A task that represents the asynchronous debouncing operation.</returns>
     public async Task DebounceAsync(Func<CancellationToken, Task> actionAsync) {
         try {
-            await DebounceAsync();
+            var cancellationToken = await DebounceAsync();
 
-            await actionAsync(_debounceCancellationTokenSource.Token).ConfigureAwait(false);
+            await actionAsync(cancellationToken).ConfigureAwait(false);
         }
         catch (TaskCanceledException) { }
     }
@@ -59,9 +59,9 @@ public class TnTDebouncer(int millisecondsDelay = 300) : IDisposable {
     /// <returns>A task that represents the asynchronous debouncing operation, containing the result of type <typeparamref name="T" />.</returns>
     public async Task<T> DebounceForResultAsync<T>(Func<CancellationToken, Task<T>> funcAsync) {
         try {
-            await DebounceAsync();
+            var cancellationToken = await DebounceAsync();
 
-            return await funcAsync(_debounceCancellationTokenSource.Token).ConfigureAwait(false);
+            return await funcAsync(cancellationToken).ConfigureAwait(false);
         }
         catch (TaskCanceledException) { }
         return default!;
@@ -80,11 +80,13 @@ public class TnTDebouncer(int millisecondsDelay = 300) : IDisposable {
     ///     Handles the debouncing logic by canceling the previous action and waiting for the specified delay.
     /// </summary>
     /// <returns>A task that represents the asynchronous debouncing operation.</returns>
-    private async Task DebounceAsync() {
+    private async Task<CancellationToken> DebounceAsync() {
         await _debounceCancellationTokenSource.CancelAsync();
         _debounceCancellationTokenSource.Dispose();
         _debounceCancellationTokenSource = new();
 
-        await Task.Delay(_millisecondsDelay, _debounceCancellationTokenSource.Token);
+        var cancellationToken = _debounceCancellationTokenSource.Token;
+        await Task.Delay(_millisecondsDelay, cancellationToken);
+        return cancellationToken;
     }
 }

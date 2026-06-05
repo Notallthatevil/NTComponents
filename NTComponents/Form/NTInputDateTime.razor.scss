@@ -1,65 +1,89 @@
 @use '../Styles/_Variables/_colors.scss' as colors;
+@use '../Styles/_Variables/_corner-radius.scss' as corners;
 @use '../Styles/_Variables/_elevation.scss' as elevation;
 @use '../Styles/_Variables/_measurements.scss' as measurements;
+@use '../Styles/_Variables/_motion.scss' as motion;
 @use '../Styles/_Variables/_typescale.scss' as typescale;
 
-.nt-input-date-time-container {
+$nt-dtp-motion-duration: motion.$nt-motion-duration-short_3;
+$nt-dtp-motion-easing: motion.$nt-motion-easing-standard;
+$nt-dtp-container-width: 360px;
+$nt-dtp-modal-width: 360px;
+$nt-dtp-clock-size: 256px;
+$nt-dtp-touch-target: 48px;
+$nt-dtp-date-cell-size: 40px;
+$nt-dtp-picker-grid-gap: 6px;
+$nt-dtp-picker-option-column: calc((100% - (#{$nt-dtp-picker-grid-gap} * 2)) / 3);
+$nt-dtp-picker-option-radius: calc(#{$nt-dtp-touch-target} / 2);
+$nt-dtp-time-input-width: 96px;
+$nt-dtp-time-input-height: 72px;
+$nt-dtp-period-selector-width: 52px;
+$nt-dtp-trigger-top-comfortable: 28px;
+$nt-dtp-trigger-top-standard: 21px;
+$nt-dtp-trigger-top-dense: 14px;
+
+.nt-input-date-time {
+    position: relative;
     width: 100%;
     min-width: 0;
 
-    ::deep .tnt-input-container {
-        min-width: 0;
-    }
-
-    ::deep .tnt-input.tnt-input {
+    ::deep .nt-input {
         min-width: 0;
         max-width: 100%;
     }
 
-        ::deep .tnt-input.tnt-input:has(.tnt-dtp-trigger):has(.tnt-start-icon):has(.tnt-end-icon) {
-            grid-template-areas: "pad1 start-icon pad2 text pad3 end-icon pad4 trigger-icon pad5";
-            grid-template-columns: 12px 24px 16px 1fr 16px 24px 8px 24px 12px;
+    &.nt-input-date-time-custom-picker {
+        ::deep .nt-input-field {
+            padding-inline-end: 52px;
         }
 
-        ::deep .tnt-input.tnt-input:has(.tnt-dtp-trigger):has(.tnt-start-icon):not(:has(.tnt-end-icon)) {
-            grid-template-areas: "pad1 start-icon pad2 text pad3 trigger-icon pad4";
-            grid-template-columns: 12px 24px 16px 1fr 16px 24px 12px;
+        .tnt-dtp-trigger {
+            inset-block-start: $nt-dtp-trigger-top-standard;
         }
+    }
 
-        ::deep .tnt-input.tnt-input:has(.tnt-dtp-trigger):has(.tnt-end-icon):not(:has(.tnt-start-icon)) {
-            grid-template-areas: "pad1 text pad2 end-icon pad3 trigger-icon pad4";
-            grid-template-columns: 16px 1fr 16px 24px 8px 24px 12px;
+    &.nt-input-date-time-comfortable {
+        .tnt-dtp-trigger {
+            inset-block-start: $nt-dtp-trigger-top-comfortable;
         }
+    }
 
-        ::deep .tnt-input.tnt-input:has(.tnt-dtp-trigger):not(:has(.tnt-start-icon)):not(:has(.tnt-end-icon)) {
-            grid-template-areas: "pad1 text pad2 trigger-icon pad3";
-            grid-template-columns: 16px 1fr 16px 24px 12px;
+    &.nt-input-date-time-dense {
+        .tnt-dtp-trigger {
+            inset-block-start: $nt-dtp-trigger-top-dense;
         }
+    }
 
-    ::deep .tnt-dtp-trigger {
-        grid-area: trigger-icon;
-        align-self: center;
-        justify-self: center;
-        appearance: none;
-        -webkit-appearance: none;
-        border: none;
-        margin: 0;
-        padding: 0;
-        min-width: 24px;
-        min-height: 24px;
+    .tnt-dtp-trigger {
+        position: absolute;
+        inset-inline-end: 12px;
+        z-index: 3;
         display: inline-grid;
         place-items: center;
+        width: $nt-dtp-touch-target;
+        height: $nt-dtp-touch-target;
+        border: 0;
+        border-radius: 50%;
+        appearance: none;
+        -webkit-appearance: none;
+        margin: 0;
+        padding: 0;
         background-color: transparent;
-        color: colors.$tnt-color-on-surface-variant;
+        color: var(--nt-input-icon-color, #{colors.$tnt-color-on-surface-variant});
         cursor: pointer;
-        z-index: 1;
+        transform: translateY(-50%);
+        transition: background-color $nt-dtp-motion-duration $nt-dtp-motion-easing,
+            color $nt-dtp-motion-duration $nt-dtp-motion-easing,
+            opacity $nt-dtp-motion-duration $nt-dtp-motion-easing;
 
         &:hover {
-            color: colors.$tnt-color-on-surface;
+            background-color: color-mix(in srgb, var(--nt-input-state-layer-color, #{colors.$tnt-color-on-surface}) 8%, transparent);
+            color: var(--nt-input-text-color, #{colors.$tnt-color-on-surface});
         }
 
-        &:focus {
-            outline: none;
+        &:focus-visible {
+            outline: 2px solid var(--nt-input-focus-color, #{colors.$tnt-color-primary});
+            outline-offset: 2px;
         }
 
         &:disabled {
@@ -68,7 +92,7 @@
         }
     }
 
-    ::deep .tnt-dtp-trigger-icon {
+    .tnt-dtp-trigger-icon {
         pointer-events: none;
     }
 
@@ -77,11 +101,12 @@
         max-width: 100%;
         width: 100%;
 
-        &.tnt-dtp-input[data-tnt-dtp-input='true'] {
+        &[data-tnt-dtp-input='true'] {
 
             &[type='date'],
             &[type='month'],
             &[type='datetime-local'],
+            &[type='text'],
             &[type='time'] {
                 appearance: none;
                 -webkit-appearance: none;
@@ -95,10 +120,8 @@
             }
 
             &::-webkit-calendar-picker-indicator {
-                border-radius: 50%;
-                background-color: color-mix(in srgb, #ffffff 50%, colors.$tnt-color-surface-container-high);
-                left: 8px;
-                position: absolute;
+                display: none;
+                pointer-events: none;
             }
         }
     }
@@ -111,7 +134,7 @@
     left: -9999px;
     top: -9999px;
     display: none;
-    width: min(320px, calc(100vw - 16px));
+    width: min($nt-dtp-container-width, calc(100vw - 16px));
     visibility: hidden;
 
     &.tnt-dtp-open {
@@ -132,7 +155,7 @@
         padding: 12px;
         box-sizing: border-box;
         overflow: hidden;
-        background-color: color-mix(in srgb, colors.$tnt-color-scrim 26%, transparent);
+        background-color: color-mix(in srgb, colors.$tnt-color-scrim 32%, transparent);
         backdrop-filter: blur(4px);
         -webkit-backdrop-filter: blur(4px);
         align-items: center;
@@ -143,15 +166,24 @@
         }
 
         .tnt-dtp-surface {
-            width: min(360px, 100%);
+            width: min($nt-dtp-modal-width, 100%);
             max-width: 100%;
             max-height: 100%;
             overflow: auto;
+            border-radius: corners.$nt-corner-radius-extra-large;
+        }
+
+        .tnt-dtp-header {
+            display: block;
+        }
+
+        .tnt-dtp-actions {
+            border-top: 1px solid color-mix(in srgb, colors.$tnt-color-outline 50%, transparent);
         }
     }
 
     .tnt-dtp-surface {
-        border-radius: 28px;
+        border-radius: corners.$nt-corner-radius-large;
         overflow: hidden;
         background-color: colors.$tnt-color-surface-container-high;
         color: colors.$tnt-color-on-surface;
@@ -159,6 +191,7 @@
     }
 
     .tnt-dtp-header {
+        display: none;
         padding: 12px 16px 10px 16px;
         background-color: colors.$tnt-color-primary-container;
         color: colors.$tnt-color-on-primary-container;
@@ -176,9 +209,9 @@
     }
 
     .tnt-dtp-content {
-        padding: 10px 12px;
+        padding: 12px 16px 4px;
         display: grid;
-        gap: 8px;
+        gap: 12px;
     }
 
     .tnt-dtp-date-panel {
@@ -188,7 +221,7 @@
 
     .tnt-dtp-calendar-nav {
         display: grid;
-        grid-template-columns: 32px 1fr 32px;
+        grid-template-columns: $nt-dtp-touch-target 1fr $nt-dtp-touch-target;
         align-items: center;
         gap: 8px;
 
@@ -201,8 +234,8 @@
     .tnt-dtp-nav-button {
         border: none;
         border-radius: 999px;
-        width: 28px;
-        height: 28px;
+        width: $nt-dtp-touch-target;
+        height: $nt-dtp-touch-target;
         cursor: pointer;
         background-color: transparent;
         color: colors.$tnt-color-on-surface-variant;
@@ -231,13 +264,13 @@
     .tnt-dtp-day-grid {
         display: grid;
         grid-template-columns: repeat(7, minmax(0, 1fr));
-        gap: 2px;
+        gap: 0;
     }
 
     .tnt-dtp-day {
         border: none;
         width: 100%;
-        min-height: 34px;
+        min-height: $nt-dtp-date-cell-size;
         border-radius: 999px;
         cursor: pointer;
         background-color: transparent;
@@ -273,13 +306,18 @@
     .tnt-dtp-month-grid {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 6px;
+        gap: $nt-dtp-picker-grid-gap;
     }
 
-    .tnt-dtp-month-option {
+    .tnt-dtp-month-option,
+    .tnt-dtp-year-option {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-sizing: border-box;
         border: none;
-        min-height: 34px;
-        border-radius: 999px;
+        min-height: $nt-dtp-touch-target;
+        border-radius: $nt-dtp-picker-option-radius;
         cursor: pointer;
         background-color: transparent;
         color: colors.$tnt-color-on-surface;
@@ -296,12 +334,14 @@
             opacity: 0.35;
         }
 
-        &.tnt-dtp-today {
+        &.tnt-dtp-today,
+        &.tnt-dtp-current-year {
             outline: 1px solid colors.$tnt-color-primary;
             outline-offset: -1px;
         }
 
-        &.tnt-dtp-selected-day {
+        &.tnt-dtp-selected-day,
+        &.tnt-dtp-selected-year {
             background-color: colors.$tnt-color-primary;
             color: colors.$tnt-color-on-primary;
         }
@@ -309,18 +349,19 @@
 
     .tnt-dtp-time-panel {
         border-top: 1px solid color-mix(in srgb, colors.$tnt-color-outline 50%, transparent);
-        padding-top: 8px;
+        padding: 12px 8px 0;
     }
 
     .tnt-dtp-time-fields {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr)) 40px;
+        display: flex;
+        justify-content: center;
         gap: 8px;
-        align-items: end;
+        align-items: start;
     }
 
     .tnt-dtp-time-field {
         display: grid;
+        width: $nt-dtp-time-input-width;
         gap: 4px;
 
         span {
@@ -330,6 +371,7 @@
 
         input {
             width: 100%;
+            height: $nt-dtp-time-input-height;
             box-sizing: border-box;
             border: 1px solid colors.$tnt-color-outline-variant;
             border-radius: 12px;
@@ -337,6 +379,7 @@
             color: colors.$tnt-color-on-surface;
             padding: 8px 10px;
             outline: none;
+            text-align: center;
             @include typescale.tnt-body-large;
 
             &:focus-visible {
@@ -346,14 +389,110 @@
         }
     }
 
+    .tnt-dtp-year-panel {
+        display: none;
+    }
+
+    .tnt-dtp-year-list {
+        display: grid;
+        grid-template-columns: $nt-dtp-picker-option-column;
+        justify-content: center;
+        gap: $nt-dtp-picker-grid-gap;
+        max-block-size: 280px;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        padding: 2px;
+        scrollbar-width: thin;
+    }
+
+    .tnt-dtp-year-option {
+        inline-size: 100%;
+        @include typescale.tnt-title-medium;
+    }
+
+    .tnt-dtp-menu-buttons {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 6px;
+        inline-size: 100%;
+        min-width: 0;
+    }
+
+    .tnt-dtp-menu-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        min-width: 0;
+        max-width: 100%;
+        min-height: 36px;
+        border: 1px solid color-mix(in srgb, colors.$tnt-color-outline-variant 72%, transparent);
+        border-radius: measurements.$tnt-pill-border-radius-small;
+        padding: 0 10px 0 16px;
+        background-color: colors.$tnt-color-surface-container-highest;
+        color: colors.$tnt-color-on-surface;
+        cursor: pointer;
+        transition: background-color $nt-dtp-motion-duration $nt-dtp-motion-easing,
+            border-color $nt-dtp-motion-duration $nt-dtp-motion-easing,
+            color $nt-dtp-motion-duration $nt-dtp-motion-easing;
+        @include typescale.tnt-title-medium;
+
+        span {
+            min-width: max-content;
+            white-space: nowrap;
+        }
+
+        &:first-child {
+            flex: 0 0 auto;
+        }
+
+        &:last-child {
+            flex: 0 0 auto;
+        }
+
+        &:hover,
+        &:focus-visible {
+            border-color: color-mix(in srgb, colors.$tnt-color-primary 54%, colors.$tnt-color-outline-variant);
+            background-color: color-mix(in srgb, colors.$tnt-color-primary 12%, colors.$tnt-color-surface-container-highest);
+            color: colors.$tnt-color-primary;
+        }
+    }
+
+    .tnt-dtp-menu-button-icon {
+        flex: 0 0 auto;
+        font-size: 20px;
+        line-height: 1;
+        color: colors.$tnt-color-on-surface-variant;
+        transition: color $nt-dtp-motion-duration $nt-dtp-motion-easing,
+            transform $nt-dtp-motion-duration $nt-dtp-motion-easing;
+    }
+
+    .tnt-dtp-menu-button:hover,
+    .tnt-dtp-menu-button:focus-visible {
+        .tnt-dtp-menu-button-icon {
+            color: colors.$tnt-color-primary;
+            transform: translateY(1px);
+        }
+    }
+
+    .tnt-dtp-time-separator {
+        height: $nt-dtp-time-input-height;
+        display: inline-flex;
+        align-items: center;
+        color: colors.$tnt-color-on-surface;
+        @include typescale.tnt-display-small;
+    }
+
     .tnt-dtp-meridiem-field {
         display: grid;
         grid-template-rows: 1fr 1fr;
+        width: $nt-dtp-period-selector-width;
+        height: $nt-dtp-time-input-height;
         border: 1px solid colors.$tnt-color-outline-variant;
         border-radius: 8px;
         overflow: hidden;
         background-color: colors.$tnt-color-surface-container-low;
-        min-height: 60px;
     }
 
     .tnt-dtp-meridiem-button {
@@ -388,13 +527,13 @@
 
     .tnt-dtp-actions {
         display: flex;
-        justify-content: space-between;
+        justify-content: flex-end;
         align-items: center;
         gap: 8px;
         flex-wrap: nowrap;
         overflow-x: auto;
-        padding: 10px 12px 12px 12px;
-        border-top: 1px solid color-mix(in srgb, colors.$tnt-color-outline 50%, transparent);
+        padding: 4px 12px 12px 12px;
+        border-top: 0;
     }
 
     .tnt-dtp-action-group {
@@ -455,14 +594,49 @@
 
     &.tnt-dtp-mode-date {
         .tnt-dtp-month-panel,
+        .tnt-dtp-year-panel,
         .tnt-dtp-time-panel {
             display: none;
         }
     }
 
+    &.tnt-dtp-mode-datetime {
+        .tnt-dtp-month-panel,
+        .tnt-dtp-year-panel {
+            display: none;
+        }
+    }
+
+    &.tnt-dtp-view-month {
+        .tnt-dtp-date-panel {
+            display: none;
+        }
+
+        .tnt-dtp-time-panel {
+            display: none;
+        }
+
+        .tnt-dtp-month-panel {
+            display: grid;
+        }
+    }
+
+    &.tnt-dtp-view-year {
+        .tnt-dtp-date-panel,
+        .tnt-dtp-month-panel,
+        .tnt-dtp-time-panel {
+            display: none;
+        }
+
+        .tnt-dtp-year-panel {
+            display: block;
+        }
+    }
+
     &.tnt-dtp-mode-month {
         .tnt-dtp-date-panel,
-        .tnt-dtp-time-panel {
+        .tnt-dtp-time-panel,
+        .tnt-dtp-year-panel {
             display: none;
         }
     }
@@ -471,15 +645,11 @@
         width: calc(100vw - 16px);
 
         .tnt-dtp-content {
-            padding: 8px;
+            padding: 12px;
         }
 
         .tnt-dtp-time-fields {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-
-        .tnt-dtp-meridiem-field {
-            grid-row: span 2;
+            flex-wrap: wrap;
         }
     }
 }

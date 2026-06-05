@@ -9,30 +9,35 @@
      hidden
      aria-hidden="true">
     <div class="tnt-rich-text-editor-inline-tool-fields">
-        <label class="tnt-rich-text-editor-inline-tool-field">
-            <span>Columns</span>
-            <input type="number"
-                   data-role="table-columns"
-                   min="1"
-                   max="8"
-                   step="1"
-                   disabled="@Disabled" />
-        </label>
-        <label class="tnt-rich-text-editor-inline-tool-field">
-            <span>Rows</span>
-            <input type="number"
-                   data-role="table-rows"
-                   min="1"
-                   max="12"
-                   step="1"
-                   disabled="@Disabled" />
-        </label>
-        <label class="tnt-rich-text-editor-inline-tool-field">
-            <span>Border color</span>
-            <input type="color"
-                   data-role="table-border-color"
-                   disabled="@Disabled" />
-        </label>
+        <NTInputNumeric TNumber="int"
+                        Label="Columns"
+                        @bind-Value="_tableColumns"
+                        Appearance="NTFormAppearance.Outlined"
+                        Density="NTFormDensity.Dense"
+                        Disabled="@Disabled"
+                        min="1"
+                        max="8"
+                        step="1"
+                        SubmitValue="false"
+                        data-role="table-columns" />
+        <NTInputNumeric TNumber="int"
+                        Label="Rows"
+                        @bind-Value="_tableRows"
+                        Appearance="NTFormAppearance.Outlined"
+                        Density="NTFormDensity.Dense"
+                        Disabled="@Disabled"
+                        min="1"
+                        max="12"
+                        step="1"
+                        SubmitValue="false"
+                        data-role="table-rows" />
+        <NTInputColor Label="Border color"
+                      @bind-Value="_tableBorderColor"
+                      Appearance="NTFormAppearance.Outlined"
+                      Density="NTFormDensity.Dense"
+                      Disabled="@Disabled"
+                      SubmitValue="false"
+                      data-role="table-border-color" />
     </div>
     <div class="tnt-rich-text-editor-inline-tool-actions">
         <button type="button"
@@ -51,6 +56,10 @@
 </div>
 
 @code {
+    private int? _tableColumns;
+    private int? _tableRows;
+    private string? _tableBorderColor;
+
     [Parameter]
     public bool Disabled { get; set; }
 }

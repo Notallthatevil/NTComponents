@@ -1,0 +1,33 @@
+nt-shape {
+    display: grid;
+    place-items: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.nt-shape-defs {
+    position: absolute;
+    inline-size: 0;
+    block-size: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.nt-shape-content {
+    display: grid;
+    width: auto;
+    height: 100%;
+    aspect-ratio: 1 / 1;
+    max-width: 100%;
+    max-height: 100%;
+    min-inline-size: 0;
+    min-block-size: 0;
+}
+
+.nt-shape-content > * {
+    box-sizing: border-box;
+    inline-size: 100%;
+    block-size: 100%;
+    min-inline-size: 0;
+    min-block-size: 0;
+}

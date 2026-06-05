@@ -8,6 +8,7 @@ namespace NTComponents;
 /// <summary>
 ///     Represents a container component.
 /// </summary>
+[Obsolete("TnTContainer is obsolete.")]
 public partial class TnTContainer {
 
     /// <summary>

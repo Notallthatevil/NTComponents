@@ -1,0 +1,231 @@
+@page "/nt-context-menu"
+@rendermode InteractiveAuto
+@using Microsoft.AspNetCore.Components.Web
+@using NTComponents
+
+<div style="display: grid; gap: 24px; padding: 24px;">
+    <h1>NTContextMenu</h1>
+
+    <div style="display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
+        <NTContextMenu AriaLabel="Project context actions">
+            <TargetContent>
+                <NTCard tabindex="0" style="display: block; min-block-size: 220px; outline: none;">
+                    <div class="tnt-card-header">
+                        <h2>Quarterly roadmap</h2>
+                    </div>
+                    <div style="display: grid; gap: 12px; padding: 24px;">
+                        <p style="margin: 0;">Selected action: <strong>@LastAction</strong></p>
+                        <p style="margin: 0;">Selection count: <strong>@SelectionCount</strong></p>
+                        <div style="border: 1px solid var(--tnt-color-outline-variant); border-radius: 8px; padding: 16px;">
+                            <strong>Platform launch checklist</strong>
+                            <p style="margin-block: 8px 0;">Owner review, dependency audit, deployment readiness, and customer communications.</p>
+                        </div>
+                    </div>
+                </NTCard>
+            </TargetContent>
+            <MenuContent>
+                <NTMenuLabelItem Label="Project" />
+                <NTMenuButtonItem Label="Rename roadmap" Icon="MaterialIcon.Edit" OnClickCallback="@((MouseEventArgs _) => SelectAction("Rename roadmap"))" />
+                <NTMenuButtonItem Label="Duplicate with milestones and inherited stakeholder permissions" Icon="MaterialIcon.ContentCopy" OnClickCallback="@((MouseEventArgs _) => SelectAction("Duplicate roadmap"))" />
+                <NTMenuDividerItem />
+                <NTMenuSubMenuItem Label="Share" Icon="MaterialIcon.Share">
+                    <NTMenuLabelItem Label="Permissions" />
+                    <NTMenuButtonItem Label="Invite reviewers" Icon="MaterialIcon.Edit" OnClickCallback="@((MouseEventArgs _) => SelectAction("Invite reviewers"))" />
+                    <NTMenuAnchorItem Label="Open sharing policy" Icon="MaterialIcon.Policy" Href="/nt-context-menu" />
+                </NTMenuSubMenuItem>
+                <NTMenuAnchorItem Label="Open details" Icon="MaterialIcon.OpenInNew" Href="/nt-context-menu" />
+            </MenuContent>
+        </NTContextMenu>
+
+        <div style="display: grid; gap: 12px;">
+            @foreach (var row in Rows) {
+                <NTContextMenu AriaLabel="@($"{row} row actions")"
+                               Appearance="NTMenuAppearance.Compact"
+                               Elevation="NTElevation.High">
+                    <TargetContent>
+                        <button type="button"
+                                style="align-items: center; background: var(--tnt-color-surface-container-low); border: 1px solid var(--tnt-color-outline-variant); border-radius: 8px; color: var(--tnt-color-on-surface); cursor: pointer; display: flex; justify-content: space-between; min-block-size: 56px; padding: 12px 16px; text-align: start;">
+                            <span>@row</span>
+                            <span aria-hidden="true">@MaterialIcon.MoreHoriz.Render()</span>
+                        </button>
+                    </TargetContent>
+                    <MenuContent>
+                        <NTMenuLabelItem Label="Row actions" />
+                        <NTMenuButtonItem Label="Open row" Icon="MaterialIcon.OpenInNew" OnClickCallback="@((MouseEventArgs _) => SelectAction($"Open {row}"))" />
+                        <NTMenuButtonItem Label="Copy row identifier with a longer compact label" Icon="MaterialIcon.ContentCopy" OnClickCallback="@((MouseEventArgs _) => SelectAction($"Copy {row}"))" />
+                        <NTMenuDividerItem Inset="true" />
+                        <NTMenuSubMenuItem Label="More" Icon="MaterialIcon.MoreHoriz">
+                            <NTMenuButtonItem Label="Archive row" Icon="MaterialIcon.Archive" OnClickCallback="@((MouseEventArgs _) => SelectAction($"Archive {row}"))" />
+                            <NTMenuAnchorItem Label="Open compact details" Icon="MaterialIcon.Info" Href="/nt-context-menu" />
+                        </NTMenuSubMenuItem>
+                    </MenuContent>
+                </NTContextMenu>
+            }
+        </div>
+    </div>
+
+    <section style="display: grid; gap: 16px;">
+        <h2>Mixed targets</h2>
+
+        <div style="display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+            <NTContextMenu AriaLabel="Button component context actions"
+                           Appearance="NTMenuAppearance.Compact">
+                <TargetContent>
+                    <NTButton Label="NTButton target"
+                              LeadingIcon="MaterialIcon.Add"
+                              Variant="NTButtonVariant.Filled"
+                              OnClickCallback="@((MouseEventArgs _) => SelectAction("Button click"))" />
+                </TargetContent>
+                <MenuContent>
+                    <NTMenuLabelItem Label="NTButton" />
+                    <NTMenuButtonItem Label="Run primary action" Icon="MaterialIcon.Add" OnClickCallback="@((MouseEventArgs _) => SelectAction("Run button action"))" />
+                    <NTMenuButtonItem Label="Copy button command" Icon="MaterialIcon.ContentCopy" OnClickCallback="@((MouseEventArgs _) => SelectAction("Copy button command"))" />
+                    <NTMenuAnchorItem Label="Open button docs" Icon="MaterialIcon.OpenInNew" Href="/buttons" />
+                </MenuContent>
+            </NTContextMenu>
+
+            <NTContextMenu AriaLabel="Chip component context actions">
+                <TargetContent>
+                    <TnTChip Label="TnTChip target"
+                             SubLabel="Component"
+                             StartIcon="@MaterialIcon.GridOn"
+                             DisableToggle="true"
+                             Value="true" />
+                </TargetContent>
+                <MenuContent>
+                    <NTMenuLabelItem Label="Chip" />
+                    <NTMenuButtonItem Label="Filter by this chip" Icon="MaterialIcon.GridOn" OnClickCallback="@((MouseEventArgs _) => SelectAction("Filter by chip"))" />
+                    <NTMenuButtonItem Label="Pin chip to toolbar" Icon="MaterialIcon.PushPin" OnClickCallback="@((MouseEventArgs _) => SelectAction("Pin chip"))" />
+                    <NTMenuDividerItem />
+                    <NTMenuAnchorItem Label="Open chip page" Icon="MaterialIcon.OpenInNew" Href="/chips" />
+                </MenuContent>
+            </NTContextMenu>
+
+            <NTContextMenu AriaLabel="Tag component context actions"
+                           Appearance="NTMenuAppearance.Compact">
+                <TargetContent>
+                    <div tabindex="0" style="outline: none;">
+                        <NTTag Label="NTTag target" />
+                    </div>
+                </TargetContent>
+                <MenuContent>
+                    <NTMenuLabelItem Label="Tag" />
+                    <NTMenuButtonItem Label="Copy tag value" Icon="MaterialIcon.ContentCopy" OnClickCallback="@((MouseEventArgs _) => SelectAction("Copy tag"))" />
+                    <NTMenuButtonItem Label="Show tag metadata" Icon="MaterialIcon.Info" OnClickCallback="@((MouseEventArgs _) => SelectAction("Show tag metadata"))" />
+                </MenuContent>
+            </NTContextMenu>
+
+            <NTContextMenu AriaLabel="Text input context actions">
+                <TargetContent>
+                    <input value="Plain input target"
+                           style="background: var(--tnt-color-surface-container-low); border: 1px solid var(--tnt-color-outline-variant); border-radius: 8px; box-sizing: border-box; color: var(--tnt-color-on-surface); min-block-size: 48px; padding: 8px 12px; width: 100%;" />
+                </TargetContent>
+                <MenuContent>
+                    <NTMenuLabelItem Label="Input" />
+                    <NTMenuButtonItem Label="Copy field value" Icon="MaterialIcon.ContentCopy" OnClickCallback="@((MouseEventArgs _) => SelectAction("Copy input value"))" />
+                    <NTMenuButtonItem Label="Clear field" Icon="MaterialIcon.Edit" OnClickCallback="@((MouseEventArgs _) => SelectAction("Clear field"))" />
+                </MenuContent>
+            </NTContextMenu>
+
+            <NTContextMenu AriaLabel="Anchor context actions"
+                           Appearance="NTMenuAppearance.Compact">
+                <TargetContent>
+                    <a href="/nt-context-menu"
+                       style="align-items: center; background: var(--tnt-color-surface-container-low); border: 1px solid var(--tnt-color-outline-variant); border-radius: 8px; color: var(--tnt-color-primary); display: flex; min-block-size: 48px; padding: 8px 12px; text-decoration: none;">
+                        HTML anchor target
+                    </a>
+                </TargetContent>
+                <MenuContent>
+                    <NTMenuLabelItem Label="Link" />
+                    <NTMenuAnchorItem Label="Open link" Icon="MaterialIcon.OpenInNew" Href="/nt-context-menu" />
+                    <NTMenuButtonItem Label="Copy link address" Icon="MaterialIcon.ContentCopy" OnClickCallback="@((MouseEventArgs _) => SelectAction("Copy link"))" />
+                </MenuContent>
+            </NTContextMenu>
+
+            <NTContextMenu AriaLabel="Article text context actions">
+                <TargetContent>
+                    <article tabindex="0"
+                             style="background: var(--tnt-color-surface-container-low); border: 1px solid var(--tnt-color-outline-variant); border-radius: 8px; color: var(--tnt-color-on-surface); min-block-size: 112px; outline: none; padding: 16px;">
+                        <h3 style="margin-block: 0 8px;">HTML article target</h3>
+                        <p style="margin: 0;">Right-click or use the keyboard context menu key while this text region is focused.</p>
+                    </article>
+                </TargetContent>
+                <MenuContent>
+                    <NTMenuLabelItem Label="Article" />
+                    <NTMenuButtonItem Label="Copy article summary" Icon="MaterialIcon.ContentCopy" OnClickCallback="@((MouseEventArgs _) => SelectAction("Copy article summary"))" />
+                    <NTMenuButtonItem Label="Archive article" Icon="MaterialIcon.Archive" OnClickCallback="@((MouseEventArgs _) => SelectAction("Archive article"))" />
+                    <NTMenuSubMenuItem Label="More article actions" Icon="MaterialIcon.MoreHoriz">
+                        <NTMenuButtonItem Label="Pin article" Icon="MaterialIcon.PushPin" OnClickCallback="@((MouseEventArgs _) => SelectAction("Pin article"))" />
+                        <NTMenuAnchorItem Label="Open article details" Icon="MaterialIcon.Info" Href="/nt-context-menu" />
+                    </NTMenuSubMenuItem>
+                </MenuContent>
+            </NTContextMenu>
+        </div>
+    </section>
+
+    <section style="display: grid; gap: 16px;">
+        <h2>Nested inherited menus</h2>
+
+        <NTContextMenu AriaLabel="Board container actions">
+            <TargetContent>
+                <div tabindex="0"
+                     style="background: var(--tnt-color-surface-container); border: 1px solid var(--tnt-color-outline-variant); border-radius: 8px; display: grid; gap: 16px; outline: none; padding: 16px;">
+                    <div>
+                        <h3 style="margin-block: 0 4px;">Planning board container</h3>
+                        <p style="margin: 0;">The whole container has a context menu. Each item inside also has its own context menu and inherits the container actions.</p>
+                    </div>
+
+                    <div style="display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+                        @foreach (var item in BoardItems) {
+                            <NTContextMenu AriaLabel="@($"{item} inherited row actions")"
+                                           InheritParentMenus="true"
+                                           Appearance="NTMenuAppearance.Compact">
+                                <TargetContent>
+                                    <button type="button"
+                                            style="background: var(--tnt-color-surface-container-low); border: 1px solid var(--tnt-color-outline-variant); border-radius: 8px; color: var(--tnt-color-on-surface); cursor: pointer; display: grid; gap: 8px; min-block-size: 112px; padding: 16px; text-align: start;">
+                                        <strong>@item</strong>
+                                        <span>Own actions render first; inherited board actions render after the divider.</span>
+                                    </button>
+                                </TargetContent>
+                                <MenuContent>
+                                    <NTMenuLabelItem Label="@item" />
+                                    <NTMenuButtonItem Label="Open item details" Icon="MaterialIcon.OpenInNew" OnClickCallback="@((MouseEventArgs _) => SelectAction($"Open {item}"))" />
+                                    <NTMenuButtonItem Label="Assign item owner" Icon="MaterialIcon.Edit" OnClickCallback="@((MouseEventArgs _) => SelectAction($"Assign {item}"))" />
+                                </MenuContent>
+                            </NTContextMenu>
+                        }
+                    </div>
+                </div>
+            </TargetContent>
+            <MenuContent>
+                <NTMenuLabelItem Label="Board" />
+                <NTMenuButtonItem Label="Refresh board" Icon="MaterialIcon.Refresh" OnClickCallback="@((MouseEventArgs _) => SelectAction("Refresh board"))" />
+                <NTMenuButtonItem Label="Copy board link" Icon="MaterialIcon.ContentCopy" OnClickCallback="@((MouseEventArgs _) => SelectAction("Copy board link"))" />
+                <NTMenuAnchorItem Label="Open board settings" Icon="MaterialIcon.Settings" Href="/nt-context-menu" />
+            </MenuContent>
+        </NTContextMenu>
+    </section>
+</div>
+
+@code {
+    private static readonly string[] Rows = [
+        "Backlog intake",
+        "Release readiness",
+        "Customer follow-up"
+    ];
+
+    private static readonly string[] BoardItems = [
+        "Design review",
+        "API contract",
+        "Release notes"
+    ];
+
+    private string LastAction { get; set; } = "None";
+    private int SelectionCount { get; set; }
+
+    private Task SelectAction(string action) {
+        LastAction = action;
+        SelectionCount++;
+        return Task.CompletedTask;
+    }
+}

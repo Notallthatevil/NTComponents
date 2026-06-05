@@ -1,7 +1,49 @@
 @page "/"
+@inject DocumentationCatalog Catalog
 
-<PageTitle>Home</PageTitle>
+<main class="docs-page docs-home">
+    <section class="docs-hero">
+        <div>
+            <p class="docs-kicker">NTComponents documentation</p>
+            <h1>Material 3 Blazor components generated from source docs</h1>
+            <p>Explore @Catalog.Components.Count NT component pages, live automatic sandboxes, API members, render compatibility tags, and referenced enums/constants.</p>
+        </div>
+        <div class="docs-actions">
+            <NTNavLink Label="Browse components" Variant="NTNavLinkVariant.Filled" AdditionalAttributes="@Href("/components")" />
+            <NTNavLink Label="Enums and constants" Variant="NTNavLinkVariant.Outlined" AdditionalAttributes="@Href("/reference/enums")" />
+        </div>
+    </section>
 
-<h1>Hello, world!</h1>
+    <section class="docs-stat-grid">
+        <NTCard>
+            <h2>@Catalog.Components.Count</h2>
+            <p>NT component pages</p>
+        </NTCard>
+        <NTCard>
+            <h2>@Catalog.ReferenceGroups.Sum(group => group.Count())</h2>
+            <p>Referenced enum and constant types</p>
+        </NTCard>
+        <NTCard>
+            <h2>@Catalog.Components.Count(component => component.Type.IsSsrCompatible)</h2>
+            <p>Marked SSR compatible or progressive</p>
+        </NTCard>
+    </section>
 
-Welcome to your new app.
+    <section class="docs-section">
+        <h2>Component Families</h2>
+        <div class="docs-family-grid">
+            @foreach (var group in Catalog.ComponentGroups) {
+                <NTCard AdditionalAttributes="@Href("/components")">
+                    <h3>@group.Key</h3>
+                    <p>@group.Count() components</p>
+                </NTCard>
+            }
+        </div>
+    </section>
+</main>
+
+@code {
+    private static IReadOnlyDictionary<string, object> Href(string href) => new Dictionary<string, object> {
+        ["href"] = href
+    };
+}

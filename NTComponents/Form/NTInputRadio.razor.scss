@@ -1,0 +1,349 @@
+@use '../Styles/_Variables/_colors.scss' as colors;
+@use '../Styles/_Variables/_motion.scss' as motion;
+@use '../Styles/_Variables/_typescale.scss' as typescale;
+
+$nt-radio-touch-target-size: 48px;
+$nt-radio-touch-target-size-standard: 42px;
+$nt-radio-touch-target-size-dense: 28px;
+$nt-radio-state-layer-size: 40px;
+$nt-radio-state-layer-size-standard: 36px;
+$nt-radio-state-layer-size-dense: 28px;
+$nt-radio-icon-size: 20px;
+$nt-radio-icon-size-standard: 18px;
+$nt-radio-icon-size-dense: 16px;
+$nt-radio-dot-size: 10px;
+$nt-radio-dot-size-standard: 8px;
+$nt-radio-dot-size-dense: 8px;
+$nt-radio-outline-width: 2px;
+$nt-radio-gap: 2px;
+$nt-radio-gap-standard: 1px;
+$nt-radio-gap-dense: 0;
+$nt-radio-content-padding-block: 4px;
+$nt-radio-content-padding-block-standard: 2px;
+$nt-radio-content-padding-block-dense: 0;
+$nt-radio-external-icon-size: 24px;
+$nt-radio-external-icon-size-standard: 22px;
+$nt-radio-external-icon-size-dense: 18px;
+$nt-radio-state-hover-opacity: 0.08;
+$nt-radio-state-focus-opacity: 0.12;
+$nt-radio-state-pressed-opacity: 0.12;
+$nt-radio-highlight-opacity: 0.24;
+$nt-radio-disabled-opacity: 0.38;
+$nt-radio-motion-duration: motion.$nt-motion-duration-short_3;
+$nt-radio-motion-easing: motion.$nt-motion-easing-standard;
+
+.nt-radio-option {
+    display: grid;
+    grid-template-columns: $nt-radio-external-icon-size minmax(0, 1fr) $nt-radio-external-icon-size;
+    align-items: center;
+    width: 100%;
+    min-width: 0;
+    color: var(--nt-radio-label-color, #{colors.$tnt-color-on-surface});
+    cursor: pointer;
+    user-select: none;
+
+    .nt-radio-option-main {
+        grid-column: 2;
+        display: inline-flex;
+        align-items: center;
+        gap: $nt-radio-gap;
+        min-width: 0;
+    }
+
+    .nt-radio-touch-target {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+        width: $nt-radio-touch-target-size;
+        height: $nt-radio-touch-target-size;
+        border-radius: 50%;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    input {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        appearance: none;
+        cursor: inherit;
+        opacity: 0;
+    }
+
+    .nt-radio-option-state-layer {
+        position: absolute;
+        width: $nt-radio-state-layer-size;
+        height: $nt-radio-state-layer-size;
+        border-radius: 50%;
+        background-color: var(--nt-radio-state-layer-color, #{colors.$tnt-color-on-surface});
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity $nt-radio-motion-duration $nt-radio-motion-easing;
+    }
+
+    .nt-radio-option-icon {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: $nt-radio-icon-size;
+        height: $nt-radio-icon-size;
+        box-sizing: border-box;
+        border: $nt-radio-outline-width solid var(--nt-radio-unselected-color, #{colors.$tnt-color-on-surface-variant});
+        border-radius: 50%;
+        pointer-events: none;
+        transition: border-color $nt-radio-motion-duration $nt-radio-motion-easing;
+
+        &::after {
+            width: $nt-radio-dot-size;
+            height: $nt-radio-dot-size;
+            content: '';
+            border-radius: 50%;
+            background-color: var(--nt-radio-selected-color, #{colors.$tnt-color-primary});
+            opacity: 0;
+            transform: scale(0);
+            transition:
+                opacity $nt-radio-motion-duration $nt-radio-motion-easing,
+                transform $nt-radio-motion-duration $nt-radio-motion-easing;
+        }
+    }
+
+    .nt-radio-option-content {
+        display: inline-flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+        min-width: 0;
+        padding-block: $nt-radio-content-padding-block;
+    }
+
+    .nt-radio-option-label {
+        @include typescale.nt-body-large;
+
+        min-width: 0;
+        color: var(--nt-radio-label-color, #{colors.$tnt-color-on-surface});
+        overflow-wrap: anywhere;
+    }
+
+    .nt-radio-option-supporting {
+        @include typescale.nt-body-small;
+
+        color: var(--nt-radio-supporting-text-color, #{colors.$tnt-color-on-surface-variant});
+        overflow-wrap: anywhere;
+    }
+
+    .nt-radio-option-leading,
+    .nt-radio-option-trailing {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        align-self: center;
+        flex: 0 0 auto;
+        width: $nt-radio-external-icon-size;
+        height: $nt-radio-external-icon-size;
+        color: var(--nt-radio-unselected-color, #{colors.$tnt-color-on-surface-variant});
+    }
+
+    .nt-radio-option-leading {
+        grid-column: 1;
+        justify-self: center;
+    }
+
+    .nt-radio-option-trailing {
+        grid-column: 3;
+        justify-self: center;
+    }
+
+    ::deep {
+        .nt-radio-option-leading :where(svg, .material-symbols-outlined),
+        .nt-radio-option-trailing :where(svg, .material-symbols-outlined) {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: $nt-radio-external-icon-size;
+            height: $nt-radio-external-icon-size;
+            font-size: $nt-radio-external-icon-size;
+            line-height: 1;
+            color: inherit;
+            fill: currentColor;
+        }
+    }
+
+    &:hover:not(.nt-radio-option-disabled):not(.nt-radio-option-readonly) .nt-radio-option-state-layer {
+        opacity: $nt-radio-state-hover-opacity;
+    }
+
+    &:active:not(.nt-radio-option-disabled):not(.nt-radio-option-readonly) .nt-radio-option-state-layer {
+        opacity: $nt-radio-state-pressed-opacity;
+    }
+
+    &:has(input:focus-visible) .nt-radio-option-state-layer,
+    &.nt-radio-option-highlighted .nt-radio-option-state-layer {
+        opacity: $nt-radio-state-focus-opacity;
+    }
+
+    &.nt-radio-option-highlighted .nt-radio-option-state-layer {
+        opacity: $nt-radio-highlight-opacity;
+    }
+
+    &.nt-radio-option-highlighted:not(.nt-radio-option-disabled):not(.nt-radio-option-readonly) {
+        --nt-radio-state-layer-color: var(--nt-radio-focus-color, #{colors.$tnt-color-primary});
+
+        .nt-radio-option-icon {
+            border-color: var(--nt-radio-focus-color, #{colors.$tnt-color-primary});
+        }
+    }
+
+    &:has(input:checked) {
+        --nt-radio-state-layer-color: var(--nt-radio-selected-state-layer-color, #{colors.$tnt-color-primary});
+
+        .nt-radio-option-icon {
+            border-color: var(--nt-radio-selected-color, #{colors.$tnt-color-primary});
+
+            &::after {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+    }
+
+    &.nt-radio-option-disabled {
+        cursor: default;
+
+        .nt-radio-option-label,
+        .nt-radio-option-supporting,
+        .nt-radio-option-leading,
+        .nt-radio-option-trailing {
+            color: var(--nt-radio-disabled-content-color, #{colors.$tnt-color-on-surface});
+            opacity: $nt-radio-disabled-opacity;
+        }
+
+        .nt-radio-option-icon {
+            border-color: var(--nt-radio-disabled-content-color, #{colors.$tnt-color-on-surface});
+            opacity: $nt-radio-disabled-opacity;
+
+            &::after {
+                background-color: var(--nt-radio-disabled-content-color, #{colors.$tnt-color-on-surface});
+            }
+        }
+    }
+
+    &.nt-radio-option-readonly {
+        cursor: default;
+    }
+}
+
+.nt-radio-option-standard {
+    grid-template-columns: $nt-radio-external-icon-size-standard minmax(0, 1fr) $nt-radio-external-icon-size-standard;
+
+    .nt-radio-option-main {
+        gap: $nt-radio-gap-standard;
+    }
+
+    .nt-radio-touch-target {
+        width: $nt-radio-touch-target-size-standard;
+        height: $nt-radio-touch-target-size-standard;
+    }
+
+    .nt-radio-option-state-layer {
+        width: $nt-radio-state-layer-size-standard;
+        height: $nt-radio-state-layer-size-standard;
+    }
+
+    .nt-radio-option-icon {
+        width: $nt-radio-icon-size-standard;
+        height: $nt-radio-icon-size-standard;
+
+        &::after {
+            width: $nt-radio-dot-size-standard;
+            height: $nt-radio-dot-size-standard;
+        }
+    }
+
+    .nt-radio-option-content {
+        padding-block: $nt-radio-content-padding-block-standard;
+    }
+
+    .nt-radio-option-leading,
+    .nt-radio-option-trailing {
+        width: $nt-radio-external-icon-size-standard;
+        height: $nt-radio-external-icon-size-standard;
+    }
+
+    ::deep {
+        .nt-radio-option-leading :where(svg, .material-symbols-outlined),
+        .nt-radio-option-trailing :where(svg, .material-symbols-outlined) {
+            width: $nt-radio-external-icon-size-standard;
+            height: $nt-radio-external-icon-size-standard;
+            font-size: $nt-radio-external-icon-size-standard;
+        }
+    }
+}
+
+.nt-radio-option-dense {
+    grid-template-columns: $nt-radio-external-icon-size-dense minmax(0, 1fr) $nt-radio-external-icon-size-dense;
+
+    .nt-radio-option-main {
+        gap: $nt-radio-gap-dense;
+    }
+
+    .nt-radio-touch-target {
+        width: $nt-radio-touch-target-size-dense;
+        height: $nt-radio-touch-target-size-dense;
+    }
+
+    .nt-radio-option-state-layer {
+        width: $nt-radio-state-layer-size-dense;
+        height: $nt-radio-state-layer-size-dense;
+    }
+
+    .nt-radio-option-icon {
+        width: $nt-radio-icon-size-dense;
+        height: $nt-radio-icon-size-dense;
+
+        &::after {
+            width: $nt-radio-dot-size-dense;
+            height: $nt-radio-dot-size-dense;
+        }
+    }
+
+    .nt-radio-option-content {
+        padding-block: $nt-radio-content-padding-block-dense;
+    }
+
+    .nt-radio-option-label {
+        @include typescale.nt-body-small;
+    }
+
+    .nt-radio-option-supporting {
+        @include typescale.nt-label-small;
+    }
+
+    .nt-radio-option-leading,
+    .nt-radio-option-trailing {
+        width: $nt-radio-external-icon-size-dense;
+        height: $nt-radio-external-icon-size-dense;
+    }
+
+    ::deep {
+        .nt-radio-option-leading :where(svg, .material-symbols-outlined),
+        .nt-radio-option-trailing :where(svg, .material-symbols-outlined) {
+            width: $nt-radio-external-icon-size-dense;
+            height: $nt-radio-external-icon-size-dense;
+            font-size: $nt-radio-external-icon-size-dense;
+        }
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nt-radio-option {
+        .nt-radio-option-state-layer,
+        .nt-radio-option-icon,
+        .nt-radio-option-icon::after {
+            transition-duration: 0ms;
+        }
+    }
+}

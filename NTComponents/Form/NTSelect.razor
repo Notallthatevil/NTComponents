@@ -1,0 +1,111 @@
+@namespace NTComponents
+@using Microsoft.AspNetCore.Components.Rendering
+@typeparam TValue
+@inherits NTFieldBase<TValue>
+
+@{
+    var errorText = CurrentErrorText;
+    var hasErrorText = !string.IsNullOrWhiteSpace(errorText);
+}
+
+<div class="@GetRootClass(hasErrorText)" style="@ElementStyle">
+    @{
+        var supportingText = hasErrorText ? null : CurrentSupportingText;
+        var hasSupportingText = !string.IsNullOrWhiteSpace(supportingText);
+    }
+
+    <div class="nt-input-container-overflow">
+        <label class="nt-input-container" for="@InputId" title="@ElementTitle" lang="@ElementLang">
+            <span class="nt-input-background" aria-hidden="true"></span>
+            <span class="nt-input-state-layer" aria-hidden="true"></span>
+
+            @if (EffectiveAppearance == NTFormAppearance.Filled) {
+                <span class="nt-input-active-indicator" aria-hidden="true"></span>
+            }
+
+            @if (EffectiveAppearance == NTFormAppearance.Outlined) {
+                <span class="nt-input-outline" aria-hidden="true">
+                    <span class="nt-input-outline-start"></span>
+                    <span class="nt-input-outline-notch">
+                        @if (HasLabel) {
+                            <span class="nt-input-outline-label">@Label</span>
+                        }
+                    </span>
+                    <span class="nt-input-outline-end"></span>
+                </span>
+            }
+
+            <span class="nt-input-field">
+                @if (LeadingIcon is not null) {
+                    <span class="nt-input-leading" aria-hidden="true">
+                        @LeadingIcon.Render()
+                    </span>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(PrefixText)) {
+                    <span class="nt-input-prefix" id="@PrefixId">@PrefixText</span>
+                }
+
+                <span class="nt-input-control-container">
+                    <select @attributes="ControlAttributes"
+                            id="@InputId"
+                            title="@FieldIdentifier.FieldName"
+                            autofocus="@AutoFocus"
+                            autocomplete="@AutoComplete"
+                            name="@ElementName"
+                            disabled="@(FieldDisabled || FieldReadOnly)"
+                            required="@IsRequired"
+                            aria-describedby="@BuildDescribedBy(hasErrorText, hasSupportingText)"
+                            aria-invalid="@(hasErrorText ? "true" : "false")"
+                            aria-errormessage="@(hasErrorText ? ErrorTextId : null)"
+                            class="@SelectClass"
+                            value="@CurrentValueAsString"
+                            @onchange="OnChangeAsync"
+                            @onblur="OnBlurAsync"
+                            @ref="Element">
+                        @ChildContent
+                    </select>
+
+                    @if (HasLabel) {
+                        <span class="nt-input-label" id="@LabelId">@Label</span>
+                    }
+                </span>
+
+                @if (!string.IsNullOrWhiteSpace(SuffixText)) {
+                    <span class="nt-input-suffix" id="@SuffixId">@SuffixText</span>
+                }
+
+                @{
+                    var trailingAdornment = CreateTrailingAdornmentState(hasErrorText);
+                }
+
+                @if (trailingAdornment.Icon is not null) {
+                    <span class="@trailingAdornment.Class" aria-label="@trailingAdornment.AriaLabel" aria-hidden="@trailingAdornment.AriaHidden">
+                        @trailingAdornment.Icon.Render()
+                    </span>
+                }
+            </span>
+        </label>
+    </div>
+
+    @if (hasErrorText || hasSupportingText || HasSupportingRowContent) {
+        <div class="nt-input-supporting-row">
+            @if (hasErrorText) {
+                <span class="nt-input-supporting nt-input-error-text" id="@ErrorTextId" role="alert">
+                    @errorText
+                </span>
+            }
+            else if (hasSupportingText) {
+                <span class="nt-input-supporting" id="@SupportingTextId">
+                    @supportingText
+                </span>
+            }
+        </div>
+    }
+
+    @if (ShouldRenderReadOnlyFormPostValue) {
+        <input type="hidden"
+               name="@ElementName"
+               value="@CurrentValueAsString" />
+    }
+</div>

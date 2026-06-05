@@ -1,0 +1,9 @@
+@use '../Styles/_Variables/_colors.scss' as colors;
+@use './layoutRegion' as region;
+@use './layoutVariables' as layout;
+
+.nt-footer {
+    background: var(--nt-footer-background-color, #{colors.$tnt-color-surface-container-low});
+    color: var(--nt-footer-text-color, #{colors.$tnt-color-on-surface});
+    @include region.fixed-height-region(layout.$nt-layout-footer-height);
+}

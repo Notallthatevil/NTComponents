@@ -9,12 +9,13 @@
      hidden
      aria-hidden="true">
     <div class="tnt-rich-text-editor-inline-tool-fields">
-        <label class="tnt-rich-text-editor-inline-tool-field">
-            <span>Text color</span>
-            <input type="color"
-                   data-role="text-color-value"
-                   disabled="@Disabled" />
-        </label>
+        <NTInputColor Label="Text color"
+                      @bind-Value="_textColor"
+                      Appearance="NTFormAppearance.Outlined"
+                      Density="NTFormDensity.Dense"
+                      Disabled="@Disabled"
+                      SubmitValue="false"
+                      data-role="text-color-value" />
     </div>
     <div class="tnt-rich-text-editor-inline-tool-actions">
         <button type="button"
@@ -33,6 +34,8 @@
 </div>
 
 @code {
+    private string? _textColor;
+
     [Parameter]
     public bool Disabled { get; set; }
 }

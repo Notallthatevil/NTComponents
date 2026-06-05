@@ -1,13 +1,11 @@
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Rendering;
-using Microsoft.JSInterop;
-using System.Threading.Tasks;
 
 namespace NTComponents;
 
 /// <summary>
 ///     Represents the theme design component for TnT.
 /// </summary>
+[Obsolete("TnTMeasurements is obsolete. Use NTHeadDependencies instead.")]
 public partial class TnTMeasurements
 {
     /// <summary>
@@ -27,4 +25,16 @@ public partial class TnTMeasurements
     /// </summary>
     [Parameter]
     public double SideNavWidth { get; set; } = 256;
+
+    /// <summary>
+    /// Gets or sets the selector where NT measurement and typography tokens are emitted.
+    /// </summary>
+    [Parameter]
+    public string TokenScopeSelector { get; set; } = ":root";
+
+    private string TokenScope => NormalizeTokenScopeSelector(TokenScopeSelector);
+
+    internal static string NormalizeTokenScopeSelector(string? tokenScopeSelector) => string.IsNullOrWhiteSpace(tokenScopeSelector)
+        ? ":root"
+        : tokenScopeSelector.Trim();
 }

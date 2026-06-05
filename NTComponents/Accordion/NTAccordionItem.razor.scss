@@ -1,0 +1,267 @@
+@use '../Styles/_Variables/_corner-radius.scss' as corners;
+@use '../Styles/_Variables/_motion.scss' as motion;
+@use '../Styles/_Variables/_typescale.scss' as typescale;
+
+$state-transition: motion.$nt-motion-duration-short_3 motion.$nt-motion-easing-standard;
+$content-enter-transition: motion.$nt-motion-duration-medium_1 motion.$nt-motion-easing-emphasized-decelerate;
+$content-exit-transition: motion.$nt-motion-duration-short_4 motion.$nt-motion-easing-emphasized-accelerate;
+$content-enter-fade-transition: motion.$nt-motion-duration-short_4 motion.$nt-motion-easing-standard-decelerate;
+$content-exit-fade-transition: motion.$nt-motion-duration-short_2 motion.$nt-motion-easing-standard-accelerate;
+
+.nt-accordion-item {
+    background: var(--nt-accordion-content-color, var(--tnt-color-surface-container-low));
+    border: 1px solid var(--nt-accordion-item-border-color, transparent);
+    box-sizing: border-box;
+    color: var(--nt-accordion-content-text-color, var(--tnt-color-on-surface));
+    display: block;
+    min-inline-size: 0;
+    overflow: hidden;
+    overflow: clip;
+    transition: background-color $state-transition, border-color $state-transition, box-shadow $state-transition, color $state-transition;
+
+    & > summary {
+        list-style: none;
+    }
+
+    & > summary::-webkit-details-marker {
+        display: none;
+    }
+}
+
+@supports (interpolate-size: allow-keywords) and (transition-behavior: allow-discrete) and selector(::details-content) {
+    .nt-accordion-item {
+        interpolate-size: allow-keywords;
+
+        &::details-content {
+            block-size: 0;
+            opacity: 0;
+            overflow: clip;
+            transition: block-size $content-exit-transition, content-visibility $content-exit-transition allow-discrete, opacity $content-exit-fade-transition;
+            transition-behavior: allow-discrete;
+        }
+
+        &[open]::details-content {
+            block-size: auto;
+            opacity: 1;
+            transition: block-size $content-enter-transition, content-visibility $content-enter-transition allow-discrete, opacity $content-enter-fade-transition;
+        }
+    }
+}
+
+.nt-accordion-item-summary {
+    @include typescale.nt-title-small;
+
+    align-items: center;
+    background: var(--nt-accordion-header-color, var(--tnt-color-surface-container-highest));
+    border-radius: inherit;
+    color: var(--nt-accordion-header-text-color, var(--tnt-color-on-surface));
+    cursor: pointer;
+    display: grid;
+    gap: 16px;
+    grid-template-columns: minmax(0, 1fr) 40px;
+    min-block-size: 56px;
+    min-inline-size: 0;
+    outline: none;
+    padding-block: 8px;
+    padding-inline: 24px 8px;
+    position: relative;
+    transition: background-color $state-transition, border-radius $state-transition, color $state-transition;
+    user-select: none;
+
+    &::before {
+        background: var(--nt-accordion-state-layer-color, var(--nt-accordion-header-text-color, currentColor));
+        border-radius: inherit;
+        content: '';
+        inset: 0;
+        opacity: 0;
+        pointer-events: none;
+        position: absolute;
+        transition: opacity $state-transition;
+    }
+}
+
+.nt-accordion-item-compact {
+    > .nt-accordion-item-summary {
+        gap: 8px;
+        grid-template-columns: minmax(0, 1fr) 32px;
+        min-block-size: 48px;
+        padding-block: 4px;
+        padding-inline: 16px 4px;
+    }
+
+    &.nt-accordion-item-with-leading-icon > .nt-accordion-item-summary {
+        grid-template-columns: 20px minmax(0, 1fr) 32px;
+        padding-inline-start: 12px;
+    }
+
+    .nt-accordion-item-labels {
+        align-items: baseline;
+        flex-direction: row;
+        gap: 8px;
+    }
+
+    .nt-accordion-item-supporting-text {
+        margin-block-start: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .nt-accordion-item-leading-icon {
+        block-size: 20px;
+        inline-size: 20px;
+    }
+
+    .nt-accordion-item-expand-icon {
+        block-size: 32px;
+        inline-size: 32px;
+    }
+
+    .nt-accordion-item-content {
+        padding-block: 8px 12px;
+        padding-inline: 16px;
+    }
+}
+
+.nt-accordion-item-with-leading-icon .nt-accordion-item-summary {
+    grid-template-columns: 24px minmax(0, 1fr) 40px;
+    padding-inline-start: 16px;
+}
+
+.nt-accordion-item:not(.nt-accordion-item-disabled) {
+    & > .nt-accordion-item-summary:hover::before {
+        opacity: 0.08;
+    }
+
+    & > .nt-accordion-item-summary:focus-visible {
+        outline: 3px solid var(--nt-accordion-outline-color, var(--tnt-color-outline-variant));
+        outline-offset: -3px;
+    }
+
+    @supports (color: color-mix(in srgb, black 50%, white)) {
+        & > .nt-accordion-item-summary:focus-visible {
+            outline-color: color-mix(in srgb, var(--nt-accordion-outline-color, var(--tnt-color-outline-variant)) 60%, transparent);
+        }
+    }
+
+    & > .nt-accordion-item-summary:focus-visible::before,
+    & > .nt-accordion-item-summary:active::before {
+        opacity: 0.1;
+    }
+}
+
+.nt-accordion-item-labels {
+    display: flex;
+    flex-direction: column;
+    min-inline-size: 0;
+    position: relative;
+    z-index: 1;
+}
+
+.nt-accordion-item-label,
+.nt-accordion-item-supporting-text {
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
+}
+
+.nt-accordion-item-supporting-text {
+    @include typescale.nt-body-medium;
+
+    color: var(--tnt-color-on-surface-variant);
+    margin-block-start: 2px;
+
+    @supports (color: color-mix(in srgb, black 50%, white)) {
+        color: color-mix(in srgb, currentColor 72%, transparent);
+    }
+}
+
+.nt-accordion-item-leading-icon,
+.nt-accordion-item-expand-icon {
+    align-items: center;
+    color: currentColor;
+    display: inline-flex;
+    justify-content: center;
+    position: relative;
+    z-index: 1;
+
+    ::deep .tnt-icon {
+        color: inherit;
+        line-height: 1;
+        pointer-events: none;
+    }
+}
+
+.nt-accordion-item-leading-icon {
+    block-size: 24px;
+    inline-size: 24px;
+}
+
+.nt-accordion-item-expand-icon {
+    block-size: 40px;
+    border-radius: corners.$nt-corner-radius-full;
+    inline-size: 40px;
+    transition: transform $content-exit-transition;
+}
+
+:is(details.nt-accordion-item[open], div.nt-accordion-item-open) > .nt-accordion-item-summary {
+    border-end-start-radius: 0;
+    border-end-end-radius: 0;
+}
+
+:is(details.nt-accordion-item[open], div.nt-accordion-item-open) > .nt-accordion-item-summary .nt-accordion-item-expand-icon {
+    transform: rotate(180deg);
+    transition: transform $content-enter-transition;
+}
+
+.nt-accordion-item-content {
+    @include typescale.nt-body-medium;
+
+    background: var(--nt-accordion-content-color, var(--tnt-color-surface-container-low));
+    box-sizing: border-box;
+    color: var(--nt-accordion-content-text-color, var(--tnt-color-on-surface));
+    opacity: 0;
+    padding-block: 16px 24px;
+    padding-inline: 24px;
+    transform: translateY(-8px);
+    transform-origin: top;
+    transition: opacity $content-exit-fade-transition, transform $content-exit-transition;
+}
+
+:is(details.nt-accordion-item[open], div.nt-accordion-item-open) > .nt-accordion-item-content {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity $content-enter-fade-transition, transform $content-enter-transition;
+}
+
+.nt-accordion-item-disabled {
+    color: var(--tnt-color-on-surface-variant);
+
+    @supports (color: color-mix(in srgb, black 50%, white)) {
+        color: color-mix(in srgb, var(--nt-accordion-header-text-color, var(--tnt-color-on-surface)) 38%, transparent);
+    }
+
+    > .nt-accordion-item-summary {
+        cursor: default;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nt-accordion-item,
+    .nt-accordion-item-summary,
+    .nt-accordion-item-summary::before,
+    .nt-accordion-item-content,
+    .nt-accordion-item-expand-icon {
+        transition: none;
+    }
+
+    @supports selector(::details-content) {
+        .nt-accordion-item::details-content {
+            transition: none;
+        }
+    }
+
+    .nt-accordion-item-content,
+    :is(details.nt-accordion-item[open], div.nt-accordion-item-open) > .nt-accordion-item-content {
+        transform: translateY(0);
+    }
+}

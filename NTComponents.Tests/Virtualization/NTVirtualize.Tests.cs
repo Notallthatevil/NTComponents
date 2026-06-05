@@ -62,6 +62,8 @@ public class NTVirtualize_Tests : BunitContext {
         // One before, one after
         spacers[0].GetAttribute("style").Should().Contain("height: 0px");
         spacers[1].GetAttribute("style").Should().Contain("height: 0px");
+        spacers[0].ClassList.Should().Contain("nt-virtualize-spacer");
+        spacers[1].ClassList.Should().Contain("nt-virtualize-spacer");
     }
 
     [Fact]
@@ -109,6 +111,260 @@ public class NTVirtualize_Tests : BunitContext {
         cut.Markup.Should().Contain("-Item 1-");
         cut.Markup.Should().Contain("-Item 5-");
         cut.Markup.Should().NotContain("-Item 6-");
+    }
+
+    [Fact]
+    public async Task Render_Items_Preloads_Next_Visible_Window_As_Placeholders() {
+        var items = Enumerable.Range(1, 20).Select(i => $"Item {i}").ToList();
+        NTVirtualizeItemsProvider<string> provider = request => {
+            var resultItems = items.Skip(request.StartIndex).Take(request.Count ?? items.Count).ToList();
+            return new ValueTask<TnTItemsProviderResult<string>>(new TnTItemsProviderResult<string>(resultItems, items.Count));
+        };
+
+        var cut = Render<NTVirtualize<string>>(p => p
+            .Add(c => c.ItemsProvider, provider)
+            .Add(c => c.ItemSize, 50)
+            .Add(c => c.ItemTemplate, item => builder => builder.AddContent(0, $"-{item}-"))
+            .Add(c => c.LoadingTemplate, context => builder => {
+                builder.OpenElement(0, "div");
+                builder.AddAttribute(1, "class", "preloaded-placeholder");
+                builder.AddAttribute(2, "data-index", context.Index.ToString(CultureInfo.InvariantCulture));
+                builder.AddAttribute(3, "style", $"height: {context.Size.ToString(CultureInfo.InvariantCulture)}px");
+                builder.CloseElement();
+            }));
+
+        await cut.InvokeAsync(() => cut.Instance.LoadItems(0, 750, 0, 5));
+
+        cut.WaitForAssertion(() => {
+            cut.Markup.Should().Contain("-Item 5-");
+            cut.FindAll(".preloaded-placeholder").Should().HaveCount(5);
+            cut.FindAll(".preloaded-placeholder")[0].GetAttribute("data-index").Should().Be("7");
+            cut.FindAll(".nt-virtualize-spacer")[1].GetAttribute("style").Should().Contain("height: 500px");
+        });
+    }
+
+    [Fact]
+    public async Task LoadItems_Renders_Cached_Items_And_Placeholders_For_Missing_Differences() {
+        var items = Enumerable.Range(1, 20).Select(i => $"Item {i}").ToList();
+        var pending = new TaskCompletionSource<TnTItemsProviderResult<string>>();
+        var captured = new List<NTVirtualizeItemsProviderRequest<string>>();
+        NTVirtualizeItemsProvider<string> provider = request => {
+            captured.Add(request);
+            if (request.StartIndex == 5) {
+                return new ValueTask<TnTItemsProviderResult<string>>(pending.Task);
+            }
+
+            var resultItems = items.Skip(request.StartIndex).Take(request.Count ?? items.Count).ToList();
+            return new ValueTask<TnTItemsProviderResult<string>>(new TnTItemsProviderResult<string>(resultItems, items.Count));
+        };
+
+        var cut = Render<NTVirtualize<string>>(p => p
+            .Add(c => c.ItemsProvider, provider)
+            .Add(c => c.PlaceholderPreloadWindowCount, 0)
+            .Add(c => c.ItemTemplate, item => builder => builder.AddContent(0, $"-{item}-"))
+            .Add(c => c.LoadingTemplate, context => builder => {
+                builder.OpenElement(0, "div");
+                builder.AddAttribute(1, "class", "missing-placeholder");
+                builder.CloseElement();
+            }));
+
+        await cut.InvokeAsync(() => cut.Instance.LoadItems(0, 750, 0, 5));
+        cut.WaitForAssertion(() => cut.Markup.Should().Contain("-Item 5-"));
+
+        await cut.InvokeAsync(() => cut.Instance.LoadItems(150, 600, 3, 5));
+
+        cut.WaitForAssertion(() => {
+            captured.Should().Contain(request => request.StartIndex == 5 && request.Count == 3);
+            cut.Markup.Should().Contain("-Item 4-");
+            cut.Markup.Should().Contain("-Item 5-");
+            cut.FindAll(".missing-placeholder").Should().HaveCount(3);
+        });
+
+        pending.SetResult(new TnTItemsProviderResult<string>(items.Skip(5).Take(3).ToList(), items.Count));
+        cut.WaitForAssertion(() => {
+            cut.Markup.Should().Contain("-Item 8-");
+            cut.FindAll(".missing-placeholder").Should().BeEmpty();
+        });
+    }
+
+    [Fact]
+    public async Task LoadItems_Uses_Cache_When_Requested_Range_Is_Already_Loaded() {
+        var items = Enumerable.Range(1, 20).Select(i => $"Item {i}").ToList();
+        var callCount = 0;
+        NTVirtualizeItemsProvider<string> provider = request => {
+            callCount++;
+            var resultItems = items.Skip(request.StartIndex).Take(request.Count ?? items.Count).ToList();
+            return new ValueTask<TnTItemsProviderResult<string>>(new TnTItemsProviderResult<string>(resultItems, items.Count));
+        };
+
+        var cut = Render<NTVirtualize<string>>(p => p
+            .Add(c => c.ItemsProvider, provider)
+            .Add(c => c.PlaceholderPreloadWindowCount, 0)
+            .Add(c => c.BackgroundPreloadWindowCount, 0)
+            .Add(c => c.ItemTemplate, item => builder => builder.AddContent(0, $"-{item}-")));
+
+        await cut.InvokeAsync(() => cut.Instance.LoadItems(0, 750, 0, 5));
+        cut.WaitForAssertion(() => cut.Markup.Should().Contain("-Item 5-"));
+
+        await cut.InvokeAsync(() => cut.Instance.LoadItems(100, 650, 2, 2));
+
+        cut.WaitForAssertion(() => {
+            callCount.Should().Be(1);
+            cut.Markup.Should().Contain("-Item 3-");
+            cut.Markup.Should().Contain("-Item 4-");
+        });
+    }
+
+    [Fact]
+    public async Task Unchanged_Render_State_Is_Not_Reposted_To_JavaScript() {
+        var items = Enumerable.Range(1, 5).Select(i => $"Item {i}").ToList();
+        NTVirtualizeItemsProvider<string> provider = request => {
+            var resultItems = items.Skip(request.StartIndex).Take(request.Count ?? items.Count).ToList();
+            return new ValueTask<TnTItemsProviderResult<string>>(new TnTItemsProviderResult<string>(resultItems, items.Count));
+        };
+
+        var cut = Render<NTVirtualize<string>>(p => p
+            .Add(c => c.ItemsProvider, provider)
+            .Add(c => c.ItemTemplate, item => builder => builder.AddContent(0, $"-{item}-")));
+
+        await cut.InvokeAsync(() => cut.Instance.LoadItems(0, 0, 0, 5));
+        cut.WaitForAssertion(() => cut.Markup.Should().Contain("-Item 5-"));
+        var updateRenderStateCount = JSInterop.Invocations.Count(invocation => invocation.Identifier == "updateRenderState");
+
+        await cut.InvokeAsync(() => cut.Instance.LoadItems(1, 0, 0, 5));
+
+        JSInterop.Invocations.Count(invocation => invocation.Identifier == "updateRenderState").Should().Be(updateRenderStateCount);
+    }
+
+    [Fact]
+    public async Task Data_Load_Render_Does_Not_Reinitialize_JavaScript_Virtualizer() {
+        var items = Enumerable.Range(1, 5).Select(i => $"Item {i}").ToList();
+        NTVirtualizeItemsProvider<string> provider = request => {
+            var resultItems = items.Skip(request.StartIndex).Take(request.Count ?? items.Count).ToList();
+            return new ValueTask<TnTItemsProviderResult<string>>(new TnTItemsProviderResult<string>(resultItems, items.Count));
+        };
+
+        var cut = Render<NTVirtualize<string>>(p => p
+            .Add(c => c.ItemsProvider, provider)
+            .Add(c => c.ItemTemplate, item => builder => builder.AddContent(0, $"-{item}-")));
+
+        JSInterop.Invocations.Count(invocation => invocation.Identifier == "init").Should().Be(1);
+
+        await cut.InvokeAsync(() => cut.Instance.LoadItems(0, 0, 0, 5));
+        cut.WaitForAssertion(() => cut.Markup.Should().Contain("-Item 5-"));
+
+        JSInterop.Invocations.Count(invocation => invocation.Identifier == "init").Should().Be(1);
+    }
+
+    [Fact]
+    public async Task LoadItems_Revalidates_Cached_Range_In_Background_When_Enabled() {
+        var captured = new List<NTVirtualizeItemsProviderRequest<string>>();
+        var revalidation = new TaskCompletionSource<TnTItemsProviderResult<string>>();
+        NTVirtualizeItemsProvider<string> provider = request => {
+            captured.Add(request);
+            if (request.StartIndex == 0 && captured.Count > 2) {
+                return new ValueTask<TnTItemsProviderResult<string>>(revalidation.Task);
+            }
+
+            var prefix = "Old";
+            var resultItems = Enumerable.Range(request.StartIndex, request.Count ?? 0).Select(index => $"{prefix} {index}").ToList();
+            return new ValueTask<TnTItemsProviderResult<string>>(new TnTItemsProviderResult<string>(resultItems, 20));
+        };
+
+        var cut = Render<NTVirtualize<string>>(p => p
+            .Add(c => c.ItemsProvider, provider)
+            .Add(c => c.PlaceholderPreloadWindowCount, 0)
+            .Add(c => c.BackgroundPreloadWindowCount, 0)
+            .Add(c => c.RevalidateCachedItems, true)
+            .Add(c => c.ItemTemplate, item => builder => builder.AddContent(0, $"-{item}-")));
+
+        await cut.InvokeAsync(() => cut.Instance.LoadItems(0, 750, 0, 5));
+        cut.WaitForAssertion(() => cut.Markup.Should().Contain("-Old 4-"));
+
+        await cut.InvokeAsync(() => cut.Instance.LoadItems(250, 500, 5, 5));
+        cut.WaitForAssertion(() => cut.Markup.Should().Contain("-Old 9-"));
+
+        await cut.InvokeAsync(() => cut.Instance.LoadItems(0, 750, 0, 5));
+
+        cut.WaitForAssertion(() => {
+            captured.Should().Contain(request => request.StartIndex == 0 && request.Count == 5);
+            captured.Count(request => request.StartIndex == 0 && request.Count == 5).Should().Be(2);
+            cut.Markup.Should().Contain("-Old 4-");
+        });
+
+        revalidation.SetResult(new TnTItemsProviderResult<string>(Enumerable.Range(0, 5).Select(index => $"New {index}").ToList(), 20));
+        cut.WaitForAssertion(() => {
+            cut.Markup.Should().Contain("-New 4-");
+            cut.Markup.Should().NotContain("-Old 4-");
+        });
+    }
+
+    [Fact]
+    public async Task LoadItems_Does_Not_Revalidate_Cached_Range_When_Disabled() {
+        var items = Enumerable.Range(1, 20).Select(i => $"Item {i}").ToList();
+        var callCount = 0;
+        NTVirtualizeItemsProvider<string> provider = request => {
+            callCount++;
+            var resultItems = items.Skip(request.StartIndex).Take(request.Count ?? items.Count).ToList();
+            return new ValueTask<TnTItemsProviderResult<string>>(new TnTItemsProviderResult<string>(resultItems, items.Count));
+        };
+
+        var cut = Render<NTVirtualize<string>>(p => p
+            .Add(c => c.ItemsProvider, provider)
+            .Add(c => c.PlaceholderPreloadWindowCount, 0)
+            .Add(c => c.BackgroundPreloadWindowCount, 0)
+            .Add(c => c.RevalidateCachedItems, false)
+            .Add(c => c.ItemTemplate, item => builder => builder.AddContent(0, $"-{item}-")));
+
+        await cut.InvokeAsync(() => cut.Instance.LoadItems(0, 750, 0, 5));
+        cut.WaitForAssertion(() => cut.Markup.Should().Contain("-Item 5-"));
+
+        await cut.InvokeAsync(() => cut.Instance.LoadItems(0, 750, 0, 5));
+
+        cut.WaitForAssertion(() => {
+            callCount.Should().Be(1);
+            cut.Markup.Should().Contain("-Item 5-");
+        });
+    }
+
+    [Fact]
+    public async Task BackgroundPreload_Replaces_Preloaded_Placeholders_With_Cached_Items() {
+        var items = Enumerable.Range(1, 20).Select(i => $"Item {i}").ToList();
+        var prefetch = new TaskCompletionSource<TnTItemsProviderResult<string>>();
+        var captured = new List<NTVirtualizeItemsProviderRequest<string>>();
+        NTVirtualizeItemsProvider<string> provider = request => {
+            captured.Add(request);
+            if (request.StartIndex == 5) {
+                return new ValueTask<TnTItemsProviderResult<string>>(prefetch.Task);
+            }
+
+            var resultItems = items.Skip(request.StartIndex).Take(request.Count ?? items.Count).ToList();
+            return new ValueTask<TnTItemsProviderResult<string>>(new TnTItemsProviderResult<string>(resultItems, items.Count));
+        };
+
+        var cut = Render<NTVirtualize<string>>(p => p
+            .Add(c => c.ItemsProvider, provider)
+            .Add(c => c.PlaceholderPreloadWindowCount, 1)
+            .Add(c => c.BackgroundPreloadWindowCount, 1)
+            .Add(c => c.ItemTemplate, item => builder => builder.AddContent(0, $"-{item}-"))
+            .Add(c => c.LoadingTemplate, context => builder => {
+                builder.OpenElement(0, "div");
+                builder.AddAttribute(1, "class", "preload-placeholder");
+                builder.CloseElement();
+            }));
+
+        await cut.InvokeAsync(() => cut.Instance.LoadItems(0, 750, 0, 5));
+
+        cut.WaitForAssertion(() => {
+            captured.Should().Contain(request => request.StartIndex == 5 && request.Count == 5);
+            cut.FindAll(".preload-placeholder").Should().HaveCount(5);
+        });
+
+        prefetch.SetResult(new TnTItemsProviderResult<string>(items.Skip(5).Take(5).ToList(), items.Count));
+        cut.WaitForAssertion(() => {
+            cut.Markup.Should().Contain("-Item 10-");
+            cut.FindAll(".preload-placeholder").Should().BeEmpty();
+        });
     }
 
     [Fact]
@@ -189,6 +445,7 @@ public class NTVirtualize_Tests : BunitContext {
 
         var cut = Render<NTVirtualize<string>>(p => p
             .Add(c => c.ItemsProvider, provider)
+            .Add(c => c.PlaceholderPreloadWindowCount, 0)
             .Add(c => c.ItemTemplate, item => builder => builder.AddContent(0, item))
             .Add(c => c.LoadingTemplate, context => builder => builder.AddContent(0, "Loading...")));
 
@@ -206,6 +463,37 @@ public class NTVirtualize_Tests : BunitContext {
         tcs.SetResult(new TnTItemsProviderResult<string>(Enumerable.Range(10, 5).Select(i => $"Item {i}").ToList(), 100));
         cut.WaitForState(() => cut.Markup.Contains("Item 14"));
         cut.Markup.Should().NotContain("Loading...");
+    }
+
+    [Fact]
+    public async Task LoadingTemplate_Is_Used_During_Initial_Load_Before_Total_Count_Is_Known() {
+        var tcs = new TaskCompletionSource<TnTItemsProviderResult<string>>();
+        NTVirtualizeItemsProvider<string> provider = _ => new ValueTask<TnTItemsProviderResult<string>>(tcs.Task);
+
+        var cut = Render<NTVirtualize<string>>(p => p
+            .Add(c => c.ItemsProvider, provider)
+            .Add(c => c.ItemSize, 64)
+            .Add(c => c.ItemTemplate, item => builder => builder.AddContent(0, item))
+            .Add(c => c.LoadingTemplate, context => builder => {
+                builder.OpenElement(0, "div");
+                builder.AddAttribute(1, "class", "initial-loading-placeholder");
+                builder.AddAttribute(2, "data-index", context.Index.ToString(CultureInfo.InvariantCulture));
+                builder.AddAttribute(3, "style", $"height: {context.Size.ToString(CultureInfo.InvariantCulture)}px");
+                builder.CloseElement();
+            }));
+
+        await cut.InvokeAsync(() => cut.Instance.LoadItems(0, 0, 0, 3));
+
+        cut.WaitForAssertion(() => {
+            var placeholders = cut.FindAll(".initial-loading-placeholder");
+            placeholders.Should().HaveCount(3);
+            placeholders[0].GetAttribute("data-index").Should().Be("2");
+            placeholders[0].GetAttribute("style").Should().Contain("height: 64px");
+        });
+
+        tcs.SetResult(new TnTItemsProviderResult<string>(["Item 1", "Item 2", "Item 3"], 3));
+        cut.WaitForState(() => cut.Markup.Contains("Item 3"));
+        cut.FindAll(".initial-loading-placeholder").Should().BeEmpty();
     }
 
     [Fact]

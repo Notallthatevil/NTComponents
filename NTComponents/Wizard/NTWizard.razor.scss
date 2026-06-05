@@ -1,0 +1,420 @@
+@use '../Styles/_Variables/_colors.scss' as colors;
+@use '../Styles/_Variables/_corner-radius.scss' as corners;
+@use '../Styles/_Variables/_measurements.scss' as measurements;
+@use '../Styles/_Variables/_motion.scss' as motion;
+@use '../Styles/_Variables/_typescale.scss' as typescale;
+
+$wizard-title-height: 24px;
+$wizard-subtitle-height: 20px;
+$wizard-title-gap-size: 4px;
+$wizard-step-gap-size: 12px;
+$wizard-step-rail-width: 250px;
+$wizard-horizontal-step-gap-size: 16px;
+$wizard-horizontal-step-connector-gap-size: 8px;
+$wizard-step-connector-thickness: 4px;
+$wizard-step-connector-radius: 9999px;
+$wizard-medium-screen-up-plus: measurements.$medium-screen-up + 1px;
+
+@mixin contain-inline {
+    box-sizing: border-box;
+    max-inline-size: 100%;
+    min-inline-size: 0;
+}
+
+@mixin horizontal-layout {
+    grid-template-areas: "steps" "content" "buttons";
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: min-content min-content auto;
+
+    &.nt-wizard-buttons-on-bottom {
+        grid-template-rows: auto 1fr auto;
+    }
+
+    &:has(.nt-wizard-title) {
+        grid-template-areas: "title" "steps" "content" "buttons";
+        grid-template-rows: min-content min-content min-content auto;
+
+        &.nt-wizard-buttons-on-bottom {
+            grid-template-rows: auto auto 1fr auto;
+        }
+    }
+
+    .nt-wizard-steps {
+        background-color: inherit;
+        flex-direction: row;
+        gap: $wizard-horizontal-step-gap-size;
+        grid-area: steps;
+        justify-content: space-between;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+
+        .nt-wizard-step-indicator {
+            align-items: center;
+            display: grid;
+            column-gap: $wizard-horizontal-step-connector-gap-size;
+            row-gap: $wizard-title-gap-size;
+            grid-template-areas: "step-title indicator";
+            grid-template-columns: auto 1fr;
+            grid-template-rows: auto;
+            min-inline-size: 0;
+
+            &:not(:last-child) {
+                flex: 1 1 0;
+                width: auto;
+            }
+
+            &:has(.nt-wizard-step-subtitle) {
+                grid-template-areas: "step-title indicator" "step-subtitle indicator";
+                grid-template-rows: auto auto;
+            }
+
+            .nt-wizard-step-title {
+                align-items: center;
+                block-size: auto;
+                grid-area: step-title;
+                max-inline-size: none;
+                min-inline-size: max-content;
+                white-space: nowrap;
+            }
+
+            .nt-wizard-step-index {
+                height: $wizard-title-height;
+            }
+
+            .nt-wizard-step-label {
+                min-inline-size: max-content;
+            }
+
+            .nt-wizard-step-subtitle {
+                block-size: auto;
+                grid-area: step-subtitle;
+                grid-row: 2;
+                margin-inline-start: 0;
+                max-inline-size: none;
+                min-inline-size: max-content;
+                white-space: nowrap;
+            }
+
+            &:has(.tnt-icon) {
+                .nt-wizard-step-subtitle {
+                    margin-inline-start: 0;
+                }
+            }
+
+            &:not(:last-child)::after {
+                block-size: $wizard-step-connector-thickness;
+                border-radius: $wizard-step-connector-radius;
+                bottom: unset;
+                grid-area: indicator;
+                grid-row: 1 / 3;
+                inline-size: 100%;
+                inset-inline: unset;
+                place-self: center stretch;
+                top: unset;
+            }
+        }
+    }
+
+    @media only screen and (max-width: measurements.$medium-screen-up) {
+        .nt-wizard-steps {
+            .nt-wizard-step-indicator {
+                .nt-wizard-step-title {
+                    align-items: flex-start;
+                    flex-wrap: wrap;
+                    height: auto;
+                    max-inline-size: min(100%, clamp(8rem, 40vw, 16rem));
+                    min-block-size: $wizard-title-height;
+                    min-inline-size: 0;
+                    overflow: visible;
+                    overflow-wrap: anywhere;
+                    text-overflow: clip;
+                    white-space: normal;
+                }
+
+                .nt-wizard-step-label {
+                    flex: 1 1 min-content;
+                    min-inline-size: 0;
+                    overflow-wrap: anywhere;
+                }
+
+                .nt-wizard-step-subtitle {
+                    height: auto;
+                    max-inline-size: min(100%, clamp(8rem, 40vw, 16rem));
+                    min-block-size: $wizard-subtitle-height;
+                    min-inline-size: 0;
+                    overflow: visible;
+                    overflow-wrap: anywhere;
+                    text-overflow: clip;
+                    white-space: normal;
+                }
+            }
+        }
+    }
+}
+
+.nt-wizard {
+    background-color: inherit;
+    box-sizing: border-box;
+    color: colors.$tnt-color-on-surface;
+    display: grid;
+    grid-template-areas: "steps content" "steps buttons";
+    grid-template-columns: minmax(0, $wizard-step-rail-width) minmax(0, 1fr);
+    grid-template-rows: min-content auto;
+    height: 100%;
+    max-inline-size: 100%;
+    min-inline-size: 0;
+    overflow-x: hidden;
+    overflow-x: clip;
+    position: relative;
+    width: 100%;
+
+    &.nt-wizard-buttons-on-bottom {
+        grid-template-rows: 1fr auto;
+    }
+
+    &:has(.nt-wizard-title) {
+        grid-template-areas: "title title" "steps content" "steps buttons";
+        grid-template-rows: min-content min-content auto;
+
+        &.nt-wizard-buttons-on-bottom {
+            grid-template-rows: auto 1fr auto;
+        }
+    }
+
+    .nt-wizard-title {
+        @include typescale.nt-title-large;
+        @include contain-inline;
+
+        border-block-end: 1px solid colors.$tnt-color-outline-variant;
+        grid-area: title;
+        margin: 0;
+        overflow: hidden;
+        padding: 8px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .nt-wizard-steps {
+        @include contain-inline;
+
+        display: flex;
+        flex-direction: column;
+        grid-area: steps;
+        margin: 0;
+        overflow-x: hidden;
+        overflow-x: clip;
+        padding: 8px;
+
+        .nt-wizard-step-indicator {
+            @include contain-inline;
+
+            color: colors.$tnt-color-outline;
+            cursor: not-allowed;
+            display: flex;
+            flex-direction: column;
+            gap: $wizard-step-gap-size;
+            height: 100%;
+            list-style-type: none;
+            position: relative;
+            transition: color motion.$nt-motion-duration-short_4 motion.$nt-motion-easing-standard;
+
+            .nt-wizard-step-button {
+                @include contain-inline;
+
+                appearance: none;
+                background: none;
+                border: 0;
+                color: inherit;
+                cursor: inherit;
+                display: block;
+                font: inherit;
+                margin: 0;
+                padding: 0;
+                text-align: inherit;
+            }
+
+            .nt-wizard-step-title {
+                @include typescale.nt-title-medium;
+
+                align-items: center;
+                display: flex;
+                height: $wizard-title-height;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .nt-wizard-step-index {
+                align-items: center;
+                aspect-ratio: 1 / 1;
+                border: 2px solid colors.$tnt-color-outline;
+                border-radius: corners.$nt-corner-radius-full;
+                box-sizing: border-box;
+                color: inherit;
+                display: flex;
+                flex: 0 0 auto;
+                height: 100%;
+                justify-content: center;
+                margin-inline-end: 8px;
+                padding: 0;
+                transition: background-color motion.$nt-motion-duration-short_4 motion.$nt-motion-easing-standard, border-color motion.$nt-motion-duration-short_4 motion.$nt-motion-easing-standard, color motion.$nt-motion-duration-short_4 motion.$nt-motion-easing-standard;
+            }
+
+            .tnt-icon {
+                margin: 0 4px 0 0;
+                padding: 0;
+            }
+
+            .nt-wizard-step-subtitle {
+                @include typescale.nt-title-small;
+
+                color: inherit;
+                height: $wizard-subtitle-height;
+                margin-inline-start: calc($wizard-title-height + 8px);
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            &:has(.tnt-icon) {
+                .nt-wizard-step-subtitle {
+                    margin-inline-start: calc($wizard-title-height + $wizard-title-height + 12px);
+                }
+            }
+
+    &:not(:last-child)::after {
+        background-color: colors.$tnt-color-outline-variant;
+        block-size: auto;
+        border-radius: $wizard-step-connector-radius;
+        bottom: 8px;
+        content: '';
+        inline-size: $wizard-step-connector-thickness;
+        inset-inline-start: calc($wizard-title-height / 2 - ($wizard-step-connector-thickness / 2));
+        position: absolute;
+        top: calc($wizard-title-height + $wizard-step-gap-size);
+        transition: background-color motion.$nt-motion-duration-short_4 motion.$nt-motion-easing-standard;
+    }
+
+            &.current-step {
+                color: colors.$tnt-color-primary;
+                cursor: pointer;
+
+                .nt-wizard-step-index {
+                    background-color: colors.$tnt-color-primary;
+                    border-color: colors.$tnt-color-primary;
+                    color: colors.$tnt-color-on-primary;
+                }
+
+                .nt-wizard-step-subtitle {
+                    color: colors.$tnt-color-secondary;
+                }
+
+                &:not(:last-child)::after {
+                    background-color: colors.$tnt-color-primary;
+                }
+            }
+
+            &.completed-step {
+                color: colors.$tnt-color-secondary;
+                cursor: pointer;
+
+                .nt-wizard-step-index {
+                    background-color: colors.$tnt-color-secondary;
+                    border-color: colors.$tnt-color-secondary;
+                    color: colors.$tnt-color-on-secondary;
+                }
+
+                &:not(:last-child)::after {
+                    background-color: colors.$tnt-color-secondary;
+                }
+            }
+
+            &.next-step {
+                cursor: pointer;
+            }
+
+            &.disabled-step {
+                color: colors.$tnt-color-outline-variant;
+                cursor: not-allowed;
+                opacity: 0.72;
+            }
+
+            &.invalid-step {
+                color: colors.$tnt-color-error;
+
+                .nt-wizard-step-index {
+                    border-color: colors.$tnt-color-error;
+                }
+            }
+
+            &.current-step.invalid-step {
+                .nt-wizard-step-index {
+                    background-color: colors.$tnt-color-error;
+                    border-color: colors.$tnt-color-error;
+                    color: colors.$tnt-color-on-error;
+                }
+
+                &:not(:last-child)::after {
+                    background-color: colors.$tnt-color-error;
+                }
+            }
+
+            &.skipped-step {
+                color: colors.$tnt-color-tertiary;
+
+                .nt-wizard-step-index {
+                    border-color: colors.$tnt-color-tertiary;
+                }
+            }
+        }
+    }
+
+    .nt-wizard-content,
+    .nt-wizard-current-step {
+        @include contain-inline;
+
+        grid-area: content;
+        overflow-wrap: anywhere;
+        overflow-y: auto;
+        padding: 8px;
+    }
+
+    .nt-wizard-form {
+        @include contain-inline;
+
+        display: grid;
+        gap: 16px;
+    }
+
+    .nt-wizard-buttons {
+        @include contain-inline;
+
+        align-self: start;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        grid-area: buttons;
+        justify-content: end;
+        justify-self: stretch;
+        padding: 8px;
+    }
+
+    &:not(.nt-wizard-layout-horizontal) {
+        .nt-wizard-steps {
+            max-inline-size: $wizard-step-rail-width;
+        }
+    }
+
+    @media only screen and (max-width: measurements.$medium-screen-up) {
+        &:not(.nt-wizard-vertical-on-small-screens) {
+            @include horizontal-layout;
+        }
+    }
+
+    @media only screen and (min-width: $wizard-medium-screen-up-plus) {
+        &.nt-wizard-layout-horizontal {
+            @include horizontal-layout;
+        }
+    }
+}

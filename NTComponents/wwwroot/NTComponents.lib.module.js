@@ -1,8 +1,13 @@
 const pageScriptInfoBySrc = new Map();
+const enhancedLoadBlazorInstances = new WeakSet();
 const richTextEditorToolRegistry = {
     tools: new Map(),
     onChange: null
 };
+let rippleHandlersRegistered = false;
+let bodyFillObserverStarted = false;
+const rippleReleaseTimeoutByHost = new WeakMap();
+const buttonInteractionRegistrationByElement = new WeakMap();
 
 export function setRichTextEditorToolRegistryChangedCallback(callback) {
     richTextEditorToolRegistry.onChange = callback;
@@ -38,7 +43,7 @@ export function createRichTextEditorToolContext(element, editorState, host, tool
     };
 }
 
-function registerPageScriptElement(src) {
+function registerPageScriptElement(src, element) {
     if (!src) {
         throw new Error('Must provide a non-empty value for the "src" attribute.');
     }
@@ -47,14 +52,16 @@ function registerPageScriptElement(src) {
 
     if (pageScriptInfo) {
         pageScriptInfo.referenceCount++;
+        pageScriptInfo.elements.add(element);
+        pageScriptInfo.module?.onUpdate?.(element);
     } else {
-        pageScriptInfo = { referenceCount: 1, module: null };
+        pageScriptInfo = { referenceCount: 1, module: null, elements: new Set([element]) };
         pageScriptInfoBySrc.set(src, pageScriptInfo);
         initializePageScriptModule(src, pageScriptInfo);
     }
 }
 
-function unregisterPageScriptElement(src) {
+function unregisterPageScriptElement(src, element) {
     if (!src) {
         return;
     }
@@ -65,6 +72,8 @@ function unregisterPageScriptElement(src) {
     }
 
     pageScriptInfo.referenceCount--;
+    pageScriptInfo.elements.delete(element);
+    pageScriptInfo.module?.onDispose?.(element);
 }
 
 async function initializePageScriptModule(src, pageScriptInfo) {
@@ -83,8 +92,10 @@ async function initializePageScriptModule(src, pageScriptInfo) {
     }
 
     pageScriptInfo.module = module;
-    module.onLoad?.();
-    module.onUpdate?.();
+    for (const element of pageScriptInfo.elements) {
+        module.onLoad?.(element);
+        module.onUpdate?.(element);
+    }
 }
 
 function onEnhancedLoad() {
@@ -97,38 +108,468 @@ function onEnhancedLoad() {
     }
 
     // Then invoke 'onUpdate' on the remaining modules.
-    for (const { module } of pageScriptInfoBySrc.values()) {
-        module?.onUpdate?.();
+    for (const { elements, module } of pageScriptInfoBySrc.values()) {
+        for (const element of elements) {
+            module?.onUpdate?.(element);
+        }
+    }
+
+    window.NTComponents?.setupRipple?.();
+    enhanceAutocompleteInputs();
+    enhanceAnimationWrappers();
+}
+
+function enhanceAutocompleteInputs() {
+    if (!document.querySelector('[data-nt-autocomplete-input="true"]')) {
+        return;
+    }
+
+    import('./Form/NTAutocomplete.razor.js')
+        .then(module => module.enhanceAll?.(document))
+        .catch(() => { });
+}
+
+function enhanceAnimationWrappers() {
+    if (!document.querySelector('[data-nt-animation="true"]')) {
+        return;
+    }
+
+    import('./Animation/NTAnimation.razor.js')
+        .then(module => module.enhanceAll?.(document))
+        .catch(() => { });
+}
+
+function getRippleHost(element) {
+    return element?.querySelector?.(':scope > .nt-button-ripple-host')
+        ?? element?.querySelector?.(':scope .nt-navigation-rail-item-ripple.nt-button-ripple-host')
+        ?? null;
+}
+
+function getRippleContainer(element) {
+    const host = getRippleHost(element);
+    if (host?.classList?.contains('nt-navigation-rail-item-ripple')) {
+        return host.parentElement ?? element ?? null;
+    }
+
+    return element ?? null;
+}
+
+function clearRippleReleaseTimeout(host) {
+    const existingTimeout = rippleReleaseTimeoutByHost.get(host);
+    if (existingTimeout) {
+        clearTimeout(existingTimeout);
+        rippleReleaseTimeoutByHost.delete(host);
     }
 }
+
+function releaseRippleHost(host) {
+    if (!host) {
+        return;
+    }
+
+    clearRippleReleaseTimeout(host);
+
+    const ripples = host.querySelectorAll(':scope > .nt-button-ripple');
+    if (!ripples.length) {
+        return;
+    }
+
+    ripples.forEach((ripple) => {
+        ripple.classList.add('nt-button-ripple-releasing');
+    });
+
+    const timeoutId = setTimeout(() => {
+        ripples.forEach((ripple) => ripple.remove());
+        rippleReleaseTimeoutByHost.delete(host);
+    }, 600);
+
+    rippleReleaseTimeoutByHost.set(host, timeoutId);
+}
+
+function createRippleAtPosition(element, x, y) {
+    const host = getRippleHost(element);
+    const container = getRippleContainer(element);
+
+    if (!host || !container || element.disabled) {
+        return false;
+    }
+
+    clearRippleReleaseTimeout(host);
+
+    const width = container.offsetWidth || 0;
+    const height = container.offsetHeight || 0;
+    const rippleElement = document.createElement('span');
+
+    rippleElement.classList.add('nt-button-ripple');
+    rippleElement.style.pointerEvents = 'none';
+    rippleElement.style.setProperty('--nt-button-ripple-origin-x', `${x}px`);
+    rippleElement.style.setProperty('--nt-button-ripple-origin-y', `${y}px`);
+    rippleElement.style.setProperty('--nt-button-ripple-width', `${width * 2}px`);
+    rippleElement.style.setProperty('--nt-button-ripple-height', `${height * 2}px`);
+    host.appendChild(rippleElement);
+
+    void rippleElement.offsetWidth;
+
+    setTimeout(() => {
+        rippleElement.classList.add('nt-button-ripple-active');
+    }, 1);
+
+    return true;
+}
+
+function createPointerRipple(event, element) {
+    const container = getRippleContainer(element);
+    if (!container) {
+        return false;
+    }
+
+    const coords = getCoords(container);
+    const pageX = event.pageX ?? (event.clientX + window.scrollX);
+    const pageY = event.pageY ?? (event.clientY + window.scrollY);
+    const x = pageX - coords.left;
+    const y = pageY - coords.top;
+    return createRippleAtPosition(element, x, y);
+}
+
+function createCenteredRipple(element) {
+    const container = getRippleContainer(element);
+    if (!container) {
+        return false;
+    }
+
+    const width = container.offsetWidth || 0;
+    const height = container.offsetHeight || 0;
+    return createRippleAtPosition(element, width / 2, height / 2);
+}
+
+function findRippleElementFromEventTarget(target) {
+    return target?.closest?.('.tnt-ripple') ?? null;
+}
+
+function isKeyboardRippleEvent(event) {
+    return !event.repeat && (event.key === ' ' || event.key === 'Enter' || event.key === 'Spacebar');
+}
+
+function handleDelegatedRipplePointerDown(event) {
+    const element = findRippleElementFromEventTarget(event.target);
+
+    if (!element) {
+        return;
+    }
+
+    createPointerRipple(event, element);
+}
+
+function handleDelegatedRipplePointerUp(event) {
+    const element = findRippleElementFromEventTarget(event.target);
+
+    if (element) {
+        releaseRippleHost(getRippleHost(element));
+        return;
+    }
+
+    document.querySelectorAll('.nt-button-ripple-host').forEach((host) => {
+        releaseRippleHost(host);
+    });
+}
+
+function handleDelegatedRippleKeyDown(event) {
+    const element = findRippleElementFromEventTarget(event.target);
+    if (!element || !isKeyboardRippleEvent(event)) {
+        return;
+    }
+
+    createCenteredRipple(element);
+}
+
+function handleDelegatedRippleKeyUp(event) {
+    const element = findRippleElementFromEventTarget(event.target);
+    if (!element || !isKeyboardRippleEvent(event)) {
+        return;
+    }
+
+    releaseRippleHost(getRippleHost(element));
+}
+
+function ensureRippleHandlers() {
+    if (rippleHandlersRegistered) {
+        return;
+    }
+
+    rippleHandlersRegistered = true;
+    if (window.PointerEvent) {
+        document.addEventListener('pointerdown', handleDelegatedRipplePointerDown);
+        document.addEventListener('pointerup', handleDelegatedRipplePointerUp);
+        document.addEventListener('pointercancel', handleDelegatedRipplePointerUp);
+        document.addEventListener('pointerleave', handleDelegatedRipplePointerUp);
+    } else {
+        document.addEventListener('mousedown', handleDelegatedRipplePointerDown);
+        document.addEventListener('mouseup', handleDelegatedRipplePointerUp);
+        document.addEventListener('mouseleave', handleDelegatedRipplePointerUp);
+    }
+
+    document.addEventListener('keydown', handleDelegatedRippleKeyDown);
+    document.addEventListener('keyup', handleDelegatedRippleKeyUp);
+    window.addEventListener('blur', () => {
+        document.querySelectorAll('.nt-button-ripple-host').forEach((host) => {
+            releaseRippleHost(host);
+        });
+    });
+}
+
+function getRippleRegistrationElement(host) {
+    return host?.closest?.('button, a, [role="button"], [tabindex]')
+        ?? host?.parentElement
+        ?? null;
+}
+
+function setPressedShape(element, isPressed) {
+    element?.classList?.toggle('nt-button--pressed-shape', isPressed);
+}
+
+function registerButtonInteraction(element) {
+    if (!element || buttonInteractionRegistrationByElement.has(element)) {
+        return;
+    }
+
+    const onPointerDown = (event) => {
+        setPressedShape(element, true);
+        if (getRippleHost(element)) {
+            createPointerRipple(event, element);
+        }
+    };
+
+    const onPointerUp = () => {
+        releaseRippleHost(getRippleHost(element));
+    };
+
+    const onKeyDown = (event) => {
+        if (!isKeyboardRippleEvent(event)) {
+            return;
+        }
+
+        setPressedShape(element, true);
+        if (getRippleHost(element)) {
+            createCenteredRipple(element);
+        }
+    };
+
+    const onKeyUp = (event) => {
+        if (!isKeyboardRippleEvent(event)) {
+            return;
+        }
+
+        setPressedShape(element, false);
+        releaseRippleHost(getRippleHost(element));
+    };
+
+    const onPointerExit = () => {
+        setPressedShape(element, false);
+        releaseRippleHost(getRippleHost(element));
+    };
+
+    const onBlur = () => {
+        setPressedShape(element, false);
+        releaseRippleHost(getRippleHost(element));
+    };
+
+    if (window.PointerEvent) {
+        element.addEventListener('pointerdown', onPointerDown);
+        element.addEventListener('pointerup', onPointerUp);
+        element.addEventListener('pointercancel', onPointerExit);
+        element.addEventListener('pointerleave', onPointerExit);
+    } else {
+        element.addEventListener('mousedown', onPointerDown);
+        element.addEventListener('mouseup', onPointerUp);
+        element.addEventListener('mouseleave', onPointerExit);
+        element.addEventListener('touchstart', onPointerDown, { passive: true });
+        element.addEventListener('touchend', onPointerExit);
+        element.addEventListener('touchcancel', onPointerExit);
+    }
+
+    element.addEventListener('keydown', onKeyDown);
+    element.addEventListener('keyup', onKeyUp);
+    element.addEventListener('blur', onBlur);
+
+    buttonInteractionRegistrationByElement.set(element, {
+        onBlur,
+        onKeyDown,
+        onKeyUp,
+        onPointerDown,
+        onPointerExit,
+        onPointerUp
+    });
+}
+
+function registerButtonInteractions(element) {
+    if (!element) {
+        return;
+    }
+
+    const buttonSelector = '.nt-button, .nt-icon-button, .nt-btn-grp-btn, .nt-split-button-segment';
+
+    if (element.matches?.(buttonSelector)) {
+        registerButtonInteraction(element);
+    }
+
+    element.querySelectorAll?.(buttonSelector).forEach((button) => {
+        registerButtonInteraction(button);
+    });
+}
+
+function registerRippleHost(host) {
+    const element = getRippleRegistrationElement(host);
+    registerButtonInteraction(element);
+}
+
+function startButtonInteraction(script) {
+    const element = script?.previousElementSibling;
+    if (!element) {
+        return;
+    }
+
+    let attempts = 0;
+    const tryRegister = () => {
+        if (typeof window.NTComponents?.registerButtonInteractions === 'function') {
+            window.NTComponents.registerButtonInteractions(element);
+            return;
+        }
+
+        if (attempts++ < 20) {
+            setTimeout(tryRegister, 0);
+        }
+    };
+
+    tryRegister();
+}
+
+function startRippleHost(script) {
+    const host = script?.previousElementSibling;
+    if (!host) {
+        return;
+    }
+
+    let attempts = 0;
+    const tryRegister = () => {
+        if (typeof window.NTComponents?.registerRippleHost === 'function') {
+            window.NTComponents.registerRippleHost(host);
+            return;
+        }
+
+        if (attempts++ < 20) {
+            setTimeout(tryRegister, 0);
+        }
+    };
+
+    tryRegister();
+}
+
 function setupPageScriptElement() {
+    if (customElements.get('tnt-page-script')) {
+        return;
+    }
+
     customElements.define('tnt-page-script', class extends HTMLElement {
         static observedAttributes = ['src'];
 
-        // We use attributeChangedCallback instead of connectedCallback
-        // because a page-script element might get reused between enhanced
-        // navigations.
+        pendingUnregisterTimeout = null;
+        registeredSrc = null;
+
+        connectedCallback() {
+            this.cancelPendingUnregister();
+            this.registerSrc(this.src);
+        }
+
         attributeChangedCallback(name, oldValue, newValue) {
             if (name !== 'src') {
                 return;
             }
 
             this.src = newValue;
-            unregisterPageScriptElement(oldValue);
-            registerPageScriptElement(newValue);
+
+            if (!this.isConnected || oldValue === newValue) {
+                return;
+            }
+
+            this.unregisterSrc(oldValue);
+            this.registerSrc(newValue);
         }
 
         disconnectedCallback() {
-            unregisterPageScriptElement(this.src);
+            this.scheduleUnregister(this.registeredSrc);
+        }
+
+        registerSrc(src) {
+            this.cancelPendingUnregister();
+
+            if (!src || this.registeredSrc === src) {
+                return;
+            }
+
+            if (this.registeredSrc) {
+                this.unregisterSrc(this.registeredSrc);
+            }
+
+            this.registeredSrc = src;
+            registerPageScriptElement(src, this);
+        }
+
+        cancelPendingUnregister() {
+            if (this.pendingUnregisterTimeout === null) {
+                return;
+            }
+
+            clearTimeout(this.pendingUnregisterTimeout);
+            this.pendingUnregisterTimeout = null;
+        }
+
+        scheduleUnregister(src) {
+            this.cancelPendingUnregister();
+
+            if (!src) {
+                return;
+            }
+
+            this.pendingUnregisterTimeout = setTimeout(() => {
+                this.pendingUnregisterTimeout = null;
+                if (!this.isConnected) {
+                    this.unregisterSrc(src);
+                }
+            }, 0);
+        }
+
+        unregisterSrc(src) {
+            this.cancelPendingUnregister();
+
+            if (!src || this.registeredSrc !== src) {
+                return;
+            }
+
+            unregisterPageScriptElement(src, this);
+            this.registeredSrc = null;
         }
     });
 }
-export function afterWebStarted(blazor) {
-    setupPageScriptElement();
+
+function setupEnhancedNavigation(blazor) {
+    if (!blazor?.addEventListener || enhancedLoadBlazorInstances.has(blazor)) {
+        return;
+    }
+
+    enhancedLoadBlazorInstances.add(blazor);
     blazor.addEventListener('enhancedload', onEnhancedLoad);
+}
+
+function setupBodyFillRemaining() {
+    if (bodyFillObserverStarted) {
+        return;
+    }
+
+    setupPageScriptElement();
 
     let body = document.querySelector('.tnt-body');
     if (body) {
+        bodyFillObserverStarted = true;
         const bodyPadding = parseInt(getComputedStyle(body).paddingBottom, 10);
         const resizeObserver = new ResizeObserver(entries => {
             const hasFooter = document.querySelector('.tnt-footer');
@@ -158,6 +599,363 @@ export function afterWebStarted(blazor) {
         });
         resizeObserver.observe(body);
     }
+}
+
+function syncInputCounter(input, counter) {
+    if (!input || !counter) {
+        return;
+    }
+
+    const maxLength = input.maxLength > 0 ? input.maxLength : input.getAttribute('maxlength');
+    if (!maxLength) {
+        return;
+    }
+
+    const text = `${input.value?.length ?? 0}/${maxLength}`;
+    counter.textContent = text;
+    counter.setAttribute('aria-label', `Character count ${text}`);
+}
+
+export function updateInputCounter(input) {
+    const root = input?.closest?.('.nt-input');
+    const counter = root?.querySelector?.(':scope .nt-input-counter');
+    syncInputCounter(input, counter);
+}
+
+function getTextAreaMaxVisibleLines(input) {
+    const value = parseInt(input?.dataset?.ntTextareaMaxVisibleLines ?? '', 10);
+    return Number.isFinite(value) && value > 0 ? value : null;
+}
+
+function getTextAreaMinVisibleLines(input) {
+    const value = parseInt(input?.dataset?.ntTextareaMinVisibleLines ?? '', 10);
+    return Number.isFinite(value) && value > 0 ? value : null;
+}
+
+function parseCssPixelValue(value) {
+    const parsed = parseFloat(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function getTextAreaLineHeight(style) {
+    const parsed = parseCssPixelValue(style.lineHeight);
+    if (parsed > 0) {
+        return parsed;
+    }
+
+    const fontSize = parseCssPixelValue(style.fontSize);
+    return fontSize > 0 ? fontSize * 1.2 : 20;
+}
+
+function getTextAreaVerticalInset(style) {
+    return parseCssPixelValue(style.paddingTop)
+        + parseCssPixelValue(style.paddingBottom)
+        + parseCssPixelValue(style.borderTopWidth)
+        + parseCssPixelValue(style.borderBottomWidth);
+}
+
+function clearTextAreaAutoGrowInput(input) {
+    if (!(input instanceof HTMLTextAreaElement)) {
+        return;
+    }
+
+    input.style.removeProperty('height');
+    input.style.removeProperty('min-height');
+    input.style.removeProperty('overflow-y');
+    input.closest?.('.nt-input')?.classList?.remove('nt-textarea-enhanced');
+}
+
+export function autoGrowTextArea(input) {
+    if (!(input instanceof HTMLTextAreaElement) || input.dataset?.ntTextareaAutogrow !== 'true') {
+        clearTextAreaAutoGrowInput(input);
+        return;
+    }
+
+    input.closest?.('.nt-input')?.classList?.add('nt-textarea-enhanced');
+    const style = window.getComputedStyle(input);
+    const lineHeight = getTextAreaLineHeight(style);
+    const verticalInset = getTextAreaVerticalInset(style);
+    const minVisibleLines = getTextAreaMinVisibleLines(input);
+    const maxVisibleLines = getTextAreaMaxVisibleLines(input);
+    const minHeight = minVisibleLines === null ? 0 : Math.ceil(lineHeight * minVisibleLines + verticalInset);
+    input.style.height = 'auto';
+    input.style.minHeight = '0px';
+    const scrollHeight = input.scrollHeight;
+    input.style.minHeight = minHeight > 0 ? `${minHeight}px` : '';
+
+    if (maxVisibleLines === null) {
+        input.style.height = `${Math.ceil(Math.max(scrollHeight, minHeight))}px`;
+        input.style.overflowY = 'hidden';
+        return;
+    }
+
+    const maxHeight = Math.ceil(lineHeight * maxVisibleLines + verticalInset);
+    input.style.height = `${Math.ceil(Math.max(Math.min(scrollHeight, maxHeight), minHeight))}px`;
+    input.style.overflowY = scrollHeight > maxHeight ? 'scroll' : 'hidden';
+}
+
+function getInputCurrencySymbol(input) {
+    const symbol = input?.getAttribute?.('currencySymbol');
+    if (symbol) {
+        return symbol;
+    }
+
+    let cultureCode = input?.getAttribute?.('cultureCode');
+    if (!cultureCode) {
+        cultureCode = 'en-US';
+    }
+
+    let currencyCode = input?.getAttribute?.('currencyCode');
+    if (!currencyCode) {
+        currencyCode = 'USD';
+    }
+
+    try {
+        const formatter = new Intl.NumberFormat(cultureCode, {
+            style: 'currency',
+            currency: currencyCode,
+            currencyDisplay: 'narrowSymbol'
+        });
+        const currencyPart = formatter.formatToParts(0).find(part => part.type === 'currency');
+        return currencyPart?.value || currencyCode;
+    } catch {
+        return currencyCode;
+    }
+}
+
+function getCurrencyInputOptions(input) {
+    const decimalDigits = parseInt(input?.getAttribute?.('currencyDecimalDigits') ?? '2', 10);
+    return {
+        currencyCode: input?.getAttribute?.('currencyCode') || 'USD',
+        decimalDigits: Number.isNaN(decimalDigits) ? 2 : decimalDigits,
+        decimalSeparator: input?.getAttribute?.('currencyDecimalSeparator') || '.',
+        groupSeparator: input?.getAttribute?.('currencyGroupSeparator') || ',',
+        symbol: getInputCurrencySymbol(input)
+    };
+}
+
+function limitCurrencyFraction(value, options) {
+    if (!value || !options.decimalSeparator) {
+        return value;
+    }
+
+    const decimalIndex = value.indexOf(options.decimalSeparator);
+    if (decimalIndex < 0) {
+        return value;
+    }
+
+    if (options.decimalDigits <= 0) {
+        return value.substring(0, decimalIndex);
+    }
+
+    const fractionalStart = decimalIndex + options.decimalSeparator.length;
+    const maximumLength = fractionalStart + options.decimalDigits;
+    return value.length <= maximumLength ? value : value.substring(0, maximumLength);
+}
+
+function replaceAllLiteral(value, searchValue, replacementValue) {
+    if (!searchValue) {
+        return value;
+    }
+
+    return value.split(searchValue).join(replacementValue);
+}
+
+function toCurrencyDecimalValue(value, options) {
+    if (!value) {
+        return '';
+    }
+
+    let normalized = limitCurrencyFraction(value, options);
+    normalized = replaceAllLiteral(normalized, options.symbol, '');
+    normalized = replaceAllLiteral(normalized, options.currencyCode, '');
+    normalized = normalized.replace(/\s|\u00a0/g, '');
+    normalized = replaceAllLiteral(normalized, options.groupSeparator, '');
+    if (options.decimalSeparator !== '.') {
+        normalized = replaceAllLiteral(normalized, options.decimalSeparator, '.');
+    }
+
+    normalized = normalized.replace(/(?!^-)[^0-9.-]/g, '');
+    const decimalIndex = normalized.indexOf('.');
+    if (decimalIndex >= 0) {
+        normalized = `${normalized.substring(0, decimalIndex + 1)}${normalized.substring(decimalIndex + 1).replace(/\./g, '')}`;
+    }
+
+    return normalized;
+}
+
+function syncCurrencyFormValue(input, options) {
+    const container = input?.closest?.('.nt-input-control-container');
+    const formValueInput = container?.querySelector?.('input[type="hidden"][name]');
+    if (!formValueInput) {
+        return;
+    }
+
+    formValueInput.value = toCurrencyDecimalValue(input.value, options);
+}
+
+export function prefixCurrencyInput(input) {
+    if (!input) {
+        return;
+    }
+
+    const options = getCurrencyInputOptions(input);
+    if (input.disabled || input.readOnly) {
+        syncCurrencyFormValue(input, options);
+        return;
+    }
+
+    if (!input.value) {
+        syncCurrencyFormValue(input, options);
+        return;
+    }
+
+    const selectionStart = input.selectionStart;
+    const selectionEnd = input.selectionEnd;
+    let offset = 0;
+
+    if (options.symbol && !input.value.startsWith(options.symbol)) {
+        input.value = `${options.symbol}${input.value}`;
+        offset += options.symbol.length;
+    }
+
+    const limitedValue = limitCurrencyFraction(input.value, options);
+    if (limitedValue !== input.value) {
+        input.value = limitedValue;
+    }
+
+    syncCurrencyFormValue(input, options);
+
+    if (selectionStart !== null && selectionEnd !== null) {
+        input.setSelectionRange(selectionStart + offset, selectionEnd + offset);
+    }
+}
+
+function getPhoneMask(input) {
+    return input?.getAttribute?.('phoneMask') || '(###) ###-####';
+}
+
+function countPhoneMaskDigits(mask) {
+    return (mask.match(/#/g) || []).length;
+}
+
+function getPhoneCountryCodeDigitCount(mask) {
+    const trimmedMask = (mask || '').trimStart();
+    if (!trimmedMask.startsWith('+')) {
+        return 0;
+    }
+
+    let digitCount = 0;
+    for (const character of trimmedMask.substring(1)) {
+        if (character !== '#') {
+            break;
+        }
+
+        digitCount++;
+    }
+
+    return digitCount;
+}
+
+export function formatPhoneValue(value, mask = '(###) ###-####') {
+    if (!value || !mask || !mask.includes('#')) {
+        return value || '';
+    }
+
+    const maximumDigits = countPhoneMaskDigits(mask);
+    const digits = value.replace(/\D/g, '').substring(0, maximumDigits);
+    if (!digits) {
+        return '';
+    }
+
+    let formatted = '';
+    let digitIndex = 0;
+    for (const character of mask) {
+        if (character === '#') {
+            if (digitIndex >= digits.length) {
+                break;
+            }
+
+            formatted += digits[digitIndex];
+            digitIndex++;
+            continue;
+        }
+
+        if (digitIndex >= digits.length && formatted.length > 0) {
+            break;
+        }
+
+        formatted += character;
+    }
+
+    return formatted;
+}
+
+export function normalizePhoneValue(value, mask = '(###) ###-####') {
+    if (!value || !mask || !mask.includes('#')) {
+        return value || '';
+    }
+
+    const maximumDigits = countPhoneMaskDigits(mask);
+    const digits = value.replace(/\D/g, '').substring(0, maximumDigits);
+    if (!digits) {
+        return '';
+    }
+
+    const countryCodeDigitCount = getPhoneCountryCodeDigitCount(mask);
+    return countryCodeDigitCount > 0 && digits.length > countryCodeDigitCount
+        ? `${digits.substring(0, countryCodeDigitCount)} ${digits.substring(countryCodeDigitCount)}`
+        : digits;
+}
+
+function syncPhoneFormValue(input) {
+    const container = input?.closest?.('.nt-input-control-container');
+    const formValueInput = container?.querySelector?.('input[type="hidden"][name]');
+    if (!formValueInput) {
+        return;
+    }
+
+    formValueInput.value = normalizePhoneValue(input.value, getPhoneMask(input));
+}
+
+export function applyPhoneMaskInput(input) {
+    if (!input) {
+        return;
+    }
+
+    if (input.disabled || input.readOnly) {
+        syncPhoneFormValue(input);
+        return;
+    }
+
+    const formatted = formatPhoneValue(input.value, getPhoneMask(input));
+    if (formatted === input.value) {
+        syncPhoneFormValue(input);
+        return;
+    }
+
+    input.value = formatted;
+    syncPhoneFormValue(input);
+    if (input.selectionStart !== null && input.selectionEnd !== null) {
+        input.setSelectionRange(input.value.length, input.value.length);
+    }
+}
+
+function startBlazorComponents(blazor) {
+    setupPageScriptElement();
+    setupEnhancedNavigation(blazor);
+    window.NTComponents?.setupRipple?.();
+    setupBodyFillRemaining();
+    enhanceAutocompleteInputs();
+    enhanceAnimationWrappers();
+}
+
+export function afterWebStarted(blazor) {
+    startBlazorComponents(blazor);
+}
+
+export function afterStarted(blazor) {
+    startBlazorComponents(blazor);
 }
 function getCoords(elem) { // crossbrowser version
     var box = elem.getBoundingClientRect();
@@ -242,7 +1040,7 @@ const resetAccordionElement = (accordion) => {
 };
 
 
-window.NTComponents = {
+window.NTComponents = Object.assign(window.NTComponents || {}, {
     customAttribute: "tntid",
     addHidden: (element) => {
         if (element && element.classList && !element.classList.contains('tnt-hidden')) {
@@ -382,26 +1180,41 @@ window.NTComponents = {
     },
     formatToPhone: (event) => {
         if (isModifierKey(event)) { return; }
-
-        const input = event.target.value.replace(/\D/g, '').substring(0, 10); // First ten digits of input only
-        const areaCode = input.substring(0, 3);
-        const middle = input.substring(3, 6);
-        const last = input.substring(6, 10);
-
-        if (input.length > 6) { event.target.value = `(${areaCode}) ${middle}-${last}`; }
-        else if (input.length > 3) { event.target.value = `(${areaCode}) ${middle}`; }
-        else if (input.length > 0) { event.target.value = `(${areaCode}`; }
+        event.target.value = formatPhoneValue(event.target.value, getPhoneMask(event.target));
     },
     getCurrentLocation: () => {
         return window.location.href;
     },
     setupRipple: () => {
+        ensureRippleHandlers();
+
+        document.querySelectorAll('.nt-button, .nt-icon-button').forEach((element) => {
+            registerButtonInteraction(element);
+        });
+
         const elements = document.querySelectorAll('.tnt-ripple');
 
         elements.forEach(element => {
-            element.appendChild(document.createElement('tnt-ripple-effect'));
+            if (getRippleHost(element)) {
+                return;
+            }
+
+            if (!element.querySelector('tnt-ripple-effect')) {
+                element.appendChild(document.createElement('tnt-ripple-effect'));
+            }
         });
     },
+    registerButtonInteraction,
+    registerButtonInteractions,
+    registerRippleHost,
+    startButtonInteraction,
+    startRippleHost,
+    applyPhoneMaskInput,
+    formatPhoneValue,
+    normalizePhoneValue,
+    prefixCurrencyInput,
+    autoGrowTextArea,
+    updateInputCounter,
     toggleAccordionHeader: (e) => {
         // If the click bubbled up from a nested interactive element inside the header template,
         // don't toggle the accordion — let that element handle its own click.
@@ -567,21 +1380,77 @@ window.NTComponents = {
         const group = event.currentTarget;
         if (!group) return;
 
-        // Number keys 1-9
+        const radios = Array.from(group.querySelectorAll('input[type="radio"]'));
+        if (radios.length === 0) return;
+
+        const isGroupDisabled = group.disabled || group.classList.contains('tnt-disabled') || group.classList.contains('nt-radio-disabled') || !!group.closest?.('.nt-radio-disabled');
+        const isGroupReadOnly = group.classList.contains('tnt-readonly') || group.classList.contains('nt-radio-readonly') || !!group.closest?.('.nt-radio-readonly');
+        const canUseRadio = (radio) => radio && !radio.disabled && !radio.readOnly && !isGroupDisabled && !isGroupReadOnly;
+        const getOption = (radio) => radio?.closest?.('.nt-radio-option, .tnt-radio-input');
+        const clearHighlightedRadios = () => {
+            group.querySelectorAll('.nt-radio-option-highlighted').forEach(option => {
+                option.classList.remove('nt-radio-option-highlighted');
+                option.removeAttribute('data-nt-radio-highlighted');
+            });
+        };
+        const getHighlightedRadio = () => {
+            const highlightedOption = group.querySelector('.nt-radio-option-highlighted');
+            const highlightedRadio = highlightedOption?.querySelector?.('input[type="radio"]');
+            if (highlightedRadio) return highlightedRadio;
+            if (group.contains(document.activeElement) && document.activeElement?.matches?.('input[type="radio"]')) return document.activeElement;
+            return radios.find(radio => radio.checked) ?? radios[0];
+        };
+        const highlightRadio = (radio) => {
+            clearHighlightedRadios();
+
+            const option = getOption(radio);
+            option?.classList.add('nt-radio-option-highlighted');
+            option?.setAttribute('data-nt-radio-highlighted', 'true');
+            radio.focus?.();
+        };
+        const selectRadio = (radio) => {
+            if (!canUseRadio(radio)) return false;
+            radio.click();
+            if (!radio.checked) {
+                radio.checked = true;
+                radio.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+            clearHighlightedRadios();
+            group.focus?.({ preventScroll: true });
+            return true;
+        };
+
         if (event.key >= '1' && event.key <= '9') {
-            const index = parseInt(event.key) - 1;
-            const radios = group.querySelectorAll('input[type="radio"]');
+            const radio = radios[parseInt(event.key, 10) - 1];
+            if (selectRadio(radio)) {
+                event.preventDefault();
+            }
+            return;
+        }
 
-            if (index < radios.length) {
-                const radio = radios[index];
-                // Check if the individual radio or the group fieldset is disabled/readonly
-                const isDisabled = radio.disabled || group.disabled || group.classList.contains('tnt-disabled');
-                const isReadOnly = radio.readOnly || group.classList.contains('tnt-readonly');
+        const navigationKeys = ['ArrowDown', 'ArrowRight', 'ArrowUp', 'ArrowLeft', 'Home', 'End'];
+        if (navigationKeys.includes(event.key)) {
+            const currentRadio = getHighlightedRadio();
+            const currentIndex = Math.max(0, radios.indexOf(currentRadio));
+            const nextIndex = event.key === 'Home'
+                ? 0
+                : event.key === 'End'
+                    ? radios.length - 1
+                    : event.key === 'ArrowDown' || event.key === 'ArrowRight'
+                        ? (currentIndex + 1) % radios.length
+                        : (currentIndex - 1 + radios.length) % radios.length;
+            const nextRadio = radios[nextIndex];
 
-                if (radio && !isDisabled && !isReadOnly) {
-                    radio.click();
-                    event.preventDefault();
-                }
+            if (canUseRadio(nextRadio)) {
+                highlightRadio(nextRadio);
+                event.preventDefault();
+            }
+            return;
+        }
+
+        if (event.key === ' ' || event.key === 'Spacebar') {
+            if (selectRadio(getHighlightedRadio())) {
+                event.preventDefault();
             }
         }
     },
@@ -594,4 +1463,4 @@ window.NTComponents = {
             dispose: () => document.removeEventListener('tnt-theme-changed', callback)
         };
     }
-}
+});

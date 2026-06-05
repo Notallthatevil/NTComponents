@@ -1,16 +1,80 @@
 @inherits LayoutComponentBase
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
+@inject DocumentationCatalog Catalog
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+<NTLayout>
+    <NTNavigationRail AriaLabel="Documentation navigation" OpenByDefault="true" Header="@HeaderContent">
+        <NTNavigationRailItem Label="Home" Href="/" Match="NavLinkMatch.All" Icon="MaterialIcon.Home" />
+        <NTNavigationRailGroup Label="Components" Icon="MaterialIcon.Category" Expanded="true">
+            <NTNavigationRailItem Label="All components" Href="/components" Match="NavLinkMatch.All" Icon="MaterialIcon.Category" />
+            @foreach (var group in Catalog.ComponentGroups) {
+                var components = group.ToArray();
+                if (components.Length == 1) {
+                    var component = components[0];
+                    <NTNavigationRailItem Label="@component.Type.Name" Href="@($"/components/{component.Slug}")" Icon="MaterialIcon.Article" />
+                }
+                else {
+                    <NTNavigationRailGroup Label="@group.Key" Icon="MaterialIcon.Folder">
+                        @foreach (var component in components) {
+                            <NTNavigationRailItem Label="@component.Type.Name" Href="@($"/components/{component.Slug}")" Icon="MaterialIcon.Article" />
+                        }
+                    </NTNavigationRailGroup>
+                }
+            }
+        </NTNavigationRailGroup>
+        <NTNavigationRailGroup Label="Enums" Icon="MaterialIcon.DataObject">
+            <NTNavigationRailItem Label="All enums" Href="/reference/enums" Match="NavLinkMatch.All" Icon="MaterialIcon.DataObject" />
+            @foreach (var group in Catalog.EnumGroups) {
+                var references = group.ToArray();
+                if (references.Length == 1) {
+                    var reference = references[0];
+                    <NTNavigationRailItem Label="@reference.Type.Name" Href="@($"/reference/enums/{reference.Slug}")" Icon="MaterialIcon.Article" />
+                }
+                else {
+                    <NTNavigationRailGroup Label="@group.Key" Icon="MaterialIcon.Folder">
+                        @foreach (var reference in references) {
+                            <NTNavigationRailItem Label="@reference.Type.Name" Href="@($"/reference/enums/{reference.Slug}")" Icon="MaterialIcon.Article" />
+                        }
+                    </NTNavigationRailGroup>
+                }
+            }
+        </NTNavigationRailGroup>
+        <NTNavigationRailGroup Label="Constants" Icon="MaterialIcon.Tag">
+            <NTNavigationRailItem Label="All constants" Href="/reference/constants" Match="NavLinkMatch.All" Icon="MaterialIcon.Tag" />
+            @foreach (var group in Catalog.ConstantGroups) {
+                var references = group.ToArray();
+                if (references.Length == 1) {
+                    var reference = references[0];
+                    <NTNavigationRailItem Label="@reference.Type.Name" Href="@($"/reference/constants/{reference.Slug}")" Icon="MaterialIcon.Article" />
+                }
+                else {
+                    <NTNavigationRailGroup Label="@group.Key" Icon="MaterialIcon.Folder">
+                        @foreach (var reference in references) {
+                            <NTNavigationRailItem Label="@reference.Type.Name" Href="@($"/reference/constants/{reference.Slug}")" Icon="MaterialIcon.Article" />
+                        }
+                    </NTNavigationRailGroup>
+                }
+            }
+        </NTNavigationRailGroup>
+    </NTNavigationRail>
+
+    <NTHeader>
+        <div class="docs-topbar">
+            <span class="docs-brand">NTComponents</span>
+            <span class="docs-topbar-subtitle">Material 3 Blazor documentation</span>
         </div>
-
-        <article class="content px-4">
+    </NTHeader>
+    <NTBody>
+        <div class="docs-content">
             @Body
-        </article>
-    </main>
-</div>
+        </div>
+    </NTBody>
+</NTLayout>
+
+@code {
+    private static RenderFragment HeaderContent => builder => {
+        builder.OpenElement(0, "div");
+        builder.AddAttribute(1, "class", "docs-rail-brand");
+        builder.AddContent(2, "NT");
+        builder.CloseElement();
+    };
+}

@@ -8,6 +8,7 @@ namespace NTComponents;
 /// <summary>
 ///     Represents a side navigation component in the TnT layout system.
 /// </summary>
+[Obsolete("TnTSideNav is obsolete. Use NTNavigationRail instead.")]
 public partial class TnTSideNav {
 
     /// <inheritdoc />

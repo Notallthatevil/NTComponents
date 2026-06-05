@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 	<PropertyGroup>
 		<TargetFrameworks>net9.0;net10.0</TargetFrameworks>
+		<TypeScriptBuildTargetFramework>net9.0</TypeScriptBuildTargetFramework>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
@@ -14,6 +15,7 @@
 		<EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
 		<WarningLevel>8</WarningLevel>
 		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+		<NoWarn>$(NoWarn);CS0618</NoWarn>
 		<PackageId>NTComponents</PackageId>
 		<Authors>NT Technologies</Authors>
 		<Description>Collection of Material-design inspired Blazor UI components for Web and WebAssembly projects. Designed for .NET 9 and .NET 10.</Description>
@@ -39,6 +41,9 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\NTComponents.CodeDocumentation.Generator\NTComponents.CodeDocumentation.Generator.csproj"
+		                  OutputItemType="Analyzer"
+		                  ReferenceOutputAssembly="false" />
+		<ProjectReference Include="..\NTComponents.Analyzers\NTComponents.Analyzers.csproj"
 		                  OutputItemType="Analyzer"
 		                  ReferenceOutputAssembly="false" />
 	</ItemGroup>
@@ -73,12 +78,17 @@
 
 	<Target Name="CompileTypeScriptModules"
 	        BeforeTargets="BeforeBuild"
-	        Condition="'$(DesignTimeBuild)' != 'true' and '$(IsCrossTargetingBuild)' == 'true' and Exists('$(MSBuildProjectDirectory)\..\tsconfig.json') and Exists('$(MSBuildProjectDirectory)\..\node_modules\.bin\tsc.cmd')">
-		<Exec Command="&quot;$(MSBuildProjectDirectory)\..\node_modules\.bin\tsc.cmd&quot; -p &quot;$(MSBuildProjectDirectory)\..\tsconfig.json&quot; --pretty false"
-		      WorkingDirectory="$(MSBuildProjectDirectory)\.." />
-		<Exec Command="&quot;$(MSBuildProjectDirectory)\..\node_modules\.bin\terser.cmd&quot; &quot;$(MSBuildProjectDirectory)\Editors\NTRichTextEditor.razor.js&quot; --module --compress --comments false --output &quot;$(MSBuildProjectDirectory)\Editors\NTRichTextEditor.razor.js&quot; &amp;&amp; &quot;$(MSBuildProjectDirectory)\..\node_modules\.bin\terser.cmd&quot; &quot;$(MSBuildProjectDirectory)\Editors\Tool\EditorToolImageButton.razor.js&quot; --module --compress --comments false --output &quot;$(MSBuildProjectDirectory)\Editors\Tool\EditorToolImageButton.razor.js&quot; &amp;&amp; &quot;$(MSBuildProjectDirectory)\..\node_modules\.bin\terser.cmd&quot; &quot;$(MSBuildProjectDirectory)\Editors\Tool\EditorToolTableButton.razor.js&quot; --module --compress --comments false --output &quot;$(MSBuildProjectDirectory)\Editors\Tool\EditorToolTableButton.razor.js&quot; &amp;&amp; &quot;$(MSBuildProjectDirectory)\..\node_modules\.bin\terser.cmd&quot; &quot;$(MSBuildProjectDirectory)\Editors\Tool\EditorToolTextColorButton.razor.js&quot; --module --compress --comments false --output &quot;$(MSBuildProjectDirectory)\Editors\Tool\EditorToolTextColorButton.razor.js&quot; &amp;&amp; &quot;$(MSBuildProjectDirectory)\..\node_modules\.bin\terser.cmd&quot; &quot;$(MSBuildProjectDirectory)\Editors\Tool\EditorToolLinkButton.razor.js&quot; --module --compress --comments false --output &quot;$(MSBuildProjectDirectory)\Editors\Tool\EditorToolLinkButton.razor.js&quot; &amp;&amp; &quot;$(MSBuildProjectDirectory)\..\node_modules\.bin\terser.cmd&quot; &quot;$(MSBuildProjectDirectory)\Editors\Tool\EditorToolIframeButton.razor.js&quot; --module --compress --comments false --output &quot;$(MSBuildProjectDirectory)\Editors\Tool\EditorToolIframeButton.razor.js&quot;"
-		      WorkingDirectory="$(MSBuildProjectDirectory)\.."
-		      Condition="'$(Configuration)' == 'Release' and Exists('$(MSBuildProjectDirectory)\..\node_modules\.bin\terser.cmd')" />
+	        Condition="'$(DesignTimeBuild)' != 'true' and '$(TargetFramework)' == '$(TypeScriptBuildTargetFramework)' and Exists('$(MSBuildProjectDirectory)/../tsconfig.json') and Exists('$(MSBuildProjectDirectory)/../node_modules/.bin/tsc')">
+		<Exec Command="&quot;$(MSBuildProjectDirectory)/../node_modules/.bin/tsc&quot; -p &quot;$(MSBuildProjectDirectory)/../tsconfig.json&quot; --pretty false"
+		      WorkingDirectory="$(MSBuildProjectDirectory)/.." />
+		<ItemGroup>
+			<TypeScriptSource Include="$(MSBuildProjectDirectory)\**\*.ts"
+			                  Exclude="$(MSBuildProjectDirectory)\**\*.d.ts" />
+			<TypeScriptMinifyFile Include="@(TypeScriptSource->'%(RootDir)%(Directory)%(Filename).js')" />
+		</ItemGroup>
+		<Exec Command="&quot;$(MSBuildProjectDirectory)/../node_modules/.bin/terser&quot; &quot;%(TypeScriptMinifyFile.Identity)&quot; --module --compress --comments false --output &quot;%(TypeScriptMinifyFile.Identity)&quot;"
+		      WorkingDirectory="$(MSBuildProjectDirectory)/.."
+		      Condition="'$(Configuration)' == 'Release' and Exists('$(MSBuildProjectDirectory)/../node_modules/.bin/terser')" />
 	</Target>
 
 	<Target Name="DeleteCssFiles" BeforeTargets="BeforeClean">

@@ -1,0 +1,39 @@
+@namespace NTComponents
+@using NTComponents.Core
+@inherits NTPageScriptComponent<NTContextMenu>
+
+<nt-context-menu @attributes="AdditionalAttributes"
+                 id="@ElementId"
+                 class="@ElementClass"
+                 style="@ElementStyle"
+                 title="@ElementTitle"
+                 lang="@ElementLang"
+                 data-disabled="@DisabledAttribute"
+                 data-long-press-delay="@LongPressDelay"
+                 data-menu-id="@MenuId"
+                 @ref="Element">
+    <CascadingValue Value="this" IsFixed="true">
+        <span class="nt-context-menu-target">
+            @TargetContent
+        </span>
+    </CascadingValue>
+    <NTMenu ElementId="@MenuId"
+            Appearance="@Appearance"
+            AriaLabel="@AriaLabel"
+            CloseOnContentClick="@CloseOnContentClick"
+            ContainerColor="@ContainerColor"
+            Disabled="@Disabled"
+            Elevation="@Elevation"
+            SelectedContainerColor="@SelectedContainerColor"
+            SelectedTextColor="@SelectedTextColor"
+            TextColor="@TextColor">
+        @MenuContent
+        @if (InheritedParentMenuContent.Count > 0) {
+            <NTMenuDividerItem />
+            @foreach (var inheritedMenuContent in InheritedParentMenuContent) {
+                @inheritedMenuContent
+            }
+        }
+    </NTMenu>
+</nt-context-menu>
+@PageScript

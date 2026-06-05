@@ -66,9 +66,9 @@
 
 <div style="padding: 20px;">
     <h1>Tooltip Component Demo</h1>
-    <p>Hover over the elements below to see the tooltip component in action. The tooltip displays contextual information and follows the cursor position while being constrained to the viewport.</p>
+    <p>Hover or focus the elements below to see the tooltip component in action. The tooltip displays brief labels or richer contextual information while staying constrained to the viewport.</p>
 
-    <TnTDivider />
+    <NTDivider />
 
     <div class="control-section">
         <label class="control-label">
@@ -81,153 +81,154 @@
         </label>
     </div>
 
-    <TnTDivider />
+    <NTDivider />
 
     <h2>Basic Tooltips</h2>
     <div class="tooltip-demo-wrapper">
-        <div class="demo-element">
+        <div class="demo-element" tabindex="0">
             Hover me
-            <TnTTooltip ShowDelay="@ShowDelay" HideDelay="@HideDelay">
+            <NTTooltip ShowDelay="@ShowDelay" HideDelay="@HideDelay">
                 This is a basic tooltip
-            </TnTTooltip>
+            </NTTooltip>
         </div>
 
-        <div class="demo-element">
+        <div class="demo-element" tabindex="0">
             Info Button
-            <TnTTooltip ShowDelay="@ShowDelay" HideDelay="@HideDelay">
+            <NTTooltip ShowDelay="@ShowDelay" HideDelay="@HideDelay" Variant="NTTooltipVariant.Rich">
                 <strong>Information:</strong> This tooltip provides helpful information
-            </TnTTooltip>
+            </NTTooltip>
         </div>
 
-        <div class="demo-element">
+        <div class="demo-element" tabindex="0">
             Help Text
-            <TnTTooltip ShowDelay="@ShowDelay" HideDelay="@HideDelay">
+            <NTTooltip ShowDelay="@ShowDelay" HideDelay="@HideDelay">
                 <span>Click me for more help</span>
-            </TnTTooltip>
+            </NTTooltip>
         </div>
     </div>
 
-    <TnTDivider />
+    <NTDivider />
 
-    <h2>Color Variations</h2>
+    <h2>Advanced Customization</h2>
+    <p>Material defaults should be preferred for plain and rich tooltips. The examples below show optional color overrides for applications that need a custom theme treatment.</p>
     <div class="demo-grid">
         <div class="demo-card">
-            <div class="demo-element" style="background-color: var(--tnt-color-error-container); color: var(--tnt-color-on-error-container);">
+            <div class="demo-element" tabindex="0" style="background-color: var(--tnt-color-error-container); color: var(--tnt-color-on-error-container);">
                 Error Tooltip
-                <TnTTooltip ShowDelay="@ShowDelay" HideDelay="@HideDelay" BackgroundColor="TnTColor.Error" TextColor="TnTColor.OnError" BorderColor="TnTColor.Error">
+                <NTTooltip ShowDelay="@ShowDelay" HideDelay="@HideDelay" BackgroundColor="TnTColor.Error" TextColor="TnTColor.OnError" BorderColor="TnTColor.Error">
                     This is an error message
-                </TnTTooltip>
+                </NTTooltip>
             </div>
         </div>
 
         <div class="demo-card">
-            <div class="demo-element" style="background-color: var(--tnt-color-success-container); color: var(--tnt-color-on-success-container);">
+            <div class="demo-element" tabindex="0" style="background-color: var(--tnt-color-success-container); color: var(--tnt-color-on-success-container);">
                 Success Tooltip
-                <TnTTooltip ShowDelay="@ShowDelay" HideDelay="@HideDelay" BackgroundColor="TnTColor.Success" TextColor="TnTColor.OnSuccess" BorderColor="TnTColor.Success">
+                <NTTooltip ShowDelay="@ShowDelay" HideDelay="@HideDelay" BackgroundColor="TnTColor.Success" TextColor="TnTColor.OnSuccess" BorderColor="TnTColor.Success">
                     Operation successful
-                </TnTTooltip>
+                </NTTooltip>
             </div>
         </div>
 
         <div class="demo-card">
-            <div class="demo-element" style="background-color: var(--tnt-color-warning-container); color: var(--tnt-color-on-warning-container);">
+            <div class="demo-element" tabindex="0" style="background-color: var(--tnt-color-warning-container); color: var(--tnt-color-on-warning-container);">
                 Warning Tooltip
-                <TnTTooltip ShowDelay="@ShowDelay" HideDelay="@HideDelay" BackgroundColor="TnTColor.Warning" TextColor="TnTColor.OnWarning" >
+                <NTTooltip ShowDelay="@ShowDelay" HideDelay="@HideDelay" BackgroundColor="TnTColor.Warning" TextColor="TnTColor.OnWarning" >
                     Be careful with this action
-                </TnTTooltip>
+                </NTTooltip>
             </div>
         </div>
 
         <div class="demo-card">
-            <div class="demo-element" style="background-color: var(--tnt-color-info-container); color: var(--tnt-color-on-info-container);">
+            <div class="demo-element" tabindex="0" style="background-color: var(--tnt-color-info-container); color: var(--tnt-color-on-info-container);">
                 Info Tooltip
-                <TnTTooltip ShowDelay="@ShowDelay" HideDelay="@HideDelay" BackgroundColor="TnTColor.Info" TextColor="TnTColor.OnInfo" BorderColor="TnTColor.Info">
+                <NTTooltip ShowDelay="@ShowDelay" HideDelay="@HideDelay" BackgroundColor="TnTColor.Info" TextColor="TnTColor.OnInfo" BorderColor="TnTColor.Info">
                     Here is some information
-                </TnTTooltip>
+                </NTTooltip>
             </div>
         </div>
     </div>
 
-    <TnTDivider />
+    <NTDivider />
 
     <h2>Delay Variations</h2>
     <p>Try the different delay configurations to see how quickly the tooltip appears and disappears:</p>
     <div class="tooltip-demo-wrapper">
-        <div class="demo-element">
+        <div class="demo-element" tabindex="0">
             Fast (100ms)
-            <TnTTooltip ShowDelay="100" HideDelay="50">
+            <NTTooltip ShowDelay="100" HideDelay="50">
                 Shows very quickly
-            </TnTTooltip>
+            </NTTooltip>
         </div>
 
-        <div class="demo-element">
+        <div class="demo-element" tabindex="0">
             Normal (500ms)
-            <TnTTooltip ShowDelay="500" HideDelay="200">
+            <NTTooltip ShowDelay="500" HideDelay="200">
                 Standard delay timing
-            </TnTTooltip>
+            </NTTooltip>
         </div>
 
-        <div class="demo-element">
+        <div class="demo-element" tabindex="0">
             Slow (1000ms)
-            <TnTTooltip ShowDelay="1000" HideDelay="300">
+            <NTTooltip ShowDelay="1000" HideDelay="300">
                 Takes longer to appear
-            </TnTTooltip>
+            </NTTooltip>
         </div>
     </div>
 
-    <TnTDivider />
+    <NTDivider />
 
     <h2>Rich Content Tooltips</h2>
     <div class="tooltip-demo-wrapper">
-        <div class="demo-element">
+        <div class="demo-element" tabindex="0">
             Complex Content
-            <TnTTooltip ShowDelay="@ShowDelay" HideDelay="@HideDelay">
+            <NTTooltip ShowDelay="@ShowDelay" HideDelay="@HideDelay" Variant="NTTooltipVariant.Rich">
                 <div style="text-align: left;">
-                    <strong>Settings:</strong>
+                    <strong class="nt-tooltip-title">Settings</strong>
                     <ul style="margin: 8px 0; padding-left: 20px;">
                         <li>Save automatically</li>
                         <li>Enable notifications</li>
                         <li>Dark mode</li>
                     </ul>
                 </div>
-            </TnTTooltip>
+            </NTTooltip>
         </div>
 
-        <div class="demo-element">
+        <div class="demo-element" tabindex="0">
             With Code
-            <TnTTooltip ShowDelay="@ShowDelay" HideDelay="@HideDelay">
+            <NTTooltip ShowDelay="@ShowDelay" HideDelay="@HideDelay" Variant="NTTooltipVariant.Rich">
                 <div>
-                    <strong>Keyboard Shortcut:</strong><br />
+                    <strong class="nt-tooltip-title">Keyboard Shortcut</strong><br />
                     <code style="background-color: rgba(0,0,0,0.2); padding: 4px 8px; border-radius: 3px;">Ctrl + S</code>
                 </div>
-            </TnTTooltip>
+            </NTTooltip>
         </div>
     </div>
 
-    <TnTDivider />
+    <NTDivider />
 
     <h2>Edge Cases - Viewport Constraints</h2>
     <p>Move your mouse near the edges of the screen to see how the tooltip automatically adjusts to stay visible:</p>
     <div style="display: flex; justify-content: space-between; margin: 20px 0;">
-        <div class="demo-element" style="margin-left: 0;">
+        <div class="demo-element" tabindex="0" style="margin-left: 0;">
             Left Edge
-            <TnTTooltip ShowDelay="@ShowDelay" HideDelay="@HideDelay">
+            <NTTooltip ShowDelay="@ShowDelay" HideDelay="@HideDelay">
                 Adjusted for left edge
-            </TnTTooltip>
+            </NTTooltip>
         </div>
 
-        <div class="demo-element">
+        <div class="demo-element" tabindex="0">
             Center
-            <TnTTooltip ShowDelay="@ShowDelay" HideDelay="@HideDelay">
+            <NTTooltip ShowDelay="@ShowDelay" HideDelay="@HideDelay">
                 Normal positioning
-            </TnTTooltip>
+            </NTTooltip>
         </div>
 
-        <div class="demo-element" style="margin-right: 0;">
+        <div class="demo-element" tabindex="0" style="margin-right: 0;">
             Right Edge
-            <TnTTooltip ShowDelay="@ShowDelay" HideDelay="@HideDelay">
+            <NTTooltip ShowDelay="@ShowDelay" HideDelay="@HideDelay">
                 Adjusted for right edge
-            </TnTTooltip>
+            </NTTooltip>
         </div>
     </div>
 </div>

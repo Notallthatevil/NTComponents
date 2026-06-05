@@ -1,0 +1,850 @@
+@use '../Styles/_Variables/_colors.scss' as colors;
+@use '../Styles/_Variables/_corner-radius.scss' as corners;
+@use '../Styles/_Variables/_motion.scss' as motion;
+@use '../Styles/_Variables/_typescale.scss' as typescale;
+
+$nt-input-motion-duration: motion.$nt-motion-duration-short_3;
+$nt-input-motion-easing: motion.$nt-motion-easing-standard;
+$nt-input-motion-duration-reduced: 0ms;
+
+$nt-input-height-comfortable: 56px;
+$nt-input-height-standard: 42px;
+$nt-input-height-dense: 28px;
+$nt-input-container-min-height: $nt-input-height-standard;
+
+$nt-input-horizontal-padding: 14px;
+$nt-input-horizontal-padding-comfortable: 16px;
+$nt-input-horizontal-padding-standard: 10px;
+$nt-input-horizontal-padding-dense: 8px;
+
+$nt-input-content-gap: 12px;
+$nt-input-content-gap-standard: 8px;
+$nt-input-content-gap-dense: 4px;
+$nt-input-content-gap-supporting: 16px;
+$nt-input-content-gap-supporting-dense: 6px;
+
+$nt-input-control-padding-block: 6px;
+$nt-input-control-padding-block-comfortable: 8px;
+$nt-input-control-padding-block-standard: 3px;
+$nt-input-control-padding-block-dense: 0;
+$nt-input-filled-control-padding-start: 20px;
+$nt-input-filled-control-padding-start-comfortable: 24px;
+$nt-input-filled-control-padding-start-standard: 14px;
+$nt-input-filled-control-padding-end-standard: 4px;
+$nt-input-filled-control-padding-start-dense: 8px;
+$nt-input-filled-control-padding-end-dense: 0;
+
+$nt-input-icon-size: 24px;
+
+$nt-input-label-top: 12px;
+$nt-input-label-top-comfortable: 16px;
+$nt-input-label-top-standard: 9px;
+$nt-input-label-top-dense: 4px;
+$nt-input-filled-label-top: 4px;
+$nt-input-filled-label-top-comfortable: 8px;
+$nt-input-filled-label-top-standard: 2px;
+$nt-input-filled-label-top-dense: -2px;
+$nt-input-outlined-label-top: -8px;
+$nt-input-outlined-label-start: 16px;
+
+$nt-input-supporting-margin-top: 4px;
+$nt-input-supporting-margin-top-standard: 2px;
+$nt-input-supporting-margin-top-dense: 1px;
+
+$nt-input-outline-width: 1px;
+$nt-input-outline-width-focused: 2px;
+$nt-input-outline-notch-padding: 4px;
+$nt-input-outline-notch-padding-dense: 3px;
+$nt-input-outline-label-edge-offset: 16px;
+$nt-input-outline-horizontal-reserved-width: $nt-input-outline-label-edge-offset * 2;
+
+$nt-input-active-indicator-width: 1px;
+$nt-input-active-indicator-width-focused: 2px;
+
+$nt-input-state-layer-hover-opacity: 0.08;
+$nt-input-disabled-container-opacity: 0.04;
+$nt-input-disabled-content-opacity: 0.38;
+$nt-input-disabled-outline-opacity: 0.12;
+$nt-input-textarea-content-offset-comfortable: 16px;
+$nt-input-textarea-content-offset-standard: 9px;
+$nt-input-textarea-content-offset-dense: 4px;
+$nt-input-textarea-filled-label-space-comfortable: 28px;
+$nt-input-textarea-filled-label-space-standard: 20px;
+$nt-input-textarea-filled-label-space-dense: 14px;
+
+@mixin nt-input-textarea-adornment-offset($offset) {
+    .nt-input-leading,
+    .nt-input-trailing,
+    .nt-input-error-icon,
+    .nt-input-prefix,
+    .nt-input-suffix {
+        align-self: flex-start;
+        margin-block-start: $offset;
+    }
+}
+
+.nt-input {
+    --nt-input-active-indicator-color: #{colors.$tnt-color-on-surface-variant};
+    --nt-input-caret-color: var(--nt-input-focus-color);
+    --nt-input-container-color: #{colors.$tnt-color-surface-container-highest};
+    --nt-input-disabled-container-color: #{colors.$tnt-color-on-surface};
+    --nt-input-disabled-content-color: #{colors.$tnt-color-on-surface};
+    --nt-input-disabled-outline-color: #{colors.$tnt-color-on-surface};
+    --nt-input-error-caret-color: var(--nt-input-error-color);
+    --nt-input-error-color: #{colors.$tnt-color-error};
+    --nt-input-focus-color: #{colors.$tnt-color-primary};
+    --nt-input-hover-active-indicator-color: #{colors.$tnt-color-on-surface};
+    --nt-input-hover-outline-color: #{colors.$tnt-color-on-surface};
+    --nt-input-icon-color: #{colors.$tnt-color-on-surface-variant};
+    --nt-input-label-color: #{colors.$tnt-color-on-surface-variant};
+    --nt-input-outline-color: #{colors.$tnt-color-outline};
+    --nt-input-placeholder-color: #{colors.$tnt-color-on-surface-variant};
+    --nt-input-prefix-suffix-color: #{colors.$tnt-color-on-surface-variant};
+    --nt-input-state-layer-color: #{colors.$tnt-color-on-surface};
+    --nt-input-supporting-text-color: #{colors.$tnt-color-on-surface-variant};
+    --nt-input-text-color: #{colors.$tnt-color-on-surface};
+
+    position: relative;
+    display: inline-flex;
+    flex-direction: column;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+
+    .nt-input-container-overflow {
+        position: relative;
+        display: flex;
+        width: 100%;
+        min-width: 0;
+        min-height: $nt-input-container-min-height;
+        overflow: hidden;
+        border-radius: inherit;
+    }
+
+    .nt-input-container {
+        position: relative;
+        display: flex;
+        align-items: center;
+        flex: 1 1 auto;
+        width: 100%;
+        min-width: 0;
+        min-height: inherit;
+        color: var(--nt-input-text-color);
+        cursor: text;
+    }
+
+    .nt-input-background,
+    .nt-input-state-layer,
+    .nt-input-active-indicator,
+    .nt-input-outline {
+        position: absolute;
+        pointer-events: none;
+    }
+
+    .nt-input-background,
+    .nt-input-state-layer {
+        inset: 0;
+        border-radius: inherit;
+    }
+
+    .nt-input-state-layer {
+        opacity: 0;
+        transition: opacity $nt-input-motion-duration $nt-input-motion-easing;
+    }
+
+    .nt-input-active-indicator {
+        display: none;
+        inset-inline: 0;
+        inset-block-end: 0;
+        z-index: 1;
+        width: 100%;
+
+        &::before,
+        &::after {
+            position: absolute;
+            inset-inline: 0;
+            inset-block-end: 0;
+            width: 100%;
+            content: '';
+            border-block-end-style: solid;
+        }
+
+        &::after {
+            opacity: 1;
+            transform: scaleX(0);
+            transform-origin: center;
+            transition: transform $nt-input-motion-duration $nt-input-motion-easing;
+        }
+    }
+
+    .nt-input-outline {
+        display: none;
+        inset: 0;
+        z-index: 1;
+        color: var(--nt-input-outline-color);
+        border-radius: inherit;
+        transition: color $nt-input-motion-duration $nt-input-motion-easing;
+    }
+
+    .nt-input-outline-start,
+    .nt-input-outline-notch,
+    .nt-input-outline-end {
+        position: relative;
+        box-sizing: border-box;
+        height: 100%;
+        border-color: currentColor;
+        border-style: solid;
+        border-width: $nt-input-outline-width;
+        transition: border-width $nt-input-motion-duration $nt-input-motion-easing;
+    }
+
+    .nt-input-outline-start {
+        display: inline-flex;
+        align-items: center;
+        flex: 0 0 calc($nt-input-outline-label-edge-offset - $nt-input-outline-notch-padding);
+        min-width: 0;
+        border-inline-end-width: 0;
+        border-start-start-radius: corners.$nt-corner-radius-extra-small;
+        border-end-start-radius: corners.$nt-corner-radius-extra-small;
+    }
+
+    .nt-input-outline-notch {
+        display: flex;
+        align-items: flex-start;
+        max-width: calc(100% - $nt-input-outline-horizontal-reserved-width);
+        padding-inline: $nt-input-outline-notch-padding;
+        border-inline-width: 0;
+        border-block-start-width: 0;
+
+        &::before {
+            position: absolute;
+            inset-inline: 0;
+            inset-block-start: 0;
+            content: '';
+            border-block-start: $nt-input-outline-width solid currentColor;
+            transform: scaleX(1);
+            transform-origin: center;
+            transition: border-block-start-width $nt-input-motion-duration $nt-input-motion-easing,
+                transform $nt-input-motion-duration $nt-input-motion-easing;
+        }
+    }
+
+    .nt-input-outline-end {
+        flex: 1 1 auto;
+        min-width: 0;
+        border-inline-start-width: 0;
+        border-start-end-radius: corners.$nt-corner-radius-extra-small;
+        border-end-end-radius: corners.$nt-corner-radius-extra-small;
+    }
+
+    .nt-input-outline-label {
+        @include typescale.nt-body-small;
+
+        display: block;
+        max-width: 100%;
+        overflow: hidden;
+        opacity: 0;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .nt-input-field {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        box-sizing: border-box;
+        width: 100%;
+        min-width: 0;
+        min-height: inherit;
+        gap: $nt-input-content-gap;
+        padding-inline: $nt-input-horizontal-padding;
+    }
+
+    .nt-input-leading,
+    .nt-input-trailing,
+    .nt-input-error-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+        width: $nt-input-icon-size;
+        height: $nt-input-icon-size;
+        color: var(--nt-input-icon-color);
+        transition: color $nt-input-motion-duration $nt-input-motion-easing,
+            opacity $nt-input-motion-duration $nt-input-motion-easing;
+    }
+
+    .nt-input-error-icon {
+        color: var(--nt-input-error-color);
+    }
+
+    .nt-input-prefix,
+    .nt-input-suffix {
+        @include typescale.nt-body-large;
+
+        flex: 0 0 auto;
+        color: var(--nt-input-prefix-suffix-color);
+        line-height: 1;
+        opacity: 0;
+        transition: opacity $nt-input-motion-duration $nt-input-motion-easing,
+            color $nt-input-motion-duration $nt-input-motion-easing;
+    }
+
+    .nt-input-control-container {
+        position: relative;
+        display: flex;
+        align-items: stretch;
+        flex: 1 1 auto;
+        min-width: 0;
+        min-height: inherit;
+    }
+
+    .nt-input-control {
+        @include typescale.nt-body-large;
+
+        box-sizing: border-box;
+        width: 100%;
+        min-width: 0;
+        border: 0;
+        outline: 0;
+        padding: $nt-input-control-padding-block 0;
+        color: var(--nt-input-text-color);
+        background-color: transparent;
+        caret-color: var(--nt-input-caret-color);
+        opacity: 0;
+        transition: opacity $nt-input-motion-duration $nt-input-motion-easing,
+            color $nt-input-motion-duration $nt-input-motion-easing,
+            padding-block-start $nt-input-motion-duration $nt-input-motion-easing,
+            padding-block-end $nt-input-motion-duration $nt-input-motion-easing;
+
+        &::placeholder {
+            color: transparent;
+        }
+
+        &:focus::placeholder {
+            color: var(--nt-input-placeholder-color);
+        }
+
+        &::-webkit-autofill,
+        &::-webkit-autofill:hover,
+        &::-webkit-autofill:focus,
+        &::-webkit-autofill:active {
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: var(--nt-input-text-color);
+        }
+    }
+
+    .nt-input-label {
+        @include typescale.nt-body-large;
+
+        position: absolute;
+        inset-block-start: $nt-input-label-top;
+        inset-inline-start: 0;
+        z-index: 3;
+        max-width: 100%;
+        overflow: hidden;
+        color: var(--nt-input-label-color);
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        cursor: text;
+        transition: inset-block-start $nt-input-motion-duration $nt-input-motion-easing,
+            color $nt-input-motion-duration $nt-input-motion-easing,
+            font-size $nt-input-motion-duration $nt-input-motion-easing,
+            line-height $nt-input-motion-duration $nt-input-motion-easing,
+            letter-spacing $nt-input-motion-duration $nt-input-motion-easing;
+    }
+
+    .nt-input-supporting-row {
+        display: flex;
+        align-items: flex-start;
+        gap: $nt-input-content-gap-supporting;
+        min-width: 0;
+        margin-block-start: $nt-input-supporting-margin-top;
+        padding-inline: $nt-input-horizontal-padding;
+        color: var(--nt-input-supporting-text-color);
+    }
+
+    .nt-input-supporting,
+    .nt-input-counter {
+        @include typescale.nt-body-small;
+    }
+
+    .nt-input-supporting {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .nt-input-counter {
+        flex: 0 0 auto;
+        margin-inline-start: auto;
+        white-space: nowrap;
+    }
+
+    &.nt-input-comfortable {
+        .nt-input-container-overflow {
+            min-height: $nt-input-height-comfortable;
+        }
+
+        .nt-input-field {
+            padding-inline: $nt-input-horizontal-padding-comfortable;
+        }
+
+        .nt-input-control {
+            padding-block: $nt-input-control-padding-block-comfortable;
+        }
+
+        .nt-input-label {
+            inset-block-start: $nt-input-label-top-comfortable;
+        }
+
+        .nt-input-supporting-row {
+            padding-inline: $nt-input-horizontal-padding-comfortable;
+        }
+    }
+
+    &.nt-input-standard {
+        .nt-input-container-overflow,
+        .nt-input-container,
+        .nt-input-field,
+        .nt-input-control-container {
+            height: $nt-input-height-standard;
+            min-height: $nt-input-height-standard;
+            max-height: $nt-input-height-standard;
+        }
+
+        .nt-input-field {
+            gap: $nt-input-content-gap-standard;
+            padding-inline: $nt-input-horizontal-padding-standard;
+        }
+
+        .nt-input-control {
+            padding-block: $nt-input-control-padding-block-standard;
+        }
+
+        .nt-input-label {
+            inset-block-start: $nt-input-label-top-standard;
+        }
+
+        .nt-input-supporting-row {
+            gap: $nt-input-content-gap-standard;
+            margin-block-start: $nt-input-supporting-margin-top-standard;
+            padding-inline: $nt-input-horizontal-padding-standard;
+        }
+    }
+
+    &.nt-input-dense {
+        .nt-input-container-overflow {
+            height: $nt-input-height-dense;
+            min-height: $nt-input-height-dense;
+            max-height: $nt-input-height-dense;
+        }
+
+        .nt-input-field {
+            gap: $nt-input-content-gap-dense;
+            padding-inline: $nt-input-horizontal-padding-dense;
+        }
+
+        .nt-input-control,
+        .nt-input-label,
+        .nt-input-prefix,
+        .nt-input-suffix {
+            @include typescale.nt-body-medium;
+        }
+
+        .nt-input-control {
+            padding-block: $nt-input-control-padding-block-dense;
+        }
+
+        .nt-input-label {
+            inset-block-start: $nt-input-label-top-dense;
+        }
+
+        .nt-input-outline-start {
+            flex-basis: calc($nt-input-outline-label-edge-offset - $nt-input-outline-notch-padding-dense);
+        }
+
+        .nt-input-outline-notch {
+            padding-inline: $nt-input-outline-notch-padding-dense;
+        }
+
+        .nt-input-supporting-row {
+            gap: $nt-input-content-gap-supporting-dense;
+            margin-block-start: $nt-input-supporting-margin-top-dense;
+            padding-inline: $nt-input-horizontal-padding-dense;
+        }
+    }
+
+    &.nt-textarea {
+        .nt-input-container-overflow,
+        .nt-input-container,
+        .nt-input-field,
+        .nt-input-control-container {
+            height: auto;
+            max-height: none;
+            min-height: 0;
+        }
+
+        .nt-input-container,
+        .nt-input-control-container {
+            align-items: stretch;
+        }
+
+        .nt-input-field {
+            align-items: flex-start;
+        }
+
+        .nt-input-control-container {
+            tnt-page-script {
+                display: none;
+            }
+        }
+
+        @include nt-input-textarea-adornment-offset($nt-input-textarea-content-offset-standard);
+
+        &.nt-input-comfortable {
+            @include nt-input-textarea-adornment-offset($nt-input-textarea-content-offset-comfortable);
+        }
+
+        &.nt-input-dense {
+            @include nt-input-textarea-adornment-offset($nt-input-textarea-content-offset-dense);
+        }
+
+        &.nt-input-filled.nt-input-standard:not(.nt-input-no-label):has(.nt-input-control:focus),
+        &.nt-input-filled.nt-input-standard:not(.nt-input-no-label):has(.nt-input-control:not(:placeholder-shown)),
+        &.nt-input-filled.nt-input-standard:not(.nt-input-no-label):has(.nt-input-control:-webkit-autofill),
+        &.nt-input-filled.nt-input-standard.nt-input-has-value:not(.nt-input-no-label),
+        &.nt-input-filled.nt-input-standard.nt-input-has-placeholder:not(.nt-input-no-label) {
+            @include nt-input-textarea-adornment-offset($nt-input-textarea-filled-label-space-standard);
+        }
+
+        &.nt-input-filled.nt-input-comfortable:not(.nt-input-no-label):has(.nt-input-control:focus),
+        &.nt-input-filled.nt-input-comfortable:not(.nt-input-no-label):has(.nt-input-control:not(:placeholder-shown)),
+        &.nt-input-filled.nt-input-comfortable:not(.nt-input-no-label):has(.nt-input-control:-webkit-autofill),
+        &.nt-input-filled.nt-input-comfortable.nt-input-has-value:not(.nt-input-no-label),
+        &.nt-input-filled.nt-input-comfortable.nt-input-has-placeholder:not(.nt-input-no-label) {
+            @include nt-input-textarea-adornment-offset($nt-input-textarea-filled-label-space-comfortable);
+        }
+
+        &.nt-input-filled.nt-input-dense:not(.nt-input-no-label):has(.nt-input-control:focus),
+        &.nt-input-filled.nt-input-dense:not(.nt-input-no-label):has(.nt-input-control:not(:placeholder-shown)),
+        &.nt-input-filled.nt-input-dense:not(.nt-input-no-label):has(.nt-input-control:-webkit-autofill),
+        &.nt-input-filled.nt-input-dense.nt-input-has-value:not(.nt-input-no-label),
+        &.nt-input-filled.nt-input-dense.nt-input-has-placeholder:not(.nt-input-no-label) {
+            @include nt-input-textarea-adornment-offset($nt-input-textarea-filled-label-space-dense);
+        }
+    }
+
+    &.nt-input-filled {
+        border-radius: corners.$nt-corner-radius-extra-small corners.$nt-corner-radius-extra-small corners.$nt-corner-radius-none corners.$nt-corner-radius-none;
+
+        .nt-input-background {
+            background-color: var(--nt-input-container-color);
+        }
+
+        .nt-input-state-layer {
+            background-color: var(--nt-input-state-layer-color);
+        }
+
+        .nt-input-active-indicator {
+            display: block;
+
+            &::before {
+                border-block-end-color: var(--nt-input-active-indicator-color);
+                border-block-end-width: $nt-input-active-indicator-width;
+            }
+
+            &::after {
+                border-block-end-color: var(--nt-input-focus-color);
+                border-block-end-width: $nt-input-active-indicator-width-focused;
+            }
+        }
+
+        &:not(.nt-input-disabled):hover {
+            .nt-input-state-layer {
+                opacity: $nt-input-state-layer-hover-opacity;
+            }
+
+            .nt-input-active-indicator::before {
+                border-block-end-color: var(--nt-input-hover-active-indicator-color);
+            }
+        }
+    }
+
+    &.nt-input-outlined {
+        border-radius: corners.$nt-corner-radius-extra-small;
+
+        .nt-input-container-overflow {
+            overflow: visible;
+        }
+
+        .nt-input-outline {
+            display: flex;
+        }
+
+        &:not(.nt-input-disabled):hover {
+            .nt-input-outline {
+                color: var(--nt-input-hover-outline-color);
+            }
+        }
+    }
+
+    &.nt-input-outlined.nt-input-no-label {
+        .nt-input-outline-notch {
+            flex: 0 0 0;
+            max-width: 0;
+            overflow: hidden;
+            padding-inline: 0;
+        }
+    }
+
+    &:has(.nt-input-control:focus),
+    &:has(.nt-input-control:not(:placeholder-shown)),
+    &:has(.nt-input-control:-webkit-autofill),
+    &.nt-input-has-value,
+    &.nt-input-has-placeholder,
+    &.nt-input-no-label {
+        .nt-input-control,
+        .nt-input-prefix,
+        .nt-input-suffix {
+            opacity: 1;
+        }
+    }
+
+    &:not(.nt-input-no-label):has(.nt-input-control:focus),
+    &:not(.nt-input-no-label):has(.nt-input-control:not(:placeholder-shown)),
+    &:not(.nt-input-no-label):has(.nt-input-control:-webkit-autofill),
+    &.nt-input-has-value:not(.nt-input-no-label),
+    &.nt-input-has-placeholder:not(.nt-input-no-label) {
+        .nt-input-label {
+            @include typescale.nt-body-small;
+
+            inset-block-start: $nt-input-filled-label-top;
+        }
+
+        .nt-input-outline-notch::before {
+            transform: scaleX(0);
+        }
+    }
+
+    &.nt-input-has-placeholder {
+        .nt-input-control::placeholder {
+            color: var(--nt-input-placeholder-color);
+        }
+    }
+
+    &.nt-input-filled:not(.nt-input-no-label):has(.nt-input-control:focus),
+    &.nt-input-filled:not(.nt-input-no-label):has(.nt-input-control:not(:placeholder-shown)),
+    &.nt-input-filled:not(.nt-input-no-label):has(.nt-input-control:-webkit-autofill),
+    &.nt-input-filled.nt-input-has-value:not(.nt-input-no-label),
+    &.nt-input-filled.nt-input-has-placeholder:not(.nt-input-no-label) {
+        .nt-input-control {
+            padding-block-start: $nt-input-filled-control-padding-start;
+        }
+    }
+
+    &.nt-input-filled.nt-input-comfortable:not(.nt-input-no-label):has(.nt-input-control:focus),
+    &.nt-input-filled.nt-input-comfortable:not(.nt-input-no-label):has(.nt-input-control:not(:placeholder-shown)),
+    &.nt-input-filled.nt-input-comfortable:not(.nt-input-no-label):has(.nt-input-control:-webkit-autofill),
+    &.nt-input-filled.nt-input-comfortable.nt-input-has-value:not(.nt-input-no-label),
+    &.nt-input-filled.nt-input-comfortable.nt-input-has-placeholder:not(.nt-input-no-label) {
+        .nt-input-label {
+            inset-block-start: $nt-input-filled-label-top-comfortable;
+        }
+
+        .nt-input-control {
+            padding-block-start: $nt-input-filled-control-padding-start-comfortable;
+        }
+    }
+
+    &.nt-input-filled.nt-input-standard:not(.nt-input-no-label):has(.nt-input-control:focus),
+    &.nt-input-filled.nt-input-standard:not(.nt-input-no-label):has(.nt-input-control:not(:placeholder-shown)),
+    &.nt-input-filled.nt-input-standard:not(.nt-input-no-label):has(.nt-input-control:-webkit-autofill),
+    &.nt-input-filled.nt-input-standard.nt-input-has-value:not(.nt-input-no-label),
+    &.nt-input-filled.nt-input-standard.nt-input-has-placeholder:not(.nt-input-no-label) {
+        .nt-input-label {
+            inset-block-start: $nt-input-filled-label-top-standard;
+        }
+
+        .nt-input-control {
+            padding-block: $nt-input-filled-control-padding-start-standard $nt-input-filled-control-padding-end-standard;
+        }
+    }
+
+    &.nt-input-filled.nt-input-dense:not(.nt-input-no-label):has(.nt-input-control:focus),
+    &.nt-input-filled.nt-input-dense:not(.nt-input-no-label):has(.nt-input-control:not(:placeholder-shown)),
+    &.nt-input-filled.nt-input-dense:not(.nt-input-no-label):has(.nt-input-control:-webkit-autofill),
+    &.nt-input-filled.nt-input-dense.nt-input-has-value:not(.nt-input-no-label),
+    &.nt-input-filled.nt-input-dense.nt-input-has-placeholder:not(.nt-input-no-label) {
+        .nt-input-label {
+            inset-block-start: $nt-input-filled-label-top-dense;
+        }
+
+        .nt-input-control {
+            padding-block: $nt-input-filled-control-padding-start-dense $nt-input-filled-control-padding-end-dense;
+        }
+    }
+
+    &.nt-input-outlined:not(.nt-input-no-label):has(.nt-input-control:focus),
+    &.nt-input-outlined:not(.nt-input-no-label):has(.nt-input-control:not(:placeholder-shown)),
+    &.nt-input-outlined:not(.nt-input-no-label):has(.nt-input-control:-webkit-autofill),
+    &.nt-input-outlined.nt-input-has-value:not(.nt-input-no-label),
+    &.nt-input-outlined.nt-input-has-placeholder:not(.nt-input-no-label) {
+        .nt-input-control-container {
+            position: static;
+        }
+
+        .nt-input-label {
+            inset-block-start: $nt-input-outlined-label-top;
+            inset-inline-start: $nt-input-outlined-label-start;
+        }
+    }
+
+    &:has(.nt-input-control:focus) {
+        .nt-input-label,
+        .nt-input-outline {
+            color: var(--nt-input-focus-color);
+        }
+
+        .nt-input-active-indicator::after {
+            transform: scaleX(1);
+        }
+
+        .nt-input-outline-start,
+        .nt-input-outline-notch,
+        .nt-input-outline-end {
+            border-width: $nt-input-outline-width-focused;
+        }
+
+        .nt-input-outline-start {
+            border-inline-end-width: 0;
+        }
+
+        .nt-input-outline-notch {
+            border-inline-width: 0;
+            border-block-start-width: 0;
+
+            &::before {
+                border-block-start-width: $nt-input-outline-width-focused;
+            }
+        }
+
+        .nt-input-outline-end {
+            border-inline-start-width: 0;
+        }
+    }
+
+    &.nt-input-invalid {
+        .nt-input-label,
+        .nt-input-supporting,
+        .nt-input-counter {
+            color: var(--nt-input-error-color);
+        }
+
+        .nt-input-control {
+            caret-color: var(--nt-input-error-caret-color);
+        }
+
+        .nt-input-active-indicator::before,
+        .nt-input-active-indicator::after {
+            border-block-end-color: var(--nt-input-error-color);
+        }
+
+        .nt-input-outline {
+            color: var(--nt-input-error-color);
+        }
+    }
+
+    &.nt-input-readonly {
+        .nt-input-container {
+            cursor: default;
+        }
+    }
+
+    &.nt-input-disabled {
+        pointer-events: none;
+
+        .nt-input-background {
+            background-color: var(--nt-input-disabled-container-color);
+            opacity: $nt-input-disabled-container-opacity;
+        }
+
+        .nt-input-label,
+        .nt-input-prefix,
+        .nt-input-suffix,
+        .nt-input-leading,
+        .nt-input-trailing,
+        .nt-input-error-icon,
+        .nt-input-control,
+        .nt-input-supporting,
+        .nt-input-counter {
+            color: var(--nt-input-disabled-content-color);
+            opacity: $nt-input-disabled-content-opacity;
+        }
+
+        .nt-input-active-indicator::before {
+            border-block-end-color: var(--nt-input-disabled-content-color);
+            opacity: $nt-input-disabled-content-opacity;
+        }
+
+        .nt-input-outline {
+            color: var(--nt-input-disabled-outline-color);
+            opacity: $nt-input-disabled-outline-opacity;
+        }
+
+        &:has(.nt-input-control:focus),
+        &:has(.nt-input-control:not(:placeholder-shown)),
+        &:has(.nt-input-control:-webkit-autofill),
+        &.nt-input-has-value,
+        &.nt-input-has-placeholder,
+        &.nt-input-no-label {
+            .nt-input-control,
+            .nt-input-prefix,
+            .nt-input-suffix {
+                opacity: $nt-input-disabled-content-opacity;
+            }
+        }
+    }
+}
+
+@media (forced-colors: active) {
+    .nt-input.nt-input-disabled {
+        .nt-input-label,
+        .nt-input-prefix,
+        .nt-input-suffix,
+        .nt-input-leading,
+        .nt-input-trailing,
+        .nt-input-error-icon,
+        .nt-input-control,
+        .nt-input-supporting,
+        .nt-input-counter,
+        .nt-input-outline,
+        .nt-input-active-indicator::before {
+            color: GrayText;
+            border-color: GrayText;
+            opacity: 1;
+        }
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nt-input {
+        .nt-input-state-layer,
+        .nt-input-active-indicator::after,
+        .nt-input-outline,
+        .nt-input-outline-start,
+        .nt-input-outline-notch,
+        .nt-input-outline-notch::before,
+        .nt-input-outline-end,
+        .nt-input-label,
+        .nt-input-leading,
+        .nt-input-trailing,
+        .nt-input-error-icon,
+        .nt-input-prefix,
+        .nt-input-suffix,
+        .nt-input-control {
+            transition-duration: $nt-input-motion-duration-reduced;
+            transition-delay: $nt-input-motion-duration-reduced;
+        }
+    }
+}

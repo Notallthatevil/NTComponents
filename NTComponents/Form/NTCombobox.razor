@@ -1,0 +1,171 @@
+@namespace NTComponents
+@using Microsoft.AspNetCore.Components.Rendering
+@typeparam TValue
+@inherits NTFieldBase<IReadOnlyList<TValue>>
+
+@{
+    var errorText = CurrentErrorText;
+    var hasErrorText = !string.IsNullOrWhiteSpace(errorText);
+}
+
+<div class="@GetRootClass(hasErrorText)" style="@ElementStyle">
+    @{
+        var supportingText = hasErrorText ? null : CurrentSupportingText;
+        var hasSupportingText = !string.IsNullOrWhiteSpace(supportingText);
+        var items = EffectiveItems;
+        var listboxId = ListboxId;
+        var selectedValues = SelectedValues;
+    }
+
+    <div class="nt-input-container-overflow">
+        <label class="nt-input-container" for="@InputId" title="@ElementTitle" lang="@ElementLang">
+            <span class="nt-input-background" aria-hidden="true"></span>
+            <span class="nt-input-state-layer" aria-hidden="true"></span>
+
+            @if (EffectiveAppearance == NTFormAppearance.Filled) {
+                <span class="nt-input-active-indicator" aria-hidden="true"></span>
+            }
+
+            @if (EffectiveAppearance == NTFormAppearance.Outlined) {
+                <span class="nt-input-outline" aria-hidden="true">
+                    <span class="nt-input-outline-start"></span>
+                    <span class="nt-input-outline-notch">
+                        @if (HasLabel) {
+                            <span class="nt-input-outline-label">@Label</span>
+                        }
+                    </span>
+                    <span class="nt-input-outline-end"></span>
+                </span>
+            }
+
+            <span class="nt-input-field">
+                @if (LeadingIcon is not null) {
+                    <span class="nt-input-leading" aria-hidden="true">
+                        @LeadingIcon.Render()
+                    </span>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(PrefixText)) {
+                    <span class="nt-input-prefix" id="@PrefixId">@PrefixText</span>
+                }
+
+                <span class="nt-input-control-container">
+                    <input @attributes="ControlAttributes"
+                           id="@InputId"
+                           type="text"
+                           title="@FieldIdentifier.FieldName"
+                           autofocus="@AutoFocus"
+                           autocomplete="@AutoComplete"
+                           readonly="true"
+                           disabled="@FieldDisabled"
+                           required="@IsRequired"
+                           placeholder="@EffectivePlaceholder"
+                           aria-describedby="@BuildDescribedBy(hasErrorText, hasSupportingText)"
+                           aria-invalid="@(hasErrorText ? "true" : "false")"
+                           aria-errormessage="@(hasErrorText ? ErrorTextId : null)"
+                           aria-autocomplete="@(Searchable ? "list" : "none")"
+                           aria-controls="@listboxId"
+                           aria-expanded="@(_isOpen ? "true" : "false")"
+                           aria-haspopup="listbox"
+                           role="combobox"
+                           class="@ComboboxControlClass"
+                           data-nt-combobox-input="true"
+                           data-nt-combobox-listbox="@listboxId"
+                           data-nt-combobox-name="@ElementName"
+                           data-nt-combobox-readonly="@FieldReadOnly.ToString().ToLowerInvariant()"
+                           data-nt-combobox-searchable="@Searchable.ToString().ToLowerInvariant()"
+                           data-nt-combobox-separator="@SelectedTextSeparator"
+                           value="@BuildSelectionDisplayText(selectedValues, items)"
+                           @ref="Element" />
+
+                    @if (HasLabel) {
+                        <span class="nt-input-label" id="@LabelId">@Label</span>
+                    }
+                </span>
+
+                @if (!string.IsNullOrWhiteSpace(SuffixText)) {
+                    <span class="nt-input-suffix" id="@SuffixId">@SuffixText</span>
+                }
+
+                @{
+                    var trailingAdornment = CreateTrailingAdornmentState(hasErrorText);
+                }
+
+                @if (trailingAdornment.Icon is not null) {
+                    <span class="@trailingAdornment.Class" aria-label="@trailingAdornment.AriaLabel" aria-hidden="@trailingAdornment.AriaHidden">
+                        @trailingAdornment.Icon.Render()
+                    </span>
+                }
+            </span>
+        </label>
+
+        <div class="nt-combobox-menu" hidden="@(!_isOpen)" aria-hidden="@(!_isOpen ? "true" : "false")" data-nt-combobox-menu="true">
+            @if (items.Count > 0) {
+                var selectedValueSet = BuildSelectedValueSet(selectedValues);
+
+                <ul class="nt-combobox-list" id="@listboxId" role="listbox" aria-multiselectable="true" aria-label="@ListboxLabel">
+                    @for (var index = 0; index < items.Count; index++) {
+                        var option = items[index];
+                        var selected = selectedValueSet?.Contains(option.Value) == true;
+                        var disabled = FieldDisabled || FieldReadOnly || option.Disabled;
+                        <li class="nt-combobox-list-item" role="presentation">
+                            <button class="@GetOptionClass(selected, disabled)"
+                                    id="@GetOptionId(listboxId, index)"
+                                    type="button"
+                                    role="option"
+                                    aria-selected="@(selected ? "true" : "false")"
+                                    aria-disabled="@(disabled ? "true" : null)"
+                                    disabled="@disabled"
+                                    data-nt-combobox-option="true"
+                                    data-nt-combobox-value="@FormatOptionValue(option.Value)"
+                                    data-nt-combobox-label="@option.Label">
+                                @if (option.LeadingIcon is not null) {
+                                    <span class="nt-combobox-option-leading" aria-hidden="true">
+                                        @option.LeadingIcon.Render()
+                                    </span>
+                                }
+
+                                <span class="nt-combobox-option-content">
+                                    <span class="nt-combobox-option-label">@option.Label</span>
+                                    @if (!string.IsNullOrWhiteSpace(option.SupportingText)) {
+                                        <span class="nt-combobox-option-supporting">@option.SupportingText</span>
+                                    }
+                                </span>
+
+                                <span class="nt-combobox-option-trailing" aria-hidden="true" hidden="@(!selected)">
+                                    @MaterialIcon.Check.Render()
+                                </span>
+                            </button>
+                        </li>
+                    }
+                </ul>
+            }
+            <div class="nt-combobox-empty" role="status" hidden="@(items.Count > 0)">@EmptyText</div>
+        </div>
+    </div>
+
+    @if (hasErrorText || hasSupportingText || HasSupportingRowContent) {
+        <div class="nt-input-supporting-row">
+            @if (hasErrorText) {
+                <span class="nt-input-supporting nt-input-error-text" id="@ErrorTextId" role="alert">
+                    @errorText
+                </span>
+            }
+            else if (hasSupportingText) {
+                <span class="nt-input-supporting" id="@SupportingTextId">
+                    @supportingText
+                </span>
+            }
+        </div>
+    }
+
+    <span data-nt-combobox-hidden-container="true">
+        @if (ShouldRenderFormPostValues(selectedValues)) {
+            @foreach (var selectedValue in selectedValues) {
+                <input type="hidden"
+                       name="@ElementName"
+                       value="@FormatOptionValue(selectedValue)" />
+            }
+        }
+    </span>
+</div>

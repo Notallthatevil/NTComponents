@@ -1,0 +1,217 @@
+@page "/divider"
+@using NTComponents
+@rendermode InteractiveAuto
+
+<PageTitle>Divider</PageTitle>
+
+<style>
+    .divider-demo {
+        display: grid;
+        gap: 1.5rem;
+        max-width: 72rem;
+    }
+
+    .divider-demo h1,
+    .divider-demo h2,
+    .divider-demo h3,
+    .divider-demo p {
+        margin: 0;
+    }
+
+    .divider-demo .header {
+        display: grid;
+        gap: .5rem;
+    }
+
+    .divider-demo .surface {
+        display: grid;
+        gap: 1.25rem;
+        padding: 1.25rem;
+        border: 1px solid var(--tnt-color-outline-variant);
+        border-radius: .5rem;
+        background: var(--tnt-color-surface);
+        color: var(--tnt-color-on-surface);
+    }
+
+    .divider-demo .controls {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+        gap: 1rem;
+    }
+
+    .divider-demo label {
+        display: grid;
+        gap: .35rem;
+        color: var(--tnt-color-on-surface-variant);
+    }
+
+    .divider-demo select {
+        min-block-size: 2.5rem;
+        padding: .5rem .75rem;
+        border: 1px solid var(--tnt-color-outline);
+        border-radius: .25rem;
+        color: var(--tnt-color-on-surface);
+        background: var(--tnt-color-surface-container-lowest);
+    }
+
+    .divider-demo .preview {
+        display: grid;
+        gap: 1rem;
+        min-block-size: 12rem;
+        padding: 1.25rem;
+        border-radius: .5rem;
+        background: var(--tnt-color-surface-container-lowest);
+    }
+
+    .divider-demo .row {
+        display: flex;
+        gap: 1rem;
+        align-items: stretch;
+        min-block-size: 10rem;
+    }
+
+    .divider-demo .pane {
+        display: grid;
+        gap: .35rem;
+        align-content: start;
+        flex: 1 1 0;
+        min-inline-size: 0;
+    }
+
+    .divider-demo .list {
+        display: grid;
+        gap: .75rem;
+        max-inline-size: 38rem;
+    }
+
+    .divider-demo .list-item {
+        display: grid;
+        gap: .25rem;
+    }
+
+    .divider-demo .muted {
+        color: var(--tnt-color-on-surface-variant);
+    }
+</style>
+
+<div class="divider-demo">
+    <div class="header">
+        <h1>NTDivider</h1>
+        <p class="muted">Material 3 separators for grouped content.</p>
+    </div>
+
+    <section class="surface" aria-labelledby="divider-playground-title">
+        <h2 id="divider-playground-title">Playground</h2>
+
+        <div class="controls">
+            <label>
+                Variant
+                <select @bind="SelectedVariant" disabled="@IsVertical">
+                    @foreach (var variant in Enum.GetValues<NTDividerVariant>()) {
+                        <option value="@variant">@variant</option>
+                    }
+                </select>
+            </label>
+
+            <label>
+                Direction
+                <select @bind="SelectedDirection">
+                    @foreach (var direction in Enum.GetValues<LayoutDirection>()) {
+                        <option value="@direction">@direction</option>
+                    }
+                </select>
+            </label>
+
+            <label>
+                Color
+                <select @bind="SelectedColor">
+                    @foreach (var color in ColorOptions) {
+                        <option value="@color">@color</option>
+                    }
+                </select>
+            </label>
+        </div>
+
+        <div class="preview" data-testid="nt-divider-playground">
+            @if (IsVertical) {
+                <div class="row">
+                    <div class="pane">
+                        <h3>Overview</h3>
+                        <p class="muted">Open work items and weekly status.</p>
+                    </div>
+                    <NTDivider Direction="LayoutDirection.Vertical" Color="@SelectedColor" />
+                    <div class="pane">
+                        <h3>Activity</h3>
+                        <p class="muted">Recent changes, approvals, and notes.</p>
+                    </div>
+                    <NTDivider Direction="LayoutDirection.Vertical" Color="@SelectedColor" />
+                    <div class="pane">
+                        <h3>Metrics</h3>
+                        <p class="muted">Throughput, cycle time, and risk.</p>
+                    </div>
+                </div>
+            }
+            else {
+                <div class="list">
+                    <div class="list-item">
+                        <h3>Backlog review</h3>
+                        <p class="muted">12 open items</p>
+                    </div>
+                    <NTDivider Variant="@SelectedVariant" Color="@SelectedColor" />
+                    <div class="list-item">
+                        <h3>Implementation</h3>
+                        <p class="muted">5 items in progress</p>
+                    </div>
+                    <NTDivider Variant="@SelectedVariant" Color="@SelectedColor" />
+                    <div class="list-item">
+                        <h3>Release</h3>
+                        <p class="muted">2 items waiting</p>
+                    </div>
+                </div>
+            }
+        </div>
+    </section>
+
+    <section class="surface" aria-labelledby="divider-variants-title">
+        <h2 id="divider-variants-title">Horizontal Variants</h2>
+        <div class="list">
+            <div class="list-item">
+                <h3>Full width</h3>
+                <p class="muted">Section boundary</p>
+            </div>
+            <NTDivider Variant="NTDividerVariant.FullWidth" />
+            <div class="list-item">
+                <h3>Inset</h3>
+                <p class="muted">Leading content aligned</p>
+            </div>
+            <NTDivider Variant="NTDividerVariant.Inset" />
+            <div class="list-item">
+                <h3>Middle inset</h3>
+                <p class="muted">Contained item group</p>
+            </div>
+            <NTDivider Variant="NTDividerVariant.MiddleInset" />
+            <div class="list-item">
+                <h3>End state</h3>
+                <p class="muted">No trailing separator</p>
+            </div>
+        </div>
+    </section>
+</div>
+
+@code {
+    private static readonly TnTColor[] ColorOptions = [
+        TnTColor.OutlineVariant,
+        TnTColor.Primary,
+        TnTColor.Secondary,
+        TnTColor.Tertiary,
+        TnTColor.Error
+    ];
+
+    private TnTColor SelectedColor { get; set; } = TnTColor.OutlineVariant;
+
+    private LayoutDirection SelectedDirection { get; set; } = LayoutDirection.Horizontal;
+
+    private NTDividerVariant SelectedVariant { get; set; } = NTDividerVariant.FullWidth;
+
+    private bool IsVertical => SelectedDirection == LayoutDirection.Vertical;
+}

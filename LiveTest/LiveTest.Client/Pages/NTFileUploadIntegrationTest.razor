@@ -1,0 +1,40 @@
+@page "/nt-file-upload-integration-test"
+@using Microsoft.AspNetCore.Components.Forms
+@using NTComponents
+@using LiveTest.Client.Components
+
+<main style="display:grid;gap:24px;max-width:900px;padding:24px;">
+    <h1>NTFileUpload Integration Test</h1>
+
+    <section id="static-upload-version" style="display:grid;gap:12px;">
+        <h2>Static Form Upload</h2>
+        <form id="static-upload-form" method="post" enctype="multipart/form-data" action="/api/uploads/static-test">
+            <NTFileUpload ElementId="static-file-upload"
+                          Value="@_staticFiles"
+                          ValueChanged="OnStaticFilesChanged"
+                          ValueExpression="@(() => _staticFiles)"
+                          Label="Static upload"
+                          EmptyText="No static file selected"
+                          SupportingText="Posts with a normal HTML form."
+                          AdditionalAttributes="@StaticFileAttributes" />
+            <button id="static-submit" type="submit">Submit static upload</button>
+        </form>
+    </section>
+
+    <NTFileUploadInteractiveServerTest @rendermode="InteractiveServer" />
+
+    <NTFileUploadInteractiveWebAssemblyTest @rendermode="InteractiveWebAssembly" />
+</main>
+
+@code {
+    private static readonly IReadOnlyDictionary<string, object> StaticFileAttributes = new Dictionary<string, object> {
+        ["name"] = "staticFile"
+    };
+
+    private IReadOnlyList<IBrowserFile>? _staticFiles;
+
+    private Task OnStaticFilesChanged(IReadOnlyList<IBrowserFile>? files) {
+        _staticFiles = files;
+        return Task.CompletedTask;
+    }
+}

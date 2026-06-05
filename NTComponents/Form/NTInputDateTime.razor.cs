@@ -1,309 +1,126 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.JSInterop;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
-using System.Linq;
-using NTComponents.Ext;
-using NTComponents.Interfaces;
 
+using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
-///     A custom input component for handling various DateTime types.
+///     A Material 3 aligned native date/time input.
 /// </summary>
-/// <typeparam name="DateTimeType">The type of the DateTime value.</typeparam>
-public partial class NTInputDateTime<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] DateTimeType> : ITnTPageScriptComponent<NTInputDateTime<DateTimeType>> {
+/// <typeparam name="DateTimeType">The date/time value type.</typeparam>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Renders native date and time input markup and enhances custom picker behavior with script.",
+    CompatibilityDetails = "Static SSR emits native date/time-compatible input attributes for form posts. The custom picker, live parsing, and validation updates require browser or Blazor enhancement.")]
+public partial class NTInputDateTime<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] DateTimeType> {
+
+    private const string JsModulePath = "./_content/NTComponents/Form/NTInputDateTime.razor.js";
+    private static readonly Type _underlyingDateTimeType = Nullable.GetUnderlyingType(typeof(DateTimeType)) ?? typeof(DateTimeType);
+
+    private IReadOnlyDictionary<string, object?>? _additionalInputAttributes;
+    private string? _additionalInputAttributesFormat;
+    private string? _additionalInputAttributesPickerId;
+    private string? _additionalInputAttributesPickerMode;
+    private bool _additionalInputAttributesCustomPicker;
+    private DateTimeInputMetadata _metadata = default!;
+    private bool _metadataMonthOnly;
+    private bool _metadataResolved;
+    private string _effectiveFormat = string.Empty;
+    private TnTIcon? _filledPickerIcon;
+    private string? _filledPickerIconName;
+    private TnTColor _filledPickerIconColor;
+    private IconSize _filledPickerIconSize;
+    private RenderFragment? _filledPickerIconTooltip;
+    private TnTIcon _resolvedPickerTriggerIcon = MaterialIcon.CalendarMonth;
+    private string _pickerClass = string.Empty;
+    private string _pickerHeadlineId = string.Empty;
+    private string _pickerId = string.Empty;
+    private string _rootClass = "nt-input-date-time nt-input-date-time-standard";
 
     /// <summary>
-    ///     Gets or sets a value indicating whether the Material picker is enabled.
+    ///     Gets or sets a value indicating whether the Material 3 aligned custom picker should be rendered.
+    /// </summary>
+    /// <remarks>
+    ///     When enabled, the native input still posts and binds the value while the custom picker provides the docked or
+    ///     modal visual interaction. On small screens and down, the picker is presented as a centered modal dialog.
+    /// </remarks>
+    [Parameter]
+    public bool EnableCustomPicker { get; set; }
+
+    /// <summary>
+    ///     Gets or sets the format string used to display the date/time value.
     /// </summary>
     [Parameter]
-    public bool EnableCustomPicker { get; set; } = true;
+    public string? Format { get; set; }
 
     /// <summary>
-    ///     Gets or sets the format string used to display the DateTime value.
-    /// </summary>
-    [Parameter]
-    public string Format { get; set; } = default!;
-
-    /// <summary>
-    ///     Gets or sets a value indicating whether to display only the month part of the DateTime value.
+    ///     Gets or sets a value indicating whether <see cref="DateOnly" /> should render as a month input.
     /// </summary>
     [Parameter]
     public bool MonthOnly { get; set; }
 
     /// <summary>
-    ///     Gets or sets date values that should be disabled in the picker.
+    ///     Gets or sets the icon used by the custom picker trigger.
     /// </summary>
     [Parameter]
-    public IEnumerable<DateOnly>? DisabledDates { get; set; }
+    public TnTIcon? PickerTriggerIcon { get; set; }
 
     /// <summary>
-    ///     Gets or sets time values that should be disabled in the picker.
+    ///     Gets the resolved legacy input type.
     /// </summary>
-    [Parameter]
-    public IEnumerable<TimeOnly>? DisabledTimes { get; set; }
-
-    /// <summary>
-    ///     Gets or sets a value indicating whether the picker opens when the input receives focus.
-    /// </summary>
-    [Parameter]
-    public bool OpenPickerOnFocus { get; set; } = true;
-
-    /// <summary>
-    ///     Gets or sets optional custom action buttons for the picker.
-    /// </summary>
-    [Parameter]
-    public RenderFragment? PickerActionButtons { get; set; }
-
-    /// <summary>
-    ///     Gets or sets additional CSS classes to apply to the picker cancel button.
-    /// </summary>
-    [Parameter]
-    public string? PickerCancelButtonClass { get; set; }
-
-    /// <summary>
-    ///     Gets or sets the text used for the picker cancel button.
-    /// </summary>
-    [Parameter]
-    public string PickerCancelButtonText { get; set; } = "Cancel";
-
-    /// <summary>
-    ///     Gets or sets additional CSS classes to apply to the picker clear button.
-    /// </summary>
-    [Parameter]
-    public string? PickerClearButtonClass { get; set; }
-
-    /// <summary>
-    ///     Gets or sets the text used for the picker clear button.
-    /// </summary>
-    [Parameter]
-    public string PickerClearButtonText { get; set; } = "Clear";
-
-    /// <summary>
-    ///     Gets or sets additional CSS classes to apply to the picker confirm button.
-    /// </summary>
-    [Parameter]
-    public string? PickerConfirmButtonClass { get; set; }
-
-    /// <summary>
-    ///     Gets or sets the text used for the picker confirm button.
-    /// </summary>
-    [Parameter]
-    public string PickerConfirmButtonText { get; set; } = "OK";
-
-    /// <summary>
-    ///     Gets or sets additional CSS classes to apply to the picker quick action buttons.
-    /// </summary>
-    [Parameter]
-    public string? PickerQuickActionButtonClass { get; set; }
-
-    /// <summary>
-    ///     Gets or sets the text used for the picker "Now" action button.
-    /// </summary>
-    [Parameter]
-    public string PickerNowButtonText { get; set; } = "Now";
-
-    /// <summary>
-    ///     Gets or sets the text used for the picker "Today" action button.
-    /// </summary>
-    [Parameter]
-    public string PickerTodayButtonText { get; set; } = "Today";
-
-    /// <summary>
-    ///     Gets or sets a value indicating whether the picker clear button is rendered.
-    /// </summary>
-    [Parameter]
-    public bool ShowPickerClearButton { get; set; } = true;
-
-    /// <summary>
-    ///     Gets or sets a value indicating whether the picker "Now" quick action button is rendered.
-    /// </summary>
-    [Parameter]
-    public bool ShowPickerNowButton { get; set; } = true;
-
-    /// <summary>
-    ///     Gets or sets a value indicating whether the picker "Today" quick action button is rendered.
-    /// </summary>
-    [Parameter]
-    public bool ShowPickerTodayButton { get; set; } = true;
+    public InputType Type => _metadata.Type;
 
     /// <inheritdoc />
-    public override InputType Type => _type;
+    protected override InputType InputTypeAttribute => _metadata.Type;
 
-    /// <summary>
-    ///     Gets the CSS class applied to the default cancel button.
-    /// </summary>
-    protected string PickerCancelButtonCssClass => BuildPickerActionClass("tnt-dtp-action-button tnt-dtp-text-button", PickerCancelButtonClass);
+    /// <inheritdoc />
+    protected override IReadOnlyDictionary<string, object?>? BuildAdditionalInputAttributes() {
+        var pickerId = BuildPickerId();
+        if (_additionalInputAttributes is not null
+            && _additionalInputAttributesCustomPicker == EnableCustomPicker
+            && _additionalInputAttributesFormat == _effectiveFormat
+            && _additionalInputAttributesPickerId == pickerId
+            && _additionalInputAttributesPickerMode == _metadata.PickerMode) {
+            return _additionalInputAttributes;
+        }
 
-    /// <summary>
-    ///     Gets the CSS class applied to the default clear button.
-    /// </summary>
-    protected string PickerClearButtonCssClass => BuildPickerActionClass("tnt-dtp-action-button tnt-dtp-tonal-button", PickerClearButtonClass ?? PickerQuickActionButtonClass);
+        var attributes = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase) {
+            ["format"] = _effectiveFormat
+        };
+        if (EnableCustomPicker) {
+            attributes["data-tnt-dtp-input"] = "true";
+            attributes["data-tnt-dtp-target"] = pickerId;
+            attributes["data-tnt-dtp-mode"] = _metadata.PickerMode;
+            attributes["data-tnt-dtp-open-on-focus"] = "true";
+        }
 
-    /// <summary>
-    ///     Gets the CSS class applied to the default confirm button.
-    /// </summary>
-    protected string PickerConfirmButtonCssClass => BuildPickerActionClass("tnt-dtp-action-button tnt-dtp-filled-button", PickerConfirmButtonClass);
-
-    /// <summary>
-    ///     Gets the CSS class applied to the default "Now" quick action button.
-    /// </summary>
-    protected string PickerNowButtonCssClass => BuildPickerActionClass("tnt-dtp-action-button tnt-dtp-tonal-button", PickerQuickActionButtonClass);
-
-    /// <summary>
-    ///     Gets the mode value emitted as a data attribute for JS interop.
-    /// </summary>
-    protected string PickerModeValue => _pickerMode switch {
-        DateTimePickerMode.Date => "date",
-        DateTimePickerMode.Month => "month",
-        DateTimePickerMode.Time => "time",
-        DateTimePickerMode.DateTime => "datetime",
-        _ => "none"
-    };
-
-    /// <summary>
-    ///     Gets the element id used by the picker popup.
-    /// </summary>
-    protected string PickerPopupId { get; } = $"tnt-dtp-{Guid.NewGuid():N}";
-
-    /// <summary>
-    ///     Gets the reference to the DotNet object associated with the component.
-    /// </summary>
-    public DotNetObjectReference<NTInputDateTime<DateTimeType>>? DotNetObjectRef { get; private set; }
-
-    /// <summary>
-    ///     Gets the reference to the isolated JavaScript module.
-    /// </summary>
-    public IJSObjectReference? IsolatedJsModule { get; private set; }
-
-    /// <summary>
-    ///     Gets the path of the JavaScript module.
-    /// </summary>
-    public string? JsModulePath => "./_content/NTComponents/Form/NTInputDateTime.razor.js";
-
-    /// <summary>
-    ///     Gets a value indicating whether a date panel should be rendered in the picker.
-    /// </summary>
-    protected bool ShowDatePickerPanel => _pickerMode is DateTimePickerMode.Date or DateTimePickerMode.DateTime;
-
-    /// <summary>
-    ///     Gets a value indicating whether a time panel should be rendered in the picker.
-    /// </summary>
-    protected bool ShowTimePickerPanel => _pickerMode is DateTimePickerMode.Time or DateTimePickerMode.DateTime;
-
-    /// <summary>
-    ///     Gets a value indicating whether a month panel should be rendered in the picker.
-    /// </summary>
-    protected bool ShowMonthPickerPanel => _pickerMode is DateTimePickerMode.Month;
-
-    /// <summary>
-    ///     Gets disabled date values encoded for JS interop.
-    /// </summary>
-    protected string? DisabledDateValuesAttribute => BuildDisabledDateValuesAttribute();
-
-    /// <summary>
-    ///     Gets disabled time values encoded for JS interop.
-    /// </summary>
-    protected string? DisabledTimeValuesAttribute => BuildDisabledTimeValuesAttribute();
-
-    /// <summary>
-    ///     Gets the accessible label used by the custom picker trigger.
-    /// </summary>
-    protected string PickerTriggerAriaLabel => _pickerMode switch {
-        DateTimePickerMode.Date => "Open calendar",
-        DateTimePickerMode.Month => "Open month picker",
-        DateTimePickerMode.Time => "Open time picker",
-        DateTimePickerMode.DateTime => "Open date and time picker",
-        _ => "Open picker"
-    };
-
-    /// <summary>
-    ///     Gets a value indicating whether the Material picker is active for the current input type.
-    /// </summary>
-    protected bool UseCustomPicker => EnableCustomPicker && _pickerMode is not DateTimePickerMode.None;
-
-    /// <summary>
-    ///     Gets a value indicating whether the picker "Now" quick action is rendered.
-    /// </summary>
-    protected bool UseNowQuickAction => (_pickerMode is DateTimePickerMode.Time or DateTimePickerMode.DateTime or DateTimePickerMode.Month) && ShowPickerNowButton;
-
-    /// <summary>
-    ///     Gets a value indicating whether the picker "Today" quick action is rendered.
-    /// </summary>
-    protected bool UseTodayQuickAction => (_pickerMode is DateTimePickerMode.Date) && ShowPickerTodayButton;
-
-    /// <summary>
-    ///     Gets the CSS class applied to the default "Today" quick action button.
-    /// </summary>
-    protected string PickerTodayButtonCssClass => BuildPickerActionClass("tnt-dtp-action-button tnt-dtp-tonal-button", PickerQuickActionButtonClass);
-
-    private string _format = default!;
-    private DateTimePickerMode _pickerMode;
-    private InputType _type;
-
-    /// <summary>
-    ///     Gets the JavaScript runtime for interop.
-    /// </summary>
-    [Inject]
-    protected IJSRuntime JSRuntime { get; private set; } = default!;
-
-    /// <summary>
-    ///     Initializes a new instance of the <see cref="NTInputDateTime{DateTimeType}" /> class.
-    /// </summary>
-    public NTInputDateTime() => DotNetObjectRef = DotNetObjectReference.Create(this);
+        _additionalInputAttributes = attributes;
+        _additionalInputAttributesCustomPicker = EnableCustomPicker;
+        _additionalInputAttributesFormat = _effectiveFormat;
+        _additionalInputAttributesPickerId = pickerId;
+        _additionalInputAttributesPickerMode = _metadata.PickerMode;
+        return _additionalInputAttributes;
+    }
 
     /// <inheritdoc />
     protected override string? FormatValueAsString(DateTimeType? value) {
-        var result = value switch {
-            DateTime dateTimeValue => BindConverter.FormatValue(dateTimeValue, _format, CultureInfo.InvariantCulture),
-            DateTimeOffset dateTimeOffsetValue => BindConverter.FormatValue(dateTimeOffsetValue, _format, CultureInfo.InvariantCulture),
-            DateOnly dateOnlyValue => BindConverter.FormatValue(dateOnlyValue, _format, CultureInfo.InvariantCulture),
-            TimeOnly timeOnlyValue => BindConverter.FormatValue(timeOnlyValue, _format, CultureInfo.InvariantCulture),
-            _ => string.Empty, // Handles null for Nullable<DateTime>, etc.
+        return value switch {
+            DateTime dateTimeValue => BindConverter.FormatValue(dateTimeValue, _effectiveFormat, CultureInfo.InvariantCulture),
+            DateTimeOffset dateTimeOffsetValue => BindConverter.FormatValue(dateTimeOffsetValue, _effectiveFormat, CultureInfo.InvariantCulture),
+            DateOnly dateOnlyValue => BindConverter.FormatValue(dateOnlyValue, _effectiveFormat, CultureInfo.InvariantCulture),
+            TimeOnly timeOnlyValue => BindConverter.FormatValue(timeOnlyValue, _effectiveFormat, CultureInfo.InvariantCulture),
+            _ => string.Empty
         };
-
-        return result;
-    }
-
-    /// <inheritdoc />
-    protected override void OnInitialized() {
-        base.OnInitialized();
-        ResolveMetadataFromType();
-        ApplyFormatAttribute();
-    }
-
-    /// <inheritdoc />
-    public async ValueTask DisposeAsync() {
-        await DisposeAsyncCore().ConfigureAwait(false);
-        GC.SuppressFinalize(this);
-    }
-
-    /// <inheritdoc />
-    protected override async Task OnAfterRenderAsync(bool firstRender) {
-        await base.OnAfterRenderAsync(firstRender);
-        try {
-            if (firstRender) {
-                IsolatedJsModule = await JSRuntime.ImportIsolatedJs(this, JsModulePath);
-                await (IsolatedJsModule?.InvokeVoidAsync("onLoad", Element, DotNetObjectRef) ?? ValueTask.CompletedTask);
-            }
-
-            await (IsolatedJsModule?.InvokeVoidAsync("onUpdate", Element, DotNetObjectRef) ?? ValueTask.CompletedTask);
-        }
-        catch (JSDisconnectedException) {
-            // JS runtime was disconnected, safe to ignore during render.
-        }
     }
 
     /// <inheritdoc />
     protected override void OnParametersSet() {
+        ResolveMetadata();
+        _effectiveFormat = string.IsNullOrWhiteSpace(Format) ? _metadata.DefaultFormat : Format;
         base.OnParametersSet();
-        ResolveMetadataFromType();
-        if (string.IsNullOrWhiteSpace(Format)) {
-            Format = _format;
-        }
-        ApplyFormatAttribute();
+        CachePickerState();
     }
 
     /// <inheritdoc />
@@ -312,125 +129,89 @@ public partial class NTInputDateTime<[DynamicallyAccessedMembers(DynamicallyAcce
             validationErrorMessage = null;
             return true;
         }
-        else {
-            validationErrorMessage = $"Failed to parse {value} into a {typeof(DateTimeType).Name}";
-            return false;
-        }
+
+        validationErrorMessage = $"Failed to parse {value} into a {typeof(DateTimeType).Name}";
+        return false;
     }
 
-    private static string BuildPickerActionClass(string defaultClass, string? customClass) {
-        if (string.IsNullOrWhiteSpace(customClass)) {
-            return defaultClass;
-        }
+    private bool IsPickerTriggerDisabled => Disabled ?? Form?.Disabled ?? false;
 
-        return $"{defaultClass} {customClass}";
+    private string BuildPickerId() => $"{EffectiveInputId}-picker";
+
+    private void CachePickerState() {
+        _pickerId = BuildPickerId();
+        _pickerHeadlineId = $"{_pickerId}-headline";
+        _pickerClass = $"tnt-dtp-overlay tnt-dtp-mode-{_metadata.PickerMode}";
+        _rootClass = BuildRootClass(Density ?? Form?.Density ?? NTFormDensity.Standard);
+        _resolvedPickerTriggerIcon = ResolvePickerTriggerIcon();
     }
 
-    private string? BuildDisabledDateValuesAttribute() {
-        if (DisabledDates is null) {
-            return null;
-        }
-
-        var values = DisabledDates
-            .Select(date => date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture))
-            .Where(value => !string.IsNullOrWhiteSpace(value))
-            .Distinct(StringComparer.Ordinal)
-            .ToArray();
-
-        return values.Length == 0 ? null : string.Join(',', values);
-    }
-
-    private string? BuildDisabledTimeValuesAttribute() {
-        if (DisabledTimes is null) {
-            return null;
-        }
-
-        var values = DisabledTimes
-            .Select(time => time.ToString("HH:mm:ss", CultureInfo.InvariantCulture))
-            .Where(value => !string.IsNullOrWhiteSpace(value))
-            .Distinct(StringComparer.Ordinal)
-            .ToArray();
-
-        return values.Length == 0 ? null : string.Join(',', values);
-    }
-
-    /// <summary>
-    ///     Releases the unmanaged resources used by the component and optionally releases the managed resources.
-    /// </summary>
-    /// <param name="disposing">true to release both managed and unmanaged resources; false to release only unmanaged resources.</param>
-    protected override void Dispose(bool disposing) {
-        if (disposing) {
-            DotNetObjectRef?.Dispose();
-            DotNetObjectRef = null;
-            // Do not dispose IsolatedJsModule here; it should be disposed asynchronously in DisposeAsyncCore.
-        }
-
-        base.Dispose(disposing);
-    }
-
-    /// <summary>
-    ///     Releases the unmanaged resources used by the component asynchronously.
-    /// </summary>
-    protected virtual async ValueTask DisposeAsyncCore() {
-        if (IsolatedJsModule is not null) {
-            try {
-                await IsolatedJsModule.InvokeVoidAsync("onDispose", Element, DotNetObjectRef);
-                await IsolatedJsModule.DisposeAsync().ConfigureAwait(false);
-            }
-            catch (JSDisconnectedException) {
-                // JS runtime was disconnected, safe to ignore during disposal.
-            }
-            IsolatedJsModule = null;
-        }
-
-        if (DotNetObjectRef is IAsyncDisposable asyncDisposable) {
-            await asyncDisposable.DisposeAsync().ConfigureAwait(false);
-        }
-        else {
-            DotNetObjectRef?.Dispose();
-        }
-        DotNetObjectRef = null;
-    }
-
-    private void ApplyFormatAttribute() {
-        _format = (Nullable.GetUnderlyingType(typeof(DateTimeType)) ?? typeof(DateTimeType)) switch {
-            var t when t == typeof(DateTime) => "yyyy-MM-ddTHH:mm:ss",
-            var t when t == typeof(DateTimeOffset) => "yyyy-MM-ddTHH:mm:ss",
-            var t when t == typeof(TimeOnly) => "HH:mm:ss",
-            var t when t == typeof(DateOnly) => MonthOnly ? "yyyy-MM" : "yyyy-MM-dd",
-            _ => throw new InvalidOperationException($"The type '{typeof(DateTimeType)}' is not a supported DateTime type.")
+    private string BuildRootClass(NTFormDensity density) {
+        var densityClass = density switch {
+            NTFormDensity.Comfortable => "nt-input-date-time-comfortable",
+            NTFormDensity.Dense => "nt-input-date-time-dense",
+            _ => "nt-input-date-time-standard"
         };
 
-        var attributes = AdditionalAttributes is null ? [] : new Dictionary<string, object>(AdditionalAttributes);
-        attributes["format"] = _format;
-        AdditionalAttributes = attributes;
+        return EnableCustomPicker ? $"nt-input-date-time nt-input-date-time-custom-picker {densityClass}" : $"nt-input-date-time {densityClass}";
     }
 
-    private void ResolveMetadataFromType() {
-        var targetType = Nullable.GetUnderlyingType(typeof(DateTimeType)) ?? typeof(DateTimeType);
+    private void ResolveMetadata() {
+        var monthOnly = _underlyingDateTimeType == typeof(DateOnly) && MonthOnly;
+        if (_metadataResolved && _metadataMonthOnly == monthOnly) {
+            return;
+        }
 
-        _type = targetType switch {
-            var t when t == typeof(DateTime) => InputType.DateTime,
-            var t when t == typeof(DateTimeOffset) => InputType.DateTime,
-            var t when t == typeof(TimeOnly) => InputType.Time,
-            var t when t == typeof(DateOnly) => MonthOnly ? InputType.Month : InputType.Date,
-            _ => throw new InvalidOperationException($"The type '{typeof(DateTimeType)}' is not a supported DateTime type.")
+        _metadata = CreateMetadata(monthOnly);
+        _metadataMonthOnly = monthOnly;
+        _metadataResolved = true;
+    }
+
+    private static DateTimeInputMetadata CreateMetadata(bool monthOnly) {
+        if (_underlyingDateTimeType == typeof(DateTime) || _underlyingDateTimeType == typeof(DateTimeOffset)) {
+            return new DateTimeInputMetadata(InputType.DateTime, "yyyy-MM-ddTHH:mm:ss", "datetime", "Date and time", "Select date and time", "Open date and time picker", MaterialIcon.CalendarMonth);
+        }
+
+        if (_underlyingDateTimeType == typeof(TimeOnly)) {
+            return new DateTimeInputMetadata(InputType.Time, "HH:mm:ss", "time", "Time", "Select time", "Open time picker", MaterialIcon.Schedule);
+        }
+
+        if (_underlyingDateTimeType == typeof(DateOnly)) {
+            return monthOnly
+                ? new DateTimeInputMetadata(InputType.Month, "yyyy-MM", "month", "Month", "Select month", "Open month picker", MaterialIcon.CalendarMonth)
+                : new DateTimeInputMetadata(InputType.Date, "yyyy-MM-dd", "date", "Date", "Select date", "Open date picker", MaterialIcon.CalendarMonth);
+        }
+
+        throw new InvalidOperationException($"The type '{typeof(DateTimeType)}' is not a supported DateTime type.");
+    }
+
+    private TnTIcon ResolvePickerTriggerIcon() {
+        var pickerIcon = PickerTriggerIcon ?? _metadata.DefaultPickerIcon;
+        if (pickerIcon is not MaterialIcon materialIcon) {
+            return pickerIcon;
+        }
+
+        if (_filledPickerIcon is not null
+            && string.Equals(_filledPickerIconName, materialIcon.Icon, StringComparison.Ordinal)
+            && EqualityComparer<TnTColor>.Default.Equals(_filledPickerIconColor, materialIcon.Color)
+            && _filledPickerIconSize == materialIcon.Size
+            && ReferenceEquals(_filledPickerIconTooltip, materialIcon.Tooltip)) {
+            return _filledPickerIcon;
+        }
+
+        _filledPickerIcon = new MaterialIcon(materialIcon.Icon) {
+            Appearance = IconAppearance.Filled,
+            Color = materialIcon.Color,
+            Size = materialIcon.Size,
+            Tooltip = materialIcon.Tooltip
         };
-
-        _pickerMode = targetType switch {
-            var t when t == typeof(DateOnly) && !MonthOnly => DateTimePickerMode.Date,
-            var t when t == typeof(DateOnly) && MonthOnly => DateTimePickerMode.Month,
-            var t when t == typeof(TimeOnly) => DateTimePickerMode.Time,
-            var t when t == typeof(DateTime) || t == typeof(DateTimeOffset) => DateTimePickerMode.DateTime,
-            _ => DateTimePickerMode.None
-        };
+        _filledPickerIconName = materialIcon.Icon;
+        _filledPickerIconColor = materialIcon.Color;
+        _filledPickerIconSize = materialIcon.Size;
+        _filledPickerIconTooltip = materialIcon.Tooltip;
+        return _filledPickerIcon;
     }
 
-    private enum DateTimePickerMode {
-        None = 0,
-        Date,
-        Month,
-        Time,
-        DateTime
-    }
+    private sealed record DateTimeInputMetadata(InputType Type, string DefaultFormat, string PickerMode, string PickerHeadline, string PickerSupportingLabel, string PickerTriggerAriaLabel, TnTIcon DefaultPickerIcon);
+
 }

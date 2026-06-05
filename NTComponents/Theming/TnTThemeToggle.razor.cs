@@ -6,6 +6,7 @@ namespace NTComponents;
 /// <summary>
 ///     Represents a theme toggle component for switching between different themes.
 /// </summary>
+[Obsolete("TnTThemeToggle is obsolete. Use NTThemeToggle instead.")]
 public partial class TnTThemeToggle {
 
     /// <summary>
@@ -88,6 +89,7 @@ public partial class TnTThemeToggle {
 /// <summary>
 ///     Represents the theme options available for the application.
 /// </summary>
+[Obsolete("Theme is obsolete. Use NTTheme instead.")]
 public enum Theme {
 
     /// <summary>

@@ -1,11 +1,12 @@
-@use '../Styles/_Variables/_elevation.scss' as elevation;
 @use '../Styles/_Variables/_interactable.scss' as interactable;
 @use '../Styles/_Variables/_measurements.scss' as measurements;
+@use '../Styles/_Variables/_motion.scss' as motion;
 @use '../Styles/_Variables/_typescale.scss' as typescale;
 
-$background-color: var(--nt-snackbar-background-color);
-$text-color: var(--nt-snackbar-text-color);
-$action-color: var(--nt-snackbar-action-color);
+$background-color: var(--nt-snackbar-background-color, var(--tnt-color-inverse-surface));
+$text-color: var(--nt-snackbar-text-color, var(--tnt-color-inverse-on-surface));
+$action-color: var(--nt-snackbar-action-color, var(--tnt-color-inverse-primary));
+$container-shape: 4px;
 
 .nt-snackbar-container {
     --nt-snackbar-edge-offset: 16px;
@@ -61,109 +62,110 @@ $action-color: var(--nt-snackbar-action-color);
         justify-items: end;
     }
 
-    .nt-snackbar-stack-item {
-        grid-area: 1 / 1;
-        pointer-events: none;
-        transform: translate(
-            calc(var(--nt-snackbar-stack-x-step) * var(--nt-snackbar-stack-depth)),
-            calc(var(--nt-snackbar-stack-y-step) * var(--nt-snackbar-stack-depth))
-        );
-        transition: transform 200ms ease-out, opacity 200ms linear;
+    ::deep {
+        .nt-snackbar-stack-item {
+            grid-area: 1 / 1;
+            pointer-events: none;
+            transform: translate(
+                calc(var(--nt-snackbar-stack-x-step) * var(--nt-snackbar-stack-depth)),
+                calc(var(--nt-snackbar-stack-y-step) * var(--nt-snackbar-stack-depth))
+            );
+            transition: transform 200ms ease-out, opacity 200ms linear;
 
-        &.nt-snackbar-front {
-            z-index: 3;
-            pointer-events: auto;
-        }
+            &.nt-snackbar-front {
+                z-index: 3;
+                pointer-events: auto;
+            }
 
-        &.nt-snackbar-queued {
-            z-index: 2;
-            opacity: 0.92;
-        }
+            &.nt-snackbar-queued {
+                z-index: 2;
+                opacity: 0.92;
+            }
 
-        &.nt-snackbar-stack-depth-2 {
-            z-index: 1;
-            opacity: 0.84;
-        }
-    }
-
-    .nt-snackbar {
-        @include elevation.tnt-elevation(3, false);
-        animation: ntSnackbarSlideIn 200ms ease-out;
-        transition: transform 200ms ease-out, opacity 200ms linear;
-        background-color: $background-color;
-        color: $text-color;
-        border-radius: 4px;
-        box-sizing: border-box;
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 4px 8px;
-        min-height: 48px;
-        max-width: 560px;
-        width: min(560px, calc(100vw - (var(--nt-snackbar-edge-offset) * 2)));
-        padding: 4px 8px 4px 16px;
-        pointer-events: auto;
-
-        &.nt-closing {
-            opacity: 0;
-            transform: translateY(16px);
-        }
-
-        .nt-snackbar-message {
-            @include typescale.tnt-body-medium;
-            flex: 1 1 16rem;
-            min-width: 0;
-            overflow-wrap: anywhere;
-            padding: 10px 0;
-        }
-
-        .nt-snackbar-actions {
-            display: flex;
-            flex: 0 1 auto;
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: flex-end;
-            gap: 4px;
-            margin-left: auto;
-        }
-
-        .nt-snackbar-action,
-        .nt-snackbar-close {
-            @include interactable.tnt-interactable($action-color, null, false);
-            background: transparent;
-            border: none;
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        .nt-snackbar-action {
-            @include typescale.tnt-label-large;
-            color: $action-color;
-            border-radius: measurements.$tnt-pill-border-radius-xs;
-            min-height: 32px;
-            padding: 0 12px;
-        }
-
-        .nt-snackbar-close {
-            @include interactable.tnt-interactable($text-color, null, false);
-            color: $text-color;
-            border-radius: 20px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            flex: 0 0 40px;
-            height: 40px;
-            width: 40px;
-
-            .tnt-icon {
-                font-size: 20px;
+            &.nt-snackbar-stack-depth-2 {
+                z-index: 1;
+                opacity: 0.84;
             }
         }
 
-        .tnt-disabled {
-            cursor: not-allowed;
-            opacity: 0.6;
+        .nt-snackbar {
+            animation: ntSnackbarRollUp motion.$nt-motion-duration-short_4 motion.$nt-motion-easing-standard;
+            background-color: $background-color;
+            color: $text-color;
+            border-radius: $container-shape;
+            box-sizing: border-box;
+            display: flex;
+            flex-wrap: nowrap;
+            align-items: center;
+            gap: 4px 8px;
+            min-height: 48px;
+            inline-size: fit-content;
+            max-inline-size: min(560px, calc(100vw - (var(--nt-snackbar-edge-offset) * 2)));
+            min-inline-size: min(280px, calc(100vw - (var(--nt-snackbar-edge-offset) * 2)));
+            padding: 4px 8px 4px 16px;
+            pointer-events: auto;
+
+            &.nt-closing {
+                animation: ntSnackbarRollDown motion.$nt-motion-duration-short_3 motion.$nt-motion-easing-standard-accelerate forwards;
+            }
+
+            .nt-snackbar-message {
+                @include typescale.tnt-body-medium;
+                flex: 1 1 auto;
+                min-width: 0;
+                overflow-wrap: anywhere;
+                padding: 10px 0;
+            }
+
+            .nt-snackbar-actions {
+                display: flex;
+                flex: 0 1 auto;
+                flex-wrap: nowrap;
+                align-items: center;
+                justify-content: flex-end;
+                gap: 4px;
+                margin-left: auto;
+                white-space: nowrap;
+            }
+
+            .nt-snackbar-action,
+            .nt-snackbar-close {
+                @include interactable.tnt-interactable($action-color, null, false);
+                background: transparent;
+                border: none;
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+
+            .nt-snackbar-action {
+                @include typescale.tnt-label-large;
+                color: $action-color;
+                border-radius: measurements.$tnt-pill-border-radius-xs;
+                min-height: 32px;
+                padding: 0 12px;
+            }
+
+            .nt-snackbar-close {
+                @include interactable.tnt-interactable($text-color, null, false);
+                color: $text-color;
+                border-radius: 20px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                flex: 0 0 40px;
+                height: 40px;
+                width: 40px;
+
+                .tnt-icon {
+                    font-size: 20px;
+                }
+            }
+
+            .tnt-disabled {
+                cursor: not-allowed;
+                opacity: 0.6;
+            }
         }
     }
 }
@@ -174,14 +176,26 @@ $action-color: var(--nt-snackbar-action-color);
     }
 }
 
-@keyframes ntSnackbarSlideIn {
+@keyframes ntSnackbarRollUp {
     0% {
         opacity: 0;
-        transform: translateY(16px);
+        clip-path: inset(100% 0 0 0 round #{$container-shape});
     }
 
     100% {
         opacity: 1;
-        transform: translateY(0);
+        clip-path: inset(0 0 0 0 round #{$container-shape});
+    }
+}
+
+@keyframes ntSnackbarRollDown {
+    0% {
+        opacity: 1;
+        clip-path: inset(0 0 0 0 round #{$container-shape});
+    }
+
+    100% {
+        opacity: 0;
+        clip-path: inset(100% 0 0 0 round #{$container-shape});
     }
 }

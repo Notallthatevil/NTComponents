@@ -1,0 +1,10 @@
+@namespace NTComponents
+@using NTComponents.Core
+@inherits NTPageScriptComponent<NTTooltip>
+
+<nt-tooltip @attributes="AdditionalAttributesWithoutInternalId" class="@ElementClass" style="@ElementStyle" id="@ResolvedElementId" title="@ElementTitle" lang="@ElementLang" role="tooltip" aria-hidden="true" @ref="Element" data-permanent>
+    <div class="nt-tooltip-content">
+        @ChildContent
+    </div>
+</nt-tooltip>
+@PageScript

@@ -13,6 +13,7 @@ namespace NTComponents;
 /// <summary>
 ///     A Blazor component for editing Markdown content.
 /// </summary>
+[Obsolete("TnTMarkdownEditor is obsolete. Use NTRichTextEditor instead.")]
 public partial class TnTMarkdownEditor {
 
     /// <inheritdoc />

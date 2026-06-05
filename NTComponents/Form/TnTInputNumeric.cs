@@ -1,3 +1,4 @@
+#pragma warning disable CS0618
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using System;
@@ -15,6 +16,7 @@ namespace NTComponents;
 ///     Represents a numeric input component.
 /// </summary>
 /// <typeparam name="TNumericType">The type of the numeric value.</typeparam>
+[System.Obsolete("This legacy Form element is obsolete. Use the NT form components instead.")]
 public class TnTInputNumeric< [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TNumericType> : TnTInputBase<TNumericType> {
 
     /// <inheritdoc />

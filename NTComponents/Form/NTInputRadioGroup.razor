@@ -1,0 +1,63 @@
+@namespace NTComponents
+@typeparam TValue
+@inherits NTFormControlBaseCore<TValue>
+
+@{
+    var errorText = CurrentErrorText;
+    var hasErrorText = !string.IsNullOrWhiteSpace(errorText);
+    var supportingText = hasErrorText ? null : CurrentSupportingText;
+    var hasSupportingText = !string.IsNullOrWhiteSpace(supportingText);
+}
+
+<div class="@BuildRootClass(hasErrorText)" style="@_elementStyle">
+    <fieldset @attributes="GroupAttributes"
+              class="nt-radio-fieldset"
+              id="@InputId"
+              title="@ElementTitle"
+              lang="@ElementLang"
+              disabled="@FieldDisabled"
+              role="radiogroup"
+              aria-labelledby="@(HasLabel ? LabelId : null)"
+              aria-describedby="@BuildDescribedBy(hasErrorText, hasSupportingText)"
+              aria-invalid="@(hasErrorText ? "true" : "false")"
+              aria-errormessage="@(hasErrorText ? ErrorTextId : null)"
+              aria-required="@(IsRequired ? "true" : null)"
+              tabindex="@(FieldDisabled ? null : "0")"
+              onkeydown="window.NTComponents?.radioGroupKeyDownHandler?.(event)"
+              @onblur="OnBlurAsync"
+              @ref="Element">
+        <span class="nt-radio-background" aria-hidden="true"></span>
+        <span class="nt-radio-state-layer" aria-hidden="true"></span>
+
+        @if (EffectiveAppearance == NTFormAppearance.Filled) {
+            <span class="nt-radio-active-indicator" aria-hidden="true"></span>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(Label)) {
+            <legend class="nt-radio-legend" id="@LabelId">@Label</legend>
+        }
+
+        <div class="nt-radio-options">
+            <CascadingValue Value="this">
+                <CascadingValue Name="SelectedRadioValue" Value="CurrentValue">
+                    @ChildContent
+                </CascadingValue>
+            </CascadingValue>
+        </div>
+    </fieldset>
+
+    @if (hasErrorText || hasSupportingText) {
+        <div class="nt-radio-supporting-row">
+            @if (hasErrorText) {
+                <span class="nt-radio-supporting nt-radio-error-text" id="@ErrorTextId" role="alert">
+                    @errorText
+                </span>
+            }
+            else if (hasSupportingText) {
+                <span class="nt-radio-supporting" id="@SupportingTextId">
+                    @supportingText
+                </span>
+            }
+        </div>
+    }
+</div>

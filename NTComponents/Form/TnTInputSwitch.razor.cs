@@ -1,3 +1,4 @@
+#pragma warning disable CS0618
 using Microsoft.AspNetCore.Components;
 using System.Diagnostics.CodeAnalysis;
 using NTComponents.Core;

@@ -2,33 +2,155 @@
 @using NTComponents
 @rendermode InteractiveAuto
 
+<main class="chips-demo">
+    <section class="chips-demo-section">
+        <h1>Chips</h1>
 
-<NTComponents.TnTChip Label="Chip" @bind-Value="_a" BindAfter="Checked" DisableToggle="true" />
-<NTComponents.TnTChip StartIcon="@MaterialIcon.GridOn" Label="Chip" BindAfter="Checked" @bind-Value="_b" />
-<NTComponents.TnTChip Label="Chip" CloseButtonClicked="@Closed" @bind-Value="_c" BindAfter="Checked" Disabled="true" />
-<NTComponents.TnTChip StartIcon="@MaterialIcon.GridOn" Label="Chip" CloseButtonClicked="@Closed" BindAfter="Checked" @bind-Value="_d" />
+        <div class="chips-demo-group" aria-label="Assist chips">
+            <NTChip Label="Add to calendar" Variant="NTChipVariant.Assist" LeadingIcon="@MaterialIcon.Event" OnClickCallback="@(() => SetMessage("Calendar action"))" />
+            <NTChip Label="Directions" Variant="NTChipVariant.Assist" LeadingIcon="@MaterialIcon.Map" Appearance="NTChipAppearance.Elevated" OnClickCallback="@(() => SetMessage("Directions action"))" />
+            <NTChip Label="Custom colors"
+                    Variant="NTChipVariant.Assist"
+                    LeadingIcon="@MaterialIcon.Palette"
+                    Appearance="NTChipAppearance.Elevated"
+                    BackgroundColor="TnTColor.TertiaryContainer"
+                    TextColor="TnTColor.OnTertiaryContainer"
+                    IconColor="TnTColor.Tertiary"
+                    StateLayerColor="TnTColor.OnTertiaryContainer"
+                    FocusOutlineColor="TnTColor.Tertiary"
+                    OnClickCallback="@(() => SetMessage("Custom color action"))" />
+            <NTChip Label="Disabled" Variant="NTChipVariant.Assist" LeadingIcon="@MaterialIcon.Block" Disabled="true" />
+        </div>
 
-<NTComponents.TnTChip Label="Chip" SubLabel="Sub label" @bind-Value="_e" BindAfter="Checked" DisableToggle="true" />
-<NTComponents.TnTChip StartIcon="@MaterialIcon.GridOn" Label="Chip" SubLabel="Sub label" BindAfter="Checked" @bind-Value="_f" />
-<NTComponents.TnTChip StartIcon="@MaterialIcon.GridOn" Label="Chip" SubLabel="Sub label" CloseButtonClicked="@Closed" BindAfter="Checked" @bind-Value="_g" />
+        <div class="chips-demo-group" aria-label="Filter chips">
+            <NTChip Label="Favorites" Variant="NTChipVariant.Filter" @bind-Selected="_favorites" ElementName="filters" />
+            <NTChip Label="Open now" Variant="NTChipVariant.Filter" @bind-Selected="_openNow" ElementName="filters" />
+            <NTChip Label="@_categoryLabel" Variant="NTChipVariant.Filter" Selected="@IsCategoryFilterSelected">
+                <MenuContent>
+                    <NTMenuLabelItem Label="Category" />
+                    <NTMenuButtonItem Label="All categories" Selected="@IsAllCategorySelected" OnClickCallback="@ClearCategory" />
+                    <NTMenuButtonItem Label="Restaurants" Selected="@IsRestaurantsCategorySelected" OnClickCallback="@SelectRestaurantsCategory" />
+                    <NTMenuButtonItem Label="Parks" Selected="@IsParksCategorySelected" OnClickCallback="@SelectParksCategory" />
+                </MenuContent>
+            </NTChip>
+            <NTChip Label="Accessible" Variant="NTChipVariant.Filter" @bind-Selected="_accessible" ElementName="filters" />
+            <NTChip Label="Pets" Variant="NTChipVariant.Filter" Selected="true" Disabled="true" />
+        </div>
 
+        <div class="chips-demo-group" aria-label="Input chips">
+            @foreach (var contact in _contacts) {
+                <NTChip @key="contact"
+                        Label="@contact"
+                        Variant="NTChipVariant.Input"
+                        LeadingIcon="@MaterialIcon.Person"
+                        OnRemoveCallback="@(() => RemoveContact(contact))" />
+            }
+        </div>
+
+        <div class="chips-demo-group" aria-label="Suggestion chips">
+            <NTChip Label="Nearby" Variant="NTChipVariant.Suggestion" Href="/chips?query=nearby" />
+            <NTChip Label="Open late" Variant="NTChipVariant.Suggestion" Href="/chips?query=open-late" />
+            <NTChip Label="Outdoor seating" Variant="NTChipVariant.Suggestion" Href="/chips?query=outdoor" />
+        </div>
+
+        <p class="chips-demo-status" aria-live="polite">@_message</p>
+    </section>
+
+    <section class="chips-demo-section">
+        <h2>Legacy TnTChip</h2>
+
+        <div class="chips-demo-group" aria-label="Legacy chips">
+            <TnTChip Label="Chip" @bind-Value="_legacyA" BindAfter="Checked" DisableToggle="true" />
+            <TnTChip StartIcon="@MaterialIcon.GridOn" Label="Chip" BindAfter="Checked" @bind-Value="_legacyB" />
+            <TnTChip Label="Chip" CloseButtonClicked="@Closed" @bind-Value="_legacyC" BindAfter="Checked" Disabled="true" />
+            <TnTChip StartIcon="@MaterialIcon.GridOn" Label="Chip" CloseButtonClicked="@Closed" BindAfter="Checked" @bind-Value="_legacyD" />
+            <TnTChip Label="Chip" SubLabel="Sub label" @bind-Value="_legacyE" BindAfter="Checked" DisableToggle="true" />
+            <TnTChip StartIcon="@MaterialIcon.GridOn" Label="Chip" SubLabel="Sub label" BindAfter="Checked" @bind-Value="_legacyF" />
+            <TnTChip StartIcon="@MaterialIcon.GridOn" Label="Chip" SubLabel="Sub label" CloseButtonClicked="@Closed" BindAfter="Checked" @bind-Value="_legacyG" />
+        </div>
+    </section>
+</main>
 
 @code {
-    private bool _a;
-    private bool _b;
-    private bool _c;
-    private bool _d;
-    private bool _e;
-    private bool _f;
-    private bool _g;
+    private bool _accessible;
+    private bool _favorites = true;
+    private bool _legacyA;
+    private bool _legacyB;
+    private bool _legacyC;
+    private bool _legacyD;
+    private bool _legacyE;
+    private bool _legacyF;
+    private bool _legacyG;
+    private bool _openNow;
+    private string _categoryLabel = "Category";
+    private string _message = "Ready";
+    private readonly List<string> _contacts = ["nate@example.com", "design@example.com", "ops@example.com"];
 
+    private bool IsAllCategorySelected => _categoryLabel == "Category";
+    private bool IsCategoryFilterSelected => !IsAllCategorySelected;
+    private bool IsParksCategorySelected => _categoryLabel == "Parks";
+    private bool IsRestaurantsCategorySelected => _categoryLabel == "Restaurants";
 
-    private void Checked(bool b) {
-        Console.WriteLine(b);
+    private void ClearCategory() {
+        SetCategory("Category");
+    }
+
+    private void Checked(bool value) {
+        _message = $"Legacy chip selected: {value}";
     }
 
     private void Closed() {
-        Console.WriteLine("Closed");
+        _message = "Legacy chip closed";
+    }
+
+    private void RemoveContact(string contact) {
+        _contacts.Remove(contact);
+        _message = $"Removed {contact}";
+    }
+
+    private void SelectParksCategory() {
+        SetCategory("Parks");
+    }
+
+    private void SelectRestaurantsCategory() {
+        SetCategory("Restaurants");
+    }
+
+    private void SetCategory(string category) {
+        _categoryLabel = category;
+        _message = category == "Category" ? "Cleared category filter" : $"Filtered by {category}";
+    }
+
+    private void SetMessage(string message) {
+        _message = message;
     }
 }
 
+<style>
+    .chips-demo {
+        display: grid;
+        gap: 32px;
+        padding: 24px;
+    }
+
+    .chips-demo-section {
+        display: grid;
+        gap: 16px;
+    }
+
+    .chips-demo-section h1,
+    .chips-demo-section h2,
+    .chips-demo-status {
+        margin: 0;
+    }
+
+    .chips-demo-group {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+    }
+
+    .chips-demo-status {
+        color: var(--tnt-color-on-surface-variant);
+    }
+</style>

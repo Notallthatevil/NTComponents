@@ -1,0 +1,298 @@
+@use 'sass:map';
+@use 'sass:math';
+@use '../Styles/_Variables/_colors.scss' as colors;
+@use '../Styles/_Variables/_corner-radius.scss' as corners;
+@use '../Styles/_Variables/_elevation.scss' as elevation;
+@use '../Styles/_Variables/_typescale.scss' as typescale;
+@use './buttonMotion' as buttonMotion;
+@use './buttonFocusRing' as focus;
+
+@function type-token($style, $property) {
+    @return map.get(map.get(typescale.$nt-typescale-baseline, $style), $property);
+}
+
+$sizes: (
+    xs: (32px, 12px, 10px, 4px, 20px, 22px, corners.$nt-corner-radius-extra-small, corners.$nt-corner-radius-medium, -1px, type-token('label-large', weight), type-token('label-large', size), type-token('label-large', line-height), type-token('label-large', tracking)),
+    s: (40px, 16px, 12px, 8px, 20px, 22px, corners.$nt-corner-radius-extra-small, corners.$nt-corner-radius-medium, -1px, type-token('label-large', weight), type-token('label-large', size), type-token('label-large', line-height), type-token('label-large', tracking)),
+    m: (56px, 24px, 24px, 8px, 24px, 26px, corners.$nt-corner-radius-extra-small, corners.$nt-corner-radius-large, -2px, type-token('title-medium', weight), type-token('title-medium', size), type-token('title-medium', line-height), type-token('title-medium', tracking)),
+    l: (96px, 48px, 48px, 12px, 32px, 38px, corners.$nt-corner-radius-small, corners.$nt-corner-radius-extra-large, -3px, type-token('headline-small', weight), type-token('headline-small', size), type-token('headline-small', line-height), type-token('headline-small', tracking)),
+    xl: (136px, 64px, 64px, 16px, 40px, 50px, corners.$nt-corner-radius-medium, corners.$nt-corner-radius-extra-large, -6px, type-token('headline-large', weight), type-token('headline-large', size), type-token('headline-large', line-height), type-token('headline-large', tracking))
+);
+
+@function touch-inset($height) {
+    @if $height < 48px {
+        @return math.div(48px - $height, 2);
+    }
+
+    @return 0px;
+}
+
+@mixin split-button-size($height, $leading-start, $leading-end, $content-gap, $leading-icon-size, $trailing-icon-size, $inner-radius, $square-radius, $trailing-icon-offset, $weight, $font-size, $line-height, $tracking) {
+    @include typescale.nt-typescale($weight, $font-size, $line-height, $tracking);
+
+    .nt-split-button-segment {
+        height: $height;
+
+        &::after,
+        &::before {
+            inset-block: touch-inset($height);
+        }
+    }
+
+    .nt-split-button-leading {
+        border-start-start-radius: math.div($height, 2);
+        border-start-end-radius: $inner-radius;
+        border-end-start-radius: math.div($height, 2);
+        border-end-end-radius: $inner-radius;
+        gap: $content-gap;
+        padding-inline: $leading-start $leading-end;
+    }
+
+    .nt-split-button-trailing {
+        border-start-start-radius: $inner-radius;
+        border-start-end-radius: math.div($height, 2);
+        border-end-start-radius: $inner-radius;
+        border-end-end-radius: math.div($height, 2);
+        inline-size: max(48px, #{$height});
+    }
+
+    &.nt-split-button-shape-square {
+        .nt-split-button-leading {
+            border-start-start-radius: $square-radius;
+            border-end-start-radius: $square-radius;
+        }
+
+        .nt-split-button-trailing {
+            border-start-end-radius: $square-radius;
+            border-end-end-radius: $square-radius;
+        }
+    }
+
+    &.nt-split-button-shape-round .nt-split-button-leading:not(:disabled):is(:active, .nt-button--pressed-shape) {
+        border-radius: math.div($height, 2);
+    }
+
+    &.nt-split-button-shape-round.nt-split-button-expanded {
+        .nt-split-button-trailing {
+            border-radius: math.div($height, 2);
+
+            &::after,
+            &::before {
+                inset-inline-start: 0;
+                inset-inline-end: 0;
+            }
+        }
+    }
+
+    .nt-split-button-trailing-icon {
+        transform: translateX($trailing-icon-offset);
+    }
+
+    &:dir(rtl) .nt-split-button-trailing-icon {
+        transform: translateX(-$trailing-icon-offset);
+    }
+
+    &.nt-split-button-expanded .nt-split-button-trailing-icon {
+        transform: translateX(0) rotate(180deg);
+    }
+
+    ::deep {
+        .nt-button-ripple-host {
+            inset-block: touch-inset($height);
+        }
+
+        .nt-split-button-leading-icon .tnt-icon {
+            font-size: $leading-icon-size;
+        }
+
+        .nt-split-button-trailing-icon .tnt-icon {
+            font-size: $trailing-icon-size;
+        }
+    }
+}
+
+.nt-split-button {
+    color: var(--nt-split-button-fg);
+    display: inline-block;
+    vertical-align: middle;
+
+    .nt-split-button-boundary {
+        align-items: center;
+        display: inline-flex;
+        gap: 2px;
+        position: relative;
+    }
+
+    .nt-split-button-segment {
+        align-items: center;
+        appearance: none;
+        background: transparent;
+        border: 0;
+        box-sizing: border-box;
+        color: inherit;
+        cursor: pointer;
+        display: inline-flex;
+        font: inherit;
+        justify-content: center;
+        margin: 0;
+        min-block-size: 48px;
+        min-inline-size: 48px;
+        outline: none;
+        overflow: visible;
+        padding-block: 0;
+        position: relative;
+        text-decoration: none;
+        transition: border-radius buttonMotion.$nt-button-shape-transition, color buttonMotion.$nt-button-state-transition;
+        user-select: none;
+
+        &::after,
+        &::before {
+            border-radius: inherit;
+            content: '';
+            inset-inline: 0;
+            pointer-events: none;
+            position: absolute;
+        }
+
+        &::after {
+            background: var(--nt-split-button-bg);
+            border: 1px solid transparent;
+            transition: background-color buttonMotion.$nt-button-state-transition, border-color buttonMotion.$nt-button-state-transition, border-radius buttonMotion.$nt-button-shape-transition;
+            z-index: 0;
+        }
+
+        &.nt-elevation-none,
+        &.nt-elevation-lowest,
+        &.nt-elevation-low,
+        &.nt-elevation-medium,
+        &.nt-elevation-high,
+        &.nt-elevation-highest {
+            box-shadow: map.get(elevation.$elevation-shadows, 0);
+        }
+
+        &.nt-elevation-lowest::after {
+            box-shadow: map.get(elevation.$elevation-shadows, 1);
+        }
+
+        &.nt-elevation-low::after {
+            box-shadow: map.get(elevation.$elevation-shadows, 2);
+        }
+
+        &.nt-elevation-medium::after {
+            box-shadow: map.get(elevation.$elevation-shadows, 3);
+        }
+
+        &.nt-elevation-high::after {
+            box-shadow: map.get(elevation.$elevation-shadows, 4);
+        }
+
+        &.nt-elevation-highest::after {
+            box-shadow: map.get(elevation.$elevation-shadows, 5);
+        }
+
+        &::before {
+            background: currentColor;
+            opacity: 0;
+            transition: border-radius buttonMotion.$nt-button-shape-transition, opacity buttonMotion.$nt-button-state-transition;
+            z-index: 1;
+        }
+
+        &:not(:disabled) {
+            &:hover::before {
+                opacity: 0.08;
+            }
+
+            &:focus-visible::before,
+            &:active::before {
+                opacity: 0.1;
+            }
+
+            &:focus-visible {
+                z-index: 3;
+
+                &::after {
+                    @include focus.nt-button-focus-ring;
+                }
+            }
+        }
+
+        &:disabled {
+            box-shadow: map.get(elevation.$elevation-shadows, 0);
+            color: color-mix(in srgb, #{colors.$tnt-color-on-surface} 38%, transparent);
+            cursor: not-allowed;
+
+            &::after {
+                background: color-mix(in srgb, #{colors.$tnt-color-on-surface} 12%, transparent);
+                border-color: transparent;
+            }
+        }
+    }
+
+    .nt-split-button-trailing {
+        padding-inline: 0;
+    }
+
+    &.nt-split-button-outlined {
+        .nt-split-button-segment::after {
+            background: transparent;
+            border-color: colors.$tnt-color-outline;
+        }
+
+        .nt-split-button-segment:disabled::after {
+            background: transparent;
+            border-color: color-mix(in srgb, #{colors.$tnt-color-on-surface} 12%, transparent);
+        }
+    }
+
+    &.nt-split-button-text {
+        .nt-split-button-segment::after,
+        .nt-split-button-segment:disabled::after {
+            background: transparent;
+            border-color: transparent;
+        }
+    }
+
+    .nt-split-button-leading-icon,
+    .nt-split-button-label,
+    .nt-split-button-trailing-icon {
+        position: relative;
+        z-index: 2;
+    }
+
+    .nt-split-button-leading-icon,
+    .nt-split-button-trailing-icon {
+        align-items: center;
+        display: inline-flex;
+        flex: 0 0 auto;
+        justify-content: center;
+    }
+
+    .nt-split-button-label {
+        min-inline-size: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    @each $size, $tokens in $sizes {
+        &.tnt-size-#{$size} {
+            @include split-button-size($tokens...);
+        }
+    }
+
+    ::deep {
+        .nt-button-ripple-host {
+            transition: border-radius buttonMotion.$nt-button-shape-transition;
+        }
+
+        .nt-split-button-leading-icon .tnt-icon {
+            color: inherit;
+            pointer-events: none;
+        }
+
+        .nt-split-button-trailing-icon .tnt-icon {
+            color: inherit;
+            pointer-events: none;
+        }
+    }
+}

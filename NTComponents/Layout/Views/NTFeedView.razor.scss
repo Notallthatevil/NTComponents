@@ -1,0 +1,16 @@
+@use '../../Styles/_Variables/_screen-width.scss' as screen-width;
+@use './viewCommon' as view;
+
+@include view.root;
+
+.nt-feed-view {
+    align-items: start;
+    display: grid;
+    grid-template-columns: 1fr;
+}
+
+@media #{screen-width.$small-and-up} {
+    .nt-feed-view {
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--nt-feed-view-min-item-width, #{view.$feed-min-item-inline-size})), 1fr));
+    }
+}

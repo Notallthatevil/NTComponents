@@ -19,9 +19,12 @@
 		"Icons",
 		"Layout",
 		"LazyLoader",
+		"Menus",
+		"NavRail",
 		"Progress",
 		"Scheduler",
 		"Script",
+		"Shapes",
 		"Skeleton",
 		"Snackbar",
 		"Storage",
@@ -32,7 +35,8 @@
 		"Tooltip",
 		"Typeahead",
 		"Virualization",
-		"Wizard"
+		"Wizard",
+		"wwwroot"
 	],
 
 	"Configurations": {

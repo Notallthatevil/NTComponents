@@ -18,6 +18,7 @@ namespace NTComponents;
 /// <typeparam name="TGridItem">The type of items in the grid.</typeparam>
 /// <typeparam name="TProp">The type of the property displayed in the column.</typeparam>
 [CascadingTypeParameter(nameof(TGridItem))]
+[Obsolete("This legacy grid API is obsolete. Use NTDataGrid, NTPropertyColumn, and NTTemplateColumn instead.")]
 public partial class TnTPropertyColumn<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields)] TGridItem, TProp> {
 
     /// <summary>

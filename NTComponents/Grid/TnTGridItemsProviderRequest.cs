@@ -10,6 +10,7 @@ namespace NTComponents.Grid;
 /// </summary>
 /// <typeparam name="TGridItem">The type of items in the grid.</typeparam>
 [ExcludeFromCodeCoverage]
+[Obsolete("This legacy grid API is obsolete. Use NTDataGrid, NTPropertyColumn, and NTTemplateColumn instead.")]
 public readonly struct TnTGridItemsProviderRequest<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields)] TGridItem> {
 
     /// <summary>

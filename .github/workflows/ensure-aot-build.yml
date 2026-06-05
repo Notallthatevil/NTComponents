@@ -15,12 +15,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # concise lists; combinations will be generated automatically
-        rid: [ 'win-x64', 'win-x86', 'win-arm64', 'linux-x64', 'linux-arm', 'linux-arm64', 'osx-x64', 'osx-arm64' ]
         tfm: [ 'net9.0', 'net10.0' ]
-    # map runtime identifier to the appropriate GitHub runner label
-    # prefer partner ARM images where available: https://github.com/actions/partner-runner-images
-    runs-on: ${{ fromJson('{"win-x64":"windows-latest","win-x86":"windows-latest","win-arm64":"windows-11-arm","linux-x64":"ubuntu-latest","linux-arm":"ubuntu-22.04-arm","linux-arm64":"ubuntu-22.04-arm","osx-x64":"macos-latest","osx-arm64":"macos-13"}')[matrix.rid] }}
+    runs-on: windows-latest
     # determine dotnet SDK version from the TFM (job-level env to avoid schema ambiguity)
     env:
       DOTNET_VERSION: ${{ matrix.tfm == 'net10.0' && '10.0.x' || '9.0.x' }}
@@ -40,6 +36,10 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
-    - name: publish AOT testApp, assert static analysis warning count, and run the app
+    - name: Restore WebAssembly workloads
       shell: pwsh
-      run: ./test-aot-compatibility.ps1 -runtimes "${{ matrix.rid }}" -frameworks "${{ matrix.tfm }}"
+      run: dotnet workload restore AotCompatibility.TestApp/AotCompatibility.TestApp.csproj
+
+    - name: Publish AOT smoke app, assert static analysis warning count, and browser-smoke the app
+      shell: pwsh
+      run: ./test-aot-compatibility.ps1 -frameworks "${{ matrix.tfm }}"

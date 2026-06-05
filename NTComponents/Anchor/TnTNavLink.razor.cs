@@ -10,6 +10,7 @@ namespace NTComponents;
 /// <summary>
 ///     Represents a navigation link (anchor) component with customizable styles and behaviors.
 /// </summary>
+[Obsolete("Use NTNavLink instead.")]
 public partial class TnTNavLink {
     /// <inheritdoc />
     [Parameter]

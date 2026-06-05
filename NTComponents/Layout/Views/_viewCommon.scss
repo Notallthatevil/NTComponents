@@ -1,0 +1,45 @@
+@use '../../Styles/_Variables/_measurements.scss' as measurements;
+@use '../../Styles/_Variables/_screen-width.scss' as screen-width;
+
+$gap: 16px !default;
+$container-inline-margin: $gap !default;
+$container-expanded-inline-margin: measurements.$gutter-width !default;
+$container-small-max-inline-size: screen-width.$small !default;
+$container-medium-max-inline-size: screen-width.$medium !default;
+$container-large-max-inline-size: screen-width.$large !default;
+$container-extra-large-max-inline-size: screen-width.$extra-large !default;
+$feed-min-item-inline-size: 280px !default;
+$pane-inline-size-compact: 240px !default;
+$pane-inline-size-medium: 320px !default;
+$pane-inline-size-large: 360px !default;
+$pane-inline-size-extra-large: 412px !default;
+$list-detail-list-min-inline-size: $pane-inline-size-compact !default;
+$list-detail-list-inline-size: $pane-inline-size-large !default;
+$list-detail-list-expanded-inline-size: $pane-inline-size-extra-large !default;
+$multi-pane-min-inline-size-compact: $pane-inline-size-compact !default;
+$multi-pane-min-inline-size-medium: $pane-inline-size-medium !default;
+$multi-pane-min-inline-size-large: $pane-inline-size-large !default;
+$multi-pane-min-inline-size-extra-large: $pane-inline-size-extra-large !default;
+$multi-pane-min-inline-size: $multi-pane-min-inline-size-medium !default;
+$supporting-pane-inline-size: $list-detail-list-inline-size !default;
+$supporting-pane-expanded-inline-size: $list-detail-list-expanded-inline-size !default;
+
+@mixin root {
+    .nt-view {
+        box-sizing: border-box;
+        gap: $gap;
+        inline-size: 100%;
+        min-inline-size: 0;
+    }
+
+    .nt-view-full-height {
+        block-size: 100%;
+        min-block-size: 0;
+    }
+
+    .nt-view-pane {
+        box-sizing: border-box;
+        min-block-size: 0;
+        min-inline-size: 0;
+    }
+}

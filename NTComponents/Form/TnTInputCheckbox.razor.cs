@@ -1,3 +1,4 @@
+#pragma warning disable CS0618
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Rendering;

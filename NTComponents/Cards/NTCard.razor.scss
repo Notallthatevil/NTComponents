@@ -1,0 +1,67 @@
+@use '../Styles/_Variables/_motion.scss' as motion;
+
+$nt-card-state-transition: motion.$nt-motion-duration-short_3 motion.$nt-motion-easing-standard;
+
+.nt-card {
+    position: relative;
+    display: block;
+    box-sizing: border-box;
+    min-width: 0;
+    padding: 16px;
+    border: 1px solid transparent;
+    background-color: var(--nt-card-background-color);
+    color: var(--nt-card-content-color, inherit);
+    overflow: hidden;
+    outline: none;
+    text-decoration: none;
+    transition: background-color $nt-card-state-transition, box-shadow $nt-card-state-transition, border-color $nt-card-state-transition, color $nt-card-state-transition, outline-color $nt-card-state-transition;
+
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        pointer-events: none;
+        border-radius: inherit;
+        background: var(--nt-card-state-layer-color);
+        transition: opacity $nt-card-state-transition;
+    }
+
+    &.nt-card-outlined {
+        border-color: var(--nt-card-outline-color);
+    }
+
+    &.nt-card-button {
+        width: 100%;
+        font: inherit;
+        text-align: inherit;
+        appearance: none;
+    }
+
+    &.nt-card-actionable:not(.nt-card-disabled) {
+        cursor: pointer;
+    }
+
+    &.nt-card-actionable:not(.nt-card-disabled):hover::before {
+        opacity: 0.08;
+    }
+
+    &.nt-card-actionable:not(.nt-card-disabled):focus-visible {
+        outline: 3px solid color-mix(in srgb, var(--nt-card-outline-color) 44%, transparent);
+        outline-offset: 2px;
+    }
+
+    &.nt-card-actionable:not(.nt-card-disabled):focus-visible::before {
+        opacity: 0.1;
+    }
+
+    &.nt-card-actionable:not(.nt-card-disabled):active::before {
+        opacity: 0.1;
+    }
+
+    &.nt-card-disabled {
+        opacity: 0.38;
+        cursor: default;
+        outline: none;
+    }
+}

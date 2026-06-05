@@ -1,0 +1,21 @@
+@namespace NTComponents
+@using Microsoft.AspNetCore.Components.Rendering
+@using NTComponents.Core
+@inherits NTPageScriptComponent<NTCarouselItem>
+
+@code {
+    internal void RenderItem(RenderTreeBuilder __builder) {
+        <tnt-carousel-item @attributes="@AdditionalAttributes" class="@($"tnt-carousel-item {(_hero ? " tnt-carousel-hero" : null)}")">
+            <div class="@ElementClass" style="@ElementStyle" id="@ElementId" title="@ElementTitle" @ref="Element" lang="@ElementLang" @onclick="@OnClickCallback">
+                @ChildContent
+                @if (OnClickCallback.HasDelegate && EnableRipple) {
+                    <TnTRippleEffect />
+                }
+            </div>
+        </tnt-carousel-item>
+    }
+
+    internal void RenderPageScript(RenderTreeBuilder __builder) {
+        @PageScript
+    }
+}

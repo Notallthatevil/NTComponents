@@ -1,0 +1,90 @@
+@namespace NTComponents
+@inherits NTBooleanInputBase
+
+@{
+    var errorText = CurrentErrorText;
+    var hasErrorText = !string.IsNullOrWhiteSpace(errorText);
+}
+
+<div class="@BuildRootClass(hasErrorText)" style="@_elementStyle">
+    @{
+        var supportingText = hasErrorText ? null : CurrentSupportingText;
+        var hasSupportingText = !string.IsNullOrWhiteSpace(supportingText);
+    }
+
+    <label class="nt-checkbox-label" for="@InputId" title="@ElementTitle" lang="@ElementLang">
+        @if (LeadingIcon is not null) {
+            <span class="nt-checkbox-leading" aria-hidden="true">
+                @LeadingIcon.Render()
+            </span>
+        }
+
+        <span class="nt-checkbox-touch-target">
+            <input @attributes="InputAttributes"
+                   id="@InputId"
+                   name="@ElementName"
+                   type="checkbox"
+                   value="true"
+                   checked="@CurrentValue"
+                   disabled="@(FieldDisabled || FieldReadOnly)"
+                   autofocus="@AutoFocus"
+                   aria-checked="@(_isIndeterminate ? "mixed" : null)"
+                   aria-describedby="@BuildDescribedBy(hasErrorText, hasSupportingText)"
+                   aria-invalid="@(hasErrorText ? "true" : "false")"
+                   aria-errormessage="@(hasErrorText ? ErrorTextId : null)"
+                   aria-required="@(Required ? "true" : null)"
+                   data-indeterminate="@(_isIndeterminate ? "true" : null)"
+                   @onchange="OnChangeAsync"
+                   @onblur="OnBlurAsync"
+                   @ref="Element" />
+            <span class="nt-checkbox-state-layer" aria-hidden="true"></span>
+            <span class="nt-checkbox-container" aria-hidden="true">
+                <span class="nt-checkbox-outline"></span>
+                <span class="nt-checkbox-background"></span>
+                <svg class="nt-checkbox-icon nt-checkbox-checkmark" viewBox="0 0 18 18" focusable="false" aria-hidden="true">
+                    <path class="nt-checkbox-mark nt-checkbox-mark-short" d="M4 9.5 L7.2 12.7"></path>
+                    <path class="nt-checkbox-mark nt-checkbox-mark-long" d="M7.2 12.7 L14 5.8"></path>
+                </svg>
+                <svg class="nt-checkbox-icon nt-checkbox-indeterminate-mark" viewBox="0 0 18 18" focusable="false" aria-hidden="true">
+                    <path d="M4 9 H14"></path>
+                </svg>
+            </span>
+        </span>
+
+        @if (!string.IsNullOrWhiteSpace(Label)) {
+            <span class="nt-checkbox-label-text" id="@LabelId">@Label</span>
+        }
+
+        @if (TrailingIcon is not null) {
+            <span class="nt-checkbox-trailing" aria-hidden="true">
+                @TrailingIcon.Render()
+            </span>
+        }
+    </label>
+
+    @if (hasErrorText || hasSupportingText) {
+        <div class="nt-checkbox-supporting-row">
+            @if (hasErrorText) {
+                <span class="nt-checkbox-supporting nt-checkbox-error-text" id="@ErrorTextId" role="alert">
+                    @errorText
+                </span>
+            }
+            else if (hasSupportingText) {
+                <span class="nt-checkbox-supporting" id="@SupportingTextId">
+                    @supportingText
+                </span>
+            }
+        </div>
+    }
+
+    @if (ShouldRenderReadOnlyFormPostValue) {
+        <input type="hidden"
+               name="@ElementName"
+               value="@FormPostValue" />
+    }
+    else if (ShouldRenderFormPostFallback) {
+        <input type="hidden"
+               name="@ElementName"
+               value="false" />
+    }
+</div>

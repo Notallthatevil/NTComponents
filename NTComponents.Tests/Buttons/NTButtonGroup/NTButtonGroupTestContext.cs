@@ -36,7 +36,8 @@ public abstract class NTButtonGroupTestContext : BunitContext {
         var first = new NTButtonGroupTestItem {
             Key = Fixture.Create<string>(),
             Label = iconOnlyFirstItem ? null : Fixture.Create<string>(),
-            StartIcon = iconOnlyFirstItem ? new MaterialIcon("home") : null,
+            Icon = iconOnlyFirstItem ? new MaterialIcon("home") : null,
+            AriaLabel = iconOnlyFirstItem ? "Home" : null,
             IsDefaultSelected = false
         };
 
@@ -61,12 +62,12 @@ public abstract class NTButtonGroupTestContext : BunitContext {
                 builder.AddAttribute(2, nameof(NTButtonGroupItem<string>.Label), item.Label);
             }
 
-            if (item.StartIcon is not null) {
-                builder.AddAttribute(3, nameof(NTButtonGroupItem<string>.StartIcon), (object)item.StartIcon);
+            if (item.AriaLabel is not null) {
+                builder.AddAttribute(3, nameof(NTButtonGroupItem<string>.AriaLabel), item.AriaLabel);
             }
 
-            if (item.EndIcon is not null) {
-                builder.AddAttribute(4, nameof(NTButtonGroupItem<string>.EndIcon), (object)item.EndIcon);
+            if (item.Icon is not null) {
+                builder.AddAttribute(4, nameof(NTButtonGroupItem<string>.Icon), (object)item.Icon);
             }
 
             if (item.Disabled) {
@@ -96,14 +97,14 @@ public abstract class NTButtonGroupTestContext : BunitContext {
         public string? Label { get; init; }
 
         /// <summary>
-        ///     Optional icon rendered before the label.
+        ///     Optional accessible label for icon-only items.
         /// </summary>
-        public TnTIcon? StartIcon { get; init; }
+        public string? AriaLabel { get; init; }
 
         /// <summary>
-        ///     Optional icon rendered after the label.
+        ///     Optional icon rendered before the label.
         /// </summary>
-        public TnTIcon? EndIcon { get; init; }
+        public TnTIcon? Icon { get; init; }
 
         /// <summary>
         ///     Controls whether the item is disabled.

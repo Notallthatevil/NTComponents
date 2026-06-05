@@ -194,7 +194,7 @@ public class TnTTypeahead_Tests : BunitContext {
         // Assert
         cut.Should().NotBeNull();
         cut.Instance.Should().NotBeNull();
-        cut.Instance.Should().BeAssignableTo<TnTComponentBase>();
+        cut.Instance.Should().BeAssignableTo<NTComponentBase>();
     }
 
     [Fact]

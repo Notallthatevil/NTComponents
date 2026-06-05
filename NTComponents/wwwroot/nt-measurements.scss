@@ -1,0 +1,286 @@
+@use 'sass:map';
+@use '../Styles/_Variables/_typescale.scss' as typescale;
+
+$nt-corner-radii: (
+    none: 0px,
+    extra-small: 4px,
+    small: 8px,
+    medium: 12px,
+    large: 16px,
+    large-increased: 20px,
+    extra-large: 28px,
+    extra-large-increased: 32px,
+    extra-extra-large: 48px,
+    full: 50%
+);
+
+@mixin nt-typescale-tokens($styles, $emphasized: false) {
+    $prefix: '';
+
+    @if $emphasized {
+        $prefix: 'emphasized-';
+    }
+
+    @each $style, $config in $styles {
+        --nt-sys-typescale-#{$prefix}#{$style}-font: var(--nt-ref-typeface-#{map.get($config, font-ref)}, Roboto);
+        --nt-sys-typescale-#{$prefix}#{$style}-weight: #{map.get($config, weight)};
+        --nt-sys-typescale-#{$prefix}#{$style}-size: #{map.get($config, size)};
+        --nt-sys-typescale-#{$prefix}#{$style}-line-height: #{map.get($config, line-height)};
+        --nt-sys-typescale-#{$prefix}#{$style}-tracking: #{map.get($config, tracking)};
+    }
+}
+
+@mixin nt-corner-radius-tokens {
+    @each $corner-radius, $value in $nt-corner-radii {
+        --nt-sys-shape-corner-#{$corner-radius}: #{$value};
+    }
+}
+
+:root {
+    --nt-ref-typeface-brand: Roboto;
+    --nt-ref-typeface-plain: Roboto;
+    --nt-ref-typeface-weight-regular: 400;
+    --nt-ref-typeface-weight-medium: 500;
+    --nt-ref-typeface-weight-bold: 700;
+
+    @include nt-typescale-tokens(typescale.$nt-typescale-baseline);
+    @include nt-typescale-tokens(typescale.$nt-typescale-emphasized, true);
+    @include nt-corner-radius-tokens;
+}
+
+body {
+    padding: 0;
+    margin: 0;
+}
+
+.tnt-display-large {
+    @include typescale.tnt-display-large;
+}
+
+.tnt-display-medium {
+    @include typescale.tnt-display-medium;
+}
+
+.tnt-display-small {
+    @include typescale.tnt-display-small;
+}
+
+.tnt-headline-large {
+    @include typescale.tnt-headline-large;
+}
+
+.tnt-headline-medium {
+    @include typescale.tnt-headline-medium;
+}
+
+.tnt-headline-small {
+    @include typescale.tnt-headline-small;
+}
+
+.tnt-body-large {
+    @include typescale.tnt-body-large;
+}
+
+.tnt-body-medium {
+    @include typescale.tnt-body-medium;
+}
+
+.tnt-body-small {
+    @include typescale.tnt-body-small;
+}
+
+.tnt-label-large {
+    @include typescale.tnt-label-large;
+}
+
+.tnt-label-medium {
+    @include typescale.tnt-label-medium;
+}
+
+.tnt-label-small {
+    @include typescale.tnt-label-small;
+}
+
+.tnt-title-large {
+    @include typescale.tnt-title-large;
+}
+
+.tnt-title-medium {
+    @include typescale.tnt-title-medium;
+}
+
+.tnt-title-small {
+    @include typescale.tnt-title-small;
+}
+
+.nt-display-large {
+    @include typescale.nt-display-large;
+}
+
+.nt-display-medium {
+    @include typescale.nt-display-medium;
+}
+
+.nt-display-small {
+    @include typescale.nt-display-small;
+}
+
+.nt-headline-large {
+    @include typescale.nt-headline-large;
+}
+
+.nt-headline-medium {
+    @include typescale.nt-headline-medium;
+}
+
+.nt-headline-small {
+    @include typescale.nt-headline-small;
+}
+
+.nt-title-large {
+    @include typescale.nt-title-large;
+}
+
+.nt-title-medium {
+    @include typescale.nt-title-medium;
+}
+
+.nt-title-small {
+    @include typescale.nt-title-small;
+}
+
+.nt-body-large {
+    @include typescale.nt-body-large;
+}
+
+.nt-body-medium {
+    @include typescale.nt-body-medium;
+}
+
+.nt-body-small {
+    @include typescale.nt-body-small;
+}
+
+.nt-label-large {
+    @include typescale.nt-label-large;
+}
+
+.nt-label-medium {
+    @include typescale.nt-label-medium;
+}
+
+.nt-label-small {
+    @include typescale.nt-label-small;
+}
+
+.nt-display-large-emphasized {
+    @include typescale.nt-display-large-emphasized;
+}
+
+.nt-display-medium-emphasized {
+    @include typescale.nt-display-medium-emphasized;
+}
+
+.nt-display-small-emphasized {
+    @include typescale.nt-display-small-emphasized;
+}
+
+.nt-headline-large-emphasized {
+    @include typescale.nt-headline-large-emphasized;
+}
+
+.nt-headline-medium-emphasized {
+    @include typescale.nt-headline-medium-emphasized;
+}
+
+.nt-headline-small-emphasized {
+    @include typescale.nt-headline-small-emphasized;
+}
+
+.nt-title-large-emphasized {
+    @include typescale.nt-title-large-emphasized;
+}
+
+.nt-title-medium-emphasized {
+    @include typescale.nt-title-medium-emphasized;
+}
+
+.nt-title-small-emphasized {
+    @include typescale.nt-title-small-emphasized;
+}
+
+.nt-body-large-emphasized {
+    @include typescale.nt-body-large-emphasized;
+}
+
+.nt-body-medium-emphasized {
+    @include typescale.nt-body-medium-emphasized;
+}
+
+.nt-body-small-emphasized {
+    @include typescale.nt-body-small-emphasized;
+}
+
+.nt-label-large-emphasized {
+    @include typescale.nt-label-large-emphasized;
+}
+
+.nt-label-medium-emphasized {
+    @include typescale.nt-label-medium-emphasized;
+}
+
+.nt-label-small-emphasized {
+    @include typescale.nt-label-small-emphasized;
+}
+
+.nt-elevation-none {
+    box-shadow: none;
+}
+
+.nt-elevation-lowest {
+    box-shadow: 0px 1px 1px 0px var(--tnt-color-shadow);
+}
+
+.nt-elevation-low {
+    box-shadow: 0px 2px 3px 0px var(--tnt-color-shadow);
+}
+
+.nt-elevation-medium {
+    box-shadow: 0px 4px 6px 0px var(--tnt-color-shadow);
+}
+
+.nt-elevation-high {
+    box-shadow: 0px 6px 8px 0px var(--tnt-color-shadow);
+}
+
+.nt-elevation-highest {
+    box-shadow: 0px 8px 12px 0px var(--tnt-color-shadow);
+}
+
+@each $corner-radius, $value in $nt-corner-radii {
+    .nt-corner-radius-#{$corner-radius} {
+        border-radius: var(--nt-sys-shape-corner-#{$corner-radius}, #{$value});
+    }
+}
+
+.nt-scrollbar {
+    scrollbar-color: var(--tnt-color-primary-fixed) transparent;
+    scrollbar-gutter: auto;
+    scrollbar-width: thin;
+}
+
+.nt-scrollbar::-webkit-scrollbar {
+    block-size: 8px;
+    inline-size: 8px;
+}
+
+.nt-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.nt-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--tnt-color-primary-fixed);
+    background-clip: content-box;
+    border: 2px solid transparent;
+    border-radius: 9999px;
+}

@@ -1,0 +1,116 @@
+@use './viewCommon' as view;
+
+@include view.root;
+
+@mixin staged-pane-range($start, $end, $pane-count) {
+    ::deep > :nth-child(n + #{$start}):nth-child(-n + #{$end}) {
+        flex-basis: calc((100% - #{view.$gap * ($pane-count - 1)}) / #{$pane-count});
+    }
+}
+
+@mixin staged-sizing($min-inline-size) {
+    &.nt-multi-pane-view-2-panes {
+        @container (min-width: #{$min-inline-size * 2 + view.$gap}) {
+            @include staged-pane-range(1, 2, 2);
+        }
+    }
+
+    &.nt-multi-pane-view-3-panes {
+        @container (min-width: #{$min-inline-size * 2 + view.$gap}) {
+            @include staged-pane-range(2, 3, 2);
+        }
+
+        @container (min-width: #{$min-inline-size * 3 + view.$gap * 2}) {
+            @include staged-pane-range(1, 3, 3);
+        }
+    }
+
+    &.nt-multi-pane-view-4-panes {
+        @container (min-width: #{$min-inline-size * 2 + view.$gap}) {
+            @include staged-pane-range(1, 4, 2);
+        }
+
+        @container (min-width: #{$min-inline-size * 4 + view.$gap * 3}) {
+            @include staged-pane-range(1, 4, 4);
+        }
+    }
+
+    &.nt-multi-pane-view-5-panes {
+        @container (min-width: #{$min-inline-size * 2 + view.$gap}) {
+            @include staged-pane-range(2, 5, 2);
+        }
+
+        @container (min-width: #{$min-inline-size * 3 + view.$gap * 2}) {
+            @include staged-pane-range(1, 2, 2);
+            @include staged-pane-range(3, 5, 3);
+        }
+
+        @container (min-width: #{$min-inline-size * 5 + view.$gap * 4}) {
+            @include staged-pane-range(1, 5, 5);
+        }
+    }
+}
+
+@mixin enforce-even-sizing($min-inline-size) {
+    &.nt-multi-pane-view-2-panes {
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, max($min-inline-size, calc((100% - #{view.$gap}) / 2))), 1fr));
+    }
+
+    &.nt-multi-pane-view-3-panes {
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, max($min-inline-size, calc((100% - #{view.$gap * 2}) / 3))), 1fr));
+    }
+
+    &.nt-multi-pane-view-4-panes {
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, max($min-inline-size, calc((100% - #{view.$gap * 3}) / 4))), 1fr));
+    }
+
+    &.nt-multi-pane-view-5-panes {
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, max($min-inline-size, calc((100% - #{view.$gap * 4}) / 5))), 1fr));
+    }
+}
+
+$multi-pane-widths: (
+    compact: view.$multi-pane-min-inline-size-compact,
+    medium: view.$multi-pane-min-inline-size-medium,
+    large: view.$multi-pane-min-inline-size-large,
+    extra-large: view.$multi-pane-min-inline-size-extra-large,
+);
+
+.nt-multi-pane-view {
+    align-content: flex-start;
+    align-items: flex-start;
+    container-type: inline-size;
+    display: flex;
+    flex-wrap: wrap;
+
+    ::deep > * {
+        box-sizing: border-box;
+        flex: 1 0 100%;
+    }
+
+    @each $size-name, $min-inline-size in $multi-pane-widths {
+        &.nt-multi-pane-view-min-pane-width-#{$size-name} {
+            ::deep > * {
+                min-inline-size: min(100%, $min-inline-size);
+            }
+
+            &.nt-multi-pane-view-staged-sizing {
+                @include staged-sizing($min-inline-size);
+            }
+
+            &.nt-multi-pane-view-enforce-even-sizing {
+                @include enforce-even-sizing($min-inline-size);
+            }
+        }
+    }
+
+    &.nt-multi-pane-view-enforce-even-sizing {
+        display: grid;
+        grid-template-columns: 1fr;
+
+        ::deep > * {
+            flex-basis: auto;
+            min-inline-size: 0;
+        }
+    }
+}

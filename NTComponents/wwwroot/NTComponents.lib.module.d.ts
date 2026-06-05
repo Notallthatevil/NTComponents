@@ -15,3 +15,5 @@ export function createRichTextEditorToolContext<TState>(
     host: RichTextEditorToolHost,
     tool: RichTextEditorToolPlugin<TState>
 ): RichTextEditorToolContext<TState>;
+export function autoGrowTextArea(input: Element | null | undefined): void;
+export function updateInputCounter(input: Element | null | undefined): void;

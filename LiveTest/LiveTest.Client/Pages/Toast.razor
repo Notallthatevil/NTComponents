@@ -1,6 +1,14 @@
 ﻿@page "/toast"
 
-<h3>Toast</h3>
+<h3>NTToast</h3>
+
+<p>
+    This page exercises the JS-backed toast host from static JavaScript and from the interactive toast service.
+</p>
+
+<button type="button" onclick="window.NTToast?.queueToast({ title: 'Static toast', message: 'Opened from a native HTML handler.', variant: 'info' })">
+    Show Static JS Toast
+</button>
 
 <LiveTest.Client.Components.ToastComponent @rendermode="InteractiveAuto" />
 

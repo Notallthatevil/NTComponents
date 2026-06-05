@@ -20,6 +20,12 @@ function keydown(element, key) {
   element.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
 }
 
+async function settleAsync() {
+  await Promise.resolve();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  await Promise.resolve();
+}
+
 function selectText(node, startOffset, endOffset) {
   const range = document.createRange();
   range.setStart(node, startOffset);
@@ -80,6 +86,7 @@ function createHost(element, surface, options = {}) {
       }
     }),
     updateToolbarState: jest.fn(),
+    syncValueFromSurface: jest.fn(),
     setToolbarButtonPressed: jest.fn(),
     getFocusedToolCommand: jest.fn(() => focusedToolCommand),
     setSelectionElement(value) {
@@ -95,17 +102,13 @@ function createHost(element, surface, options = {}) {
 }
 
 describe('NTRichTextEditor registered tool runtimes', () => {
-  let libraryModule;
+  let editorModule;
   let originalExecCommand;
   let originalFileReader;
+  let originalFetch;
 
   beforeAll(async () => {
-    libraryModule = await importModule('NTComponents/wwwroot/NTComponents.lib.module.js');
-    await importModule('NTComponents/Editors/Tool/EditorToolImageButton.razor.js');
-    await importModule('NTComponents/Editors/Tool/EditorToolTableButton.razor.js');
-    await importModule('NTComponents/Editors/Tool/EditorToolTextColorButton.razor.js');
-    await importModule('NTComponents/Editors/Tool/EditorToolLinkButton.razor.js');
-    await importModule('NTComponents/Editors/Tool/EditorToolIframeButton.razor.js');
+    editorModule = await importModule('NTComponents/Editors/NTRichTextEditor.razor.js');
   });
 
   beforeEach(() => {
@@ -153,15 +156,25 @@ describe('NTRichTextEditor registered tool runtimes', () => {
         this.onload?.({ target: this });
       }
     };
+
+    originalFetch = global.fetch;
+    global.fetch = jest.fn(async () => ({
+      ok: true,
+      headers: {
+        get: (name) => name.toLowerCase() === 'content-type' ? 'image/png' : null
+      },
+      blob: async () => new Blob(['remote image'], { type: 'image/png' })
+    }));
   });
 
   afterEach(() => {
     document.execCommand = originalExecCommand;
     global.FileReader = originalFileReader;
+    global.fetch = originalFetch;
     document.body.innerHTML = '';
   });
 
-  test('image and table tools cover direct runtime branches', () => {
+  test('image and table tools cover direct runtime branches', async () => {
     document.body.innerHTML = `
       <nt-rich-text-editor>
         <div data-tool-command="image" data-role="image-editor" hidden aria-hidden="true">
@@ -186,12 +199,12 @@ describe('NTRichTextEditor registered tool runtimes', () => {
 
     const element = document.querySelector('nt-rich-text-editor');
     const surface = element.querySelector('.tnt-rich-text-editor-surface');
-    const imageTool = libraryModule.getRichTextEditorTool('image');
-    const tableTool = libraryModule.getRichTextEditorTool('table');
+    const imageTool = editorModule.getRichTextEditorTool('image');
+    const tableTool = editorModule.getRichTextEditorTool('table');
 
     const imageState = createEditorState();
     const imageHost = createHost(element, surface, { selectionElement: surface.querySelector('p') });
-    const imageContext = libraryModule.createRichTextEditorToolContext(element, imageState, imageHost, imageTool);
+    const imageContext = editorModule.createRichTextEditorToolContext(element, imageState, imageHost, imageTool);
     imageTool.bind(imageContext);
     imageTool.setDisabled(imageContext, true);
     imageTool.setDisabled(imageContext, false);
@@ -205,6 +218,7 @@ describe('NTRichTextEditor registered tool runtimes', () => {
     element.querySelector('[data-role="image-url"]').value = '../images/direct.png';
     element.querySelector('[data-role="image-alt"]').value = 'Relative';
     keydown(element.querySelector('[data-role="image-alt"]'), 'Enter');
+    await settleAsync();
     expect(surface.querySelector('img').getAttribute('src')).toBe('../images/direct.png');
 
     surface.innerHTML = '<p>Plain</p>';
@@ -214,8 +228,39 @@ describe('NTRichTextEditor registered tool runtimes', () => {
     element.querySelector('[data-role="image-url"]').value = 'example.com/plain.png';
     element.querySelector('[data-role="image-alt"]').value = '';
     click(element.querySelector('[data-role="image-apply"]'));
+    await settleAsync();
     const plainImage = surface.querySelectorAll('img')[0];
     expect(plainImage.getAttribute('src')).toBe('example.com/plain.png');
+
+    surface.innerHTML = '<p>Remote</p>';
+    imageHost.setSelectionElement(surface.querySelector('p'));
+    collapseAtEnd(surface.querySelector('p').firstChild);
+    imageTool.execute(imageContext);
+    element.querySelector('[data-role="image-url"]').value = 'https://example.com/remote.png';
+    click(element.querySelector('[data-role="image-apply"]'));
+    await settleAsync();
+    const remoteImage = surface.querySelector('img');
+    expect(remoteImage.getAttribute('src')).toBe('data:image/png;base64,ZmFrZQ==');
+    expect(global.fetch).toHaveBeenCalledWith('https://example.com/remote.png', { credentials: 'omit' });
+
+    surface.innerHTML = '<p>Upload host</p>';
+    imageHost.setSelectionElement(surface.querySelector('p'));
+    collapseAtEnd(surface.querySelector('p').firstChild);
+    imageHost.syncValueFromSurface.mockClear();
+    imageHost.updateToolbarState.mockClear();
+    imageTool.execute(imageContext);
+    const fileInput = element.querySelector('[data-role="image-file"]');
+    Object.defineProperty(fileInput, 'files', {
+      configurable: true,
+      value: [new File(['fake'], 'uploaded-image.png', { type: 'image/png' })]
+    });
+    fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+    await settleAsync();
+    const uploadedImage = surface.querySelector('img');
+    expect(uploadedImage.getAttribute('src')).toBe('data:image/png;base64,ZmFrZQ==');
+    expect(uploadedImage.getAttribute('alt')).toBe('uploaded-image');
+    expect(imageHost.syncValueFromSurface).toHaveBeenCalledWith(element, true);
+    expect(imageHost.updateToolbarState).toHaveBeenCalled();
 
     imageContext.toolState.onImageFileChange({ target: null });
     imageTool.close(imageContext);
@@ -224,17 +269,18 @@ describe('NTRichTextEditor registered tool runtimes', () => {
 
     const imageNoSurfaceState = createEditorState();
     const imageNoSurfaceHost = createHost(element, surface, { surfaceOverride: null });
-    const imageNoSurfaceContext = libraryModule.createRichTextEditorToolContext(element, imageNoSurfaceState, imageNoSurfaceHost, imageTool);
+    const imageNoSurfaceContext = editorModule.createRichTextEditorToolContext(element, imageNoSurfaceState, imageNoSurfaceHost, imageTool);
     imageTool.bind(imageNoSurfaceContext);
     expect(imageTool.execute(imageNoSurfaceContext)).toBe(false);
     click(element.querySelector('[data-role="image-apply"]'));
+    await settleAsync();
 
     surface.innerHTML = '<table style="--nt-rich-text-table-border-color:#445566;"><tbody><tr><td>Only</td></tr></tbody></table>';
     const existingTable = surface.querySelector('table');
     imageHost.setSelectionElement(existingTable);
     const tableState = createEditorState();
     const tableHost = createHost(element, surface, { selectionElement: existingTable.querySelector('td') });
-    const tableContext = libraryModule.createRichTextEditorToolContext(element, tableState, tableHost, tableTool);
+    const tableContext = editorModule.createRichTextEditorToolContext(element, tableState, tableHost, tableTool);
     tableTool.bind(tableContext);
     tableTool.execute(tableContext);
     expect(element.querySelector('[data-role="table-border-color"]').value).toBe('#445566');
@@ -264,7 +310,7 @@ describe('NTRichTextEditor registered tool runtimes', () => {
 
     const tableNoSurfaceState = createEditorState();
     const tableNoSurfaceHost = createHost(element, surface, { surfaceOverride: null });
-    const tableNoSurfaceContext = libraryModule.createRichTextEditorToolContext(element, tableNoSurfaceState, tableNoSurfaceHost, tableTool);
+    const tableNoSurfaceContext = editorModule.createRichTextEditorToolContext(element, tableNoSurfaceState, tableNoSurfaceHost, tableTool);
     tableTool.bind(tableNoSurfaceContext);
     expect(tableTool.execute(tableNoSurfaceContext)).toBe(false);
     click(element.querySelector('[data-role="table-apply"]'));
@@ -293,12 +339,12 @@ describe('NTRichTextEditor registered tool runtimes', () => {
 
     const element = document.querySelector('nt-rich-text-editor');
     const surface = element.querySelector('.tnt-rich-text-editor-surface');
-    const linkTool = libraryModule.getRichTextEditorTool('link');
-    const iframeTool = libraryModule.getRichTextEditorTool('iframe');
+    const linkTool = editorModule.getRichTextEditorTool('link');
+    const iframeTool = editorModule.getRichTextEditorTool('iframe');
 
     const linkState = createEditorState();
     const linkHost = createHost(element, surface, { selectionElement: surface.querySelector('p') });
-    const linkContext = libraryModule.createRichTextEditorToolContext(element, linkState, linkHost, linkTool);
+    const linkContext = editorModule.createRichTextEditorToolContext(element, linkState, linkHost, linkTool);
     linkTool.bind(linkContext);
 
     selectText(surface.querySelector('p').firstChild, 0, 4);
@@ -350,7 +396,7 @@ describe('NTRichTextEditor registered tool runtimes', () => {
 
     const linkNoSurfaceState = createEditorState();
     const linkNoSurfaceHost = createHost(element, surface, { surfaceOverride: null });
-    const linkNoSurfaceContext = libraryModule.createRichTextEditorToolContext(element, linkNoSurfaceState, linkNoSurfaceHost, linkTool);
+    const linkNoSurfaceContext = editorModule.createRichTextEditorToolContext(element, linkNoSurfaceState, linkNoSurfaceHost, linkTool);
     linkTool.bind(linkNoSurfaceContext);
     expect(linkTool.execute(linkNoSurfaceContext)).toBe(false);
     click(element.querySelector('[data-role="link-apply"]'));
@@ -358,7 +404,7 @@ describe('NTRichTextEditor registered tool runtimes', () => {
     surface.innerHTML = '<p>Embed</p>';
     const iframeState = createEditorState();
     const iframeHost = createHost(element, surface, { selectionElement: surface.querySelector('p') });
-    const iframeContext = libraryModule.createRichTextEditorToolContext(element, iframeState, iframeHost, iframeTool);
+    const iframeContext = editorModule.createRichTextEditorToolContext(element, iframeState, iframeHost, iframeTool);
     iframeTool.bind(iframeContext);
 
     collapseAtEnd(surface.querySelector('p').firstChild);
@@ -391,7 +437,7 @@ describe('NTRichTextEditor registered tool runtimes', () => {
 
     const iframeNoSurfaceState = createEditorState();
     const iframeNoSurfaceHost = createHost(element, surface, { surfaceOverride: null });
-    const iframeNoSurfaceContext = libraryModule.createRichTextEditorToolContext(element, iframeNoSurfaceState, iframeNoSurfaceHost, iframeTool);
+    const iframeNoSurfaceContext = editorModule.createRichTextEditorToolContext(element, iframeNoSurfaceState, iframeNoSurfaceHost, iframeTool);
     iframeTool.bind(iframeNoSurfaceContext);
     expect(iframeTool.execute(iframeNoSurfaceContext)).toBe(false);
     click(element.querySelector('[data-role="iframe-apply"]'));
@@ -414,10 +460,10 @@ describe('NTRichTextEditor registered tool runtimes', () => {
     const element = document.querySelector('nt-rich-text-editor');
     const surface = element.querySelector('.tnt-rich-text-editor-surface');
     const outer = element.querySelector('#outer');
-    const textColorTool = libraryModule.getRichTextEditorTool('textColor');
+    const textColorTool = editorModule.getRichTextEditorTool('textColor');
     const textColorState = createEditorState();
     const textColorHost = createHost(element, surface, { selectionElement: outer });
-    const textColorContext = libraryModule.createRichTextEditorToolContext(element, textColorState, textColorHost, textColorTool);
+    const textColorContext = editorModule.createRichTextEditorToolContext(element, textColorState, textColorHost, textColorTool);
     textColorTool.bind(textColorContext);
     textColorTool.setDisabled(textColorContext, true);
     textColorTool.setDisabled(textColorContext, false);
@@ -456,7 +502,7 @@ describe('NTRichTextEditor registered tool runtimes', () => {
 
     const textColorNoSurfaceState = createEditorState();
     const textColorNoSurfaceHost = createHost(element, surface, { surfaceOverride: null });
-    const textColorNoSurfaceContext = libraryModule.createRichTextEditorToolContext(element, textColorNoSurfaceState, textColorNoSurfaceHost, textColorTool);
+    const textColorNoSurfaceContext = editorModule.createRichTextEditorToolContext(element, textColorNoSurfaceState, textColorNoSurfaceHost, textColorTool);
     textColorTool.bind(textColorNoSurfaceContext);
     expect(textColorTool.execute(textColorNoSurfaceContext)).toBe(false);
     click(element.querySelector('[data-role="text-color-apply"]'));

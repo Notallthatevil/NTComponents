@@ -1,0 +1,105 @@
+@using Microsoft.AspNetCore.Components.Rendering
+@using NTComponents.Core
+@using NTComponents.Wizard
+@namespace NTComponents
+@inherits NTComponentBase
+
+<div @attributes="AdditionalAttributes" class="@ElementClass" style="@ElementStyle" id="@ElementId" title="@ElementTitle" @onkeypress="HandleKeyPressAsync" @ref="Element">
+    @if (!string.IsNullOrWhiteSpace(Title)) {
+        <h1 class="nt-wizard-title">
+            @Title
+        </h1>
+    }
+    <ol class="nt-wizard-steps" role="tablist" aria-orientation="@(LayoutDirection == LayoutDirection.Horizontal ? "horizontal" : "vertical")">
+        @foreach (var (step, i) in _steps.Select((s, i) => new KeyValuePair<NTWizardStepBase, int>(s, i))) {
+            <li class="@GetStepIndicatorClass(i)" data-state="@GetStepIndicatorState(i)">
+                <button type="button"
+                        class="nt-wizard-step-button"
+                        id="@GetStepTabId(i)"
+                        role="tab"
+                        aria-controls="@GetStepPanelId(i)"
+                        aria-current="@(_stepIndex == i ? "step" : null)"
+                        aria-disabled="@(GetStepIndicatorAriaDisabled(i) ? "true" : "false")"
+                        aria-invalid="@(IsStepInvalid(i) ? "true" : "false")"
+                        aria-label="@GetStepIndicatorAriaLabel(i)"
+                        aria-selected="@(_stepIndex == i ? "true" : "false")"
+                        tabindex="@GetStepIndicatorTabIndex(i)"
+                        @onclick="@(() => NavigateToStepAsync(i))">
+                    <span class="nt-wizard-step-title">
+                        <span class="nt-wizard-step-index">
+                            @(i + 1)
+                        </span>
+                        @step.Icon?.Render()
+                        <span class="nt-wizard-step-label">
+                            @(step.Title ?? $"Step {i + 1}")
+                        </span>
+                    </span>
+                </button>
+                @if (!string.IsNullOrWhiteSpace(step.SubTitle)) {
+                    <div class="nt-wizard-step-subtitle">
+                        @step.SubTitle
+                    </div>
+                }
+            </li>
+        }
+    </ol>
+    @if (HideStepsInsteadOfRemovingFromDom) {
+        @foreach (var (step, i) in _steps.Select((s, i) => new KeyValuePair<NTWizardStepBase, int>(s, i))) {
+            var stepClass = step == _currentStep ? "nt-wizard-current-step" : "nt-wizard-hidden-step";
+            var hiddenStyle = step == _currentStep ? string.Empty : "display:none;";
+            <div @key="step"
+                 class="@stepClass"
+                 id="@GetStepPanelId(i)"
+                 role="tabpanel"
+                 aria-labelledby="@GetStepTabId(i)"
+                 aria-hidden="@(step == _currentStep ? null : "true")"
+                 hidden="@(step == _currentStep ? null : true)"
+                 style="@hiddenStyle">
+                @step.Render()
+            </div>
+        }
+    }
+    else {
+        <div class="nt-wizard-content" id="@GetStepPanelId(_stepIndex)" role="tabpanel" aria-labelledby="@GetStepTabId(_stepIndex)">
+            @if (_currentStep is not null) {
+                @_currentStep.Render()
+            }
+            else {
+                <text>No step provided</text>
+            }
+        </div>
+    }
+    <div class="nt-wizard-buttons">
+        @if (HasPreviousEnterableStep) {
+            <NTButton Variant="NTButtonVariant.Outlined"
+                      Label="Previous Step"
+                      TextColor="TnTColor.OnSurface"
+                      LeadingIcon="@MaterialIcon.KeyboardArrowLeft"
+                      OnClickCallback="@PreviousStepAsync"
+                      Disabled="@PreviousButtonDisabled" />
+        }
+        @if (CanSkipCurrentStep) {
+            <NTButton Variant="NTButtonVariant.Text"
+                      Label="Skip"
+                      TextColor="TnTColor.OnSurface"
+                      OnClickCallback="@(_ => SkipStepAsync())" />
+        }
+        @if (!HasNextEnterableStep) {
+            <NTButton Label="Submit"
+                      BackgroundColor="TnTColor.Success"
+                      TextColor="TnTColor.OnSuccess"
+                      class="@ProgressButtonInvalidClass"
+                      OnClickCallback="@SubmitClickedAsync"
+                      Disabled="@EffectiveSubmitButtonDisabled" />
+        }
+        else {
+            <NTButton Label="Next Step"
+                      class="@ProgressButtonInvalidClass"
+                      OnClickCallback="@NextStepAsync"
+                      Disabled="@EffectiveNextButtonDisabled" />
+        }
+    </div>
+    <CascadingValue Value="this" IsFixed="true">
+        @ChildContent
+    </CascadingValue>
+</div>

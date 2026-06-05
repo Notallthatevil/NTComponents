@@ -7,6 +7,7 @@ namespace NTComponents.Grid.Infrastructure;
 /// <summary>
 ///     Provides methods for asynchronous evaluation of queries against an <see cref="IQueryable{T}" />.
 /// </summary>
+[Obsolete("This legacy grid API is obsolete. Use NTDataGrid, NTPropertyColumn, and NTTemplateColumn instead.")]
 internal interface IAsyncQueryExecutor {
 
     /// <summary>
@@ -37,6 +38,7 @@ internal interface IAsyncQueryExecutor {
 }
 
 [ExcludeFromCodeCoverage]
+[Obsolete("This legacy grid API is obsolete. Use NTDataGrid, NTPropertyColumn, and NTTemplateColumn instead.")]
 internal static class AsyncQueryExecutorSupplier {
     private static readonly ConcurrentDictionary<Type, bool> _isEntityFrameworkProviderTypeCache = new();
 

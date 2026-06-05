@@ -1,0 +1,51 @@
+@use '../../Styles/_Variables/_screen-width.scss' as screen-width;
+@use './viewCommon' as view;
+
+@include view.root;
+
+.nt-supporting-pane-view {
+    display: grid;
+    grid-template-areas:
+        'primary'
+        'supporting';
+    grid-template-columns: minmax(0, 1fr);
+
+    .nt-supporting-pane-view-primary {
+        grid-area: primary;
+    }
+
+    .nt-supporting-pane-view-supporting {
+        grid-area: supporting;
+    }
+
+    &.nt-supporting-pane-view-hide-on-small-screens {
+        grid-template-areas: 'primary';
+
+        .nt-supporting-pane-view-supporting {
+            display: none;
+        }
+    }
+}
+
+@media #{screen-width.$medium-and-up} {
+    .nt-supporting-pane-view:not(.nt-supporting-pane-view-stacked) {
+        grid-template-areas: 'primary supporting';
+        grid-template-columns: minmax(0, 1fr) view.$supporting-pane-inline-size;
+
+        .nt-supporting-pane-view-supporting {
+            display: block;
+        }
+
+        &.nt-supporting-pane-view-hide-on-small-screens {
+            .nt-supporting-pane-view-supporting {
+                display: block;
+            }
+        }
+    }
+}
+
+@media #{screen-width.$large-and-up} {
+    .nt-supporting-pane-view:not(.nt-supporting-pane-view-stacked) {
+        grid-template-columns: minmax(0, 1fr) view.$supporting-pane-expanded-inline-size;
+    }
+}

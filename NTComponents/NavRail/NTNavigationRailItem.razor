@@ -1,0 +1,59 @@
+@namespace NTComponents
+@using NTComponents.Core
+@inherits NTComponentBase
+
+@if (RendersAnchor) {
+    <a @attributes="RenderedAdditionalAttributes"
+       class="@ElementClass"
+       style="@ElementStyle"
+       href="@RenderedHref"
+       aria-current="@AriaCurrent"
+       aria-label="@EffectiveAriaLabel"
+       aria-disabled="@AriaDisabled"
+       tabindex="@RenderedTabIndex"
+       lang="@EffectiveElementLang"
+       title="@EffectiveElementTitle"
+       id="@EffectiveElementId"
+       data-nt-navigation-rail-match="@RouteMatchText"
+       data-nt-navigation-rail-selected="@SelectedText"
+       @ref="Element">
+        @ItemContent
+    </a>
+}
+else {
+    <button @attributes="RenderedAdditionalAttributes"
+            class="@ElementClass"
+            style="@ElementStyle"
+            type="@Type.ToHtmlAttribute()"
+            name="@ElementName"
+            value="@Value"
+            disabled="@Disabled"
+            aria-current="@AriaCurrent"
+            aria-label="@EffectiveAriaLabel"
+            lang="@EffectiveElementLang"
+            title="@EffectiveElementTitle"
+            id="@EffectiveElementId"
+            data-nt-navigation-rail-match="@RouteMatchText"
+            data-nt-navigation-rail-selected="@SelectedText"
+            @ref="Element">
+        @ItemContent
+    </button>
+}
+
+@code {
+    private RenderFragment ItemContent => @<span class="nt-navigation-rail-item-body">
+        @NTRipple.RenderHost("nt-button-ripple-host nt-navigation-rail-item-ripple")
+        <span class="nt-navigation-rail-item-indicator" aria-hidden="true"></span>
+        <span class="nt-navigation-rail-item-content">
+            <span class="nt-navigation-rail-item-icon" aria-hidden="true">
+                @if (EffectiveIcon is not null) {
+                    @EffectiveIcon.Render(EffectiveIconClass)
+                }
+                else if (EffectiveIconFragment is not null) {
+                    @EffectiveIconFragment
+                }
+            </span>
+            <span class="nt-navigation-rail-item-label">@Label</span>
+        </span>
+    </span>;
+}

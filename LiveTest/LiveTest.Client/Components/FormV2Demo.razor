@@ -1,0 +1,1816 @@
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Components.Forms
+@using NTComponents
+
+<section style="display:grid;gap:16px;max-width:1180px;padding:16px;background:var(--tnt-color-surface);color:var(--tnt-color-on-surface);">
+    <div style="position:sticky;top:0;z-index:10;display:grid;gap:12px;padding:12px;border:1px solid var(--tnt-color-outline-variant);background:var(--tnt-color-surface);">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+            <h3 style="margin:0;">NTForm Fields</h3>
+            <button type="button" @onclick="ToggleControls">@(_showControls ? "Hide controls" : "Show controls")</button>
+        </div>
+
+        @if (_showControls) {
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;align-items:end;">
+            <label>
+                Appearance
+                <select @bind="_appearance">
+                    @foreach (var appearance in Enum.GetValues<NTFormAppearance>()) {
+                        <option value="@appearance">@appearance</option>
+                    }
+                </select>
+            </label>
+
+            <label>
+                Density
+                <select @bind="_density">
+                    @foreach (var density in Enum.GetValues<NTFormDensity>()) {
+                        <option value="@density">@density</option>
+                    }
+                </select>
+            </label>
+
+            <label>
+                Checkbox variant
+                <select @bind="_checkboxVariant">
+                    @foreach (var variant in Enum.GetValues<NTInputCheckboxVariant>()) {
+                        <option value="@variant">@variant</option>
+                    }
+                </select>
+            </label>
+
+            <label>
+                Switch variant
+                <select @bind="_switchVariant">
+                    @foreach (var variant in Enum.GetValues<NTSwitchVariant>()) {
+                        <option value="@variant">@variant</option>
+                    }
+                </select>
+            </label>
+
+            <label>
+                Slider size
+                <select @bind="_sliderSize">
+                    @foreach (var size in Enum.GetValues<NTSliderSize>()) {
+                        <option value="@size">@size</option>
+                    }
+                </select>
+            </label>
+
+            <label>
+                Slider orientation
+                <select @bind="_sliderOrientation">
+                    @foreach (var orientation in Enum.GetValues<NTSliderOrientation>()) {
+                        <option value="@orientation">@orientation</option>
+                    }
+                </select>
+            </label>
+
+            <label>
+                Text type
+                <select @bind="_textInputType">
+                    @foreach (var inputType in Enum.GetValues<TextInputType>()) {
+                        <option value="@inputType">@inputType</option>
+                    }
+                </select>
+            </label>
+
+            <label>
+                Phone mask
+                <select @bind="_phoneMask" disabled="@(_textInputType != TextInputType.Tel)">
+                    @foreach (var mask in PhoneMaskOptions) {
+                        <option value="@mask">@mask</option>
+                    }
+                </select>
+            </label>
+
+            <label>
+                Date type
+                <select @bind="_dateInputKind">
+                    @foreach (var inputKind in Enum.GetValues<DateInputKind>()) {
+                        <option value="@inputKind">@inputKind</option>
+                    }
+                </select>
+            </label>
+
+            <label>
+                Menu item appearance
+                <select @bind="_menuItemAppearance">
+                    @foreach (var appearance in Enum.GetValues<NTMenuItemAppearance>()) {
+                        <option value="@appearance">@appearance</option>
+                    }
+                </select>
+            </label>
+            </div>
+
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;">
+            <label><input type="checkbox" @bind="_readOnly" /> Readonly</label>
+            <label><input type="checkbox" @bind="_disabled" /> Disabled</label>
+            <label><input type="checkbox" @bind="_showRequiredText" /> Required text</label>
+            <label><input type="checkbox" @bind="_showLabel" /> Label</label>
+            <label><input type="checkbox" @bind="_showPlaceholder" /> Placeholder</label>
+            <label><input type="checkbox" @bind="_showSupportingText" /> Supporting text</label>
+            <label><input type="checkbox" @bind="_showLeadingIcon" /> Leading icon</label>
+            <label><input type="checkbox" @bind="_showTrailingIcon" /> Trailing icon</label>
+            <label><input type="checkbox" @bind="_showPrefix" /> Prefix</label>
+            <label><input type="checkbox" @bind="_showSuffix" /> Suffix</label>
+            <label><input type="checkbox" @bind="_showErrorText" /> Error text</label>
+            <label><input type="checkbox" @bind="_bindOnInput" /> Bind on input</label>
+            <label><input type="checkbox" @bind="_enableCustomDatePicker" /> Custom date/time picker</label>
+            <label><input type="checkbox" @bind="_checkboxIndeterminate" /> Checkbox indeterminate</label>
+            <label><input type="checkbox" @bind="CheckboxRequired" /> Checkbox required</label>
+            <label><input type="checkbox" @bind="_switchRequired" /> Switch required</label>
+            <label><input type="checkbox" @bind="_showSwitchHandleIcon" /> Switch handle icons</label>
+            <label><input type="checkbox" @bind="_showSliderStops" /> Slider stops</label>
+            <label><input type="checkbox" @bind="_showSliderValueIndicator" /> Slider value</label>
+            <label><input type="checkbox" @bind="_showSliderInsetIcon" /> Slider inset icon</label>
+            <label><input type="checkbox" @bind="_comboboxSearchable" /> Combobox searchable</label>
+            <label><input type="checkbox" @bind="_allowAutocompleteCustomValue" /> Autocomplete custom values</label>
+            <label><input type="checkbox" @bind="_textAreaAutoGrow" /> Textarea auto grow</label>
+            <label><input type="checkbox" @bind="_showCounter" /> Counter</label>
+            <label><input type="checkbox" @bind="_addLengthLimits" /> Length limits</label>
+            <label><input type="checkbox" @bind="_addRangeLimits" /> Range limits</label>
+            <label><input type="checkbox" @bind="_autoFocus" /> Autofocus</label>
+            <label>Textarea min lines <input type="number" min="1" @bind="_textAreaMinVisibleLines" /></label>
+            <label>Textarea max lines <input type="number" min="1" @bind="_textAreaMaxVisibleLines" disabled="@(!_textAreaAutoGrow)" /></label>
+            </div>
+
+            <fieldset style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:0;padding:12px;border:1px solid var(--tnt-color-outline-variant);">
+            <legend>Field overrides</legend>
+            <label><input type="checkbox" @bind="_overrideAppearance" /> Override appearance</label>
+            <label><input type="checkbox" @bind="_overrideDensity" /> Override density</label>
+            <label><input type="checkbox" @bind="_overrideDisabled" /> Override disabled</label>
+            <label><input type="checkbox" @bind="_overrideReadOnly" /> Override readonly</label>
+
+            <label>
+                Field appearance
+                <select @bind="_fieldAppearance">
+                    @foreach (var appearance in Enum.GetValues<NTFormAppearance>()) {
+                        <option value="@appearance">@appearance</option>
+                    }
+                </select>
+            </label>
+
+            <label>
+                Field density
+                <select @bind="_fieldDensity">
+                    @foreach (var density in Enum.GetValues<NTFormDensity>()) {
+                        <option value="@density">@density</option>
+                    }
+                </select>
+            </label>
+            </fieldset>
+
+            <fieldset style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:0;padding:12px;border:1px solid var(--tnt-color-outline-variant);">
+            <legend>Color overrides</legend>
+            <label><input type="checkbox" @bind="_useCustomColors" /> Use custom colors</label>
+
+            <label>
+                Text
+                <select @bind="_textColor" disabled="@(!_useCustomColors)">
+                    @foreach (var color in ColorOptions) {
+                        <option value="@color">@color</option>
+                    }
+                </select>
+            </label>
+
+            <label>
+                Background
+                <select @bind="_backgroundColor" disabled="@(!_useCustomColors)">
+                    @foreach (var color in ColorOptions) {
+                        <option value="@color">@color</option>
+                    }
+                </select>
+            </label>
+
+            <label>
+                Label
+                <select @bind="_labelColor" disabled="@(!_useCustomColors)">
+                    @foreach (var color in ColorOptions) {
+                        <option value="@color">@color</option>
+                    }
+                </select>
+            </label>
+
+            <label>
+                Supporting
+                <select @bind="_supportingTextColor" disabled="@(!_useCustomColors)">
+                    @foreach (var color in ColorOptions) {
+                        <option value="@color">@color</option>
+                    }
+                </select>
+            </label>
+
+            <label>
+                Prefix/suffix
+                <select @bind="_prefixSuffixColor" disabled="@(!_useCustomColors)">
+                    @foreach (var color in ColorOptions) {
+                        <option value="@color">@color</option>
+                    }
+                </select>
+            </label>
+
+            <label>
+                Icons
+                <select @bind="_iconColor" disabled="@(!_useCustomColors)">
+                    @foreach (var color in ColorOptions) {
+                        <option value="@color">@color</option>
+                    }
+                </select>
+            </label>
+
+            <label>
+                Placeholder
+                <select @bind="_placeholderColor" disabled="@(!_useCustomColors)">
+                    @foreach (var color in ColorOptions) {
+                        <option value="@color">@color</option>
+                    }
+                </select>
+            </label>
+
+            <label>
+                Outline
+                <select @bind="_outlineColor" disabled="@(!_useCustomColors)">
+                    @foreach (var color in ColorOptions) {
+                        <option value="@color">@color</option>
+                    }
+                </select>
+            </label>
+
+            <label>
+                Hover outline
+                <select @bind="_hoverOutlineColor" disabled="@(!_useCustomColors)">
+                    @foreach (var color in ColorOptions) {
+                        <option value="@color">@color</option>
+                    }
+                </select>
+            </label>
+
+            <label>
+                Focus
+                <select @bind="_focusColor" disabled="@(!_useCustomColors)">
+                    @foreach (var color in ColorOptions) {
+                        <option value="@color">@color</option>
+                    }
+                </select>
+            </label>
+
+            <label>
+                Caret
+                <select @bind="_caretColor" disabled="@(!_useCustomColors)">
+                    @foreach (var color in ColorOptions) {
+                        <option value="@color">@color</option>
+                    }
+                </select>
+            </label>
+
+            <label>
+                Active indicator
+                <select @bind="_activeIndicatorColor" disabled="@(!_useCustomColors)">
+                    @foreach (var color in ColorOptions) {
+                        <option value="@color">@color</option>
+                    }
+                </select>
+            </label>
+
+            <label>
+                Hover indicator
+                <select @bind="_hoverActiveIndicatorColor" disabled="@(!_useCustomColors)">
+                    @foreach (var color in ColorOptions) {
+                        <option value="@color">@color</option>
+                    }
+                </select>
+            </label>
+
+            <label>
+                State layer
+                <select @bind="_stateLayerColor" disabled="@(!_useCustomColors)">
+                    @foreach (var color in ColorOptions) {
+                        <option value="@color">@color</option>
+                    }
+                </select>
+            </label>
+
+            <label>
+                Error
+                <select @bind="_errorColor" disabled="@(!_useCustomColors)">
+                    @foreach (var color in ColorOptions) {
+                        <option value="@color">@color</option>
+                    }
+                </select>
+            </label>
+
+            <label>
+                Error caret
+                <select @bind="_errorCaretColor" disabled="@(!_useCustomColors)">
+                    @foreach (var color in ColorOptions) {
+                        <option value="@color">@color</option>
+                    }
+                </select>
+            </label>
+
+            <label>
+                Disabled content
+                <select @bind="_disabledContentColor" disabled="@(!_useCustomColors)">
+                    @foreach (var color in ColorOptions) {
+                        <option value="@color">@color</option>
+                    }
+                </select>
+            </label>
+
+            <label>
+                Disabled background
+                <select @bind="_disabledContainerColor" disabled="@(!_useCustomColors)">
+                    @foreach (var color in ColorOptions) {
+                        <option value="@color">@color</option>
+                    }
+                </select>
+            </label>
+
+            <label>
+                Disabled outline
+                <select @bind="_disabledOutlineColor" disabled="@(!_useCustomColors)">
+                    @foreach (var color in ColorOptions) {
+                        <option value="@color">@color</option>
+                    }
+                </select>
+            </label>
+            </fieldset>
+        }
+    </div>
+
+    <NTForm Model="_model"
+            Appearance="@_appearance"
+            Density="@_density"
+            Disabled="@_disabled"
+            ReadOnly="@_readOnly"
+            ShowRequiredSupportingText="@_showRequiredText"
+            RequiredSupportingText="Required for setup"
+            OnValidSubmit="HandleValidSubmit"
+            OnInvalidSubmit="HandleInvalidSubmit">
+        <DataAnnotationsValidator />
+
+        <div style="display:grid;gap:16px;">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;">
+                <NTInputText @bind-Value="_model.Name"
+                             Appearance="@FieldAppearanceOverride"
+                             ActiveIndicatorColor="@ActiveIndicatorColorOverride"
+                             BackgroundColor="@BackgroundColorOverride"
+                             CaretColor="@CaretColorOverride"
+                             Density="@FieldDensityOverride"
+                             DisabledContainerColor="@DisabledContainerColorOverride"
+                             DisabledContentColor="@DisabledContentColorOverride"
+                             DisabledOutlineColor="@DisabledOutlineColorOverride"
+                             Disabled="@FieldDisabledOverride"
+                             ErrorCaretColor="@ErrorCaretColorOverride"
+                             ErrorColor="@ErrorColorOverride"
+                             FocusColor="@FocusColorOverride"
+                             HoverActiveIndicatorColor="@HoverActiveIndicatorColorOverride"
+                             HoverOutlineColor="@HoverOutlineColorOverride"
+                             IconColor="@IconColorOverride"
+                             LabelColor="@LabelColorOverride"
+                             ReadOnly="@FieldReadOnlyOverride"
+                             Label="@Label"
+                             OutlineColor="@OutlineColorOverride"
+                             Placeholder="@Placeholder"
+                             PlaceholderColor="@PlaceholderColorOverride"
+                             PrefixSuffixColor="@PrefixSuffixColorOverride"
+                             StateLayerColor="@StateLayerColorOverride"
+                             SupportingText="@SupportingText"
+                             SupportingTextColor="@SupportingTextColorOverride"
+                             TextColor="@TextColorOverride"
+                             ErrorText="@ErrorText"
+                             LeadingIcon="@LeadingIcon"
+                             TrailingIcon="@TrailingIcon"
+                             PrefixText="@PrefixText"
+                             SuffixText="@SuffixText"
+                             BindOnInput="@_bindOnInput"
+                             AutoFocus="@_autoFocus"
+                             ShowCharacterCounter="@_showCounter"
+                             AdditionalAttributes="@TextAttributes" />
+
+                <NTInputText @bind-Value="_model.Email"
+                             Appearance="@FieldAppearanceOverride"
+                             ActiveIndicatorColor="@ActiveIndicatorColorOverride"
+                             BackgroundColor="@BackgroundColorOverride"
+                             CaretColor="@CaretColorOverride"
+                             Density="@FieldDensityOverride"
+                             DisabledContainerColor="@DisabledContainerColorOverride"
+                             DisabledContentColor="@DisabledContentColorOverride"
+                             DisabledOutlineColor="@DisabledOutlineColorOverride"
+                             Disabled="@FieldDisabledOverride"
+                             ErrorCaretColor="@ErrorCaretColorOverride"
+                             ErrorColor="@ErrorColorOverride"
+                             FocusColor="@FocusColorOverride"
+                             HoverActiveIndicatorColor="@HoverActiveIndicatorColorOverride"
+                             HoverOutlineColor="@HoverOutlineColorOverride"
+                             IconColor="@IconColorOverride"
+                             LabelColor="@LabelColorOverride"
+                             ReadOnly="@FieldReadOnlyOverride"
+                             Label="@EmailLabel"
+                             OutlineColor="@OutlineColorOverride"
+                             Placeholder="@Placeholder"
+                             PlaceholderColor="@PlaceholderColorOverride"
+                             PrefixSuffixColor="@PrefixSuffixColorOverride"
+                             StateLayerColor="@StateLayerColorOverride"
+                             SupportingText="@SupportingText"
+                             SupportingTextColor="@SupportingTextColorOverride"
+                             TextColor="@TextColorOverride"
+                             ErrorText="@ErrorText"
+                             LeadingIcon="@LeadingIcon"
+                             TrailingIcon="@TrailingIcon"
+                             PrefixText="@EmailPrefixText"
+                             SuffixText="@SuffixText"
+                             BindOnInput="@_bindOnInput"
+                             InputType="@_textInputType"
+                             PhoneMask="@_phoneMask"
+                             ShowCharacterCounter="@_showCounter"
+                             AdditionalAttributes="@TextAttributes" />
+
+                <NTInputText @bind-Value="_model.Phone"
+                             Appearance="@FieldAppearanceOverride"
+                             ActiveIndicatorColor="@ActiveIndicatorColorOverride"
+                             BackgroundColor="@BackgroundColorOverride"
+                             CaretColor="@CaretColorOverride"
+                             Density="@FieldDensityOverride"
+                             DisabledContainerColor="@DisabledContainerColorOverride"
+                             DisabledContentColor="@DisabledContentColorOverride"
+                             DisabledOutlineColor="@DisabledOutlineColorOverride"
+                             Disabled="@FieldDisabledOverride"
+                             ErrorCaretColor="@ErrorCaretColorOverride"
+                             ErrorColor="@ErrorColorOverride"
+                             FocusColor="@FocusColorOverride"
+                             HoverActiveIndicatorColor="@HoverActiveIndicatorColorOverride"
+                             HoverOutlineColor="@HoverOutlineColorOverride"
+                             IconColor="@IconColorOverride"
+                             LabelColor="@LabelColorOverride"
+                             ReadOnly="@FieldReadOnlyOverride"
+                             Label="@PhoneLabel"
+                             OutlineColor="@OutlineColorOverride"
+                             Placeholder="@PhonePlaceholder"
+                             PlaceholderColor="@PlaceholderColorOverride"
+                             PrefixSuffixColor="@PrefixSuffixColorOverride"
+                             StateLayerColor="@StateLayerColorOverride"
+                             SupportingText="@PhoneSupportingText"
+                             SupportingTextColor="@SupportingTextColorOverride"
+                             TextColor="@TextColorOverride"
+                             ErrorText="@ErrorText"
+                             LeadingIcon="@PhoneLeadingIcon"
+                             TrailingIcon="@TrailingIcon"
+                             PrefixText="@PhonePrefixText"
+                             SuffixText="@SuffixText"
+                             BindOnInput="@_bindOnInput"
+                             InputType="TextInputType.Tel"
+                             PhoneMask="@_phoneMask"
+                             ShowCharacterCounter="@_showCounter"
+                             AdditionalAttributes="@PhoneAttributes" />
+
+                <div style="grid-column:1 / -1;">
+                    <NTTextArea @bind-Value="_model.Notes"
+                                Appearance="@FieldAppearanceOverride"
+                                ActiveIndicatorColor="@ActiveIndicatorColorOverride"
+                                BackgroundColor="@BackgroundColorOverride"
+                                CaretColor="@CaretColorOverride"
+                                Density="@FieldDensityOverride"
+                                DisabledContainerColor="@DisabledContainerColorOverride"
+                                DisabledContentColor="@DisabledContentColorOverride"
+                                DisabledOutlineColor="@DisabledOutlineColorOverride"
+                                Disabled="@FieldDisabledOverride"
+                                ErrorCaretColor="@ErrorCaretColorOverride"
+                                ErrorColor="@ErrorColorOverride"
+                                FocusColor="@FocusColorOverride"
+                                HoverActiveIndicatorColor="@HoverActiveIndicatorColorOverride"
+                                HoverOutlineColor="@HoverOutlineColorOverride"
+                                IconColor="@IconColorOverride"
+                                LabelColor="@LabelColorOverride"
+                                ReadOnly="@FieldReadOnlyOverride"
+                                Label="@NotesLabel"
+                                OutlineColor="@OutlineColorOverride"
+                                Placeholder="@Placeholder"
+                                PlaceholderColor="@PlaceholderColorOverride"
+                                PrefixSuffixColor="@PrefixSuffixColorOverride"
+                                StateLayerColor="@StateLayerColorOverride"
+                                SupportingText="@NotesSupportingText"
+                                SupportingTextColor="@SupportingTextColorOverride"
+                                TextColor="@TextColorOverride"
+                                ErrorText="@ErrorText"
+                                LeadingIcon="@NotesLeadingIcon"
+                                TrailingIcon="@TrailingIcon"
+                                PrefixText="@PrefixText"
+                                SuffixText="@SuffixText"
+                                AutoGrow="@_textAreaAutoGrow"
+                                MinVisibleLines="@_textAreaMinVisibleLines"
+                                MaxVisibleLines="@_textAreaMaxVisibleLines"
+                                BindOnInput="@_bindOnInput"
+                                ShowCharacterCounter="@_showCounter"
+                                AdditionalAttributes="@TextAreaAttributes" />
+                </div>
+
+                <div style="grid-column:1 / -1;">
+                    <NTFileUpload @bind-Value="_model.Files"
+                                  Appearance="@FieldAppearanceOverride"
+                                  ActiveIndicatorColor="@ActiveIndicatorColorOverride"
+                                  BackgroundColor="@BackgroundColorOverride"
+                                  CaretColor="@CaretColorOverride"
+                                  Density="@FieldDensityOverride"
+                                  DisabledContainerColor="@DisabledContainerColorOverride"
+                                  DisabledContentColor="@DisabledContentColorOverride"
+                                  DisabledOutlineColor="@DisabledOutlineColorOverride"
+                                  Disabled="@FieldDisabledOverride"
+                                  ErrorCaretColor="@ErrorCaretColorOverride"
+                                  ErrorColor="@ErrorColorOverride"
+                                  FocusColor="@FocusColorOverride"
+                                  HoverActiveIndicatorColor="@HoverActiveIndicatorColorOverride"
+                                  HoverOutlineColor="@HoverOutlineColorOverride"
+                                  IconColor="@IconColorOverride"
+                                  LabelColor="@LabelColorOverride"
+                                  ReadOnly="@FieldReadOnlyOverride"
+                                  Label="@FileLabel"
+                                  OutlineColor="@OutlineColorOverride"
+                                  PlaceholderColor="@PlaceholderColorOverride"
+                                  PrefixSuffixColor="@PrefixSuffixColorOverride"
+                                  StateLayerColor="@StateLayerColorOverride"
+                                  SupportingText="@FileSupportingText"
+                                  SupportingTextColor="@SupportingTextColorOverride"
+                                  TextColor="@TextColorOverride"
+                                  ErrorText="@ErrorText"
+                                  LeadingIcon="@FileLeadingIcon"
+                                  TrailingIcon="@TrailingIcon"
+                                  Accept=".txt,.pdf,image/*,.zip"
+                                  Multiple="true"
+                                  MaximumFileCount="3"
+                                  MaximumFileSize="5242880000"
+                                  OnUploadFile="OnDemoUploadFileAsync"
+                                  AdditionalAttributes="@FileAttributes" />
+                </div>
+
+                <NTInputNumeric TNumber="int"
+                                @bind-Value="_model.Quantity"
+                                Appearance="@FieldAppearanceOverride"
+                                ActiveIndicatorColor="@ActiveIndicatorColorOverride"
+                                BackgroundColor="@BackgroundColorOverride"
+                                CaretColor="@CaretColorOverride"
+                                Density="@FieldDensityOverride"
+                                DisabledContainerColor="@DisabledContainerColorOverride"
+                                DisabledContentColor="@DisabledContentColorOverride"
+                                DisabledOutlineColor="@DisabledOutlineColorOverride"
+                                Disabled="@FieldDisabledOverride"
+                                ErrorCaretColor="@ErrorCaretColorOverride"
+                                ErrorColor="@ErrorColorOverride"
+                                FocusColor="@FocusColorOverride"
+                                HoverActiveIndicatorColor="@HoverActiveIndicatorColorOverride"
+                                HoverOutlineColor="@HoverOutlineColorOverride"
+                                IconColor="@IconColorOverride"
+                                LabelColor="@LabelColorOverride"
+                                ReadOnly="@FieldReadOnlyOverride"
+                                Label="@QuantityLabel"
+                                OutlineColor="@OutlineColorOverride"
+                                Placeholder="@Placeholder"
+                                PlaceholderColor="@PlaceholderColorOverride"
+                                PrefixSuffixColor="@PrefixSuffixColorOverride"
+                                StateLayerColor="@StateLayerColorOverride"
+                                SupportingText="@SupportingText"
+                                SupportingTextColor="@SupportingTextColorOverride"
+                                TextColor="@TextColorOverride"
+                                ErrorText="@ErrorText"
+                                LeadingIcon="@LeadingIcon"
+                                TrailingIcon="@TrailingIcon"
+                                PrefixText="@PrefixText"
+                                SuffixText="@QuantitySuffixText"
+                                BindOnInput="@_bindOnInput"
+                                AdditionalAttributes="@NumericAttributes" />
+
+                <NTInputCurrency @bind-Value="_model.Price"
+                                 Appearance="@FieldAppearanceOverride"
+                                 ActiveIndicatorColor="@ActiveIndicatorColorOverride"
+                                 BackgroundColor="@BackgroundColorOverride"
+                                 CaretColor="@CaretColorOverride"
+                                 Density="@FieldDensityOverride"
+                                 DisabledContainerColor="@DisabledContainerColorOverride"
+                                 DisabledContentColor="@DisabledContentColorOverride"
+                                 DisabledOutlineColor="@DisabledOutlineColorOverride"
+                                 Disabled="@FieldDisabledOverride"
+                                 ErrorCaretColor="@ErrorCaretColorOverride"
+                                 ErrorColor="@ErrorColorOverride"
+                                 FocusColor="@FocusColorOverride"
+                                 HoverActiveIndicatorColor="@HoverActiveIndicatorColorOverride"
+                                 HoverOutlineColor="@HoverOutlineColorOverride"
+                                 IconColor="@IconColorOverride"
+                                 LabelColor="@LabelColorOverride"
+                                 ReadOnly="@FieldReadOnlyOverride"
+                                 Label="@PriceLabel"
+                                 OutlineColor="@OutlineColorOverride"
+                                 Placeholder="@Placeholder"
+                                 PlaceholderColor="@PlaceholderColorOverride"
+                                 PrefixSuffixColor="@PrefixSuffixColorOverride"
+                                 StateLayerColor="@StateLayerColorOverride"
+                                 SupportingText="@SupportingText"
+                                 SupportingTextColor="@SupportingTextColorOverride"
+                                 TextColor="@TextColorOverride"
+                                 ErrorText="@ErrorText"
+                                 LeadingIcon="@LeadingIcon"
+                                 TrailingIcon="@TrailingIcon"
+                                 SuffixText="@SuffixText"
+                                 BindOnInput="@_bindOnInput"
+                                 AdditionalAttributes="@NumericAttributes" />
+
+                <NTInputSlider TNumber="int"
+                               @bind-Value="_model.Volume"
+                               ActiveTrackColor="@ActiveIndicatorColorOverride"
+                               Disabled="@FieldDisabledOverride"
+                               DisabledColor="@DisabledContentColorOverride"
+                               ErrorColor="@ErrorColorOverride"
+                               FocusColor="@FocusColorOverride"
+                               HandleColor="@ActiveIndicatorColorOverride"
+                               InsetIcon="@VolumeSliderInsetIcon"
+                               Label="@VolumeSliderLabel"
+                               LabelColor="@LabelColorOverride"
+                               Max="100"
+                               Min="0"
+                               Orientation="@_sliderOrientation"
+                               ReadOnly="@FieldReadOnlyOverride"
+                               ShowStops="@_showSliderStops"
+                               ShowValueIndicator="@_showSliderValueIndicator"
+                               Size="@_sliderSize"
+                               StateLayerColor="@StateLayerColorOverride"
+                               StopCount="11"
+                               SupportingText="@VolumeSliderSupportingText"
+                               SupportingTextColor="@SupportingTextColorOverride"
+                               BindOnInput="@_bindOnInput"
+                               ErrorText="@ErrorText"
+                               AdditionalAttributes="@VolumeSliderAttributes" />
+
+                <NTInputSlider TNumber="int"
+                               @bind-Value="_model.TemperatureOffset"
+                               ActiveTrackColor="@ActiveIndicatorColorOverride"
+                               Disabled="@FieldDisabledOverride"
+                               DisabledColor="@DisabledContentColorOverride"
+                               ErrorColor="@ErrorColorOverride"
+                               FocusColor="@FocusColorOverride"
+                               HandleColor="@ActiveIndicatorColorOverride"
+                               Label="@TemperatureSliderLabel"
+                               LabelColor="@LabelColorOverride"
+                               Max="50"
+                               Min="-50"
+                               ReadOnly="@FieldReadOnlyOverride"
+                               ShowStops="@_showSliderStops"
+                               ShowValueIndicator="@_showSliderValueIndicator"
+                               Size="@_sliderSize"
+                               StateLayerColor="@StateLayerColorOverride"
+                               StopCount="11"
+                               SupportingText="@TemperatureSliderSupportingText"
+                               SupportingTextColor="@SupportingTextColorOverride"
+                               Variant="NTSliderVariant.Centered"
+                               BindOnInput="@_bindOnInput"
+                               ErrorText="@ErrorText"
+                               AdditionalAttributes="@TemperatureSliderAttributes" />
+
+                <NTInputRangeSlider TNumber="int"
+                                    @bind-Value="_model.BudgetRange"
+                                    ActiveTrackColor="@ActiveIndicatorColorOverride"
+                                    Disabled="@FieldDisabledOverride"
+                                    DisabledColor="@DisabledContentColorOverride"
+                                    ErrorColor="@ErrorColorOverride"
+                                    FocusColor="@FocusColorOverride"
+                                    HandleColor="@ActiveIndicatorColorOverride"
+                                    Label="@BudgetRangeLabel"
+                                    LabelColor="@LabelColorOverride"
+                                    Max="100"
+                                    Min="0"
+                                    ReadOnly="@FieldReadOnlyOverride"
+                                    ShowStops="@_showSliderStops"
+                                    ShowValueIndicator="@_showSliderValueIndicator"
+                                    Size="@_sliderSize"
+                                    StateLayerColor="@StateLayerColorOverride"
+                                    StopCount="11"
+                                    SupportingText="@BudgetRangeSupportingText"
+                                    SupportingTextColor="@SupportingTextColorOverride"
+                                    BindOnInput="@_bindOnInput"
+                                    ErrorText="@ErrorText"
+                                    AdditionalAttributes="@BudgetRangeAttributes" />
+
+                <div style="min-height:280px;">
+                    <NTInputSlider TNumber="int"
+                                   @bind-Value="_model.Brightness"
+                                   ActiveTrackColor="@ActiveIndicatorColorOverride"
+                                   Disabled="@FieldDisabledOverride"
+                                   DisabledColor="@DisabledContentColorOverride"
+                                   ErrorColor="@ErrorColorOverride"
+                                   FocusColor="@FocusColorOverride"
+                                   HandleColor="@ActiveIndicatorColorOverride"
+                                   Label="@BrightnessSliderLabel"
+                                   LabelColor="@LabelColorOverride"
+                                   Max="100"
+                                   Min="0"
+                                   Orientation="NTSliderOrientation.Vertical"
+                                   ReadOnly="@FieldReadOnlyOverride"
+                                   ShowStops="@_showSliderStops"
+                                   ShowValueIndicator="@_showSliderValueIndicator"
+                                   Size="@_sliderSize"
+                                   StateLayerColor="@StateLayerColorOverride"
+                                   StopCount="11"
+                                   SupportingText="@BrightnessSliderSupportingText"
+                                   SupportingTextColor="@SupportingTextColorOverride"
+                                   BindOnInput="@_bindOnInput"
+                                   ErrorText="@ErrorText"
+                                   AdditionalAttributes="@BrightnessSliderAttributes" />
+                </div>
+
+                <NTSelect TValue="string"
+                          @bind-Value="_model.Status"
+                          Appearance="@FieldAppearanceOverride"
+                          ActiveIndicatorColor="@ActiveIndicatorColorOverride"
+                          BackgroundColor="@BackgroundColorOverride"
+                          CaretColor="@CaretColorOverride"
+                          Density="@FieldDensityOverride"
+                          DisabledContainerColor="@DisabledContainerColorOverride"
+                          DisabledContentColor="@DisabledContentColorOverride"
+                          DisabledOutlineColor="@DisabledOutlineColorOverride"
+                          Disabled="@FieldDisabledOverride"
+                          ErrorCaretColor="@ErrorCaretColorOverride"
+                          ErrorColor="@ErrorColorOverride"
+                          FocusColor="@FocusColorOverride"
+                          HoverActiveIndicatorColor="@HoverActiveIndicatorColorOverride"
+                          HoverOutlineColor="@HoverOutlineColorOverride"
+                          IconColor="@IconColorOverride"
+                          LabelColor="@LabelColorOverride"
+                          ReadOnly="@FieldReadOnlyOverride"
+                          Label="@StatusLabel"
+                          OutlineColor="@OutlineColorOverride"
+                          Placeholder="@Placeholder"
+                          PlaceholderColor="@PlaceholderColorOverride"
+                          PrefixSuffixColor="@PrefixSuffixColorOverride"
+                          StateLayerColor="@StateLayerColorOverride"
+                          SupportingText="@StatusSupportingText"
+                          SupportingTextColor="@SupportingTextColorOverride"
+                          TextColor="@TextColorOverride"
+                          ErrorText="@ErrorText"
+                          LeadingIcon="@StatusLeadingIcon"
+                          TrailingIcon="@TrailingIcon"
+                          PrefixText="@PrefixText"
+                          SuffixText="@SuffixText"
+                          AdditionalAttributes="@SelectAttributes">
+                    <option value="">Choose a status</option>
+                    <optgroup label="Active work">
+                        <option value="new">New</option>
+                        <option value="in-progress">In progress</option>
+                    </optgroup>
+                    <optgroup label="Closed work">
+                        <option value="complete">Complete</option>
+                        <option value="archived">Archived</option>
+                    </optgroup>
+                </NTSelect>
+
+                <NTSelect TValue="bool?"
+                          @bind-Value="_model.Approved"
+                          Appearance="@FieldAppearanceOverride"
+                          ActiveIndicatorColor="@ActiveIndicatorColorOverride"
+                          BackgroundColor="@BackgroundColorOverride"
+                          CaretColor="@CaretColorOverride"
+                          Density="@FieldDensityOverride"
+                          DisabledContainerColor="@DisabledContainerColorOverride"
+                          DisabledContentColor="@DisabledContentColorOverride"
+                          DisabledOutlineColor="@DisabledOutlineColorOverride"
+                          Disabled="@FieldDisabledOverride"
+                          ErrorCaretColor="@ErrorCaretColorOverride"
+                          ErrorColor="@ErrorColorOverride"
+                          FocusColor="@FocusColorOverride"
+                          HoverActiveIndicatorColor="@HoverActiveIndicatorColorOverride"
+                          HoverOutlineColor="@HoverOutlineColorOverride"
+                          IconColor="@IconColorOverride"
+                          LabelColor="@LabelColorOverride"
+                          ReadOnly="@FieldReadOnlyOverride"
+                          Label="@ApprovalLabel"
+                          OutlineColor="@OutlineColorOverride"
+                          Placeholder="@Placeholder"
+                          PlaceholderColor="@PlaceholderColorOverride"
+                          PrefixSuffixColor="@PrefixSuffixColorOverride"
+                          StateLayerColor="@StateLayerColorOverride"
+                          SupportingText="@ApprovalSupportingText"
+                          SupportingTextColor="@SupportingTextColorOverride"
+                          TextColor="@TextColorOverride"
+                          ErrorText="@ErrorText"
+                          LeadingIcon="@StatusLeadingIcon"
+                          TrailingIcon="@TrailingIcon"
+                          PrefixText="@PrefixText"
+                          SuffixText="@SuffixText"
+                          AdditionalAttributes="@ApprovalSelectAttributes">
+                    <option value="">Unset</option>
+                    <option value="true">Approved</option>
+                    <option value="false">Not approved</option>
+                </NTSelect>
+
+                <NTSelect TValue="DemoPriority?"
+                          @bind-Value="_model.Priority"
+                          Appearance="@FieldAppearanceOverride"
+                          ActiveIndicatorColor="@ActiveIndicatorColorOverride"
+                          BackgroundColor="@BackgroundColorOverride"
+                          CaretColor="@CaretColorOverride"
+                          Density="@FieldDensityOverride"
+                          DisabledContainerColor="@DisabledContainerColorOverride"
+                          DisabledContentColor="@DisabledContentColorOverride"
+                          DisabledOutlineColor="@DisabledOutlineColorOverride"
+                          Disabled="@FieldDisabledOverride"
+                          ErrorCaretColor="@ErrorCaretColorOverride"
+                          ErrorColor="@ErrorColorOverride"
+                          FocusColor="@FocusColorOverride"
+                          HoverActiveIndicatorColor="@HoverActiveIndicatorColorOverride"
+                          HoverOutlineColor="@HoverOutlineColorOverride"
+                          IconColor="@IconColorOverride"
+                          LabelColor="@LabelColorOverride"
+                          ReadOnly="@FieldReadOnlyOverride"
+                          Label="@PriorityLabel"
+                          OutlineColor="@OutlineColorOverride"
+                          Placeholder="@Placeholder"
+                          PlaceholderColor="@PlaceholderColorOverride"
+                          PrefixSuffixColor="@PrefixSuffixColorOverride"
+                          StateLayerColor="@StateLayerColorOverride"
+                          SupportingText="@PrioritySupportingText"
+                          SupportingTextColor="@SupportingTextColorOverride"
+                          TextColor="@TextColorOverride"
+                          ErrorText="@ErrorText"
+                          LeadingIcon="@StatusLeadingIcon"
+                          TrailingIcon="@TrailingIcon"
+                          PrefixText="@PrefixText"
+                          SuffixText="@SuffixText"
+                          AdditionalAttributes="@PrioritySelectAttributes">
+                    <option value="">Choose a priority</option>
+                    <option value="Low">Low</option>
+                    <option value="Medium">Medium</option>
+                    <option value="High">High</option>
+                </NTSelect>
+
+                <NTCombobox TValue="string"
+                            @bind-Value="_model.Tags"
+                            Appearance="@FieldAppearanceOverride"
+                            ActiveIndicatorColor="@ActiveIndicatorColorOverride"
+                            BackgroundColor="@BackgroundColorOverride"
+                            CaretColor="@CaretColorOverride"
+                            Density="@FieldDensityOverride"
+                            DisabledContainerColor="@DisabledContainerColorOverride"
+                            DisabledContentColor="@DisabledContentColorOverride"
+                            DisabledOutlineColor="@DisabledOutlineColorOverride"
+                            Disabled="@FieldDisabledOverride"
+                            ErrorCaretColor="@ErrorCaretColorOverride"
+                            ErrorColor="@ErrorColorOverride"
+                            FocusColor="@FocusColorOverride"
+                            HoverActiveIndicatorColor="@HoverActiveIndicatorColorOverride"
+                            HoverOutlineColor="@HoverOutlineColorOverride"
+                            IconColor="@IconColorOverride"
+                            LabelColor="@LabelColorOverride"
+                            ReadOnly="@FieldReadOnlyOverride"
+                            Label="@TagsLabel"
+                            OutlineColor="@OutlineColorOverride"
+                            Placeholder="@Placeholder"
+                            PlaceholderColor="@PlaceholderColorOverride"
+                            PrefixSuffixColor="@PrefixSuffixColorOverride"
+                            StateLayerColor="@StateLayerColorOverride"
+                            SupportingText="@TagsSupportingText"
+                            SupportingTextColor="@SupportingTextColorOverride"
+                            TextColor="@TextColorOverride"
+                            ErrorText="@ErrorText"
+                            LeadingIcon="@TagsLeadingIcon"
+                            TrailingIcon="@TrailingIcon"
+                            PrefixText="@PrefixText"
+                            SuffixText="@SuffixText"
+                            Items="@TagOptions"
+                            MenuItemAppearance="@_menuItemAppearance"
+                            Searchable="@_comboboxSearchable"
+                            AdditionalAttributes="@ComboboxAttributes" />
+
+                <NTAutocomplete @bind-Value="_model.City"
+                                Appearance="@FieldAppearanceOverride"
+                                ActiveIndicatorColor="@ActiveIndicatorColorOverride"
+                                BackgroundColor="@BackgroundColorOverride"
+                                CaretColor="@CaretColorOverride"
+                                Density="@FieldDensityOverride"
+                                DisabledContainerColor="@DisabledContainerColorOverride"
+                                DisabledContentColor="@DisabledContentColorOverride"
+                                DisabledOutlineColor="@DisabledOutlineColorOverride"
+                                Disabled="@FieldDisabledOverride"
+                                ErrorCaretColor="@ErrorCaretColorOverride"
+                                ErrorColor="@ErrorColorOverride"
+                                FocusColor="@FocusColorOverride"
+                                HoverActiveIndicatorColor="@HoverActiveIndicatorColorOverride"
+                                HoverOutlineColor="@HoverOutlineColorOverride"
+                                IconColor="@IconColorOverride"
+                                LabelColor="@LabelColorOverride"
+                                ReadOnly="@FieldReadOnlyOverride"
+                                Label="@CityLabel"
+                                OutlineColor="@OutlineColorOverride"
+                                Placeholder="@Placeholder"
+                                PlaceholderColor="@PlaceholderColorOverride"
+                                PrefixSuffixColor="@PrefixSuffixColorOverride"
+                                StateLayerColor="@StateLayerColorOverride"
+                                SupportingText="@CitySupportingText"
+                                SupportingTextColor="@SupportingTextColorOverride"
+                                TextColor="@TextColorOverride"
+                                ErrorText="@ErrorText"
+                                LeadingIcon="@CityLeadingIcon"
+                                TrailingIcon="@TrailingIcon"
+                                PrefixText="@PrefixText"
+                                SuffixText="@SuffixText"
+                                Items="@CityOptions"
+                                AllowCustomValue="@_allowAutocompleteCustomValue"
+                                MenuItemAppearance="@_menuItemAppearance"
+                                AdditionalAttributes="@AutocompleteAttributes" />
+
+                <NTInputCheckbox @bind-Value="_model.Accepted"
+                            Density="@FieldDensityOverride"
+                            Disabled="@FieldDisabledOverride"
+                            DisabledContainerColor="@DisabledContainerColorOverride"
+                            DisabledIconColor="@DisabledContentColorOverride"
+                            DisabledOutlineColor="@DisabledOutlineColorOverride"
+                            ErrorColor="@ErrorColorOverride"
+                            ErrorIconColor="@TextColorOverride"
+                            FocusOutlineColor="@FocusColorOverride"
+                            HoverOutlineColor="@HoverOutlineColorOverride"
+                            Indeterminate="@_checkboxIndeterminate"
+                            IndeterminateChanged="HandleCheckboxIndeterminateChanged"
+                            Label="@CheckboxLabel"
+                            LabelColor="@LabelColorOverride"
+                            LeadingIcon="@CheckboxLeadingIcon"
+                            IconColor="@IconColorOverride"
+                            OutlineColor="@OutlineColorOverride"
+                            PressedOutlineColor="@FocusColorOverride"
+                            ReadOnly="@FieldReadOnlyOverride"
+                            Required="@_checkboxRequired"
+                            RequiredErrorText="Accept terms before submitting"
+                            SelectedContainerColor="@ActiveIndicatorColorOverride"
+                            SelectedIconColor="@TextColorOverride"
+                            SelectedStateLayerColor="@StateLayerColorOverride"
+                            StateLayerColor="@StateLayerColorOverride"
+                            SupportingText="@CheckboxSupportingText"
+                            SupportingTextColor="@SupportingTextColorOverride"
+                            TrailingIcon="@CheckboxTrailingIcon"
+                            Variant="@_checkboxVariant"
+                            ErrorText="@ErrorText"
+                            AdditionalAttributes="@CheckboxAttributes" />
+
+                <NTInputRadioGroup TValue="string"
+                                   @bind-Value="_model.ContactMethod"
+                                   Appearance="@FieldAppearanceOverride"
+                                   ActiveIndicatorColor="@ActiveIndicatorColorOverride"
+                                   BackgroundColor="@BackgroundColorOverride"
+                                   Density="@FieldDensityOverride"
+                                   Disabled="@FieldDisabledOverride"
+                                   DisabledContainerColor="@DisabledContainerColorOverride"
+                                   DisabledContentColor="@DisabledContentColorOverride"
+                                   DisabledOutlineColor="@DisabledOutlineColorOverride"
+                                   ErrorColor="@ErrorColorOverride"
+                                   FocusColor="@FocusColorOverride"
+                                   HoverActiveIndicatorColor="@HoverActiveIndicatorColorOverride"
+                                   HoverOutlineColor="@HoverOutlineColorOverride"
+                                   Label="@RadioGroupLabel"
+                                   LabelColor="@LabelColorOverride"
+                                   OutlineColor="@OutlineColorOverride"
+                                   ReadOnly="@FieldReadOnlyOverride"
+                                   SelectedColor="@ActiveIndicatorColorOverride"
+                                   SelectedStateLayerColor="@StateLayerColorOverride"
+                                   StateLayerColor="@StateLayerColorOverride"
+                                   SupportingText="@RadioGroupSupportingText"
+                                   SupportingTextColor="@SupportingTextColorOverride"
+                                   UnselectedColor="@OutlineColorOverride"
+                                   ErrorText="@ErrorText"
+                                   AdditionalAttributes="@RadioGroupAttributes">
+                    <NTInputRadio TValue="string"
+                                  Value="@("email")"
+                                  Label="Email"
+                                  LeadingIcon="@RadioLeadingIcon"
+                                  SupportingText="Best for detailed updates" />
+                    <NTInputRadio TValue="string"
+                                  Value="@("sms")"
+                                  Label="SMS"
+                                  SupportingText="Best for urgent notifications" />
+                    <NTInputRadio TValue="string"
+                                  Value="@("phone")"
+                                  Label="Phone"
+                                  TrailingIcon="@RadioTrailingIcon"
+                                  SupportingText="Use for scheduled calls" />
+                </NTInputRadioGroup>
+
+                <NTInputSwitch @bind-Value="_model.NotificationsEnabled"
+                               Density="@FieldDensityOverride"
+                               Disabled="@FieldDisabledOverride"
+                               DisabledHandleColor="@DisabledContentColorOverride"
+                               DisabledIconColor="@DisabledContainerColorOverride"
+                               DisabledTrackColor="@DisabledOutlineColorOverride"
+                               ErrorColor="@ErrorColorOverride"
+                               IconColor="@IconColorOverride"
+                               Label="@SwitchLabel"
+                               LabelColor="@LabelColorOverride"
+                               LeadingIcon="@SwitchLeadingIcon"
+                               ReadOnly="@FieldReadOnlyOverride"
+                               Required="@_switchRequired"
+                               RequiredErrorText="Enable notifications before submitting"
+                               SelectedHandleColor="@TextColorOverride"
+                               SelectedIconColor="@ActiveIndicatorColorOverride"
+                               SelectedStateLayerColor="@StateLayerColorOverride"
+                               SelectedTrackColor="@ActiveIndicatorColorOverride"
+                               ShowHandleIcon="@_showSwitchHandleIcon"
+                               StateLayerColor="@StateLayerColorOverride"
+                               SupportingText="@SwitchSupportingText"
+                               SupportingTextColor="@SupportingTextColorOverride"
+                               TrailingIcon="@SwitchTrailingIcon"
+                               UnselectedHandleColor="@OutlineColorOverride"
+                               UnselectedIconColor="@DisabledContainerColorOverride"
+                               UnselectedOutlineColor="@OutlineColorOverride"
+                               UnselectedTrackColor="@BackgroundColorOverride"
+                               Variant="@_switchVariant"
+                               ErrorText="@ErrorText"
+                               AdditionalAttributes="@SwitchAttributes" />
+
+                @switch (_dateInputKind) {
+                    case DateInputKind.DateTime:
+                        <NTInputDateTime DateTimeType="DateTime?"
+                                         @bind-Value="_model.Appointment"
+                                         Appearance="@FieldAppearanceOverride"
+                                         ActiveIndicatorColor="@ActiveIndicatorColorOverride"
+                                         BackgroundColor="@BackgroundColorOverride"
+                                         CaretColor="@CaretColorOverride"
+                                         Density="@FieldDensityOverride"
+                                         DisabledContainerColor="@DisabledContainerColorOverride"
+                                         DisabledContentColor="@DisabledContentColorOverride"
+                                         DisabledOutlineColor="@DisabledOutlineColorOverride"
+                                         Disabled="@FieldDisabledOverride"
+                                         ErrorCaretColor="@ErrorCaretColorOverride"
+                                         ErrorColor="@ErrorColorOverride"
+                                         FocusColor="@FocusColorOverride"
+                                         HoverActiveIndicatorColor="@HoverActiveIndicatorColorOverride"
+                                         HoverOutlineColor="@HoverOutlineColorOverride"
+                                         IconColor="@IconColorOverride"
+                                         LabelColor="@LabelColorOverride"
+                                         ReadOnly="@FieldReadOnlyOverride"
+                                         Label="@DateTimeLabel"
+                                         OutlineColor="@OutlineColorOverride"
+                                         Placeholder="@Placeholder"
+                                         PlaceholderColor="@PlaceholderColorOverride"
+                                         PrefixSuffixColor="@PrefixSuffixColorOverride"
+                                         StateLayerColor="@StateLayerColorOverride"
+                                         SupportingText="@SupportingText"
+                                         SupportingTextColor="@SupportingTextColorOverride"
+                                         TextColor="@TextColorOverride"
+                                         ErrorText="@ErrorText"
+                                         LeadingIcon="@LeadingIcon"
+                                         TrailingIcon="@DateTrailingIcon"
+                                         PrefixText="@PrefixText"
+                                         SuffixText="@SuffixText"
+                                         BindOnInput="@_bindOnInput"
+                                         EnableCustomPicker="@_enableCustomDatePicker" />
+                        break;
+                    case DateInputKind.Date:
+                        <NTInputDateTime DateTimeType="DateOnly?"
+                                         @bind-Value="_model.StartDate"
+                                         Appearance="@FieldAppearanceOverride"
+                                         ActiveIndicatorColor="@ActiveIndicatorColorOverride"
+                                         BackgroundColor="@BackgroundColorOverride"
+                                         CaretColor="@CaretColorOverride"
+                                         Density="@FieldDensityOverride"
+                                         DisabledContainerColor="@DisabledContainerColorOverride"
+                                         DisabledContentColor="@DisabledContentColorOverride"
+                                         DisabledOutlineColor="@DisabledOutlineColorOverride"
+                                         Disabled="@FieldDisabledOverride"
+                                         ErrorCaretColor="@ErrorCaretColorOverride"
+                                         ErrorColor="@ErrorColorOverride"
+                                         FocusColor="@FocusColorOverride"
+                                         HoverActiveIndicatorColor="@HoverActiveIndicatorColorOverride"
+                                         HoverOutlineColor="@HoverOutlineColorOverride"
+                                         IconColor="@IconColorOverride"
+                                         LabelColor="@LabelColorOverride"
+                                         ReadOnly="@FieldReadOnlyOverride"
+                                         Label="@DateLabel"
+                                         OutlineColor="@OutlineColorOverride"
+                                         Placeholder="@Placeholder"
+                                         PlaceholderColor="@PlaceholderColorOverride"
+                                         PrefixSuffixColor="@PrefixSuffixColorOverride"
+                                         StateLayerColor="@StateLayerColorOverride"
+                                         SupportingText="@SupportingText"
+                                         SupportingTextColor="@SupportingTextColorOverride"
+                                         TextColor="@TextColorOverride"
+                                         ErrorText="@ErrorText"
+                                         LeadingIcon="@LeadingIcon"
+                                         TrailingIcon="@DateTrailingIcon"
+                                         PrefixText="@PrefixText"
+                                         SuffixText="@SuffixText"
+                                         BindOnInput="@_bindOnInput"
+                                         EnableCustomPicker="@_enableCustomDatePicker" />
+                        break;
+                    case DateInputKind.Month:
+                        <NTInputDateTime DateTimeType="DateOnly?"
+                                         @bind-Value="_model.StartDate"
+                                         Appearance="@FieldAppearanceOverride"
+                                         ActiveIndicatorColor="@ActiveIndicatorColorOverride"
+                                         BackgroundColor="@BackgroundColorOverride"
+                                         CaretColor="@CaretColorOverride"
+                                         Density="@FieldDensityOverride"
+                                         DisabledContainerColor="@DisabledContainerColorOverride"
+                                         DisabledContentColor="@DisabledContentColorOverride"
+                                         DisabledOutlineColor="@DisabledOutlineColorOverride"
+                                         Disabled="@FieldDisabledOverride"
+                                         ErrorCaretColor="@ErrorCaretColorOverride"
+                                         ErrorColor="@ErrorColorOverride"
+                                         FocusColor="@FocusColorOverride"
+                                         HoverActiveIndicatorColor="@HoverActiveIndicatorColorOverride"
+                                         HoverOutlineColor="@HoverOutlineColorOverride"
+                                         IconColor="@IconColorOverride"
+                                         LabelColor="@LabelColorOverride"
+                                         ReadOnly="@FieldReadOnlyOverride"
+                                         Label="@MonthLabel"
+                                         OutlineColor="@OutlineColorOverride"
+                                         Placeholder="@Placeholder"
+                                         PlaceholderColor="@PlaceholderColorOverride"
+                                         PrefixSuffixColor="@PrefixSuffixColorOverride"
+                                         StateLayerColor="@StateLayerColorOverride"
+                                         SupportingText="@SupportingText"
+                                         SupportingTextColor="@SupportingTextColorOverride"
+                                         TextColor="@TextColorOverride"
+                                         ErrorText="@ErrorText"
+                                         LeadingIcon="@LeadingIcon"
+                                         TrailingIcon="@DateTrailingIcon"
+                                         PrefixText="@PrefixText"
+                                         SuffixText="@SuffixText"
+                                         BindOnInput="@_bindOnInput"
+                                         MonthOnly="true"
+                                         EnableCustomPicker="@_enableCustomDatePicker" />
+                        break;
+                    case DateInputKind.Time:
+                        <NTInputDateTime DateTimeType="TimeOnly?"
+                                         @bind-Value="_model.StartTime"
+                                         Appearance="@FieldAppearanceOverride"
+                                         ActiveIndicatorColor="@ActiveIndicatorColorOverride"
+                                         BackgroundColor="@BackgroundColorOverride"
+                                         CaretColor="@CaretColorOverride"
+                                         Density="@FieldDensityOverride"
+                                         DisabledContainerColor="@DisabledContainerColorOverride"
+                                         DisabledContentColor="@DisabledContentColorOverride"
+                                         DisabledOutlineColor="@DisabledOutlineColorOverride"
+                                         Disabled="@FieldDisabledOverride"
+                                         ErrorCaretColor="@ErrorCaretColorOverride"
+                                         ErrorColor="@ErrorColorOverride"
+                                         FocusColor="@FocusColorOverride"
+                                         HoverActiveIndicatorColor="@HoverActiveIndicatorColorOverride"
+                                         HoverOutlineColor="@HoverOutlineColorOverride"
+                                         IconColor="@IconColorOverride"
+                                         LabelColor="@LabelColorOverride"
+                                         ReadOnly="@FieldReadOnlyOverride"
+                                         Label="@TimeLabel"
+                                         OutlineColor="@OutlineColorOverride"
+                                         Placeholder="@Placeholder"
+                                         PlaceholderColor="@PlaceholderColorOverride"
+                                         PrefixSuffixColor="@PrefixSuffixColorOverride"
+                                         StateLayerColor="@StateLayerColorOverride"
+                                         SupportingText="@SupportingText"
+                                         SupportingTextColor="@SupportingTextColorOverride"
+                                         TextColor="@TextColorOverride"
+                                         ErrorText="@ErrorText"
+                                         LeadingIcon="@LeadingIcon"
+                                         TrailingIcon="@DateTrailingIcon"
+                                         PrefixText="@PrefixText"
+                                         SuffixText="@SuffixText"
+                                         BindOnInput="@_bindOnInput"
+                                         EnableCustomPicker="@_enableCustomDatePicker" />
+                        break;
+                }
+            </div>
+
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <button type="submit">Submit</button>
+                <button type="button" @onclick="ResetModel">Reset values</button>
+                <span>@_submitMessage</span>
+            </div>
+
+            <pre style="margin:0;padding:12px;overflow:auto;background:var(--tnt-color-surface-container);color:var(--tnt-color-on-surface);">@Summary</pre>
+        </div>
+    </NTForm>
+</section>
+
+@code {
+    private DemoModel _model = CreateModel();
+    private NTFormAppearance _appearance = NTFormAppearance.Outlined;
+    private NTFormDensity _density = NTFormDensity.Standard;
+    private TextInputType _textInputType = TextInputType.Email;
+    private string _phoneMask = "(###) ###-####";
+    private DateInputKind _dateInputKind = DateInputKind.Date;
+    private NTFormAppearance _fieldAppearance = NTFormAppearance.Filled;
+    private NTFormDensity _fieldDensity = NTFormDensity.Dense;
+    private NTInputCheckboxVariant _checkboxVariant = NTInputCheckboxVariant.Leading;
+    private NTMenuItemAppearance _menuItemAppearance;
+    private NTSliderOrientation _sliderOrientation = NTSliderOrientation.Horizontal;
+    private NTSliderSize _sliderSize = NTSliderSize.Medium;
+    private NTSwitchVariant _switchVariant = NTSwitchVariant.Leading;
+    private string _submitMessage = "Not submitted";
+    private bool _addLengthLimits = true;
+    private bool _addRangeLimits = true;
+    private bool _autoFocus;
+    private bool _bindOnInput = true;
+    private bool _checkboxIndeterminate;
+    private bool _checkboxRequired;
+    private bool _comboboxSearchable = true;
+    private bool _disabled;
+    private bool _enableCustomDatePicker = true;
+    private bool _overrideAppearance;
+    private bool _overrideDensity;
+    private bool _overrideDisabled;
+    private bool _overrideReadOnly;
+    private bool _readOnly;
+    private bool _showCounter = true;
+    private bool _showErrorText;
+    private bool _showLabel = true;
+    private bool _showLeadingIcon = true;
+    private bool _showPlaceholder = true;
+    private bool _showPrefix;
+    private bool _showRequiredText = true;
+    private bool _allowAutocompleteCustomValue = true;
+    private bool _showSuffix = true;
+    private bool _showSupportingText = true;
+    private bool _showSliderStops;
+    private bool _showSliderValueIndicator = true;
+    private bool _showSwitchHandleIcon;
+    private bool _showSliderInsetIcon = true;
+    private bool _showTrailingIcon = true;
+    private bool _switchRequired;
+    private bool _textAreaAutoGrow = true;
+    private bool _showControls = true;
+    private bool _useCustomColors;
+    private int _textAreaMinVisibleLines = 2;
+    private int? _textAreaMaxVisibleLines = 5;
+    private TnTColor _activeIndicatorColor = TnTColor.Secondary;
+    private TnTColor _backgroundColor = TnTColor.SecondaryContainer;
+    private TnTColor _caretColor = TnTColor.Tertiary;
+    private TnTColor _disabledContainerColor = TnTColor.SurfaceContainerHigh;
+    private TnTColor _disabledContentColor = TnTColor.OnSurfaceVariant;
+    private TnTColor _disabledOutlineColor = TnTColor.OutlineVariant;
+    private TnTColor _errorCaretColor = TnTColor.Warning;
+    private TnTColor _errorColor = TnTColor.Error;
+    private TnTColor _focusColor = TnTColor.Primary;
+    private TnTColor _hoverActiveIndicatorColor = TnTColor.OnSecondaryContainer;
+    private TnTColor _hoverOutlineColor = TnTColor.OnSecondaryContainer;
+    private TnTColor _iconColor = TnTColor.Tertiary;
+    private TnTColor _labelColor = TnTColor.Secondary;
+    private TnTColor _outlineColor = TnTColor.Secondary;
+    private TnTColor _placeholderColor = TnTColor.OnSurfaceVariant;
+    private TnTColor _prefixSuffixColor = TnTColor.Tertiary;
+    private TnTColor _stateLayerColor = TnTColor.OnSurface;
+    private TnTColor _supportingTextColor = TnTColor.Secondary;
+    private TnTColor _textColor = TnTColor.OnSurface;
+
+    private TnTColor? ActiveIndicatorColorOverride => _useCustomColors ? _activeIndicatorColor : null;
+    private TnTColor? BackgroundColorOverride => _useCustomColors ? _backgroundColor : null;
+    private TnTColor? CaretColorOverride => _useCustomColors ? _caretColor : null;
+    private TnTColor? DisabledContainerColorOverride => _useCustomColors ? _disabledContainerColor : null;
+    private TnTColor? DisabledContentColorOverride => _useCustomColors ? _disabledContentColor : null;
+    private TnTColor? DisabledOutlineColorOverride => _useCustomColors ? _disabledOutlineColor : null;
+    private TnTColor? ErrorCaretColorOverride => _useCustomColors ? _errorCaretColor : null;
+    private TnTColor? ErrorColorOverride => _useCustomColors ? _errorColor : null;
+    private NTFormAppearance? FieldAppearanceOverride => _overrideAppearance ? _fieldAppearance : null;
+    private NTFormDensity? FieldDensityOverride => _overrideDensity ? _fieldDensity : null;
+    private bool? FieldDisabledOverride => _overrideDisabled ? false : null;
+    private bool? FieldReadOnlyOverride => _overrideReadOnly ? false : null;
+    private TnTColor? FocusColorOverride => _useCustomColors ? _focusColor : null;
+    private TnTColor? HoverActiveIndicatorColorOverride => _useCustomColors ? _hoverActiveIndicatorColor : null;
+    private TnTColor? HoverOutlineColorOverride => _useCustomColors ? _hoverOutlineColor : null;
+    private TnTColor? IconColorOverride => _useCustomColors ? _iconColor : null;
+    private TnTColor? LabelColorOverride => _useCustomColors ? _labelColor : null;
+    private TnTColor? OutlineColorOverride => _useCustomColors ? _outlineColor : null;
+    private TnTColor? PlaceholderColorOverride => _useCustomColors ? _placeholderColor : null;
+    private TnTColor? PrefixSuffixColorOverride => _useCustomColors ? _prefixSuffixColor : null;
+    private TnTColor? StateLayerColorOverride => _useCustomColors ? _stateLayerColor : null;
+    private TnTColor? SupportingTextColorOverride => _useCustomColors ? _supportingTextColor : null;
+    private TnTColor? TextColorOverride => _useCustomColors ? _textColor : null;
+    private bool CheckboxRequired {
+        get => _checkboxRequired;
+        set => _checkboxRequired = value;
+    }
+
+    private string? CheckboxLabel => _showLabel ? "Accept terms" : null;
+    private string? CheckboxSupportingText => _showSupportingText ? "Required only when checkbox required is enabled" : null;
+    private TnTIcon? CheckboxLeadingIcon => _showLeadingIcon ? MaterialIcon.VerifiedUser : null;
+    private TnTIcon? CheckboxTrailingIcon => _showTrailingIcon ? MaterialIcon.Info : null;
+    private TnTIcon? RadioLeadingIcon => _showLeadingIcon ? MaterialIcon.AlternateEmail : null;
+    private TnTIcon? RadioTrailingIcon => _showTrailingIcon ? MaterialIcon.Info : null;
+    private string? RadioGroupLabel => _showLabel ? "Contact method" : null;
+    private string? RadioGroupSupportingText => _showSupportingText ? "Press 1-3 to select; arrow keys highlight and Space selects." : null;
+    private string? SwitchLabel => _showLabel ? "Notifications" : null;
+    private string? SwitchSupportingText => _showSupportingText ? "Applies immediately" : null;
+    private TnTIcon? SwitchLeadingIcon => _showLeadingIcon ? MaterialIcon.Notifications : null;
+    private TnTIcon? SwitchTrailingIcon => _showTrailingIcon ? MaterialIcon.Info : null;
+    private string? BudgetRangeLabel => _showLabel ? "Budget range" : null;
+    private string? BudgetRangeSupportingText => _showSupportingText ? "Range slider with two native handles" : null;
+    private string? BrightnessSliderLabel => _showLabel ? "Brightness" : null;
+    private string? BrightnessSliderSupportingText => _showSupportingText ? "Vertical slider demo" : null;
+    private TnTIcon? DateTrailingIcon => _showTrailingIcon ? MaterialIcon.CalendarMonth : null;
+    private TnTIcon? LeadingIcon => _showLeadingIcon ? MaterialIcon.Person : null;
+    private TnTIcon? TrailingIcon => _showTrailingIcon ? MaterialIcon.Search : null;
+    private string? DateLabel => _showLabel ? "Start date" : null;
+    private string? DateTimeLabel => _showLabel ? "Appointment" : null;
+    private string? EmailLabel => _showLabel ? "Email" : null;
+    private string? EmailPrefixText => _showPrefix ? "mailto:" : null;
+    private string? ErrorText => _showErrorText ? "This is explicit error text" : null;
+    private string? Label => _showLabel ? "Name" : null;
+    private string? MonthLabel => _showLabel ? "Start month" : null;
+    private string? PhoneLabel => _showLabel ? "Phone" : null;
+    private TnTIcon? PhoneLeadingIcon => _showLeadingIcon ? MaterialIcon.Phone : null;
+    private string? PhonePlaceholder => _showPlaceholder ? _phoneMask.Replace("#", "0", StringComparison.Ordinal) : null;
+    private string? PhonePrefixText => _showPrefix ? "tel:" : null;
+    private string? PhoneSupportingText => _showSupportingText ? $"Mask: {_phoneMask}" : null;
+    private string? Placeholder => _showPlaceholder ? "Placeholder" : null;
+    private string? PrefixText => _showPrefix ? "#" : null;
+    private TnTIcon? NotesLeadingIcon => _showLeadingIcon ? MaterialIcon.Notes : null;
+    private string? NotesLabel => _showLabel ? "Notes" : null;
+    private string? NotesSupportingText => _showSupportingText ? "Multiline textarea field" : null;
+    private TnTIcon? FileLeadingIcon => _showLeadingIcon ? MaterialIcon.AttachFile : null;
+    private string? FileLabel => _showLabel ? "Attachments" : null;
+    private string? FileSupportingText => _showSupportingText ? "Static form post and interactive stream upload demo" : null;
+    private string? PriceLabel => _showLabel ? "Price" : null;
+    private string? QuantityLabel => _showLabel ? "Quantity" : null;
+    private string? QuantitySuffixText => _showSuffix ? "items" : null;
+    private string? StatusLabel => _showLabel ? "Status" : null;
+    private string? ApprovalLabel => _showLabel ? "Approval" : null;
+    private string? PriorityLabel => _showLabel ? "Priority" : null;
+    private TnTIcon? StatusLeadingIcon => _showLeadingIcon ? MaterialIcon.ListAlt : null;
+    private string? StatusSupportingText => _showSupportingText ? "Native select with option and optgroup children" : null;
+    private string? ApprovalSupportingText => _showSupportingText ? "Nullable bool select" : null;
+    private string? PrioritySupportingText => _showSupportingText ? "Nullable enum select" : null;
+    private TnTIcon? TagsLeadingIcon => _showLeadingIcon ? MaterialIcon.Label : null;
+    private string? TagsLabel => _showLabel ? "Tags" : null;
+    private string? TagsSupportingText => _showSupportingText ? "Multi-select combobox; click items to toggle them" : null;
+    private TnTIcon? CityLeadingIcon => _showLeadingIcon ? MaterialIcon.LocationCity : null;
+    private string? CityLabel => _showLabel ? "City" : null;
+    private string? CitySupportingText => _showSupportingText ? "Local autocomplete suggestions filtered in the browser" : null;
+    private string? SuffixText => _showSuffix ? "suffix" : null;
+    private string? SupportingText => _showSupportingText ? "Supporting text" : null;
+    private string? TimeLabel => _showLabel ? "Start time" : null;
+    private string? TemperatureSliderLabel => _showLabel ? "Temperature offset" : null;
+    private string? TemperatureSliderSupportingText => _showSupportingText ? "Centered slider from -50 to 50" : null;
+    private TnTIcon? VolumeSliderInsetIcon => _showSliderInsetIcon ? MaterialIcon.VolumeDown : null;
+    private string? VolumeSliderLabel => _showLabel ? "Volume" : null;
+    private string? VolumeSliderSupportingText => _showSupportingText ? "Standard slider with stops and immediate binding" : null;
+
+    private static readonly string[] PhoneMaskOptions = [
+        "(###) ###-####",
+        "+# (###) ###-####",
+        "+## #### ######",
+        "+## ## ## ## ##",
+        "#### ### ###"
+    ];
+
+    private IReadOnlyDictionary<string, object> NumericAttributes {
+        get {
+            var attributes = new Dictionary<string, object>();
+            if (_addRangeLimits) {
+                attributes["min"] = "1";
+                attributes["max"] = "25";
+            }
+
+            return attributes;
+        }
+    }
+
+    private IReadOnlyDictionary<string, object> VolumeSliderAttributes {
+        get {
+            var attributes = new Dictionary<string, object> {
+                ["data-field"] = "volume"
+            };
+            if (!_showLabel) {
+                attributes["aria-label"] = "Volume";
+            }
+
+            return attributes;
+        }
+    }
+
+    private IReadOnlyDictionary<string, object> TemperatureSliderAttributes {
+        get {
+            var attributes = new Dictionary<string, object> {
+                ["data-field"] = "temperature-offset"
+            };
+            if (!_showLabel) {
+                attributes["aria-label"] = "Temperature offset";
+            }
+
+            return attributes;
+        }
+    }
+
+    private IReadOnlyDictionary<string, object> BudgetRangeAttributes {
+        get {
+            var attributes = new Dictionary<string, object> {
+                ["data-field"] = "budget-range"
+            };
+            if (!_showLabel) {
+                attributes["aria-label"] = "Budget range";
+            }
+
+            return attributes;
+        }
+    }
+
+    private IReadOnlyDictionary<string, object> BrightnessSliderAttributes {
+        get {
+            var attributes = new Dictionary<string, object> {
+                ["data-field"] = "brightness"
+            };
+            if (!_showLabel) {
+                attributes["aria-label"] = "Brightness";
+            }
+
+            return attributes;
+        }
+    }
+
+    private static readonly TnTColor[] ColorOptions = [
+        TnTColor.Primary,
+        TnTColor.OnPrimary,
+        TnTColor.PrimaryContainer,
+        TnTColor.OnPrimaryContainer,
+        TnTColor.Secondary,
+        TnTColor.OnSecondary,
+        TnTColor.SecondaryContainer,
+        TnTColor.OnSecondaryContainer,
+        TnTColor.Tertiary,
+        TnTColor.OnTertiary,
+        TnTColor.TertiaryContainer,
+        TnTColor.OnTertiaryContainer,
+        TnTColor.Error,
+        TnTColor.OnError,
+        TnTColor.ErrorContainer,
+        TnTColor.OnErrorContainer,
+        TnTColor.Surface,
+        TnTColor.OnSurface,
+        TnTColor.SurfaceContainerLow,
+        TnTColor.SurfaceContainer,
+        TnTColor.SurfaceContainerHigh,
+        TnTColor.SurfaceContainerHighest,
+        TnTColor.OnSurfaceVariant,
+        TnTColor.Outline,
+        TnTColor.OutlineVariant,
+        TnTColor.Success,
+        TnTColor.Warning,
+        TnTColor.Info
+    ];
+
+    private static readonly IReadOnlyList<NTComboboxOption<string>> TagOptions = [
+        new("design", "Design") {
+            LeadingIcon = MaterialIcon.Palette,
+            SupportingText = "Visual and interaction work"
+        },
+        new("engineering", "Engineering") {
+            LeadingIcon = MaterialIcon.Engineering,
+            SupportingText = "Implementation and review"
+        },
+        new("qa", "QA") {
+            LeadingIcon = MaterialIcon.BugReport,
+            SupportingText = "Testing and validation"
+        },
+        new("security", "Security") {
+            LeadingIcon = MaterialIcon.Security,
+            SupportingText = "Risk and access review"
+        },
+        new("release", "Release") {
+            LeadingIcon = MaterialIcon.WorkspacePremium,
+            SupportingText = "Launch coordination"
+        },
+        new("blocked", "Blocked") {
+            LeadingIcon = MaterialIcon.Flag,
+            SupportingText = "Disabled example",
+            Disabled = true
+        }
+    ];
+
+    private static readonly IReadOnlyList<NTAutocompleteOption> CityOptions = [
+        new("Austin", "Austin") {
+            SupportingText = "Texas"
+        },
+        new("Boston", "Boston") {
+            SupportingText = "Massachusetts"
+        },
+        new("Dallas", "Dallas") {
+            SupportingText = "Texas"
+        },
+        new("East Austin", "East Austin") {
+            SupportingText = "Neighborhood"
+        },
+        new("Denver", "Denver") {
+            SupportingText = "Colorado"
+        },
+        new("Detroit", "Detroit") {
+            SupportingText = "Michigan"
+        },
+        new("Fort Worth", "Fort Worth") {
+            SupportingText = "Texas"
+        },
+        new("Houston", "Houston") {
+            SupportingText = "Texas"
+        },
+        new("Los Angeles", "Los Angeles") {
+            SupportingText = "California"
+        },
+        new("New York", "New York") {
+            SupportingText = "New York"
+        },
+        new("North Austin", "North Austin") {
+            SupportingText = "Neighborhood"
+        },
+        new("Phoenix", "Phoenix") {
+            SupportingText = "Arizona"
+        },
+        new("San Antonio", "San Antonio") {
+            SupportingText = "Texas"
+        },
+        new("San Diego", "San Diego") {
+            SupportingText = "California"
+        },
+        new("Washington", "Washington") {
+            SupportingText = "District of Columbia"
+        }
+    ];
+
+    private string Summary => string.Join(Environment.NewLine, [
+        $"Appearance: {_appearance}",
+        $"Density: {_density}",
+        $"Text type: {_textInputType}",
+        $"Phone mask: {_phoneMask}",
+        $"Textarea auto grow: {_textAreaAutoGrow}",
+        $"Textarea min visible lines: {_textAreaMinVisibleLines}",
+        $"Textarea max visible lines: {_textAreaMaxVisibleLines}",
+        $"Date type: {_dateInputKind}",
+        $"Custom date/time picker: {_enableCustomDatePicker}",
+        $"Custom colors: {_useCustomColors}",
+        $"Name: {_model.Name}",
+        $"Email: {_model.Email}",
+        $"Phone: {_model.Phone}",
+        $"Notes: {_model.Notes}",
+        $"Files: {(_model.Files is { Count: > 0 } files ? string.Join(", ", files.Select(file => file.Name)) : "none")}",
+        $"Quantity: {_model.Quantity}",
+        $"Price: {_model.Price}",
+        $"Volume: {_model.Volume}",
+        $"Temperature offset: {_model.TemperatureOffset}",
+        $"Brightness: {_model.Brightness}",
+        $"Budget range: {_model.BudgetRange.Start} - {_model.BudgetRange.End}",
+        $"Slider size: {_sliderSize}",
+        $"Slider orientation: {_sliderOrientation}",
+        $"Slider stops: {_showSliderStops}",
+        $"Slider value indicator: {_showSliderValueIndicator}",
+        $"Slider inset icon: {_showSliderInsetIcon}",
+        $"Status: {_model.Status}",
+        $"Approved: {_model.Approved}",
+        $"Priority: {_model.Priority}",
+        $"Tags: {string.Join(", ", _model.Tags)}",
+        $"City: {_model.City}",
+        $"Accepted: {_model.Accepted}",
+        $"Contact method: {_model.ContactMethod}",
+        $"Checkbox variant: {_checkboxVariant}",
+        $"Checkbox required: {_checkboxRequired}",
+        $"Checkbox indeterminate: {_checkboxIndeterminate}",
+        $"Notifications: {_model.NotificationsEnabled}",
+        $"Switch variant: {_switchVariant}",
+        $"Switch required: {_switchRequired}",
+        $"Switch handle icons: {_showSwitchHandleIcon}",
+        $"Appointment: {_model.Appointment}",
+        $"Start date: {_model.StartDate}",
+        $"Start time: {_model.StartTime}"
+    ]);
+
+    private IReadOnlyDictionary<string, object> TextAttributes {
+        get {
+            var attributes = new Dictionary<string, object>();
+            if (_addLengthLimits) {
+                attributes["minlength"] = "2";
+                attributes["maxlength"] = "24";
+            }
+
+            return attributes;
+        }
+    }
+
+    private IReadOnlyDictionary<string, object> TextAreaAttributes {
+        get {
+            var attributes = new Dictionary<string, object> {
+                ["data-field"] = "notes"
+            };
+            if (_addLengthLimits) {
+                attributes["minlength"] = "2";
+                attributes["maxlength"] = "280";
+            }
+
+            if (!_showLabel) {
+                attributes["aria-label"] = "Notes";
+            }
+
+            return attributes;
+        }
+    }
+
+    private IReadOnlyDictionary<string, object> FileAttributes {
+        get {
+            var attributes = new Dictionary<string, object> {
+                ["data-field"] = "files",
+                ["name"] = "files"
+            };
+            if (!_showLabel) {
+                attributes["aria-label"] = "Attachments";
+            }
+
+            return attributes;
+        }
+    }
+
+    private IReadOnlyDictionary<string, object> PhoneAttributes {
+        get {
+            var attributes = new Dictionary<string, object>();
+            if (_addLengthLimits) {
+                attributes["maxlength"] = "24";
+            }
+
+            return attributes;
+        }
+    }
+
+    private IReadOnlyDictionary<string, object> SelectAttributes {
+        get {
+            var attributes = new Dictionary<string, object> {
+                ["data-field"] = "status"
+            };
+            if (!_showLabel) {
+                attributes["aria-label"] = "Status";
+            }
+
+            return attributes;
+        }
+    }
+
+    private IReadOnlyDictionary<string, object> ApprovalSelectAttributes {
+        get {
+            var attributes = new Dictionary<string, object> {
+                ["data-field"] = "approved"
+            };
+            if (!_showLabel) {
+                attributes["aria-label"] = "Approval";
+            }
+
+            return attributes;
+        }
+    }
+
+    private IReadOnlyDictionary<string, object> PrioritySelectAttributes {
+        get {
+            var attributes = new Dictionary<string, object> {
+                ["data-field"] = "priority"
+            };
+            if (!_showLabel) {
+                attributes["aria-label"] = "Priority";
+            }
+
+            return attributes;
+        }
+    }
+
+    private IReadOnlyDictionary<string, object> ComboboxAttributes {
+        get {
+            var attributes = new Dictionary<string, object> {
+                ["data-field"] = "tags"
+            };
+            if (!_showLabel) {
+                attributes["aria-label"] = "Tags";
+            }
+
+            return attributes;
+        }
+    }
+
+    private IReadOnlyDictionary<string, object> AutocompleteAttributes {
+        get {
+            var attributes = new Dictionary<string, object> {
+                ["data-field"] = "city"
+            };
+            if (!_showLabel) {
+                attributes["aria-label"] = "City";
+            }
+
+            return attributes;
+        }
+    }
+
+    private IReadOnlyDictionary<string, object> CheckboxAttributes {
+        get {
+            var attributes = new Dictionary<string, object>();
+            if (!_showLabel) {
+                attributes["aria-label"] = "Accept terms";
+            }
+
+            return attributes;
+        }
+    }
+
+    private IReadOnlyDictionary<string, object> RadioGroupAttributes {
+        get {
+            var attributes = new Dictionary<string, object> {
+                ["data-field"] = "contact-method"
+            };
+            if (!_showLabel) {
+                attributes["aria-label"] = "Contact method";
+            }
+
+            return attributes;
+        }
+    }
+
+    private IReadOnlyDictionary<string, object> SwitchAttributes {
+        get {
+            var attributes = new Dictionary<string, object>();
+            if (!_showLabel) {
+                attributes["aria-label"] = "Notifications";
+            }
+
+            return attributes;
+        }
+    }
+
+    private static DemoModel CreateModel() => new();
+
+    private void HandleCheckboxIndeterminateChanged(bool indeterminate) => _checkboxIndeterminate = indeterminate;
+
+    private void HandleInvalidSubmit() => _submitMessage = "Invalid submit";
+
+    private void HandleValidSubmit() => _submitMessage = "Valid submit";
+
+    private async Task OnDemoUploadFileAsync(NTFileUploadEventArgs args) {
+        if (args.Stream is not null) {
+            await args.Stream.CopyToAsync(System.IO.Stream.Null);
+        }
+
+        await Task.Delay(3000);
+    }
+
+    private void ResetModel() {
+        _model = CreateModel();
+        _submitMessage = "Not submitted";
+    }
+
+    private void ToggleControls() => _showControls = !_showControls;
+
+    private enum DateInputKind {
+        Date,
+        Month,
+        Time,
+        DateTime
+    }
+
+    private enum DemoPriority {
+        Low,
+        Medium,
+        High
+    }
+
+    private sealed class DemoModel {
+        [Required]
+        [StringLength(24, MinimumLength = 2)]
+        public string? Name { get; set; }
+
+        [EmailAddress]
+        public string? Email { get; set; }
+
+        [Phone]
+        public string? Phone { get; set; }
+
+        [StringLength(280, MinimumLength = 2)]
+        public string? Notes { get; set; }
+
+        public IReadOnlyList<IBrowserFile>? Files { get; set; }
+
+        [Range(1, 25)]
+        public int? Quantity { get; set; }
+
+        [Range(typeof(decimal), "1", "25")]
+        public decimal? Price { get; set; }
+
+        public int Volume { get; set; } = 55;
+
+        public int TemperatureOffset { get; set; } = -20;
+
+        public int Brightness { get; set; } = 70;
+
+        public NTSliderRange<int> BudgetRange { get; set; } = new(25, 75);
+
+        public string Status { get; set; } = string.Empty;
+
+        public bool? Approved { get; set; }
+
+        public DemoPriority? Priority { get; set; }
+
+        public IReadOnlyList<string> Tags { get; set; } = [];
+
+        public string? City { get; set; }
+
+        public bool Accepted { get; set; }
+
+        public string ContactMethod { get; set; } = "email";
+
+        public bool NotificationsEnabled { get; set; }
+
+        public DateTime? Appointment { get; set; }
+
+        public DateOnly? StartDate { get; set; }
+
+        public TimeOnly? StartTime { get; set; }
+    }
+}

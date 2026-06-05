@@ -1,0 +1,665 @@
+@use '../Styles/_Variables/_colors.scss' as colors;
+@use '../Styles/_Variables/_corner-radius.scss' as corners;
+@use '../Styles/_Variables/_measurements.scss' as measurements;
+@use '../Styles/_Variables/_motion.scss' as motion;
+@use '../Styles/_Variables/_scrollbar.scss' as scrollbar;
+@use '../Styles/_Variables/_screen-width.scss' as screen-width;
+@use '../Buttons/buttonFocusRing' as focus;
+
+$nt-navigation-rail-collapsed-width: 96px;
+$nt-navigation-rail-expanded-min-width: 220px;
+$nt-navigation-rail-expanded-max-width: 360px;
+$nt-navigation-rail-expanded-width: clamp($nt-navigation-rail-expanded-min-width, 20vw, $nt-navigation-rail-expanded-max-width);
+$nt-navigation-rail-item-gap: 4px;
+$nt-navigation-rail-menu-button-size: 48px;
+$nt-navigation-rail-menu-button-block-inset: calc((#{measurements.$tnt-header-height} - #{$nt-navigation-rail-menu-button-size}) / 2);
+$nt-navigation-rail-fab-collapsed-width: 56px;
+$nt-navigation-rail-fab-max-inline-inset: 24px;
+$nt-navigation-rail-fab-expanded-inline-padding: 20px;
+$nt-navigation-rail-region-min-height: 56px;
+$nt-navigation-rail-transition-duration: motion.$nt-motion-duration-long_2;
+$nt-navigation-rail-transition-easing: motion.$nt-motion-easing-emphasized;
+$nt-navigation-rail-state-transition: motion.$nt-motion-duration-short_3 motion.$nt-motion-easing-standard;
+$nt-navigation-rail-shape-transition: motion.$nt-motion-duration-short_4 motion.$nt-motion-easing-emphasized;
+$nt-navigation-rail-icon-size: 24px;
+$nt-navigation-rail-indicator-height: 32px;
+$nt-navigation-rail-icon-label-gap: 4px;
+$nt-navigation-rail-horizontal-icon-label-gap: 8px;
+$nt-navigation-rail-modal-corner-radius: corners.$nt-corner-radius-extra-large;
+$nt-navigation-rail-modal-width: min($nt-navigation-rail-expanded-width, 88vw);
+
+.nt-navigation-rail {
+    align-self: flex-start;
+    background: var(--nt-navigation-rail-container-color, #{colors.$tnt-color-surface});
+    block-size: 100dvh;
+    box-sizing: border-box;
+    color: colors.$tnt-color-on-surface-variant;
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    inline-size: $nt-navigation-rail-collapsed-width;
+    inset-block: 0;
+    max-block-size: 100dvh;
+    min-block-size: 100dvh;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    padding-block: 0;
+    position: sticky;
+    top: 0;
+    transition: inline-size $nt-navigation-rail-transition-duration $nt-navigation-rail-transition-easing, margin-inline-end $nt-navigation-rail-transition-duration $nt-navigation-rail-transition-easing, background-color $nt-navigation-rail-state-transition, border-color $nt-navigation-rail-state-transition, box-shadow $nt-navigation-rail-state-transition;
+    z-index: 1;
+    @include scrollbar.nt-scrollbar;
+
+    ::deep .nt-nav-rail-selected-icon {
+        font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+
+    &.nt-navigation-rail-with-divider {
+        border-right: 1px solid var(--nt-navigation-rail-divider-color, #{colors.$tnt-color-outline-variant});
+    }
+
+    &.nt-navigation-rail-expanded {
+        inline-size: $nt-navigation-rail-expanded-width;
+
+        &.nt-navigation-rail-with-divider {
+            border-right: 1px solid var(--nt-navigation-rail-divider-color, #{colors.$tnt-color-outline-variant});
+        }
+    }
+
+    &.nt-navigation-rail-expanding:not(.nt-navigation-rail-responsive-modal):not(.nt-navigation-rail-hide-when-collapsed) {
+        ::deep .nt-navigation-rail-item-label {
+            animation: nt-navigation-rail-label-expand $nt-navigation-rail-transition-duration $nt-navigation-rail-transition-easing both;
+        }
+    }
+
+    &.nt-navigation-rail-collapsing:not(.nt-navigation-rail-responsive-modal):not(.nt-navigation-rail-hide-when-collapsed) {
+        ::deep .nt-navigation-rail-item-label {
+            animation: nt-navigation-rail-label-collapse $nt-navigation-rail-transition-duration $nt-navigation-rail-transition-easing both;
+        }
+    }
+
+    &.nt-navigation-rail-modal,
+    &.nt-navigation-rail-responsive-modal {
+        box-shadow: none;
+    }
+
+        &.nt-navigation-rail-modal.nt-navigation-rail-expanded,
+        &.nt-navigation-rail-modal.nt-navigation-rail-collapsing {
+            border-end-end-radius: $nt-navigation-rail-modal-corner-radius;
+            border-start-end-radius: $nt-navigation-rail-modal-corner-radius;
+            box-shadow: 0 8px 24px color-mix(in srgb, #{colors.$tnt-color-shadow} 24%, transparent);
+            inset-inline-start: 0;
+            max-inline-size: min($nt-navigation-rail-expanded-max-width, 88vw);
+            position: fixed;
+            z-index: 1000;
+        }
+
+    &.nt-navigation-rail-responsive-modal {
+        min-inline-size: $nt-navigation-rail-collapsed-width;
+        overflow-x: visible;
+
+        &.nt-navigation-rail-expanded,
+        &.nt-navigation-rail-expanding {
+            border-end-end-radius: $nt-navigation-rail-modal-corner-radius;
+            border-start-end-radius: $nt-navigation-rail-modal-corner-radius;
+            box-shadow: 0 8px 24px color-mix(in srgb, #{colors.$tnt-color-shadow} 24%, transparent);
+            inline-size: $nt-navigation-rail-expanded-width;
+            margin-inline-end: calc($nt-navigation-rail-collapsed-width - $nt-navigation-rail-expanded-width);
+            z-index: 1000;
+        }
+
+        &.nt-navigation-rail-collapsing {
+            border-end-end-radius: $nt-navigation-rail-modal-corner-radius;
+            border-start-end-radius: $nt-navigation-rail-modal-corner-radius;
+            box-shadow: 0 8px 24px color-mix(in srgb, #{colors.$tnt-color-shadow} 24%, transparent);
+            z-index: 1000;
+        }
+    }
+
+    &.nt-navigation-rail-hide-when-collapsed.nt-navigation-rail-collapsed:not(.nt-navigation-rail-collapsing) {
+        display: none;
+    }
+
+    &[dir='rtl'],
+    :dir(rtl) & {
+        &.nt-navigation-rail-with-divider {
+            border-left: 1px solid var(--nt-navigation-rail-divider-color, #{colors.$tnt-color-outline-variant});
+            border-right: 0;
+        }
+
+        &.nt-navigation-rail-modal.nt-navigation-rail-expanded,
+        &.nt-navigation-rail-modal.nt-navigation-rail-collapsing {
+            border-end-end-radius: 0;
+            border-end-start-radius: $nt-navigation-rail-modal-corner-radius;
+            border-start-end-radius: 0;
+            border-start-start-radius: $nt-navigation-rail-modal-corner-radius;
+            inset-inline-end: 0;
+            inset-inline-start: auto;
+        }
+    }
+}
+
+.nt-navigation-rail-menu {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+}
+
+.nt-navigation-rail-menu,
+.nt-navigation-rail-header,
+.nt-navigation-rail-footer {
+    box-sizing: border-box;
+    flex: 0 0 auto;
+    inline-size: 100%;
+    min-inline-size: 0;
+}
+
+.nt-navigation-rail-menu {
+    align-items: flex-start;
+    background: inherit;
+    inset-block-start: 0;
+    margin-block-start: $nt-navigation-rail-menu-button-block-inset;
+    margin-block-end: 12px;
+    position: sticky;
+    z-index: 4;
+}
+
+.nt-navigation-rail-menu-button {
+    --nt-button-state-layer-color: var(--nt-navigation-rail-state-layer-color, #{colors.$tnt-color-on-secondary-container});
+    align-items: center;
+    appearance: none;
+    background: transparent;
+    border: 0;
+    border-radius: 999px;
+    box-sizing: border-box;
+    color: colors.$tnt-color-on-surface-variant;
+    cursor: pointer;
+    display: inline-flex;
+    font: inherit;
+    justify-content: center;
+    margin-inline: 16px;
+    min-block-size: $nt-navigation-rail-menu-button-size;
+    min-inline-size: $nt-navigation-rail-menu-button-size;
+    outline: none;
+    padding: 0;
+    position: relative;
+    text-decoration: none;
+    transition: border-radius $nt-navigation-rail-shape-transition, color $nt-navigation-rail-state-transition;
+
+    &::after,
+    &::before {
+        border-radius: inherit;
+        content: '';
+        inset: 0;
+        opacity: 0;
+        pointer-events: none;
+        position: absolute;
+    }
+
+    &::after {
+        background: transparent;
+        border: 1px solid transparent;
+        transition: background-color $nt-navigation-rail-state-transition, border-color $nt-navigation-rail-state-transition, border-radius $nt-navigation-rail-shape-transition, box-shadow $nt-navigation-rail-state-transition;
+        z-index: 0;
+    }
+
+    &::before {
+        background: currentColor;
+        transition: border-radius $nt-navigation-rail-shape-transition, opacity $nt-navigation-rail-state-transition;
+        z-index: 1;
+    }
+
+    &:hover::before {
+        opacity: 0.08;
+    }
+
+    &:focus-visible::before,
+    &:active::before {
+        opacity: 0.1;
+    }
+
+    &:focus-visible {
+        outline: none;
+        z-index: 3;
+
+        &::after {
+            @include focus.nt-button-focus-ring;
+        }
+    }
+
+    &:active,
+    &.nt-button--pressed-shape {
+        border-radius: 12px;
+    }
+
+    ::deep {
+        .nt-button-ripple-host {
+            inset: 0;
+            transition: border-radius $nt-navigation-rail-shape-transition;
+        }
+
+        .tnt-icon {
+            color: inherit;
+            font-size: $nt-navigation-rail-icon-size;
+            pointer-events: none;
+        }
+    }
+}
+
+.nt-navigation-rail-menu-icon {
+    align-items: center;
+    display: inline-flex;
+    justify-content: center;
+    position: relative;
+    z-index: 2;
+}
+
+.nt-navigation-rail-xs-menu-button {
+    display: none;
+    inset-block-start: $nt-navigation-rail-menu-button-block-inset;
+    inset-inline-start: 16px;
+    margin: 0;
+    position: fixed;
+    z-index: 998;
+}
+
+.nt-navigation-rail-hide-menu-button {
+    display: inline-flex;
+}
+
+.nt-navigation-rail-header {
+    background: inherit;
+    border-block-end: 1px solid var(--nt-navigation-rail-divider-color, #{colors.$tnt-color-outline-variant});
+    gap: 12px;
+    min-block-size: $nt-navigation-rail-region-min-height;
+    position: sticky;
+    top: 0;
+    z-index: 3;
+}
+
+.nt-navigation-rail-fab {
+    align-items: flex-start;
+    display: flex;
+    justify-content: center;
+    inline-size: 100%;
+    max-inline-size: 100%;
+    min-inline-size: 0;
+    padding-inline: 0;
+
+    ::deep {
+        .nt-fab-button {
+            max-inline-size: calc(100% - $nt-navigation-rail-fab-max-inline-inset);
+            position: relative;
+            inset: auto;
+            z-index: 1;
+
+            &::after {
+                box-shadow: none;
+            }
+
+            &:not(.tnt-disabled):not(:disabled):hover::after {
+                box-shadow: none;
+            }
+        }
+
+        .nt-fab-button-placement-lower-right,
+        .nt-fab-button-placement-lower-left,
+        .nt-fab-button-placement-upper-right,
+        .nt-fab-button-placement-upper-left {
+            position: relative;
+            inset: auto;
+        }
+    }
+}
+
+.nt-navigation-rail-collapsed {
+    .nt-navigation-rail-fab {
+        ::deep {
+            .nt-fab-button {
+                max-inline-size: $nt-navigation-rail-fab-collapsed-width;
+            }
+
+            .nt-fab-button-extended {
+                gap: 0;
+                inline-size: $nt-navigation-rail-fab-collapsed-width;
+                min-inline-size: $nt-navigation-rail-fab-collapsed-width;
+                padding-inline: 16px;
+            }
+
+            .nt-fab-button-label {
+                inline-size: 0;
+                opacity: 0;
+                overflow: hidden;
+                white-space: nowrap;
+            }
+        }
+    }
+}
+
+.nt-navigation-rail-expanded {
+    .nt-navigation-rail-items {
+        gap: 0;
+    }
+
+    .nt-navigation-rail-fab {
+        justify-content: flex-start;
+        padding-inline: $nt-navigation-rail-fab-expanded-inline-padding;
+
+        ::deep {
+            .nt-fab-button {
+                max-inline-size: 100%;
+            }
+        }
+    }
+}
+
+.nt-navigation-rail-items {
+    box-sizing: border-box;
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: $nt-navigation-rail-item-gap;
+    justify-content: flex-start;
+    min-block-size: 0;
+    min-inline-size: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding-block: 8px;
+    padding-inline: 0;
+    @include scrollbar.nt-scrollbar;
+}
+
+.nt-navigation-rail-footer {
+    background: inherit;
+    border-block-start: 1px solid var(--nt-navigation-rail-divider-color, #{colors.$tnt-color-outline-variant});
+    bottom: 0;
+    min-block-size: $nt-navigation-rail-region-min-height;
+    position: sticky;
+    z-index: 3;
+}
+
+.nt-navigation-rail-modal-placeholder {
+    block-size: 100dvh;
+    flex: 0 0 $nt-navigation-rail-collapsed-width;
+    inline-size: $nt-navigation-rail-collapsed-width;
+    max-inline-size: $nt-navigation-rail-collapsed-width;
+    min-inline-size: $nt-navigation-rail-collapsed-width;
+}
+
+.nt-navigation-rail-modal-dialog {
+    background: transparent;
+    border: 0;
+    block-size: 100dvh;
+    color: inherit;
+    inline-size: $nt-navigation-rail-modal-width;
+    inset-block-end: 0;
+    inset-block-start: 0;
+    inset-inline-end: auto;
+    inset-inline-start: 0;
+    margin: 0;
+    max-block-size: 100dvh;
+    max-inline-size: $nt-navigation-rail-modal-width;
+    overflow-x: clip;
+    overflow-y: hidden;
+    padding: 0;
+    position: fixed;
+    scrollbar-width: none;
+    z-index: 999;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+
+    &::backdrop {
+        background: color-mix(in srgb, var(--nt-navigation-rail-scrim-color, #{colors.$tnt-color-scrim}) 32%, transparent);
+    }
+
+    &.nt-navigation-rail-modal-dialog-entering {
+        animation: nt-navigation-rail-modal-dialog-enter $nt-navigation-rail-transition-duration $nt-navigation-rail-transition-easing both;
+
+        &::backdrop {
+            animation: nt-navigation-rail-modal-backdrop-enter $nt-navigation-rail-transition-duration $nt-navigation-rail-transition-easing both;
+        }
+    }
+
+    &.nt-navigation-rail-modal-dialog-exiting {
+        animation: nt-navigation-rail-modal-dialog-exit $nt-navigation-rail-transition-duration $nt-navigation-rail-transition-easing both;
+        pointer-events: none;
+
+        &::backdrop {
+            animation: nt-navigation-rail-modal-backdrop-exit $nt-navigation-rail-transition-duration $nt-navigation-rail-transition-easing both;
+        }
+    }
+
+    &[open] {
+        display: block;
+    }
+
+    &.nt-navigation-rail-modal-dialog-hide-when-collapsed.nt-navigation-rail-modal-dialog-entering {
+        animation-name: nt-navigation-rail-modal-dialog-enter-clipped;
+        inline-size: $nt-navigation-rail-modal-width;
+    }
+
+    &.nt-navigation-rail-modal-dialog-hide-when-collapsed.nt-navigation-rail-modal-dialog-exiting {
+        animation-name: nt-navigation-rail-modal-dialog-exit-to-zero;
+    }
+
+    > .nt-navigation-rail {
+        block-size: 100dvh;
+        flex: 0 0 $nt-navigation-rail-modal-width;
+        inline-size: $nt-navigation-rail-modal-width;
+        margin-inline-end: 0;
+        max-block-size: 100dvh;
+        max-inline-size: $nt-navigation-rail-modal-width;
+        min-inline-size: 0;
+        overflow-x: clip;
+        overflow-y: auto;
+        z-index: auto;
+    }
+
+        > .nt-navigation-rail.nt-navigation-rail-expanded,
+        > .nt-navigation-rail.nt-navigation-rail-expanding,
+        > .nt-navigation-rail.nt-navigation-rail-collapsing {
+            inline-size: $nt-navigation-rail-modal-width;
+            inset: auto;
+            margin-inline-end: 0;
+            max-inline-size: $nt-navigation-rail-modal-width;
+            position: relative;
+            z-index: auto;
+        }
+}
+
+[dir='rtl'] .nt-navigation-rail-modal-dialog,
+:dir(rtl) .nt-navigation-rail-modal-dialog {
+    inset-inline-end: 0;
+    inset-inline-start: auto;
+}
+
+    [dir='rtl'] .nt-navigation-rail-modal-dialog.nt-navigation-rail-modal-dialog-hide-when-collapsed.nt-navigation-rail-modal-dialog-entering,
+    :dir(rtl) .nt-navigation-rail-modal-dialog.nt-navigation-rail-modal-dialog-hide-when-collapsed.nt-navigation-rail-modal-dialog-entering {
+        animation-name: nt-navigation-rail-modal-dialog-enter-clipped-rtl;
+    }
+
+.nt-navigation-rail-modal-placeholder.nt-navigation-rail-modal-placeholder-hide-when-collapsed {
+    flex-basis: 0;
+    inline-size: 0;
+    max-inline-size: 0;
+    min-inline-size: 0;
+}
+
+.nt-navigation-rail-modal-dialog > .nt-navigation-rail.nt-navigation-rail-hide-when-collapsed {
+    flex: 0 0 $nt-navigation-rail-modal-width;
+    inline-size: $nt-navigation-rail-modal-width;
+    max-inline-size: $nt-navigation-rail-modal-width;
+    padding-block-start: 0;
+    pointer-events: auto;
+}
+
+tnt-page-script {
+    display: none;
+}
+
+@keyframes nt-navigation-rail-label-expand {
+    from {
+        transform: translate( calc(-50% - ($nt-navigation-rail-icon-size / 2) - $nt-navigation-rail-horizontal-icon-label-gap), calc(($nt-navigation-rail-indicator-height / 2) + $nt-navigation-rail-icon-label-gap) );
+    }
+
+    to {
+        transform: translate(0, 0);
+    }
+}
+
+@keyframes nt-navigation-rail-label-collapse {
+    from {
+        transform: translate( calc(50% + ($nt-navigation-rail-icon-size / 2) + $nt-navigation-rail-horizontal-icon-label-gap), calc(-1 * (($nt-navigation-rail-indicator-height / 2) + $nt-navigation-rail-icon-label-gap)) );
+    }
+
+    to {
+        transform: translate(0, 0);
+    }
+}
+
+@keyframes nt-navigation-rail-modal-dialog-enter {
+    from {
+        inline-size: $nt-navigation-rail-collapsed-width;
+    }
+
+    to {
+        inline-size: $nt-navigation-rail-modal-width;
+    }
+}
+
+@keyframes nt-navigation-rail-modal-dialog-exit {
+    from {
+        inline-size: $nt-navigation-rail-modal-width;
+    }
+
+    to {
+        inline-size: $nt-navigation-rail-collapsed-width;
+    }
+}
+
+@keyframes nt-navigation-rail-modal-backdrop-enter {
+    from {
+        background: transparent;
+    }
+
+    to {
+        background: color-mix(in srgb, var(--nt-navigation-rail-scrim-color, #{colors.$tnt-color-scrim}) 32%, transparent);
+    }
+}
+
+@keyframes nt-navigation-rail-modal-backdrop-exit {
+    from {
+        background: color-mix(in srgb, var(--nt-navigation-rail-scrim-color, #{colors.$tnt-color-scrim}) 32%, transparent);
+    }
+
+    to {
+        background: transparent;
+    }
+}
+
+@keyframes nt-navigation-rail-modal-dialog-enter-clipped {
+    from {
+        clip-path: inset(0 100% 0 0);
+    }
+
+    to {
+        clip-path: inset(0);
+    }
+}
+
+@keyframes nt-navigation-rail-modal-dialog-enter-clipped-rtl {
+    from {
+        clip-path: inset(0 0 0 100%);
+    }
+
+    to {
+        clip-path: inset(0);
+    }
+}
+
+@keyframes nt-navigation-rail-modal-dialog-exit-to-zero {
+    from {
+        inline-size: $nt-navigation-rail-modal-width;
+    }
+
+    to {
+        inline-size: 0;
+    }
+}
+
+@media #{screen-width.$extra-small-only} {
+    .nt-navigation-rail-xs-menu-button {
+        display: inline-flex;
+    }
+
+    .nt-navigation-rail-modal-dialog.nt-navigation-rail-modal-dialog-hide-on-xs.nt-navigation-rail-modal-dialog-entering {
+        animation-name: nt-navigation-rail-modal-dialog-enter-clipped;
+        inline-size: $nt-navigation-rail-modal-width;
+    }
+
+    [dir='rtl'] .nt-navigation-rail-modal-dialog.nt-navigation-rail-modal-dialog-hide-on-xs.nt-navigation-rail-modal-dialog-entering,
+    :dir(rtl) .nt-navigation-rail-modal-dialog.nt-navigation-rail-modal-dialog-hide-on-xs.nt-navigation-rail-modal-dialog-entering {
+        animation-name: nt-navigation-rail-modal-dialog-enter-clipped-rtl;
+    }
+
+    .nt-navigation-rail-modal-dialog.nt-navigation-rail-modal-dialog-hide-on-xs.nt-navigation-rail-modal-dialog-exiting {
+        animation-name: nt-navigation-rail-modal-dialog-exit-to-zero;
+    }
+
+    .nt-navigation-rail-modal-placeholder.nt-navigation-rail-modal-placeholder-hide-on-xs {
+        flex-basis: 0;
+        inline-size: 0;
+        max-inline-size: 0;
+        min-inline-size: 0;
+    }
+
+    .nt-navigation-rail.nt-navigation-rail-hide-on-xs.nt-navigation-rail-collapsed {
+        border-right: 0;
+        box-shadow: none;
+        flex: 0 0 0;
+        inline-size: 0;
+        margin-inline-end: 0;
+        max-inline-size: 0;
+        min-inline-size: 0;
+        padding-inline: 0;
+        pointer-events: none;
+    }
+
+    .nt-navigation-rail-modal-dialog > .nt-navigation-rail.nt-navigation-rail-hide-on-xs {
+        flex: 0 0 $nt-navigation-rail-modal-width;
+        inline-size: $nt-navigation-rail-modal-width;
+        max-inline-size: $nt-navigation-rail-modal-width;
+        padding-block-start: 0;
+        pointer-events: auto;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nt-navigation-rail {
+        transition-duration: 1ms;
+        transition-timing-function: linear;
+
+        &.nt-navigation-rail-expanding,
+        &.nt-navigation-rail-collapsing {
+            ::deep .nt-navigation-rail-item-label {
+                animation-duration: 1ms;
+                animation-timing-function: linear;
+            }
+        }
+    }
+
+    .nt-navigation-rail-modal-dialog {
+        &.nt-navigation-rail-modal-dialog-entering,
+        &.nt-navigation-rail-modal-dialog-exiting {
+            animation-duration: 1ms;
+            animation-timing-function: linear;
+
+            &::backdrop {
+                animation-duration: 1ms;
+                animation-timing-function: linear;
+            }
+        }
+    }
+}

@@ -82,12 +82,12 @@ public class TnTInputRadioGroup_Tests : BunitContext {
     }
 
     [Fact]
-    public void Component_Implements_ITnTComponentBase() {
+    public void Component_Implements_INTComponentBase() {
         // Arrange & Act
         var cut = RenderInputRadioGroup();
 
         // Assert
-        cut.Instance.Should().BeAssignableTo<ITnTComponentBase>();
+        cut.Instance.Should().BeAssignableTo<INTComponentBase>();
         cut.Instance.ElementClass.Should().NotBeNullOrEmpty();
     }
 

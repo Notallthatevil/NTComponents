@@ -1,19 +1,51 @@
-import {
-    createRichTextEditorToolContext,
-    getRichTextEditorTool,
-    setRichTextEditorToolRegistryChangedCallback
-} from '../wwwroot/NTComponents.lib.module.js';
-import type {
-    Maybe,
-    RichTextEditorToolEditorState,
-    RichTextEditorToolHost,
-    RichTextEditorToolPlugin
-} from './Core/NTRichTextEditorToolRegistry.js';
-
 // Source of truth for the rich text editor module.
 // Rebuild NTRichTextEditor.razor.js with: npm run build:rich-text-editor
+type Maybe<T> = T | null | undefined;
 type Alignment = '' | 'left' | 'center' | 'right' | 'justify';
 type DotNetEditorMethod = 'UpdateValueFromJs' | 'CommitValueFromJs' | 'UpdateMarkupValueFromJs';
+
+interface InlineToolCloseOptions {
+    focusSurface?: boolean;
+    preserveSelection?: boolean;
+}
+
+interface RichTextEditorToolEditorState {
+    selectionRange: Range | null;
+    toolStates: Map<string, unknown>;
+}
+
+interface RichTextEditorToolContext<TState> {
+    element: HTMLElement;
+    editorState: RichTextEditorToolEditorState;
+    toolState: TState;
+    host: RichTextEditorToolHost;
+}
+
+interface RichTextEditorToolHost {
+    getSurface(element: Maybe<ParentNode>): HTMLElement | null;
+    getSelectionElement(surface: Maybe<HTMLElement>): Element | null;
+    getFocusedToolCommand(element: HTMLElement): string | null;
+    getToolbarButton(element: Maybe<ParentNode>, command: string, value?: string): HTMLButtonElement | null;
+    setToolbarButtonPressed(element: HTMLElement, command: string, isPressed: boolean, value?: string): void;
+    getToolPanel(element: Maybe<ParentNode>, command: string): HTMLElement | null;
+    setToolPanelOpen(element: HTMLElement, command: string, isOpen: boolean): void;
+    saveSelectionRange(surface: HTMLElement, editorState: RichTextEditorToolEditorState): void;
+    restoreSelectionRange(surface: HTMLElement, editorState: RichTextEditorToolEditorState): void;
+    syncValueFromSurface(element: HTMLElement, notifyDotNet: boolean): void;
+    updateToolbarState(element: HTMLElement): void;
+    closeOtherTools(element: HTMLElement, editorState: RichTextEditorToolEditorState, exceptCommand?: string | null): void;
+}
+
+interface RichTextEditorToolPlugin<TState> {
+    command: string;
+    createState(): TState;
+    bind(context: RichTextEditorToolContext<TState>): void;
+    unbind(context: RichTextEditorToolContext<TState>): void;
+    setDisabled?(context: RichTextEditorToolContext<TState>, disabled: boolean): void;
+    execute?(context: RichTextEditorToolContext<TState>, value?: string): boolean;
+    close?(context: RichTextEditorToolContext<TState>, options?: InlineToolCloseOptions): void;
+    syncState?(context: RichTextEditorToolContext<TState>): void;
+}
 
 interface DotNetEditorRef {
     invokeMethodAsync(methodName: 'UpdateValueFromJs' | 'CommitValueFromJs', markdown: string, html: string): Promise<unknown> | void;
@@ -91,6 +123,10 @@ interface EditorState extends RichTextEditorToolEditorState {
 type RegisteredTool = RichTextEditorToolPlugin<unknown>;
 type RegisteredToolContext = ReturnType<typeof createRichTextEditorToolContext<unknown>>;
 
+const richTextEditorToolRegistry: { tools: Map<string, RegisteredTool>; onChange: (() => void) | null } = {
+    tools: new Map<string, RegisteredTool>(),
+    onChange: null
+};
 const editorState = new WeakMap<HTMLElement, EditorState>();
 const blockNodeTags = new Set<string>(['DIV', 'P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'UL', 'OL', 'BLOCKQUOTE', 'PRE', 'TABLE', 'IFRAME']);
 const blockSelector = 'h1, h2, h3, h4, h5, h6, pre, blockquote, table, th, td, iframe, li, p, div';
@@ -100,9 +136,39 @@ const editorElements = new Set<HTMLElement>();
 let selectionChangeRegistered = false;
 let activeEditor: HTMLElement | null = null;
 
-setRichTextEditorToolRegistryChangedCallback(() => {
-    initializeAllEditors();
-});
+export function setRichTextEditorToolRegistryChangedCallback(callback: (() => void) | null): void {
+    richTextEditorToolRegistry.onChange = callback;
+}
+
+export function registerRichTextEditorTool<TState>(tool: RichTextEditorToolPlugin<TState>): RichTextEditorToolPlugin<TState> {
+    richTextEditorToolRegistry.tools.set(tool.command, tool as RegisteredTool);
+    richTextEditorToolRegistry.onChange?.();
+    return tool;
+}
+
+export function getRichTextEditorTool(command: string): RegisteredTool | null {
+    return richTextEditorToolRegistry.tools.get(command) ?? null;
+}
+
+export function getRichTextEditorToolState<TState>(state: RichTextEditorToolEditorState, tool: RichTextEditorToolPlugin<TState>): TState {
+    const existingState = state.toolStates.get(tool.command);
+    if (existingState) {
+        return existingState as TState;
+    }
+
+    const nextState = tool.createState();
+    state.toolStates.set(tool.command, nextState);
+    return nextState;
+}
+
+export function createRichTextEditorToolContext<TState>(element: HTMLElement, state: RichTextEditorToolEditorState, host: RichTextEditorToolHost, tool: RichTextEditorToolPlugin<TState>): RichTextEditorToolContext<TState> {
+    return {
+        element,
+        editorState: state,
+        host,
+        toolState: getRichTextEditorToolState(state, tool)
+    };
+}
 
 function toArray<T>(values: Maybe<Iterable<T> | ArrayLike<T>>): T[] {
     return values ? Array.from(values) : [];
@@ -126,6 +192,12 @@ function isHtmlElement(value: unknown): value is HTMLElement {
 
 function isHtmlInputElement(value: unknown): value is HTMLInputElement {
     return value instanceof HTMLInputElement;
+}
+
+function setDisabled(control: Maybe<HTMLButtonElement | HTMLInputElement>, disabled: boolean): void {
+    if (control) {
+        control.disabled = disabled;
+    }
 }
 
 function isHtmlSpanElement(value: unknown): value is HTMLSpanElement {
@@ -553,6 +625,51 @@ function buildImageMarkdown({ src, alt = '', width = '', height = '' }: ImageDet
     return `<img src="${normalizedSource}" alt="${escapeMarkdownAttribute(alt)}"${widthAttribute}${heightAttribute} />`;
 }
 
+function isHttpUrl(value: string): boolean {
+    const scheme = extractUrlScheme(value);
+    return scheme === 'http' || scheme === 'https';
+}
+
+function readBlobAsDataUrl(blob: Blob): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => typeof reader.result === 'string' ? resolve(reader.result) : reject(new Error('Image data URL conversion failed.'));
+        reader.onerror = () => reject(reader.error ?? new Error('Image data URL conversion failed.'));
+        reader.readAsDataURL(blob);
+    });
+}
+
+async function tryEmbedImageUrlAsDataUrl(url: string): Promise<string> {
+    if (!isHttpUrl(url) || typeof fetch !== 'function') {
+        return url;
+    }
+
+    try {
+        const response = await fetch(url, { credentials: 'omit' });
+        if (!response.ok) {
+            return url;
+        }
+
+        const contentType = response.headers?.get('content-type')?.split(';')[0]?.trim().toLowerCase() ?? '';
+        if (contentType && !contentType.startsWith('image/')) {
+            return url;
+        }
+
+        const responseBlob = await response.blob();
+        const imageBlob = responseBlob.type.startsWith('image/') || !contentType
+            ? responseBlob
+            : new Blob([await responseBlob.arrayBuffer()], { type: contentType });
+        if (imageBlob.type && !imageBlob.type.startsWith('image/')) {
+            return url;
+        }
+
+        const dataUrl = await readBlobAsDataUrl(imageBlob);
+        return normalizeSafeUrl(dataUrl, 'image') || url;
+    } catch {
+        return url;
+    }
+}
+
 function renderMarkdownImage(_match: string, alt: string, url: string): string {
     return buildImageHtml({ src: url, alt, width: '', height: '' });
 }
@@ -578,6 +695,1274 @@ function getImageDetails(imageElement: unknown): ImageDetails {
         height: normalizeImageDimension(imageElement.getAttribute('height') ?? '')
     };
 }
+
+interface ImageToolState {
+    imageEditorInputs: HTMLInputElement[];
+    imageFileInput: HTMLInputElement | null;
+    imageApplyButton: HTMLButtonElement | null;
+    imageCancelButton: HTMLButtonElement | null;
+    imageTarget: HTMLImageElement | null;
+    onImageFileChange?: (event: Event) => void;
+    onImageApply?: (event: MouseEvent) => void;
+    onImageCancel?: (event: MouseEvent) => void;
+    onImageEditorKeyDown?: (event: KeyboardEvent) => void;
+}
+
+interface TableToolState {
+    tableEditorInputs: HTMLInputElement[];
+    tableApplyButton: HTMLButtonElement | null;
+    tableCancelButton: HTMLButtonElement | null;
+    tableTarget: HTMLTableElement | null;
+    onTableApply?: (event: MouseEvent) => void;
+    onTableCancel?: (event: MouseEvent) => void;
+    onTableEditorKeyDown?: (event: KeyboardEvent) => void;
+}
+
+interface TextColorToolState {
+    textColorEditorInputs: HTMLInputElement[];
+    textColorApplyButton: HTMLButtonElement | null;
+    textColorCancelButton: HTMLButtonElement | null;
+    textColorTarget: HTMLSpanElement | null;
+    onTextColorApply?: (event: MouseEvent) => void;
+    onTextColorCancel?: (event: MouseEvent) => void;
+    onTextColorEditorKeyDown?: (event: KeyboardEvent) => void;
+}
+
+interface LinkToolState {
+    linkEditorInputs: HTMLInputElement[];
+    linkApplyButton: HTMLButtonElement | null;
+    linkCancelButton: HTMLButtonElement | null;
+    linkTarget: HTMLAnchorElement | null;
+    linkSelectedText: string;
+    onLinkApply?: (event: MouseEvent) => void;
+    onLinkCancel?: (event: MouseEvent) => void;
+    onLinkEditorKeyDown?: (event: KeyboardEvent) => void;
+}
+
+interface IframeToolState {
+    iframeEditorInputs: HTMLInputElement[];
+    iframeApplyButton: HTMLButtonElement | null;
+    iframeCancelButton: HTMLButtonElement | null;
+    iframeTarget: HTMLIFrameElement | null;
+    onIframeApply?: (event: MouseEvent) => void;
+    onIframeCancel?: (event: MouseEvent) => void;
+    onIframeEditorKeyDown?: (event: KeyboardEvent) => void;
+}
+
+const defaultIframeTitle = 'Embedded content';
+const defaultIframeWidth = '100%';
+const defaultIframeHeight = '315';
+
+function getRoleInput(element: Maybe<ParentNode>, role: string): HTMLInputElement | null {
+    return qs<HTMLInputElement>(element, `[data-role="${role}"]`);
+}
+
+function getRoleButton(element: Maybe<ParentNode>, role: string): HTMLButtonElement | null {
+    return qs<HTMLButtonElement>(element, `[data-role="${role}"]`);
+}
+
+function getToolEditor(element: Maybe<ParentNode>, command: string): HTMLElement | null {
+    return qs<HTMLElement>(element, `[data-tool-command="${command}"]`);
+}
+
+function closeInlineTool<TState>(context: RichTextEditorToolContext<TState>, command: string, { focusSurface = false, preserveSelection = false }: InlineToolCloseOptions = {}): void {
+    const { element, editorState, host } = context;
+    host.setToolPanelOpen(element, command, false);
+    if (!preserveSelection) {
+        editorState.selectionRange = null;
+    }
+
+    if (focusSurface) {
+        host.getSurface(element)?.focus();
+    }
+}
+
+function getSelectionClosest<TElement extends Element>(surface: Maybe<HTMLElement>, selector: string, guard: (value: unknown) => value is TElement): TElement | null {
+    const selectionElement = getSelectionElement(surface);
+    const candidate = selectionElement?.closest?.(selector) ?? null;
+    return guard(candidate) ? candidate : null;
+}
+
+function isHtmlAnchorElement(value: unknown): value is HTMLAnchorElement {
+    return value instanceof HTMLAnchorElement;
+}
+
+function isHtmlImageElement(value: unknown): value is HTMLImageElement {
+    return value instanceof HTMLImageElement;
+}
+
+function isHtmlIFrameElement(value: unknown): value is HTMLIFrameElement {
+    return value instanceof HTMLIFrameElement;
+}
+
+function getImageUrlInput(element: Maybe<ParentNode>): HTMLInputElement | null {
+    return getRoleInput(element, 'image-url');
+}
+
+function getImageAltInput(element: Maybe<ParentNode>): HTMLInputElement | null {
+    return getRoleInput(element, 'image-alt');
+}
+
+function getImageWidthInput(element: Maybe<ParentNode>): HTMLInputElement | null {
+    return getRoleInput(element, 'image-width');
+}
+
+function getImageHeightInput(element: Maybe<ParentNode>): HTMLInputElement | null {
+    return getRoleInput(element, 'image-height');
+}
+
+function handleImageFileSelection(context: RichTextEditorToolContext<ImageToolState>, file: File | null): void {
+    const { element, host } = context;
+    if (!(file instanceof File) || !file.type.startsWith('image/')) {
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+        const imageUrlInput = getImageUrlInput(element);
+        if (typeof reader.result === 'string' && imageUrlInput) {
+            imageUrlInput.value = reader.result;
+            const imageAltInput = getImageAltInput(element);
+            if (imageAltInput && !imageAltInput.value.trim()) {
+                imageAltInput.value = file.name.replace(/\.[^.]+$/, '');
+            }
+
+            void applyImageEditor(context)
+                .then((applied) => {
+                    if (applied) {
+                        host.syncValueFromSurface(element, true);
+                        host.updateToolbarState(element);
+                    }
+                });
+        }
+    };
+
+    reader.readAsDataURL(file);
+}
+
+function initializeImageToolStateHandlers(context: RichTextEditorToolContext<ImageToolState>): void {
+    const { element, host, toolState } = context;
+    if (toolState.onImageApply) {
+        return;
+    }
+
+    toolState.onImageFileChange = (event: Event) => {
+        const target = event.target instanceof HTMLInputElement ? event.target : null;
+        handleImageFileSelection(context, target?.files?.[0] ?? null);
+    };
+
+    toolState.onImageApply = (event: MouseEvent) => {
+        event.preventDefault();
+        void applyImageEditor(context)
+            .then((applied) => {
+                if (applied) {
+                    host.syncValueFromSurface(element, true);
+                    host.updateToolbarState(element);
+                }
+            });
+    };
+
+    toolState.onImageCancel = (event: MouseEvent) => {
+        event.preventDefault();
+        closeImageEditor(context, { focusSurface: true });
+        host.updateToolbarState(element);
+    };
+
+    toolState.onImageEditorKeyDown = (event: KeyboardEvent) => {
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            closeImageEditor(context, { focusSurface: true });
+            host.updateToolbarState(element);
+            return;
+        }
+
+        const target = event.target instanceof HTMLInputElement ? event.target : null;
+        if (event.key === 'Enter' && target?.type !== 'file') {
+            event.preventDefault();
+            void applyImageEditor(context)
+                .then((applied) => {
+                    if (applied) {
+                        host.syncValueFromSurface(element, true);
+                        host.updateToolbarState(element);
+                    }
+                });
+        }
+    };
+}
+
+function bindImageToolControls(context: RichTextEditorToolContext<ImageToolState>): void {
+    const { element, toolState } = context;
+    initializeImageToolStateHandlers(context);
+    unbindImageToolControls(context);
+    toolState.imageFileInput = getRoleInput(element, 'image-file');
+    toolState.imageApplyButton = getRoleButton(element, 'image-apply');
+    toolState.imageCancelButton = getRoleButton(element, 'image-cancel');
+    toolState.imageEditorInputs = [getImageUrlInput(element), getImageAltInput(element), getImageWidthInput(element), getImageHeightInput(element)].filter(isHtmlInputElement);
+    if (toolState.onImageFileChange) {
+        toolState.imageFileInput?.addEventListener('change', toolState.onImageFileChange);
+    }
+
+    if (toolState.onImageApply) {
+        toolState.imageApplyButton?.addEventListener('click', toolState.onImageApply);
+    }
+
+    if (toolState.onImageCancel) {
+        toolState.imageCancelButton?.addEventListener('click', toolState.onImageCancel);
+    }
+
+    if (toolState.onImageEditorKeyDown) {
+        for (const input of toolState.imageEditorInputs) {
+            input.addEventListener('keydown', toolState.onImageEditorKeyDown);
+        }
+    }
+}
+
+function unbindImageToolControls(context: RichTextEditorToolContext<ImageToolState>): void {
+    const { toolState } = context;
+    if (toolState.onImageFileChange) {
+        toolState.imageFileInput?.removeEventListener('change', toolState.onImageFileChange);
+    }
+
+    if (toolState.onImageApply) {
+        toolState.imageApplyButton?.removeEventListener('click', toolState.onImageApply);
+    }
+
+    if (toolState.onImageCancel) {
+        toolState.imageCancelButton?.removeEventListener('click', toolState.onImageCancel);
+    }
+
+    if (toolState.onImageEditorKeyDown) {
+        for (const input of toolState.imageEditorInputs ?? []) {
+            input.removeEventListener('keydown', toolState.onImageEditorKeyDown);
+        }
+    }
+}
+
+function closeImageEditor(context: RichTextEditorToolContext<ImageToolState>, options: InlineToolCloseOptions = {}): void {
+    context.toolState.imageTarget = null;
+    context.toolState.imageFileInput && (context.toolState.imageFileInput.value = '');
+    closeInlineTool(context, 'image', options);
+}
+
+function openImageEditor(context: RichTextEditorToolContext<ImageToolState>, { focusInput = true, selectInputText = true }: { focusInput?: boolean; selectInputText?: boolean } = {}): boolean {
+    const { element, editorState, host, toolState } = context;
+    const surface = host.getSurface(element);
+    if (!surface || !getToolEditor(element, 'image')) {
+        return false;
+    }
+
+    host.closeOtherTools(element, editorState, 'image');
+    const existingImage = getSelectionClosest(surface, 'img', isHtmlImageElement);
+    const imageDetails = getImageDetails(existingImage);
+    host.saveSelectionRange(surface, editorState);
+    toolState.imageTarget = existingImage;
+    const imageUrlInput = getImageUrlInput(element);
+    if (imageUrlInput) {
+        imageUrlInput.value = imageDetails.src;
+    }
+
+    const imageAltInput = getImageAltInput(element);
+    if (imageAltInput) {
+        imageAltInput.value = imageDetails.alt;
+    }
+
+    const imageWidthInput = getImageWidthInput(element);
+    if (imageWidthInput) {
+        imageWidthInput.value = imageDetails.width;
+    }
+
+    const imageHeightInput = getImageHeightInput(element);
+    if (imageHeightInput) {
+        imageHeightInput.value = imageDetails.height;
+    }
+
+    if (toolState.imageFileInput) {
+        toolState.imageFileInput.value = '';
+    }
+
+    host.setToolPanelOpen(element, 'image', true);
+    if (focusInput) {
+        imageUrlInput?.focus();
+        if (selectInputText) {
+            imageUrlInput?.select();
+        }
+    }
+
+    return false;
+}
+
+async function applyImageEditor(context: RichTextEditorToolContext<ImageToolState>): Promise<boolean> {
+    const { element, editorState, host, toolState } = context;
+    const surface = host.getSurface(element);
+    if (!surface) {
+        return false;
+    }
+
+    let imageUrl = normalizeSafeUrl(getImageUrlInput(element)?.value ?? '', 'image');
+    if (!imageUrl) {
+        getImageUrlInput(element)?.focus();
+        return false;
+    }
+
+    imageUrl = await tryEmbedImageUrlAsDataUrl(imageUrl);
+    const imageUrlInput = getImageUrlInput(element);
+    if (imageUrlInput) {
+        imageUrlInput.value = imageUrl;
+    }
+
+    const imageAlt = getImageAltInput(element)?.value?.trim?.() ?? '';
+    const imageWidth = normalizeImageDimension(getImageWidthInput(element)?.value ?? '');
+    const imageHeight = normalizeImageDimension(getImageHeightInput(element)?.value ?? '');
+    const imageTarget = toolState.imageTarget;
+
+    if (imageTarget instanceof HTMLImageElement && surface.contains(imageTarget)) {
+        imageTarget.setAttribute('src', imageUrl);
+        imageTarget.setAttribute('alt', imageAlt);
+        imageWidth ? imageTarget.setAttribute('width', imageWidth) : imageTarget.removeAttribute('width');
+        imageHeight ? imageTarget.setAttribute('height', imageHeight) : imageTarget.removeAttribute('height');
+    } else {
+        host.restoreSelectionRange(surface, editorState);
+        const imageHtml = buildImageHtml({ src: imageUrl, alt: imageAlt, width: imageWidth, height: imageHeight });
+        if (!imageHtml) {
+            getImageUrlInput(element)?.focus();
+            return false;
+        }
+
+        document.execCommand('insertHTML', false, imageHtml);
+    }
+
+    closeImageEditor(context, { focusSurface: true });
+    return true;
+}
+
+function getTableEditorDetails(tableElement: Maybe<HTMLTableElement>): TableEditorDetails {
+    if (!(tableElement instanceof HTMLTableElement)) {
+        return {
+            columns: 3,
+            rows: 2,
+            borderColor: defaultTableBorderColor
+        };
+    }
+
+    const rows = getTableRows(tableElement);
+    const headerCells = getTableCells(rows[0]);
+    const bodyRows = rows.slice(1)
+        .map((row) => getTableCells(row))
+        .filter((cells) => cells.length > 0);
+    return {
+        columns: Math.min(Math.max(headerCells.length || 3, 1), 8),
+        rows: Math.min(Math.max(bodyRows.length || 2, 1), 12),
+        borderColor: getTableBorderColor(tableElement) || defaultTableBorderColor
+    };
+}
+
+function getExistingTableContent(tableElement: Maybe<HTMLTableElement>): ExistingTableContent {
+    if (!(tableElement instanceof HTMLTableElement)) {
+        return {
+            headers: [],
+            rows: []
+        };
+    }
+
+    const rows = getTableRows(tableElement);
+    const headerCells = getTableCells(rows[0]);
+    const bodyRows = rows.slice(1)
+        .map((row) => getTableCells(row))
+        .filter((cells) => cells.length > 0);
+    return {
+        headers: headerCells.map((cell) => cell.innerHTML.trim()),
+        rows: bodyRows.map((cells) => cells.map((cell) => cell.innerHTML.trim()))
+    };
+}
+
+function getTableCellMarkup(content: string | undefined, fallbackText: string, tagName: 'th' | 'td'): string {
+    const normalizedContent = `${content ?? ''}`.trim();
+    return normalizedContent.length > 0 ? `<${tagName}>${normalizedContent}</${tagName}>` : `<${tagName}>${escapeHtml(fallbackText)}</${tagName}>`;
+}
+
+function clampTableColumns(value: number): number {
+    return Math.min(Math.max(value, 1), 8);
+}
+
+function clampTableRows(value: number): number {
+    return Math.min(Math.max(value, 1), 12);
+}
+
+function buildTableHtml({ columns, rows, borderColor, existingContent = null }: TableHtmlOptions): string {
+    const normalizedBorderColor = normalizeTableBorderColor(borderColor) || defaultTableBorderColor;
+    const headerMarkup = Array.from({ length: columns }, (_, columnIndex) => getTableCellMarkup(existingContent?.headers?.[columnIndex], `Header ${columnIndex + 1}`, 'th')).join('');
+    const bodyMarkup = Array.from({ length: rows }, (_, rowIndex) => `<tr>${Array.from({ length: columns }, (_, columnIndex) => getTableCellMarkup(existingContent?.rows?.[rowIndex]?.[columnIndex], `Cell ${rowIndex + 1}-${columnIndex + 1}`, 'td')).join('')}</tr>`).join('');
+    return `<table${buildTableStyleAttribute(normalizedBorderColor)}><thead><tr>${headerMarkup}</tr></thead><tbody>${bodyMarkup}</tbody></table>`;
+}
+
+function initializeTableToolStateHandlers(context: RichTextEditorToolContext<TableToolState>): void {
+    const { element, host, toolState } = context;
+    if (toolState.onTableApply) {
+        return;
+    }
+
+    toolState.onTableApply = (event: MouseEvent) => {
+        event.preventDefault();
+        if (applyTableEditor(context)) {
+            host.syncValueFromSurface(element, true);
+            host.updateToolbarState(element);
+        }
+    };
+
+    toolState.onTableCancel = (event: MouseEvent) => {
+        event.preventDefault();
+        closeTableEditor(context, { focusSurface: true });
+        host.updateToolbarState(element);
+    };
+
+    toolState.onTableEditorKeyDown = (event: KeyboardEvent) => {
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            closeTableEditor(context, { focusSurface: true });
+            host.updateToolbarState(element);
+            return;
+        }
+
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            if (applyTableEditor(context)) {
+                host.syncValueFromSurface(element, true);
+                host.updateToolbarState(element);
+            }
+        }
+    };
+}
+
+function bindTableToolControls(context: RichTextEditorToolContext<TableToolState>): void {
+    const { element, toolState } = context;
+    initializeTableToolStateHandlers(context);
+    unbindTableToolControls(context);
+    toolState.tableApplyButton = getRoleButton(element, 'table-apply');
+    toolState.tableCancelButton = getRoleButton(element, 'table-cancel');
+    toolState.tableEditorInputs = [getRoleInput(element, 'table-columns'), getRoleInput(element, 'table-rows'), getRoleInput(element, 'table-border-color')].filter(isHtmlInputElement);
+    if (toolState.onTableApply) {
+        toolState.tableApplyButton?.addEventListener('click', toolState.onTableApply);
+    }
+
+    if (toolState.onTableCancel) {
+        toolState.tableCancelButton?.addEventListener('click', toolState.onTableCancel);
+    }
+
+    if (toolState.onTableEditorKeyDown) {
+        for (const input of toolState.tableEditorInputs) {
+            input.addEventListener('keydown', toolState.onTableEditorKeyDown);
+        }
+    }
+}
+
+function unbindTableToolControls(context: RichTextEditorToolContext<TableToolState>): void {
+    const { toolState } = context;
+    if (toolState.onTableApply) {
+        toolState.tableApplyButton?.removeEventListener('click', toolState.onTableApply);
+    }
+
+    if (toolState.onTableCancel) {
+        toolState.tableCancelButton?.removeEventListener('click', toolState.onTableCancel);
+    }
+
+    if (toolState.onTableEditorKeyDown) {
+        for (const input of toolState.tableEditorInputs ?? []) {
+            input.removeEventListener('keydown', toolState.onTableEditorKeyDown);
+        }
+    }
+}
+
+function closeTableEditor(context: RichTextEditorToolContext<TableToolState>, options: InlineToolCloseOptions = {}): void {
+    context.toolState.tableTarget = null;
+    closeInlineTool(context, 'table', options);
+}
+
+function openTableEditor(context: RichTextEditorToolContext<TableToolState>, { focusInput = true, selectInputText = true }: { focusInput?: boolean; selectInputText?: boolean } = {}): boolean {
+    const { element, editorState, host, toolState } = context;
+    const surface = host.getSurface(element);
+    if (!surface || !getToolEditor(element, 'table')) {
+        return false;
+    }
+
+    host.closeOtherTools(element, editorState, 'table');
+    const existingTable = getSelectionClosest(surface, 'table', (value): value is HTMLTableElement => value instanceof HTMLTableElement);
+    const tableDetails = getTableEditorDetails(existingTable);
+    host.saveSelectionRange(surface, editorState);
+    toolState.tableTarget = existingTable;
+    const columnsInput = getRoleInput(element, 'table-columns');
+    const rowsInput = getRoleInput(element, 'table-rows');
+    const borderColorInput = getRoleInput(element, 'table-border-color');
+    if (columnsInput) {
+        columnsInput.value = `${tableDetails.columns}`;
+    }
+
+    if (rowsInput) {
+        rowsInput.value = `${tableDetails.rows}`;
+    }
+
+    if (borderColorInput) {
+        borderColorInput.value = tableDetails.borderColor;
+    }
+
+    host.setToolPanelOpen(element, 'table', true);
+    if (focusInput) {
+        columnsInput?.focus();
+        if (selectInputText) {
+            columnsInput?.select();
+        }
+    }
+
+    return false;
+}
+
+function applyTableEditor(context: RichTextEditorToolContext<TableToolState>): boolean {
+    const { element, editorState, host, toolState } = context;
+    const surface = host.getSurface(element);
+    if (!surface) {
+        return false;
+    }
+
+    const requestedColumns = Number.parseInt(getRoleInput(element, 'table-columns')?.value ?? '', 10);
+    const requestedRows = Number.parseInt(getRoleInput(element, 'table-rows')?.value ?? '', 10);
+    if (Number.isNaN(requestedColumns)) {
+        getRoleInput(element, 'table-columns')?.focus();
+        return false;
+    }
+
+    if (Number.isNaN(requestedRows)) {
+        getRoleInput(element, 'table-rows')?.focus();
+        return false;
+    }
+
+    const columns = clampTableColumns(requestedColumns);
+    const rows = clampTableRows(requestedRows);
+    const borderColor = normalizeTableBorderColor(getRoleInput(element, 'table-border-color')?.value ?? '') || defaultTableBorderColor;
+    const tableTarget = toolState.tableTarget;
+    if (tableTarget instanceof HTMLTableElement && surface.contains(tableTarget)) {
+        const template = document.createElement('template');
+        template.innerHTML = buildTableHtml({ columns, rows, borderColor, existingContent: getExistingTableContent(tableTarget) });
+        const replacementTable = template.content.querySelector('table');
+        if (!(replacementTable instanceof HTMLTableElement)) {
+            return false;
+        }
+
+        tableTarget.replaceWith(replacementTable);
+        toolState.tableTarget = replacementTable;
+    } else {
+        host.restoreSelectionRange(surface, editorState);
+        document.execCommand('insertHTML', false, `${buildTableHtml({ columns, rows, borderColor })}<p><br></p>`);
+    }
+
+    closeTableEditor(context, { focusSurface: true });
+    return true;
+}
+
+function unwrapElement(element: Element): void {
+    element.replaceWith(...Array.from(element.childNodes));
+}
+
+function mergeAdjacentColorSiblings(span: HTMLSpanElement, color: string): HTMLSpanElement {
+    let current = span;
+    let previous = current.previousSibling;
+    while (previous instanceof HTMLSpanElement && normalizeTextColorValue(getElementTextColor(previous)) === color) {
+        const source = previous;
+        previous = source.previousSibling;
+        current.prepend(...Array.from(source.childNodes));
+        source.remove();
+    }
+
+    let next = current.nextSibling;
+    while (next instanceof HTMLSpanElement && normalizeTextColorValue(getElementTextColor(next)) === color) {
+        const source = next;
+        next = source.nextSibling;
+        current.append(...Array.from(source.childNodes));
+        source.remove();
+    }
+
+    current.normalize();
+    return current;
+}
+
+function normalizeTextColorSpan(span: HTMLSpanElement): HTMLSpanElement {
+    const color = normalizeTextColorValue(getElementTextColor(span));
+    if (!color) {
+        return span;
+    }
+
+    span.style.color = color;
+    for (const descendant of Array.from(span.querySelectorAll('span[style*="color"]'))) {
+        if (descendant instanceof HTMLSpanElement && normalizeTextColorValue(getElementTextColor(descendant)) === color) {
+            unwrapElement(descendant);
+        }
+    }
+
+    const parent = span.parentElement;
+    if (parent instanceof HTMLSpanElement && normalizeTextColorValue(getElementTextColor(parent)) === color) {
+        for (const childNode of Array.from(span.childNodes)) {
+            parent.insertBefore(childNode, span);
+        }
+
+        span.remove();
+        return mergeAdjacentColorSiblings(parent, color);
+    }
+
+    return mergeAdjacentColorSiblings(span, color);
+}
+
+function applyTextColorRange(range: Range, color: string): void {
+    const selectedContent = range.extractContents();
+    const wrapper = document.createElement('span');
+    wrapper.style.color = color;
+    wrapper.appendChild(selectedContent);
+    range.insertNode(wrapper);
+    const normalizedWrapper = normalizeTextColorSpan(wrapper);
+    const selection = window.getSelection?.();
+    if (selection) {
+        const updatedRange = document.createRange();
+        updatedRange.selectNodeContents(normalizedWrapper);
+        selection.removeAllRanges();
+        selection.addRange(updatedRange);
+    }
+}
+
+function initializeTextColorToolStateHandlers(context: RichTextEditorToolContext<TextColorToolState>): void {
+    const { element, host, toolState } = context;
+    if (toolState.onTextColorApply) {
+        return;
+    }
+
+    toolState.onTextColorApply = (event: MouseEvent) => {
+        event.preventDefault();
+        if (applyTextColorEditor(context)) {
+            host.syncValueFromSurface(element, true);
+            host.updateToolbarState(element);
+        }
+    };
+
+    toolState.onTextColorCancel = (event: MouseEvent) => {
+        event.preventDefault();
+        closeTextColorEditor(context, { focusSurface: true });
+        host.updateToolbarState(element);
+    };
+
+    toolState.onTextColorEditorKeyDown = (event: KeyboardEvent) => {
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            closeTextColorEditor(context, { focusSurface: true });
+            host.updateToolbarState(element);
+            return;
+        }
+
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            if (applyTextColorEditor(context)) {
+                host.syncValueFromSurface(element, true);
+                host.updateToolbarState(element);
+            }
+        }
+    };
+}
+
+function bindTextColorToolControls(context: RichTextEditorToolContext<TextColorToolState>): void {
+    const { element, toolState } = context;
+    initializeTextColorToolStateHandlers(context);
+    unbindTextColorToolControls(context);
+    toolState.textColorApplyButton = getRoleButton(element, 'text-color-apply');
+    toolState.textColorCancelButton = getRoleButton(element, 'text-color-cancel');
+    toolState.textColorEditorInputs = [getRoleInput(element, 'text-color-value')].filter(isHtmlInputElement);
+    if (toolState.onTextColorApply) {
+        toolState.textColorApplyButton?.addEventListener('click', toolState.onTextColorApply);
+    }
+
+    if (toolState.onTextColorCancel) {
+        toolState.textColorCancelButton?.addEventListener('click', toolState.onTextColorCancel);
+    }
+
+    if (toolState.onTextColorEditorKeyDown) {
+        for (const input of toolState.textColorEditorInputs) {
+            input.addEventListener('keydown', toolState.onTextColorEditorKeyDown);
+        }
+    }
+}
+
+function unbindTextColorToolControls(context: RichTextEditorToolContext<TextColorToolState>): void {
+    const { toolState } = context;
+    if (toolState.onTextColorApply) {
+        toolState.textColorApplyButton?.removeEventListener('click', toolState.onTextColorApply);
+    }
+
+    if (toolState.onTextColorCancel) {
+        toolState.textColorCancelButton?.removeEventListener('click', toolState.onTextColorCancel);
+    }
+
+    if (toolState.onTextColorEditorKeyDown) {
+        for (const input of toolState.textColorEditorInputs ?? []) {
+            input.removeEventListener('keydown', toolState.onTextColorEditorKeyDown);
+        }
+    }
+}
+
+function closeTextColorEditor(context: RichTextEditorToolContext<TextColorToolState>, options: InlineToolCloseOptions = {}): void {
+    context.toolState.textColorTarget = null;
+    closeInlineTool(context, 'textColor', options);
+}
+
+function openTextColorEditor(context: RichTextEditorToolContext<TextColorToolState>, { focusInput = true, selectInputText = true }: { focusInput?: boolean; selectInputText?: boolean } = {}): boolean {
+    const { element, editorState, host, toolState } = context;
+    const surface = host.getSurface(element);
+    if (!surface) {
+        return false;
+    }
+
+    host.closeOtherTools(element, editorState, 'textColor');
+    const selectionElement = host.getSelectionElement(surface);
+    const existingSpanCandidate = selectionElement?.closest?.('span[style*="color"]') ?? null;
+    const existingSpan = isHtmlSpanElement(existingSpanCandidate) ? existingSpanCandidate : null;
+    host.saveSelectionRange(surface, editorState);
+    toolState.textColorTarget = existingSpan;
+    const textColorInput = getRoleInput(element, 'text-color-value');
+    if (textColorInput) {
+        textColorInput.value = normalizeTextColorValue(getElementTextColor(existingSpan)) || defaultTextColor;
+    }
+
+    host.setToolPanelOpen(element, 'textColor', true);
+    if (focusInput) {
+        textColorInput?.focus();
+        if (selectInputText) {
+            textColorInput?.select();
+        }
+    }
+
+    return false;
+}
+
+function applyTextColorEditor(context: RichTextEditorToolContext<TextColorToolState>): boolean {
+    const { element, editorState, host, toolState } = context;
+    const surface = host.getSurface(element);
+    if (!surface) {
+        return false;
+    }
+
+    const color = normalizeTextColorValue(getRoleInput(element, 'text-color-value')?.value ?? '') || defaultTextColor;
+    const textColorTarget = toolState.textColorTarget;
+    if (textColorTarget instanceof HTMLSpanElement && surface.contains(textColorTarget)) {
+        textColorTarget.style.color = color;
+        normalizeTextColorSpan(textColorTarget);
+    } else {
+        host.restoreSelectionRange(surface, editorState);
+        const selection = window.getSelection?.();
+        const range = selection?.rangeCount ? selection.getRangeAt(0) : null;
+        if (!range || range.collapsed || !surface.contains(range.commonAncestorContainer)) {
+            getRoleInput(element, 'text-color-value')?.focus();
+            return false;
+        }
+
+        applyTextColorRange(range, color);
+    }
+
+    closeTextColorEditor(context, { focusSurface: true });
+    return true;
+}
+
+function initializeLinkToolStateHandlers(context: RichTextEditorToolContext<LinkToolState>): void {
+    const { element, host, toolState } = context;
+    if (toolState.onLinkApply) {
+        return;
+    }
+
+    toolState.onLinkApply = (event: MouseEvent) => {
+        event.preventDefault();
+        if (applyLinkEditor(context)) {
+            host.syncValueFromSurface(element, true);
+            host.updateToolbarState(element);
+        }
+    };
+
+    toolState.onLinkCancel = (event: MouseEvent) => {
+        event.preventDefault();
+        closeLinkEditor(context, { focusSurface: true });
+        host.updateToolbarState(element);
+    };
+
+    toolState.onLinkEditorKeyDown = (event: KeyboardEvent) => {
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            closeLinkEditor(context, { focusSurface: true });
+            host.updateToolbarState(element);
+            return;
+        }
+
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            if (applyLinkEditor(context)) {
+                host.syncValueFromSurface(element, true);
+                host.updateToolbarState(element);
+            }
+        }
+    };
+}
+
+function bindLinkToolControls(context: RichTextEditorToolContext<LinkToolState>): void {
+    const { element, toolState } = context;
+    initializeLinkToolStateHandlers(context);
+    unbindLinkToolControls(context);
+    toolState.linkApplyButton = getRoleButton(element, 'link-apply');
+    toolState.linkCancelButton = getRoleButton(element, 'link-cancel');
+    toolState.linkEditorInputs = [getRoleInput(element, 'link-url'), getRoleInput(element, 'link-text')].filter(isHtmlInputElement);
+    if (toolState.onLinkApply) {
+        toolState.linkApplyButton?.addEventListener('click', toolState.onLinkApply);
+    }
+
+    if (toolState.onLinkCancel) {
+        toolState.linkCancelButton?.addEventListener('click', toolState.onLinkCancel);
+    }
+
+    if (toolState.onLinkEditorKeyDown) {
+        for (const input of toolState.linkEditorInputs) {
+            input.addEventListener('keydown', toolState.onLinkEditorKeyDown);
+        }
+    }
+}
+
+function unbindLinkToolControls(context: RichTextEditorToolContext<LinkToolState>): void {
+    const { toolState } = context;
+    if (toolState.onLinkApply) {
+        toolState.linkApplyButton?.removeEventListener('click', toolState.onLinkApply);
+    }
+
+    if (toolState.onLinkCancel) {
+        toolState.linkCancelButton?.removeEventListener('click', toolState.onLinkCancel);
+    }
+
+    if (toolState.onLinkEditorKeyDown) {
+        for (const input of toolState.linkEditorInputs ?? []) {
+            input.removeEventListener('keydown', toolState.onLinkEditorKeyDown);
+        }
+    }
+}
+
+function closeLinkEditor(context: RichTextEditorToolContext<LinkToolState>, options: InlineToolCloseOptions = {}): void {
+    context.toolState.linkTarget = null;
+    context.toolState.linkSelectedText = '';
+    closeInlineTool(context, 'link', options);
+}
+
+function openLinkEditor(context: RichTextEditorToolContext<LinkToolState>, { focusInput = true, selectInputText = true }: { focusInput?: boolean; selectInputText?: boolean } = {}): boolean {
+    const { element, editorState, host, toolState } = context;
+    const surface = host.getSurface(element);
+    if (!surface) {
+        return false;
+    }
+
+    host.closeOtherTools(element, editorState, 'link');
+    const existingLink = getSelectionClosest(surface, 'a', isHtmlAnchorElement);
+    const selection = window.getSelection?.();
+    const selectedText = selection?.toString?.().trim?.() ?? '';
+    const linkText = existingLink?.textContent?.trim?.() || selectedText;
+    const linkUrl = existingLink?.getAttribute('href') ?? '';
+    host.saveSelectionRange(surface, editorState);
+    toolState.linkTarget = existingLink;
+    toolState.linkSelectedText = selectedText;
+    const linkUrlInput = getRoleInput(element, 'link-url');
+    const linkTextInput = getRoleInput(element, 'link-text');
+    if (linkUrlInput) {
+        linkUrlInput.value = linkUrl;
+    }
+
+    if (linkTextInput) {
+        linkTextInput.value = linkText;
+    }
+
+    host.setToolPanelOpen(element, 'link', true);
+    if (focusInput) {
+        linkUrlInput?.focus();
+        if (selectInputText) {
+            linkUrlInput?.select();
+        }
+    }
+
+    return false;
+}
+
+function applyLinkEditor(context: RichTextEditorToolContext<LinkToolState>): boolean {
+    const { element, editorState, host, toolState } = context;
+    const surface = host.getSurface(element);
+    if (!surface) {
+        return false;
+    }
+
+    const linkUrl = normalizeSafeUrl(getRoleInput(element, 'link-url')?.value ?? '', 'link');
+    if (!linkUrl) {
+        getRoleInput(element, 'link-url')?.focus();
+        return false;
+    }
+
+    const linkTextInput = getRoleInput(element, 'link-text')?.value?.trim?.() ?? '';
+    const linkText = linkTextInput || toolState.linkSelectedText || linkUrl;
+    const linkTarget = toolState.linkTarget;
+    if (linkTarget instanceof HTMLAnchorElement && surface.contains(linkTarget)) {
+        linkTarget.setAttribute('href', linkUrl);
+        linkTarget.textContent = linkText;
+    } else {
+        host.restoreSelectionRange(surface, editorState);
+        const selection = window.getSelection?.();
+        const range = selection?.rangeCount ? selection.getRangeAt(0) : null;
+        if (!range || !surface.contains(range.commonAncestorContainer)) {
+            getRoleInput(element, 'link-url')?.focus();
+            return false;
+        }
+
+        const anchor = document.createElement('a');
+        anchor.setAttribute('href', linkUrl);
+        anchor.textContent = linkText;
+        range.deleteContents();
+        range.insertNode(anchor);
+        if (selection) {
+            const updatedRange = document.createRange();
+            updatedRange.selectNodeContents(anchor);
+            selection.removeAllRanges();
+            selection.addRange(updatedRange);
+        }
+    }
+
+    closeLinkEditor(context, { focusSurface: true });
+    return true;
+}
+
+function normalizeIframeField(value: unknown, fallbackValue: string): string {
+    const trimmed = `${value ?? ''}`.trim();
+    return trimmed.length > 0 ? trimmed : fallbackValue;
+}
+
+function buildIframeHtml(url: string, title: string, width: string, height: string): string {
+    const normalizedUrl = normalizeSafeUrl(url, 'iframe');
+    if (!normalizedUrl) {
+        return '';
+    }
+
+    return `<iframe src="${escapeHtml(normalizedUrl)}" title="${escapeHtml(title)}" width="${escapeHtml(width)}" height="${escapeHtml(height)}" loading="lazy"></iframe>`;
+}
+
+function initializeIframeToolStateHandlers(context: RichTextEditorToolContext<IframeToolState>): void {
+    const { element, host, toolState } = context;
+    if (toolState.onIframeApply) {
+        return;
+    }
+
+    toolState.onIframeApply = (event: MouseEvent) => {
+        event.preventDefault();
+        if (applyIframeEditor(context)) {
+            host.syncValueFromSurface(element, true);
+            host.updateToolbarState(element);
+        }
+    };
+
+    toolState.onIframeCancel = (event: MouseEvent) => {
+        event.preventDefault();
+        closeIframeEditor(context, { focusSurface: true });
+        host.updateToolbarState(element);
+    };
+
+    toolState.onIframeEditorKeyDown = (event: KeyboardEvent) => {
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            closeIframeEditor(context, { focusSurface: true });
+            host.updateToolbarState(element);
+            return;
+        }
+
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            if (applyIframeEditor(context)) {
+                host.syncValueFromSurface(element, true);
+                host.updateToolbarState(element);
+            }
+        }
+    };
+}
+
+function bindIframeToolControls(context: RichTextEditorToolContext<IframeToolState>): void {
+    const { element, toolState } = context;
+    initializeIframeToolStateHandlers(context);
+    unbindIframeToolControls(context);
+    toolState.iframeApplyButton = getRoleButton(element, 'iframe-apply');
+    toolState.iframeCancelButton = getRoleButton(element, 'iframe-cancel');
+    toolState.iframeEditorInputs = [getRoleInput(element, 'iframe-url'), getRoleInput(element, 'iframe-title'), getRoleInput(element, 'iframe-width'), getRoleInput(element, 'iframe-height')].filter(isHtmlInputElement);
+    if (toolState.onIframeApply) {
+        toolState.iframeApplyButton?.addEventListener('click', toolState.onIframeApply);
+    }
+
+    if (toolState.onIframeCancel) {
+        toolState.iframeCancelButton?.addEventListener('click', toolState.onIframeCancel);
+    }
+
+    if (toolState.onIframeEditorKeyDown) {
+        for (const input of toolState.iframeEditorInputs) {
+            input.addEventListener('keydown', toolState.onIframeEditorKeyDown);
+        }
+    }
+}
+
+function unbindIframeToolControls(context: RichTextEditorToolContext<IframeToolState>): void {
+    const { toolState } = context;
+    if (toolState.onIframeApply) {
+        toolState.iframeApplyButton?.removeEventListener('click', toolState.onIframeApply);
+    }
+
+    if (toolState.onIframeCancel) {
+        toolState.iframeCancelButton?.removeEventListener('click', toolState.onIframeCancel);
+    }
+
+    if (toolState.onIframeEditorKeyDown) {
+        for (const input of toolState.iframeEditorInputs ?? []) {
+            input.removeEventListener('keydown', toolState.onIframeEditorKeyDown);
+        }
+    }
+}
+
+function closeIframeEditor(context: RichTextEditorToolContext<IframeToolState>, options: InlineToolCloseOptions = {}): void {
+    context.toolState.iframeTarget = null;
+    closeInlineTool(context, 'iframe', options);
+}
+
+function openIframeEditor(context: RichTextEditorToolContext<IframeToolState>, { focusInput = true, selectInputText = true }: { focusInput?: boolean; selectInputText?: boolean } = {}): boolean {
+    const { element, editorState, host, toolState } = context;
+    const surface = host.getSurface(element);
+    if (!surface) {
+        return false;
+    }
+
+    host.closeOtherTools(element, editorState, 'iframe');
+    const existingIframe = getSelectionClosest(surface, 'iframe', isHtmlIFrameElement);
+    host.saveSelectionRange(surface, editorState);
+    toolState.iframeTarget = existingIframe;
+    const iframeUrlInput = getRoleInput(element, 'iframe-url');
+    const iframeTitleInput = getRoleInput(element, 'iframe-title');
+    const iframeWidthInput = getRoleInput(element, 'iframe-width');
+    const iframeHeightInput = getRoleInput(element, 'iframe-height');
+    if (iframeUrlInput) {
+        iframeUrlInput.value = existingIframe?.getAttribute('src') ?? '';
+    }
+
+    if (iframeTitleInput) {
+        iframeTitleInput.value = existingIframe?.getAttribute('title') ?? defaultIframeTitle;
+    }
+
+    if (iframeWidthInput) {
+        iframeWidthInput.value = existingIframe?.getAttribute('width') ?? defaultIframeWidth;
+    }
+
+    if (iframeHeightInput) {
+        iframeHeightInput.value = existingIframe?.getAttribute('height') ?? defaultIframeHeight;
+    }
+
+    host.setToolPanelOpen(element, 'iframe', true);
+    if (focusInput) {
+        iframeUrlInput?.focus();
+        if (selectInputText) {
+            iframeUrlInput?.select();
+        }
+    }
+
+    return false;
+}
+
+function applyIframeEditor(context: RichTextEditorToolContext<IframeToolState>): boolean {
+    const { element, editorState, host, toolState } = context;
+    const surface = host.getSurface(element);
+    if (!surface) {
+        return false;
+    }
+
+    const iframeUrl = normalizeSafeUrl(getRoleInput(element, 'iframe-url')?.value ?? '', 'iframe');
+    if (!iframeUrl) {
+        getRoleInput(element, 'iframe-url')?.focus();
+        return false;
+    }
+
+    const iframeTitle = normalizeIframeField(getRoleInput(element, 'iframe-title')?.value, defaultIframeTitle);
+    const iframeWidth = normalizeIframeField(getRoleInput(element, 'iframe-width')?.value, defaultIframeWidth);
+    const iframeHeight = normalizeIframeField(getRoleInput(element, 'iframe-height')?.value, defaultIframeHeight);
+    const iframeTarget = toolState.iframeTarget;
+    if (iframeTarget instanceof HTMLIFrameElement && surface.contains(iframeTarget)) {
+        iframeTarget.setAttribute('src', iframeUrl);
+        iframeTarget.setAttribute('title', iframeTitle);
+        iframeTarget.setAttribute('width', iframeWidth);
+        iframeTarget.setAttribute('height', iframeHeight);
+        iframeTarget.setAttribute('loading', 'lazy');
+    } else {
+        host.restoreSelectionRange(surface, editorState);
+        const iframeHtml = buildIframeHtml(iframeUrl, iframeTitle, iframeWidth, iframeHeight);
+        if (!iframeHtml) {
+            getRoleInput(element, 'iframe-url')?.focus();
+            return false;
+        }
+
+        document.execCommand('insertHTML', false, iframeHtml);
+    }
+
+    closeIframeEditor(context, { focusSurface: true });
+    return true;
+}
+
+registerRichTextEditorTool<ImageToolState>({
+    command: 'image',
+    createState: () => ({ imageEditorInputs: [], imageFileInput: null, imageApplyButton: null, imageCancelButton: null, imageTarget: null }),
+    bind: bindImageToolControls,
+    unbind: unbindImageToolControls,
+    setDisabled: ({ toolState }, disabled) => {
+        toolState.imageEditorInputs.forEach((input) => setDisabled(input, disabled));
+        setDisabled(toolState.imageFileInput, disabled);
+        setDisabled(toolState.imageApplyButton, disabled);
+        setDisabled(toolState.imageCancelButton, disabled);
+    },
+    execute: (context) => openImageEditor(context),
+    close: closeImageEditor,
+    syncState: (context) => {
+        const { element, host } = context;
+        const surface = host.getSurface(element);
+        const existingImage = getSelectionClosest(surface, 'img', isHtmlImageElement) instanceof HTMLImageElement;
+        const focusedToolCommand = host.getFocusedToolCommand(element);
+        host.setToolbarButtonPressed(element, 'image', existingImage);
+        if (focusedToolCommand === 'image') {
+            return;
+        }
+
+        if (focusedToolCommand || !existingImage) {
+            closeImageEditor(context, { preserveSelection: Boolean(focusedToolCommand) });
+            return;
+        }
+
+        openImageEditor(context, { focusInput: false, selectInputText: false });
+    }
+});
+
+registerRichTextEditorTool<TableToolState>({
+    command: 'table',
+    createState: () => ({ tableEditorInputs: [], tableApplyButton: null, tableCancelButton: null, tableTarget: null }),
+    bind: bindTableToolControls,
+    unbind: unbindTableToolControls,
+    setDisabled: ({ toolState }, disabled) => {
+        toolState.tableEditorInputs.forEach((input) => setDisabled(input, disabled));
+        setDisabled(toolState.tableApplyButton, disabled);
+        setDisabled(toolState.tableCancelButton, disabled);
+    },
+    execute: (context) => openTableEditor(context),
+    close: closeTableEditor,
+    syncState: (context) => {
+        const { element, host } = context;
+        const surface = host.getSurface(element);
+        const existingTable = getSelectionClosest(surface, 'table', (value): value is HTMLTableElement => value instanceof HTMLTableElement) instanceof HTMLTableElement;
+        const focusedToolCommand = host.getFocusedToolCommand(element);
+        host.setToolbarButtonPressed(element, 'table', existingTable);
+        if (focusedToolCommand === 'table') {
+            return;
+        }
+
+        if (focusedToolCommand || !existingTable) {
+            closeTableEditor(context, { preserveSelection: Boolean(focusedToolCommand) });
+            return;
+        }
+
+        openTableEditor(context, { focusInput: false, selectInputText: false });
+    }
+});
+
+registerRichTextEditorTool<TextColorToolState>({
+    command: 'textColor',
+    createState: () => ({ textColorEditorInputs: [], textColorApplyButton: null, textColorCancelButton: null, textColorTarget: null }),
+    bind: bindTextColorToolControls,
+    unbind: unbindTextColorToolControls,
+    setDisabled: ({ toolState }, disabled) => {
+        toolState.textColorEditorInputs.forEach((input) => setDisabled(input, disabled));
+        setDisabled(toolState.textColorApplyButton, disabled);
+        setDisabled(toolState.textColorCancelButton, disabled);
+    },
+    execute: (context) => openTextColorEditor(context),
+    close: closeTextColorEditor,
+    syncState: (context) => {
+        const { element, host } = context;
+        const surface = host.getSurface(element);
+        const selectionElement = host.getSelectionElement(surface);
+        const existingColor = selectionElement?.closest?.('span[style*="color"]') instanceof HTMLSpanElement;
+        const focusedToolCommand = host.getFocusedToolCommand(element);
+        host.setToolbarButtonPressed(element, 'textColor', existingColor);
+        if (focusedToolCommand === 'textColor') {
+            return;
+        }
+
+        if (focusedToolCommand || !existingColor) {
+            closeTextColorEditor(context, { preserveSelection: Boolean(focusedToolCommand) });
+            return;
+        }
+
+        openTextColorEditor(context, { focusInput: false, selectInputText: false });
+    }
+});
+
+registerRichTextEditorTool<LinkToolState>({
+    command: 'link',
+    createState: () => ({ linkEditorInputs: [], linkApplyButton: null, linkCancelButton: null, linkTarget: null, linkSelectedText: '' }),
+    bind: bindLinkToolControls,
+    unbind: unbindLinkToolControls,
+    setDisabled: ({ toolState }, disabled) => {
+        toolState.linkEditorInputs.forEach((input) => setDisabled(input, disabled));
+        setDisabled(toolState.linkApplyButton, disabled);
+        setDisabled(toolState.linkCancelButton, disabled);
+    },
+    execute: (context) => openLinkEditor(context),
+    close: closeLinkEditor,
+    syncState: (context) => {
+        const { element, host } = context;
+        const surface = host.getSurface(element);
+        const existingLink = getSelectionClosest(surface, 'a', isHtmlAnchorElement) instanceof HTMLAnchorElement;
+        const focusedToolCommand = host.getFocusedToolCommand(element);
+        host.setToolbarButtonPressed(element, 'link', existingLink);
+        if (focusedToolCommand === 'link') {
+            return;
+        }
+
+        if (focusedToolCommand || !existingLink) {
+            closeLinkEditor(context, { preserveSelection: Boolean(focusedToolCommand) });
+            return;
+        }
+
+        openLinkEditor(context, { focusInput: false, selectInputText: false });
+    }
+});
+
+registerRichTextEditorTool<IframeToolState>({
+    command: 'iframe',
+    createState: () => ({ iframeEditorInputs: [], iframeApplyButton: null, iframeCancelButton: null, iframeTarget: null }),
+    bind: bindIframeToolControls,
+    unbind: unbindIframeToolControls,
+    setDisabled: ({ toolState }, disabled) => {
+        toolState.iframeEditorInputs.forEach((input) => setDisabled(input, disabled));
+        setDisabled(toolState.iframeApplyButton, disabled);
+        setDisabled(toolState.iframeCancelButton, disabled);
+    },
+    execute: (context) => openIframeEditor(context),
+    close: closeIframeEditor,
+    syncState: (context) => {
+        const { element, host } = context;
+        const surface = host.getSurface(element);
+        const existingIframe = getSelectionClosest(surface, 'iframe', isHtmlIFrameElement) instanceof HTMLIFrameElement;
+        const focusedToolCommand = host.getFocusedToolCommand(element);
+        host.setToolbarButtonPressed(element, 'iframe', existingIframe);
+        if (focusedToolCommand === 'iframe') {
+            return;
+        }
+
+        if (focusedToolCommand || !existingIframe) {
+            closeIframeEditor(context, { preserveSelection: Boolean(focusedToolCommand) });
+            return;
+        }
+
+        openIframeEditor(context, { focusInput: false, selectInputText: false });
+    }
+});
+
+setRichTextEditorToolRegistryChangedCallback(initializeAllEditors);
 
 function renderHtmlAnchor(_match: string, href: string, text: string): string {
     const normalizedHref = normalizeSafeUrl(href, 'link');
@@ -1288,7 +2673,7 @@ function serializeInline(node: Maybe<Node>): string {
         case 'del':
             return `~~${content}~~`;
         case 'span': {
-            const textColor = getElementTextColor(node);
+            const textColor = normalizeTextColorValue(getElementTextColor(node)) || getElementTextColor(node);
             return textColor ? `<span style="color:${escapeMarkdownAttribute(textColor)};">${content}</span>` : content;
         }
         case 'br':
@@ -1493,9 +2878,7 @@ function serializeBlock(block: Maybe<Element>): string {
     const alignment = getElementAlignment(block);
     let markdown = '';
 
-    if (tagName === 'div' && hasRenderableBlockChildren(block)) {
-        markdown = serializeContainerBlocks(block);
-    } else if (/^h[1-6]$/.test(tagName)) {
+    if (/^h[1-6]$/.test(tagName)) {
         const text = toArray(block.childNodes).map(serializeInline).join('');
         const normalized = text.replace(/\u00a0/g, ' ').replace(/\n{3,}/g, '\n\n').replace(/\n+$/g, '').trimEnd();
         markdown = `${'#'.repeat(Number.parseInt(tagName[1], 10))} ${normalized}`.trimEnd();
@@ -1514,6 +2897,8 @@ function serializeBlock(block: Maybe<Element>): string {
         markdown = iframeSource
             ? `<iframe src="${iframeSource}" title="${escapeMarkdownAttribute(block.getAttribute('title') ?? '')}" width="${block.getAttribute('width') ?? '100%'}" height="${block.getAttribute('height') ?? '315'}" loading="lazy"></iframe>`
             : '';
+    } else if (hasRenderableBlockChildren(block)) {
+        markdown = serializeContainerBlocks(block);
     } else {
         const text = toArray(block.childNodes).map(serializeInline).join('');
         markdown = text.replace(/\u00a0/g, ' ').replace(/\n{3,}/g, '\n\n').replace(/\n+$/g, '').trimEnd();
@@ -2239,6 +3624,19 @@ function initializeAllEditors(): void {
     }
 }
 
+function getLifecycleEditorElement(element: Maybe<HTMLElement>): HTMLElement | null {
+    if (!element) {
+        return null;
+    }
+
+    if (element.matches('nt-rich-text-editor')) {
+        return element;
+    }
+
+    const closestEditor = element.closest?.('nt-rich-text-editor');
+    return closestEditor instanceof HTMLElement ? closestEditor : null;
+}
+
 function registerSelectionChangeHandler(): void {
     if (selectionChangeRegistered) {
         return;
@@ -2261,36 +3659,39 @@ function registerSelectionChangeHandler(): void {
 }
 
 export function focusEditor(element: Maybe<HTMLElement>): void {
-    getSurface(element)?.focus();
+    getSurface(getLifecycleEditorElement(element))?.focus();
 }
 
 export function onLoad(element: Maybe<HTMLElement>, dotNetRef: DotNetEditorRef | null): void {
     registerSelectionChangeHandler();
 
-    if (!element) {
+    const editorElement = getLifecycleEditorElement(element);
+    if (!editorElement) {
         initializeAllEditors();
         return;
     }
 
-    synchronizeElement(element, dotNetRef);
+    synchronizeElement(editorElement, dotNetRef);
 }
 
 export function onUpdate(element: Maybe<HTMLElement>, dotNetRef: DotNetEditorRef | null): void {
-    if (!element) {
+    const editorElement = getLifecycleEditorElement(element);
+    if (!editorElement) {
         initializeAllEditors();
         return;
     }
 
-    synchronizeElement(element, dotNetRef);
+    synchronizeElement(editorElement, dotNetRef);
 }
 
 export function onDispose(element: Maybe<HTMLElement>): void {
-    if (!element) {
+    const editorElement = getLifecycleEditorElement(element);
+    if (!editorElement) {
         return;
     }
 
-    const state = editorState.get(element);
-    const surface = getSurface(element);
+    const state = editorState.get(editorElement);
+    const surface = getSurface(editorElement);
     if (state) {
         state.isDisposed = true;
         state.dotNetRef = null;
@@ -2308,17 +3709,17 @@ export function onDispose(element: Maybe<HTMLElement>): void {
     }
 
     if (state) {
-        element.removeEventListener('focusin', state.onFocusIn);
+        editorElement.removeEventListener('focusin', state.onFocusIn);
     }
 
-    unbindToolbarButtons(state?.toolbarButtons ?? getToolbarButtons(element), state);
+    unbindToolbarButtons(state?.toolbarButtons ?? getToolbarButtons(editorElement), state);
     if (state) {
-        unbindRegisteredToolControls(element, state);
+        unbindRegisteredToolControls(editorElement, state);
     }
 
-    clearActiveEditor(element);
-    editorElements.delete(element);
-    editorState.delete(element);
+    clearActiveEditor(editorElement);
+    editorElements.delete(editorElement);
+    editorState.delete(editorElement);
 }
 
 export const __testHooks = {
@@ -2456,5 +3857,6 @@ export const __testHooks = {
     ensureState,
     synchronizeElement,
     initializeAllEditors,
+    getLifecycleEditorElement,
     registerSelectionChangeHandler
 };

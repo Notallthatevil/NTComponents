@@ -1,0 +1,69 @@
+@page "/reference/{Kind}"
+@inject DocumentationCatalog Catalog
+
+<main class="docs-page">
+    <DocumentationPageHeader Kicker="Reference"
+                             Title="@Title"
+                             Description="@Description"
+                             Meta="@($"{ReferenceCount} generated {Title.ToLowerInvariant()} pages")" />
+
+    @foreach (var group in ReferenceGroups) {
+        <section class="docs-section">
+            <h2>@group.Key</h2>
+            <div class="docs-reference-grid">
+                @foreach (var reference in group) {
+                    <NTCard AdditionalAttributes="@Href($"/reference/{reference.RouteKind}/{reference.Slug}")">
+                        <div class="docs-reference-block">
+                            <div class="docs-card-title-row">
+                                <h3>@reference.Type.Name</h3>
+                                <NTTag Label="@reference.Type.Kind" Elevation="0" />
+                            </div>
+                            <DocumentationText XmlDocumentation="@reference.Type.XmlDocumentation" ElementName="summary" Fallback="@reference.Type.Summary" />
+                            <div class="docs-card-footer">
+                                <span class="docs-muted">@reference.MemberCount members</span>
+                                @if (TryGetPreviewValues(reference, out var values)) {
+                                    <span class="docs-muted">@values</span>
+                                }
+                            </div>
+                        </div>
+                    </NTCard>
+                }
+            </div>
+        </section>
+    }
+</main>
+
+@code {
+    [Parameter]
+    public string? Kind { get; set; }
+
+    private bool ShowConstants => string.Equals(Kind, "constants", StringComparison.OrdinalIgnoreCase);
+
+    private string Title => ShowConstants ? "Constants" : "Enums";
+
+    private string Description => ShowConstants
+        ? "Public constant types referenced by the generated NT component documentation."
+        : "Enum and option types referenced by the generated NT component documentation.";
+
+    private IEnumerable<IGrouping<string, ReferenceDocumentationEntry>> ReferenceGroups => ShowConstants
+        ? Catalog.ConstantGroups
+        : Catalog.EnumGroups;
+
+    private int ReferenceCount => ReferenceGroups.Sum(group => group.Count());
+
+    private static bool TryGetPreviewValues(ReferenceDocumentationEntry reference, out string preview) {
+        var names = reference.Type.Fields
+            .Where(field => DocumentationCatalog.IsPublicOrProtected(field.Accessibility))
+            .OrderBy(field => field.Name, StringComparer.Ordinal)
+            .Take(3)
+            .Select(field => field.Name)
+            .ToArray();
+
+        preview = names.Length == 0 ? string.Empty : string.Join(", ", names);
+        return names.Length > 0;
+    }
+
+    private static IReadOnlyDictionary<string, object> Href(string href) => new Dictionary<string, object> {
+        ["href"] = href
+    };
+}

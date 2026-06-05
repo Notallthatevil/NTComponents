@@ -1,0 +1,9 @@
+@use 'NTInputBase.razor';
+@use 'NTMenuField' as menu;
+
+@include menu.nt-menu-field(
+    $root-selector: '.nt-input.nt-combobox',
+    $control-selector: '.nt-combobox-control',
+    $indicator-selector: '.nt-combobox-indicator',
+    $condensed-class: 'nt-combobox-menu-items-condensed'
+);

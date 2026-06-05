@@ -1,0 +1,30 @@
+@use 'NTInputBase.razor';
+@use '../Styles/_Variables/_colors.scss' as colors;
+
+.nt-input.nt-select {
+    .nt-select-control {
+        appearance: none;
+        cursor: pointer;
+    }
+
+    ::deep {
+        .nt-select-control {
+            option,
+            optgroup {
+                background-color: colors.$tnt-color-surface;
+                color: colors.$tnt-color-on-surface;
+            }
+        }
+    }
+
+    .nt-select-indicator {
+        pointer-events: none;
+    }
+
+    &.nt-input-readonly,
+    &.nt-input-disabled {
+        .nt-select-control {
+            cursor: default;
+        }
+    }
+}

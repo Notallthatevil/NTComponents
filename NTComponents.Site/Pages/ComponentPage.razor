@@ -1,0 +1,193 @@
+@page "/components/{Slug}"
+@inject DocumentationCatalog Catalog
+
+@if (_component is null) {
+    <main class="docs-page">
+        <h1>Component not found</h1>
+        <p>The requested NT component documentation page does not exist.</p>
+        <NTNavLink Label="Back to components" Variant="NTNavLinkVariant.Filled" AdditionalAttributes="@Href("/components")" />
+    </main>
+}
+else {
+    <NTContainerView OnThisPageTitle="@_component.Type.Name">
+        <main class="docs-page docs-detail-page">
+            <DocumentationPageHeader Kicker="Component"
+                                     Title="@_component.Type.Name"
+                                     Meta="@_component.Type.FullName">
+                <Badges>
+                    <CompatibilityTag Type="@_component.Type" />
+                    @if (_component.Type.IsObsolete) {
+                        <NTTag Label="Obsolete" BackgroundColor="TnTColor.ErrorContainer" TextColor="TnTColor.OnErrorContainer" Elevation="0" />
+                    }
+                </Badges>
+                <Actions>
+                    <NTNavLink Label="Components" Variant="NTNavLinkVariant.InlineText" AdditionalAttributes="@Href("/components")" />
+                </Actions>
+            </DocumentationPageHeader>
+
+            <section class="docs-section" id="overview">
+                <h2>Overview</h2>
+                <div class="docs-overview">
+                    <div class="docs-overview-copy">
+                        <DocumentationText XmlDocumentation="@_component.Type.XmlDocumentation" ElementName="summary" Fallback="@_component.Type.Summary" CssClass="docs-overview-summary" />
+                        <DocumentationText XmlDocumentation="@_component.Type.XmlDocumentation" ElementName="remarks" Fallback="@_component.Type.Remarks" CssClass="docs-overview-remarks" />
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(_component.Type.CompatibilitySummary) || _component.Type.IsObsolete) {
+                        <div class="docs-overview-asides">
+                            @if (!string.IsNullOrWhiteSpace(_component.Type.CompatibilitySummary)) {
+                                <div class="docs-callout">
+                                    <span class="docs-callout-label">Render compatibility</span>
+                                    <strong>@_component.Type.CompatibilitySummary</strong>
+                                    @if (!string.IsNullOrWhiteSpace(_component.Type.CompatibilityDetails)) {
+                                        <p>@_component.Type.CompatibilityDetails</p>
+                                    }
+                                </div>
+                            }
+                            @if (_component.Type.IsObsolete) {
+                                <div class="docs-callout docs-callout-error">
+                                    <span class="docs-callout-label">Status</span>
+                                    <strong>Obsolete</strong>
+                                    <p>@_component.Type.ObsoleteMessage</p>
+                                </div>
+                            }
+                        </div>
+                    }
+                    @if (_component.DependentComponents.Count > 0) {
+                        <div class="docs-callout docs-dependent-callout">
+                            <span class="docs-callout-label">Composed with</span>
+                            <div class="docs-dependent-list">
+                                @foreach (var child in _component.DependentComponents) {
+                                    <a class="docs-inline-link" href="@($"#{child.Slug}")"><code>@child.Type.Name</code></a>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </section>
+
+            <section class="docs-section" id="sandbox">
+                <h2>Sandbox</h2>
+                <DocumentationSandbox Component="@_component" />
+            </section>
+
+            <section class="docs-section" id="api">
+                <h2>API</h2>
+
+                <h3>Direct properties and fields</h3>
+                <MemberTable Properties="@_component.MemberGroups.DirectProperties" Fields="@_component.MemberGroups.DirectFields" />
+
+                <h3>Inherited properties and fields</h3>
+                @if (_component.MemberGroups.InheritedProperties.Count == 0 && _component.MemberGroups.InheritedFields.Count == 0) {
+                    <p class="docs-muted">No documented public or protected inherited members.</p>
+                }
+                else {
+                    @foreach (var declaringType in InheritedDeclaringTypes) {
+                        <section class="docs-inherited-group" id="@DocumentationCatalog.CreateSlug(declaringType)">
+                            <h4>@ShortTypeName(declaringType)</h4>
+                            <MemberTable Properties="@_component.MemberGroups.InheritedProperties.Where(member => member.DeclaringTypeFullName == declaringType).ToArray()"
+                                         Fields="@_component.MemberGroups.InheritedFields.Where(member => member.DeclaringTypeFullName == declaringType).ToArray()" />
+                        </section>
+                    }
+                }
+            </section>
+
+            @if (_component.DependentComponents.Count > 0) {
+                <section class="docs-section" id="dependent-components">
+                    <h2>Dependent components</h2>
+                    <p class="docs-muted">These component types are documented on this page because they are designed to be used with <code>@_component.Type.Name</code>.</p>
+
+                    @foreach (var child in _component.DependentComponents) {
+                        <section class="docs-dependent-component" id="@child.Slug">
+                            <div class="docs-card-title-row">
+                                <h3>@child.Type.Name</h3>
+                                <CompatibilityTag Type="@child.Type" />
+                                @if (child.Type.IsObsolete) {
+                                    <NTTag Label="Obsolete" BackgroundColor="TnTColor.ErrorContainer" TextColor="TnTColor.OnErrorContainer" Elevation="0" />
+                                }
+                            </div>
+
+                            <div class="docs-overview docs-overview-single">
+                                <div class="docs-overview-copy">
+                                    <DocumentationText XmlDocumentation="@child.Type.XmlDocumentation" ElementName="summary" Fallback="@child.Type.Summary" CssClass="docs-overview-summary" />
+                                    <DocumentationText XmlDocumentation="@child.Type.XmlDocumentation" ElementName="remarks" Fallback="@child.Type.Remarks" CssClass="docs-overview-remarks" />
+                                </div>
+                            </div>
+
+                            @if (!string.IsNullOrWhiteSpace(child.Type.CompatibilitySummary) || child.Type.IsObsolete) {
+                                <div class="docs-overview-asides">
+                                    @if (!string.IsNullOrWhiteSpace(child.Type.CompatibilitySummary)) {
+                                        <div class="docs-callout">
+                                            <span class="docs-callout-label">Render compatibility</span>
+                                            <strong>@child.Type.CompatibilitySummary</strong>
+                                            @if (!string.IsNullOrWhiteSpace(child.Type.CompatibilityDetails)) {
+                                                <p>@child.Type.CompatibilityDetails</p>
+                                            }
+                                        </div>
+                                    }
+                                    @if (child.Type.IsObsolete) {
+                                        <div class="docs-callout docs-callout-error">
+                                            <span class="docs-callout-label">Status</span>
+                                            <strong>Obsolete</strong>
+                                            <p>@child.Type.ObsoleteMessage</p>
+                                        </div>
+                                    }
+                                </div>
+                            }
+
+                            <div class="docs-dependent-api">
+                                <h4>Direct properties and fields</h4>
+                                <MemberTable Properties="@child.MemberGroups.DirectProperties" Fields="@child.MemberGroups.DirectFields" AnchorPrefix="@child.Slug" />
+
+                                <h4>Inherited properties and fields</h4>
+                                @if (child.MemberGroups.InheritedProperties.Count == 0 && child.MemberGroups.InheritedFields.Count == 0) {
+                                    <p class="docs-muted">No documented public or protected inherited members.</p>
+                                }
+                                else {
+                                    @foreach (var declaringType in GetInheritedDeclaringTypes(child)) {
+                                        <section class="docs-inherited-group" id="@($"{child.Slug}-{DocumentationCatalog.CreateSlug(declaringType)}")">
+                                            <h5>@ShortTypeName(declaringType)</h5>
+                                            <MemberTable Properties="@child.MemberGroups.InheritedProperties.Where(member => member.DeclaringTypeFullName == declaringType).ToArray()"
+                                                         Fields="@child.MemberGroups.InheritedFields.Where(member => member.DeclaringTypeFullName == declaringType).ToArray()"
+                                                         AnchorPrefix="@child.Slug" />
+                                        </section>
+                                    }
+                                }
+                            </div>
+                        </section>
+                    }
+                </section>
+            }
+        </main>
+    </NTContainerView>
+}
+
+@code {
+    private ComponentDocumentationEntry? _component;
+
+    [Parameter]
+    public string? Slug { get; set; }
+
+    private IEnumerable<string> InheritedDeclaringTypes =>
+        _component is null
+            ? []
+            : GetInheritedDeclaringTypes(_component);
+
+    protected override void OnParametersSet() {
+        _component = Catalog.GetComponent(Slug);
+    }
+
+    private static string ShortTypeName(string fullName) {
+        var index = fullName.LastIndexOf('.');
+        return index < 0 ? fullName : fullName[(index + 1)..];
+    }
+
+    private static IEnumerable<string> GetInheritedDeclaringTypes(ComponentDocumentationEntry component) =>
+        component.MemberGroups.InheritedProperties.Select(member => member.DeclaringTypeFullName)
+            .Concat(component.MemberGroups.InheritedFields.Select(member => member.DeclaringTypeFullName))
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(value => value, StringComparer.Ordinal);
+
+    private static IReadOnlyDictionary<string, object> Href(string href) => new Dictionary<string, object> {
+        ["href"] = href
+    };
+}

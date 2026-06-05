@@ -18,7 +18,7 @@
                         <div style="height: 520px;">
                             <NTChart TData="ClaimPoint" TitleOptions="@new("Claims Treemap Drill-Down")"
                                      EnableHardwareAcceleration="true" DebugView="true">
-                                <NTTooltip />
+                                <NTComponents.Charts.Core.NTTooltip />
                                 <NTLegend />
                                 <NTTreeMapSeries TData="ClaimPoint" Data="@_claims" Title="Claims" XValue="@(c => c.Customer)"
                                                  ValueSelector="@(c => c.Amount)" GroupSelector="@(c => c.Customer)"
@@ -50,7 +50,7 @@
                             <div style="height: 500px;">
                                 <NTChart TData="ClaimPoint" TitleOptions="@new("Regional Claims")" EnableHardwareAcceleration="true"
                                          DebugView="true">
-                                    <NTTooltip />
+                                    <NTComponents.Charts.Core.NTTooltip />
                                     <NTLegend />
                                     <NTTreeMapSeries TData="ClaimPoint" Data="@_northClaims" Title="North Region"
                                                      XValue="@(c => c.Customer)" ValueSelector="@(c => c.Amount)"
@@ -83,7 +83,7 @@
                         <div style="height: 500px;">
                             <NTChart TData="ClaimPoint" TitleOptions="@new("Claims Treemap (Hidden Child Previews)")"
                                      EnableHardwareAcceleration="true" DebugView="true">
-                                <NTTooltip />
+                                <NTComponents.Charts.Core.NTTooltip />
                                 <NTLegend />
                                 <NTTreeMapSeries TData="ClaimPoint" Data="@_claims" Title="Claims"
                                                  XValue="@(c => c.Customer)" ValueSelector="@(c => c.Amount)"

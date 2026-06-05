@@ -9,6 +9,7 @@ namespace NTComponents.Grid.Infrastructure;
 /// </summary>
 /// <typeparam name="TGridItem">The type of the data item displayed in the cell.</typeparam>
 [CascadingTypeParameter(nameof(TGridItem))]
+[Obsolete("This legacy grid API is obsolete. Use NTDataGrid, NTPropertyColumn, and NTTemplateColumn instead.")]
 public partial class TnTDataGridBodyCell<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields)] TGridItem> {
 
     /// <summary>

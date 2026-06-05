@@ -202,7 +202,7 @@ public class TnTInputRadio_Tests : BunitContext {
         var fieldset = cut.Find("fieldset");
 
         // Assert
-        cut.Instance.Should().BeAssignableTo<ITnTComponentBase>();
+        cut.Instance.Should().BeAssignableTo<INTComponentBase>();
     }
 
     [Fact]

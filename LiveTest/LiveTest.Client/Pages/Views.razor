@@ -1,0 +1,791 @@
+@page "/views"
+@rendermode InteractiveAuto
+@using NTComponents
+@using NTComponents.Core
+
+<article class="views-demo">
+    <header class="demo-header">
+        <p class="demo-kicker">Material 3 layout</p>
+        <h1>Views</h1>
+        <p>
+            Adjust the controls and resize the browser to see the view components recompose panes with CSS-first layout behavior.
+        </p>
+    </header>
+
+    <section class="demo-section" aria-labelledby="container-view-heading">
+        <div class="demo-section-header">
+            <div>
+                <h2 id="container-view-heading">Container</h2>
+                <p>Centered content width follows the NT window-size breakpoints.</p>
+            </div>
+        </div>
+
+        <NTContainerView aria-label="Centered container view example" OnThisPageTitle="Container">
+            <div class="demo-container-document">
+                <p class="demo-kicker">Container view</p>
+                <h3>Bounded page content</h3>
+                <p>
+                    The view owns horizontal placement while the inner content owns presentation for readable,
+                    document-like pages.
+                </p>
+
+                <h4>Planning summary</h4>
+                <p>
+                    The migration plan groups foundation work, component updates, and validation evidence into a single
+                    bounded reading flow.
+                </p>
+
+                <h4>Content structure</h4>
+                <p>
+                    Each section captures one decision area so reviewers can scan the page and return to the details
+                    they need.
+                </p>
+
+                <h5>Responsive behavior</h5>
+                <p>
+                    The supporting notes stay short enough for compact screens while still giving expanded layouts
+                    enough depth to scroll.
+                </p>
+
+                <h4>Release criteria</h4>
+                <ul class="demo-container-checklist">
+                    <li>Component examples cover compact, medium, and expanded layouts.</li>
+                    <li>Browser checks confirm the interactive states remain reachable.</li>
+                    <li>Release notes identify any visual or behavioral changes.</li>
+                </ul>
+            </div>
+        </NTContainerView>
+    </section>
+
+    <section class="demo-section" aria-labelledby="list-detail-heading">
+        <div class="demo-section-header">
+            <div>
+                <h2 id="list-detail-heading">List-detail</h2>
+                <p>Client selection is wired by NTListDetailView; links and the back form remain SSR fallbacks.</p>
+            </div>
+            <div class="demo-toolbar" aria-label="List-detail controls">
+                <button class="@SegmentClass(_listDetailMode == NTListDetailViewMode.Auto)" type="button" aria-pressed="@(_listDetailMode == NTListDetailViewMode.Auto)" @onclick="() => _listDetailMode = NTListDetailViewMode.Auto">Auto</button>
+                <button class="@SegmentClass(_listDetailMode == NTListDetailViewMode.SinglePane)" type="button" aria-pressed="@(_listDetailMode == NTListDetailViewMode.SinglePane)" @onclick="() => _listDetailMode = NTListDetailViewMode.SinglePane">Single</button>
+                <button class="@SegmentClass(_listDetailMode == NTListDetailViewMode.TwoPane)" type="button" aria-pressed="@(_listDetailMode == NTListDetailViewMode.TwoPane)" @onclick="() => _listDetailMode = NTListDetailViewMode.TwoPane">Two pane</button>
+                <label class="demo-switch">
+                    <input type="checkbox" @bind="_detailVisible" />
+                    <span>Detail</span>
+                </label>
+            </div>
+        </div>
+
+        <NTListDetailView DetailVisible="@_detailVisible"
+                          Mode="@_listDetailMode"
+                          aria-label="Project list detail example">
+            <List>
+                <ul class="demo-list" aria-label="Projects">
+                    @for (var i = 0; i < Projects.Count; i++) {
+                        var project = Projects[i];
+                        var projectIndex = i;
+                        <li @key="project.Title">
+                            <a class="demo-list-item"
+                               href="@ProjectDetailHref(projectIndex)"
+                               aria-current="@(projectIndex == _selectedProjectIndex ? "true" : null)"
+                               data-nt-list-detail-trigger="@projectIndex"
+                               data-nt-list-detail-selected="@((projectIndex == _selectedProjectIndex).ToString().ToLowerInvariant())">
+                                @NTRipple.Render()
+                                <span class="demo-list-item-content">
+                                    <span class="demo-list-item-label">@project.Title</span>
+                                    <span class="demo-list-item-supporting">@project.Owner</span>
+                                </span>
+                                <span class="demo-list-item-trailing">@project.Status</span>
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </List>
+            <DetailHeader>
+                <form class="@DetailHeaderClass" method="get" action="/views#list-detail-heading" data-nt-list-detail-back>
+                    <input type="hidden" name="project" value="@_selectedProjectIndex" />
+                    <input type="hidden" name="detail" value="false" />
+                    <input type="hidden" name="listMode" value="@_listDetailMode" />
+                    <NTButton class="demo-back-button"
+                              Label="Back to list"
+                              Variant="NTButtonVariant.Text"
+                              ButtonSize="Size.Small"
+                              Type="ButtonType.Submit" />
+                </form>
+            </DetailHeader>
+            <Detail>
+                @for (var i = 0; i < Projects.Count; i++) {
+                    var project = Projects[i];
+                    var projectIndex = i;
+                    <div class="demo-pane-content demo-pane-content-animated"
+                         @key="project.Title"
+                         data-nt-list-detail-panel="@projectIndex"
+                         hidden="@(projectIndex != _selectedProjectIndex)">
+                        <p class="demo-kicker">Selected item</p>
+                        <h3>@project.Title</h3>
+                        <p>@project.Description</p>
+                        <div class="demo-metadata">
+                            <span>Owner: @project.Owner</span>
+                            <span>Status: @project.Status</span>
+                        </div>
+                    </div>
+                }
+            </Detail>
+            <EmptyDetail>
+                <div class="demo-pane-content">
+                    <h3>No detail pane</h3>
+                    <p>Turn detail back on to restore the selected project pane.</p>
+                </div>
+            </EmptyDetail>
+        </NTListDetailView>
+    </section>
+
+    <section class="demo-section" aria-labelledby="supporting-pane-heading">
+        <div class="demo-section-header">
+            <div>
+                <h2 id="supporting-pane-heading">Supporting pane</h2>
+                <p>Mode: <span data-nt-supporting-pane-mode-label data-nt-supporting-pane-target="supporting-pane-demo-view">@SupportingPaneInitialMode</span></p>
+            </div>
+            <div class="demo-toolbar" aria-label="Supporting pane controls">
+                <button class="@SegmentClass(SupportingPaneInitialMode == NTSupportingPaneViewMode.Auto)"
+                        type="button"
+                        aria-pressed="@(SupportingPaneInitialMode == NTSupportingPaneViewMode.Auto)"
+                        data-nt-supporting-pane-mode-control="@NTSupportingPaneViewMode.Auto"
+                        data-nt-supporting-pane-target="supporting-pane-demo-view">Auto</button>
+                <button class="@SegmentClass(SupportingPaneInitialMode == NTSupportingPaneViewMode.Stacked)"
+                        type="button"
+                        aria-pressed="@(SupportingPaneInitialMode == NTSupportingPaneViewMode.Stacked)"
+                        data-nt-supporting-pane-mode-control="@NTSupportingPaneViewMode.Stacked"
+                        data-nt-supporting-pane-target="supporting-pane-demo-view">Stacked</button>
+                <button class="@SegmentClass(SupportingPaneInitialMode == NTSupportingPaneViewMode.HideOnSmallScreens)"
+                        type="button"
+                        aria-pressed="@(SupportingPaneInitialMode == NTSupportingPaneViewMode.HideOnSmallScreens)"
+                        data-nt-supporting-pane-mode-control="@NTSupportingPaneViewMode.HideOnSmallScreens"
+                        data-nt-supporting-pane-target="supporting-pane-demo-view">Hide on small screens</button>
+            </div>
+        </div>
+
+        <NTSupportingPaneView ElementId="supporting-pane-demo-view"
+                              Mode="@SupportingPaneInitialMode"
+                              aria-label="Document editor supporting pane example">
+            <Primary>
+                <div class="demo-pane-content">
+                    <p class="demo-kicker">Primary pane</p>
+                    <h3>Quarterly planning document</h3>
+                    <p>
+                        The primary pane owns the task. Supporting content stays related without becoming the main navigation model.
+                    </p>
+                    <div class="demo-document-lines" aria-hidden="true">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+            </Primary>
+            <Supporting>
+                <div class="demo-pane-content">
+                    <p class="demo-kicker">Supporting pane</p>
+                    <h3>Context</h3>
+                    <ul class="demo-context-list">
+                        @foreach (var item in SupportingContextItems) {
+                            <li @key="item">@item</li>
+                        }
+                    </ul>
+                </div>
+            </Supporting>
+        </NTSupportingPaneView>
+    </section>
+
+    <section class="demo-section" aria-labelledby="multi-pane-heading">
+        <div class="demo-section-header">
+            <div>
+                <h2 id="multi-pane-heading">Multi-pane</h2>
+                <p>@_paneCount panes, @MultiPaneMinWidth minimum width</p>
+            </div>
+            <div class="demo-toolbar" aria-label="Multi-pane controls">
+                <button class="@SegmentClass(_paneCount == 1)" type="button" aria-pressed="@(_paneCount == 1)" @onclick="() => _paneCount = 1">1</button>
+                <button class="@SegmentClass(_paneCount == 2)" type="button" aria-pressed="@(_paneCount == 2)" @onclick="() => _paneCount = 2">2</button>
+                <button class="@SegmentClass(_paneCount == 3)" type="button" aria-pressed="@(_paneCount == 3)" @onclick="() => _paneCount = 3">3</button>
+                <button class="@SegmentClass(_paneCount == 4)" type="button" aria-pressed="@(_paneCount == 4)" @onclick="() => _paneCount = 4">4</button>
+                <button class="@SegmentClass(_paneCount == 5)" type="button" aria-pressed="@(_paneCount == 5)" @onclick="() => _paneCount = 5">5</button>
+                <button class="@SegmentClass(_multiPaneMinPaneWidth == NTMultiPaneViewMinPaneWidth.Compact)" type="button" aria-pressed="@(_multiPaneMinPaneWidth == NTMultiPaneViewMinPaneWidth.Compact)" @onclick="() => _multiPaneMinPaneWidth = NTMultiPaneViewMinPaneWidth.Compact">Compact</button>
+                <button class="@SegmentClass(_multiPaneMinPaneWidth == NTMultiPaneViewMinPaneWidth.Medium)" type="button" aria-pressed="@(_multiPaneMinPaneWidth == NTMultiPaneViewMinPaneWidth.Medium)" @onclick="() => _multiPaneMinPaneWidth = NTMultiPaneViewMinPaneWidth.Medium">Medium</button>
+                <button class="@SegmentClass(_multiPaneMinPaneWidth == NTMultiPaneViewMinPaneWidth.Large)" type="button" aria-pressed="@(_multiPaneMinPaneWidth == NTMultiPaneViewMinPaneWidth.Large)" @onclick="() => _multiPaneMinPaneWidth = NTMultiPaneViewMinPaneWidth.Large">Large</button>
+                <button class="@SegmentClass(_multiPaneMinPaneWidth == NTMultiPaneViewMinPaneWidth.ExtraLarge)" type="button" aria-pressed="@(_multiPaneMinPaneWidth == NTMultiPaneViewMinPaneWidth.ExtraLarge)" @onclick="() => _multiPaneMinPaneWidth = NTMultiPaneViewMinPaneWidth.ExtraLarge">Extra large</button>
+                <label class="demo-switch">
+                    <input type="checkbox" @bind="_enforceEvenSizing" />
+                    <span>Enforce even sizing</span>
+                </label>
+            </div>
+        </div>
+
+        <NTMultiPaneView EnforceEvenSizing="@_enforceEvenSizing"
+                         MinPaneWidth="@_multiPaneMinPaneWidth"
+                         PaneCount="@_paneCount"
+                         aria-label="Equal planning summary panes">
+            @foreach (var pane in MultiPaneColumns.Take(_paneCount)) {
+                <section class="demo-multi-pane-column" aria-label="@pane.AriaLabel" @key="pane.Title">
+                    @foreach (var panel in pane.Panels) {
+                        <article class="demo-panel" @key="panel.Title">
+                            <p class="demo-kicker">@panel.Type</p>
+                            <h3>@panel.Title</h3>
+                            <dl class="demo-detail-list">
+                                @foreach (var detail in panel.Details) {
+                                    <div @key="detail.Label">
+                                        <dt>@detail.Label</dt>
+                                        <dd>@detail.Value</dd>
+                                    </div>
+                                }
+                            </dl>
+                        </article>
+                    }
+                </section>
+            }
+        </NTMultiPaneView>
+    </section>
+
+    <section class="demo-section" aria-labelledby="feed-heading">
+        <div class="demo-section-header">
+            <div>
+                <h2 id="feed-heading">Feed</h2>
+                <p>@_feedCardCount cards, @FeedMinItemWidth minimum card width</p>
+            </div>
+            <div class="demo-toolbar" aria-label="Feed controls">
+                <button type="button" @onclick="RemoveFeedCard" disabled="@(_feedCardCount <= 1)">Remove</button>
+                <button type="button" @onclick="AddFeedCard" disabled="@(_feedCardCount >= FeedCards.Count)">Add</button>
+                <label class="demo-range">
+                    <span>Card width</span>
+                    <input type="range" min="200" max="360" step="20" @bind="_feedMinItemWidth" />
+                </label>
+            </div>
+        </div>
+
+        <NTFeedView MinItemWidth="@FeedMinItemWidth"
+                    aria-label="Responsive activity feed">
+            @foreach (var card in FeedCards.Take(_feedCardCount)) {
+                <article class="demo-feed-card" @key="card.Title">
+                    <p class="demo-kicker">@card.Type</p>
+                    <h3>@card.Title</h3>
+                    <p>@card.Description</p>
+                </article>
+            }
+        </NTFeedView>
+    </section>
+</article>
+
+<style>
+    .views-demo {
+        display: grid;
+        gap: 32px;
+        padding: 24px;
+    }
+
+    .demo-header,
+    .demo-section,
+    .demo-controls {
+        display: grid;
+        gap: 16px;
+    }
+
+    .demo-header {
+        max-inline-size: 760px;
+    }
+
+    .demo-controls,
+    .demo-section-header {
+        align-items: end;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        justify-content: space-between;
+    }
+
+    .demo-control-group {
+        display: grid;
+        gap: 8px;
+    }
+
+    .demo-section-header p,
+    .demo-header p,
+    .demo-pane-content p,
+    .demo-feed-card p {
+        margin: 0;
+    }
+
+    .demo-header h1,
+    .demo-section h2,
+    .demo-pane-content h3,
+    .demo-feed-card h3,
+    .demo-panel h3 {
+        margin: 0;
+    }
+
+    .demo-kicker,
+    .demo-control-label {
+        color: var(--tnt-color-primary);
+        font-size: 0.8125rem;
+        font-weight: 600;
+        letter-spacing: 0;
+        text-transform: uppercase;
+    }
+
+    .demo-toolbar,
+    .demo-segmented {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .demo-toolbar button,
+    .demo-toolbar a,
+    .demo-segmented button {
+        align-items: center;
+        background: var(--tnt-color-surface);
+        border: 1px solid var(--tnt-color-outline);
+        border-radius: 999px;
+        color: var(--tnt-color-on-surface);
+        cursor: pointer;
+        display: inline-flex;
+        min-block-size: 40px;
+        padding: 0 16px;
+        text-decoration: none;
+    }
+
+    .demo-toolbar button:disabled {
+        cursor: default;
+        opacity: 0.5;
+    }
+
+    .demo-detail-header {
+        display: flex;
+        margin-block-end: 12px;
+    }
+
+    .demo-back-button {
+        width: fit-content;
+    }
+
+    .demo-toolbar button.demo-active,
+    .demo-toolbar a.demo-active,
+    .demo-segmented button.demo-active {
+        background: var(--tnt-color-secondary-container);
+        border-color: var(--tnt-color-secondary-container);
+        color: var(--tnt-color-on-secondary-container);
+    }
+
+    .demo-switch,
+    .demo-range {
+        align-items: center;
+        display: inline-flex;
+        gap: 8px;
+        min-block-size: 40px;
+    }
+
+    .demo-range input {
+        inline-size: 140px;
+    }
+
+    .demo-list,
+    .demo-container-document,
+    .demo-pane-content,
+    .demo-feed-card,
+    .demo-multi-pane-column,
+    .demo-panel {
+        display: grid;
+        gap: 12px;
+    }
+
+    .demo-container-document {
+        background: var(--tnt-color-surface-container);
+        border: 1px solid var(--tnt-color-outline-variant);
+        border-radius: 8px;
+        color: var(--tnt-color-on-surface);
+        padding: 24px;
+    }
+
+    .demo-container-document h3,
+    .demo-container-document h4,
+    .demo-container-document h5,
+    .demo-container-document p,
+    .demo-container-document ul {
+        margin: 0;
+    }
+
+    .demo-container-document h4,
+    .demo-container-document h5 {
+        margin-block-start: 12px;
+    }
+
+    .demo-container-checklist {
+        display: grid;
+        gap: 8px;
+        padding-inline-start: 20px;
+    }
+
+    .demo-list {
+        gap: 4px;
+        list-style: none;
+        margin: 0;
+        padding: 6px;
+    }
+
+    .demo-list-item {
+        align-items: center;
+        appearance: none;
+        background: transparent;
+        border: 0;
+        border-radius: 24px;
+        box-sizing: border-box;
+        color: var(--tnt-color-on-surface);
+        column-gap: 16px;
+        cursor: pointer;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        inline-size: 100%;
+        max-inline-size: 100%;
+        min-block-size: 72px;
+        overflow: hidden;
+        padding: 10px 16px;
+        position: relative;
+        text-align: start;
+        text-decoration: none;
+        transition:
+            background-color 150ms ease,
+            color 150ms ease;
+    }
+
+    .demo-list-item:hover {
+        background: color-mix(in srgb, var(--tnt-color-on-surface) 8%, transparent);
+    }
+
+    .demo-list-item:focus-visible {
+        outline: 3px solid var(--tnt-color-primary);
+        outline-offset: 2px;
+    }
+
+    .demo-list-item:active {
+        background: color-mix(in srgb, var(--tnt-color-on-surface) 12%, transparent);
+    }
+
+    .demo-list-item[data-nt-list-detail-selected='true'],
+    .demo-list-item.nt-list-detail-view-item-selected {
+        background: var(--tnt-color-primary-container);
+        color: var(--tnt-color-on-primary-container);
+    }
+
+    .demo-list-item[data-nt-list-detail-selected='true']:hover,
+    .demo-list-item[data-nt-list-detail-selected='true']:active,
+    .demo-list-item.nt-list-detail-view-item-selected:hover,
+    .demo-list-item.nt-list-detail-view-item-selected:active {
+        background: color-mix(in srgb, var(--tnt-color-primary-container) 88%, var(--tnt-color-on-primary-container));
+    }
+
+    .demo-list-item-content {
+        display: grid;
+        gap: 2px;
+        min-inline-size: 0;
+        position: relative;
+        z-index: 2;
+    }
+
+    .demo-list-item-label,
+    .demo-list-item-supporting,
+    .demo-list-item-trailing {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .demo-list-item-label {
+        font-weight: 600;
+    }
+
+    .demo-list-item-supporting,
+    .demo-list-item-trailing {
+        color: inherit;
+        opacity: 0.74;
+    }
+
+    .demo-list-item-trailing {
+        justify-self: end;
+        max-inline-size: 12rem;
+        position: relative;
+        z-index: 2;
+    }
+
+    .demo-list-item .nt-button-ripple-host {
+        border-radius: inherit;
+    }
+
+    .demo-pane-content-animated {
+        animation: demo-detail-forward 300ms cubic-bezier(0.2, 0, 0, 1) both;
+    }
+
+    .nt-list-detail-view-panel-backward {
+        animation-name: demo-detail-backward;
+    }
+
+    @@keyframes demo-detail-forward {
+        from {
+            opacity: 0;
+            transform: translateX(24px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    @@keyframes demo-detail-backward {
+        from {
+            opacity: 0;
+            transform: translateX(-24px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    @@media (prefers-reduced-motion: reduce) {
+        .demo-pane-content-animated {
+            animation-duration: 150ms;
+            animation-name: demo-detail-reduced-motion;
+            transform: none;
+        }
+
+        @@keyframes demo-detail-reduced-motion {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+    }
+
+    @@media (min-width: 840px) {
+        .nt-list-detail-view:not(.nt-list-detail-view-single-pane) .demo-detail-header-auto {
+            display: none;
+        }
+    }
+
+    .demo-metadata {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .demo-metadata span,
+    .demo-context-list li {
+        background: var(--tnt-color-surface-container-highest);
+        border-radius: 12px;
+        padding: 8px 12px;
+    }
+
+    .demo-document-lines {
+        display: grid;
+        gap: 10px;
+        margin-block-start: 8px;
+    }
+
+    .demo-document-lines span {
+        background: var(--tnt-color-surface-container-highest);
+        border-radius: 999px;
+        block-size: 12px;
+    }
+
+    .demo-document-lines span:nth-child(2) {
+        inline-size: 76%;
+    }
+
+    .demo-document-lines span:nth-child(3) {
+        inline-size: 88%;
+    }
+
+    .demo-document-lines span:nth-child(4) {
+        inline-size: 56%;
+    }
+
+    .demo-context-list {
+        display: grid;
+        gap: 8px;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .demo-panel {
+        background: var(--tnt-color-surface);
+        border: 1px solid var(--tnt-color-outline-variant);
+        border-radius: 20px;
+        color: var(--tnt-color-on-surface);
+        padding: 20px;
+    }
+
+    .demo-detail-list {
+        display: grid;
+        gap: 8px;
+        margin: 0;
+    }
+
+    .demo-detail-list div {
+        align-items: baseline;
+        border-block-end: 1px solid var(--tnt-color-outline-variant);
+        display: grid;
+        gap: 12px;
+        grid-template-columns: minmax(120px, 0.45fr) minmax(0, 1fr);
+        padding-block-end: 8px;
+    }
+
+    .demo-detail-list dt {
+        color: var(--tnt-color-on-surface-variant);
+    }
+
+    .demo-detail-list dd {
+        font-weight: 600;
+        margin: 0;
+        text-align: end;
+    }
+
+    .demo-feed-card {
+        background: var(--tnt-color-surface-container);
+        border: 1px solid var(--tnt-color-outline-variant);
+        border-radius: 20px;
+        color: var(--tnt-color-on-surface);
+        min-block-size: 160px;
+        padding: 20px;
+    }
+</style>
+
+@code {
+    private int _feedCardCount = 4;
+    private int _feedMinItemWidth = 240;
+    private bool _detailVisible = true;
+    private bool _enforceEvenSizing;
+    private NTMultiPaneViewMinPaneWidth _multiPaneMinPaneWidth = NTMultiPaneViewMinPaneWidth.Large;
+    private int _paneCount = 2;
+    private int _selectedProjectIndex;
+    private const NTSupportingPaneViewMode SupportingPaneInitialMode = NTSupportingPaneViewMode.Auto;
+    private NTListDetailViewMode _listDetailMode;
+
+    [SupplyParameterFromQuery(Name = "detail")]
+    private bool? DetailQuery { get; set; }
+
+    [SupplyParameterFromQuery(Name = "listMode")]
+    private string? ListModeQuery { get; set; }
+
+    [SupplyParameterFromQuery(Name = "project")]
+    private int? ProjectQuery { get; set; }
+
+    private string FeedMinItemWidth => $"{_feedMinItemWidth}px";
+
+    private string MultiPaneMinWidth =>
+        _multiPaneMinPaneWidth switch {
+            NTMultiPaneViewMinPaneWidth.Compact => "compact",
+            NTMultiPaneViewMinPaneWidth.Medium => "medium",
+            NTMultiPaneViewMinPaneWidth.ExtraLarge => "extra large",
+            _ => "large"
+        };
+
+    private DemoProject SelectedProject => Projects[_selectedProjectIndex];
+
+    private string DetailHeaderClass =>
+        _listDetailMode == NTListDetailViewMode.Auto
+            ? "demo-detail-header demo-detail-header-auto"
+            : "demo-detail-header";
+
+    private static IReadOnlyList<string> SupportingContextItems =>
+        ["3 open comments", "Updated today", "Hide on small screens removes this pane below 840px"];
+
+    private void AddFeedCard() => _feedCardCount = Math.Min(_feedCardCount + 1, FeedCards.Count);
+
+    private void RemoveFeedCard() => _feedCardCount = Math.Max(_feedCardCount - 1, 1);
+
+    protected override void OnParametersSet() {
+        if (ProjectQuery is { } projectQuery) {
+            var projectIndex = Math.Clamp(projectQuery, 0, Projects.Count - 1);
+            _selectedProjectIndex = projectIndex;
+        }
+
+        if (DetailQuery is { } detailQuery) {
+            _detailVisible = detailQuery;
+        }
+
+        if (Enum.TryParse<NTListDetailViewMode>(ListModeQuery, ignoreCase: true, out var listDetailMode)) {
+            _listDetailMode = listDetailMode;
+        }
+
+    }
+
+    private string ProjectDetailHref(int projectIndex) =>
+        $"/views?project={projectIndex}&detail=true&listMode={_listDetailMode}#list-detail-heading";
+
+    private static string SegmentClass(bool active) => active ? "demo-active" : string.Empty;
+
+    private static readonly IReadOnlyList<DemoProject> Projects = [
+        new("Migration plan", "Ready for review", "Platform", "Compact widths focus on one pane at a time. Expanded widths keep the list visible beside the selected detail."),
+        new("Release notes", "Draft", "Design systems", "The detail pane changes without rebuilding the view structure, so page state remains owned by the page."),
+        new("Accessibility audit", "In progress", "UX", "Keyboard and pointer actions update the selected item while the component continues to handle pane presentation.")
+    ];
+
+    private static readonly IReadOnlyList<MultiPaneColumn> MultiPaneColumns = [
+        new(
+            "Planning information",
+            "Planning column",
+            [
+                new("Roadmap", "Platform migration", [new("Phase", "Implementation"), new("Readiness", "Review queued")]),
+                new("Design", "Component audit", [new("Scope", "Layout views"), new("Status", "In progress")])
+            ]),
+        new(
+            "Operations information",
+            "Operations column",
+            [
+                new("Queue", "Review workload", [new("Open items", "14"), new("Priority", "Standard")]),
+                new("Quality", "Validation status", [new("Build", "Passing"), new("Tests", "Passing")])
+            ]),
+        new(
+            "Delivery information",
+            "Delivery column",
+            [
+                new("Release", "Next package", [new("Channel", "Preview"), new("Risk", "Low")]),
+                new("Support", "Documentation", [new("Examples", "Updated"), new("Notes", "Drafted")])
+            ]),
+        new(
+            "Metrics information",
+            "Metrics column",
+            [
+                new("Adoption", "Usage signals", [new("Views", "128"), new("Trend", "Increasing")]),
+                new("Performance", "Layout checks", [new("Frames", "Stable"), new("Overflow", "None")])
+            ]),
+        new(
+            "Governance information",
+            "Governance column",
+            [
+                new("Access", "Role review", [new("Policy", "Current"), new("Exceptions", "0")]),
+                new("Compliance", "Content review", [new("PII", "Removed"), new("Status", "Ready")])
+            ])
+    ];
+
+    private static readonly IReadOnlyList<FeedCard> FeedCards = [
+        new("Update", "View tokens", "Shared spacing and pane defaults are applied by the view component."),
+        new("Review", "Browser first", "CSS grid and media queries handle width adaptation without C# resize state."),
+        new("Demo", "Feed reflow", "Cards preserve source order while columns change with available width."),
+        new("State", "Page owned", "The page keeps business state while the view controls presentation."),
+        new("Pane", "Equal priority", "Multi-pane views wrap from five down to one column as the available width changes."),
+        new("Detail", "Selection", "List-detail keeps selection state outside the reusable pane component.")
+    ];
+
+    private sealed record DemoProject(string Title, string Status, string Owner, string Description);
+
+    private sealed record DetailItem(string Label, string Value);
+
+    private sealed record FeedCard(string Type, string Title, string Description);
+
+    private sealed record MultiPaneColumn(string AriaLabel, string Title, IReadOnlyList<PanePanel> Panels);
+
+    private sealed record PanePanel(string Type, string Title, IReadOnlyList<DetailItem> Details);
+}

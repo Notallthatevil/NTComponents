@@ -1,0 +1,52 @@
+@inherits NTPageScriptComponent<NTThemeToggle>
+@namespace NTComponents
+@using NTComponents.Core
+
+@if (AllowThemeSelection || AllowContrastSelection)
+{
+    <nt-theme-toggle @attributes="AdditionalAttributes"
+        nt-themes-root="@ThemesRoot"
+        nt-light-default="@LightDefaultCss"
+        nt-light-medium="@LightMediumCss"
+        nt-light-high="@LightHighCss"
+        nt-dark-default="@DarkDefaultCss"
+        nt-dark-medium="@DarkMediumCss"
+        nt-dark-high="@DarkHighCss"
+        nt-default-theme="@DefaultThemeValue"
+        nt-default-contrast="@DefaultContrastValue"
+        data-permanent
+        style="@(Hide ? "display:none" : null)">
+        <span class="material-symbols-outlined nt-theme-toggle-icon"></span>
+        <select title="Select Theme and Contrast" class="nt-theme-select">
+            @{
+                var showBothOptions = AllowThemeSelection && AllowContrastSelection;
+                var showThemeOnly = AllowThemeSelection && !AllowContrastSelection;
+            }
+            @if (showBothOptions)
+            {
+                <option value="LIGHT-DEFAULT">Light - Default</option>
+                <option value="LIGHT-MEDIUM">Light - Medium</option>
+                <option value="LIGHT-HIGH">Light - High</option>
+                <option value="DARK-DEFAULT">Dark - Default</option>
+                <option value="DARK-MEDIUM">Dark - Medium</option>
+                <option value="DARK-HIGH">Dark - High</option>
+                <option value="SYSTEM-DEFAULT">System - Default</option>
+                <option value="SYSTEM-MEDIUM">System - Medium</option>
+                <option value="SYSTEM-HIGH">System - High</option>
+            }
+            else if (showThemeOnly)
+            {
+                <option value="LIGHT-DEFAULT">Light</option>
+                <option value="DARK-DEFAULT">Dark</option>
+                <option value="SYSTEM-DEFAULT">System</option>
+            }
+            else
+            {
+                <option value="LIGHT-DEFAULT">Default</option>
+                <option value="LIGHT-MEDIUM">Medium</option>
+                <option value="LIGHT-HIGH">High</option>
+            }
+        </select>
+    </nt-theme-toggle>
+    @PageScript
+}

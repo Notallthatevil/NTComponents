@@ -56,7 +56,7 @@ public class TnTInputBase_Tests : BunitContext {
         // Assert
         cut.Should().NotBeNull();
         cut.Instance.Should().NotBeNull();
-        cut.Instance.Should().BeAssignableTo<ITnTComponentBase>();
+        cut.Instance.Should().BeAssignableTo<INTComponentBase>();
         cut.Instance.Type.Should().Be(InputType.Text);
     }
 

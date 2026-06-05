@@ -1,0 +1,48 @@
+@namespace NTComponents
+@using NTComponents.Core
+@inherits NTComponentBase
+
+<div @attributes="AdditionalAttributes"
+     class="@ElementClass"
+     style="@ElementStyle"
+     lang="@EffectiveElementLang"
+     title="@EffectiveElementTitle"
+     id="@EffectiveElementId"
+     data-nt-navigation-rail-group-expanded="@DefaultExpandedText"
+     @ref="Element">
+    <button class="@TriggerClass"
+            type="button"
+            disabled="@Disabled"
+            aria-expanded="@ExpandedText"
+            aria-controls="@PanelId"
+            aria-label="@EffectiveAriaLabel"
+            data-nt-navigation-rail-group-trigger="true">
+        <span class="nt-navigation-rail-item-body">
+            @NTRipple.RenderHost("nt-button-ripple-host nt-navigation-rail-item-ripple")
+            <span class="nt-navigation-rail-item-indicator" aria-hidden="true"></span>
+            <span class="nt-navigation-rail-item-content">
+                <span class="nt-navigation-rail-item-icon" aria-hidden="true">
+                    @if (Icon is not null) {
+                        @Icon.Render()
+                    }
+                    else if (IconContent is not null) {
+                        @IconContent
+                    }
+                </span>
+                <span class="nt-navigation-rail-item-label">@Label</span>
+                <span class="nt-navigation-rail-group-chevron" aria-hidden="true">
+                    @MaterialIcon.ExpandMore.Render()
+                </span>
+            </span>
+        </span>
+    </button>
+    <div id="@PanelId"
+         class="nt-navigation-rail-group-panel"
+         popover="auto"
+         role="group"
+         aria-label="@PanelAriaLabel">
+        <div class="nt-navigation-rail-group-items">
+            @ChildContent
+        </div>
+    </div>
+</div>

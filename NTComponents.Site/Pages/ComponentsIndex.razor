@@ -1,0 +1,78 @@
+@page "/components"
+@inject DocumentationCatalog Catalog
+
+<main class="docs-page">
+    <DocumentationPageHeader Kicker="Components"
+                             Title="NT components"
+                             Description="Runtime generated component documentation grouped by source folder family, with designed templates for overview, sandbox, and API sections."
+                             Meta="@($"{Catalog.DocumentedComponentTypeCount} component types documented across {Catalog.Components.Count} pages")" />
+
+    <section class="docs-search-panel" aria-label="Component search">
+        <NTInputText Label="Search components"
+                     Value="@_query"
+                     ValueChanged="value => _query = value ?? string.Empty"
+                     ValueExpression="@(() => _searchModel.Query)"
+                     BindOnInput="true"
+                     SubmitValue="false" />
+        <div class="docs-search-summary">
+            <span>@FilteredComponents.Count component results</span>
+            <span>@Catalog.ComponentGroups.Count() groups</span>
+        </div>
+    </section>
+
+    @foreach (var group in FilteredComponents.GroupBy(component => component.GroupName).OrderBy(group => group.Key, StringComparer.Ordinal)) {
+        <section class="docs-section">
+            <h2>@group.Key</h2>
+            <div class="docs-component-grid">
+                @foreach (var component in group) {
+                    <NTCard AdditionalAttributes="@Href($"/components/{component.Slug}")">
+                        <div class="docs-card-content">
+                            <div class="docs-card-title-row">
+                                <h3>@component.Type.Name</h3>
+                                <CompatibilityTag Type="@component.Type" />
+                            </div>
+                            <p>@component.Type.Summary</p>
+                            <div class="docs-card-meta">
+                                <span>@component.Parameters.Count parameters</span>
+                                <span>@component.RequiredParameterCount required</span>
+                                <span>@component.DirectMemberCount direct members</span>
+                                @if (component.DependentComponents.Count > 0) {
+                                    <span>@component.DependentComponents.Count dependent components</span>
+                                }
+                            </div>
+                            @if (component.DependentComponents.Count > 0) {
+                                <div class="docs-dependent-list">
+                                    <span>Includes</span>
+                                    @foreach (var child in component.DependentComponents) {
+                                        <code>@child.Type.Name</code>
+                                    }
+                                </div>
+                            }
+                            <div class="docs-card-footer">
+                                <span class="docs-muted">@component.SupportedSandboxParameterCount sandbox controls</span>
+                                @if (component.UnsupportedSandboxParameterCount > 0) {
+                                    <span class="docs-muted">@component.UnsupportedSandboxParameterCount documented only</span>
+                                }
+                            </div>
+                        </div>
+                    </NTCard>
+                }
+            </div>
+        </section>
+    }
+</main>
+
+@code {
+    private readonly SearchModel _searchModel = new();
+    private string _query = string.Empty;
+
+    private IReadOnlyList<ComponentDocumentationEntry> FilteredComponents => Catalog.SearchComponents(_query).ToArray();
+
+    private static IReadOnlyDictionary<string, object> Href(string href) => new Dictionary<string, object> {
+        ["href"] = href
+    };
+
+    private sealed class SearchModel {
+        public string? Query { get; set; }
+    }
+}
