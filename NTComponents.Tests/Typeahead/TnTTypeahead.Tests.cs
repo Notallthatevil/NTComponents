@@ -167,10 +167,9 @@ public class TnTTypeahead_Tests : BunitContext {
 
         // Perform search to show results
         input.Input("test");
-        await Task.Delay(400, Xunit.TestContext.Current.CancellationToken);
+        cut.WaitForAssertion(() => cut.FindAll(".tnt-typeahead-list-item").Should().HaveCountGreaterThan(1), TimeSpan.FromSeconds(3));
 
         var items = cut.FindAll(".tnt-typeahead-list-item");
-        items.Should().HaveCountGreaterThan(1);
 
         // The first item should be focused initially
         items.First().GetAttribute("class").Should().Contain("tnt-focused");
@@ -807,18 +806,20 @@ public class TnTTypeahead_Tests : BunitContext {
         }
 
         var cut = RenderTypeahead(CountingSearchFunc, parameters => parameters
-            .Add(p => p.DebounceMilliseconds, 100));
+            .Add(p => p.DebounceMilliseconds, 500));
 
-        // Act - Type multiple characters without awaiting each to simulate fast typing
-        _ = cut.InvokeAsync(() => cut.Find("input").Input("a"));
-        _ = cut.InvokeAsync(() => cut.Find("input").Input("ap"));
-        _ = cut.InvokeAsync(() => cut.Find("input").Input("app"));
+        // Act
+        var inputTasks = new[] {
+            cut.InvokeAsync(() => cut.Find("input").Input("a")),
+            cut.InvokeAsync(() => cut.Find("input").Input("ap")),
+            cut.InvokeAsync(() => cut.Find("input").Input("app"))
+        };
 
-        // Allow time for debounce to trigger the actual search call(s)
-        await Task.Delay(250, Xunit.TestContext.Current.CancellationToken);
-
-        // Assert - Should not have called search for every character
-        searchCallCount.Should().BeLessThan(3);
+        // Assert
+        await Task.Delay(750, Xunit.TestContext.Current.CancellationToken);
+        searchCallCount.Should().Be(1);
+        await Task.WhenAll(inputTasks);
+        searchCallCount.Should().Be(1);
     }
 
     [Fact]
