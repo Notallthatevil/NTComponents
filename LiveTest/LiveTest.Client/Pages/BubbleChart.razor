@@ -18,7 +18,7 @@
         <div style="height: 620px;">
             <NTChart TData="BubbleClaimPoint" TitleOptions="@new("Claims Bubble Pack")"
                      EnableHardwareAcceleration="true" DebugView="true">
-                <NTTooltip />
+                <NTComponents.Charts.Core.NTTooltip />
                 <NTLegend />
                 <NTBubblePackSeries TData="BubbleClaimPoint" Data="@_claims" Title="Claims" XValue="@(c => c.Customer)"
                                     ValueSelector="@(c => c.Amount)" GroupSelector="@(c => c.Customer)" GroupLevelLabels="@_levelLabels"

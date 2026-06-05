@@ -32,7 +32,7 @@ public class NTDataGrid_Tests : BunitContext {
             cut.FindAll("th[scope='col']").Should().HaveCount(3);
             cut.FindAll("tbody tr").Should().HaveCount(3);
             cut.Markup.Should().Contain("Gamma");
-            cut.Markup.Should().Contain("$30.25");
+            cut.Markup.Should().Contain(30.25m.ToString("C", System.Globalization.CultureInfo.CurrentCulture));
         });
     }
 

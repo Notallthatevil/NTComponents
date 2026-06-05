@@ -72,7 +72,7 @@ public class NTNavigationRail_E2E_Tests : IAsyncLifetime {
     }
 
     [Fact]
-    public async Task Rail_SmallScreen_Collapsed_VisibleRail_Uses_Collapsed_Item_Layout() {
+    public async Task Rail_SmallScreen_Collapsed_VisibleRail_Uses_Modal_Item_Layout() {
         ArgumentNullException.ThrowIfNull(_page);
 
         await _page.SetViewportSizeAsync(700, 900);
@@ -92,7 +92,7 @@ public class NTNavigationRail_E2E_Tests : IAsyncLifetime {
             null,
             new PageWaitForFunctionOptions { Timeout = 5000 });
 
-        var usesCollapsedItemLayout = await _page.EvaluateAsync<bool>(
+        var usesModalItemLayout = await _page.EvaluateAsync<bool>(
             """
             () => {
                 const item = document.querySelector('[data-testid="nav-rail-home-item"]');
@@ -102,22 +102,22 @@ public class NTNavigationRail_E2E_Tests : IAsyncLifetime {
                 if (!(item instanceof HTMLElement)
                     || !(icon instanceof HTMLElement)
                     || !(label instanceof HTMLElement)
-                    || item.classList.contains('nt-navigation-rail-item-expanded')) {
+                    || !item.classList.contains('nt-navigation-rail-item-expanded')) {
                     return false;
                 }
 
                 const iconRect = icon.getBoundingClientRect();
                 const labelRect = label.getBoundingClientRect();
-                const iconCenter = iconRect.left + (iconRect.width / 2);
-                const labelCenter = labelRect.left + (labelRect.width / 2);
+                const iconCenter = iconRect.top + (iconRect.height / 2);
+                const labelCenter = labelRect.top + (labelRect.height / 2);
 
-                return labelRect.top > iconRect.bottom
+                return labelRect.left > iconRect.right
                     && Math.abs(labelCenter - iconCenter) < 2;
             }
             """);
 
-        usesCollapsedItemLayout.Should().BeTrue(
-            "a visible collapsed rail below the medium breakpoint should keep labels stacked under their icons");
+        usesModalItemLayout.Should().BeTrue(
+            "a visible collapsed rail below the medium breakpoint should use the modal item layout");
     }
 
     private ILocator GetRail() {
