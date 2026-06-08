@@ -22,6 +22,7 @@ describe('NTSnackbar module', () => {
       const host = document.createElement('div');
       host.className = 'nt-snackbar-container nt-snackbar-bottom-center';
       host.dataset.ntSnackbarHost = 'true';
+      host.setAttribute('popover', 'manual');
       document.body.appendChild(host);
       return host;
    }
@@ -42,6 +43,29 @@ describe('NTSnackbar module', () => {
       expect(host.querySelector('.nt-snackbar').getAttribute('role')).toBe('status');
       expect(host.querySelector('.nt-snackbar').classList.contains('nt-elevation-medium')).toBe(true);
       expect(host.querySelector('.nt-snackbar').style.getPropertyValue('--nt-snackbar-background-color')).toBe('');
+   });
+
+   test('onLoad opens host as a manual popover for top-layer rendering', () => {
+      const host = createHost();
+      host.showPopover = jest.fn();
+
+      loadHostFromPageScript(host);
+
+      expect(host.getAttribute('popover')).toBe('manual');
+      expect(host.showPopover).toHaveBeenCalledTimes(1);
+   });
+
+   test('onDispose hides host popover', () => {
+      const host = createHost();
+      host.showPopover = jest.fn();
+      host.hidePopover = jest.fn();
+      const pageScript = document.createElement('tnt-page-script');
+      host.after(pageScript);
+
+      onLoad(pageScript);
+      onDispose(pageScript);
+
+      expect(host.hidePopover).toHaveBeenCalledTimes(1);
    });
 
    test('queueSnackbar waits for a host when called before setup', () => {

@@ -449,8 +449,33 @@ function flushPendingToasts(): void {
 function initializeHost(host: NTToastHostElement): void {
     registeredHosts.add(host);
     getOrCreateState(host);
+    showToastHostPopover(host);
     defaultHost = host;
     flushPendingToasts();
+}
+
+function showToastHostPopover(host: NTToastHostElement): void {
+    if (typeof host.showPopover !== 'function') {
+        return;
+    }
+
+    try {
+        host.showPopover();
+    } catch {
+        // Already-open or unsupported popover transitions should not block toast rendering.
+    }
+}
+
+function hideToastHostPopover(host: NTToastHostElement): void {
+    if (typeof host.hidePopover !== 'function') {
+        return;
+    }
+
+    try {
+        host.hidePopover();
+    } catch {
+        // The host may already be disconnected or closed.
+    }
 }
 
 function disposeHost(host: NTToastHostElement): void {
@@ -475,6 +500,7 @@ function disposeHost(host: NTToastHostElement): void {
 
     state.activeToasts.length = 0;
     state.queue.length = 0;
+    hideToastHostPopover(host);
     delete host.__ntToastState;
     hostStates.delete(host);
     registeredHosts.delete(host);

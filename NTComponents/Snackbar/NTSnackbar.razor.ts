@@ -399,8 +399,33 @@ function flushPendingSnackbars(): void {
 function initializeHost(host: NTSnackbarHostElement): void {
     registeredHosts.add(host);
     getOrCreateState(host);
+    showSnackbarHostPopover(host);
     defaultHost = host;
     flushPendingSnackbars();
+}
+
+function showSnackbarHostPopover(host: NTSnackbarHostElement): void {
+    if (typeof host.showPopover !== 'function') {
+        return;
+    }
+
+    try {
+        host.showPopover();
+    } catch {
+        // Already-open or unsupported popover transitions should not block snackbar rendering.
+    }
+}
+
+function hideSnackbarHostPopover(host: NTSnackbarHostElement): void {
+    if (typeof host.hidePopover !== 'function') {
+        return;
+    }
+
+    try {
+        host.hidePopover();
+    } catch {
+        // The host may already be disconnected or closed.
+    }
 }
 
 function disposeHost(host: NTSnackbarHostElement): void {
@@ -425,6 +450,7 @@ function disposeHost(host: NTSnackbarHostElement): void {
     ];
     state.queue.length = 0;
     state.activeElement?.remove();
+    hideSnackbarHostPopover(host);
     delete host.__ntSnackbarState;
     hostStates.delete(host);
     registeredHosts.delete(host);

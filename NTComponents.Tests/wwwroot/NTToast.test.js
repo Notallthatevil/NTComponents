@@ -22,6 +22,7 @@ describe('NTToast module', () => {
       const host = document.createElement('div');
       host.className = 'nt-toast-container nt-toast-bottom-right-corner';
       host.dataset.ntToastHost = 'true';
+      host.setAttribute('popover', 'manual');
       document.body.appendChild(host);
       return host;
    }
@@ -43,6 +44,29 @@ describe('NTToast module', () => {
       expect(host.querySelector('.nt-toast').getAttribute('role')).toBe('status');
       expect(host.querySelector('.nt-toast').classList.contains('nt-toast-success')).toBe(true);
       expect(host.querySelector('.nt-toast').classList.contains('nt-elevation-medium')).toBe(true);
+   });
+
+   test('onLoad opens host as a manual popover for top-layer rendering', () => {
+      const host = createHost();
+      host.showPopover = jest.fn();
+
+      loadHostFromPageScript(host);
+
+      expect(host.getAttribute('popover')).toBe('manual');
+      expect(host.showPopover).toHaveBeenCalledTimes(1);
+   });
+
+   test('onDispose hides host popover', () => {
+      const host = createHost();
+      host.showPopover = jest.fn();
+      host.hidePopover = jest.fn();
+      const pageScript = document.createElement('tnt-page-script');
+      host.after(pageScript);
+
+      onLoad(pageScript);
+      onDispose(pageScript);
+
+      expect(host.hidePopover).toHaveBeenCalledTimes(1);
    });
 
    test('queueToast waits for a host when called before setup', () => {

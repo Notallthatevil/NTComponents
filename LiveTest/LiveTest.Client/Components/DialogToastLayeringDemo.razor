@@ -1,0 +1,109 @@
+@using NTComponents
+
+<div class="toast-demo-actions">
+    <NTButton Label="Dialog then toast" OnClickCallback="@ShowDialogThenToastAsync" />
+    <NTButton Label="Toast then dialog" Variant="NTButtonVariant.Tonal" OnClickCallback="@ShowToastThenDialogAsync" />
+    <NTButton Label="Dialog then snackbar" Variant="NTButtonVariant.Outlined" OnClickCallback="@ShowDialogThenSnackbarAsync" />
+    <NTButton Label="Snackbar then dialog" Variant="NTButtonVariant.Text" OnClickCallback="@ShowSnackbarThenDialogAsync" />
+</div>
+
+<NTDialog @ref="_dialogThenToast"
+          Id="dialog-then-toast-demo"
+          Title="Dialog then toast"
+          SupportingText="The toast opens after this dialog is already modal.">
+    <ChildContent>
+        <p>This dialog remains open while the toast is visible.</p>
+    </ChildContent>
+
+    <Buttons>
+        <button type="button" class="nt-dialog-button" command="request-close" commandfor="dialog-then-toast-demo">Close</button>
+    </Buttons>
+</NTDialog>
+
+<NTDialog @ref="_toastThenDialog"
+          Id="toast-then-dialog-demo"
+          Title="Toast then dialog"
+          SupportingText="The dialog opens after the toast is already visible.">
+    <ChildContent>
+        <p>The toast should remain above this modal surface.</p>
+    </ChildContent>
+
+    <Buttons>
+        <button type="button" class="nt-dialog-button" command="request-close" commandfor="toast-then-dialog-demo">Close</button>
+    </Buttons>
+</NTDialog>
+
+<NTDialog @ref="_dialogThenSnackbar"
+          Id="dialog-then-snackbar-demo"
+          Title="Dialog then snackbar"
+          SupportingText="The snackbar opens after this dialog is already modal.">
+    <ChildContent>
+        <p>This dialog remains open while the snackbar is visible.</p>
+    </ChildContent>
+
+    <Buttons>
+        <button type="button" class="nt-dialog-button" command="request-close" commandfor="dialog-then-snackbar-demo">Close</button>
+    </Buttons>
+</NTDialog>
+
+<NTDialog @ref="_snackbarThenDialog"
+          Id="snackbar-then-dialog-demo"
+          Title="Snackbar then dialog"
+          SupportingText="The dialog opens after the snackbar is already visible.">
+    <ChildContent>
+        <p>The snackbar should remain above this modal surface.</p>
+    </ChildContent>
+
+    <Buttons>
+        <button type="button" class="nt-dialog-button" command="request-close" commandfor="snackbar-then-dialog-demo">Close</button>
+    </Buttons>
+</NTDialog>
+
+@code {
+    [Inject]
+    private INTToastService _toastService { get; set; } = default!;
+
+    [Inject]
+    private INTSnackbarService _snackbarService { get; set; } = default!;
+
+    private NTDialog? _dialogThenToast;
+    private NTDialog? _dialogThenSnackbar;
+    private NTDialog? _snackbarThenDialog;
+    private NTDialog? _toastThenDialog;
+
+    private async Task ShowDialogThenToastAsync() {
+        if (_dialogThenToast is null) {
+            return;
+        }
+
+        await _dialogThenToast.OpenAsync();
+        await _toastService.ShowInfoAsync("Dialog then toast", "Opened after the dialog is already modal.");
+    }
+
+    private async Task ShowToastThenDialogAsync() {
+        if (_toastThenDialog is null) {
+            return;
+        }
+
+        await _toastService.ShowSuccessAsync("Toast then dialog", "Opened before the dialog.");
+        await _toastThenDialog.OpenAsync();
+    }
+
+    private async Task ShowDialogThenSnackbarAsync() {
+        if (_dialogThenSnackbar is null) {
+            return;
+        }
+
+        await _dialogThenSnackbar.OpenAsync();
+        await _snackbarService.ShowAsync("Opened after the dialog is already modal.", showClose: true);
+    }
+
+    private async Task ShowSnackbarThenDialogAsync() {
+        if (_snackbarThenDialog is null) {
+            return;
+        }
+
+        await _snackbarService.ShowAsync("Opened before the dialog.", showClose: true);
+        await _snackbarThenDialog.OpenAsync();
+    }
+}

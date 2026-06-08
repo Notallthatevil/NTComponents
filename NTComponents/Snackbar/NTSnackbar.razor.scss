@@ -12,10 +12,18 @@ $container-shape: 4px;
     --nt-snackbar-edge-offset: 16px;
     --nt-snackbar-stack-x-step: 0px;
     --nt-snackbar-stack-y-step: 16px;
+    background: transparent;
+    border: 0;
+    color: inherit;
+    display: grid;
+    inline-size: auto;
+    inset: auto;
+    margin: 0;
+    overflow: visible;
+    padding: 0;
+    pointer-events: none;
     position: fixed;
     z-index: 1001;
-    pointer-events: none;
-    display: grid;
 
     &.nt-snackbar-top-left-corner {
         --nt-snackbar-stack-x-step: -16px;

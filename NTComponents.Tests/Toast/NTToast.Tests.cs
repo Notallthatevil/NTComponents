@@ -13,7 +13,9 @@ public class NTToast_Tests : BunitContext {
         var cut = RenderToastComponent();
 
         // Assert
-        cut.Find(".nt-toast-container").GetAttribute("data-nt-toast-host").Should().Be("true");
+        var container = cut.Find(".nt-toast-container");
+        container.GetAttribute("data-nt-toast-host").Should().Be("true");
+        container.GetAttribute("popover").Should().Be("manual");
         cut.Find("tnt-page-script").GetAttribute("src").Should().Be(NTToast.JsModulePathValue);
         cut.FindAll(".nt-toast").Should().BeEmpty();
         cut.FindAll("script").Should().BeEmpty();
