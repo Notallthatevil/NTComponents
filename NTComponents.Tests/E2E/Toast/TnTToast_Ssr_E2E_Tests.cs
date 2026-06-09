@@ -12,6 +12,7 @@ namespace NTComponents.Tests.E2E.Toast;
 ///         <item>Auto-dismisses the toast after the configured timeout.</item>
 ///     </list>
 /// </summary>
+[Collection(PlaywrightE2ECollection.Name)]
 public class TnTToast_Ssr_E2E_Tests : IAsyncLifetime {
 
     private PlaywrightFixture? _fixture;

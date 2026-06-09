@@ -6,6 +6,7 @@ namespace NTComponents.Tests.E2E.FormV2;
 /// <summary>
 ///     Browser-level coverage for the three NTFileUpload upload modes.
 /// </summary>
+[Collection(PlaywrightE2ECollection.Name)]
 public class NTFileUpload_E2E_Tests : IAsyncLifetime {
     private PlaywrightFixture? _fixture;
     private IPage? _page;

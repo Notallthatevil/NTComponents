@@ -5,6 +5,7 @@ namespace NTComponents.Tests.E2E.NavRail;
 /// <summary>
 ///     Browser-level coverage for the navigation rail's JavaScript-enhanced expand/collapse behavior.
 /// </summary>
+[Collection(PlaywrightE2ECollection.Name)]
 public class NTNavigationRail_E2E_Tests : IAsyncLifetime {
 
     private PlaywrightFixture? _fixture;

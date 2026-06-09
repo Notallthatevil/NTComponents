@@ -5,6 +5,7 @@ namespace NTComponents.Tests.E2E.Layout;
 /// <summary>
 ///     Browser-level coverage for supporting-pane view responsive visibility.
 /// </summary>
+[Collection(PlaywrightE2ECollection.Name)]
 public class NTSupportingPaneView_E2E_Tests : IAsyncLifetime {
     private PlaywrightFixture? _fixture;
     private IPage? _page;

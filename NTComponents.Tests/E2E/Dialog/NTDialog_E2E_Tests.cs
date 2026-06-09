@@ -5,6 +5,7 @@ namespace NTComponents.Tests.E2E.Dialog;
 /// <summary>
 ///     Browser-level coverage for owned NTDialog markup, native command handlers, Blazor ref opening, and Material 3 appearance.
 /// </summary>
+[Collection(PlaywrightE2ECollection.Name)]
 public class NTDialog_E2E_Tests : IAsyncLifetime {
     private PlaywrightFixture? _fixture;
     private IPage? _page;

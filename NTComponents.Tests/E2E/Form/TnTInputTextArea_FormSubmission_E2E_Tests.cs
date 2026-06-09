@@ -5,6 +5,7 @@ namespace NTComponents.Tests.E2E.Form;
 /// <summary>
 /// E2E tests for TnTInputTextArea Enter key behavior inside a parent submit handler.
 /// </summary>
+[Collection(PlaywrightE2ECollection.Name)]
 public class TnTInputTextArea_FormSubmission_E2E_Tests : IAsyncLifetime {
     private PlaywrightFixture? _fixture;
     private IPage? _page;

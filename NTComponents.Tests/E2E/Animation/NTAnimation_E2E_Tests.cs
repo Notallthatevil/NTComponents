@@ -2,6 +2,7 @@ using Microsoft.Playwright;
 
 namespace NTComponents.Tests.E2E.Animation;
 
+[Collection(PlaywrightE2ECollection.Name)]
 public class NTAnimation_E2E_Tests : IAsyncLifetime {
 
     private string _appBaseUrl = default!;

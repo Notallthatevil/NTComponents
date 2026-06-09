@@ -2,6 +2,7 @@ using Microsoft.Playwright;
 
 namespace NTComponents.Tests.E2E.Typeahead;
 
+[Collection(PlaywrightE2ECollection.Name)]
 public class NTTypeahead_E2E_Tests : IAsyncLifetime {
     private PlaywrightFixture? _fixture;
     private IPage? _page;

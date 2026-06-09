@@ -2,6 +2,7 @@ using Microsoft.Playwright;
 
 namespace NTComponents.Tests.E2E.Wizard;
 
+[Collection(PlaywrightE2ECollection.Name)]
 public class NTWizard_E2E_Tests : IAsyncLifetime {
 
     private string _appBaseUrl = default!;

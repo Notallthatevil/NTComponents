@@ -5,6 +5,7 @@ namespace NTComponents.Tests.E2E.Layout;
 /// <summary>
 ///     Browser-level coverage for list-detail view SSR markup, CSS isolation, and page-script enhancement.
 /// </summary>
+[Collection(PlaywrightE2ECollection.Name)]
 public class NTListDetailView_E2E_Tests : IAsyncLifetime {
     private PlaywrightFixture? _fixture;
     private IPage? _page;

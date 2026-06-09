@@ -1,5 +1,6 @@
 namespace NTComponents.Tests.E2E.Menus;
 
+[Collection(PlaywrightE2ECollection.Name)]
 public class NTMenuRoute_E2E_Tests {
 
     [Theory]

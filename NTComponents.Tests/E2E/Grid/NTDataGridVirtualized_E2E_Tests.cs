@@ -5,6 +5,7 @@ namespace NTComponents.Tests.E2E.Grid;
 /// <summary>
 ///     Browser-level coverage for NTDataGrid virtualization scroll behavior.
 /// </summary>
+[Collection(PlaywrightE2ECollection.Name)]
 public class NTDataGridVirtualized_E2E_Tests : IAsyncLifetime {
     private PlaywrightFixture? _fixture;
     private IPage? _page;

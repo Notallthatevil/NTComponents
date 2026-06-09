@@ -5,7 +5,7 @@ namespace NTComponents.Tests.E2E.Editors;
 /// <summary>
 ///     Browser coverage for the rich text editor LiveTest surface across render modes and toolbar controls.
 /// </summary>
-[Collection("NTRichTextEditor E2E")]
+[Collection(PlaywrightE2ECollection.Name)]
 public class NTRichTextEditor_E2E_Tests : IAsyncLifetime {
     private const int ExpectedDefaultToolbarButtonCount = 27;
     private const string ServerEditorTestId = "rich-text-editor-server";
@@ -358,6 +358,3 @@ public class NTRichTextEditor_E2E_Tests : IAsyncLifetime {
 
     public sealed record ToolbarControlCase(string Command, string? Value = null, string InitialHtml = "<p>Text</p>", string SelectionText = "Text", string? ExpectedMarkdown = null, string? ExpectedPanelRole = null, string? PreparedMarkdown = null, bool PrepareUndoRedo = false, bool PrepareRedo = false);
 }
-
-[CollectionDefinition("NTRichTextEditor E2E", DisableParallelization = true)]
-public sealed class NTRichTextEditorE2ECollectionDefinition;
