@@ -36,12 +36,14 @@
         </header>
     }
 
-    @if (!string.IsNullOrWhiteSpace(SupportingText) || ChildContent is not null) {
-        <div class="nt-dialog-content">
+    @if (!string.IsNullOrWhiteSpace(SupportingText) || (ChildContent is not null && ShouldRenderChildContent)) {
+        <div @key="_childContentRenderKey" class="nt-dialog-content">
             @if (!string.IsNullOrWhiteSpace(SupportingText)) {
                 <p id="@SupportingTextId" class="nt-dialog-supporting-text">@SupportingText</p>
             }
-            @ChildContent
+            @if (ChildContent is not null && ShouldRenderChildContent) {
+                @ChildContent(_dialogParameters)
+            }
         </div>
     }
 

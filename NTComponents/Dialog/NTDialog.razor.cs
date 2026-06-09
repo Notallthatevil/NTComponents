@@ -44,6 +44,10 @@ public partial class NTDialog {
     public const string JsModulePathValue = "./_content/NTComponents/Dialog/NTDialog.razor.js";
 
     private readonly RenderFragment _defaultButtons;
+    private long _childContentRenderKey;
+    private IReadOnlyDictionary<string, object?>? _dialogParameters;
+    private PendingOpenRequest? _pendingOpenRequest;
+    private bool _renderChildContent;
 
     /// <summary>
     ///     Initializes a new instance of the <see cref="NTDialog" /> class.
@@ -59,6 +63,8 @@ public partial class NTDialog {
     private string? SupportingTextId => string.IsNullOrWhiteSpace(SupportingText) ? null : $"{ResolvedElementId}-supporting-text";
 
     private string? TitleId => string.IsNullOrWhiteSpace(Title) ? null : $"{ResolvedElementId}-title";
+
+    private bool ShouldRenderChildContent => !RendererInfo.IsInteractive || Open || _renderChildContent;
 
     /// <summary>
     ///     Gets or sets the dialog action buttons. Defaults to a single native close button.
@@ -77,7 +83,7 @@ public partial class NTDialog {
     ///     Use this for the focused content or form fields the dialog owns. Long content is constrained to the body scroll container so the title and actions remain visible.
     /// </remarks>
     [Parameter]
-    public RenderFragment? ChildContent { get; set; }
+    public RenderFragment<IReadOnlyDictionary<string, object?>?>? ChildContent { get; set; }
 
     /// <summary>
     ///     Gets or sets the accessible label for the optional close icon button.
@@ -145,8 +151,8 @@ public partial class NTDialog {
     ///     Gets or sets whether the dialog is rendered open during static markup rendering.
     /// </summary>
     /// <remarks>
-    ///     Use this for static SSR scenarios where the initial HTML should include an open dialog. Interactive opening after render should use <see cref="OpenAsync" />, native command attributes, or
-    ///     the JavaScript module.
+    ///     Use this for static SSR scenarios where the initial HTML should include an open dialog. Interactive opening after render should use <see cref="OpenAsync(CancellationToken)" />, native
+    ///     command attributes, or the JavaScript module.
     /// </remarks>
     [Parameter]
     public bool Open { get; set; }
@@ -237,8 +243,19 @@ public partial class NTDialog {
     ///     Opens the dialog when the component is interactive.
     /// </summary>
     public async ValueTask<bool> OpenAsync(CancellationToken cancellationToken = default) {
+        return await OpenAsync(null, cancellationToken);
+    }
+
+    /// <summary>
+    ///     Opens the dialog when the component is interactive and supplies parameters to the dialog body template.
+    /// </summary>
+    public async ValueTask<bool> OpenAsync(IReadOnlyDictionary<string, object?>? parameters, CancellationToken cancellationToken = default) {
         if (IsolatedJsModule is null) {
             throw new InvalidOperationException($"{nameof(NTDialog)} cannot be opened from .NET until it has rendered interactively.");
+        }
+
+        if (_pendingOpenRequest is not null) {
+            return false;
         }
 
         if (await IsolatedJsModule.InvokeAsync<bool>("isOpen", cancellationToken, Element)) {
@@ -249,12 +266,7 @@ public partial class NTDialog {
             return false;
         }
 
-        var opened = await IsolatedJsModule.InvokeAsync<bool>("openDialogFromBlazor", cancellationToken, Element);
-        if (opened) {
-            await NotifyOpenedAsync(null);
-        }
-
-        return opened;
+        return await QueueOpenAfterRender(parameters, cancellationToken).WaitAsync(cancellationToken);
     }
 
     /// <summary>
@@ -277,11 +289,40 @@ public partial class NTDialog {
     }
 
     /// <summary>
+    ///     Forces the dialog body and its child content to rerender.
+    /// </summary>
+    public async ValueTask RefreshAsync(CancellationToken cancellationToken = default) {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        _childContentRenderKey++;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    /// <summary>
+    ///     Forces the dialog body and its child content to rerender with updated dialog parameters.
+    /// </summary>
+    public async ValueTask RefreshAsync(IReadOnlyDictionary<string, object?>? parameters, CancellationToken cancellationToken = default) {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        _dialogParameters = CopyDialogParameters(parameters);
+        await RefreshAsync(cancellationToken);
+    }
+
+    /// <summary>
     ///     Requests dialog opening from JavaScript.
     /// </summary>
     [JSInvokable]
     public async Task<bool> RequestOpenFromJavaScript() {
-        return await RequestOpenAsync();
+        if (IsolatedJsModule is null || _pendingOpenRequest is not null || await IsolatedJsModule.InvokeAsync<bool>("isOpen", Element)) {
+            return false;
+        }
+
+        if (!await RequestOpenAsync()) {
+            return false;
+        }
+
+        _ = QueueOpenAfterRender(null, CancellationToken.None);
+        return false;
     }
 
     /// <summary>
@@ -338,6 +379,66 @@ public partial class NTDialog {
     private async Task NotifyClosedAsync(string? returnValue) {
         var args = new NTDialogEventArgs(ResolvedElementId, returnValue);
         await OnClosed.InvokeAsync(args);
+        if (RendererInfo.IsInteractive) {
+            _renderChildContent = false;
+            _dialogParameters = null;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    /// <inheritdoc />
+    protected override async Task OnAfterRenderAsync(bool firstRender) {
+        await base.OnAfterRenderAsync(firstRender);
+
+        if (_pendingOpenRequest is null) {
+            return;
+        }
+
+        var pendingOpenRequest = _pendingOpenRequest;
+        _pendingOpenRequest = null;
+
+        if (pendingOpenRequest.Completion.Task.IsCompleted) {
+            return;
+        }
+
+        try {
+            if (IsolatedJsModule is null) {
+                pendingOpenRequest.Completion.TrySetException(new InvalidOperationException($"{nameof(NTDialog)} cannot be opened from .NET until it has rendered interactively."));
+                return;
+            }
+
+            var opened = await IsolatedJsModule.InvokeAsync<bool>("openDialogFromBlazor", pendingOpenRequest.CancellationToken, Element);
+            if (opened) {
+                await NotifyOpenedAsync(null);
+            }
+
+            pendingOpenRequest.Completion.TrySetResult(opened);
+        }
+        catch (Exception exception) {
+            pendingOpenRequest.Completion.TrySetException(exception);
+        }
+    }
+
+    private Task<bool> QueueOpenAfterRender(IReadOnlyDictionary<string, object?>? parameters, CancellationToken cancellationToken) {
+        _dialogParameters = CopyDialogParameters(parameters);
+        _renderChildContent = true;
+        _childContentRenderKey++;
+
+        var pendingOpenRequest = new PendingOpenRequest(cancellationToken);
+        _pendingOpenRequest = pendingOpenRequest;
+
+        _ = InvokeAsync(StateHasChanged);
+        return pendingOpenRequest.Completion.Task;
+    }
+
+    private static IReadOnlyDictionary<string, object?>? CopyDialogParameters(IReadOnlyDictionary<string, object?>? parameters) {
+        return parameters is null ? null : new Dictionary<string, object?>(parameters);
+    }
+
+    private sealed class PendingOpenRequest(CancellationToken cancellationToken) {
+        public CancellationToken CancellationToken { get; } = cancellationToken;
+
+        public TaskCompletionSource<bool> Completion { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
     }
 }
 
