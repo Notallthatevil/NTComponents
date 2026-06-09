@@ -3,7 +3,12 @@ export type SnackbarActionCallback = () => void | Promise<void>;
 export type SnackbarInput = string | SnackbarOptions;
 
 interface NTSnackbarHostElement extends HTMLElement {
+    __ntSnackbarPortalAnchor?: Comment;
     __ntSnackbarState?: NTSnackbarHostState;
+}
+
+interface NTSnackbarPageScriptElement extends HTMLElement {
+    __ntSnackbarHost?: NTSnackbarHostElement;
 }
 
 interface NTSnackbarHostState {
@@ -75,14 +80,26 @@ const maxQueuedSnackbars = 50;
 const pendingSnackbars: SnackbarRecord[] = [];
 const hostStates = new WeakMap<NTSnackbarHostElement, NTSnackbarHostState>();
 const registeredHosts = new Set<NTSnackbarHostElement>();
+let dialogLayerObserver: MutationObserver | null = null;
 let defaultHost: NTSnackbarHostElement | null = null;
+let foregroundDialog: HTMLDialogElement | null = null;
 let nextSnackbarId = 0;
 
 function getHosts(root: Maybe<Element | Document>): NTSnackbarHostElement[] {
     const scope = root ?? document;
     if (scope instanceof HTMLElement && scope.localName === 'tnt-page-script') {
+        const pageScript = scope as NTSnackbarPageScriptElement;
+        if (pageScript.__ntSnackbarHost) {
+            return [pageScript.__ntSnackbarHost];
+        }
+
         const sibling = scope.previousElementSibling;
-        return sibling instanceof HTMLElement && sibling.matches(snackbarHostSelector) ? [sibling as NTSnackbarHostElement] : [];
+        if (sibling instanceof HTMLElement && sibling.matches(snackbarHostSelector)) {
+            pageScript.__ntSnackbarHost = sibling as NTSnackbarHostElement;
+            return [pageScript.__ntSnackbarHost];
+        }
+
+        return [];
     }
 
     const hosts = scope instanceof HTMLElement && scope.matches(snackbarHostSelector) ? [scope as NTSnackbarHostElement] : [];
@@ -249,6 +266,10 @@ function getRegisteredHosts(): NTSnackbarHostElement[] {
         hosts.push(host);
     }
 
+    if (hosts.length === 0) {
+        releaseDialogLayerObserver();
+    }
+
     return hosts;
 }
 
@@ -344,6 +365,11 @@ function tryShowNext(host: NTSnackbarHostElement): void {
     if (snackbar.timeout > 0) {
         state.closeTimeout = window.setTimeout(() => closeActiveSnackbar(host, state), snackbar.timeout * 1000);
     }
+
+    if (hasOpenDialog()) {
+        syncSnackbarHostForegroundContainer(host);
+        promoteSnackbarHostToForeground(host);
+    }
 }
 
 function closeActiveSnackbar(host: NTSnackbarHostElement, state: NTSnackbarHostState, notifyDotNet = true): boolean {
@@ -399,14 +425,24 @@ function flushPendingSnackbars(): void {
 function initializeHost(host: NTSnackbarHostElement): void {
     registeredHosts.add(host);
     getOrCreateState(host);
+    ensureDialogLayerObserver();
+    syncSnackbarHostForegroundContainer(host);
     showSnackbarHostPopover(host);
     defaultHost = host;
     flushPendingSnackbars();
 }
 
-function showSnackbarHostPopover(host: NTSnackbarHostElement): void {
+function showSnackbarHostPopover(host: NTSnackbarHostElement, moveToForeground = false): void {
     if (typeof host.showPopover !== 'function') {
         return;
+    }
+
+    if (moveToForeground && typeof host.hidePopover === 'function') {
+        try {
+            host.hidePopover();
+        } catch {
+            // The host may not be open yet.
+        }
     }
 
     try {
@@ -414,6 +450,128 @@ function showSnackbarHostPopover(host: NTSnackbarHostElement): void {
     } catch {
         // Already-open or unsupported popover transitions should not block snackbar rendering.
     }
+}
+
+function hasOpenDialog(): boolean {
+    return document.querySelector('dialog[open]') !== null;
+}
+
+function getFallbackForegroundDialog(): HTMLDialogElement | null {
+    const openDialogs = Array.from(document.querySelectorAll<HTMLDialogElement>('dialog[open]'));
+    return openDialogs.at(-1) ?? null;
+}
+
+function isOpenDialogNode(node: Node): boolean {
+    if (node instanceof HTMLDialogElement) {
+        return node.open;
+    }
+
+    return node instanceof Element && node.querySelector('dialog[open]') !== null;
+}
+
+function getOpenDialogNode(node: Node): HTMLDialogElement | null {
+    if (node instanceof HTMLDialogElement) {
+        return node.open ? node : null;
+    }
+
+    return node instanceof Element ? node.querySelector<HTMLDialogElement>('dialog[open]') : null;
+}
+
+function getForegroundDialogFromMutations(mutations: MutationRecord[]): HTMLDialogElement | null {
+    for (const mutation of mutations) {
+        if (mutation.type === 'attributes' && mutation.target instanceof HTMLDialogElement && mutation.target.open) {
+            return mutation.target;
+        }
+
+        for (const node of Array.from(mutation.addedNodes)) {
+            const dialog = getOpenDialogNode(node);
+            if (dialog) {
+                return dialog;
+            }
+        }
+    }
+
+    return getFallbackForegroundDialog();
+}
+
+function mutationTouchesDialog(mutation: MutationRecord): boolean {
+    if (mutation.type === 'attributes' && mutation.target instanceof HTMLDialogElement) {
+        return true;
+    }
+
+    return Array.from(mutation.addedNodes).some(isOpenDialogNode);
+}
+
+function syncSnackbarHostForegroundContainer(host: NTSnackbarHostElement): void {
+    const dialog = foregroundDialog?.open ? foregroundDialog : getFallbackForegroundDialog();
+    if (!dialog) {
+        restoreSnackbarHostPlacement(host);
+        return;
+    }
+
+    if (!host.__ntSnackbarPortalAnchor && host.parentNode) {
+        host.__ntSnackbarPortalAnchor = document.createComment('nt-snackbar-host');
+        host.parentNode.insertBefore(host.__ntSnackbarPortalAnchor, host);
+    }
+
+    if (host.parentNode !== dialog) {
+        dialog.appendChild(host);
+    }
+}
+
+function restoreSnackbarHostPlacement(host: NTSnackbarHostElement): void {
+    const anchor = host.__ntSnackbarPortalAnchor;
+    if (!anchor) {
+        return;
+    }
+
+    if (anchor.parentNode) {
+        anchor.parentNode.insertBefore(host, anchor);
+    }
+
+    anchor.remove();
+    delete host.__ntSnackbarPortalAnchor;
+}
+
+function syncSnackbarHostsForegroundContainers(dialog: HTMLDialogElement | null = getFallbackForegroundDialog()): void {
+    foregroundDialog = dialog;
+    for (const host of getRegisteredHosts()) {
+        syncSnackbarHostForegroundContainer(host);
+    }
+}
+
+function promoteSnackbarHostToForeground(host: NTSnackbarHostElement): void {
+    showSnackbarHostPopover(host, true);
+}
+
+function promoteSnackbarHostsToForeground(): void {
+    syncSnackbarHostsForegroundContainers(foregroundDialog?.open ? foregroundDialog : getFallbackForegroundDialog());
+    for (const host of getRegisteredHosts()) {
+        promoteSnackbarHostToForeground(host);
+    }
+}
+
+function ensureDialogLayerObserver(): void {
+    if (dialogLayerObserver || typeof MutationObserver === 'undefined') {
+        return;
+    }
+
+    dialogLayerObserver = new MutationObserver(mutations => {
+        if (mutations.some(mutationTouchesDialog)) {
+            syncSnackbarHostsForegroundContainers(getForegroundDialogFromMutations(mutations));
+            promoteSnackbarHostsToForeground();
+        }
+    });
+    dialogLayerObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['open'], childList: true, subtree: true });
+}
+
+function releaseDialogLayerObserver(): void {
+    if (registeredHosts.size > 0) {
+        return;
+    }
+
+    dialogLayerObserver?.disconnect();
+    dialogLayerObserver = null;
 }
 
 function hideSnackbarHostPopover(host: NTSnackbarHostElement): void {
@@ -450,10 +608,12 @@ function disposeHost(host: NTSnackbarHostElement): void {
     ];
     state.queue.length = 0;
     state.activeElement?.remove();
+    restoreSnackbarHostPlacement(host);
     hideSnackbarHostPopover(host);
     delete host.__ntSnackbarState;
     hostStates.delete(host);
     registeredHosts.delete(host);
+    releaseDialogLayerObserver();
     notifySnackbarsClosed(closedSnackbars);
 
     if (defaultHost === host) {
@@ -557,6 +717,10 @@ function clearHostSnackbars(host: NTSnackbarHostElement): void {
 export function onDispose(element?: Maybe<Element>): void {
     for (const host of getHosts(element)) {
         disposeHost(host);
+    }
+
+    if (element instanceof HTMLElement && element.localName === 'tnt-page-script') {
+        delete (element as NTSnackbarPageScriptElement).__ntSnackbarHost;
     }
 }
 

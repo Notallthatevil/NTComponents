@@ -68,6 +68,28 @@ describe('NTSnackbar module', () => {
       expect(host.hidePopover).toHaveBeenCalledTimes(1);
    });
 
+   test('open dialog promotes host popover back to the foreground layer', async () => {
+      const host = createHost();
+      host.showPopover = jest.fn();
+      host.hidePopover = jest.fn();
+      loadHostFromPageScript(host);
+
+      addSnackbar({ message: 'Snackbar before dialog', timeout: 0 });
+      const dialog = document.createElement('dialog');
+      document.body.appendChild(dialog);
+      dialog.setAttribute('open', '');
+      await Promise.resolve();
+
+      expect(host.parentNode).toBe(dialog);
+      expect(host.hidePopover).toHaveBeenCalledTimes(1);
+      expect(host.showPopover).toHaveBeenCalledTimes(2);
+
+      dialog.removeAttribute('open');
+      await Promise.resolve();
+
+      expect(host.nextElementSibling.localName).toBe('tnt-page-script');
+   });
+
    test('queueSnackbar waits for a host when called before setup', () => {
       queueSnackbar('Queued before render');
 

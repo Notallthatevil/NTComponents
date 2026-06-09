@@ -40,6 +40,18 @@ public class NTDialog_E2E_Tests : IAsyncLifetime {
         await VerifyRenderModeDialogCanOpenAndCloseAsync("Open WASM NT dialog", "WASM NT dialog", "Interactive WebAssembly");
     }
 
+    [Fact]
+    public async Task Dialog_Page_Keeps_Toast_And_Snackbar_In_The_Foreground_Layer() {
+        ArgumentNullException.ThrowIfNull(_page);
+
+        await NavigateToDialogAsync();
+
+        await VerifyNotificationForegroundLayerAsync("Dialog then toast", ".nt-toast", "dialog-then-toast-demo");
+        await VerifyNotificationForegroundLayerAsync("Toast then dialog", ".nt-toast", "toast-then-dialog-demo");
+        await VerifyNotificationForegroundLayerAsync("Dialog then snackbar", ".nt-snackbar", "dialog-then-snackbar-demo");
+        await VerifyNotificationForegroundLayerAsync("Snackbar then dialog", ".nt-snackbar", "snackbar-then-dialog-demo");
+    }
+
     private async Task AssertDialogAppearanceAsync(ILocator dialog, string expectedTitle, bool hasIcon = false) {
         await dialog.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 10000 });
         await dialog.EvaluateAsync(
@@ -260,6 +272,45 @@ public class NTDialog_E2E_Tests : IAsyncLifetime {
         await _page.WaitForFunctionAsync("() => document.getElementById('icon-nt-dialog')?.open === false");
     }
 
+    private async Task VerifyNotificationForegroundLayerAsync(string buttonName, string notificationSelector, string dialogId) {
+        ArgumentNullException.ThrowIfNull(_page);
+
+        await _page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Exact = true, Name = buttonName }).ClickAsync();
+        await _page.WaitForFunctionAsync(
+            """
+            ([selector, id]) => document.getElementById(id)?.open === true && document.querySelector(selector) !== null
+            """,
+            new object[] { notificationSelector, dialogId },
+            new PageWaitForFunctionOptions { Timeout = 10000 });
+
+        var foregroundState = await _page.EvaluateAsync<NotificationForegroundState>(
+            """
+            ([selector, id]) => {
+                const notification = document.querySelector(selector);
+                const dialog = document.getElementById(id);
+                const rect = notification.getBoundingClientRect();
+                const topElement = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+
+                return {
+                    dialogOpen: dialog?.open === true,
+                    notificationVisible: rect.width > 0 && rect.height > 0,
+                    topElementClass: topElement?.className?.toString() ?? '',
+                    topElementTag: topElement?.tagName ?? '',
+                    topMatchesNotification: topElement?.closest(selector) !== null || topElement?.querySelector(selector) !== null
+                };
+            }
+            """,
+            new object[] { notificationSelector, dialogId });
+
+        foregroundState.DialogOpen.Should().BeTrue($"{dialogId} should be open for the foreground-layer assertion");
+        foregroundState.NotificationVisible.Should().BeTrue($"{notificationSelector} should be visible while the dialog is open");
+        foregroundState.TopMatchesNotification.Should().BeTrue($"{notificationSelector} should be above the modal dialog top-layer entry, but the top element was {foregroundState.TopElementTag} {foregroundState.TopElementClass}");
+
+        await _page.Locator($"#{dialogId}").GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Exact = true, Name = "Close" }).ClickAsync();
+        await _page.WaitForFunctionAsync("id => document.getElementById(id)?.open === false", dialogId);
+        await _page.EvaluateAsync("() => { window.NTToast?.clearToasts(); window.NTSnackbar?.clearSnackbars(); }");
+    }
+
     private async Task VerifyStackedDialogCanOpenAboveParentAsync() {
         ArgumentNullException.ThrowIfNull(_page);
 
@@ -366,5 +417,13 @@ public class NTDialog_E2E_Tests : IAsyncLifetime {
         public bool ChildOpen { get; set; }
         public bool ParentOpen { get; set; }
         public string TopDialogId { get; set; } = string.Empty;
+    }
+
+    private sealed class NotificationForegroundState {
+        public bool DialogOpen { get; set; }
+        public bool NotificationVisible { get; set; }
+        public string TopElementClass { get; set; } = string.Empty;
+        public string TopElementTag { get; set; } = string.Empty;
+        public bool TopMatchesNotification { get; set; }
     }
 }

@@ -3,6 +3,7 @@ export type ToastInput = string | ToastOptions;
 export type ToastVariant = 'default' | 'success' | 'info' | 'warning' | 'error' | 'assert';
 
 interface NTToastHostElement extends HTMLElement {
+    __ntToastPortalAnchor?: Comment;
     __ntToastState?: NTToastHostState;
 }
 
@@ -78,7 +79,9 @@ const maxVisibleToasts = 5;
 const pendingToasts: ToastRecord[] = [];
 const hostStates = new WeakMap<NTToastHostElement, NTToastHostState>();
 const registeredHosts = new Set<NTToastHostElement>();
+let dialogLayerObserver: MutationObserver | null = null;
 let defaultHost: NTToastHostElement | null = null;
+let foregroundDialog: HTMLDialogElement | null = null;
 let nextToastId = 0;
 
 const variantDefaults: Record<ToastVariant, Pick<ToastRecord, 'backgroundColor' | 'icon' | 'iconColor' | 'textColor'>> = {
@@ -296,6 +299,10 @@ function getRegisteredHosts(): NTToastHostElement[] {
         hosts.push(host);
     }
 
+    if (hosts.length === 0) {
+        releaseDialogLayerObserver();
+    }
+
     return hosts;
 }
 
@@ -375,6 +382,11 @@ function tryShowNext(host: NTToastHostElement): void {
 
         activeVisibleCount++;
     }
+
+    if (hasOpenDialog()) {
+        syncToastHostForegroundContainer(host);
+        promoteToastHostToForeground(host);
+    }
 }
 
 function closeToastRecord(host: NTToastHostElement, state: NTToastHostState, toast: ToastRecord, notifyDotNet = true): boolean {
@@ -449,14 +461,24 @@ function flushPendingToasts(): void {
 function initializeHost(host: NTToastHostElement): void {
     registeredHosts.add(host);
     getOrCreateState(host);
+    ensureDialogLayerObserver();
+    syncToastHostForegroundContainer(host);
     showToastHostPopover(host);
     defaultHost = host;
     flushPendingToasts();
 }
 
-function showToastHostPopover(host: NTToastHostElement): void {
+function showToastHostPopover(host: NTToastHostElement, moveToForeground = false): void {
     if (typeof host.showPopover !== 'function') {
         return;
+    }
+
+    if (moveToForeground && typeof host.hidePopover === 'function') {
+        try {
+            host.hidePopover();
+        } catch {
+            // The host may not be open yet.
+        }
     }
 
     try {
@@ -464,6 +486,128 @@ function showToastHostPopover(host: NTToastHostElement): void {
     } catch {
         // Already-open or unsupported popover transitions should not block toast rendering.
     }
+}
+
+function hasOpenDialog(): boolean {
+    return document.querySelector('dialog[open]') !== null;
+}
+
+function getFallbackForegroundDialog(): HTMLDialogElement | null {
+    const openDialogs = Array.from(document.querySelectorAll<HTMLDialogElement>('dialog[open]'));
+    return openDialogs.at(-1) ?? null;
+}
+
+function isOpenDialogNode(node: Node): boolean {
+    if (node instanceof HTMLDialogElement) {
+        return node.open;
+    }
+
+    return node instanceof Element && node.querySelector('dialog[open]') !== null;
+}
+
+function getOpenDialogNode(node: Node): HTMLDialogElement | null {
+    if (node instanceof HTMLDialogElement) {
+        return node.open ? node : null;
+    }
+
+    return node instanceof Element ? node.querySelector<HTMLDialogElement>('dialog[open]') : null;
+}
+
+function getForegroundDialogFromMutations(mutations: MutationRecord[]): HTMLDialogElement | null {
+    for (const mutation of mutations) {
+        if (mutation.type === 'attributes' && mutation.target instanceof HTMLDialogElement && mutation.target.open) {
+            return mutation.target;
+        }
+
+        for (const node of Array.from(mutation.addedNodes)) {
+            const dialog = getOpenDialogNode(node);
+            if (dialog) {
+                return dialog;
+            }
+        }
+    }
+
+    return getFallbackForegroundDialog();
+}
+
+function mutationTouchesDialog(mutation: MutationRecord): boolean {
+    if (mutation.type === 'attributes' && mutation.target instanceof HTMLDialogElement) {
+        return true;
+    }
+
+    return Array.from(mutation.addedNodes).some(isOpenDialogNode);
+}
+
+function syncToastHostForegroundContainer(host: NTToastHostElement): void {
+    const dialog = foregroundDialog?.open ? foregroundDialog : getFallbackForegroundDialog();
+    if (!dialog) {
+        restoreToastHostPlacement(host);
+        return;
+    }
+
+    if (!host.__ntToastPortalAnchor && host.parentNode) {
+        host.__ntToastPortalAnchor = document.createComment('nt-toast-host');
+        host.parentNode.insertBefore(host.__ntToastPortalAnchor, host);
+    }
+
+    if (host.parentNode !== dialog) {
+        dialog.appendChild(host);
+    }
+}
+
+function restoreToastHostPlacement(host: NTToastHostElement): void {
+    const anchor = host.__ntToastPortalAnchor;
+    if (!anchor) {
+        return;
+    }
+
+    if (anchor.parentNode) {
+        anchor.parentNode.insertBefore(host, anchor);
+    }
+
+    anchor.remove();
+    delete host.__ntToastPortalAnchor;
+}
+
+function syncToastHostsForegroundContainers(dialog: HTMLDialogElement | null = getFallbackForegroundDialog()): void {
+    foregroundDialog = dialog;
+    for (const host of getRegisteredHosts()) {
+        syncToastHostForegroundContainer(host);
+    }
+}
+
+function promoteToastHostToForeground(host: NTToastHostElement): void {
+    showToastHostPopover(host, true);
+}
+
+function promoteToastHostsToForeground(): void {
+    syncToastHostsForegroundContainers(foregroundDialog?.open ? foregroundDialog : getFallbackForegroundDialog());
+    for (const host of getRegisteredHosts()) {
+        promoteToastHostToForeground(host);
+    }
+}
+
+function ensureDialogLayerObserver(): void {
+    if (dialogLayerObserver || typeof MutationObserver === 'undefined') {
+        return;
+    }
+
+    dialogLayerObserver = new MutationObserver(mutations => {
+        if (mutations.some(mutationTouchesDialog)) {
+            syncToastHostsForegroundContainers(getForegroundDialogFromMutations(mutations));
+            promoteToastHostsToForeground();
+        }
+    });
+    dialogLayerObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['open'], childList: true, subtree: true });
+}
+
+function releaseDialogLayerObserver(): void {
+    if (registeredHosts.size > 0) {
+        return;
+    }
+
+    dialogLayerObserver?.disconnect();
+    dialogLayerObserver = null;
 }
 
 function hideToastHostPopover(host: NTToastHostElement): void {
@@ -500,10 +644,12 @@ function disposeHost(host: NTToastHostElement): void {
 
     state.activeToasts.length = 0;
     state.queue.length = 0;
+    restoreToastHostPlacement(host);
     hideToastHostPopover(host);
     delete host.__ntToastState;
     hostStates.delete(host);
     registeredHosts.delete(host);
+    releaseDialogLayerObserver();
     notifyToastsClosed(closedToasts);
 
     if (defaultHost === host) {
