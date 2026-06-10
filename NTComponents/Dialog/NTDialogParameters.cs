@@ -23,8 +23,11 @@ public sealed class NTDialogParameters : IEnumerable<KeyValuePair<string, object
     /// <summary>
     ///     Initializes a new instance of the <see cref="NTDialogParameters" /> class.
     /// </summary>
-    public NTDialogParameters(IEnumerable<KeyValuePair<string, object?>> parameters) {
-        ArgumentNullException.ThrowIfNull(parameters, nameof(parameters));
+    public NTDialogParameters(IEnumerable<KeyValuePair<string, object?>>? parameters) {
+        if (parameters is null) {
+            return;
+        }
+
         foreach (var parameter in parameters) {
             Add(parameter.Key, parameter.Value);
         }
@@ -33,12 +36,12 @@ public sealed class NTDialogParameters : IEnumerable<KeyValuePair<string, object
     /// <summary>
     ///     Converts dialog parameters to a dictionary.
     /// </summary>
-    public static implicit operator Dictionary<string, object?>(NTDialogParameters parameters) => new(parameters._parameters);
+    public static implicit operator Dictionary<string, object?>(NTDialogParameters parameters) => parameters is null ? [] : new(parameters._parameters);
 
     /// <summary>
     ///     Converts a dictionary to dialog parameters.
     /// </summary>
-    public static implicit operator NTDialogParameters(Dictionary<string, object?> parameters) => new(parameters);
+    public static implicit operator NTDialogParameters(Dictionary<string, object?>? parameters) => new(parameters);
 
     /// <summary>
     ///     Adds a named parameter.

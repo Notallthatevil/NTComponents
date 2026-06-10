@@ -100,6 +100,13 @@ public class NTDialogParameters_Tests {
     }
 
     [Fact]
+    public void Constructor_Treats_Null_Source_As_Empty() {
+        var parameters = new NTDialogParameters(null);
+
+        parameters.Should().BeEmpty();
+    }
+
+    [Fact]
     public void Collection_Initializer_Adds_Parameters() {
         var value = new object();
         var parameters = new NTDialogParameters {
@@ -119,6 +126,15 @@ public class NTDialogParameters_Tests {
 
         parameters.Should().NotBeNull();
         parameters!.Get<int>("RecordId").Should().Be(42);
+    }
+
+    [Fact]
+    public void Null_Dictionary_Implicitly_Converts_To_Empty_Dialog_Parameters() {
+        Dictionary<string, object?>? dictionary = null;
+
+        NTDialogParameters parameters = dictionary;
+
+        parameters.Should().BeEmpty();
     }
 
     [Fact]
@@ -142,5 +158,14 @@ public class NTDialogParameters_Tests {
         dictionary["RecordId"] = 84;
 
         parameters.Get<int>("RecordId").Should().Be(42);
+    }
+
+    [Fact]
+    public void Null_Dialog_Parameters_Implicitly_Converts_To_Empty_Dictionary() {
+        NTDialogParameters parameters = null!;
+
+        Dictionary<string, object?> dictionary = parameters;
+
+        dictionary.Should().BeEmpty();
     }
 }

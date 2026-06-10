@@ -73,7 +73,7 @@ public class NTDialog_Tests : BunitContext {
     public async Task OpenAsync_With_Parameters_Renders_ChildContent_And_Opens_Dialog() {
         var component = Render<NTDialog>(parameters => parameters
             .Add(p => p.Id, "parameter-dialog")
-            .Add(p => p.ChildContent, dialogParameters => builder => builder.AddContent(0, $"Record {dialogParameters!.Get<int>("RecordId")}")));
+            .Add(p => p.ChildContent, dialogParameters => builder => builder.AddContent(0, $"Record {dialogParameters.Get<int>("RecordId")}")));
 
         var opened = await component.Instance.OpenAsync(new Dictionary<string, object?> {
             ["RecordId"] = 42
@@ -82,6 +82,42 @@ public class NTDialog_Tests : BunitContext {
         opened.Should().BeTrue();
         component.Markup.Should().Contain("Record 42");
         JSInterop.Invocations.Should().Contain(invocation => invocation.Identifier == "openDialogFromBlazor");
+    }
+
+    [Fact]
+    public async Task OpenAsync_Without_Parameters_Renders_ChildContent_With_Empty_Parameters() {
+        NTDialogParameters? receivedParameters = null;
+        var component = Render<NTDialog>(parameters => parameters
+            .Add(p => p.Id, "empty-parameter-dialog")
+            .Add(p => p.ChildContent, dialogParameters => builder => {
+                receivedParameters = dialogParameters;
+                builder.AddContent(0, dialogParameters.Any() ? "Has parameters" : "No parameters");
+            }));
+
+        var opened = await component.Instance.OpenAsync(Xunit.TestContext.Current.CancellationToken);
+
+        opened.Should().BeTrue();
+        receivedParameters.Should().NotBeNull();
+        receivedParameters.Should().BeEmpty();
+        component.Markup.Should().Contain("No parameters");
+    }
+
+    [Fact]
+    public async Task OpenAsync_With_Null_Parameters_Renders_ChildContent_With_Empty_Parameters() {
+        NTDialogParameters? receivedParameters = null;
+        var component = Render<NTDialog>(parameters => parameters
+            .Add(p => p.Id, "null-parameter-dialog")
+            .Add(p => p.ChildContent, dialogParameters => builder => {
+                receivedParameters = dialogParameters;
+                builder.AddContent(0, dialogParameters.Any() ? "Has parameters" : "No parameters");
+            }));
+
+        var opened = await component.Instance.OpenAsync(null, Xunit.TestContext.Current.CancellationToken);
+
+        opened.Should().BeTrue();
+        receivedParameters.Should().NotBeNull();
+        receivedParameters.Should().BeEmpty();
+        component.Markup.Should().Contain("No parameters");
     }
 
     [Fact]
@@ -105,7 +141,7 @@ public class NTDialog_Tests : BunitContext {
             .Add(p => p.Id, "refresh-dialog")
             .Add(p => p.ChildContent, dialogParameters => builder => {
                 builder.OpenComponent<RefreshableDialogChild>(0);
-                dialogParameters!.TryGet<int>("RecordId", out var recordId).Should().BeTrue();
+                dialogParameters.TryGet<int>("RecordId", out var recordId).Should().BeTrue();
                 builder.AddComponentParameter(1, nameof(RefreshableDialogChild.OnInitializedCallback), (Action)(() => initializedCount++));
                 builder.AddComponentParameter(2, nameof(RefreshableDialogChild.Value), recordId);
                 builder.CloseComponent();
@@ -124,6 +160,27 @@ public class NTDialog_Tests : BunitContext {
 
         initializedCount.Should().Be(2);
         component.Markup.Should().Contain("Record 84");
+    }
+
+    [Fact]
+    public async Task RefreshAsync_With_Null_Parameters_Recreates_ChildContent_With_Empty_Parameters() {
+        var initializedCount = 0;
+        var component = Render<NTDialog>(parameters => parameters
+            .Add(p => p.Id, "null-refresh-dialog")
+            .Add(p => p.ChildContent, dialogParameters => builder => {
+                initializedCount++;
+                builder.AddContent(0, dialogParameters.Any() ? "Has parameters" : "No parameters");
+            }));
+
+        await component.Instance.OpenAsync(new Dictionary<string, object?> {
+            ["RecordId"] = 42
+        }, Xunit.TestContext.Current.CancellationToken);
+        component.Markup.Should().Contain("Has parameters");
+
+        await component.Instance.RefreshAsync(null, Xunit.TestContext.Current.CancellationToken);
+
+        initializedCount.Should().Be(2);
+        component.Markup.Should().Contain("No parameters");
     }
 
     [Fact]
