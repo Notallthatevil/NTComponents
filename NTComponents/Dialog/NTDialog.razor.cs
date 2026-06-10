@@ -70,7 +70,7 @@ public partial class NTDialog {
     /// close lifecycle.
     /// </remarks>
     [Parameter]
-    public RenderFragment? Buttons { get; set; }
+    public RenderFragment<NTDialogParameters>? Buttons { get; set; }
 
     /// <summary>
     /// Gets or sets the dialog body content.

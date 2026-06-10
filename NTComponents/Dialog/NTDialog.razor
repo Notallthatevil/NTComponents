@@ -55,7 +55,12 @@
     }
 
     <footer class="nt-dialog-actions">
-        @(Buttons ?? DefaultButtons)
+        @if(Buttons is not null) {
+            @Buttons(_dialogParameters)
+        }
+        else {
+            DefaultButtons
+        }
     </footer>
 </dialog>
 @PageScript
