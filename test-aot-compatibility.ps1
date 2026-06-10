@@ -37,6 +37,10 @@ function Get-FreePort {
 
 function Get-BrowserExecutable {
     $candidates = @()
+    $configuredBrowser = [Environment]::GetEnvironmentVariable('AOT_SMOKE_BROWSER')
+    if ($configuredBrowser) {
+        $candidates += $configuredBrowser
+    }
 
     if ($IsWindows -or [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::Windows)) {
         $programFiles = [Environment]::GetEnvironmentVariable('ProgramFiles')
@@ -44,16 +48,24 @@ function Get-BrowserExecutable {
         $localAppData = [Environment]::GetEnvironmentVariable('LOCALAPPDATA')
 
         $candidates += @(
-            (Join-Path $programFiles 'Microsoft/Edge/Application/msedge.exe'),
-            (Join-Path $programFilesX86 'Microsoft/Edge/Application/msedge.exe'),
             (Join-Path $programFiles 'Google/Chrome/Application/chrome.exe'),
             (Join-Path $programFilesX86 'Google/Chrome/Application/chrome.exe'),
-            (Join-Path $localAppData 'Microsoft/Edge/Application/msedge.exe'),
-            (Join-Path $localAppData 'Google/Chrome/Application/chrome.exe')
+            (Join-Path $localAppData 'Google/Chrome/Application/chrome.exe'),
+            (Join-Path $programFiles 'Microsoft/Edge/Application/msedge.exe'),
+            (Join-Path $programFilesX86 'Microsoft/Edge/Application/msedge.exe'),
+            (Join-Path $localAppData 'Microsoft/Edge/Application/msedge.exe')
         ) | Where-Object { $_ -and $_ -ne '' }
     }
 
-    foreach ($commandName in @('msedge', 'microsoft-edge', 'google-chrome', 'chrome', 'chromium', 'chromium-browser')) {
+    if ([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::OSX)) {
+        $candidates += @(
+            '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+            '/Applications/Chromium.app/Contents/MacOS/Chromium',
+            '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge'
+        )
+    }
+
+    foreach ($commandName in @('google-chrome', 'chrome', 'chromium', 'chromium-browser', 'msedge', 'microsoft-edge')) {
         $command = Get-Command $commandName -ErrorAction SilentlyContinue
         if ($command) {
             $candidates += $command.Source
@@ -80,64 +92,86 @@ function Start-StaticFileServer {
     $job = Start-Job -ArgumentList $Root, $Port, $stopFile -ScriptBlock {
         param($Root, $Port, $StopFile)
 
-        $listener = [System.Net.HttpListener]::new()
-        $listener.Prefixes.Add("http://127.0.0.1:$Port/")
+        $listener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Parse('127.0.0.1'), $Port)
         $listener.Start()
 
         try {
-            $pendingContext = $listener.BeginGetContext($null, $null)
             while (-not (Test-Path $StopFile)) {
-                if (-not $pendingContext.AsyncWaitHandle.WaitOne(250)) {
+                if (-not $listener.Pending()) {
+                    Start-Sleep -Milliseconds 50
                     continue
                 }
 
-                $context = $listener.EndGetContext($pendingContext)
-                $pendingContext = $listener.BeginGetContext($null, $null)
-                $requestPath = [Uri]::UnescapeDataString($context.Request.Url.AbsolutePath.TrimStart('/'))
-                if ([string]::IsNullOrWhiteSpace($requestPath)) {
-                    $requestPath = 'index.html'
+                $client = $listener.AcceptTcpClient()
+                try {
+                    $stream = $client.GetStream()
+                    $buffer = [byte[]]::new(8192)
+                    $read = $stream.Read($buffer, 0, $buffer.Length)
+                    if ($read -le 0) {
+                        continue
+                    }
+
+                    $requestText = [System.Text.Encoding]::ASCII.GetString($buffer, 0, $read)
+                    $requestLine = ($requestText -split "\r?\n", 2)[0]
+                    if ($requestLine -notmatch '^(GET|HEAD)\s+([^ ]+)') {
+                        $response = [System.Text.Encoding]::ASCII.GetBytes("HTTP/1.1 400 Bad Request`r`nConnection: close`r`nContent-Length: 0`r`n`r`n")
+                        $stream.Write($response, 0, $response.Length)
+                        continue
+                    }
+
+                    $method = $Matches[1]
+                    $requestUri = [Uri]::new("http://127.0.0.1$($Matches[2])")
+                    $requestPath = [Uri]::UnescapeDataString($requestUri.AbsolutePath.TrimStart('/'))
+                    if ([string]::IsNullOrWhiteSpace($requestPath)) {
+                        $requestPath = 'index.html'
+                    }
+
+                    $relativePath = $requestPath.Replace('/', [System.IO.Path]::DirectorySeparatorChar)
+                    $fullPath = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($Root, $relativePath))
+                    $rootPath = [System.IO.Path]::GetFullPath($Root)
+
+                    if (-not $fullPath.StartsWith($rootPath, [System.StringComparison]::OrdinalIgnoreCase)) {
+                        $response = [System.Text.Encoding]::ASCII.GetBytes("HTTP/1.1 403 Forbidden`r`nConnection: close`r`nContent-Length: 0`r`n`r`n")
+                        $stream.Write($response, 0, $response.Length)
+                        continue
+                    }
+
+                    if (-not (Test-Path $fullPath)) {
+                        $fullPath = [System.IO.Path]::Combine($rootPath, 'index.html')
+                    }
+
+                    if (-not (Test-Path $fullPath)) {
+                        $response = [System.Text.Encoding]::ASCII.GetBytes("HTTP/1.1 404 Not Found`r`nConnection: close`r`nContent-Length: 0`r`n`r`n")
+                        $stream.Write($response, 0, $response.Length)
+                        continue
+                    }
+
+                    $extension = [System.IO.Path]::GetExtension($fullPath).ToLowerInvariant()
+                    $contentType = switch ($extension) {
+                        '.html' { 'text/html' }
+                        '.js' { 'text/javascript' }
+                        '.mjs' { 'text/javascript' }
+                        '.css' { 'text/css' }
+                        '.json' { 'application/json' }
+                        '.wasm' { 'application/wasm' }
+                        '.dat' { 'application/octet-stream' }
+                        default { 'application/octet-stream' }
+                    }
+
+                    $bytes = [System.IO.File]::ReadAllBytes($fullPath)
+                    $headers = [System.Text.Encoding]::ASCII.GetBytes("HTTP/1.1 200 OK`r`nContent-Type: $contentType`r`nContent-Length: $($bytes.Length)`r`nCache-Control: no-store`r`nConnection: close`r`n`r`n")
+                    $stream.Write($headers, 0, $headers.Length)
+                    if ($method -ne 'HEAD') {
+                        $stream.Write($bytes, 0, $bytes.Length)
+                    }
                 }
-
-                $relativePath = $requestPath.Replace('/', [System.IO.Path]::DirectorySeparatorChar)
-                $fullPath = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($Root, $relativePath))
-                $rootPath = [System.IO.Path]::GetFullPath($Root)
-
-                if (-not $fullPath.StartsWith($rootPath, [System.StringComparison]::OrdinalIgnoreCase)) {
-                    $context.Response.StatusCode = 403
-                    $context.Response.Close()
-                    continue
+                finally {
+                    $client.Close()
                 }
-
-                if (-not (Test-Path $fullPath)) {
-                    $fullPath = [System.IO.Path]::Combine($rootPath, 'index.html')
-                }
-
-                if (-not (Test-Path $fullPath)) {
-                    $context.Response.StatusCode = 404
-                    $context.Response.Close()
-                    continue
-                }
-
-                $extension = [System.IO.Path]::GetExtension($fullPath).ToLowerInvariant()
-                $contentType = switch ($extension) {
-                    '.html' { 'text/html' }
-                    '.js' { 'text/javascript' }
-                    '.css' { 'text/css' }
-                    '.json' { 'application/json' }
-                    '.wasm' { 'application/wasm' }
-                    default { 'application/octet-stream' }
-                }
-
-                $bytes = [System.IO.File]::ReadAllBytes($fullPath)
-                $context.Response.ContentType = $contentType
-                $context.Response.ContentLength64 = $bytes.Length
-                $context.Response.OutputStream.Write($bytes, 0, $bytes.Length)
-                $context.Response.Close()
             }
         }
         finally {
             $listener.Stop()
-            $listener.Close()
         }
     }
 
@@ -211,18 +245,24 @@ function Invoke-BrowserSmoke {
             throw "Static file server did not become ready at $($server.Url)."
         }
 
-        $browserUserDataDirectory = Join-Path ([System.IO.Path]::GetTempPath()) "ntcomponents-aot-browser-$Port"
-        Remove-Item -LiteralPath $browserUserDataDirectory -Recurse -Force -ErrorAction SilentlyContinue
-
         $lastDom = ''
         $lastBrowserExitCode = 0
-        foreach ($virtualTimeBudget in @(15000, 30000, 60000)) {
+        foreach ($virtualTimeBudget in @(30000, 60000, 120000)) {
+            $browserUserDataDirectory = Join-Path ([System.IO.Path]::GetTempPath()) "ntcomponents-aot-browser-$Port-$virtualTimeBudget"
+            Remove-Item -LiteralPath $browserUserDataDirectory -Recurse -Force -ErrorAction SilentlyContinue
+
             $browserArgs = @(
                 '--headless=new',
                 '--disable-gpu',
+                '--disable-gpu-compositing',
+                '--disable-gpu-rasterization',
+                '--disable-accelerated-2d-canvas',
+                '--disable-accelerated-video-decode',
+                '--disable-features=CalculateNativeWinOcclusion,UseSkiaRenderer,DawnGraphite,WebGPU,Vulkan',
                 '--disable-dev-shm-usage',
                 '--no-first-run',
                 '--disable-background-networking',
+                '--disable-search-engine-choice-screen',
                 "--user-data-dir=$browserUserDataDirectory",
                 "--virtual-time-budget=$virtualTimeBudget",
                 '--dump-dom',
@@ -233,9 +273,11 @@ function Invoke-BrowserSmoke {
             $lastBrowserExitCode = $LASTEXITCODE
 
             if ($lastBrowserExitCode -eq 0 -and $lastDom -match 'data-aot-smoke-ready="true"' -and $lastDom -match 'id="aot-smoke-status"') {
+                Remove-Item -LiteralPath $browserUserDataDirectory -Recurse -Force -ErrorAction SilentlyContinue
                 return
             }
 
+            Remove-Item -LiteralPath $browserUserDataDirectory -Recurse -Force -ErrorAction SilentlyContinue
             Start-Sleep -Milliseconds 500
         }
 
@@ -246,9 +288,6 @@ function Invoke-BrowserSmoke {
         throw "Browser smoke did not render the NTComponents AOT smoke marker. Output:`n$lastDom"
     }
     finally {
-        if ($browserUserDataDirectory) {
-            Remove-Item -LiteralPath $browserUserDataDirectory -Recurse -Force -ErrorAction SilentlyContinue
-        }
         Stop-StaticFileServer -Server $server
     }
 }

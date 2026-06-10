@@ -184,6 +184,51 @@ public class NTDialog_Tests : BunitContext {
     }
 
     [Fact]
+    public void NTDialog_TitleContent_Overrides_Title_And_Preserves_Label_Wiring() {
+        var component = Render<NTDialog>(parameters => parameters
+            .Add(p => p.Id, "custom-title-dialog")
+            .Add(p => p.Open, true)
+            .Add(p => p.Title, "Default title")
+            .Add(p => p.TitleContent, _ => builder => {
+                builder.OpenElement(0, "span");
+                builder.AddAttribute(1, "class", "custom-title");
+                builder.AddContent(2, "Custom title");
+                builder.CloseElement();
+            }));
+
+        component.Find("dialog").GetAttribute("aria-labelledby").Should().Be("custom-title-dialog-title");
+        var title = component.Find(".nt-dialog-title");
+        title.GetAttribute("id").Should().Be("custom-title-dialog-title");
+        title.TextContent.Should().Be("Custom title");
+        title.InnerHtml.Should().Contain("custom-title");
+        component.Markup.Should().NotContain("Default title");
+    }
+
+    [Fact]
+    public async Task NTDialog_TitleContent_Receives_Open_And_Refresh_Parameters() {
+        var component = Render<NTDialog>(parameters => parameters
+            .Add(p => p.Id, "parameter-title-dialog")
+            .Add(p => p.TitleContent, dialogParameters => builder => builder.AddContent(0, $"Editing {dialogParameters.Get<int>("RecordId")}"))
+            .Add(p => p.ChildContent, _ => builder => builder.AddContent(0, "Dialog body")));
+
+        component.Find("dialog").GetAttribute("aria-labelledby").Should().BeNull();
+        component.FindAll(".nt-dialog-title").Should().BeEmpty();
+
+        await component.Instance.OpenAsync(new Dictionary<string, object?> {
+            ["RecordId"] = 42
+        }, Xunit.TestContext.Current.CancellationToken);
+
+        component.Find("dialog").GetAttribute("aria-labelledby").Should().Be("parameter-title-dialog-title");
+        component.Find(".nt-dialog-title").TextContent.Should().Be("Editing 42");
+
+        await component.Instance.RefreshAsync(new Dictionary<string, object?> {
+            ["RecordId"] = 84
+        }, Xunit.TestContext.Current.CancellationToken);
+
+        component.Find(".nt-dialog-title").TextContent.Should().Be("Editing 84");
+    }
+
+    [Fact]
     public void NTDialog_Renders_Open_Attribute_Only_When_Open_Is_True() {
         var component = Render<NTDialog>(parameters => parameters
             .Add(p => p.Id, "open-attribute-dialog")

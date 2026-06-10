@@ -55,9 +55,11 @@ public partial class NTDialog {
 
     private string? SupportingTextId => string.IsNullOrWhiteSpace(SupportingText) ? null : $"{ResolvedElementId}-supporting-text";
 
-    private string? TitleId => string.IsNullOrWhiteSpace(Title) ? null : $"{ResolvedElementId}-title";
+    private string? TitleId => ShouldRenderTitle ? $"{ResolvedElementId}-title" : null;
 
     private bool ShouldRenderChildContent => !RendererInfo.IsInteractive || Open || _renderChildContent;
+
+    private bool ShouldRenderTitle => !string.IsNullOrWhiteSpace(Title) || (TitleContent is not null && ShouldRenderChildContent);
 
     /// <summary>
     /// Gets or sets the dialog action buttons. Defaults to a single native close button.
@@ -228,6 +230,16 @@ public partial class NTDialog {
     /// </remarks>
     [Parameter]
     public string? Title { get; set; }
+
+    /// <summary>
+    /// Gets or sets custom title content rendered in place of <see cref="Title" />.
+    /// </summary>
+    /// <remarks>
+    /// The template receives the current dialog parameters supplied through <see cref="OpenAsync(NTDialogParameters?, CancellationToken)" />
+    /// or <see cref="RefreshAsync(NTDialogParameters?, CancellationToken)" />. Keep the rendered content concise because it remains the dialog label through <c>aria-labelledby</c>.
+    /// </remarks>
+    [Parameter]
+    public RenderFragment<NTDialogParameters>? TitleContent { get; set; }
 
     /// <summary>
     /// Gets the default action button content.

@@ -409,3 +409,4 @@ coverlet.runsettings
 /.playwright-cli
 /docs
 /NTComponents/Virtualization/NTVirtualize.razor.js
+/LiveTest/LiveTest/App_Data/uploads

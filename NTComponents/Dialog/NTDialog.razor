@@ -22,10 +22,17 @@
         </div>
     }
 
-    @if (!string.IsNullOrWhiteSpace(Title) || ShowCloseButton) {
+    @if (ShouldRenderTitle || ShowCloseButton) {
         <header class="nt-dialog-header">
-            @if (!string.IsNullOrWhiteSpace(Title)) {
-                <h2 id="@TitleId" class="nt-dialog-title">@Title</h2>
+            @if (ShouldRenderTitle) {
+                <h2 id="@TitleId" class="nt-dialog-title">
+                    @if (TitleContent is not null && ShouldRenderChildContent) {
+                        @TitleContent(_dialogParameters)
+                    }
+                    else {
+                        @Title
+                    }
+                </h2>
             }
 
             @if (ShowCloseButton) {

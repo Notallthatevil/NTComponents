@@ -13,7 +13,7 @@ env:
   TESTINGPLATFORM_EXITCODE_IGNORE: 8
 
 jobs:
-  build-test-pack:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -46,20 +46,119 @@ jobs:
       - name: Build
         run: dotnet build NTComponents.slnx --no-restore --configuration ${{ inputs.configuration }}
 
+  dotnet-test:
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: ntcomponents-net9
+            project: NTComponents.Tests/NTComponents.Tests.csproj
+            framework: net9.0
+            install-playwright: true
+          - name: ntcomponents-net10
+            project: NTComponents.Tests/NTComponents.Tests.csproj
+            framework: net10.0
+            install-playwright: true
+          - name: analyzers-net10
+            project: NTComponents.Analyzers.Tests/NTComponents.Analyzers.Tests.csproj
+            framework: net10.0
+            install-playwright: false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup .NET SDKs
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+            10.0.x
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: Restore WebAssembly workloads
+        run: dotnet workload restore NTComponents.slnx
+
+      - name: Restore dependencies
+        run: dotnet restore NTComponents.slnx
+
+      - name: Install node dependencies
+        run: npm ci
+
+      - name: Build test project
+        run: dotnet build ${{ matrix.project }} --no-restore --configuration ${{ inputs.configuration }} --framework ${{ matrix.framework }}
+
       - name: Ensure browsers are installed
-        run: pwsh NTComponents.Tests/bin/${{ inputs.configuration }}/net10.0/playwright.ps1 install --with-deps
+        if: matrix.install-playwright
+        run: pwsh NTComponents.Tests/bin/${{ inputs.configuration }}/${{ matrix.framework }}/playwright.ps1 install --with-deps
 
       - name: Install dotnet-coverage
         run: dotnet tool install --global dotnet-coverage
 
       - name: Run .NET tests with coverage
-        run: |
-          dotnet-coverage collect --output ./TestResults/ntcomponents-tests.cobertura.xml --output-format cobertura dotnet test NTComponents.Tests/NTComponents.Tests.csproj --no-restore --configuration ${{ inputs.configuration }} --results-directory ./TestResults -v minimal
-          dotnet-coverage collect --output ./TestResults/analyzers-tests.cobertura.xml --output-format cobertura dotnet test NTComponents.Analyzers.Tests/NTComponents.Analyzers.Tests.csproj --no-restore --configuration ${{ inputs.configuration }} --results-directory ./TestResults -v minimal
-          dotnet-coverage merge ./TestResults/ntcomponents-tests.cobertura.xml ./TestResults/analyzers-tests.cobertura.xml --output ./TestResults/coverage.cobertura.xml --output-format cobertura --remove-input-files
+        run: dotnet-coverage collect --output ./TestResults/${{ matrix.name }}.cobertura.xml --output-format cobertura dotnet test ${{ matrix.project }} --no-build --configuration ${{ inputs.configuration }} --framework ${{ matrix.framework }} --results-directory ./TestResults -v minimal
+
+      - name: Upload coverage shard
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.name }}
+          path: ./TestResults/${{ matrix.name }}.cobertura.xml
+
+  node-test:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: Install node dependencies
+        run: npm ci
 
       - name: Run node tests
         run: npm test
+
+  coverage-report:
+    needs: dotnet-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install dotnet-coverage
+        run: dotnet tool install --global dotnet-coverage
+
+      - name: Download coverage shards
+        uses: actions/download-artifact@v4
+        with:
+          pattern: coverage-*
+          path: ./TestResults
+          merge-multiple: true
+
+      - name: Merge coverage
+        shell: pwsh
+        run: |
+          $coverageFiles = Get-ChildItem ./TestResults -Filter *.cobertura.xml | ForEach-Object { $_.FullName }
+          dotnet-coverage merge @coverageFiles --output ./TestResults/coverage.cobertura.xml --output-format cobertura
 
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v4
@@ -78,3 +177,14 @@ jobs:
           show_line: true
           show_class_names: true
           only_changed_files: true
+
+  build-test-pack:
+    needs:
+      - build
+      - dotnet-test
+      - node-test
+      - coverage-report
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build, test, and coverage succeeded
+        run: echo "Build, parallel .NET tests, node tests, and coverage completed successfully."

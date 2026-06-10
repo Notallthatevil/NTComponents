@@ -1,4 +1,4 @@
-name: Publish AOTCompatibility testApp
+name: Validate AOT compatibility
 
 on:
   push:
@@ -12,11 +12,25 @@ on:
 
 jobs:
   aot-test:
+    name: AOT smoke (${{ matrix.tfm }}, ${{ matrix.runner.name }})
     strategy:
       fail-fast: false
       matrix:
         tfm: [ 'net9.0', 'net10.0' ]
-    runs-on: windows-latest
+        runner:
+        - name: Windows x64
+          os: windows-latest
+        - name: Windows arm64
+          os: windows-11-arm
+        - name: Linux x64
+          os: ubuntu-latest
+        - name: Linux arm64
+          os: ubuntu-24.04-arm
+        - name: macOS x64
+          os: macos-15-intel
+        - name: macOS arm64
+          os: macos-latest
+    runs-on: ${{ matrix.runner.os }}
     # determine dotnet SDK version from the TFM (job-level env to avoid schema ambiguity)
     env:
       DOTNET_VERSION: ${{ matrix.tfm == 'net10.0' && '10.0.x' || '9.0.x' }}
@@ -35,6 +49,18 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Display runner architecture
+      shell: pwsh
+      run: |
+        dotnet --info
+        [System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture
+        [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture
+
+    - name: Verify Python for WebAssembly tools
+      if: runner.os == 'Linux'
+      shell: pwsh
+      run: python3 --version
 
     - name: Restore WebAssembly workloads
       shell: pwsh
