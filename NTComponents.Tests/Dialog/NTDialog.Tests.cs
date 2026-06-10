@@ -250,7 +250,7 @@ public class NTDialog_Tests : BunitContext {
     public void NTDialog_Renders_Custom_Button_Fragment() {
         var component = Render<NTDialog>(parameters => parameters
             .Add(p => p.Id, "custom-dialog")
-            .Add(p => p.Buttons, builder => {
+            .Add(p => p.Buttons, _ => builder => {
                 builder.OpenElement(0, "button");
                 builder.AddAttribute(1, "class", "confirm-action");
                 builder.AddAttribute(2, "command", "request-close");
@@ -261,6 +261,33 @@ public class NTDialog_Tests : BunitContext {
 
         component.Find(".confirm-action").TextContent.Should().Be("Confirm");
         component.FindAll(".nt-dialog-actions .nt-dialog-button").Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task NTDialog_Buttons_Receives_Open_And_Refresh_Parameters() {
+        var component = Render<NTDialog>(parameters => parameters
+            .Add(p => p.Id, "parameter-buttons-dialog")
+            .Add(p => p.Buttons, dialogParameters => builder => {
+                dialogParameters.TryGet<int>("RecordId", out var recordId);
+                builder.OpenElement(0, "button");
+                builder.AddAttribute(1, "class", "confirm-action");
+                builder.AddContent(2, recordId == 0 ? "Confirm" : $"Save {recordId}");
+                builder.CloseElement();
+            }));
+
+        component.Find(".confirm-action").TextContent.Should().Be("Confirm");
+
+        await component.Instance.OpenAsync(new Dictionary<string, object?> {
+            ["RecordId"] = 42
+        }, Xunit.TestContext.Current.CancellationToken);
+
+        component.Find(".confirm-action").TextContent.Should().Be("Save 42");
+
+        await component.Instance.RefreshAsync(new Dictionary<string, object?> {
+            ["RecordId"] = 84
+        }, Xunit.TestContext.Current.CancellationToken);
+
+        component.Find(".confirm-action").TextContent.Should().Be("Save 84");
     }
 
     [Fact]
