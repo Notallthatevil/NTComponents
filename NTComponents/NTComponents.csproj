@@ -40,30 +40,26 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\NTComponents.CodeDocumentation.Generator\NTComponents.CodeDocumentation.Generator.csproj"
-		                  OutputItemType="Analyzer"
-		                  ReferenceOutputAssembly="false" />
-		<ProjectReference Include="..\NTComponents.Analyzers\NTComponents.Analyzers.csproj"
-		                  OutputItemType="Analyzer"
-		                  ReferenceOutputAssembly="false" />
+		<ProjectReference Include="..\NTComponents.CodeDocumentation.Generator\NTComponents.CodeDocumentation.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+		<ProjectReference Include="..\NTComponents.Analyzers\NTComponents.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="AspNetCore.SassCompiler" Version="1.99.0" />
-		<PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.9" />
-		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.6" />
-		<PackageReference Include="System.Text.Encodings.Web" Version="10.0.6" />
+		<PackageReference Include="AspNetCore.SassCompiler" Version="1.100.0" />
+		<PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.11" />
+		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.9" />
+		<PackageReference Include="System.Text.Encodings.Web" Version="10.0.9" />
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
 		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly">
-			<Version>9.0.15</Version>
+			<Version>9.0.17</Version>
 		</PackageReference>
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
 		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly">
-			<Version>10.0.6</Version>
+			<Version>10.0.9</Version>
 		</PackageReference>
 	</ItemGroup>
 
@@ -76,19 +72,13 @@
 		<None Include="compilerconfig.json" />
 	</ItemGroup>
 
-	<Target Name="CompileTypeScriptModules"
-	        BeforeTargets="BeforeBuild"
-	        Condition="'$(DesignTimeBuild)' != 'true' and '$(TargetFramework)' == '$(TypeScriptBuildTargetFramework)' and Exists('$(MSBuildProjectDirectory)/../tsconfig.json') and Exists('$(MSBuildProjectDirectory)/../node_modules/.bin/tsc')">
-		<Exec Command="&quot;$(MSBuildProjectDirectory)/../node_modules/.bin/tsc&quot; -p &quot;$(MSBuildProjectDirectory)/../tsconfig.json&quot; --pretty false"
-		      WorkingDirectory="$(MSBuildProjectDirectory)/.." />
+	<Target Name="CompileTypeScriptModules" BeforeTargets="BeforeBuild" Condition="'$(DesignTimeBuild)' != 'true' and '$(TargetFramework)' == '$(TypeScriptBuildTargetFramework)' and Exists('$(MSBuildProjectDirectory)/../tsconfig.json') and Exists('$(MSBuildProjectDirectory)/../node_modules/.bin/tsc')">
+		<Exec Command="&quot;$(MSBuildProjectDirectory)/../node_modules/.bin/tsc&quot; -p &quot;$(MSBuildProjectDirectory)/../tsconfig.json&quot; --pretty false" WorkingDirectory="$(MSBuildProjectDirectory)/.." />
 		<ItemGroup>
-			<TypeScriptSource Include="$(MSBuildProjectDirectory)\**\*.ts"
-			                  Exclude="$(MSBuildProjectDirectory)\**\*.d.ts" />
+			<TypeScriptSource Include="$(MSBuildProjectDirectory)\**\*.ts" Exclude="$(MSBuildProjectDirectory)\**\*.d.ts" />
 			<TypeScriptMinifyFile Include="@(TypeScriptSource->'%(RootDir)%(Directory)%(Filename).js')" />
 		</ItemGroup>
-		<Exec Command="&quot;$(MSBuildProjectDirectory)/../node_modules/.bin/terser&quot; &quot;%(TypeScriptMinifyFile.Identity)&quot; --module --compress --comments false --output &quot;%(TypeScriptMinifyFile.Identity)&quot;"
-		      WorkingDirectory="$(MSBuildProjectDirectory)/.."
-		      Condition="'$(Configuration)' == 'Release' and Exists('$(MSBuildProjectDirectory)/../node_modules/.bin/terser')" />
+		<Exec Command="&quot;$(MSBuildProjectDirectory)/../node_modules/.bin/terser&quot; &quot;%(TypeScriptMinifyFile.Identity)&quot; --module --compress --comments false --output &quot;%(TypeScriptMinifyFile.Identity)&quot;" WorkingDirectory="$(MSBuildProjectDirectory)/.." Condition="'$(Configuration)' == 'Release' and Exists('$(MSBuildProjectDirectory)/../node_modules/.bin/terser')" />
 	</Target>
 
 	<Target Name="DeleteCssFiles" BeforeTargets="BeforeClean">
