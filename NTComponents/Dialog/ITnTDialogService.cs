@@ -7,6 +7,7 @@ namespace NTComponents;
 /// <summary>
 /// Provides methods and events for managing dialogs.
 /// </summary>
+[Obsolete("ITnTDialogService is obsolete. Use owned NTDialog components with @ref, native command/commandfor attributes, or JavaScript by id instead.")]
 public interface ITnTDialogService {
 
     /// <summary>

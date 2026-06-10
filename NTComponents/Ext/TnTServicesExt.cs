@@ -20,7 +20,7 @@ public static class TnTServicesExt {
     /// <param name="services">Service collection</param>
     /// <param name="options">Action to configure NTComponents default options</param>
     /// <returns>The IServiceCollection instance</returns>
-    public static IServiceCollection AddTnTServices(this IServiceCollection services, Action<NTComponentsDefaultOptions>? options = null) {
+    public static IServiceCollection AddNTServices(this IServiceCollection services, Action<NTComponentsDefaultOptions>? options = null) {
         //#if DEBUG
         //        services.AddSassCompiler();
         //#endif
@@ -34,4 +34,14 @@ public static class TnTServicesExt {
              .AddScoped<ILocalStorageService, LocalStorageService>()
              .AddSingleton(o);
     }
+
+    /// <summary>
+    /// Adds TnT services to the service collection.
+    /// </summary>
+    /// <param name="services">Service collection</param>
+    /// <param name="options">Action to configure NTComponents default options</param>
+    /// <returns>The IServiceCollection instance</returns>
+    [Obsolete("Use AddNTServices instead. This method will be removed in future versions.")]
+    public static IServiceCollection AddTnTServices(this IServiceCollection services, Action<NTComponentsDefaultOptions>? options = null) => AddNTServices(services, options);
+
 }

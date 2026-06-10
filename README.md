@@ -1,113 +1,195 @@
 # NTComponents
-[![Deploy](https://github.com/Notallthatevil/NTComponents/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/Notallthatevil/NTComponents/actions/workflows/ci-cd.yml)
-[![Publish AOTCompatibility](https://github.com/Notallthatevil/NTComponents/actions/workflows/ensure-aot-build.yml/badge.svg)](https://github.com/Notallthatevil/NTComponents/actions/workflows/ensure-aot-build.yml)
 
-NTComponents is a Blazor WebAssembly project that provides a set of reusable UI components for building modern web applications based on Google's Material 3 spec. The components are designed to be highly customizable and easy to use.
+[![PR Build](https://github.com/Notallthatevil/NTComponents/actions/workflows/pr-build.yml/badge.svg)](https://github.com/Notallthatevil/NTComponents/actions/workflows/pr-build.yml)
+[![AOT Compatibility](https://github.com/Notallthatevil/NTComponents/actions/workflows/ensure-aot-build.yml/badge.svg)](https://github.com/Notallthatevil/NTComponents/actions/workflows/ensure-aot-build.yml)
 
-## Features
+NTComponents is a Material 3 inspired Blazor component library for .NET 9 and .NET 10 applications. The current component model is `NT*` first, with source-generated documentation metadata, render-compatibility guidance, static web assets, scoped CSS, optional JavaScript enhancement, and analyzer coverage for component usage rules.
 
-- **Form Components**: Includes various form components like `TnTInputFile` with advanced features.
-- **Toast Notifications**: Provides a service for displaying toast notifications with different styles and messages.
-- **Theming**: Supports theming with customizable color schemes and styles.
-- **Grid**: A data grid component modified from FluentDataGrid.
-- **Scheduler**: A scheduler component with week view and event management.
+The package is designed for Blazor Web Apps, Blazor WebAssembly, interactive render modes, and static SSR scenarios where components can render useful HTML before browser enhancement.
 
-## Toast Notifications
+## Quick Getting Started
 
-Place one `NTToast` near the route or layout level. The component is static-rendering friendly and loads the JavaScript bridge used by both browser JavaScript and `INTToastService`.
+### 1. Install
+
+```powershell
+dotnet add package NTComponents
+```
+
+### 2. Add the namespace
+
+Add the component namespace to your app's `_Imports.razor`:
+
+```razor
+@using NTComponents
+```
+
+### 3. Register services
+
+Register the library services in `Program.cs`:
+
+```csharp
+builder.Services.AddNTServices();
+```
+
+`AddNTServices()` registers the NT snackbar, toast, dialog, local storage, session storage, and default option services used by the component library. The legacy `AddTnTServices()` extension remains available as an obsolete compatibility shim.
+
+### 4. Add head dependencies
+
+Place `NTHeadDependencies` in the document head and include the package scoped CSS:
+
+```razor
+<head>
+    <NTHeadDependencies />
+</head>
+```
+
+`NTHeadDependencies` emits theme bootstrap scripts, first-paint theme links, measurement tokens, ripple styles, Roboto, Material Symbols fonts, and the anchor-positioning polyfill hook.
+
+### 5. Add app-level hosts
+
+Add app-level hosts once near the route or layout level when you use these services:
 
 ```razor
 <NTToast />
+<NTSnackbar />
 ```
 
-Use `INTToastService` from interactive Blazor code:
+`NTToast` and `NTSnackbar` register browser bridges so both interactive Blazor code and static markup can trigger feedback. `NTThemeToggle` works with the theme runtime and the theme CSS files under `/Themes` by default.
+
+### 6. Use components
 
 ```razor
-@inject INTToastService ToastService
-
-<button @onclick="SaveAsync">Save</button>
+<NTCard>
+    <h2>Account</h2>
+    <p>Review the account settings before saving.</p>
+    <NTButton Label="Save" Variant="NTButtonVariant.Filled" OnClickCallback="@(async _ => await SaveAsync())" />
+</NTCard>
 
 @code {
-    private async Task SaveAsync() {
-        await ToastService.ShowSuccessAsync("Saved", "Your changes were saved.");
+    private Task SaveAsync()
+    {
+        return Task.CompletedTask;
     }
 }
 ```
 
-For static SSR markup or native HTML handlers, call the JavaScript bridge directly and guard the call in case the module has not loaded yet:
+## Component Model
+
+NTComponents uses the `NT*` API surface for new component work. Some legacy `TnT*` components and services remain for compatibility, but new code should prefer `NTButton`, `NTCard`, `NTDialog`, `NTToast`, `NTSnackbar`, `NTThemeToggle`, `NTNavigationRail`, `NTProgress`, `NTLoader`, `NTCarousel`, and the `NTInput*` form components.
+
+The library's component model is built around:
+
+- Material 3 structure, spacing, state, and token alignment.
+- Co-located component files: `.razor`, `.razor.cs`, `.razor.scss`, and `.razor.ts` when browser behavior is needed.
+- Scoped CSS plus shared static assets under `_content/NTComponents`.
+- Progressive enhancement where possible: useful static markup first, richer behavior after browser JavaScript or Blazor interactivity is available.
+- Render compatibility metadata through `NTDocumentationAttribute`.
+- Analyzer-backed guidance for required parameters, invalid combinations, and accessibility-sensitive component usage.
+
+## Component Families
+
+The library includes components for:
+
+- Actions: `NTButton`, `NTIconButton`, `NTFabButton`, `NTFabMenu`, `NTSplitButton`, `NTButtonGroup`.
+- Layout: `NTLayout`, `NTHeader`, `NTBody`, `NTFooter`, `NTContainerView`, `NTListDetailView`, `NTSupportingPaneView`, `NTMultiPaneView`, `NTFeedView`.
+- Navigation: `NTNavLink`, `NTNavigationRail`, `NTNavigationRailItem`, `NTNavigationRailGroup`.
+- Surfaces and content: `NTCard`, `NTDivider`, `NTTag`, `NTChip`, `NTSkeleton`, `NTShape`, `NTTooltip`.
+- Feedback: `NTToast`, `NTSnackbar`, `NTProgress`, `NTLoader`.
+- Forms: `NTForm`, `NTInputText`, `NTTextArea`, `NTInputCheckbox`, `NTInputSwitch`, `NTInputRadioGroup`, `NTInputSelect`, `NTSelect`, `NTCombobox`, `NTAutocomplete`, `NTTypeahead`, `NTInputSlider`, `NTInputRangeSlider`, `NTInputDateTime`, `NTFileUpload`.
+- Overlays and menus: `NTDialog`, `NTMenu`, `NTContextMenu`.
+- Rich components: `NTDataGrid`, `NTCarousel`, `NTCarouselItem`, `NTTabView`, `NTTab`, `NTWizard`, `NTRichTextEditor`, `NTVirtualize`.
+
+## Render Modes And SSR
+
+Many components render useful HTML in static SSR and enhance later. Components that depend on browser APIs, JS interop, callbacks, or measurement are marked as progressively enhanced or interactive required in their generated documentation metadata.
+
+Use these rules when choosing render modes:
+
+- Native HTML behavior and pass-through attributes can work in static SSR.
+- Blazor callbacks such as `EventCallback` require an interactive render mode.
+- Browser-enhanced components need their package scripts and static assets available.
+- App-level feedback hosts such as `NTToast` and `NTSnackbar` should be rendered once near the layout or route shell.
+
+Static markup can use guarded browser bridge calls after the host script is available:
 
 ```html
-<button onclick="window.NTToast?.queueToast({ title: 'Saved', message: 'Your changes were saved.', variant: 'success' })">
+<button onclick="window.NTToast?.queueToast({ title: 'Saved', message: 'Changes stored.', variant: 'success' })">
     Save
 </button>
 ```
 
-JavaScript options are `title`, `message`, `variant`, `timeout`, `showClose`, `icon`, `backgroundColor`, `textColor`, and `iconColor`. Variants are `default`, `success`, `info`, `warning`, `error`, and `assert`.
+Interactive Blazor code can use the registered services:
 
-Best practices:
-- Use `NTToast` with `INTToastService`; legacy `TnTToast` uses `ITnTToastService` and is a separate host/service pair.
-- Prefer semantic helpers such as `ShowSuccessAsync`, `ShowInfoAsync`, `ShowWarningAsync`, `ShowErrorAsync`, and `ShowAssertAsync`.
-- Keep toast copy short and status-focused.
-- Let the default four-second timeout handle normal messages. Use `timeout: 0` only when explicit dismissal is required.
-- Use `error` or `assert` only for high-priority messages because they use assertive accessibility announcements.
+```razor
+@inject INTToastService ToastService
+@inject INTSnackbarService SnackbarService
 
-## Getting Started
+<NTButton Label="Show toast" OnClickCallback="ShowToastAsync" />
+<NTButton Label="Show snackbar" Variant="NTButtonVariant.Outlined" OnClickCallback="ShowSnackbarAsync" />
 
-### Prerequisites
+@code {
+    private Task ShowToastAsync()
+    {
+        return ToastService.ShowSuccessAsync("Saved", "Changes stored.");
+    }
 
-- .NET 9 or .NET 10 SDK
-
-### Install
-
-Install from NuGet (package id: `NTComponents`):
-
+    private Task ShowSnackbarAsync()
+    {
+        return SnackbarService.ShowAsync("Message sent");
+    }
+}
 ```
-dotnet add package NTComponents
+
+## Theming
+
+`NTHeadDependencies` and `NTThemeToggle` use the NT theme runtime. The default theme root is `/Themes`, with these expected file names:
+
+- `light.css`, `light-mc.css`, `light-hc.css`
+- `dark.css`, `dark-mc.css`, `dark-hc.css`
+
+You can override the theme root and file names on both `NTHeadDependencies` and `NTThemeToggle`:
+
+```razor
+<NTHeadDependencies ThemesRoot="/brand-themes" LightDefaultCss="light.css" DarkDefaultCss="dark.css" />
+<NTThemeToggle ThemesRoot="/brand-themes" DefaultTheme="NTTheme.System" DefaultContrast="NTThemeContrast.Default" />
 ```
 
-Or add the package reference in your project file.
+The runtime persists the selected theme in local storage using `NTComponentsStoredThemeKey` and supports light, dark, and system preferences with default, medium, and high contrast variants.
 
-### Building the Project
+## Packages
 
-1. Restore the NuGet packages:
-```
+The repository produces:
+
+- `NTComponents`: the core Blazor component library.
+- `NTComponents.AspNetCore`: ASP.NET Core support package.
+- `NTComponents.Extensions`: supporting extensions package.
+
+The component package includes analyzer projects during build so component rules stay close to the public API.
+
+## Development
+
+Restore, build, and test from the repository root:
+
+```powershell
 dotnet restore
-```
-2. Build the solution:
-```
-dotnet build
-```
-
-### Usage
-In your `Program.cs` file add the following to register any library services (see `LiveTest` for examples):
-
-```csharp
-// builder is the WebAssemblyHostBuilder or WebApplicationBuilder
-builder.Services.AddNTComponents();
+dotnet build NTComponents.slnx -c Release
+dotnet test NTComponents.Tests/NTComponents.Tests.csproj -c Release --no-build
+npm ci
+npm test
 ```
 
-Then use components in your pages (see `LiveTest` samples for exact component names and parameters):
+Run AOT compatibility validation when changing trimming, JavaScript interop, static assets, or component public APIs:
 
-```razor
-@page "/"
-<h3>Example</h3>
-<TnTButton OnClick="() => Console.WriteLine("Clicked")">Click me</TnTButton>
+```powershell
+pwsh ./test-aot-compatibility.ps1
 ```
 
-### Theming
-Themes can be generated using Google's Material 3 designer. Export your theme as a json file and drop it in the `wwwroot` folder. Inside your `App.razor` file, add the following code:
+## Design And Documentation
 
-```razor
-<NTComponents.TnTThemeDesign ThemeFile="your-theme.json" />
-```
+Component design work follows the Material 3 source file and repo-local Material 3 reference notes. Public components use XML documentation and `NTDocumentationAttribute` metadata so documentation pages can show summaries, API members, render compatibility, and related enum or constant references directly from source.
 
-Dark, light, and system themes can be applied by setting the `Theme` property of the `TnTThemeDesign` component.
-
-## Contributing
-
-Contributions are welcome! 
+The sample and documentation hosts in this repository are development aids for validating the package surface. Consumer setup should start with the quick setup guide above.
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
-
+NTComponents is licensed under the MIT License. See [LICENSE.txt](LICENSE.txt) for details.

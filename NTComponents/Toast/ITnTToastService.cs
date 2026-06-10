@@ -6,6 +6,7 @@ namespace NTComponents;
 /// <summary>
 ///     Interface for the TnT Toast Service, providing methods to show and close toast notifications.
 /// </summary>
+[Obsolete("ITnTToastService is obsolete. Use NTToast with INTToastService instead.")]
 public interface ITnTToastService {
 
     /// <summary>
