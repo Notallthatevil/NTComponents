@@ -45,7 +45,7 @@ public partial class NTDialog {
 
     private readonly RenderFragment _defaultButtons;
     private long _childContentRenderKey;
-    private IReadOnlyDictionary<string, object?>? _dialogParameters;
+    private NTDialogParameters? _dialogParameters;
     private PendingOpenRequest? _pendingOpenRequest;
     private bool _renderChildContent;
 
@@ -83,7 +83,7 @@ public partial class NTDialog {
     ///     Use this for the focused content or form fields the dialog owns. Long content is constrained to the body scroll container so the title and actions remain visible.
     /// </remarks>
     [Parameter]
-    public RenderFragment<IReadOnlyDictionary<string, object?>?>? ChildContent { get; set; }
+    public RenderFragment<NTDialogParameters?>? ChildContent { get; set; }
 
     /// <summary>
     ///     Gets or sets the accessible label for the optional close icon button.
@@ -249,7 +249,7 @@ public partial class NTDialog {
     /// <summary>
     ///     Opens the dialog when the component is interactive and supplies parameters to the dialog body template.
     /// </summary>
-    public async ValueTask<bool> OpenAsync(IReadOnlyDictionary<string, object?>? parameters, CancellationToken cancellationToken = default) {
+    public async ValueTask<bool> OpenAsync(NTDialogParameters? parameters, CancellationToken cancellationToken = default) {
         if (IsolatedJsModule is null) {
             throw new InvalidOperationException($"{nameof(NTDialog)} cannot be opened from .NET until it has rendered interactively.");
         }
@@ -301,10 +301,10 @@ public partial class NTDialog {
     /// <summary>
     ///     Forces the dialog body and its child content to rerender with updated dialog parameters.
     /// </summary>
-    public async ValueTask RefreshAsync(IReadOnlyDictionary<string, object?>? parameters, CancellationToken cancellationToken = default) {
+    public async ValueTask RefreshAsync(NTDialogParameters? parameters, CancellationToken cancellationToken = default) {
         cancellationToken.ThrowIfCancellationRequested();
 
-        _dialogParameters = CopyDialogParameters(parameters);
+        _dialogParameters = parameters;
         await RefreshAsync(cancellationToken);
     }
 
@@ -419,8 +419,8 @@ public partial class NTDialog {
         }
     }
 
-    private Task<bool> QueueOpenAfterRender(IReadOnlyDictionary<string, object?>? parameters, CancellationToken cancellationToken) {
-        _dialogParameters = CopyDialogParameters(parameters);
+    private Task<bool> QueueOpenAfterRender(NTDialogParameters? parameters, CancellationToken cancellationToken) {
+        _dialogParameters = parameters;
         _renderChildContent = true;
         _childContentRenderKey++;
 
@@ -429,10 +429,6 @@ public partial class NTDialog {
 
         _ = InvokeAsync(StateHasChanged);
         return pendingOpenRequest.Completion.Task;
-    }
-
-    private static IReadOnlyDictionary<string, object?>? CopyDialogParameters(IReadOnlyDictionary<string, object?>? parameters) {
-        return parameters is null ? null : new Dictionary<string, object?>(parameters);
     }
 
     private sealed class PendingOpenRequest(CancellationToken cancellationToken) {

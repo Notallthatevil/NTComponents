@@ -73,7 +73,7 @@ public class NTDialog_Tests : BunitContext {
     public async Task OpenAsync_With_Parameters_Renders_ChildContent_And_Opens_Dialog() {
         var component = Render<NTDialog>(parameters => parameters
             .Add(p => p.Id, "parameter-dialog")
-            .Add(p => p.ChildContent, dialogParameters => builder => builder.AddContent(0, $"Record {dialogParameters!["RecordId"]}")));
+            .Add(p => p.ChildContent, dialogParameters => builder => builder.AddContent(0, $"Record {dialogParameters!.Get<int>("RecordId")}")));
 
         var opened = await component.Instance.OpenAsync(new Dictionary<string, object?> {
             ["RecordId"] = 42
@@ -105,8 +105,9 @@ public class NTDialog_Tests : BunitContext {
             .Add(p => p.Id, "refresh-dialog")
             .Add(p => p.ChildContent, dialogParameters => builder => {
                 builder.OpenComponent<RefreshableDialogChild>(0);
+                dialogParameters!.TryGet<int>("RecordId", out var recordId).Should().BeTrue();
                 builder.AddComponentParameter(1, nameof(RefreshableDialogChild.OnInitializedCallback), (Action)(() => initializedCount++));
-                builder.AddComponentParameter(2, nameof(RefreshableDialogChild.Value), dialogParameters!["RecordId"]);
+                builder.AddComponentParameter(2, nameof(RefreshableDialogChild.Value), recordId);
                 builder.CloseComponent();
             }));
 
