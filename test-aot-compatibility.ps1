@@ -327,10 +327,57 @@ function Start-BrowserProcess {
     }
 
     $process = [System.Diagnostics.Process]::Start($startInfo)
-    $process.BeginErrorReadLine()
-    $process.BeginOutputReadLine()
+    $standardOutputTask = $process.StandardOutput.ReadToEndAsync()
+    $standardErrorTask = $process.StandardError.ReadToEndAsync()
 
-    return $process
+    return [pscustomobject]@{
+        Process = $process
+        StandardOutputTask = $standardOutputTask
+        StandardErrorTask = $standardErrorTask
+    }
+}
+
+function Get-BrowserProcessOutput {
+    param(
+        [Parameter(Mandatory = $true)]
+        $BrowserRun
+    )
+
+    $standardOutput = ''
+    $standardError = ''
+
+    try {
+        if ($BrowserRun.StandardOutputTask.Wait(1000)) {
+            $standardOutput = $BrowserRun.StandardOutputTask.Result
+        }
+    }
+    catch {
+        $standardOutput = "Failed to read Chromium stdout: $($_.Exception.Message)"
+    }
+
+    try {
+        if ($BrowserRun.StandardErrorTask.Wait(1000)) {
+            $standardError = $BrowserRun.StandardErrorTask.Result
+        }
+    }
+    catch {
+        $standardError = "Failed to read Chromium stderr: $($_.Exception.Message)"
+    }
+
+    $output = @()
+    if (-not [string]::IsNullOrWhiteSpace($standardOutput)) {
+        $output += "stdout:`n$standardOutput"
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($standardError)) {
+        $output += "stderr:`n$standardError"
+    }
+
+    if ($output.Count -eq 0) {
+        return 'Chromium did not write stdout or stderr.'
+    }
+
+    return $output -join "`n"
 }
 
 function Test-PublishedOutput {
@@ -385,6 +432,7 @@ function Invoke-BrowserSmoke {
 
         $lastDom = 'DOM was not captured.'
         $lastBrowserExitCode = $null
+        $lastBrowserOutput = 'Chromium output was not captured.'
         foreach ($attempt in 1..3) {
             $debugPort = Get-FreePort
             $browserUserDataDirectory = Join-Path ([System.IO.Path]::GetTempPath()) "ntcomponents-aot-browser-$Port-$attempt"
@@ -408,7 +456,18 @@ function Invoke-BrowserSmoke {
                 $server.Url
             )
 
-            $browserProcess = Start-BrowserProcess -Browser $browser -Arguments $browserArgs
+            if ([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::Linux)) {
+                $browserArgs = @(
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-crash-reporter',
+                    '--disable-crashpad',
+                    '--disable-breakpad'
+                ) + $browserArgs
+            }
+
+            $browserRun = Start-BrowserProcess -Browser $browser -Arguments $browserArgs
+            $browserProcess = $browserRun.Process
 
             try {
                 $devToolsPage = $null
@@ -457,6 +516,7 @@ function Invoke-BrowserSmoke {
                     [void]$browserProcess.WaitForExit(5000)
                 }
 
+                $lastBrowserOutput = Get-BrowserProcessOutput -BrowserRun $browserRun
                 $browserProcess.Dispose()
             }
 
@@ -465,10 +525,10 @@ function Invoke-BrowserSmoke {
         }
 
         if ($null -ne $lastBrowserExitCode -and $lastBrowserExitCode -ne 0) {
-            throw "Browser smoke failed with exit code $lastBrowserExitCode. Output:`n$lastDom"
+            throw "Browser smoke failed with exit code $lastBrowserExitCode. Output:`n$lastDom`nChromium output:`n$lastBrowserOutput"
         }
 
-        throw "Browser smoke did not render the NTComponents AOT smoke marker. Output:`n$lastDom"
+        throw "Browser smoke did not render the NTComponents AOT smoke marker. Output:`n$lastDom`nChromium output:`n$lastBrowserOutput"
     }
     finally {
         Stop-StaticFileServer -Server $server
