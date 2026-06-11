@@ -83,6 +83,7 @@
 
 	<Target Name="MinifyTypeScriptModules" BeforeTargets="BeforeBuild" DependsOnTargets="CompileTypeScriptModules" Inputs="@(TypeScriptOutput)" Outputs="$(IntermediateOutputPath)TypeScriptModules.min.stamp" Condition="'$(DesignTimeBuild)' != 'true' and '$(TargetFramework)' == '$(TypeScriptBuildTargetFramework)' and '$(Configuration)' == 'Release' and Exists('$(MSBuildProjectDirectory)/../node_modules/.bin/terser')">
 		<Exec Command="&quot;$(MSBuildProjectDirectory)/../node_modules/.bin/terser&quot; &quot;%(TypeScriptOutput.Identity)&quot; --module --compress --comments false --output &quot;%(TypeScriptOutput.Identity)&quot;" WorkingDirectory="$(MSBuildProjectDirectory)/.." />
+		<MakeDir Directories="$(IntermediateOutputPath)" />
 		<Touch Files="$(IntermediateOutputPath)TypeScriptModules.min.stamp" AlwaysCreate="true" />
 	</Target>
 
