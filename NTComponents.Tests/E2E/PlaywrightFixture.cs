@@ -1,7 +1,4 @@
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Playwright;
-using System.Diagnostics;
 
 namespace NTComponents.Tests.E2E;
 
@@ -9,20 +6,17 @@ namespace NTComponents.Tests.E2E;
 ///     Base fixture for E2E tests using Playwright. Handles browser, context, and page lifecycle management with a test server using WebApplicationFactory.
 /// </summary>
 public class PlaywrightFixture : IAsyncLifetime {
-    public HttpClient HttpClient {
-        get {
-            if (_factory == null) throw new InvalidOperationException("Web application factory is not initialized.");
-            return new HttpClient { BaseAddress = new Uri(ServerAddress) };
-        }
-    }
-    public string ServerAddress => _factory?.ServerAddress ?? throw new InvalidOperationException("Web application factory is not initialized.");
+    private static readonly Lazy<Task<SharedPlaywrightResources>> SharedResources = new(CreateSharedResourcesAsync);
+
+    public HttpClient HttpClient => new() { BaseAddress = new Uri(ServerAddress) };
+    public string ServerAddress => _resources?.Factory.ServerAddress ?? throw new InvalidOperationException("Web application factory is not initialized.");
     public IBrowserContext Context { get; private set; } = null!;
     public IPage Page { get; private set; } = null!;
-    private const int HealthCheckTimeoutSeconds = 30;
-    private IBrowser? _browser;
-    private IBrowserType? _browserType;
-    private NTWebAppFactory? _factory;
-    private IPlaywright? _playwright;
+    private SharedPlaywrightResources? _resources;
+
+    static PlaywrightFixture() {
+        AppDomain.CurrentDomain.ProcessExit += (_, _) => DisposeSharedResources();
+    }
 
     /// <summary>
     ///     Clean up browser and application resources after test.
@@ -36,33 +30,40 @@ public class PlaywrightFixture : IAsyncLifetime {
             await Context.CloseAsync();
         }
 
-        if (_browser != null) {
-            await _browser.CloseAsync();
-        }
-
-        _playwright?.Dispose();
-
-        // Dispose of the WebApplicationFactory
-        _factory?.Dispose();
+        _resources = null;
     }
 
     /// <summary>
     ///     Initialize the test application server and Playwright browser.
     /// </summary>
     public async ValueTask InitializeAsync() {
-        // Start the application using WebApplicationFactory
-        _factory = new();
-        // Ensure the server is started so ServerAddress is populated
-        _ = _factory.Services;
+        _resources = await SharedResources.Value;
+        Context = await _resources.Browser.NewContextAsync();
+        Page = await Context.NewPageAsync();
+    }
 
-        // Initialize Playwright browser
-        _playwright = await Playwright.CreateAsync();
-        _browserType = _playwright.Chromium;
-        _browser = await _browserType.LaunchAsync(new() {
+    private static async Task<SharedPlaywrightResources> CreateSharedResourcesAsync() {
+        var factory = new NTWebAppFactory();
+        _ = factory.Services;
+
+        var playwright = await Playwright.CreateAsync();
+        var browser = await playwright.Chromium.LaunchAsync(new() {
             Headless = true,
         });
 
-        Context = await _browser.NewContextAsync();
-        Page = await Context.NewPageAsync();
+        return new(factory, playwright, browser);
     }
+
+    private static void DisposeSharedResources() {
+        if (!SharedResources.IsValueCreated || !SharedResources.Value.IsCompletedSuccessfully) {
+            return;
+        }
+
+        var resources = SharedResources.Value.Result;
+        resources.Browser.CloseAsync().GetAwaiter().GetResult();
+        resources.Playwright.Dispose();
+        resources.Factory.Dispose();
+    }
+
+    private sealed record SharedPlaywrightResources(NTWebAppFactory Factory, IPlaywright Playwright, IBrowser Browser);
 }

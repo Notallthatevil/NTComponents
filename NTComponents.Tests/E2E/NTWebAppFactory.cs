@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Linq;
 
@@ -52,6 +54,19 @@ public class NTWebAppFactory : WebApplicationFactory<Program> {
     }
 
     protected override IHost CreateHost(IHostBuilder builder) {
+        builder.ConfigureLogging(logging => {
+            logging.ClearProviders();
+            logging.AddConsole();
+            logging.SetMinimumLevel(LogLevel.Warning);
+        });
+
+        builder.ConfigureServices(services => {
+            var dataProtectionDirectory = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), "NTComponents.Tests", "DataProtectionKeys", Environment.ProcessId.ToString()));
+            services.AddDataProtection()
+                .SetApplicationName("NTComponents.Tests.E2E")
+                .PersistKeysToFileSystem(dataProtectionDirectory);
+        });
+
         // Configure Kestrel
         builder.ConfigureWebHost(webBuilder => {
             webBuilder.UseKestrel();

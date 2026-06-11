@@ -6,7 +6,7 @@
 		<Nullable>enable</Nullable>
 		<IsPackable>false</IsPackable>
 		<OutputType>Exe</OutputType>
-		<TestTfmsInParallel>false</TestTfmsInParallel>
+		<TestTfmsInParallel>true</TestTfmsInParallel>
 		<WarningLevel>8</WarningLevel>
 		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
 		<NoWarn>$(NoWarn);CS0618</NoWarn>
