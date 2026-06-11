@@ -1,4 +1,5 @@
 @use 'sass:map';
+@use 'sass:math';
 @use '../Styles/_Variables/_colors.scss' as colors;
 @use '../Styles/_Variables/_corner-radius.scss' as corners;
 @use '../Styles/_Variables/_elevation.scss' as elevation;
@@ -54,6 +55,9 @@ $nt-fab-elevations: (
     high: (rest: 4, hover: 5),
     highest: (rest: 5, hover: 6)
 );
+$space-unit: measurements.$gutter-width;
+$compact-placement-offset: math.div($space-unit * 2, 3);
+$medium-placement-offset: $space-unit;
 
 @mixin nt-fab-size($tokens) {
     $container-size: map.get($tokens, container-size);
@@ -195,23 +199,45 @@ $nt-fab-elevations: (
     }
 
     &.nt-fab-button-placement-lower-right {
-        bottom: 16px;
-        right: 16px;
+        inset-block-end: $compact-placement-offset;
+        inset-inline-end: $compact-placement-offset;
     }
 
     &.nt-fab-button-placement-lower-left {
-        bottom: 16px;
-        left: 16px;
+        inset-block-end: $compact-placement-offset;
+        inset-inline-start: $compact-placement-offset;
     }
 
     &.nt-fab-button-placement-upper-right {
-        right: 16px;
-        top: 16px;
+        inset-block-start: $compact-placement-offset;
+        inset-inline-end: $compact-placement-offset;
     }
 
     &.nt-fab-button-placement-upper-left {
-        left: 16px;
-        top: 16px;
+        inset-block-start: $compact-placement-offset;
+        inset-inline-start: $compact-placement-offset;
+    }
+
+    @media (min-width: 600px) {
+        &.nt-fab-button-placement-lower-right {
+            inset-block-end: $medium-placement-offset;
+            inset-inline-end: $medium-placement-offset;
+        }
+
+        &.nt-fab-button-placement-lower-left {
+            inset-block-end: $medium-placement-offset;
+            inset-inline-start: $medium-placement-offset;
+        }
+
+        &.nt-fab-button-placement-upper-right {
+            inset-block-start: $medium-placement-offset;
+            inset-inline-end: $medium-placement-offset;
+        }
+
+        &.nt-fab-button-placement-upper-left {
+            inset-block-start: $medium-placement-offset;
+            inset-inline-start: $medium-placement-offset;
+        }
     }
 
     > .nt-fab-button-icon,
@@ -278,7 +304,14 @@ body:has(.tnt-footer) {
     .nt-fab-button {
         &.nt-fab-button-placement-lower-right,
         &.nt-fab-button-placement-lower-left {
-            bottom: calc(#{measurements.$tnt-footer-height} + 16px);
+            inset-block-end: calc(var(--tnt-footer-height) + #{$compact-placement-offset});
+        }
+
+        @media (min-width: 600px) {
+            &.nt-fab-button-placement-lower-right,
+            &.nt-fab-button-placement-lower-left {
+                inset-block-end: calc(var(--tnt-footer-height) + #{$medium-placement-offset});
+            }
         }
     }
 }

@@ -10,7 +10,7 @@ public class NTFabButton_Tests : BunitContext {
     public NTFabButton_Tests() => RippleTestingUtility.SetupRippleEffectModule(this);
 
     [Fact]
-    public void Default_Render_Uses_IconOnly_Mode_Medium_Size_Elevation_And_Button_Type() {
+    public void Default_Render_Uses_IconOnly_Mode_Small_Size_Elevation_And_Button_Type() {
         var cut = Render<NTFabButton>(parameters => parameters
             .Add(x => x.Icon, SampleIcon)
             .Add(x => x.AriaLabel, "Create item"));
@@ -21,7 +21,7 @@ public class NTFabButton_Tests : BunitContext {
         classes.Should().Contain("nt-fab-button");
         classes.Should().Contain("nt-fab-button-icon-only");
         classes.Should().Contain("nt-fab-button-placement-inline");
-        classes.Should().Contain("tnt-size-m");
+        classes.Should().Contain("tnt-size-s");
         classes.Should().Contain("nt-elevation-medium");
         button.GetAttribute("type")!.Should().Be("button");
         button.GetAttribute("aria-label")!.Should().Be("Create item");

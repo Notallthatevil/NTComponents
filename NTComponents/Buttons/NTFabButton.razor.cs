@@ -29,7 +29,7 @@ public partial class NTFabButton : NTButtonBase {
     /// </summary>
     /// <remarks>Supports <see cref="Size.Small" />, <see cref="Size.Medium" />, and <see cref="Size.Large" />. Unsupported enum values map to the nearest supported Material FAB size.</remarks>
     [Parameter]
-    public override Size ButtonSize { get; set; } = Size.Medium;
+    public override Size ButtonSize { get; set; } = Size.Small;
 
     /// <inheritdoc />
     public override string? ElementClass => CssClassBuilder.Create()
