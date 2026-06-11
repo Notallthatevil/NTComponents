@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
 using NTComponents.Core;
 
 using NTComponents.CodeDocumentation;
@@ -17,7 +16,7 @@ namespace NTComponents;
     RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
     CompatibilitySummary = "Renders useful static HTML and adds Blazor behavior when interactive.",
     CompatibilityDetails = "Static SSR preserves the rendered markup and native browser behavior. EventCallback handlers, bound state updates, and live validation require an interactive render mode.")]
-public partial class NTFabButton : NTComponentBase {
+public partial class NTFabButton : NTButtonBase {
 
     /// <summary>
     ///     Gets or sets the accessible name announced for icon-only FABs or a more descriptive name for extended FABs.
@@ -26,24 +25,11 @@ public partial class NTFabButton : NTComponentBase {
     public string? AriaLabel { get; set; }
 
     /// <summary>
-    ///     Gets or sets an optional override for the FAB container color.
-    /// </summary>
-    [Parameter]
-    public TnTColor? BackgroundColor { get; set; }
-
-    /// <summary>
     ///     Gets or sets the size of the FAB.
     /// </summary>
     /// <remarks>Supports <see cref="Size.Small" />, <see cref="Size.Medium" />, and <see cref="Size.Large" />. Unsupported enum values map to the nearest supported Material FAB size.</remarks>
     [Parameter]
-    public Size ButtonSize { get; set; } = Size.Medium;
-
-    /// <summary>
-    ///     Gets or sets whether the FAB is disabled.
-    /// </summary>
-    /// <remarks>Material guidance recommends not rendering unavailable FAB actions instead of disabling them.</remarks>
-    [Parameter]
-    public bool Disabled { get; set; }
+    public override Size ButtonSize { get; set; } = Size.Medium;
 
     /// <inheritdoc />
     public override string? ElementClass => CssClassBuilder.Create()
@@ -56,12 +42,6 @@ public partial class NTFabButton : NTComponentBase {
         .AddSize(EffectiveButtonSize)
         .AddDisabled(Disabled)
         .Build();
-
-    /// <summary>
-    ///     Gets or sets the optional native name attribute.
-    /// </summary>
-    [Parameter]
-    public string? ElementName { get; set; }
 
     /// <inheritdoc />
     public override string? ElementStyle => CssStyleBuilder.Create()
@@ -77,12 +57,6 @@ public partial class NTFabButton : NTComponentBase {
     public NTElevation Elevation { get; set; } = NTElevation.Medium;
 
     /// <summary>
-    ///     Gets or sets whether a ripple effect should be rendered.
-    /// </summary>
-    [Parameter]
-    public bool EnableRipple { get; set; } = true;
-
-    /// <summary>
     ///     Gets or sets the action icon rendered inside the FAB.
     /// </summary>
     [Parameter, EditorRequired]
@@ -95,41 +69,11 @@ public partial class NTFabButton : NTComponentBase {
     public string? Label { get; set; }
 
     /// <summary>
-    ///     Gets or sets the click callback.
-    /// </summary>
-    [Parameter]
-    public EventCallback<MouseEventArgs> OnClickCallback { get; set; }
-
-    /// <summary>
     ///     Gets or sets where the FAB is positioned.
     /// </summary>
     /// <remarks>The default <see cref="NTFabButtonPlacement.Inline" /> keeps the FAB in normal document flow. The corner placements use fixed viewport positioning.</remarks>
     [Parameter]
     public NTFabButtonPlacement Placement { get; set; } = NTFabButtonPlacement.Inline;
-
-    /// <summary>
-    ///     Gets or sets whether click events should stop propagating.
-    /// </summary>
-    [Parameter]
-    public bool StopPropagation { get; set; }
-
-    /// <summary>
-    ///     Gets or sets an optional override for the FAB icon and label color.
-    /// </summary>
-    [Parameter]
-    public TnTColor? TextColor { get; set; }
-
-    /// <summary>
-    ///     Gets or sets the content displayed as a tooltip.
-    /// </summary>
-    [Parameter]
-    public RenderFragment? Tooltip { get; set; }
-
-    /// <summary>
-    ///     Gets or sets the native button type.
-    /// </summary>
-    [Parameter]
-    public ButtonType Type { get; set; }
 
     internal string? EffectiveAriaLabel => string.IsNullOrWhiteSpace(AriaLabel) ? null : AriaLabel;
 
@@ -179,14 +123,6 @@ public partial class NTFabButton : NTComponentBase {
         NTFabButtonPlacement.UpperLeft => "nt-fab-button-placement-upper-left",
         _ => throw new ArgumentOutOfRangeException(nameof(Placement), Placement, null)
     };
-
-    private async Task HandleClickAsync(MouseEventArgs args) {
-        if (Disabled) {
-            return;
-        }
-
-        await OnClickCallback.InvokeAsync(args);
-    }
 
     private void WarnForUnsupportedSize() {
         if (ButtonSize is Size.Smallest) {

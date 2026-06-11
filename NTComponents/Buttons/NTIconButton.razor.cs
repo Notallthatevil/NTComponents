@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
 using NTComponents.Core;
 
 using NTComponents.CodeDocumentation;
@@ -11,7 +10,7 @@ namespace NTComponents;
 /// <remarks>
 ///     <para>
 ///         Do use icon buttons for compact, repeated, toolbar, or secondary actions where a visible text label would make the interface harder to scan. Do provide a clear <see cref="AriaLabel" /> for
-///         every icon button, and use <see cref="Tooltip" /> on web surfaces when the action is not immediately obvious from context. Prefer system icons with clear, familiar meaning.
+///         every icon button, and use <see cref="NTButtonBase.Tooltip" /> on web surfaces when the action is not immediately obvious from context. Prefer system icons with clear, familiar meaning.
 ///     </para>
 ///     <para>
 ///         Do use <see cref="IsToggleButton" /> only for persistent selected or on-off state. Consumers can bind <see cref="Selected" /> and change <see cref="Icon" /> at runtime when selected and
@@ -30,7 +29,7 @@ namespace NTComponents;
     RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
     CompatibilitySummary = "Renders useful static HTML and adds Blazor behavior when interactive.",
     CompatibilityDetails = "Static SSR preserves the rendered markup and native browser behavior. EventCallback handlers, bound state updates, and live validation require an interactive render mode.")]
-public partial class NTIconButton : NTComponentBase {
+public partial class NTIconButton : NTButtonBase {
 
     /// <summary>
     ///     Gets or sets the accessible name announced for the icon-only button.
@@ -40,31 +39,6 @@ public partial class NTIconButton : NTComponentBase {
     /// </remarks>
     [Parameter, EditorRequired]
     public string AriaLabel { get; set; } = string.Empty;
-
-    /// <summary>
-    ///     Gets or sets an optional override for the icon button container color.
-    /// </summary>
-    /// <remarks>
-    ///     Standard and unselected outlined icon buttons should keep a transparent container. Filled, tonal, elevated, and selected outlined icon buttons need a visible container color.
-    /// </remarks>
-    [Parameter]
-    public TnTColor? BackgroundColor { get; set; }
-
-    /// <summary>
-    ///     Gets or sets the size of the icon button.
-    /// </summary>
-    /// <remarks>
-    ///     Supports <see cref="Size.Smallest" />, <see cref="Size.Small" />, <see cref="Size.Medium" />, <see cref="Size.Large" />, and <see cref="Size.Largest" /> while preserving at least a 48 by
-    ///     48 CSS pixel touch target.
-    /// </remarks>
-    [Parameter]
-    public Size ButtonSize { get; set; } = Size.Small;
-
-    /// <summary>
-    ///     Gets or sets whether the icon button is disabled.
-    /// </summary>
-    [Parameter]
-    public bool Disabled { get; set; }
 
     /// <inheritdoc />
     public override string? ElementClass => CssClassBuilder.Create()
@@ -87,12 +61,6 @@ public partial class NTIconButton : NTComponentBase {
         .AddDisabled(Disabled)
         .Build();
 
-    /// <summary>
-    ///     Gets or sets the optional name attribute.
-    /// </summary>
-    [Parameter]
-    public string? ElementName { get; set; }
-
     /// <inheritdoc />
     public override string? ElementStyle => CssStyleBuilder.Create()
         .AddFromAdditionalAttributes(AdditionalAttributes)
@@ -110,15 +78,6 @@ public partial class NTIconButton : NTComponentBase {
     public NTElevation? Elevation { get; set; }
 
     /// <summary>
-    ///     Gets or sets whether a ripple effect should be rendered.
-    /// </summary>
-    /// <remarks>
-    ///     Pressed-shape behavior is registered independently from ripple rendering, so disabling ripple does not disable the interaction shape lifecycle.
-    /// </remarks>
-    [Parameter]
-    public bool EnableRipple { get; set; } = true;
-
-    /// <summary>
     ///     Gets or sets the only visual icon rendered inside the button.
     /// </summary>
     /// <remarks>
@@ -131,16 +90,10 @@ public partial class NTIconButton : NTComponentBase {
     ///     Gets or sets whether this icon button behaves as a toggle button.
     /// </summary>
     /// <remarks>
-    ///     Toggle mode renders <c>aria-pressed</c>, flips <see cref="Selected" /> on click, invokes <see cref="SelectedChanged" />, and then invokes <see cref="OnClickCallback" />.
+    ///     Toggle mode renders <c>aria-pressed</c>, flips <see cref="Selected" /> on click, invokes <see cref="SelectedChanged" />, and then invokes <see cref="NTButtonBase.OnClickCallback" />.
     /// </remarks>
     [Parameter]
     public bool IsToggleButton { get; set; }
-
-    /// <summary>
-    ///     Gets or sets the click callback.
-    /// </summary>
-    [Parameter]
-    public EventCallback<MouseEventArgs> OnClickCallback { get; set; }
 
     /// <summary>
     ///     Gets or sets whether the toggle icon button is currently selected.
@@ -164,36 +117,6 @@ public partial class NTIconButton : NTComponentBase {
     public ButtonShape Shape { get; set; } = ButtonShape.Round;
 
     /// <summary>
-    ///     Gets or sets whether click events should stop propagating.
-    /// </summary>
-    [Parameter]
-    public bool StopPropagation { get; set; }
-
-    /// <summary>
-    ///     Gets or sets an optional override for the icon color.
-    /// </summary>
-    /// <remarks>
-    ///     The icon color must remain visible against the selected container color.
-    /// </remarks>
-    [Parameter]
-    public TnTColor? TextColor { get; set; }
-
-    /// <summary>
-    ///     Gets or sets the content displayed as a tooltip.
-    /// </summary>
-    /// <remarks>
-    ///     If omitted, <see cref="NTIconButton" /> does not render visible tooltip content. Pair this with <see cref="AriaLabel" /> for hover affordance when a web action is not immediately obvious.
-    /// </remarks>
-    [Parameter]
-    public RenderFragment? Tooltip { get; set; }
-
-    /// <summary>
-    ///     Gets or sets the native button type.
-    /// </summary>
-    [Parameter]
-    public ButtonType Type { get; set; }
-
-    /// <summary>
     ///     Gets or sets the visual variant of the icon button.
     /// </summary>
     /// <remarks>
@@ -208,40 +131,18 @@ public partial class NTIconButton : NTComponentBase {
     [Parameter]
     public NTIconButtonAppearance Width { get; set; } = NTIconButtonAppearance.Default;
 
-    internal string? AriaPressed => IsToggleButton ? Selected.ToString().ToLowerInvariant() : null;
+    internal string? AriaPressed => ToggleAriaPressed;
 
-    private ButtonShape EffectiveShape => IsToggleButton
-        ? Selected ? ButtonShape.Square : ButtonShape.Round
-        : Shape;
-
-    private bool _backgroundColorWasProvided;
-    private bool _elevationWasProvided;
-    private bool _textColorWasProvided;
+    private ButtonShape EffectiveShape => GetEffectiveToggleShape(Shape);
 
     /// <inheritdoc />
-    public override Task SetParametersAsync(ParameterView parameters) {
-        _backgroundColorWasProvided = false;
-        _elevationWasProvided = false;
-        _textColorWasProvided = false;
+    protected override bool IsToggleEnabled => IsToggleButton;
 
-        foreach (var parameter in parameters) {
-            switch (parameter.Name) {
-                case nameof(BackgroundColor):
-                    _backgroundColorWasProvided = true;
-                    break;
+    /// <inheritdoc />
+    protected override bool ToggleSelected { get => Selected; set => Selected = value; }
 
-                case nameof(Elevation):
-                    _elevationWasProvided = true;
-                    break;
-
-                case nameof(TextColor):
-                    _textColorWasProvided = true;
-                    break;
-            }
-        }
-
-        return base.SetParametersAsync(parameters);
-    }
+    /// <inheritdoc />
+    protected override EventCallback<bool> ToggleSelectedChanged => SelectedChanged;
 
     /// <inheritdoc />
     protected override void OnParametersSet() {
@@ -255,15 +156,15 @@ public partial class NTIconButton : NTComponentBase {
             throw new ArgumentException("NTIconButton requires a non-empty AriaLabel.", nameof(AriaLabel));
         }
 
-        if (!_backgroundColorWasProvided || !BackgroundColor.HasValue) {
+        if (!WasParameterProvided(nameof(BackgroundColor)) || !BackgroundColor.HasValue) {
             BackgroundColor = GetDefaultBackgroundColor();
         }
 
-        if (!_elevationWasProvided || !Elevation.HasValue) {
+        if (!WasParameterProvided(nameof(Elevation)) || !Elevation.HasValue) {
             Elevation = GetDefaultElevation();
         }
 
-        if (!_textColorWasProvided || !TextColor.HasValue) {
+        if (!WasParameterProvided(nameof(TextColor)) || !TextColor.HasValue) {
             TextColor = GetDefaultTextColor();
         }
 
@@ -325,20 +226,6 @@ public partial class NTIconButton : NTComponentBase {
             NTButtonVariant.Text => Selected ? TnTColor.Primary : TnTColor.OnSurfaceVariant,
             _ => throw new ArgumentOutOfRangeException(nameof(Variant), Variant, null)
         };
-    }
-
-    private async Task HandleClickAsync(MouseEventArgs args) {
-        if (Disabled) {
-            return;
-        }
-
-        if (IsToggleButton) {
-            var nextSelected = !Selected;
-            Selected = nextSelected;
-            await SelectedChanged.InvokeAsync(nextSelected);
-        }
-
-        await OnClickCallback.InvokeAsync(args);
     }
 
     private void ValidateBackgroundColorForVariant() {

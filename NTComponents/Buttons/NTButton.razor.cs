@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
 using NTComponents.CodeDocumentation;
 using NTComponents.Core;
 
@@ -19,25 +18,7 @@ namespace NTComponents;
     RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
     CompatibilitySummary = "Renders a native button in static SSR and adds Blazor callbacks when interactive.",
     CompatibilityDetails = "Use AdditionalAttributes for native HTML attributes in static SSR. Blazor EventCallback parameters require an interactive render mode.")]
-public partial class NTButton : NTComponentBase {
-
-    /// <summary>
-    ///     Gets or sets an optional override for the button container color.
-    /// </summary>
-    [Parameter]
-    public TnTColor? BackgroundColor { get; set; }
-
-    /// <summary>
-    ///     Gets or sets the size of the button.
-    /// </summary>
-    [Parameter]
-    public Size ButtonSize { get; set; } = Size.Small;
-
-    /// <summary>
-    ///     Gets or sets whether the button is disabled.
-    /// </summary>
-    [Parameter]
-    public bool Disabled { get; set; }
+public partial class NTButton : NTButtonBase {
 
     /// <inheritdoc />
     public override string? ElementClass => CssClassBuilder.Create()
@@ -57,12 +38,6 @@ public partial class NTButton : NTComponentBase {
         .AddDisabled(Disabled)
         .Build();
 
-    /// <summary>
-    ///     Gets or sets the optional name attribute.
-    /// </summary>
-    [Parameter]
-    public string? ElementName { get; set; }
-
     /// <inheritdoc />
     public override string? ElementStyle => CssStyleBuilder.Create()
         .AddFromAdditionalAttributes(AdditionalAttributes)
@@ -75,12 +50,6 @@ public partial class NTButton : NTComponentBase {
     /// </summary>
     [Parameter]
     public NTElevation? Elevation { get; set; }
-
-    /// <summary>
-    ///     Gets or sets whether a ripple effect should be rendered.
-    /// </summary>
-    [Parameter]
-    public bool EnableRipple { get; set; } = true;
 
     /// <summary>
     ///     Gets or sets whether this button behaves as a toggle button.
@@ -101,12 +70,6 @@ public partial class NTButton : NTComponentBase {
     public TnTIcon? LeadingIcon { get; set; }
 
     /// <summary>
-    ///     Gets or sets the click callback.
-    /// </summary>
-    [Parameter]
-    public EventCallback<MouseEventArgs> OnClickCallback { get; set; }
-
-    /// <summary>
     ///     Gets or sets whether the toggle button is currently selected.
     /// </summary>
     [Parameter]
@@ -125,69 +88,23 @@ public partial class NTButton : NTComponentBase {
     public ButtonShape Shape { get; set; } = ButtonShape.Round;
 
     /// <summary>
-    ///     Gets or sets whether click events should stop propagating.
-    /// </summary>
-    [Parameter]
-    public bool StopPropagation { get; set; }
-
-    /// <summary>
-    ///     Gets or sets an optional override for the button content color.
-    /// </summary>
-    [Parameter]
-    public TnTColor? TextColor { get; set; }
-
-    /// <summary>
-    ///     Gets or sets the content displayed as a tooltip.
-    /// </summary>
-    [Parameter]
-    public RenderFragment? Tooltip { get; set; }
-
-    /// <summary>
-    ///     Gets or sets the button type.
-    /// </summary>
-    [Parameter]
-    public ButtonType Type { get; set; }
-
-    /// <summary>
     ///     Gets or sets the visual variant of the button.
     /// </summary>
     [Parameter]
     public NTButtonVariant Variant { get; set; } = NTButtonVariant.Filled;
 
-    internal string? AriaPressed => IsToggleButton ? Selected.ToString().ToLowerInvariant() : null;
+    internal string? AriaPressed => ToggleAriaPressed;
 
-    private ButtonShape EffectiveShape => IsToggleButton
-        ? Selected ? ButtonShape.Square : ButtonShape.Round
-        : Shape;
-
-    private bool _backgroundColorWasProvided;
-    private bool _elevationWasProvided;
-    private bool _textColorWasProvided;
+    private ButtonShape EffectiveShape => GetEffectiveToggleShape(Shape);
 
     /// <inheritdoc />
-    public override Task SetParametersAsync(ParameterView parameters) {
-        _backgroundColorWasProvided = false;
-        _elevationWasProvided = false;
-        _textColorWasProvided = false;
+    protected override bool IsToggleEnabled => IsToggleButton;
 
-        foreach (var parameter in parameters) {
-            switch (parameter.Name) {
-                case nameof(BackgroundColor):
-                    _backgroundColorWasProvided = true;
-                    break;
+    /// <inheritdoc />
+    protected override bool ToggleSelected { get => Selected; set => Selected = value; }
 
-                case nameof(Elevation):
-                    _elevationWasProvided = true;
-                    break;
-
-                case nameof(TextColor):
-                    _textColorWasProvided = true;
-                    break;
-            }
-        }
-
-        return base.SetParametersAsync(parameters);
-    }
+    /// <inheritdoc />
+    protected override EventCallback<bool> ToggleSelectedChanged => SelectedChanged;
 
     /// <inheritdoc />
     protected override void OnParametersSet() {
@@ -200,15 +117,15 @@ public partial class NTButton : NTComponentBase {
             throw new InvalidOperationException("Text buttons do not support toggle behavior.");
         }
 
-        if (!_backgroundColorWasProvided || !BackgroundColor.HasValue) {
+        if (!WasParameterProvided(nameof(BackgroundColor)) || !BackgroundColor.HasValue) {
             BackgroundColor = GetDefaultBackgroundColor();
         }
 
-        if (!_elevationWasProvided || !Elevation.HasValue) {
+        if (!WasParameterProvided(nameof(Elevation)) || !Elevation.HasValue) {
             Elevation = GetDefaultElevation();
         }
 
-        if (!_textColorWasProvided || !TextColor.HasValue) {
+        if (!WasParameterProvided(nameof(TextColor)) || !TextColor.HasValue) {
             TextColor = GetDefaultTextColor();
         }
 
@@ -270,19 +187,6 @@ public partial class NTButton : NTComponentBase {
             NTButtonVariant.Text => TnTColor.Primary,
             _ => throw new ArgumentOutOfRangeException(nameof(Variant), Variant, null)
         };
-    }
-
-    private async Task HandleClickAsync(MouseEventArgs args) {
-        if (Disabled) {
-            return;
-        }
-
-        if (IsToggleButton) {
-            Selected = !Selected;
-            await SelectedChanged.InvokeAsync(Selected);
-        }
-
-        await OnClickCallback.InvokeAsync(args);
     }
 
     private void ValidateBackgroundColorForVariant() {
