@@ -31,11 +31,12 @@ public partial class NTButton : NTButtonBase {
         .AddClass("nt-button-text", Variant == NTButtonVariant.Text)
         .AddClass("nt-button-toggle", IsToggleButton)
         .AddClass("nt-button-selected", Selected)
+        .AddClass("nt-button-progress-active", ShowProgress)
         .AddClass("nt-button-shape-round", EffectiveShape == ButtonShape.Round)
         .AddClass("nt-button-shape-square", EffectiveShape == ButtonShape.Square)
         .AddElevation(Elevation)
         .AddSize(ButtonSize)
-        .AddDisabled(Disabled)
+        .AddDisabled(EffectiveDisabled)
         .Build();
 
     /// <inheritdoc />

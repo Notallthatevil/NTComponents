@@ -38,9 +38,10 @@ public partial class NTFabButton : NTButtonBase {
         .AddClass("nt-fab-button-extended", HasLabel)
         .AddClass("nt-fab-button-icon-only", !HasLabel)
         .AddClass(GetPlacementClass())
+        .AddClass("nt-button-progress-active", ShowProgress)
         .AddElevation(Elevation)
         .AddSize(EffectiveButtonSize)
-        .AddDisabled(Disabled)
+        .AddDisabled(EffectiveDisabled)
         .Build();
 
     /// <inheritdoc />
@@ -87,6 +88,9 @@ public partial class NTFabButton : NTButtonBase {
     };
 
     internal bool HasLabel => !string.IsNullOrWhiteSpace(Label);
+
+    /// <inheritdoc />
+    protected override TnTColor EffectiveProgressColor => TextColor ?? TnTColor.OnPrimaryContainer;
 
     /// <inheritdoc />
     protected override void OnParametersSet() {

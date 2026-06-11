@@ -51,6 +51,7 @@ public partial class NTIconButton : NTButtonBase {
         .AddClass("nt-icon-button-standard", Variant == NTButtonVariant.Text)
         .AddClass("nt-icon-button-toggle", IsToggleButton)
         .AddClass("nt-icon-button-selected", Selected)
+        .AddClass("nt-button-progress-active", ShowProgress)
         .AddClass("nt-icon-button-width-narrow", Width == NTIconButtonAppearance.Narrow)
         .AddClass("nt-icon-button-width-default", Width == NTIconButtonAppearance.Default)
         .AddClass("nt-icon-button-width-wide", Width == NTIconButtonAppearance.Wide)
@@ -58,7 +59,7 @@ public partial class NTIconButton : NTButtonBase {
         .AddClass("nt-icon-button-shape-square", EffectiveShape == ButtonShape.Square)
         .AddElevation(Elevation)
         .AddSize(ButtonSize)
-        .AddDisabled(Disabled)
+        .AddDisabled(EffectiveDisabled)
         .Build();
 
     /// <inheritdoc />

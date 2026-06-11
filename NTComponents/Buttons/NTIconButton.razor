@@ -7,7 +7,7 @@
         style="@ElementStyle"
         type="@Type.ToHtmlAttribute()"
         name="@ElementName"
-        disabled="@Disabled"
+        disabled="@EffectiveDisabled"
         autofocus="@AutoFocus"
         title="@ElementTitle"
         id="@ElementId"
@@ -29,6 +29,8 @@
     <span class="nt-icon-button-icon" aria-hidden="true">
         @Icon.Render()
     </span>
+
+    @ButtonProgressIndicator
 </button>
 <script>
     (function (script) {

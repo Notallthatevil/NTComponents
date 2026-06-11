@@ -33,6 +33,13 @@
         z-index: 2;
     }
 
+    &.nt-button-progress-active {
+        > .nt-button-icon,
+        > .nt-button-label {
+            opacity: 0;
+        }
+    }
+
     .nt-button-label {
         min-inline-size: 0;
         overflow: hidden;
@@ -70,21 +77,11 @@
     }
 
     @include buttonChrome.ripple-host;
+    @include buttonChrome.progress-overlay;
 
     ::deep {
         tnt-page-script {
             position: absolute;
-        }
-
-        progress.tnt-components {
-            height: 100%;
-            position: absolute !important;
-            width: 100%;
-
-            &.tnt-progress-linear {
-                height: 4px !important;
-                width: calc(100% - 8px) !important;
-            }
         }
     }
 }

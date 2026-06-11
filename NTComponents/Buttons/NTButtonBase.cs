@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components.Web;
 using NTComponents.Core;
 
@@ -48,6 +49,24 @@ public abstract class NTButtonBase : NTComponentBase {
     public EventCallback<MouseEventArgs> OnClickCallback { get; set; }
 
     /// <summary>
+    ///     Gets or sets the progress indicator variant when progress is visible.
+    /// </summary>
+    [Parameter]
+    public NTProgressVariant ProgressVariant { get; set; } = NTProgressVariant.Ring;
+
+    /// <summary>
+    ///     Gets or sets the current progress value. Leave unset for indeterminate progress.
+    /// </summary>
+    [Parameter]
+    public int? ProgressValue { get; set; }
+
+    /// <summary>
+    ///     Gets or sets whether a progress indicator is shown inside the button.
+    /// </summary>
+    [Parameter]
+    public bool ShowProgress { get; set; }
+
+    /// <summary>
     ///     Gets or sets whether click events should stop propagating.
     /// </summary>
     [Parameter]
@@ -72,6 +91,23 @@ public abstract class NTButtonBase : NTComponentBase {
     public ButtonType Type { get; set; }
 
     /// <summary>
+    ///     Gets whether the native button should be disabled.
+    /// </summary>
+    protected bool EffectiveDisabled => Disabled || ShowProgress;
+
+    /// <summary>
+    ///     Gets the progress indicator color.
+    /// </summary>
+    protected virtual TnTColor EffectiveProgressColor => TextColor ?? TnTColor.Primary;
+
+    /// <summary>
+    ///     Renders the shared button progress indicator.
+    /// </summary>
+    protected RenderFragment? ButtonProgressIndicator => ShowProgress
+        ? RenderButtonProgressIndicator
+        : null;
+
+    /// <summary>
     ///     Gets whether this button currently exposes toggle behavior.
     /// </summary>
     protected virtual bool IsToggleEnabled => false;
@@ -90,6 +126,20 @@ public abstract class NTButtonBase : NTComponentBase {
     ///     Gets the rendered aria-pressed value for toggle buttons.
     /// </summary>
     protected string? ToggleAriaPressed => IsToggleEnabled ? ToggleSelected.ToString().ToLowerInvariant() : null;
+
+    private void RenderButtonProgressIndicator(RenderTreeBuilder builder) {
+        builder.OpenElement(0, "span");
+        builder.AddAttribute(1, "class", "nt-button-progress");
+        builder.OpenComponent<NTProgress>(2);
+        builder.AddAttribute(3, "class", "nt-button-progress-indicator");
+        builder.AddAttribute(4, nameof(NTProgress.Variant), ProgressVariant);
+        builder.AddAttribute(5, nameof(NTProgress.Value), (double?)ProgressValue);
+        builder.AddAttribute(6, nameof(NTProgress.Size), Size.Largest);
+        builder.AddAttribute(7, nameof(NTProgress.TrackVisible), false);
+        builder.AddAttribute(8, nameof(NTProgress.ProgressColor), EffectiveProgressColor);
+        builder.CloseComponent();
+        builder.CloseElement();
+    }
 
     /// <inheritdoc />
     public override Task SetParametersAsync(ParameterView parameters) {
@@ -118,7 +168,7 @@ public abstract class NTButtonBase : NTComponentBase {
     ///     Handles the native button click event.
     /// </summary>
     protected async Task HandleClickAsync(MouseEventArgs args) {
-        if (Disabled) {
+        if (EffectiveDisabled) {
             return;
         }
 

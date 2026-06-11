@@ -70,6 +70,51 @@ public class NTButton_Tests : BunitContext {
     }
 
     [Fact]
+    public void ShowProgress_Renders_Indeterminate_Ring_Progress_And_Disables_Button() {
+        var cut = Render<NTButton>(parameters => parameters
+            .Add(x => x.Label, "Save")
+            .Add(x => x.ShowProgress, true));
+
+        var button = cut.Find("button");
+        var progress = cut.Find(".nt-button-progress .nt-progress");
+
+        button.HasAttribute("disabled").Should().BeTrue();
+        button.GetAttribute("class")!.Should().Contain("nt-button-progress-active");
+        button.GetAttribute("class")!.Should().Contain("tnt-disabled");
+        progress.GetAttribute("class")!.Should().Contain("nt-progress-ring");
+        progress.GetAttribute("class")!.Should().Contain("nt-progress-indeterminate");
+        progress.HasAttribute("aria-valuenow").Should().BeFalse();
+    }
+
+    [Fact]
+    public void ProgressValue_Renders_Determinate_Linear_Progress() {
+        var cut = Render<NTButton>(parameters => parameters
+            .Add(x => x.Label, "Upload")
+            .Add(x => x.ShowProgress, true)
+            .Add(x => x.ProgressVariant, NTProgressVariant.Linear)
+            .Add(x => x.ProgressValue, 35));
+
+        var progress = cut.Find(".nt-button-progress .nt-progress");
+
+        progress.GetAttribute("class")!.Should().Contain("nt-progress-linear");
+        progress.GetAttribute("class")!.Should().Contain("nt-progress-determinate");
+        progress.GetAttribute("aria-valuenow")!.Should().Be("35");
+    }
+
+    [Fact]
+    public void ShowProgress_Click_Does_Not_Invoke_Callback() {
+        var clicked = 0;
+        var cut = Render<NTButton>(parameters => parameters
+            .Add(x => x.Label, "Saving")
+            .Add(x => x.ShowProgress, true)
+            .Add(x => x.OnClickCallback, EventCallback.Factory.Create<MouseEventArgs>(this, () => clicked++)));
+
+        cut.Find("button").Click();
+
+        clicked.Should().Be(0);
+    }
+
+    [Fact]
     public void Toggle_Click_Invokes_SelectedChanged_For_Bind_Selected() {
         var selected = false;
         var cut = Render<NTButton>(parameters => parameters

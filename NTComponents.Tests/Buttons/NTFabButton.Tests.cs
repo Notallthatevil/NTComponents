@@ -211,6 +211,21 @@ public class NTFabButton_Tests : BunitContext {
     }
 
     [Fact]
+    public void ShowProgress_Renders_Progress_And_Disables_Button() {
+        var cut = Render<NTFabButton>(parameters => parameters
+            .Add(x => x.Icon, SampleIcon)
+            .Add(x => x.AriaLabel, "Create item")
+            .Add(x => x.ShowProgress, true));
+
+        var button = cut.Find("button");
+
+        button.HasAttribute("disabled").Should().BeTrue();
+        button.GetAttribute("class")!.Should().Contain("nt-button-progress-active");
+        button.GetAttribute("class")!.Should().Contain("tnt-disabled");
+        cut.Find(".nt-button-progress .nt-progress").GetAttribute("class")!.Should().Contain("nt-progress-ring");
+    }
+
+    [Fact]
     public void Disabled_Click_Does_Not_Invoke_Callback() {
         var clicked = 0;
         var cut = Render<NTFabButton>(parameters => parameters

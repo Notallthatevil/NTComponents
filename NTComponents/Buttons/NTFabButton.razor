@@ -7,7 +7,7 @@
 		style="@ElementStyle"
 		type="@Type.ToHtmlAttribute()"
 		name="@ElementName"
-		disabled="@Disabled"
+		disabled="@EffectiveDisabled"
 		autofocus="@AutoFocus"
 		title="@ElementTitle"
 		id="@ElementId"
@@ -32,4 +32,6 @@
 	@if (HasLabel) {
 		<span class="nt-fab-button-label">@Label</span>
 	}
+
+	@ButtonProgressIndicator
 </button>

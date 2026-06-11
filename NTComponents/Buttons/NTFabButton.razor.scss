@@ -4,6 +4,7 @@
 @use '../Styles/_Variables/_elevation.scss' as elevation;
 @use '../Styles/_Variables/_measurements.scss' as measurements;
 @use '../Styles/_Variables/_typescale.scss' as typescale;
+@use './buttonChrome' as buttonChrome;
 @use './buttonMotion' as buttonMotion;
 @use './buttonFocusRing' as focus;
 
@@ -217,6 +218,13 @@ $nt-fab-elevations: (
         z-index: 2;
     }
 
+    &.nt-button-progress-active {
+        > .nt-fab-button-icon,
+        > .nt-fab-button-label {
+            opacity: 0;
+        }
+    }
+
     .nt-fab-button-icon {
         align-items: center;
         display: inline-flex;
@@ -242,6 +250,8 @@ $nt-fab-elevations: (
         }
     }
 
+    @include buttonChrome.progress-overlay;
+
     ::deep {
         .nt-button-ripple-host {
             border-radius: inherit;
@@ -257,17 +267,6 @@ $nt-fab-elevations: (
 
         tnt-page-script {
             position: absolute;
-        }
-
-        progress.tnt-components {
-            height: 100%;
-            position: absolute !important;
-            width: 100%;
-
-            &.tnt-progress-linear {
-                height: 4px !important;
-                width: calc(100% - 8px) !important;
-            }
         }
     }
 }

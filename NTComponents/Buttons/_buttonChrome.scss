@@ -137,3 +137,47 @@ $sizes: (
         }
     }
 }
+
+@mixin progress-overlay {
+    &.nt-button-progress-active {
+        cursor: progress;
+    }
+
+    ::deep {
+        .nt-button-progress {
+            border-radius: inherit;
+            display: grid;
+            inset: 0;
+            overflow: hidden;
+            place-items: center;
+            pointer-events: none;
+            position: absolute;
+            z-index: 3;
+        }
+
+        .nt-button-progress-indicator.nt-progress {
+            margin: 0;
+            max-block-size: 100%;
+            max-inline-size: 100%;
+        }
+
+        .nt-button-progress-indicator.nt-progress-ring {
+            --nt-progress-size: 100%;
+            --nt-progress-ring-thickness: max(3px, min(8px, 12%));
+            block-size: 100%;
+            inline-size: 100%;
+        }
+
+        .nt-button-progress-indicator.nt-progress-linear {
+            --nt-progress-linear-height: 100%;
+            block-size: 100%;
+            inline-size: 100%;
+            margin-inline: 0;
+
+            .nt-progress-track {
+                border-radius: inherit;
+                clip-path: none;
+            }
+        }
+    }
+}

@@ -2,6 +2,7 @@
 @use '../Styles/_Variables/_colors.scss' as colors;
 @use '../Styles/_Variables/_corner-radius.scss' as corners;
 @use '../Styles/_Variables/_measurements.scss' as measurements;
+@use './buttonChrome' as buttonChrome;
 @use './buttonMotion' as buttonMotion;
 @use './buttonFocusRing' as focus;
 
@@ -176,6 +177,10 @@ $nt-icon-button-sizes: (
         z-index: 2;
     }
 
+    &.nt-button-progress-active > .nt-icon-button-icon {
+        opacity: 0;
+    }
+
     &.tnt-disabled,
     &:disabled {
         box-shadow: none;
@@ -197,6 +202,8 @@ $nt-icon-button-sizes: (
             border-color: color-mix(in srgb, #{colors.$tnt-color-on-surface} 12%, transparent);
         }
     }
+
+    @include buttonChrome.progress-overlay;
 
     ::deep {
         .nt-button-ripple-host {
