@@ -1,4 +1,6 @@
+@use 'sass:map';
 @use '../Styles/_Variables/_colors.scss' as colors;
+@use '../Styles/_Variables/_elevation.scss' as elevation;
 @use './buttonChrome' as buttonChrome;
 
 .nt-button {
@@ -33,10 +35,40 @@
         z-index: 2;
     }
 
+    &.nt-elevation-none,
+    &.nt-elevation-lowest,
+    &.nt-elevation-low,
+    &.nt-elevation-medium,
+    &.nt-elevation-high,
+    &.nt-elevation-highest {
+        box-shadow: none;
+    }
+
+    &.nt-elevation-lowest::after {
+        box-shadow: map.get(elevation.$elevation-shadows, 1);
+    }
+
+    &.nt-elevation-low::after {
+        box-shadow: map.get(elevation.$elevation-shadows, 2);
+    }
+
+    &.nt-elevation-medium::after {
+        box-shadow: map.get(elevation.$elevation-shadows, 3);
+    }
+
+    &.nt-elevation-high::after {
+        box-shadow: map.get(elevation.$elevation-shadows, 4);
+    }
+
+    &.nt-elevation-highest::after {
+        box-shadow: map.get(elevation.$elevation-shadows, 5);
+    }
+
     &.nt-button-progress-active {
+        &::after,
         > .nt-button-icon,
         > .nt-button-label {
-            opacity: 0;
+            opacity: 0.72;
         }
     }
 
@@ -55,7 +87,7 @@
     }
 
     &.tnt-disabled,
-    &:disabled {
+    &:disabled:not(.nt-button-progress-active) {
         box-shadow: none;
         color: color-mix(in srgb, #{colors.$tnt-color-on-surface} 38%, transparent);
         cursor: not-allowed;

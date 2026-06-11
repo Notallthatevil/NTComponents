@@ -80,7 +80,7 @@ public class NTButton_Tests : BunitContext {
 
         button.HasAttribute("disabled").Should().BeTrue();
         button.GetAttribute("class")!.Should().Contain("nt-button-progress-active");
-        button.GetAttribute("class")!.Should().Contain("tnt-disabled");
+        button.GetAttribute("class")!.Should().NotContain("tnt-disabled");
         progress.GetAttribute("class")!.Should().Contain("nt-progress-ring");
         progress.GetAttribute("class")!.Should().Contain("nt-progress-indeterminate");
         progress.HasAttribute("aria-valuenow").Should().BeFalse();

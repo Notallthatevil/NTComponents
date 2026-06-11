@@ -221,7 +221,7 @@ public class NTFabButton_Tests : BunitContext {
 
         button.HasAttribute("disabled").Should().BeTrue();
         button.GetAttribute("class")!.Should().Contain("nt-button-progress-active");
-        button.GetAttribute("class")!.Should().Contain("tnt-disabled");
+        button.GetAttribute("class")!.Should().NotContain("tnt-disabled");
         cut.Find(".nt-button-progress .nt-progress").GetAttribute("class")!.Should().Contain("nt-progress-ring");
     }
 

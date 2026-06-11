@@ -36,7 +36,7 @@ public partial class NTButton : NTButtonBase {
         .AddClass("nt-button-shape-square", EffectiveShape == ButtonShape.Square)
         .AddElevation(Elevation)
         .AddSize(ButtonSize)
-        .AddDisabled(EffectiveDisabled)
+        .AddDisabled(Disabled)
         .Build();
 
     /// <inheritdoc />

@@ -101,6 +101,11 @@ public abstract class NTButtonBase : NTComponentBase {
     protected virtual TnTColor EffectiveProgressColor => TextColor ?? TnTColor.Primary;
 
     /// <summary>
+    ///     Gets the progress indicator size.
+    /// </summary>
+    protected virtual Size EffectiveProgressSize => ButtonSize;
+
+    /// <summary>
     ///     Renders the shared button progress indicator.
     /// </summary>
     protected RenderFragment? ButtonProgressIndicator => ShowProgress
@@ -134,7 +139,7 @@ public abstract class NTButtonBase : NTComponentBase {
         builder.AddAttribute(3, "class", "nt-button-progress-indicator");
         builder.AddAttribute(4, nameof(NTProgress.Variant), ProgressVariant);
         builder.AddAttribute(5, nameof(NTProgress.Value), (double?)ProgressValue);
-        builder.AddAttribute(6, nameof(NTProgress.Size), Size.Largest);
+        builder.AddAttribute(6, nameof(NTProgress.Size), EffectiveProgressSize);
         builder.AddAttribute(7, nameof(NTProgress.TrackVisible), false);
         builder.AddAttribute(8, nameof(NTProgress.ProgressColor), EffectiveProgressColor);
         builder.CloseComponent();

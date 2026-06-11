@@ -58,6 +58,8 @@ $nt-fab-elevations: (
 @mixin nt-fab-size($tokens) {
     $container-size: map.get($tokens, container-size);
 
+    --nt-button-progress-ring-size: max(24px, calc(#{$container-size} - 8px));
+
     border-radius: map.get($tokens, radius);
     min-block-size: max(48px, #{$container-size});
     min-inline-size: max(48px, #{$container-size});
@@ -219,9 +221,10 @@ $nt-fab-elevations: (
     }
 
     &.nt-button-progress-active {
+        &::after,
         > .nt-fab-button-icon,
         > .nt-fab-button-label {
-            opacity: 0;
+            opacity: 0.72;
         }
     }
 
@@ -239,7 +242,7 @@ $nt-fab-elevations: (
     }
 
     &.tnt-disabled,
-    &:disabled {
+    &:disabled:not(.nt-button-progress-active) {
         color: color-mix(in srgb, #{colors.$tnt-color-on-surface} 38%, transparent);
         cursor: not-allowed;
         outline: none;

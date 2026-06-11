@@ -2,297 +2,160 @@
 @using NTComponents
 @rendermode InteractiveAuto
 
-<select @bind="Appearance">
-	@foreach (var appearance in Enum.GetValues<ButtonAppearance>().Distinct()) {
-		<option value="@appearance">@appearance</option>
-	}
-</select>
+<div style="display:flex;flex-wrap:wrap;gap:16px;align-items:end;margin-bottom:24px;">
+	<label>
+		Variant
+		<select @bind="SelectedVariant">
+			@foreach (var variant in ButtonVariants) {
+				<option value="@variant">@variant</option>
+			}
+		</select>
+	</label>
 
-<select @bind="Shape">
-	@foreach (var shape in Enum.GetValues<ButtonShape>().Distinct()) {
-		<option value="@shape">@shape</option>
-	}
-</select>
+	<label>
+		Shape
+		<select @bind="Shape">
+			@foreach (var shape in ButtonShapes) {
+				<option value="@shape">@shape</option>
+			}
+		</select>
+	</label>
 
-<label>
-	<input type="checkbox" @bind="Disabled" />
-	Disabled
-</label>
+	<label>
+		Progress
+		<select @bind="ProgressVariant">
+			@foreach (var variant in ProgressVariants) {
+				<option value="@variant">@variant</option>
+			}
+		</select>
+	</label>
 
-<label>
-	<input type="checkbox" @bind="StartIcon" />
-	Start Icon
-</label>
+	<label>
+		<input type="checkbox" @bind="Disabled" />
+		Disabled
+	</label>
 
-<label>
-	<input type="checkbox" @bind="EndIcon" />
-	End Icon
-</label>
+	<label>
+		<input type="checkbox" @bind="ShowLeadingIcon" />
+		Leading Icon
+	</label>
+
+	<label>
+		<input type="checkbox" @bind="ShowProgress" />
+		Show Progress
+	</label>
+
+	<label>
+		<input type="checkbox" @bind="UseDeterminateProgress" />
+		Determinate
+	</label>
+
+	<label>
+		Progress Value
+		<input type="range" min="0" max="100" @bind="ProgressValue" disabled="@(!UseDeterminateProgress)" />
+		@ProgressValue%
+	</label>
+</div>
 
 <NTDivider style="margin-top:36px;margin-bottom:36px;" />
-<TnTRow>
-	<TnTColumn S="12">
-		<TnTButton ButtonSize="@Size.XS" Appearance="@Appearance" Shape="@Shape" Disabled="Disabled" TextColor="@(Appearance == ButtonAppearance.Filled || Appearance == ButtonAppearance.Elevated ? TnTColor.OnPrimary : TnTColor.OnSurface)">
-			@if (StartIcon) {
-				<MaterialIcon Icon="@MaterialIcon.CloudySnowing" />
-			}
-			Smallest
-			@if (EndIcon) {
-				<MaterialIcon Icon="@MaterialIcon.SunnySnowing" />
-			}
-		</TnTButton>
 
-		<TnTButton ButtonSize="@Size.Small" Appearance="@Appearance" Shape="@Shape" Disabled="Disabled" TextColor="@(Appearance == ButtonAppearance.Filled || Appearance == ButtonAppearance.Elevated ? TnTColor.OnPrimary : TnTColor.OnSurface)">
-			@if (StartIcon) {
-				<MaterialIcon Icon="@MaterialIcon.CloudySnowing" />
-			}
-			Small
-			@if (EndIcon) {
-				<MaterialIcon Icon="@MaterialIcon.SunnySnowing" />
-			}
-		</TnTButton>
+<h2>Variants</h2>
+<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-block:16px 32px;">
+	@foreach (var variant in ButtonVariants) {
+		<NTButton Label="@variant.ToString()"
+		          Variant="@variant"
+		          Shape="@Shape"
+		          Disabled="@Disabled"
+		          LeadingIcon="@CurrentLeadingIcon"
+		          ShowProgress="@ShowProgress"
+		          ProgressVariant="@ProgressVariant"
+		          ProgressValue="@EffectiveProgressValue" />
+	}
+</div>
 
-		<TnTButton ButtonSize="@Size.Medium" Appearance="@Appearance" Shape="@Shape" Disabled="Disabled" TextColor="@(Appearance == ButtonAppearance.Filled || Appearance == ButtonAppearance.Elevated ? TnTColor.OnPrimary : TnTColor.OnSurface)">
-			@if (StartIcon) {
-				<MaterialIcon Icon="@MaterialIcon.CloudySnowing" />
-			}
-			Medium
-			@if (EndIcon) {
-				<MaterialIcon Icon="@MaterialIcon.SunnySnowing" />
-			}
-		</TnTButton>
+<h2>Sizes</h2>
+<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-block:16px 32px;">
+	@foreach (var size in ButtonSizes) {
+		<NTButton Label="@GetSizeLabel(size)"
+		          Variant="@SelectedVariant"
+		          ButtonSize="@size"
+		          Shape="@Shape"
+		          Disabled="@Disabled"
+		          LeadingIcon="@CurrentLeadingIcon"
+		          ShowProgress="@ShowProgress"
+		          ProgressVariant="@ProgressVariant"
+		          ProgressValue="@EffectiveProgressValue" />
+	}
+</div>
 
-		<TnTButton ButtonSize="@Size.Large" Appearance="@Appearance" Shape="@Shape" Disabled="Disabled" TextColor="@(Appearance == ButtonAppearance.Filled || Appearance == ButtonAppearance.Elevated ? TnTColor.OnPrimary : TnTColor.OnSurface)">
-			@if (StartIcon) {
-				<MaterialIcon Icon="@MaterialIcon.CloudySnowing" />
-			}
-			Large
-			@if (EndIcon) {
-				<MaterialIcon Icon="@MaterialIcon.SunnySnowing" />
-			}
-		</TnTButton>
+<h2>Progress Variants</h2>
+<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-block:16px 32px;">
+	@foreach (var variant in ProgressVariants) {
+		<NTButton Label="@variant.ToString()"
+		          Variant="@SelectedVariant"
+		          Shape="@Shape"
+		          Disabled="@Disabled"
+		          LeadingIcon="@CurrentLeadingIcon"
+		          ShowProgress="@ShowProgress"
+		          ProgressVariant="@variant"
+		          ProgressValue="@EffectiveProgressValue" />
+	}
+</div>
 
-		<TnTButton ButtonSize="@Size.Largest" Appearance="@Appearance" Shape="@Shape" Disabled="Disabled" TextColor="@(Appearance == ButtonAppearance.Filled || Appearance == ButtonAppearance.Elevated ? TnTColor.OnPrimary : TnTColor.OnSurface)">
-			@if (StartIcon) {
-				<MaterialIcon Icon="@MaterialIcon.CloudySnowing" />
-			}
-			Largest
-			@if (EndIcon) {
-				<MaterialIcon Icon="@MaterialIcon.SunnySnowing" />
-			}
-		</TnTButton>
-	</TnTColumn>
-</TnTRow>
+<h2>Toggle Buttons</h2>
+<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-block:16px 32px;">
+	@if (SelectedVariant == NTButtonVariant.Text) {
+		<NTButton Label="Toggle unavailable"
+		          Variant="@SelectedVariant"
+		          Shape="@Shape"
+		          Disabled="@Disabled"
+		          LeadingIcon="@CurrentLeadingIcon"
+		          ShowProgress="@ShowProgress"
+		          ProgressVariant="@ProgressVariant"
+		          ProgressValue="@EffectiveProgressValue" />
+	}
+	else {
+		<NTButton Label="Unselected"
+		          Variant="@SelectedVariant"
+		          Shape="@Shape"
+		          Disabled="@Disabled"
+		          LeadingIcon="@CurrentLeadingIcon"
+		          IsToggleButton="true"
+		          Selected="false"
+		          ShowProgress="@ShowProgress"
+		          ProgressVariant="@ProgressVariant"
+		          ProgressValue="@EffectiveProgressValue" />
 
-<TnTRow>
-	<TnTColumn S="12">
-		<TnTButton ButtonSize="@Size.XS" Appearance="@Appearance" Shape="@Shape" Disabled="Disabled" TextColor="@(Appearance == ButtonAppearance.Filled || Appearance == ButtonAppearance.Elevated ? TnTColor.OnPrimary : TnTColor.OnSurface)">
-			<ChildContent>
-
-				@if (StartIcon) {
-					<MaterialIcon Icon="@MaterialIcon.CloudySnowing" />
-				}
-				Smallest
-				@if (EndIcon) {
-					<MaterialIcon Icon="@MaterialIcon.SunnySnowing" />
-				}
-				<TnTBadge>
-					100
-				</TnTBadge>
-			</ChildContent>
-			<Tooltip>
-				My tooltip content
-			</Tooltip>
-		</TnTButton>
-
-		<TnTButton ButtonSize="@Size.Small" Appearance="@Appearance" Shape="@Shape" Disabled="Disabled" TextColor="@(Appearance == ButtonAppearance.Filled || Appearance == ButtonAppearance.Elevated ? TnTColor.OnPrimary : TnTColor.OnSurface)">
-			@if (StartIcon) {
-				<MaterialIcon Icon="@MaterialIcon.CloudySnowing" />
-			}
-			Small
-			@if (EndIcon) {
-				<MaterialIcon Icon="@MaterialIcon.SunnySnowing" />
-			}
-			<TnTBadge>
-				100
-			</TnTBadge>
-		</TnTButton>
-
-		<TnTButton ButtonSize="@Size.Medium" Appearance="@Appearance" Shape="@Shape" Disabled="Disabled" TextColor="@(Appearance == ButtonAppearance.Filled || Appearance == ButtonAppearance.Elevated ? TnTColor.OnPrimary : TnTColor.OnSurface)">
-			@if (StartIcon) {
-				<MaterialIcon Icon="@MaterialIcon.CloudySnowing" />
-			}
-			Medium
-			@if (EndIcon) {
-				<MaterialIcon Icon="@MaterialIcon.SunnySnowing" />
-			}
-			<TnTBadge>
-				100
-			</TnTBadge>
-		</TnTButton>
-
-		<TnTButton ButtonSize="@Size.Large" Appearance="@Appearance" Shape="@Shape" Disabled="Disabled" TextColor="@(Appearance == ButtonAppearance.Filled || Appearance == ButtonAppearance.Elevated ? TnTColor.OnPrimary : TnTColor.OnSurface)">
-			@if (StartIcon) {
-				<MaterialIcon Icon="@MaterialIcon.CloudySnowing" />
-			}
-			Large
-			@if (EndIcon) {
-				<MaterialIcon Icon="@MaterialIcon.SunnySnowing" />
-			}
-			<TnTBadge>
-				100
-			</TnTBadge>
-		</TnTButton>
-
-		<TnTButton ButtonSize="@Size.Largest" Appearance="@Appearance" Shape="@Shape" Disabled="Disabled" TextColor="@(Appearance == ButtonAppearance.Filled || Appearance == ButtonAppearance.Elevated ? TnTColor.OnPrimary : TnTColor.OnSurface)">
-			@if (StartIcon) {
-				<MaterialIcon Icon="@MaterialIcon.CloudySnowing" />
-			}
-			Largest
-			@if (EndIcon) {
-				<MaterialIcon Icon="@MaterialIcon.SunnySnowing" />
-			}
-			<TnTBadge>
-				100
-			</TnTBadge>
-		</TnTButton>
-	</TnTColumn>
-</TnTRow>
-
-<TnTRow>
-	<TnTColumn S="12">
-		<TnTButton ButtonSize="@Size.XS" Appearance="@Appearance" Shape="@Shape" Disabled="Disabled" TextColor="@(Appearance == ButtonAppearance.Filled || Appearance == ButtonAppearance.Elevated ? TnTColor.OnPrimary : TnTColor.OnSurface)">
-			@if (StartIcon) {
-				<MaterialIcon Icon="@MaterialIcon.CloudySnowing" />
-			}
-			Smallest
-			@if (EndIcon) {
-				<MaterialIcon Icon="@MaterialIcon.SunnySnowing" />
-			}
-			<TnTProgressIndicator ProgressColor="TnTColor.Error" />
-		</TnTButton>
-
-		<TnTButton ButtonSize="@Size.Small" Appearance="@Appearance" Shape="@Shape" Disabled="Disabled" TextColor="@(Appearance == ButtonAppearance.Filled || Appearance == ButtonAppearance.Elevated ? TnTColor.OnPrimary : TnTColor.OnSurface)">
-			@if (StartIcon) {
-				<MaterialIcon Icon="@MaterialIcon.CloudySnowing" />
-			}
-			Small
-			@if (EndIcon) {
-				<MaterialIcon Icon="@MaterialIcon.SunnySnowing" />
-			}
-
-			<TnTProgressIndicator ProgressColor="TnTColor.Error" />
-		</TnTButton>
-
-		<TnTButton ButtonSize="@Size.Medium" Appearance="@Appearance" Shape="@Shape" Disabled="Disabled" TextColor="@(Appearance == ButtonAppearance.Filled || Appearance == ButtonAppearance.Elevated ? TnTColor.OnPrimary : TnTColor.OnSurface)">
-			@if (StartIcon) {
-				<MaterialIcon Icon="@MaterialIcon.CloudySnowing" />
-			}
-			Medium
-			@if (EndIcon) {
-				<MaterialIcon Icon="@MaterialIcon.SunnySnowing" />
-			}
-
-			<TnTProgressIndicator ProgressColor="TnTColor.Error" />
-		</TnTButton>
-
-		<TnTButton ButtonSize="@Size.Large" Appearance="@Appearance" Shape="@Shape" Disabled="Disabled" TextColor="@(Appearance == ButtonAppearance.Filled || Appearance == ButtonAppearance.Elevated ? TnTColor.OnPrimary : TnTColor.OnSurface)">
-			@if (StartIcon) {
-				<MaterialIcon Icon="@MaterialIcon.CloudySnowing" />
-			}
-			Large
-			@if (EndIcon) {
-				<MaterialIcon Icon="@MaterialIcon.SunnySnowing" />
-			}
-
-			<TnTProgressIndicator ProgressColor="TnTColor.Error" />
-		</TnTButton>
-
-		<TnTButton ButtonSize="@Size.Largest" Appearance="@Appearance" Shape="@Shape" Disabled="Disabled" TextColor="@(Appearance == ButtonAppearance.Filled || Appearance == ButtonAppearance.Elevated ? TnTColor.OnPrimary : TnTColor.OnSurface)">
-			@if (StartIcon) {
-				<MaterialIcon Icon="@MaterialIcon.CloudySnowing" />
-			}
-			Largest
-			@if (EndIcon) {
-				<MaterialIcon Icon="@MaterialIcon.SunnySnowing" />
-			}
-
-			<TnTProgressIndicator ProgressColor="TnTColor.Error" />
-		</TnTButton>
-	</TnTColumn>
-</TnTRow>
-
-
-<TnTRow>
-	<TnTColumn S="12">
-		<TnTButton ButtonSize="@Size.XS" Appearance="@Appearance" Shape="@Shape" Disabled="Disabled" TextColor="@(Appearance == ButtonAppearance.Filled || Appearance == ButtonAppearance.Elevated ? TnTColor.OnPrimary : TnTColor.OnSurface)">
-			@if (StartIcon) {
-				<MaterialIcon Icon="@MaterialIcon.CloudySnowing" />
-			}
-			Smallest
-			@if (EndIcon) {
-				<MaterialIcon Icon="@MaterialIcon.SunnySnowing" />
-			}
-			<TnTProgressIndicator ProgressColor="TnTColor.Error" Appearance="ProgressAppearance.Linear" />
-		</TnTButton>
-
-		<TnTButton ButtonSize="@Size.Small" Appearance="@Appearance" Shape="@Shape" Disabled="Disabled" TextColor="@(Appearance == ButtonAppearance.Filled || Appearance == ButtonAppearance.Elevated ? TnTColor.OnPrimary : TnTColor.OnSurface)">
-			@if (StartIcon) {
-				<MaterialIcon Icon="@MaterialIcon.CloudySnowing" />
-			}
-			Small
-			@if (EndIcon) {
-				<MaterialIcon Icon="@MaterialIcon.SunnySnowing" />
-			}
-			<TnTProgressIndicator ProgressColor="TnTColor.Error" Appearance="ProgressAppearance.Linear" />
-		</TnTButton>
-
-		<TnTButton ButtonSize="@Size.Medium" Appearance="@Appearance" Shape="@Shape" Disabled="Disabled" TextColor="@(Appearance == ButtonAppearance.Filled || Appearance == ButtonAppearance.Elevated ? TnTColor.OnPrimary : TnTColor.OnSurface)">
-			@if (StartIcon) {
-				<MaterialIcon Icon="@MaterialIcon.CloudySnowing" />
-			}
-			Medium
-			@if (EndIcon) {
-				<MaterialIcon Icon="@MaterialIcon.SunnySnowing" />
-			}
-			<TnTProgressIndicator ProgressColor="TnTColor.Error" Appearance="ProgressAppearance.Linear" />
-		</TnTButton>
-
-		<TnTButton ButtonSize="@Size.Large" Appearance="@Appearance" Shape="@Shape" Disabled="Disabled" TextColor="@(Appearance == ButtonAppearance.Filled || Appearance == ButtonAppearance.Elevated ? TnTColor.OnPrimary : TnTColor.OnSurface)">
-			@if (StartIcon) {
-				<MaterialIcon Icon="@MaterialIcon.CloudySnowing" />
-			}
-			Large
-			@if (EndIcon) {
-				<MaterialIcon Icon="@MaterialIcon.SunnySnowing" />
-			}
-			<TnTProgressIndicator ProgressColor="TnTColor.Error" Appearance="ProgressAppearance.Linear" />
-		</TnTButton>
-
-		<TnTButton ButtonSize="@Size.Largest" Appearance="@Appearance" Shape="@Shape" Disabled="Disabled" TextColor="@(Appearance == ButtonAppearance.Filled || Appearance == ButtonAppearance.Elevated ? TnTColor.OnPrimary : TnTColor.OnSurface)">
-			@if (StartIcon) {
-				<MaterialIcon Icon="@MaterialIcon.CloudySnowing" />
-			}
-			Largest
-			@if (EndIcon) {
-				<MaterialIcon Icon="@MaterialIcon.SunnySnowing" />
-			}
-			<TnTProgressIndicator ProgressColor="TnTColor.Error" Appearance="ProgressAppearance.Linear" />
-		</TnTButton>
-	</TnTColumn>
-</TnTRow>
-
+		<NTButton Label="Selected"
+		          Variant="@SelectedVariant"
+		          Shape="@Shape"
+		          Disabled="@Disabled"
+		          LeadingIcon="@CurrentLeadingIcon"
+		          IsToggleButton="true"
+		          Selected="true"
+		          ShowProgress="@ShowProgress"
+		          ProgressVariant="@ProgressVariant"
+		          ProgressValue="@EffectiveProgressValue" />
+	}
+</div>
 
 @code {
+	private static readonly NTButtonVariant[] ButtonVariants = Enum.GetValues<NTButtonVariant>();
+	private static readonly ButtonShape[] ButtonShapes = Enum.GetValues<ButtonShape>();
+	private static readonly NTProgressVariant[] ProgressVariants = Enum.GetValues<NTProgressVariant>();
+	private static readonly Size[] ButtonSizes = [Size.Smallest, Size.Small, Size.Medium, Size.Large, Size.Largest];
 
-
-	private ButtonAppearance Appearance { get; set; } = ButtonAppearance.Filled;
-
+	private NTButtonVariant SelectedVariant { get; set; } = NTButtonVariant.Filled;
 	private ButtonShape Shape { get; set; } = ButtonShape.Round;
-
+	private NTProgressVariant ProgressVariant { get; set; } = NTProgressVariant.Ring;
 	private bool Disabled { get; set; }
+	private bool ShowLeadingIcon { get; set; }
+	private bool ShowProgress { get; set; }
+	private bool UseDeterminateProgress { get; set; }
+	private int ProgressValue { get; set; } = 42;
+	private int? EffectiveProgressValue => UseDeterminateProgress ? ProgressValue : null;
+	private TnTIcon? CurrentLeadingIcon => ShowLeadingIcon ? MaterialIcon.CloudySnowing : null;
 
-	private bool StartIcon { get; set; }
-
-	private bool EndIcon { get; set; }
+	private static string GetSizeLabel(Size size)
+		=> size == Size.Smallest ? "Smallest" : size.ToString();
 }

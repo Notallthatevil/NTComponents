@@ -59,7 +59,7 @@ public partial class NTIconButton : NTButtonBase {
         .AddClass("nt-icon-button-shape-square", EffectiveShape == ButtonShape.Square)
         .AddElevation(Elevation)
         .AddSize(ButtonSize)
-        .AddDisabled(EffectiveDisabled)
+        .AddDisabled(Disabled)
         .Build();
 
     /// <inheritdoc />

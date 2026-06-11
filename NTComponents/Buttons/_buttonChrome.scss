@@ -89,6 +89,10 @@ $sizes: (
 }
 
 @mixin size($square-shape-class, $height, $padding, $gap, $icon-size, $radius, $pressed-radius, $square-radius, $weight, $font-size, $line-height, $tracking) {
+    --nt-button-progress-inset-block: #{touch-inset($height)};
+    --nt-button-progress-inset-inline: 0px;
+    --nt-button-progress-ring-size: max(24px, calc(#{$height} - 8px));
+
     border-radius: $radius;
     gap: $gap;
     height: $height;
@@ -140,14 +144,15 @@ $sizes: (
 
 @mixin progress-overlay {
     &.nt-button-progress-active {
-        cursor: progress;
+        cursor: not-allowed;
     }
 
     ::deep {
         .nt-button-progress {
             border-radius: inherit;
             display: grid;
-            inset: 0;
+            inset-block: var(--nt-button-progress-inset-block, 0);
+            inset-inline: var(--nt-button-progress-inset-inline, 0);
             overflow: hidden;
             place-items: center;
             pointer-events: none;
@@ -164,19 +169,16 @@ $sizes: (
         .nt-button-progress-indicator.nt-progress-ring {
             --nt-progress-size: 100%;
             --nt-progress-ring-thickness: max(3px, min(8px, 12%));
-            block-size: 100%;
-            inline-size: 100%;
+            block-size: var(--nt-button-progress-ring-size, 100%);
+            inline-size: var(--nt-button-progress-ring-size, 100%);
         }
 
         .nt-button-progress-indicator.nt-progress-linear {
-            --nt-progress-linear-height: 100%;
-            block-size: 100%;
-            inline-size: 100%;
-            margin-inline: 0;
+            inline-size: calc(100% - 16px);
+            margin-inline: 8px;
 
             .nt-progress-track {
                 border-radius: inherit;
-                clip-path: none;
             }
         }
     }

@@ -41,7 +41,7 @@ public partial class NTFabButton : NTButtonBase {
         .AddClass("nt-button-progress-active", ShowProgress)
         .AddElevation(Elevation)
         .AddSize(EffectiveButtonSize)
-        .AddDisabled(EffectiveDisabled)
+        .AddDisabled(Disabled)
         .Build();
 
     /// <inheritdoc />
@@ -91,6 +91,9 @@ public partial class NTFabButton : NTButtonBase {
 
     /// <inheritdoc />
     protected override TnTColor EffectiveProgressColor => TextColor ?? TnTColor.OnPrimaryContainer;
+
+    /// <inheritdoc />
+    protected override Size EffectiveProgressSize => EffectiveButtonSize;
 
     /// <inheritdoc />
     protected override void OnParametersSet() {
