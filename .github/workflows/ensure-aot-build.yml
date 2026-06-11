@@ -62,6 +62,17 @@ jobs:
       shell: pwsh
       run: python3 --version
 
+    - name: Setup Node for Playwright browser install
+      if: runner.os == 'Linux'
+      uses: actions/setup-node@v4
+      with:
+        node-version: 24.x
+
+    - name: Install Chromium for AOT browser smoke
+      if: runner.os == 'Linux'
+      shell: pwsh
+      run: npx --yes playwright@1.60.0 install --with-deps --no-shell chromium
+
     - name: Restore WebAssembly workloads
       shell: pwsh
       run: dotnet workload restore AotCompatibility.TestApp/AotCompatibility.TestApp.csproj

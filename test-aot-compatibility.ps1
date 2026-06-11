@@ -65,6 +65,52 @@ function Get-BrowserExecutable {
         )
     }
 
+    $playwrightBrowsersPath = [Environment]::GetEnvironmentVariable('PLAYWRIGHT_BROWSERS_PATH')
+    $userProfile = [Environment]::GetFolderPath([System.Environment+SpecialFolder]::UserProfile)
+    $playwrightCacheRoots = @()
+    if ($playwrightBrowsersPath -and $playwrightBrowsersPath -ne '0') {
+        $playwrightCacheRoots += $playwrightBrowsersPath
+    }
+
+    if ($IsWindows -or [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::Windows)) {
+        $localAppData = [Environment]::GetEnvironmentVariable('LOCALAPPDATA')
+        if ($localAppData) {
+            $playwrightCacheRoots += Join-Path $localAppData 'ms-playwright'
+        }
+    }
+    elseif ([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::OSX)) {
+        if ($userProfile) {
+            $playwrightCacheRoots += Join-Path $userProfile 'Library/Caches/ms-playwright'
+        }
+    }
+    else {
+        $cacheHome = [Environment]::GetEnvironmentVariable('XDG_CACHE_HOME')
+        if (-not $cacheHome -and $userProfile) {
+            $cacheHome = Join-Path $userProfile '.cache'
+        }
+
+        if ($cacheHome) {
+            $playwrightCacheRoots += Join-Path $cacheHome 'ms-playwright'
+        }
+    }
+
+    foreach ($playwrightCacheRoot in $playwrightCacheRoots | Where-Object { $_ } | Select-Object -Unique) {
+        if (-not (Test-Path -LiteralPath $playwrightCacheRoot)) {
+            continue
+        }
+
+        $candidates += Get-ChildItem -Path $playwrightCacheRoot -Directory -Filter 'chromium-*' -ErrorAction SilentlyContinue |
+            Sort-Object Name -Descending |
+            ForEach-Object {
+                @(
+                    (Join-Path $_.FullName 'chrome-linux/chrome'),
+                    (Join-Path $_.FullName 'chrome-win64/chrome.exe'),
+                    (Join-Path $_.FullName 'chrome-win/chrome.exe'),
+                    (Join-Path $_.FullName 'chrome-mac/Chromium.app/Contents/MacOS/Chromium')
+                )
+            }
+    }
+
     foreach ($commandName in @('google-chrome', 'chrome', 'chromium', 'chromium-browser', 'msedge', 'microsoft-edge')) {
         $command = Get-Command $commandName -ErrorAction SilentlyContinue
         if ($command) {
@@ -195,6 +241,98 @@ function Stop-StaticFileServer {
     Remove-Item -LiteralPath $Server.StopFile -Force -ErrorAction SilentlyContinue
 }
 
+function Invoke-ChromiumRuntimeExpression {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$WebSocketUrl,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Expression
+    )
+
+    $socket = [System.Net.WebSockets.ClientWebSocket]::new()
+    $cancellation = [System.Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds(10))
+
+    try {
+        $socket.ConnectAsync([Uri]::new($WebSocketUrl), $cancellation.Token).GetAwaiter().GetResult()
+
+        $message = @{
+            id = 1
+            method = 'Runtime.evaluate'
+            params = @{
+                expression = $Expression
+                returnByValue = $true
+                awaitPromise = $true
+            }
+        } | ConvertTo-Json -Compress -Depth 5
+
+        $messageBytes = [System.Text.Encoding]::UTF8.GetBytes($message)
+        $socket.SendAsync([ArraySegment[byte]]::new($messageBytes), [System.Net.WebSockets.WebSocketMessageType]::Text, $true, $cancellation.Token).GetAwaiter().GetResult()
+
+        $buffer = [byte[]]::new(65536)
+        $builder = [System.Text.StringBuilder]::new()
+
+        while ($true) {
+            $result = $socket.ReceiveAsync([ArraySegment[byte]]::new($buffer), $cancellation.Token).GetAwaiter().GetResult()
+            if ($result.MessageType -eq [System.Net.WebSockets.WebSocketMessageType]::Close) {
+                throw "Chromium DevTools socket closed before returning an evaluation result."
+            }
+
+            [void]$builder.Append([System.Text.Encoding]::UTF8.GetString($buffer, 0, $result.Count))
+            if (-not $result.EndOfMessage) {
+                continue
+            }
+
+            $responseText = $builder.ToString()
+            [void]$builder.Clear()
+            $response = $responseText | ConvertFrom-Json
+            if ($response.id -ne 1) {
+                continue
+            }
+
+            if ($response.error) {
+                throw "Chromium DevTools evaluation failed: $($response.error.message)"
+            }
+
+            return $response.result.result.value
+        }
+    }
+    finally {
+        $cancellation.Dispose()
+        if ($socket.State -eq [System.Net.WebSockets.WebSocketState]::Open) {
+            $socket.CloseAsync([System.Net.WebSockets.WebSocketCloseStatus]::NormalClosure, 'done', [System.Threading.CancellationToken]::None).GetAwaiter().GetResult()
+        }
+
+        $socket.Dispose()
+    }
+}
+
+function Start-BrowserProcess {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Browser,
+
+        [Parameter(Mandatory = $true)]
+        [string[]]$Arguments
+    )
+
+    $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
+    $startInfo.FileName = $Browser
+    $startInfo.UseShellExecute = $false
+    $startInfo.RedirectStandardError = $true
+    $startInfo.RedirectStandardOutput = $true
+
+    foreach ($argument in $Arguments) {
+        [void]$startInfo.ArgumentList.Add($argument)
+    }
+
+    $process = [System.Diagnostics.Process]::Start($startInfo)
+    $process.BeginErrorReadLine()
+    $process.BeginOutputReadLine()
+
+    return $process
+}
+
 function Test-PublishedOutput {
     param(
         [Parameter(Mandatory = $true)]
@@ -245,10 +383,11 @@ function Invoke-BrowserSmoke {
             throw "Static file server did not become ready at $($server.Url)."
         }
 
-        $lastDom = ''
-        $lastBrowserExitCode = 0
-        foreach ($virtualTimeBudget in @(30000, 60000, 120000)) {
-            $browserUserDataDirectory = Join-Path ([System.IO.Path]::GetTempPath()) "ntcomponents-aot-browser-$Port-$virtualTimeBudget"
+        $lastDom = 'DOM was not captured.'
+        $lastBrowserExitCode = $null
+        foreach ($attempt in 1..3) {
+            $debugPort = Get-FreePort
+            $browserUserDataDirectory = Join-Path ([System.IO.Path]::GetTempPath()) "ntcomponents-aot-browser-$Port-$attempt"
             Remove-Item -LiteralPath $browserUserDataDirectory -Recurse -Force -ErrorAction SilentlyContinue
 
             $browserArgs = @(
@@ -263,25 +402,69 @@ function Invoke-BrowserSmoke {
                 '--no-first-run',
                 '--disable-background-networking',
                 '--disable-search-engine-choice-screen',
+                '--remote-allow-origins=*',
+                "--remote-debugging-port=$debugPort",
                 "--user-data-dir=$browserUserDataDirectory",
-                "--virtual-time-budget=$virtualTimeBudget",
-                '--dump-dom',
                 $server.Url
             )
 
-            $lastDom = & $browser @browserArgs 2>&1 | Out-String
-            $lastBrowserExitCode = $LASTEXITCODE
+            $browserProcess = Start-BrowserProcess -Browser $browser -Arguments $browserArgs
 
-            if ($lastBrowserExitCode -eq 0 -and $lastDom -match 'data-aot-smoke-ready="true"' -and $lastDom -match 'id="aot-smoke-status"') {
-                Remove-Item -LiteralPath $browserUserDataDirectory -Recurse -Force -ErrorAction SilentlyContinue
-                return
+            try {
+                $devToolsPage = $null
+                $deadline = [DateTimeOffset]::UtcNow.AddSeconds(120)
+                while ([DateTimeOffset]::UtcNow -lt $deadline) {
+                    if ($browserProcess.HasExited) {
+                        $lastBrowserExitCode = $browserProcess.ExitCode
+                        break
+                    }
+
+                    try {
+                        $devToolsPages = Invoke-RestMethod -Uri "http://127.0.0.1:$debugPort/json" -TimeoutSec 5
+                        $devToolsPage = @($devToolsPages) | Where-Object { $_.url -eq $server.Url -and $_.webSocketDebuggerUrl } | Select-Object -First 1
+                        if ($devToolsPage) {
+                            break
+                        }
+
+                        Start-Sleep -Milliseconds 250
+                    }
+                    catch {
+                        Start-Sleep -Milliseconds 250
+                    }
+                }
+
+                if ($devToolsPage) {
+                    while ([DateTimeOffset]::UtcNow -lt $deadline) {
+                        if ($browserProcess.HasExited) {
+                            $lastBrowserExitCode = $browserProcess.ExitCode
+                            break
+                        }
+
+                        $isReady = Invoke-ChromiumRuntimeExpression -WebSocketUrl $devToolsPage.webSocketDebuggerUrl -Expression "document.querySelector('[data-aot-smoke-ready=""true""]') !== null && document.getElementById('aot-smoke-status') !== null"
+                        if ($isReady) {
+                            Remove-Item -LiteralPath $browserUserDataDirectory -Recurse -Force -ErrorAction SilentlyContinue
+                            return
+                        }
+
+                        $lastDom = Invoke-ChromiumRuntimeExpression -WebSocketUrl $devToolsPage.webSocketDebuggerUrl -Expression 'document.documentElement.outerHTML'
+                        Start-Sleep -Milliseconds 500
+                    }
+                }
+            }
+            finally {
+                if ($browserProcess -and -not $browserProcess.HasExited) {
+                    $browserProcess.Kill($true)
+                    [void]$browserProcess.WaitForExit(5000)
+                }
+
+                $browserProcess.Dispose()
             }
 
             Remove-Item -LiteralPath $browserUserDataDirectory -Recurse -Force -ErrorAction SilentlyContinue
             Start-Sleep -Milliseconds 500
         }
 
-        if ($lastBrowserExitCode -ne 0) {
+        if ($null -ne $lastBrowserExitCode -and $lastBrowserExitCode -ne 0) {
             throw "Browser smoke failed with exit code $lastBrowserExitCode. Output:`n$lastDom"
         }
 
