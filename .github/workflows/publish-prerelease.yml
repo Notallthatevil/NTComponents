@@ -175,9 +175,9 @@ jobs:
           set -euo pipefail
           rm -rf ./artifacts/nuget
           mkdir -p ./artifacts/nuget
-          dotnet pack ./NTComponents/NTComponents.csproj --no-build --configuration Release --output ./artifacts/nuget /p:PackageVersion=${{ steps.release-version.outputs.version }}
-          dotnet pack ./NTComponents.AspNetCore/NTComponents.AspNetCore.csproj --no-build --configuration Release --output ./artifacts/nuget /p:PackageVersion=${{ steps.release-version.outputs.version }}
-          dotnet pack ./NTComponents.Extensions/NTComponents.Extensions.csproj --no-build --configuration Release --output ./artifacts/nuget /p:PackageVersion=${{ steps.release-version.outputs.version }}
+          dotnet pack ./NTComponents/NTComponents.csproj --configuration Release --output ./artifacts/nuget /p:PackageVersion=${{ steps.release-version.outputs.version }}
+          dotnet pack ./NTComponents.AspNetCore/NTComponents.AspNetCore.csproj --configuration Release --output ./artifacts/nuget /p:PackageVersion=${{ steps.release-version.outputs.version }}
+          dotnet pack ./NTComponents.Extensions/NTComponents.Extensions.csproj --configuration Release --output ./artifacts/nuget /p:PackageVersion=${{ steps.release-version.outputs.version }}
 
       - name: Publish NuGet packages
         if: steps.check-tags.outputs.is_tagged == 'false'
