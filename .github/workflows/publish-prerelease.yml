@@ -6,22 +6,18 @@ on:
       - main
 
 permissions:
-  contents: write
-  issues: write
-  pull-requests: write
+  contents: read
 
 env:
   TESTINGPLATFORM_EXITCODE_IGNORE: 8
 
 jobs:
-  publish-prerelease:
+  dotnet-test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
-          persist-credentials: true
           submodules: recursive
 
       - name: Setup .NET SDKs
@@ -55,8 +51,41 @@ jobs:
       - name: Run .NET tests
         run: dotnet test NTComponents.slnx --no-restore --configuration Release --results-directory ./TestResults -v minimal
 
+  node-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: Install node dependencies
+        run: npm ci
+
       - name: Run node tests
         run: npm test
+
+  publish-prerelease:
+    needs:
+      - dotnet-test
+      - node-test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+          submodules: recursive
 
       - name: Check if commit has a preview release tag
         id: check-tags
@@ -67,6 +96,37 @@ jobs:
           else
             echo "is_tagged=false" >> $GITHUB_OUTPUT
           fi
+
+      - name: Setup .NET SDKs
+        if: steps.check-tags.outputs.is_tagged == 'false'
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+            10.0.x
+
+      - name: Setup Node.js
+        if: steps.check-tags.outputs.is_tagged == 'false'
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: Restore WebAssembly workloads
+        if: steps.check-tags.outputs.is_tagged == 'false'
+        run: dotnet workload restore NTComponents.slnx
+
+      - name: Restore dependencies
+        if: steps.check-tags.outputs.is_tagged == 'false'
+        run: dotnet restore NTComponents.slnx
+
+      - name: Install node dependencies
+        if: steps.check-tags.outputs.is_tagged == 'false'
+        run: npm ci
+
+      - name: Build
+        if: steps.check-tags.outputs.is_tagged == 'false'
+        run: dotnet build NTComponents.slnx --no-restore --configuration Release
 
       - name: Install semantic-release
         if: steps.check-tags.outputs.is_tagged == 'false'
