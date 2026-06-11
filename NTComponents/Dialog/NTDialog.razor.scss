@@ -170,7 +170,6 @@ $nt-dialog-exit-easing: motion.$nt-motion-easing-emphasized-accelerate;
         margin-block-start: $nt-dialog-body-actions-gap;
         min-block-size: $nt-dialog-action-button-height;
 
-        ::deep > button,
         ::deep .nt-dialog-button {
             @include typescale.nt-label-large;
             align-items: center;
@@ -194,6 +193,10 @@ $nt-dialog-exit-easing: motion.$nt-motion-easing-emphasized-accelerate;
                 outline: 3px solid #{colors.$tnt-color-primary};
                 outline-offset: 2px;
             }
+        }
+
+        &.nt-dialog-actions-space-between {
+            justify-content: space-between;
         }
     }
 }

@@ -264,6 +264,23 @@ public class NTDialog_Tests : BunitContext {
     }
 
     [Fact]
+    public void NTDialog_Renders_Default_Button_Spacing_Class() {
+        var component = Render<NTDialog>(parameters => parameters
+            .Add(p => p.Id, "default-button-spacing-dialog"));
+
+        component.Find(".nt-dialog-actions").ClassList.Should().NotContain("nt-dialog-actions-space-between");
+    }
+
+    [Fact]
+    public void NTDialog_Renders_Space_Between_Button_Spacing_Class() {
+        var component = Render<NTDialog>(parameters => parameters
+            .Add(p => p.Id, "space-between-button-spacing-dialog")
+            .Add(p => p.ButtonSpacing, NTDialogButtonSpacing.SpaceBetween));
+
+        component.Find(".nt-dialog-actions").ClassList.Should().Contain("nt-dialog-actions-space-between");
+    }
+
+    [Fact]
     public async Task NTDialog_Buttons_Receives_Open_And_Refresh_Parameters() {
         var component = Render<NTDialog>(parameters => parameters
             .Add(p => p.Id, "parameter-buttons-dialog")

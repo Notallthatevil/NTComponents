@@ -57,6 +57,10 @@ public partial class NTDialog {
 
     private string? TitleId => ShouldRenderTitle ? $"{ResolvedElementId}-title" : null;
 
+    private string ActionsClass => CssClassBuilder.Create("nt-dialog-actions")
+        .AddClass("nt-dialog-actions-space-between", ButtonSpacing == NTDialogButtonSpacing.SpaceBetween)
+        .Build();
+
     private bool ShouldRenderChildContent => !RendererInfo.IsInteractive || Open || _renderChildContent;
 
     private bool ShouldRenderTitle => !string.IsNullOrWhiteSpace(Title) || (TitleContent is not null && ShouldRenderChildContent);
@@ -71,6 +75,12 @@ public partial class NTDialog {
     /// </remarks>
     [Parameter]
     public RenderFragment<NTDialogParameters>? Buttons { get; set; }
+
+    /// <summary>
+    /// Gets or sets how the dialog action buttons are spaced inside the actions row.
+    /// </summary>
+    [Parameter]
+    public NTDialogButtonSpacing ButtonSpacing { get; set; } = NTDialogButtonSpacing.End;
 
     /// <summary>
     /// Gets or sets the dialog body content.
@@ -479,4 +489,19 @@ public sealed class NTDialogEventArgs(string dialogId, string? returnValue = nul
     /// Gets the native dialog return value when closing.
     /// </summary>
     public string? ReturnValue { get; } = returnValue;
+}
+
+/// <summary>
+/// Spacing options for <see cref="NTDialog" /> action buttons.
+/// </summary>
+public enum NTDialogButtonSpacing {
+    /// <summary>
+    /// Places dialog action buttons at the inline end of the actions row.
+    /// </summary>
+    End,
+
+    /// <summary>
+    /// Distributes dialog action buttons with the first action at the inline start and the last action at the inline end.
+    /// </summary>
+    SpaceBetween
 }
