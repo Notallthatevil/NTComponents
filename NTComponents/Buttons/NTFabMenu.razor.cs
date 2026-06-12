@@ -280,6 +280,15 @@ public partial class NTFabMenu {
     }
 
     /// <summary>
+    ///     Refreshes the rendered FAB menu items.
+    /// </summary>
+    /// <remarks>
+    ///     Use this when child item metadata changes outside the normal parent render flow and the menu should immediately
+    ///     re-render the registered item list.
+    /// </remarks>
+    public Task RefreshAsync() => InvokeAsync(StateHasChanged);
+
+    /// <summary>
     ///     Receives native popover state changes from the browser.
     /// </summary>
     [JSInvokable]

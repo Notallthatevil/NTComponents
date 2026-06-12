@@ -218,6 +218,46 @@ public class NTFabMenu_Tests : BunitContext {
         classes.Should().NotContain("tnt-size-xl");
     }
 
+    [Fact]
+    public async Task RefreshAsync_Rerenders_Registered_Item_Label() {
+        var cut = Render<RefreshableFabMenu>();
+
+        cut.Find(".nt-fab-menu-item-label").TextContent.Should().Be("Draft");
+
+        await cut.Instance.UpdateDraftLabelAsync("Draft saved");
+
+        cut.Find(".nt-fab-menu-item-label").TextContent.Should().Be("Draft saved");
+    }
+
+    private sealed class RefreshableFabMenu : ComponentBase {
+        private NTFabMenu? _menu;
+        private string _draftLabel = "Draft";
+
+        public async Task UpdateDraftLabelAsync(string label) {
+            _draftLabel = label;
+            await (_menu?.RefreshAsync() ?? Task.CompletedTask);
+        }
+
+        protected override void BuildRenderTree(RenderTreeBuilder builder) {
+            builder.OpenComponent<NTFabMenu>(0);
+            builder.AddAttribute(1, nameof(NTFabMenu.Icon), (object)(TnTIcon)MaterialIcon.Add);
+            builder.AddAttribute(2, nameof(NTFabMenu.AriaLabel), "Create options");
+            builder.AddAttribute(3, nameof(NTFabMenu.ChildContent), (RenderFragment)(childBuilder => {
+                childBuilder.OpenComponent<NTFabMenuButtonItem>(0);
+                childBuilder.AddAttribute(1, nameof(NTFabMenuButtonItem.Icon), (object)(TnTIcon)MaterialIcon.Edit);
+                childBuilder.AddAttribute(2, nameof(NTFabMenuButtonItem.Label), _draftLabel);
+                childBuilder.CloseComponent();
+
+                childBuilder.OpenComponent<NTFabMenuButtonItem>(10);
+                childBuilder.AddAttribute(11, nameof(NTFabMenuButtonItem.Icon), (object)(TnTIcon)MaterialIcon.Upload);
+                childBuilder.AddAttribute(12, nameof(NTFabMenuButtonItem.Label), "Import");
+                childBuilder.CloseComponent();
+            }));
+            builder.AddComponentReferenceCapture(4, component => _menu = (NTFabMenu)component);
+            builder.CloseComponent();
+        }
+    }
+
     private sealed class ValidFabMenu : ComponentBase {
 
         protected override void BuildRenderTree(RenderTreeBuilder builder) {
