@@ -79,6 +79,25 @@ namespace NTComponents.Tests.Core {
         }
 
         [Fact]
+        public async Task Debounce_ExecutesOnlyOneAction_WhenCallsStartConcurrently() {
+            // Arrange
+            var debouncer = new TnTDebouncer(millisecondsDelay: 60);
+            var callCount = 0;
+
+            // Act
+            var tasks = Enumerable.Range(0, 10)
+                .Select(_ => debouncer.DebounceAsync(_ => {
+                    Interlocked.Increment(ref callCount);
+                    return Task.CompletedTask;
+                }))
+                .ToArray();
+            await Task.WhenAll(tasks);
+
+            // Assert
+            callCount.Should().Be(1);
+        }
+
+        [Fact]
         public async Task DebounceForResult_ReturnsDefault_WhenCanceledByNextCall() {
             // Arrange
             var debouncer = new TnTDebouncer(millisecondsDelay: 40);

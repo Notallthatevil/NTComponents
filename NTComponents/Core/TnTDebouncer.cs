@@ -29,13 +29,23 @@ namespace NTComponents.Core;
 /// <param name="millisecondsDelay">The delay in milliseconds to wait before executing the action.</param>
 public class TnTDebouncer(int millisecondsDelay = 300) : IDisposable {
     private readonly int _millisecondsDelay = millisecondsDelay;
+    private readonly object _syncRoot = new();
     private CancellationTokenSource _debounceCancellationTokenSource = new();
+    private bool _disposed;
 
     /// <summary>
     ///     Cancels the current debouncing action.
     /// </summary>
     /// <returns>A task that represents the asynchronous cancel operation.</returns>
-    public Task CancelAsync() => _debounceCancellationTokenSource.CancelAsync();
+    public Task CancelAsync() {
+        lock (_syncRoot) {
+            if (!_disposed) {
+                _debounceCancellationTokenSource.Cancel();
+            }
+
+            return Task.CompletedTask;
+        }
+    }
 
     /// <summary>
     ///     Starts the debouncing.
@@ -49,6 +59,7 @@ public class TnTDebouncer(int millisecondsDelay = 300) : IDisposable {
             await actionAsync(cancellationToken).ConfigureAwait(false);
         }
         catch (TaskCanceledException) { }
+        catch (ObjectDisposedException) { }
     }
 
     /// <summary>
@@ -64,6 +75,7 @@ public class TnTDebouncer(int millisecondsDelay = 300) : IDisposable {
             return await funcAsync(cancellationToken).ConfigureAwait(false);
         }
         catch (TaskCanceledException) { }
+        catch (ObjectDisposedException) { }
         return default!;
     }
 
@@ -72,8 +84,15 @@ public class TnTDebouncer(int millisecondsDelay = 300) : IDisposable {
     /// </summary>
     public void Dispose() {
         GC.SuppressFinalize(this);
-        _debounceCancellationTokenSource.Cancel();
-        _debounceCancellationTokenSource.Dispose();
+        lock (_syncRoot) {
+            if (_disposed) {
+                return;
+            }
+
+            _disposed = true;
+            _debounceCancellationTokenSource.Cancel();
+            _debounceCancellationTokenSource.Dispose();
+        }
     }
 
     /// <summary>
@@ -81,12 +100,19 @@ public class TnTDebouncer(int millisecondsDelay = 300) : IDisposable {
     /// </summary>
     /// <returns>A task that represents the asynchronous debouncing operation.</returns>
     private async Task<CancellationToken> DebounceAsync() {
-        await _debounceCancellationTokenSource.CancelAsync();
-        _debounceCancellationTokenSource.Dispose();
-        _debounceCancellationTokenSource = new();
-
-        var cancellationToken = _debounceCancellationTokenSource.Token;
+        var cancellationToken = CreateNextDebounceToken();
         await Task.Delay(_millisecondsDelay, cancellationToken);
         return cancellationToken;
+    }
+
+    private CancellationToken CreateNextDebounceToken() {
+        lock (_syncRoot) {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+
+            _debounceCancellationTokenSource.Cancel();
+            _debounceCancellationTokenSource.Dispose();
+            _debounceCancellationTokenSource = new();
+            return _debounceCancellationTokenSource.Token;
+        }
     }
 }
