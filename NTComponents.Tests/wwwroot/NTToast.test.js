@@ -75,7 +75,8 @@ describe('NTToast module', () => {
       host.hidePopover = jest.fn();
       loadHostFromPageScript(host);
 
-      addToast({ title: 'Toast before dialog', timeout: 0 });
+      addToast({ title: 'Toast before dialog', timeout: 4 });
+      jest.advanceTimersByTime(2000);
       const dialog = document.createElement('dialog');
       document.body.appendChild(dialog);
       dialog.setAttribute('open', '');
@@ -84,11 +85,13 @@ describe('NTToast module', () => {
       expect(host.parentNode).toBe(dialog);
       expect(host.hidePopover).toHaveBeenCalledTimes(1);
       expect(host.showPopover).toHaveBeenCalledTimes(2);
+      expect(host.querySelector('.nt-toast-progress').style.animationDelay).toBe('-2s');
 
       dialog.removeAttribute('open');
       await Promise.resolve();
 
       expect(host.nextElementSibling.localName).toBe('tnt-page-script');
+      expect(host.querySelector('.nt-toast-progress').style.animationDelay).toBe('-2s');
    });
 
    test('queueToast waits for a host when called before setup', () => {

@@ -29,6 +29,7 @@ interface ToastRecord {
     isClosing: boolean;
     message: string | null;
     showClose: boolean;
+    shownAtMilliseconds: number | null;
     textColor: string | null;
     timeout: number;
     title: string;
@@ -206,6 +207,7 @@ function normalizeToast(messageOrOptions: ToastInput, options?: Partial<ToastOpt
         isClosing: false,
         message: source.message ?? null,
         showClose: source.showClose ?? true,
+        shownAtMilliseconds: null,
         textColor: source.textColor ?? defaults.textColor,
         timeout: typeof source.timeout === 'number' ? source.timeout : defaultTimeoutSeconds,
         title: source.title,
@@ -363,6 +365,35 @@ function createToastElement(host: NTToastHostElement, state: NTToastHostState, t
     return toastElement;
 }
 
+function formatAnimationDelaySeconds(seconds: number): string {
+    return Number(seconds.toFixed(3)).toString();
+}
+
+function syncToastProgress(toast: ToastRecord): void {
+    if (toast.timeout <= 0 || toast.shownAtMilliseconds === null || !toast.element) {
+        return;
+    }
+
+    const progress = toast.element.querySelector<HTMLElement>('.nt-toast-progress');
+    if (!progress) {
+        return;
+    }
+
+    const elapsedSeconds = Math.min(Math.max((Date.now() - toast.shownAtMilliseconds) / 1000, 0), toast.timeout);
+    progress.style.animationDelay = elapsedSeconds > 0 ? `-${formatAnimationDelaySeconds(elapsedSeconds)}s` : '';
+}
+
+function syncActiveToastProgress(host: NTToastHostElement): void {
+    const state = hostStates.get(host);
+    if (!state) {
+        return;
+    }
+
+    for (const toast of state.activeToasts) {
+        syncToastProgress(toast);
+    }
+}
+
 function tryShowNext(host: NTToastHostElement): void {
     const state = getOrCreateState(host);
     let activeVisibleCount = state.activeToasts.reduce((count, toast) => toast.isClosing ? count : count + 1, 0);
@@ -377,6 +408,7 @@ function tryShowNext(host: NTToastHostElement): void {
         host.appendChild(element);
 
         if (toast.timeout > 0) {
+            toast.shownAtMilliseconds = Date.now();
             toast.closeTimeout = window.setTimeout(() => closeToastRecord(host, state, toast), toast.timeout * 1000);
         }
 
@@ -542,6 +574,7 @@ function syncToastHostForegroundContainer(host: NTToastHostElement): void {
     const dialog = foregroundDialog?.open ? foregroundDialog : getFallbackForegroundDialog();
     if (!dialog) {
         restoreToastHostPlacement(host);
+        syncActiveToastProgress(host);
         return;
     }
 
@@ -553,6 +586,7 @@ function syncToastHostForegroundContainer(host: NTToastHostElement): void {
     if (host.parentNode !== dialog) {
         dialog.appendChild(host);
     }
+    syncActiveToastProgress(host);
 }
 
 function restoreToastHostPlacement(host: NTToastHostElement): void {
@@ -578,6 +612,7 @@ function syncToastHostsForegroundContainers(dialog: HTMLDialogElement | null = g
 
 function promoteToastHostToForeground(host: NTToastHostElement): void {
     showToastHostPopover(host, true);
+    syncActiveToastProgress(host);
 }
 
 function promoteToastHostsToForeground(): void {
