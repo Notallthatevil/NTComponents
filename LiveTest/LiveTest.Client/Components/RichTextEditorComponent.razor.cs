@@ -17,35 +17,7 @@ public partial class RichTextEditorComponent : ComponentBase {
     private string ModeKey => ModeName.ToLowerInvariant().Replace(" ", "-", StringComparison.Ordinal);
 
     private RichTextEditorDemoModel Model { get; } = new() {
-        Value = """
-            # Meeting Notes
-
-            Start with **bold**, *italic*, <u>underline</u>, <span style="color:#2563eb;">accent color</span>, or a [reference link](https://example.com).
-
-            <div align="center">
-            ## Centered Callout
-            </div>
-
-            - Agenda
-              - Introductions
-              - Demo walkthrough
-            - Follow-up items
-
-            > Keep the example grounded in real content.
-
-            ```text
-            npm test -- NTRichTextEditor.test.js
-            ```
-
-            | Milestone | Owner | Status |
-            | :--- | :---: | ---: |
-            | Editor shell | Nate | 100% |
-            | Table support | Team | 75% |
-
-            ![Architecture](https://placehold.co/640x240/png)
-
-            <iframe src="https://example.com/embed" title="Embedded example" width="100%" height="315" loading="lazy"></iframe>
-            """
+        Value = InitialHtmlValue
     };
 
     private string? BlurMessage { get; set; }
@@ -78,4 +50,19 @@ public partial class RichTextEditorComponent : ComponentBase {
         [Required]
         public string? Value { get; set; }
     }
+
+    private const string InitialHtmlValue = """
+        <h1>Meeting Notes</h1>
+        <p>Start with <strong>bold</strong>, <em>italic</em>, <u>underline</u>, <span style="color:#2563eb;">accent color</span>, or a <a href="https://example.com">reference link</a>.</p>
+        <div style="text-align:center;"><h2>Centered Callout</h2></div>
+        <ul>
+            <li>Agenda<ul><li>Introductions</li><li>Demo walkthrough</li></ul></li>
+            <li>Follow-up items</li>
+        </ul>
+        <blockquote><p>Keep the example grounded in real content.</p></blockquote>
+        <pre data-language="text"><code data-language="text">npm test -- NTRichTextEditor.test.js</code></pre>
+        <table data-border-color="#94a3b8" style="--nt-rich-text-table-border-color:#94a3b8;"><caption>Delivery plan</caption><thead><tr><th>Milestone</th><th>Owner</th><th>Status</th></tr></thead><tbody><tr><td>Editor shell</td><td>Nate</td><td>100%</td></tr><tr><td>Table support</td><td>Team</td><td>75%</td></tr></tbody></table>
+        <img src="https://placehold.co/640x240/png" alt="Architecture" />
+        <iframe src="https://example.com/embed" title="Embedded example" width="100%" height="315" loading="lazy"></iframe>
+        """;
 }

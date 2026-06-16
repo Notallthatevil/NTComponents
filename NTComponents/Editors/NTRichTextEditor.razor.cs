@@ -367,7 +367,7 @@ public partial class NTRichTextEditor : INTPageScriptComponent<NTRichTextEditor>
     /// <summary>
     /// Synchronizes the editor value from JavaScript while the user is typing.
     /// </summary>
-    /// <param name="value">The current Markdown value.</param>
+    /// <param name="value">The current sanitized HTML source value.</param>
     /// <param name="html">The current HTML value.</param>
     [JSInvokable]
     public async Task UpdateValueFromJs(string value, string html) {
@@ -383,7 +383,7 @@ public partial class NTRichTextEditor : INTPageScriptComponent<NTRichTextEditor>
     /// <summary>
     /// Commits the editor value and notifies the form that the field changed.
     /// </summary>
-    /// <param name="value">The current Markdown value.</param>
+    /// <param name="value">The current sanitized HTML source value.</param>
     /// <param name="html">The current HTML value.</param>
     [JSInvokable]
     public async Task CommitValueFromJs(string value, string html) {
@@ -402,7 +402,7 @@ public partial class NTRichTextEditor : INTPageScriptComponent<NTRichTextEditor>
     }
 
     /// <summary>
-    /// Synchronizes the editor HTML value from JavaScript without changing the bound Markdown value.
+    /// Synchronizes the editor HTML value from JavaScript without changing the bound value.
     /// </summary>
     /// <param name="html">The current HTML value.</param>
     [JSInvokable]

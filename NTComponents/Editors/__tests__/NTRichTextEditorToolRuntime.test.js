@@ -181,6 +181,7 @@ describe('NTRichTextEditor registered tool runtimes', () => {
           <input data-role="image-url" type="text" />
           <input data-role="image-file" type="file" />
           <input data-role="image-alt" type="text" />
+          <input data-role="image-title" type="text" />
           <input data-role="image-width" type="text" />
           <input data-role="image-height" type="text" />
           <button type="button" data-role="image-apply"></button>
@@ -190,6 +191,7 @@ describe('NTRichTextEditor registered tool runtimes', () => {
           <input data-role="table-columns" type="text" />
           <input data-role="table-rows" type="text" />
           <input data-role="table-border-color" type="text" />
+          <input data-role="table-caption" type="text" />
           <button type="button" data-role="table-apply"></button>
           <button type="button" data-role="table-cancel"></button>
         </div>
@@ -237,11 +239,13 @@ describe('NTRichTextEditor registered tool runtimes', () => {
     collapseAtEnd(surface.querySelector('p').firstChild);
     imageTool.execute(imageContext);
     element.querySelector('[data-role="image-url"]').value = 'https://example.com/remote.png';
+    element.querySelector('[data-role="image-title"]').value = 'Remote title';
     click(element.querySelector('[data-role="image-apply"]'));
     await settleAsync();
     const remoteImage = surface.querySelector('img');
-    expect(remoteImage.getAttribute('src')).toBe('data:image/png;base64,ZmFrZQ==');
-    expect(global.fetch).toHaveBeenCalledWith('https://example.com/remote.png', { credentials: 'omit' });
+    expect(remoteImage.getAttribute('src')).toBe('https://example.com/remote.png');
+    expect(remoteImage.getAttribute('title')).toBe('Remote title');
+    expect(global.fetch).not.toHaveBeenCalled();
 
     surface.innerHTML = '<p>Upload host</p>';
     imageHost.setSelectionElement(surface.querySelector('p'));
@@ -284,6 +288,7 @@ describe('NTRichTextEditor registered tool runtimes', () => {
     tableTool.bind(tableContext);
     tableTool.execute(tableContext);
     expect(element.querySelector('[data-role="table-border-color"]').value).toBe('#445566');
+    expect(element.querySelector('[data-role="table-caption"]').value).toBe('');
     click(element.querySelector('[data-role="table-cancel"]'));
     expect(tableHost.updateToolbarState).toHaveBeenCalled();
 
@@ -300,9 +305,11 @@ describe('NTRichTextEditor registered tool runtimes', () => {
     element.querySelector('[data-role="table-columns"]').value = '2';
     element.querySelector('[data-role="table-rows"]').value = '1';
     element.querySelector('[data-role="table-border-color"]').value = 'invalid';
+    element.querySelector('[data-role="table-caption"]').value = 'Data summary';
     click(element.querySelector('[data-role="table-apply"]'));
     const insertedTable = surface.querySelector('table');
     expect(insertedTable.dataset.borderColor).toBe('#94a3b8');
+    expect(insertedTable.querySelector('caption').textContent).toBe('Data summary');
 
     tableTool.close(tableContext);
     expect(tableState.selectionRange).toBeNull();
@@ -322,6 +329,8 @@ describe('NTRichTextEditor registered tool runtimes', () => {
         <div data-tool-command="link" data-role="link-editor" hidden aria-hidden="true">
           <input data-role="link-url" type="text" />
           <input data-role="link-text" type="text" />
+          <input data-role="link-aria-label" type="text" />
+          <input data-role="link-title" type="text" />
           <button type="button" data-role="link-apply"></button>
           <button type="button" data-role="link-cancel"></button>
         </div>
@@ -355,8 +364,12 @@ describe('NTRichTextEditor registered tool runtimes', () => {
     selectText(surface.querySelector('p').firstChild, 0, 4);
     linkTool.execute(linkContext);
     element.querySelector('[data-role="link-url"]').value = '../docs';
+    element.querySelector('[data-role="link-aria-label"]').value = 'Documentation';
+    element.querySelector('[data-role="link-title"]').value = 'Read documentation';
     keydown(element.querySelector('[data-role="link-text"]'), 'Enter');
     expect(surface.querySelector('a').getAttribute('href')).toBe('../docs');
+    expect(surface.querySelector('a').getAttribute('aria-label')).toBe('Documentation');
+    expect(surface.querySelector('a').getAttribute('title')).toBe('Read documentation');
 
     surface.innerHTML = '<p></p>';
     linkHost.setSelectionElement(surface.querySelector('p'));
@@ -388,6 +401,8 @@ describe('NTRichTextEditor registered tool runtimes', () => {
     linkHost.setFocusedToolCommand(null);
     linkHost.setSelectionElement(insertedLink);
     linkTool.syncState(linkContext);
+    expect(element.querySelector('[data-role="link-aria-label"]').value).toBe('');
+    expect(element.querySelector('[data-role="link-title"]').value).toBe('');
     expect(linkHost.setToolbarButtonPressed).toHaveBeenCalled();
 
     linkTool.close(linkContext);

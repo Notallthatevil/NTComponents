@@ -12,24 +12,23 @@
         <NTInputColor Label="Text color"
                       @bind-Value="_textColor"
                       Appearance="NTFormAppearance.Outlined"
-                      Density="NTFormDensity.Dense"
+                      Density="NTFormDensity.Standard"
                       Disabled="@Disabled"
                       SubmitValue="false"
                       data-role="text-color-value" />
     </div>
     <div class="tnt-rich-text-editor-inline-tool-actions">
-        <button type="button"
-                class="tnt-rich-text-editor-toolbar-button"
-                data-role="text-color-apply"
-                disabled="@Disabled">
-            Apply color
-        </button>
-        <button type="button"
-                class="tnt-rich-text-editor-toolbar-button"
-                data-role="text-color-cancel"
-                disabled="@Disabled">
-            Cancel
-        </button>
+        <NTButton Label="Apply color"
+                  ButtonSize="Size.Small"
+                  Disabled="@Disabled"
+                  Type="ButtonType.Button"
+                  data-role="text-color-apply" />
+        <NTButton Label="Cancel"
+                  ButtonSize="Size.Small"
+                  Disabled="@Disabled"
+                  Type="ButtonType.Button"
+                  Variant="NTButtonVariant.Text"
+                  data-role="text-color-cancel" />
     </div>
 </div>
 

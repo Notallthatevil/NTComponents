@@ -15,28 +15,28 @@ public class NTRichTextEditor_E2E_Tests : IAsyncLifetime {
     private string AppBaseUrl = default!;
 
     public static IEnumerable<object[]> ToolbarControlCases() {
-        yield return [new ToolbarControlCase("undo", null, "<p>Undo text</p>", "Undo text", "Undo text", PreparedMarkdown: "**Undo text**", PrepareUndoRedo: true)];
-        yield return [new ToolbarControlCase("redo", null, "<p>Redo text</p>", "Redo text", "**Redo text**", PrepareRedo: true)];
-        yield return [new ToolbarControlCase("paragraph", null, "<h2>Paragraph text</h2>", "Paragraph text", "Paragraph text")];
-        yield return [new ToolbarControlCase("heading", "1", "<p>Heading one</p>", "Heading one", "# Heading one")];
-        yield return [new ToolbarControlCase("heading", "2", "<p>Heading two</p>", "Heading two", "## Heading two")];
-        yield return [new ToolbarControlCase("heading", "3", "<p>Heading three</p>", "Heading three", "### Heading three")];
-        yield return [new ToolbarControlCase("heading", "4", "<p>Heading four</p>", "Heading four", "#### Heading four")];
-        yield return [new ToolbarControlCase("heading", "5", "<p>Heading five</p>", "Heading five", "##### Heading five")];
-        yield return [new ToolbarControlCase("heading", "6", "<p>Heading six</p>", "Heading six", "###### Heading six")];
+        yield return [new ToolbarControlCase("undo", null, "<p>Undo text</p>", "Undo text", "<p>Undo text</p>", PreparedValue: "Undo text</b>", PrepareUndoRedo: true)];
+        yield return [new ToolbarControlCase("redo", null, "<p>Redo text</p>", "Redo text", "Redo text</b>", PrepareRedo: true)];
+        yield return [new ToolbarControlCase("paragraph", null, "<h2>Paragraph text</h2>", "Paragraph text", "<p>Paragraph text</p>")];
+        yield return [new ToolbarControlCase("heading", "1", "<p>Heading one</p>", "Heading one", "<h1>Heading one</h1>")];
+        yield return [new ToolbarControlCase("heading", "2", "<p>Heading two</p>", "Heading two", "<h2>Heading two</h2>")];
+        yield return [new ToolbarControlCase("heading", "3", "<p>Heading three</p>", "Heading three", "<h3>Heading three</h3>")];
+        yield return [new ToolbarControlCase("heading", "4", "<p>Heading four</p>", "Heading four", "<h4>Heading four</h4>")];
+        yield return [new ToolbarControlCase("heading", "5", "<p>Heading five</p>", "Heading five", "<h5>Heading five</h5>")];
+        yield return [new ToolbarControlCase("heading", "6", "<p>Heading six</p>", "Heading six", "<h6>Heading six</h6>")];
         yield return [new ToolbarControlCase("alignLeft", null, "<p style=\"text-align:center;\">Left text</p>", "Left text", "Left text")];
-        yield return [new ToolbarControlCase("alignCenter", null, "<p>Center text</p>", "Center text", "<div align=\"center\">")];
-        yield return [new ToolbarControlCase("alignRight", null, "<p>Right text</p>", "Right text", "<div align=\"right\">")];
-        yield return [new ToolbarControlCase("alignJustify", null, "<p>Justified text</p>", "Justified text", "<div align=\"justify\">")];
-        yield return [new ToolbarControlCase("unorderedList", null, "<p>Bullet text</p>", "Bullet text", "- Bullet text")];
-        yield return [new ToolbarControlCase("orderedList", null, "<p>Numbered text</p>", "Numbered text", "1. Numbered text")];
-        yield return [new ToolbarControlCase("blockquote", null, "<p>Quote text</p>", "Quote text", "> Quote text")];
-        yield return [new ToolbarControlCase("codeBlock", null, "<p>const value = 1;</p>", "const value = 1;", "```")];
+        yield return [new ToolbarControlCase("alignCenter", null, "<p>Center text</p>", "Center text", "text-align: center")];
+        yield return [new ToolbarControlCase("alignRight", null, "<p>Right text</p>", "Right text", "text-align: right")];
+        yield return [new ToolbarControlCase("alignJustify", null, "<p>Justified text</p>", "Justified text", "text-align: justify")];
+        yield return [new ToolbarControlCase("unorderedList", null, "<p>Bullet text</p>", "Bullet text", "<ul><li>Bullet text</li></ul>")];
+        yield return [new ToolbarControlCase("orderedList", null, "<p>Numbered text</p>", "Numbered text", "<ol><li>Numbered text</li></ol>")];
+        yield return [new ToolbarControlCase("blockquote", null, "<p>Quote text</p>", "Quote text", "<blockquote>")];
+        yield return [new ToolbarControlCase("codeBlock", null, "<p>const value = 1;</p>", "const value = 1;", "<pre")];
         yield return [new ToolbarControlCase("table", null, "<p>Table anchor</p>", "Table anchor", null, ExpectedPanelRole: "table-editor")];
-        yield return [new ToolbarControlCase("bold", null, "<p>Bold text</p>", "Bold text", "**Bold text**")];
-        yield return [new ToolbarControlCase("italic", null, "<p>Italic text</p>", "Italic text", "*Italic text*")];
+        yield return [new ToolbarControlCase("bold", null, "<p>Bold text</p>", "Bold text", "Bold text</b>")];
+        yield return [new ToolbarControlCase("italic", null, "<p>Italic text</p>", "Italic text", "Italic text</i>")];
         yield return [new ToolbarControlCase("underline", null, "<p>Underline text</p>", "Underline text", "<u>Underline text</u>")];
-        yield return [new ToolbarControlCase("strikeThrough", null, "<p>Strike text</p>", "Strike text", "~~Strike text~~")];
+        yield return [new ToolbarControlCase("strikeThrough", null, "<p>Strike text</p>", "Strike text", "Strike text</strike>")];
         yield return [new ToolbarControlCase("textColor", null, "<p>Color text</p>", "Color text", null, ExpectedPanelRole: "text-color-editor")];
         yield return [new ToolbarControlCase("link", null, "<p>Link text</p>", "Link text", null, ExpectedPanelRole: "link-editor")];
         yield return [new ToolbarControlCase("image", null, "<p>Image anchor</p>", "Image anchor", null, ExpectedPanelRole: "image-editor")];
@@ -96,12 +96,12 @@ public class NTRichTextEditor_E2E_Tests : IAsyncLifetime {
 
             if (controlCase.PrepareUndoRedo) {
                 await ClickToolbarButtonAsync(new("bold"));
-                await WaitForHiddenValueAsync(ServerEditorTestId, controlCase.PreparedMarkdown!);
+                await WaitForHiddenValueAsync(ServerEditorTestId, controlCase.PreparedValue!);
             }
 
             if (controlCase.PrepareRedo) {
                 await ClickToolbarButtonAsync(new("bold"));
-                await WaitForHiddenValueAsync(ServerEditorTestId, controlCase.ExpectedMarkdown!);
+                await WaitForHiddenValueAsync(ServerEditorTestId, controlCase.ExpectedValue!);
                 await ClickToolbarButtonAsync(new("undo"));
                 await WaitForHiddenValueAsync(ServerEditorTestId, "Redo text");
             }
@@ -116,7 +116,7 @@ public class NTRichTextEditor_E2E_Tests : IAsyncLifetime {
                 continue;
             }
 
-            await WaitForHiddenValueAsync(ServerEditorTestId, controlCase.ExpectedMarkdown!);
+            await WaitForHiddenValueAsync(ServerEditorTestId, controlCase.ExpectedValue!);
         }
     }
 
@@ -131,13 +131,13 @@ public class NTRichTextEditor_E2E_Tests : IAsyncLifetime {
         await ClickToolbarButtonAsync(new("link"));
         await EditorRoot(ServerEditorTestId).Locator("[data-role='link-url']").FillAsync("https://example.com/docs");
         await EditorRoot(ServerEditorTestId).Locator("[data-role='link-apply']").ClickAsync();
-        await WaitForHiddenValueAsync(ServerEditorTestId, "[Link text](https://example.com/docs)");
+        await WaitForHiddenValueAsync(ServerEditorTestId, "<a href=\"https://example.com/docs\">Link text</a>");
 
         await ClickToolbarButtonAsync(new("image"));
         await EditorRoot(ServerEditorTestId).Locator("[data-role='image-url']").FillAsync("https://example.com/image.png");
         await EditorRoot(ServerEditorTestId).Locator("[data-role='image-alt']").FillAsync("Architecture diagram");
         await EditorRoot(ServerEditorTestId).Locator("[data-role='image-apply']").ClickAsync();
-        await WaitForHiddenValueAsync(ServerEditorTestId, "![Architecture diagram](https://example.com/image.png)");
+        await WaitForHiddenValueAsync(ServerEditorTestId, "<img src=\"https://example.com/image.png\" alt=\"Architecture diagram\"");
 
         await ClickToolbarButtonAsync(new("table"));
         await EditorRoot(ServerEditorTestId).Locator("[data-role='table-columns']").FillAsync("2");
@@ -167,15 +167,15 @@ public class NTRichTextEditor_E2E_Tests : IAsyncLifetime {
     }
 
     [Fact]
-    public async Task Interactive_Render_Modes_Submit_Updated_Markdown() {
+    public async Task Interactive_Render_Modes_Submit_Updated_Html() {
         ArgumentNullException.ThrowIfNull(_page);
 
         await NavigateToRichTextEditorAsync();
 
         foreach (var testId in new[] { ServerEditorTestId, "rich-text-editor-wasm" }) {
             await WaitForEditorReadyAsync(testId);
-            await SetEditorHtmlAndSelectTextAsync(testId, "<p>Submitted markdown</p>", "Submitted markdown");
-            await WaitForHiddenValueAsync(testId, "Submitted markdown");
+            await SetEditorHtmlAndSelectTextAsync(testId, "<p>Submitted HTML</p>", "Submitted HTML");
+            await WaitForHiddenValueAsync(testId, "<p>Submitted HTML</p>");
 
             await Section(testId).GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Submit" }).ClickAsync();
             await ExpectStatusAsync(testId, "Form is valid.");
@@ -356,5 +356,5 @@ public class NTRichTextEditor_E2E_Tests : IAsyncLifetime {
             new PageWaitForFunctionOptions { Timeout = 10000 });
     }
 
-    public sealed record ToolbarControlCase(string Command, string? Value = null, string InitialHtml = "<p>Text</p>", string SelectionText = "Text", string? ExpectedMarkdown = null, string? ExpectedPanelRole = null, string? PreparedMarkdown = null, bool PrepareUndoRedo = false, bool PrepareRedo = false);
+    public sealed record ToolbarControlCase(string Command, string? Value = null, string InitialHtml = "<p>Text</p>", string SelectionText = "Text", string? ExpectedValue = null, string? ExpectedPanelRole = null, string? PreparedValue = null, bool PrepareUndoRedo = false, bool PrepareRedo = false);
 }

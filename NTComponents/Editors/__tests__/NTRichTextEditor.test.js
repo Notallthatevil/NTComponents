@@ -68,18 +68,35 @@ function setSurfaceContent(surface, html) {
   surface.innerHTML = html;
 }
 
+function escapeFixtureAttribute(value) {
+  return `${value ?? ''}`
+    .replaceAll('&', '&amp;')
+    .replaceAll('"', '&quot;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;');
+}
+
+function escapeFixtureText(value) {
+  return `${value ?? ''}`
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;');
+}
+
 function createEditorFixture({
   bindOnInput = false,
   editable = true,
   value = '',
   maxLength = 200
 } = {}) {
+  const encodedValueAttribute = escapeFixtureAttribute(value);
+  const encodedValueText = escapeFixtureText(value);
   document.body.innerHTML = `
     <div class="tnt-input-container">
       <nt-rich-text-editor data-bind-on-input="${bindOnInput}" data-editable="${editable}">
         <div class="tnt-rich-text-editor-shell">
-          <input type="hidden" class="tnt-rich-text-editor-hidden-input" value="${value}" />
-          <div class="tnt-rich-text-editor-value" hidden>${value}</div>
+          <input type="hidden" class="tnt-rich-text-editor-hidden-input" value="${encodedValueAttribute}" />
+          <div class="tnt-rich-text-editor-value" hidden>${encodedValueText}</div>
           <div class="tnt-rich-text-editor-toolbar" role="toolbar">
             <button type="button" class="tnt-rich-text-editor-toolbar-button" data-command="bold" aria-keyshortcuts="Control+B" aria-pressed="false"></button>
             <button type="button" class="tnt-rich-text-editor-toolbar-button" data-command="unorderedList" aria-keyshortcuts="Control+Alt+7" aria-pressed="false"></button>
@@ -94,6 +111,7 @@ function createEditorFixture({
             <input data-role="image-url" type="url" />
             <input data-role="image-file" type="file" />
             <input data-role="image-alt" type="text" />
+            <input data-role="image-title" type="text" />
             <input data-role="image-width" type="number" />
             <input data-role="image-height" type="number" />
             <button type="button" data-role="image-apply"></button>
@@ -104,6 +122,7 @@ function createEditorFixture({
             <input data-role="table-columns" type="number" />
             <input data-role="table-rows" type="number" />
             <input data-role="table-border-color" type="color" />
+            <input data-role="table-caption" type="text" />
             <button type="button" data-role="table-apply"></button>
             <button type="button" data-role="table-cancel"></button>
           </div>
@@ -117,6 +136,8 @@ function createEditorFixture({
           <div data-tool-command="link" data-role="link-editor" hidden aria-hidden="true">
             <input data-role="link-url" type="url" />
             <input data-role="link-text" type="text" />
+            <input data-role="link-aria-label" type="text" />
+            <input data-role="link-title" type="text" />
             <button type="button" data-role="link-apply"></button>
             <button type="button" data-role="link-cancel"></button>
           </div>
@@ -260,24 +281,50 @@ describe('NTRichTextEditor runtime behavior', () => {
     document.body.innerHTML = '';
   });
 
-  test('onLoad renders markdown, updates supporting length, and syncs bind-on-input changes', async () => {
-    const fixture = createEditorFixture({ bindOnInput: true, value: 'Hello' });
+  test('onLoad renders html, updates supporting length, and syncs bind-on-input changes', async () => {
+    const fixture = createEditorFixture({ bindOnInput: true, value: '<p>Hello</p>' });
     const dotNetRef = createDotNetRef();
 
     editorModule.onLoad(fixture.element, dotNetRef);
 
     expect(fixture.surface.innerHTML).toContain('Hello');
-    expect(fixture.length.textContent).toBe('5/200');
+    expect(fixture.length.textContent).toBe('12/200');
 
     setSurfaceContent(fixture.surface, '<p>World</p>');
     fixture.surface.dispatchEvent(new Event('input', { bubbles: true }));
 
-    expect(fixture.hiddenInput.value).toBe('World');
-    expect(fixture.sourceValue.textContent).toBe('World');
+    expect(fixture.hiddenInput.value).toBe('<p>World</p>');
+    expect(fixture.sourceValue.textContent).toBe('<p>World</p>');
     expect(dotNetRef.invokeMethodAsync).toHaveBeenCalledWith(
       'UpdateValueFromJs',
-      'World',
+      '<p>World</p>',
       '<p>World</p>'
+    );
+  });
+
+  test('applies direct html source and sanitizes posted values', () => {
+    const fixture = createEditorFixture({
+      bindOnInput: true,
+      value: '<p onclick="bad()">Hello <a href="javascript:alert(1)">bad</a><script>alert(1)</script></p><iframe src="https://example.com/embed"></iframe>'
+    });
+    const dotNetRef = createDotNetRef();
+
+    editorModule.onLoad(fixture.element, dotNetRef);
+
+    expect(fixture.surface.innerHTML).toContain('<p>Hello <a>bad</a></p>');
+    expect(fixture.surface.innerHTML).not.toContain('script');
+    expect(fixture.surface.querySelector('p').hasAttribute('onclick')).toBe(false);
+    expect(fixture.surface.querySelector('iframe').getAttribute('title')).toBe('Embedded content');
+    expect(fixture.hiddenInput.value).toBe(fixture.surface.innerHTML);
+
+    setSurfaceContent(fixture.surface, '<p><img src="javascript:alert(1)" onerror="bad()" alt="Bad"><a href="https://example.com/docs" aria-label="Docs label" title="Docs title">Docs</a></p>');
+    fixture.surface.dispatchEvent(new Event('input', { bubbles: true }));
+
+    expect(fixture.hiddenInput.value).toBe('<p><a href="https://example.com/docs" aria-label="Docs label" title="Docs title">Docs</a></p>');
+    expect(dotNetRef.invokeMethodAsync).toHaveBeenCalledWith(
+      'UpdateValueFromJs',
+      '<p><a href="https://example.com/docs" aria-label="Docs label" title="Docs title">Docs</a></p>',
+      '<p><a href="https://example.com/docs" aria-label="Docs label" title="Docs title">Docs</a></p>'
     );
   });
 
@@ -300,7 +347,7 @@ describe('NTRichTextEditor runtime behavior', () => {
 
     expect(dotNetRef.invokeMethodAsync).toHaveBeenCalledWith(
       'CommitValueFromJs',
-      'Committed',
+      '<p>Committed</p>',
       '<p>Committed</p>'
     );
   });
@@ -364,7 +411,7 @@ describe('NTRichTextEditor runtime behavior', () => {
     click(fixture.element.querySelector('[data-role="image-apply"]'));
     await settleAsync();
 
-    expect(image.getAttribute('src')).toBe('data:image/png;base64,ZmFrZQ==');
+    expect(image.getAttribute('src')).toBe('https://new.example/image.png');
     expect(image.getAttribute('alt')).toBe('Updated alt');
     expect(image.getAttribute('width')).toBe('640');
     expect(image.getAttribute('height')).toBe('360');
@@ -508,7 +555,7 @@ describe('NTRichTextEditor runtime behavior', () => {
 
     const image = fixture.surface.querySelector('img');
     expect(image).not.toBeNull();
-    expect(image.getAttribute('src')).toBe('data:image/png;base64,ZmFrZQ==');
+    expect(image.getAttribute('src')).toBe('https://example.com/runtime-image.png');
   });
 
   test('onDispose detaches editor listeners so later events do not resync state', () => {
@@ -574,9 +621,6 @@ describe('NTRichTextEditor runtime behavior', () => {
     expect(hooks.normalizeSafeUrl('javascript:alert(1)', 'link')).toBe('');
     expect(hooks.normalizeSafeUrl('ftp://example.com/file', 'iframe')).toBe('');
     expect(hooks.normalizeSafeUrl('example.com/path', 'iframe')).toBe('example.com/path');
-    expect(hooks.canUseMarkdownUrl('https://example.com/a-b')).toBe(true);
-    expect(hooks.canUseMarkdownUrl('https://example.com/a b')).toBe(false);
-
     expect(hooks.getChildNodeIndex(cell)).toBe(0);
     expect(hooks.getChildNodeIndex(document.createTextNode('orphan'))).toBe(-1);
 
@@ -605,14 +649,8 @@ describe('NTRichTextEditor runtime behavior', () => {
     expect(hooks.normalizeTextColorValue('rgb(255, 0, 128)')).toBe('#ff0080');
     expect(hooks.normalizeTextColorValue('rgba(255, 0, 128, 0.5)')).toBe('#ff0080');
     expect(hooks.normalizeTextColorValue('invalid')).toBe('');
-    expect(hooks.normalizeNewLines('a\r\nb\rc')).toBe('a\nb\nc');
-    expect(hooks.countLeadingSpaces('   x')).toBe(3);
-    expect(hooks.stripIndent('hello', 10)).toBe('');
     expect(hooks.escapeHtml(`<&>"'`)).toBe('&lt;&amp;&gt;&quot;&#39;');
 
-    const tokens = [];
-    expect(hooks.createInlineToken(tokens, '<strong>x</strong>')).toBe('__NT_INLINE_TOKEN_0__');
-    expect(tokens).toHaveLength(1);
     expect(hooks.normalizeImageDimension('320')).toBe('320');
     expect(hooks.normalizeImageDimension('50%')).toBe('');
     expect(hooks.normalizeTableBorderColor('#112233')).toBe('#112233');
@@ -621,110 +659,43 @@ describe('NTRichTextEditor runtime behavior', () => {
     expect(hooks.buildTableStyleAttribute('bad')).toBe('');
     expect(hooks.buildImageHtml({ src: 'https://example.com/a.png', alt: 'A', width: '100', height: '200' })).toContain('width="100"');
     expect(hooks.buildImageHtml({ src: 'javascript:bad', alt: 'A', width: '', height: '' })).toBe('');
-    expect(hooks.buildImageMarkdown({ src: 'https://example.com/a.png', alt: 'A', width: '', height: '' })).toBe('![A](https://example.com/a.png)');
-    expect(hooks.buildImageMarkdown({ src: 'https://example.com/a b.png', alt: 'A', width: '100', height: '' })).toContain('<img src="https://example.com/a b.png"');
-    expect(hooks.renderMarkdownImage('', 'Alt', 'https://example.com/a.png')).toContain('<img');
-    expect(hooks.renderHtmlImage('', 'https://example.com/a.png', 'Alt', '50', '60')).toContain('height="60"');
-    expect(hooks.getImageDetails({})).toEqual({ src: '', alt: '', width: '', height: '' });
-    expect(hooks.renderHtmlAnchor('', 'javascript:bad', 'Text')).toBe('Text');
-    expect(hooks.renderLink('', 'Text', 'https://example.com')).toContain('<a href="https://example.com">');
-    expect(hooks.renderTextColor('', '#123456', 'Text')).toContain('style="color:#123456;"');
+    expect(hooks.renderHtmlImage('', 'https://example.com/a.png', 'Alt', '', '50', '60')).toContain('height="60"');
+    expect(hooks.getImageDetails({})).toEqual({ src: '', alt: '', title: '', width: '', height: '' });
 
     const rejectedRef = { invokeMethodAsync: jest.fn(() => Promise.reject(new Error('disconnect'))) };
     hooks.invokeDotNetVoid(rejectedRef, 'UpdateMarkupValueFromJs', '<p>x</p>');
-    hooks.invokeDotNetVoid(rejectedRef, 'UpdateValueFromJs', 'md', '<p>md</p>');
+    hooks.invokeDotNetVoid(rejectedRef, 'UpdateValueFromJs', '<p>x</p>', '<p>x</p>');
     await Promise.resolve();
   });
 
-  test('test hooks render markdown blocks and serialize complex editor content', () => {
+  test('test hooks sanitize complex html content', () => {
     const hooks = editorModule.__testHooks;
-
-    const markdown = [
-      '# Heading',
-      '',
-      'Plain **bold** *italic* ~~strike~~ <u>underline</u> [link](https://example.com)',
-      '',
-      '> Quote',
-      '>',
-      '> More quote',
-      '',
-      '- Item 1',
-      '  continued',
-      '  - Nested item',
-      '1. Numbered',
-      '',
-      '```ts',
-      'const value = 1;',
-      '```',
-      '',
-      '| Name | Role |',
-      '| :--- | ---: |',
-      '| Avery | Host |',
-      '',
-      '<table data-border-color="#112233"><thead><tr><th>Col</th></tr></thead><tbody><tr><td>Cell</td></tr></tbody></table>',
-      '',
-      '<div align="justify">',
-      'Aligned text',
-      '</div>',
-      '',
-      '<iframe src="https://example.com/embed" title="Embed" width="100%" height="315"></iframe>'
-    ].join('\n');
-
-    const rendered = hooks.markdownToHtml(markdown);
-    expect(rendered).toContain('<h1>Heading</h1>');
-    expect(rendered).toContain('<strong>bold</strong>');
-    expect(rendered).toContain('<em>italic</em>');
-    expect(rendered).toContain('<s>strike</s>');
-    expect(rendered).toContain('<u>underline</u>');
-    expect(rendered).toContain('<a href="https://example.com">link</a>');
-    expect(rendered).toContain('<blockquote>');
-    expect(rendered).toContain('<ul>');
-    expect(rendered).toContain('<ol>');
-    expect(rendered).toContain('<pre data-language="ts"><code data-language="ts">const value = 1;</code></pre>');
-    expect(rendered).toContain('<table>');
-    expect(rendered).toContain('data-border-color="#112233"');
-    expect(rendered).toContain('text-align:justify;');
-    expect(rendered).toContain('loading="lazy"');
 
     const surface = document.createElement('div');
     surface.innerHTML = [
-      '<div align="center"><p><strong>Bold</strong> <em>Italic</em> <u>Underline</u> <s>Strike</s> <span style="color:#123456">Color</span><br><img src="https://example.com/image.png" alt="Alt" width="50" height="60" /><a href="https://example.com/docs">Docs</a></p></div>',
+      '<div onclick="bad()" align="center"><p><strong>Bold</strong> <em>Italic</em> <u>Underline</u> <s>Strike</s> <span style="color:#123456">Color</span><br><img src="https://example.com/image.png" alt="Alt" width="50" height="60" onerror="bad()" /><a href="https://example.com/docs">Docs</a></p></div>',
       '<pre data-language="ts"><code data-language="ts">const value = 1;\n</code></pre>',
       '<blockquote><p>Quote</p><p>More</p></blockquote>',
       '<ul><li>Item 1<ul><li>Nested</li></ul></li><li>Item 2</li></ul>',
       '<table data-border-color="#112233"><thead><tr><th style="text-align:center;">Name</th><th>Role</th></tr></thead><tbody><tr><td>Avery</td><td>Host</td></tr></tbody></table>',
-      '<iframe src="https://example.com/embed" title="Embed" width="100%" height="315" loading="lazy"></iframe>'
+      '<iframe src="https://example.com/embed" title="Embed" width="100%" height="315" loading="eager"></iframe>',
+      '<script>alert(1)</script>'
     ].join('');
 
-    const serialized = hooks.surfaceToMarkdown(surface);
-    expect(serialized).toContain('<div align="center">');
-    expect(serialized).toContain('**Bold**');
-    expect(serialized).toContain('*Italic*');
-    expect(serialized).toContain('<u>Underline</u>');
-    expect(serialized).toContain('~~Strike~~');
-    expect(serialized).toContain('<span style="color:#123456;">Color</span>');
-    expect(serialized).toContain('<img src="https://example.com/image.png" alt="Alt" width="50" height="60" />');
-    expect(serialized).toContain('[Docs](https://example.com/docs)');
-    expect(serialized).toContain('```ts');
-    expect(serialized).toContain('> Quote');
-    expect(serialized).toContain('- Item 1');
-    expect(serialized).toContain('<table data-border-color="#112233"');
-    expect(serialized).toContain('<iframe src="https://example.com/embed" title="Embed" width="100%" height="315" loading="lazy"></iframe>');
+    const sanitized = hooks.sanitizeEditorHtml(surface.innerHTML);
+    expect(sanitized).toContain('<strong>Bold</strong>');
+    expect(sanitized).toContain('<img src="https://example.com/image.png" alt="Alt" width="50" height="60">');
+    expect(sanitized).toContain('<a href="https://example.com/docs">Docs</a>');
+    expect(sanitized).toContain('<table data-border-color="#112233"');
+    expect(sanitized).toContain('<iframe src="https://example.com/embed" title="Embed" width="100%" height="315" loading="lazy"></iframe>');
+    expect(sanitized).not.toContain('onclick');
+    expect(sanitized).not.toContain('onerror');
+    expect(sanitized).not.toContain('script');
 
-    expect(hooks.escapeMarkdownText('[a](b)*')).toBe('\\[a\\]\\(b\\)\\*');
-    expect(hooks.escapeMarkdownAttribute("line\nbreak")).toBe('line break');
     expect(hooks.normalizeAlignment('start')).toBe('left');
     expect(hooks.normalizeAlignment('end')).toBe('right');
     expect(hooks.normalizeAlignment('weird')).toBe('');
     expect(hooks.getElementAlignment(surface.firstElementChild)).toBe('center');
-    expect(hooks.hasRenderableBlockChildren(surface)).toBe(true);
-    expect(hooks.wrapAlignedMarkdown('justify', 'Hello')).toContain('<div align="justify">');
-    expect(hooks.indentMarkdownBlock('A\n\nB', 2)).toBe('  A\n\n  B');
-    expect(hooks.serializeListItemContent(2, '- ', 'Line 1\nLine 2')).toBe('  - Line 1\n    Line 2');
-    expect(hooks.formatTableSeparator('center')).toBe(':---:');
-    expect(hooks.formatTableSeparator('right')).toBe('---:');
-    expect(hooks.formatTableSeparator('left')).toBe(':---');
-    expect(hooks.formatTableSeparator('')).toBe('---');
   });
 
   test('test hooks cover runtime synchronization and toolbar state helpers', () => {
@@ -750,17 +721,17 @@ describe('NTRichTextEditor runtime behavior', () => {
     expect(fixture.length.textContent).toBe('4/25');
     fixture.surface.setAttribute('data-maxlength', '25');
 
-    hooks.applyMarkdownToSurface(fixture.element, '**Bold**');
+    hooks.applyHtmlToSurface(fixture.element, '<p><strong>Bold</strong></p>');
     expect(fixture.surface.innerHTML).toContain('<strong>Bold</strong>');
 
     setSurfaceContent(fixture.surface, '<p>Sync</p>');
     hooks.syncValueFromSurface(fixture.element, true);
-    expect(fixture.hiddenInput.value).toBe('Sync');
-    expect(dotNetRef.invokeMethodAsync).toHaveBeenCalledWith('UpdateValueFromJs', 'Sync', '<p>Sync</p>');
+    expect(fixture.hiddenInput.value).toBe('<p>Sync</p>');
+    expect(dotNetRef.invokeMethodAsync).toHaveBeenCalledWith('UpdateValueFromJs', '<p>Sync</p>', '<p>Sync</p>');
 
     setSurfaceContent(fixture.surface, '<p>Commit</p>');
     hooks.commitValue(fixture.element);
-    expect(dotNetRef.invokeMethodAsync).toHaveBeenCalledWith('CommitValueFromJs', 'Commit', '<p>Commit</p>');
+    expect(dotNetRef.invokeMethodAsync).toHaveBeenCalledWith('CommitValueFromJs', '<p>Commit</p>', '<p>Commit</p>');
 
     setSurfaceContent(fixture.surface, '<blockquote>Quote</blockquote>');
     collapseBeforeNode(fixture.surface.querySelector('blockquote'));
@@ -866,7 +837,7 @@ describe('NTRichTextEditor runtime behavior', () => {
     await settleAsync();
 
     const updatedImage = fixture.surface.querySelector('img');
-    expect(updatedImage.getAttribute('src')).toBe('data:image/png;base64,ZmFrZQ==');
+    expect(updatedImage.getAttribute('src')).toBe('https://example.com/new.png');
     expect(updatedImage.getAttribute('alt')).toBe('Updated');
     expect(updatedImage.hasAttribute('width')).toBe(false);
     expect(updatedImage.hasAttribute('height')).toBe(false);
@@ -878,7 +849,7 @@ describe('NTRichTextEditor runtime behavior', () => {
     click(fixture.element.querySelector('[data-role="image-apply"]'));
 
     expect(document.activeElement).toBe(imageUrlInput);
-    expect(fixture.surface.querySelector('img').getAttribute('src')).toBe('data:image/png;base64,ZmFrZQ==');
+    expect(fixture.surface.querySelector('img').getAttribute('src')).toBe('https://example.com/new.png');
   });
 
   test('link tool updates existing anchors and falls back to selected text or url when inserting', () => {
@@ -1095,7 +1066,7 @@ describe('NTRichTextEditor runtime behavior', () => {
     imageAltInput.value = 'Enter image';
     keydown(imageAltInput, 'Enter');
     await settleAsync();
-    expect(fixture.surface.querySelector('img').getAttribute('src')).toBe('data:image/png;base64,ZmFrZQ==');
+    expect(fixture.surface.querySelector('img').getAttribute('src')).toBe('https://example.com/enter.png');
 
     setSurfaceContent(fixture.surface, '<p>Table host</p>');
     const tableText = fixture.surface.querySelector('p').firstChild;

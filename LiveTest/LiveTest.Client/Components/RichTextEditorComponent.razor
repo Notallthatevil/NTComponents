@@ -12,7 +12,7 @@
                           ElementId="@EditorId"
                           Label="@($"{ModeName} notes")"
                           Placeholder="Type some formatted text"
-                          SupportingText="Toolbar actions update markdown while the editing surface stays rendered."
+                          SupportingText="Toolbar actions update sanitized HTML while the editing surface stays rendered."
                           LeadingIcon="@MaterialIcon.Notes"
                           TrailingIcon="@MaterialIcon.EditNote"
                           BindOnInput="true"
@@ -40,8 +40,8 @@
         </output>
 
         <details class="rich-text-editor-output" open>
-            <summary>Markdown value</summary>
-            <pre data-testid="@($"{ModeKey}-markdown")">@(Model.Value ?? string.Empty)</pre>
+            <summary>HTML value</summary>
+            <pre data-testid="@($"{ModeKey}-html")">@(Model.Value ?? string.Empty)</pre>
         </details>
     </div>
 </NTForm>

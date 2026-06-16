@@ -1,5 +1,4 @@
 @page "/rich-text-editor"
-@page "/Markdown"
 @using LiveTest.Client.Components
 
 <main class="rich-text-editor-page">
@@ -28,7 +27,7 @@
         <article class="rich-text-editor-demo" data-testid="rich-text-editor-wasm">
             <header>
                 <h2>InteractiveWebAssembly</h2>
-                <p>Commits in the browser after WebAssembly loads.</p>
+                <p>Commits sanitized HTML in the browser after WebAssembly loads.</p>
             </header>
             <RichTextEditorComponent ModeName="WASM" @rendermode="InteractiveWebAssembly" />
         </article>

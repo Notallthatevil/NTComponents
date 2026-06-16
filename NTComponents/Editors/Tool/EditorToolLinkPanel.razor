@@ -12,7 +12,7 @@
         <NTInputText Label="Link URL"
                      @bind-Value="_linkUrl"
                      Appearance="NTFormAppearance.Outlined"
-                     Density="NTFormDensity.Dense"
+                     Density="NTFormDensity.Standard"
                      InputType="TextInputType.Url"
                      Placeholder="https://example.com"
                      Disabled="@Disabled"
@@ -21,31 +21,48 @@
         <NTInputText Label="Link text"
                      @bind-Value="_linkText"
                      Appearance="NTFormAppearance.Outlined"
-                     Density="NTFormDensity.Dense"
+                     Density="NTFormDensity.Standard"
                      Placeholder="Link text"
                      Disabled="@Disabled"
                      SubmitValue="false"
                      data-role="link-text" />
+        <NTInputText Label="Accessible label"
+                     @bind-Value="_linkAriaLabel"
+                     Appearance="NTFormAppearance.Outlined"
+                     Density="NTFormDensity.Standard"
+                     Placeholder="Optional screen reader label"
+                     Disabled="@Disabled"
+                     SubmitValue="false"
+                     data-role="link-aria-label" />
+        <NTInputText Label="Title"
+                     @bind-Value="_linkTitle"
+                     Appearance="NTFormAppearance.Outlined"
+                     Density="NTFormDensity.Standard"
+                     Placeholder="Optional link title"
+                     Disabled="@Disabled"
+                     SubmitValue="false"
+                     data-role="link-title" />
     </div>
     <div class="tnt-rich-text-editor-inline-tool-actions">
-        <button type="button"
-                class="tnt-rich-text-editor-toolbar-button"
-                data-role="link-apply"
-                disabled="@Disabled">
-            Apply link
-        </button>
-        <button type="button"
-                class="tnt-rich-text-editor-toolbar-button"
-                data-role="link-cancel"
-                disabled="@Disabled">
-            Cancel
-        </button>
+        <NTButton Label="Apply link"
+                  ButtonSize="Size.Small"
+                  Disabled="@Disabled"
+                  Type="ButtonType.Button"
+                  data-role="link-apply" />
+        <NTButton Label="Cancel"
+                  ButtonSize="Size.Small"
+                  Disabled="@Disabled"
+                  Type="ButtonType.Button"
+                  Variant="NTButtonVariant.Text"
+                  data-role="link-cancel" />
     </div>
 </div>
 
 @code {
     private string? _linkUrl;
     private string? _linkText;
+    private string? _linkAriaLabel;
+    private string? _linkTitle;
 
     [Parameter]
     public bool Disabled { get; set; }

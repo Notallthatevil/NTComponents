@@ -13,7 +13,7 @@
         <NTInputText Label="Image URL"
                      @bind-Value="_imageUrl"
                      Appearance="NTFormAppearance.Outlined"
-                     Density="NTFormDensity.Dense"
+                     Density="NTFormDensity.Standard"
                      InputType="TextInputType.Url"
                      Placeholder="https://example.com/image.png"
                      Disabled="@Disabled"
@@ -21,7 +21,7 @@
                      data-role="image-url" />
         <NTFileUpload Label="Upload image"
                       Appearance="NTFormAppearance.Outlined"
-                      Density="NTFormDensity.Dense"
+                      Density="NTFormDensity.Standard"
                       @bind-Value="_imageFiles"
                       Accept="image/*"
                       EmptyText="No image selected"
@@ -33,16 +33,24 @@
         <NTInputText Label="Alt text"
                      @bind-Value="_imageAlt"
                      Appearance="NTFormAppearance.Outlined"
-                     Density="NTFormDensity.Dense"
+                     Density="NTFormDensity.Standard"
                      Placeholder="Describe the image"
                      Disabled="@Disabled"
                      SubmitValue="false"
                      data-role="image-alt" />
+        <NTInputText Label="Title"
+                     @bind-Value="_imageTitle"
+                     Appearance="NTFormAppearance.Outlined"
+                     Density="NTFormDensity.Standard"
+                     Placeholder="Optional image title"
+                     Disabled="@Disabled"
+                     SubmitValue="false"
+                     data-role="image-title" />
         <NTInputNumeric TNumber="int"
                         Label="Width"
                         @bind-Value="_imageWidth"
                         Appearance="NTFormAppearance.Outlined"
-                        Density="NTFormDensity.Dense"
+                        Density="NTFormDensity.Standard"
                         Placeholder="Auto"
                         Disabled="@Disabled"
                         min="1"
@@ -53,7 +61,7 @@
                         Label="Height"
                         @bind-Value="_imageHeight"
                         Appearance="NTFormAppearance.Outlined"
-                        Density="NTFormDensity.Dense"
+                        Density="NTFormDensity.Standard"
                         Placeholder="Auto"
                         Disabled="@Disabled"
                         min="1"
@@ -62,18 +70,17 @@
                         data-role="image-height" />
     </div>
     <div class="tnt-rich-text-editor-inline-tool-actions">
-        <button type="button"
-                class="tnt-rich-text-editor-toolbar-button"
-                data-role="image-apply"
-                disabled="@Disabled">
-            Insert image
-        </button>
-        <button type="button"
-                class="tnt-rich-text-editor-toolbar-button"
-                data-role="image-cancel"
-                disabled="@Disabled">
-            Cancel
-        </button>
+        <NTButton Label="Insert image"
+                  ButtonSize="Size.Small"
+                  Disabled="@Disabled"
+                  Type="ButtonType.Button"
+                  data-role="image-apply" />
+        <NTButton Label="Cancel"
+                  ButtonSize="Size.Small"
+                  Disabled="@Disabled"
+                  Type="ButtonType.Button"
+                  Variant="NTButtonVariant.Text"
+                  data-role="image-cancel" />
     </div>
 </div>
 
@@ -81,6 +88,7 @@
     private string? _imageUrl;
     private IReadOnlyList<IBrowserFile>? _imageFiles;
     private string? _imageAlt;
+    private string? _imageTitle;
     private int? _imageWidth;
     private int? _imageHeight;
 

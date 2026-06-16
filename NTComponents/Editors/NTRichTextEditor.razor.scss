@@ -1,5 +1,4 @@
 @use '../Form/NTInputBase.razor';
-@use '../Styles/_Variables/_colors.scss' as colors;
 @use '../Styles/_Variables/_corner-radius.scss' as corners;
 @use '../Styles/_Variables/_motion.scss' as motion;
 @use '../Styles/_Variables/_scrollbar.scss' as scrollbar;
@@ -11,8 +10,8 @@ $nt-rich-text-motion-duration-reduced: 0ms;
 $nt-rich-text-toolbar-button-size: 40px;
 $nt-rich-text-toolbar-button-size-dense: 36px;
 $nt-rich-text-toolbar-icon-size: 20px;
-$nt-rich-text-content-padding-block: 16px 12px;
-$nt-rich-text-content-padding-block-dense: 10px 8px;
+$nt-rich-text-content-padding-block: 12px 8px;
+$nt-rich-text-content-padding-block-dense: 8px 6px;
 $nt-rich-text-surface-min-height: 144px;
 $nt-rich-text-surface-min-height-comfortable: 168px;
 $nt-rich-text-surface-min-height-dense: 112px;
@@ -59,7 +58,7 @@ $nt-rich-text-media-radius: corners.$nt-corner-radius-extra-small;
         display: grid;
         width: 100%;
         min-width: 0;
-        gap: 8px;
+        gap: 6px;
         padding-block: $nt-rich-text-content-padding-block;
     }
 
@@ -72,8 +71,8 @@ $nt-rich-text-media-radius: corners.$nt-corner-radius-extra-small;
         display: flex;
         align-items: center;
         flex-wrap: wrap;
-        gap: 4px;
-        padding-block: 4px 8px;
+        gap: 2px;
+        padding-block: 2px 6px;
         border-block-end: 1px solid color-mix(in srgb, var(--nt-input-outline-color) 48%, transparent);
     }
 
@@ -142,11 +141,11 @@ $nt-rich-text-media-radius: corners.$nt-corner-radius-extra-small;
 
         display: block;
         min-height: $nt-rich-text-surface-min-height;
-        padding: 2px 0;
+        padding: 0;
         overflow: auto;
         overflow-wrap: anywhere;
         opacity: 1;
-        white-space: pre-wrap;
+        white-space: normal;
         word-break: break-word;
 
         &:empty::before {
@@ -188,12 +187,12 @@ $nt-rich-text-media-radius: corners.$nt-corner-radius-extra-small;
         }
 
         li + li {
-            margin-top: 0.25rem;
+            margin-top: 0.2rem;
         }
 
         blockquote {
             margin: 0;
-            padding-left: 12px;
+            padding-left: 10px;
             border-left: 3px solid color-mix(in srgb, var(--nt-input-focus-color) 36%, transparent);
             color: color-mix(in srgb, currentColor 84%, transparent);
         }
@@ -202,7 +201,7 @@ $nt-rich-text-media-radius: corners.$nt-corner-radius-extra-small;
             @include scrollbar.nt-scrollbar;
 
             margin: 0;
-            padding: 12px 14px;
+            padding: 10px 12px;
             overflow-x: auto;
             border-radius: $nt-rich-text-media-radius;
             background-color: color-mix(in srgb, var(--nt-input-focus-color) 10%, transparent);
@@ -223,7 +222,7 @@ $nt-rich-text-media-radius: corners.$nt-corner-radius-extra-small;
 
         th,
         td {
-            padding: 10px 12px;
+            padding: 8px 10px;
             border: 1px solid var(--nt-rich-text-table-border-color);
             text-align: left;
             vertical-align: top;
@@ -287,15 +286,15 @@ $nt-rich-text-media-radius: corners.$nt-corner-radius-extra-small;
         p + img,
         iframe + p,
         p + iframe {
-            margin-top: 0.8rem;
+            margin-top: 0.55rem;
         }
     }
 
     ::deep {
         .tnt-rich-text-editor-inline-tool {
             display: grid;
-            gap: 12px;
-            padding: 12px;
+            gap: 8px;
+            padding: 8px;
             border-radius: $nt-rich-text-media-radius;
             background-color: color-mix(in srgb, var(--nt-input-container-color) 92%, var(--nt-input-focus-color) 8%);
             box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--nt-input-outline-color) 64%, transparent);
@@ -308,75 +307,14 @@ $nt-rich-text-media-radius: corners.$nt-corner-radius-extra-small;
         .tnt-rich-text-editor-inline-tool-fields {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
-            gap: 10px;
+            gap: 8px;
             align-items: start;
-        }
-
-        .tnt-rich-text-editor-inline-tool-field {
-            display: grid;
-            min-width: 0;
-            gap: 6px;
-
-            span {
-                @include typescale.nt-label-small;
-
-                color: var(--nt-input-label-color);
-            }
-
-            input {
-                @include typescale.nt-body-medium;
-
-                box-sizing: border-box;
-                width: 100%;
-                min-width: 0;
-                min-height: 40px;
-                padding: 8px 10px;
-                border: 0;
-                border-radius: corners.$nt-corner-radius-extra-small;
-                background-color: colors.$tnt-color-surface;
-                box-shadow: inset 0 0 0 1px var(--nt-input-outline-color);
-                color: var(--nt-input-text-color);
-
-                &:focus {
-                    outline: 2px solid var(--nt-input-focus-color);
-                    outline-offset: 1px;
-                }
-
-                &:disabled {
-                    color: var(--nt-input-disabled-content-color);
-                    opacity: $nt-rich-text-disabled-content-opacity;
-                }
-            }
-
-            input[type='file'] {
-                padding: 6px;
-            }
-
-            input[type='color'] {
-                width: min(100%, 64px);
-                min-width: 48px;
-                padding: 2px;
-                overflow: hidden;
-                appearance: none;
-                background-color: transparent;
-                cursor: pointer;
-
-                &::-webkit-color-swatch-wrapper {
-                    padding: 0;
-                }
-
-                &::-webkit-color-swatch,
-                &::-moz-color-swatch {
-                    border: 0;
-                    border-radius: corners.$nt-corner-radius-extra-small;
-                }
-            }
         }
 
         .tnt-rich-text-editor-inline-tool-actions {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
+            gap: 6px;
             justify-content: flex-end;
         }
 

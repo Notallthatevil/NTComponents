@@ -48,19 +48,8 @@ interface RichTextEditorToolPlugin<TState> {
 }
 
 interface DotNetEditorRef {
-    invokeMethodAsync(methodName: 'UpdateValueFromJs' | 'CommitValueFromJs', markdown: string, html: string): Promise<unknown> | void;
+    invokeMethodAsync(methodName: 'UpdateValueFromJs' | 'CommitValueFromJs', value: string, html: string): Promise<unknown> | void;
     invokeMethodAsync(methodName: 'UpdateMarkupValueFromJs', html: string): Promise<unknown> | void;
-}
-
-interface InlineToken {
-    token: string;
-    html: string;
-}
-
-interface ListMarker {
-    indent: number;
-    ordered: boolean;
-    content: string;
 }
 
 interface IframeDetails {
@@ -73,16 +62,13 @@ interface IframeDetails {
 interface ImageDetails {
     src: string;
     alt: string;
+    title: string;
     width: string;
     height: string;
 }
 
-interface BlockRenderResult {
-    html: string;
-    nextIndex: number;
-}
-
 interface ExistingTableContent {
+    caption: string;
     headers: string[];
     rows: string[][];
 }
@@ -91,12 +77,14 @@ interface TableEditorDetails {
     columns: number;
     rows: number;
     borderColor: string;
+    caption: string;
 }
 
 interface TableHtmlOptions {
     columns: number;
     rows: number;
     borderColor: string;
+    caption?: string;
     existingContent?: ExistingTableContent | null;
 }
 
@@ -108,7 +96,7 @@ interface EditorState extends RichTextEditorToolEditorState {
     requiresInitialRender: boolean;
     toolbarButtons: HTMLButtonElement[];
     toolCommands: string[];
-    lastMarkdown: string;
+    lastValue: string;
     lastHtml: string;
     onInput: () => void;
     onFocus: () => void;
@@ -341,10 +329,6 @@ function normalizeSafeUrl(value: unknown, kind: 'link' | 'iframe' | 'image'): st
     return '';
 }
 
-function canUseMarkdownUrl(url: string): boolean {
-    return !/[)\s]/.test(url);
-}
-
 function unbindToolbarButtons(buttons: Maybe<HTMLButtonElement[]>, state: Maybe<EditorState>): void {
     if (!state) {
         return;
@@ -543,23 +527,6 @@ function normalizeTextColorValue(value: unknown): string {
     return red && green && blue ? `#${red}${green}${blue}` : '';
 }
 
-function normalizeNewLines(value: unknown): string {
-    return `${value ?? ''}`.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-}
-
-function countLeadingSpaces(value: string): number {
-    let count = 0;
-    while (count < value.length && value[count] === ' ') {
-        count++;
-    }
-
-    return count;
-}
-
-function stripIndent(value: string, count: number): string {
-    return count >= value.length ? '' : value.slice(count);
-}
-
 function escapeHtml(value: string): string {
     return value
         .replaceAll('&', '&amp;')
@@ -569,10 +536,121 @@ function escapeHtml(value: string): string {
         .replaceAll('\'', '&#39;');
 }
 
-function createInlineToken(tokens: InlineToken[], html: string): string {
-    const token = `__NT_INLINE_TOKEN_${tokens.length}__`;
-    tokens.push({ token, html });
-    return token;
+const allowedHtmlTags = new Set(['A', 'B', 'BLOCKQUOTE', 'BR', 'CAPTION', 'CODE', 'DEL', 'DIV', 'EM', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'I', 'IFRAME', 'IMG', 'LI', 'OL', 'P', 'PRE', 'S', 'SPAN', 'STRIKE', 'STRONG', 'TABLE', 'TBODY', 'TD', 'TFOOT', 'TH', 'THEAD', 'TR', 'U', 'UL']);
+const droppedHtmlTags = new Set(['SCRIPT', 'STYLE', 'TEMPLATE']);
+
+function unwrapUnsafeElement(element: Element): void {
+    if (droppedHtmlTags.has(element.tagName)) {
+        element.remove();
+        return;
+    }
+
+    element.replaceWith(...toArray(element.childNodes));
+}
+
+function sanitizeDimensionAttribute(value: unknown, allowPercent = false): string {
+    const trimmed = `${value ?? ''}`.trim();
+    if (/^\d+$/.test(trimmed)) {
+        return trimmed;
+    }
+
+    return allowPercent && /^\d+(?:\.\d+)?%$/.test(trimmed) ? trimmed : '';
+}
+
+function sanitizeElementStyle(element: HTMLElement): void {
+    const color = normalizeTextColorValue(element.style.color);
+    const textAlign = normalizeAlignment(element.style.textAlign);
+    const tableBorderColor = normalizeTableBorderColor(element.style.getPropertyValue('--nt-rich-text-table-border-color'));
+    element.removeAttribute('style');
+
+    if (color) {
+        element.style.color = color;
+    }
+
+    if (textAlign) {
+        element.style.textAlign = textAlign;
+    }
+
+    if (tableBorderColor && element instanceof HTMLTableElement) {
+        element.style.setProperty('--nt-rich-text-table-border-color', tableBorderColor);
+    }
+}
+
+function sanitizeElementAttributes(element: Element): void {
+    const tagName = element.tagName;
+    for (const attribute of toArray(element.attributes)) {
+        const name = attribute.name.toLowerCase();
+        if (name.startsWith('on') || name === 'srcdoc') {
+            element.removeAttribute(attribute.name);
+            continue;
+        }
+
+        if (name === 'style' && element instanceof HTMLElement) {
+            sanitizeElementStyle(element);
+            continue;
+        }
+
+        if (!['align', 'alt', 'aria-label', 'data-border-color', 'data-language', 'height', 'href', 'loading', 'scope', 'src', 'title', 'width'].includes(name)) {
+            element.removeAttribute(attribute.name);
+        }
+    }
+
+    if (element instanceof HTMLAnchorElement) {
+        const href = normalizeSafeUrl(element.getAttribute('href') ?? '', 'link');
+        href ? element.setAttribute('href', href) : element.removeAttribute('href');
+    }
+
+    if (element instanceof HTMLImageElement) {
+        const src = normalizeSafeUrl(element.getAttribute('src') ?? '', 'image');
+        src ? element.setAttribute('src', src) : element.remove();
+        element.setAttribute('alt', element.getAttribute('alt') ?? '');
+        const width = normalizeImageDimension(element.getAttribute('width') ?? '');
+        const height = normalizeImageDimension(element.getAttribute('height') ?? '');
+        width ? element.setAttribute('width', width) : element.removeAttribute('width');
+        height ? element.setAttribute('height', height) : element.removeAttribute('height');
+    }
+
+    if (element instanceof HTMLIFrameElement) {
+        const src = normalizeSafeUrl(element.getAttribute('src') ?? '', 'iframe');
+        src ? element.setAttribute('src', src) : element.remove();
+        element.setAttribute('title', element.getAttribute('title')?.trim() || defaultIframeTitle);
+        element.setAttribute('width', sanitizeDimensionAttribute(element.getAttribute('width'), true) || defaultIframeWidth);
+        element.setAttribute('height', sanitizeDimensionAttribute(element.getAttribute('height')) || defaultIframeHeight);
+        element.setAttribute('loading', 'lazy');
+    }
+
+    if (element instanceof HTMLTableElement) {
+        const borderColor = getTableBorderColor(element);
+        if (borderColor) {
+            element.setAttribute('data-border-color', borderColor);
+            element.style.setProperty('--nt-rich-text-table-border-color', borderColor);
+        }
+    }
+
+    if (element instanceof HTMLTableCellElement && element.tagName === 'TH') {
+        const scope = element.getAttribute('scope')?.trim().toLowerCase();
+        if (scope && !['col', 'row', 'colgroup', 'rowgroup'].includes(scope)) {
+            element.removeAttribute('scope');
+        }
+    }
+}
+
+function sanitizeHtmlFragment(root: ParentNode): void {
+    for (const element of toArray(root.querySelectorAll('*'))) {
+        if (!allowedHtmlTags.has(element.tagName)) {
+            unwrapUnsafeElement(element);
+            continue;
+        }
+
+        sanitizeElementAttributes(element);
+    }
+}
+
+function sanitizeEditorHtml(html: string): string {
+    const template = document.createElement('template');
+    template.innerHTML = html;
+    sanitizeHtmlFragment(template.content);
+    return template.innerHTML;
 }
 
 function normalizeImageDimension(value: unknown): string {
@@ -595,7 +673,7 @@ function buildTableStyleAttribute(borderColor: unknown): string {
     return ` data-border-color="${encodedBorderColor}" style="--nt-rich-text-table-border-color:${encodedBorderColor};"`;
 }
 
-function buildImageHtml({ src, alt = '', width = '', height = '' }: ImageDetails): string {
+function buildImageHtml({ src, alt = '', title = '', width = '', height = '' }: ImageDetails): string {
     const normalizedSource = normalizeSafeUrl(src, 'image');
     if (!normalizedSource) {
         return '';
@@ -603,79 +681,14 @@ function buildImageHtml({ src, alt = '', width = '', height = '' }: ImageDetails
 
     const normalizedWidth = normalizeImageDimension(width);
     const normalizedHeight = normalizeImageDimension(height);
+    const titleAttribute = title.trim() ? ` title="${escapeHtml(title.trim())}"` : '';
     const widthAttribute = normalizedWidth ? ` width="${escapeHtml(normalizedWidth)}"` : '';
     const heightAttribute = normalizedHeight ? ` height="${escapeHtml(normalizedHeight)}"` : '';
-    return `<img src="${escapeHtml(normalizedSource)}" alt="${escapeHtml(alt)}"${widthAttribute}${heightAttribute} />`;
+    return `<img src="${escapeHtml(normalizedSource)}" alt="${escapeHtml(alt)}"${titleAttribute}${widthAttribute}${heightAttribute} />`;
 }
 
-function buildImageMarkdown({ src, alt = '', width = '', height = '' }: ImageDetails): string {
-    const normalizedSource = normalizeSafeUrl(src, 'image');
-    if (!normalizedSource) {
-        return escapeMarkdownText(alt);
-    }
-
-    const normalizedWidth = normalizeImageDimension(width);
-    const normalizedHeight = normalizeImageDimension(height);
-    if (!normalizedWidth && !normalizedHeight && canUseMarkdownUrl(normalizedSource)) {
-        return `![${escapeMarkdownAttribute(alt)}](${normalizedSource})`;
-    }
-
-    const widthAttribute = normalizedWidth ? ` width="${escapeMarkdownAttribute(normalizedWidth)}"` : '';
-    const heightAttribute = normalizedHeight ? ` height="${escapeMarkdownAttribute(normalizedHeight)}"` : '';
-    return `<img src="${normalizedSource}" alt="${escapeMarkdownAttribute(alt)}"${widthAttribute}${heightAttribute} />`;
-}
-
-function isHttpUrl(value: string): boolean {
-    const scheme = extractUrlScheme(value);
-    return scheme === 'http' || scheme === 'https';
-}
-
-function readBlobAsDataUrl(blob: Blob): Promise<string> {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => typeof reader.result === 'string' ? resolve(reader.result) : reject(new Error('Image data URL conversion failed.'));
-        reader.onerror = () => reject(reader.error ?? new Error('Image data URL conversion failed.'));
-        reader.readAsDataURL(blob);
-    });
-}
-
-async function tryEmbedImageUrlAsDataUrl(url: string): Promise<string> {
-    if (!isHttpUrl(url) || typeof fetch !== 'function') {
-        return url;
-    }
-
-    try {
-        const response = await fetch(url, { credentials: 'omit' });
-        if (!response.ok) {
-            return url;
-        }
-
-        const contentType = response.headers?.get('content-type')?.split(';')[0]?.trim().toLowerCase() ?? '';
-        if (contentType && !contentType.startsWith('image/')) {
-            return url;
-        }
-
-        const responseBlob = await response.blob();
-        const imageBlob = responseBlob.type.startsWith('image/') || !contentType
-            ? responseBlob
-            : new Blob([await responseBlob.arrayBuffer()], { type: contentType });
-        if (imageBlob.type && !imageBlob.type.startsWith('image/')) {
-            return url;
-        }
-
-        const dataUrl = await readBlobAsDataUrl(imageBlob);
-        return normalizeSafeUrl(dataUrl, 'image') || url;
-    } catch {
-        return url;
-    }
-}
-
-function renderMarkdownImage(_match: string, alt: string, url: string): string {
-    return buildImageHtml({ src: url, alt, width: '', height: '' });
-}
-
-function renderHtmlImage(_match: string, src: string, alt = '', width = '', height = ''): string {
-    return buildImageHtml({ src, alt, width, height });
+function renderHtmlImage(_match: string, src: string, alt = '', title = '', width = '', height = ''): string {
+    return buildImageHtml({ src, alt, title, width, height });
 }
 
 function getImageDetails(imageElement: unknown): ImageDetails {
@@ -683,6 +696,7 @@ function getImageDetails(imageElement: unknown): ImageDetails {
         return {
             src: '',
             alt: '',
+            title: '',
             width: '',
             height: ''
         };
@@ -691,6 +705,7 @@ function getImageDetails(imageElement: unknown): ImageDetails {
     return {
         src: imageElement.getAttribute('src') ?? '',
         alt: imageElement.getAttribute('alt') ?? '',
+        title: imageElement.getAttribute('title') ?? '',
         width: normalizeImageDimension(imageElement.getAttribute('width') ?? ''),
         height: normalizeImageDimension(imageElement.getAttribute('height') ?? '')
     };
@@ -803,6 +818,10 @@ function getImageAltInput(element: Maybe<ParentNode>): HTMLInputElement | null {
     return getRoleInput(element, 'image-alt');
 }
 
+function getImageTitleInput(element: Maybe<ParentNode>): HTMLInputElement | null {
+    return getRoleInput(element, 'image-title');
+}
+
 function getImageWidthInput(element: Maybe<ParentNode>): HTMLInputElement | null {
     return getRoleInput(element, 'image-width');
 }
@@ -897,7 +916,7 @@ function bindImageToolControls(context: RichTextEditorToolContext<ImageToolState
     toolState.imageFileInput = getRoleInput(element, 'image-file');
     toolState.imageApplyButton = getRoleButton(element, 'image-apply');
     toolState.imageCancelButton = getRoleButton(element, 'image-cancel');
-    toolState.imageEditorInputs = [getImageUrlInput(element), getImageAltInput(element), getImageWidthInput(element), getImageHeightInput(element)].filter(isHtmlInputElement);
+    toolState.imageEditorInputs = [getImageUrlInput(element), getImageAltInput(element), getImageTitleInput(element), getImageWidthInput(element), getImageHeightInput(element)].filter(isHtmlInputElement);
     if (toolState.onImageFileChange) {
         toolState.imageFileInput?.addEventListener('change', toolState.onImageFileChange);
     }
@@ -966,6 +985,11 @@ function openImageEditor(context: RichTextEditorToolContext<ImageToolState>, { f
         imageAltInput.value = imageDetails.alt;
     }
 
+    const imageTitleInput = getImageTitleInput(element);
+    if (imageTitleInput) {
+        imageTitleInput.value = imageDetails.title;
+    }
+
     const imageWidthInput = getImageWidthInput(element);
     if (imageWidthInput) {
         imageWidthInput.value = imageDetails.width;
@@ -998,19 +1022,19 @@ async function applyImageEditor(context: RichTextEditorToolContext<ImageToolStat
         return false;
     }
 
-    let imageUrl = normalizeSafeUrl(getImageUrlInput(element)?.value ?? '', 'image');
+    const imageUrl = normalizeSafeUrl(getImageUrlInput(element)?.value ?? '', 'image');
     if (!imageUrl) {
         getImageUrlInput(element)?.focus();
         return false;
     }
 
-    imageUrl = await tryEmbedImageUrlAsDataUrl(imageUrl);
     const imageUrlInput = getImageUrlInput(element);
     if (imageUrlInput) {
         imageUrlInput.value = imageUrl;
     }
 
     const imageAlt = getImageAltInput(element)?.value?.trim?.() ?? '';
+    const imageTitle = getImageTitleInput(element)?.value?.trim?.() ?? '';
     const imageWidth = normalizeImageDimension(getImageWidthInput(element)?.value ?? '');
     const imageHeight = normalizeImageDimension(getImageHeightInput(element)?.value ?? '');
     const imageTarget = toolState.imageTarget;
@@ -1018,11 +1042,12 @@ async function applyImageEditor(context: RichTextEditorToolContext<ImageToolStat
     if (imageTarget instanceof HTMLImageElement && surface.contains(imageTarget)) {
         imageTarget.setAttribute('src', imageUrl);
         imageTarget.setAttribute('alt', imageAlt);
+        imageTitle ? imageTarget.setAttribute('title', imageTitle) : imageTarget.removeAttribute('title');
         imageWidth ? imageTarget.setAttribute('width', imageWidth) : imageTarget.removeAttribute('width');
         imageHeight ? imageTarget.setAttribute('height', imageHeight) : imageTarget.removeAttribute('height');
     } else {
         host.restoreSelectionRange(surface, editorState);
-        const imageHtml = buildImageHtml({ src: imageUrl, alt: imageAlt, width: imageWidth, height: imageHeight });
+        const imageHtml = buildImageHtml({ src: imageUrl, alt: imageAlt, title: imageTitle, width: imageWidth, height: imageHeight });
         if (!imageHtml) {
             getImageUrlInput(element)?.focus();
             return false;
@@ -1040,7 +1065,8 @@ function getTableEditorDetails(tableElement: Maybe<HTMLTableElement>): TableEdit
         return {
             columns: 3,
             rows: 2,
-            borderColor: defaultTableBorderColor
+            borderColor: defaultTableBorderColor,
+            caption: ''
         };
     }
 
@@ -1052,13 +1078,15 @@ function getTableEditorDetails(tableElement: Maybe<HTMLTableElement>): TableEdit
     return {
         columns: Math.min(Math.max(headerCells.length || 3, 1), 8),
         rows: Math.min(Math.max(bodyRows.length || 2, 1), 12),
-        borderColor: getTableBorderColor(tableElement) || defaultTableBorderColor
+        borderColor: getTableBorderColor(tableElement) || defaultTableBorderColor,
+        caption: tableElement.querySelector(':scope > caption')?.textContent?.trim() ?? ''
     };
 }
 
 function getExistingTableContent(tableElement: Maybe<HTMLTableElement>): ExistingTableContent {
     if (!(tableElement instanceof HTMLTableElement)) {
         return {
+            caption: '',
             headers: [],
             rows: []
         };
@@ -1070,6 +1098,7 @@ function getExistingTableContent(tableElement: Maybe<HTMLTableElement>): Existin
         .map((row) => getTableCells(row))
         .filter((cells) => cells.length > 0);
     return {
+        caption: tableElement.querySelector(':scope > caption')?.innerHTML?.trim() ?? '',
         headers: headerCells.map((cell) => cell.innerHTML.trim()),
         rows: bodyRows.map((cells) => cells.map((cell) => cell.innerHTML.trim()))
     };
@@ -1088,11 +1117,13 @@ function clampTableRows(value: number): number {
     return Math.min(Math.max(value, 1), 12);
 }
 
-function buildTableHtml({ columns, rows, borderColor, existingContent = null }: TableHtmlOptions): string {
+function buildTableHtml({ columns, rows, borderColor, caption = '', existingContent = null }: TableHtmlOptions): string {
     const normalizedBorderColor = normalizeTableBorderColor(borderColor) || defaultTableBorderColor;
+    const captionContent = `${caption || existingContent?.caption || ''}`.trim();
+    const captionMarkup = captionContent ? `<caption>${escapeHtml(captionContent)}</caption>` : '';
     const headerMarkup = Array.from({ length: columns }, (_, columnIndex) => getTableCellMarkup(existingContent?.headers?.[columnIndex], `Header ${columnIndex + 1}`, 'th')).join('');
     const bodyMarkup = Array.from({ length: rows }, (_, rowIndex) => `<tr>${Array.from({ length: columns }, (_, columnIndex) => getTableCellMarkup(existingContent?.rows?.[rowIndex]?.[columnIndex], `Cell ${rowIndex + 1}-${columnIndex + 1}`, 'td')).join('')}</tr>`).join('');
-    return `<table${buildTableStyleAttribute(normalizedBorderColor)}><thead><tr>${headerMarkup}</tr></thead><tbody>${bodyMarkup}</tbody></table>`;
+    return `<table${buildTableStyleAttribute(normalizedBorderColor)}>${captionMarkup}<thead><tr>${headerMarkup}</tr></thead><tbody>${bodyMarkup}</tbody></table>`;
 }
 
 function initializeTableToolStateHandlers(context: RichTextEditorToolContext<TableToolState>): void {
@@ -1139,7 +1170,7 @@ function bindTableToolControls(context: RichTextEditorToolContext<TableToolState
     unbindTableToolControls(context);
     toolState.tableApplyButton = getRoleButton(element, 'table-apply');
     toolState.tableCancelButton = getRoleButton(element, 'table-cancel');
-    toolState.tableEditorInputs = [getRoleInput(element, 'table-columns'), getRoleInput(element, 'table-rows'), getRoleInput(element, 'table-border-color')].filter(isHtmlInputElement);
+    toolState.tableEditorInputs = [getRoleInput(element, 'table-columns'), getRoleInput(element, 'table-rows'), getRoleInput(element, 'table-border-color'), getRoleInput(element, 'table-caption')].filter(isHtmlInputElement);
     if (toolState.onTableApply) {
         toolState.tableApplyButton?.addEventListener('click', toolState.onTableApply);
     }
@@ -1204,6 +1235,11 @@ function openTableEditor(context: RichTextEditorToolContext<TableToolState>, { f
         borderColorInput.value = tableDetails.borderColor;
     }
 
+    const captionInput = getRoleInput(element, 'table-caption');
+    if (captionInput) {
+        captionInput.value = tableDetails.caption;
+    }
+
     host.setToolPanelOpen(element, 'table', true);
     if (focusInput) {
         columnsInput?.focus();
@@ -1237,10 +1273,11 @@ function applyTableEditor(context: RichTextEditorToolContext<TableToolState>): b
     const columns = clampTableColumns(requestedColumns);
     const rows = clampTableRows(requestedRows);
     const borderColor = normalizeTableBorderColor(getRoleInput(element, 'table-border-color')?.value ?? '') || defaultTableBorderColor;
+    const caption = getRoleInput(element, 'table-caption')?.value?.trim?.() ?? '';
     const tableTarget = toolState.tableTarget;
     if (tableTarget instanceof HTMLTableElement && surface.contains(tableTarget)) {
         const template = document.createElement('template');
-        template.innerHTML = buildTableHtml({ columns, rows, borderColor, existingContent: getExistingTableContent(tableTarget) });
+        template.innerHTML = buildTableHtml({ columns, rows, borderColor, caption, existingContent: getExistingTableContent(tableTarget) });
         const replacementTable = template.content.querySelector('table');
         if (!(replacementTable instanceof HTMLTableElement)) {
             return false;
@@ -1250,7 +1287,7 @@ function applyTableEditor(context: RichTextEditorToolContext<TableToolState>): b
         toolState.tableTarget = replacementTable;
     } else {
         host.restoreSelectionRange(surface, editorState);
-        document.execCommand('insertHTML', false, `${buildTableHtml({ columns, rows, borderColor })}<p><br></p>`);
+        document.execCommand('insertHTML', false, `${buildTableHtml({ columns, rows, borderColor, caption })}<p><br></p>`);
     }
 
     closeTableEditor(context, { focusSurface: true });
@@ -1508,7 +1545,7 @@ function bindLinkToolControls(context: RichTextEditorToolContext<LinkToolState>)
     unbindLinkToolControls(context);
     toolState.linkApplyButton = getRoleButton(element, 'link-apply');
     toolState.linkCancelButton = getRoleButton(element, 'link-cancel');
-    toolState.linkEditorInputs = [getRoleInput(element, 'link-url'), getRoleInput(element, 'link-text')].filter(isHtmlInputElement);
+    toolState.linkEditorInputs = [getRoleInput(element, 'link-url'), getRoleInput(element, 'link-text'), getRoleInput(element, 'link-aria-label'), getRoleInput(element, 'link-title')].filter(isHtmlInputElement);
     if (toolState.onLinkApply) {
         toolState.linkApplyButton?.addEventListener('click', toolState.onLinkApply);
     }
@@ -1560,6 +1597,8 @@ function openLinkEditor(context: RichTextEditorToolContext<LinkToolState>, { foc
     const selectedText = selection?.toString?.().trim?.() ?? '';
     const linkText = existingLink?.textContent?.trim?.() || selectedText;
     const linkUrl = existingLink?.getAttribute('href') ?? '';
+    const linkAriaLabel = existingLink?.getAttribute('aria-label') ?? '';
+    const linkTitle = existingLink?.getAttribute('title') ?? '';
     host.saveSelectionRange(surface, editorState);
     toolState.linkTarget = existingLink;
     toolState.linkSelectedText = selectedText;
@@ -1571,6 +1610,16 @@ function openLinkEditor(context: RichTextEditorToolContext<LinkToolState>, { foc
 
     if (linkTextInput) {
         linkTextInput.value = linkText;
+    }
+
+    const linkAriaLabelInput = getRoleInput(element, 'link-aria-label');
+    if (linkAriaLabelInput) {
+        linkAriaLabelInput.value = linkAriaLabel;
+    }
+
+    const linkTitleInput = getRoleInput(element, 'link-title');
+    if (linkTitleInput) {
+        linkTitleInput.value = linkTitle;
     }
 
     host.setToolPanelOpen(element, 'link', true);
@@ -1599,9 +1648,13 @@ function applyLinkEditor(context: RichTextEditorToolContext<LinkToolState>): boo
 
     const linkTextInput = getRoleInput(element, 'link-text')?.value?.trim?.() ?? '';
     const linkText = linkTextInput || toolState.linkSelectedText || linkUrl;
+    const linkAriaLabel = getRoleInput(element, 'link-aria-label')?.value?.trim?.() ?? '';
+    const linkTitle = getRoleInput(element, 'link-title')?.value?.trim?.() ?? '';
     const linkTarget = toolState.linkTarget;
     if (linkTarget instanceof HTMLAnchorElement && surface.contains(linkTarget)) {
         linkTarget.setAttribute('href', linkUrl);
+        linkAriaLabel ? linkTarget.setAttribute('aria-label', linkAriaLabel) : linkTarget.removeAttribute('aria-label');
+        linkTitle ? linkTarget.setAttribute('title', linkTitle) : linkTarget.removeAttribute('title');
         linkTarget.textContent = linkText;
     } else {
         host.restoreSelectionRange(surface, editorState);
@@ -1614,6 +1667,14 @@ function applyLinkEditor(context: RichTextEditorToolContext<LinkToolState>): boo
 
         const anchor = document.createElement('a');
         anchor.setAttribute('href', linkUrl);
+        if (linkAriaLabel) {
+            anchor.setAttribute('aria-label', linkAriaLabel);
+        }
+
+        if (linkTitle) {
+            anchor.setAttribute('title', linkTitle);
+        }
+
         anchor.textContent = linkText;
         range.deleteContents();
         range.insertNode(anchor);
@@ -1964,301 +2025,6 @@ registerRichTextEditorTool<IframeToolState>({
 
 setRichTextEditorToolRegistryChangedCallback(initializeAllEditors);
 
-function renderHtmlAnchor(_match: string, href: string, text: string): string {
-    const normalizedHref = normalizeSafeUrl(href, 'link');
-    const renderedText = renderInlineMarkdown(text);
-    return normalizedHref ? `<a href="${escapeHtml(normalizedHref)}">${renderedText}</a>` : renderedText;
-}
-
-function renderLink(_match: string, text: string, url: string): string {
-    return renderHtmlAnchor(_match, url, text);
-}
-
-function renderTextColor(_match: string, color: string, content: string): string {
-    return `<span style="color:${escapeHtml(color.trim())};">${renderInlineMarkdown(content)}</span>`;
-}
-
-function renderInlineMarkdown(value: string): string {
-    const tokens: InlineToken[] = [];
-    let rendered = value.replace(/<img\b[^>]*>/gi, (match) => {
-        const template = document.createElement('template');
-        template.innerHTML = match;
-        const image = template.content.querySelector('img');
-        return image instanceof HTMLImageElement
-            ? createInlineToken(tokens, buildImageHtml(getImageDetails(image)))
-            : match;
-    });
-    rendered = rendered.replace(/<a\b[^>]*href="([^"]+)"[^>]*>([\s\S]+?)<\/a>/gi,
-        (match, href, text) => createInlineToken(tokens, renderHtmlAnchor(match, href, text)));
-    rendered = rendered.replace(/<img\s+src="([^"]+)"(?:\s+alt="([^"]*)")?(?:\s+width="([^"]+)")?(?:\s+height="([^"]+)")?\s*\/?>/gi,
-        (match, src, alt, width, height) => createInlineToken(tokens, renderHtmlImage(match, src, alt ?? '', width ?? '', height ?? '')));
-    rendered = rendered.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, (match, alt, url) => createInlineToken(tokens, renderMarkdownImage(match, alt, url)));
-    rendered = rendered.replace(/(?<!!)\[([^\]]+)\]\(([^)\s]+)\)/g, (match, text, url) => createInlineToken(tokens, renderLink(match, text, url)));
-    rendered = rendered.replace(/<span\s+style="color:\s*([^";>]+)\s*;?">\s*([\s\S]+?)\s*<\/span>/gi, (match, color, content) => createInlineToken(tokens, renderTextColor(match, color, content)));
-    rendered = rendered.replace(/<u>([\s\S]+?)<\/u>/gi, (_, content) => createInlineToken(tokens, `<u>${renderInlineMarkdown(content)}</u>`));
-
-    rendered = escapeHtml(rendered);
-    rendered = rendered.replace(/\*\*(.+?)\*\*/gs, '<strong>$1</strong>');
-    rendered = rendered.replace(/(^|[^*])\*([^*\r\n]+?)\*(?!\*)/gs, (_, prefix, content) => `${prefix}<em>${content}</em>`);
-    rendered = rendered.replace(/~~(.+?)~~/gs, '<s>$1</s>');
-
-    for (const token of tokens) {
-        rendered = rendered.replaceAll(token.token, token.html);
-    }
-
-    return rendered;
-}
-
-function isCodeFenceLine(line: string): boolean {
-    return line.trimStart().startsWith('```');
-}
-
-function isBlockQuoteLine(line: string): boolean {
-    return line.trimStart().startsWith('>');
-}
-
-function stripBlockQuoteMarker(line: string): string {
-    const trimmed = line.trimStart();
-    if (!trimmed.startsWith('>')) {
-        return trimmed;
-    }
-
-    return trimmed.length > 1 && trimmed[1] === ' ' ? trimmed.slice(2) : trimmed.slice(1);
-}
-
-function parseListMarker(line: string): ListMarker | null {
-    const indent = countLeadingSpaces(line);
-    const trimmed = stripIndent(line, indent);
-
-    if (trimmed.length >= 2 && ['-', '*', '+'].includes(trimmed[0]) && trimmed[1] === ' ') {
-        return {
-            indent,
-            ordered: false,
-            content: trimmed.slice(2)
-        };
-    }
-
-    const orderedMatch = trimmed.match(/^\d+\.\s+(.*)$/s);
-    if (!orderedMatch) {
-        return null;
-    }
-
-    return {
-        indent,
-        ordered: true,
-        content: orderedMatch[1]
-    };
-}
-
-function parseAlignmentMarker(line: string): Alignment | null {
-    const match = line.trim().match(/^<div\s+align="(left|center|right|justify)">$/i);
-    if (!match) {
-        return null;
-    }
-
-    return normalizeAlignment(match[1]);
-}
-
-function parseIframeMarker(line: string): IframeDetails | null {
-    const trimmed = line.trim();
-    if (!/^<iframe\b/i.test(trimmed)) {
-        return null;
-    }
-
-    const template = document.createElement('template');
-    template.innerHTML = trimmed;
-    const iframe = template.content.querySelector('iframe');
-    if (!(iframe instanceof HTMLIFrameElement) || template.content.childElementCount !== 1) {
-        return null;
-    }
-
-    return {
-        src: iframe.getAttribute('src') ?? '',
-        title: iframe.getAttribute('title') ?? '',
-        width: iframe.getAttribute('width') ?? '',
-        height: iframe.getAttribute('height') ?? ''
-    };
-}
-
-function splitTableRow(line: string): string[] {
-    if (!line.includes('|')) {
-        return [];
-    }
-
-    let normalized = line.trim();
-    if (normalized.startsWith('|')) {
-        normalized = normalized.slice(1);
-    }
-
-    if (normalized.endsWith('|')) {
-        normalized = normalized.slice(0, -1);
-    }
-
-    return normalized.split('|').map((cell) => cell.trim());
-}
-
-function parseTableSeparator(line: string): Alignment[] | null {
-    const cells = splitTableRow(line);
-    if (cells.length === 0) {
-        return null;
-    }
-
-    const alignments: Alignment[] = [];
-    for (const cell of cells) {
-        const trimmed = cell.trim();
-        if (trimmed.length < 3) {
-            return null;
-        }
-
-        const leftAligned = trimmed.startsWith(':');
-        const rightAligned = trimmed.endsWith(':');
-        const dashSection = trimmed.replace(/^:/, '').replace(/:$/, '');
-        if (dashSection.length < 3 || !/^-+$/.test(dashSection)) {
-            return null;
-        }
-
-        alignments.push(leftAligned && rightAligned ? 'center'
-            : rightAligned ? 'right'
-            : leftAligned ? 'left'
-            : '');
-    }
-
-    return alignments;
-}
-
-function isTableStart(lines: string[], index: number): boolean {
-    if (index + 1 >= lines.length) {
-        return false;
-    }
-
-    const headerCells = splitTableRow(lines[index]);
-    const separatorCells = parseTableSeparator(lines[index + 1]);
-    return headerCells.length > 0 && separatorCells !== null && separatorCells.length === headerCells.length;
-}
-
-function isBlockBoundary(lines: string[], index: number): boolean {
-    const trimmed = lines[index].trimStart();
-    return parseAlignmentMarker(trimmed) !== null
-        || parseIframeMarker(trimmed) !== null
-        || isHtmlTableStart(lines, index)
-        || isCodeFenceLine(trimmed)
-        || isBlockQuoteLine(trimmed)
-        || isTableStart(lines, index)
-        || /^(#{1,6})\s+(.+)$/s.test(trimmed)
-        || parseListMarker(lines[index]) !== null;
-}
-
-function hasListContinuation(lines: string[], blankLineIndex: number, currentIndent: number): boolean {
-    for (let lookahead = blankLineIndex + 1; lookahead < lines.length; lookahead++) {
-        if (!lines[lookahead].trim()) {
-            continue;
-        }
-
-        const listMarker = parseListMarker(lines[lookahead]);
-        if (listMarker) {
-            return listMarker.indent >= currentIndent;
-        }
-
-        return countLeadingSpaces(lines[lookahead]) > currentIndent;
-    }
-
-    return false;
-}
-
-function renderParagraph(lines: string[], startIndex: number): BlockRenderResult {
-    const paragraphLines = [];
-    let index = startIndex;
-
-    while (index < lines.length) {
-        const line = lines[index];
-        if (!line.trim()) {
-            break;
-        }
-
-        if (paragraphLines.length > 0 && isBlockBoundary(lines, index)) {
-            break;
-        }
-
-        paragraphLines.push(line.trimEnd());
-        index++;
-    }
-
-    if (paragraphLines.length === 0) {
-        return { html: '', nextIndex: index };
-    }
-
-    return {
-        html: `<p>${renderInlineMarkdown(paragraphLines.join('\n')).replace(/\n/g, '<br />')}</p>`,
-        nextIndex: index
-    };
-}
-
-function renderCodeBlock(lines: string[], startIndex: number): BlockRenderResult {
-    const firstLine = lines[startIndex].trim();
-    const language = firstLine.slice(3).trim();
-    const codeLines = [];
-    let index = startIndex + 1;
-
-    while (index < lines.length && !lines[index].trimStart().startsWith('```')) {
-        codeLines.push(lines[index]);
-        index++;
-    }
-
-    if (index < lines.length) {
-        index++;
-    }
-
-    const encodedLanguage = escapeHtml(language);
-    const encodedCode = escapeHtml(codeLines.join('\n'));
-    const languageAttribute = language ? ` data-language="${encodedLanguage}"` : '';
-
-    return {
-        html: `<pre${languageAttribute}><code${languageAttribute}>${encodedCode}</code></pre>`,
-        nextIndex: index
-    };
-}
-
-function renderAlignmentBlock(lines: string[], startIndex: number): BlockRenderResult {
-    const alignment = parseAlignmentMarker(lines[startIndex]);
-    if (!alignment) {
-        return { html: '', nextIndex: startIndex + 1 };
-    }
-
-    const innerLines = [];
-    let index = startIndex + 1;
-
-    while (index < lines.length && !/^<\/div>\s*$/i.test(lines[index].trim())) {
-        innerLines.push(lines[index]);
-        index++;
-    }
-
-    if (index < lines.length) {
-        index++;
-    }
-
-    return {
-        html: `<div class="tnt-rich-text-editor-alignment" style="text-align:${escapeHtml(alignment)};">${renderBlocksFromLines(innerLines).html}</div>`,
-        nextIndex: index
-    };
-}
-
-function renderIframeBlock(lines: string[], startIndex: number): BlockRenderResult {
-    const iframe = parseIframeMarker(lines[startIndex]);
-    if (!iframe) {
-        return { html: '', nextIndex: startIndex + 1 };
-    }
-
-    const iframeSource = normalizeSafeUrl(iframe.src, 'iframe');
-    if (!iframeSource) {
-        return { html: '', nextIndex: startIndex + 1 };
-    }
-
-    return {
-        html: `<iframe src="${escapeHtml(iframeSource)}" title="${escapeHtml(iframe.title)}" width="${escapeHtml(iframe.width)}" height="${escapeHtml(iframe.height)}" loading="lazy"></iframe>`,
-        nextIndex: startIndex + 1
-    };
-}
-
 function normalizeTableCells<T>(cells: T[], targetCount: number, filler?: T): T[] {
     const normalized = cells.slice(0, targetCount);
     while (normalized.length < targetCount) {
@@ -2266,10 +2032,6 @@ function normalizeTableCells<T>(cells: T[], targetCount: number, filler?: T): T[
     }
 
     return normalized;
-}
-
-function isHtmlTableStart(lines: string[], index: number): boolean {
-    return /^\s*<table(?:\s|>)/i.test(lines[index] ?? '');
 }
 
 function getTableBorderColor(tableElement: Maybe<HTMLTableElement>): string {
@@ -2285,320 +2047,6 @@ function getTableBorderColor(tableElement: Maybe<HTMLTableElement>): string {
     const styleAttribute = tableElement.getAttribute('style') ?? '';
     const styleMatch = styleAttribute.match(/--nt-rich-text-table-border-color:\s*([^;]+)/i);
     return normalizeTableBorderColor(styleMatch?.[1] ?? '');
-}
-
-function renderTableCellFromElement(cell: HTMLTableCellElement, tagName: 'th' | 'td'): string {
-    const alignment = getTableCellAlignment(cell);
-    const alignmentStyle = alignment ? ` style="text-align:${escapeHtml(alignment)};"` : '';
-    return `<${tagName}${alignmentStyle}>${renderInlineMarkdown(serializeTableCell(cell))}</${tagName}>`;
-}
-
-function renderHtmlTableElement(tableElement: HTMLTableElement): string {
-    const rows = getTableRows(tableElement);
-    if (rows.length === 0) {
-        return '<table></table>';
-    }
-
-    const headerCells = getTableCells(rows[0]);
-    if (headerCells.length === 0) {
-        return '<table></table>';
-    }
-
-    const borderColor = getTableBorderColor(tableElement);
-    const headerHtml = headerCells
-        .map((cell) => renderTableCellFromElement(cell, 'th'))
-        .join('');
-
-    const bodyHtml = rows.slice(1)
-        .map((row) => getTableCells(row))
-        .filter((cells) => cells.length > 0)
-        .map((cells) => `<tr>${normalizeTableCells(cells, headerCells.length).map((cell) => cell instanceof Element
-            ? renderTableCellFromElement(cell, cell.tagName === 'TH' ? 'th' : 'td')
-            : '<td></td>').join('')}</tr>`)
-        .join('');
-
-    return `<table${buildTableStyleAttribute(borderColor)}><thead><tr>${headerHtml}</tr></thead>${bodyHtml ? `<tbody>${bodyHtml}</tbody>` : ''}</table>`;
-}
-
-function renderHtmlTableBlock(lines: string[], startIndex: number): BlockRenderResult {
-    const blockLines = [];
-    let index = startIndex;
-
-    while (index < lines.length) {
-        blockLines.push(lines[index]);
-        if (/<\/table>\s*$/i.test(lines[index].trim())) {
-            index++;
-            break;
-        }
-
-        index++;
-    }
-
-    const template = document.createElement('template');
-    template.innerHTML = blockLines.join('\n').trim();
-
-    const tableElement = template.content.querySelector('table');
-    if (!(tableElement instanceof HTMLTableElement)) {
-        return {
-            html: '',
-            nextIndex: index
-        };
-    }
-
-    return {
-        html: renderHtmlTableElement(tableElement),
-        nextIndex: index
-    };
-}
-
-function renderTable(lines: string[], startIndex: number): BlockRenderResult {
-    const headerCells = splitTableRow(lines[startIndex]);
-    const alignments = parseTableSeparator(lines[startIndex + 1]) ?? headerCells.map(() => '');
-    let index = startIndex + 2;
-    const bodyRows = [];
-
-    while (index < lines.length) {
-        if (!lines[index].trim()) {
-            break;
-        }
-
-        if (isBlockBoundary(lines, index) && !lines[index].includes('|')) {
-            break;
-        }
-
-        const rowCells = splitTableRow(lines[index]);
-        if (rowCells.length === 0) {
-            break;
-        }
-
-        bodyRows.push(normalizeTableCells(rowCells, headerCells.length));
-        index++;
-    }
-
-    const headerHtml = headerCells.map((cell, cellIndex) => {
-        const alignment = alignments[cellIndex] ? ` style="text-align:${escapeHtml(alignments[cellIndex])};"` : '';
-        return `<th${alignment}>${renderInlineMarkdown(cell)}</th>`;
-    }).join('');
-
-    const bodyHtml = bodyRows.length === 0
-        ? ''
-        : `<tbody>${bodyRows.map((row) => `<tr>${row.map((cell, cellIndex) => {
-            const alignment = alignments[cellIndex] ? ` style="text-align:${escapeHtml(alignments[cellIndex])};"` : '';
-            return `<td${alignment}>${renderInlineMarkdown(cell)}</td>`;
-        }).join('')}</tr>`).join('')}</tbody>`;
-
-    return {
-        html: `<table><thead><tr>${headerHtml}</tr></thead>${bodyHtml}</table>`,
-        nextIndex: index
-    };
-}
-
-function renderBlockQuote(lines: string[], startIndex: number): BlockRenderResult {
-    const quoteLines = [];
-    let index = startIndex;
-
-    while (index < lines.length) {
-        const line = lines[index];
-        if (!line.trim()) {
-            if (index + 1 < lines.length && isBlockQuoteLine(lines[index + 1])) {
-                quoteLines.push('');
-                index++;
-                continue;
-            }
-
-            break;
-        }
-
-        if (!isBlockQuoteLine(line)) {
-            break;
-        }
-
-        quoteLines.push(stripBlockQuoteMarker(line));
-        index++;
-    }
-
-    return {
-        html: `<blockquote>${renderBlocksFromLines(quoteLines).html}</blockquote>`,
-        nextIndex: index
-    };
-}
-
-function renderList(lines: string[], startIndex: number): BlockRenderResult {
-    const marker = parseListMarker(lines[startIndex]);
-    if (!marker) {
-        return { html: '', nextIndex: startIndex };
-    }
-
-    const { indent, ordered } = marker;
-    const tagName = ordered ? 'ol' : 'ul';
-    const parts = [`<${tagName}>`];
-    let index = startIndex;
-
-    while (index < lines.length) {
-        if (!lines[index].trim()) {
-            index++;
-            continue;
-        }
-
-        const lineMarker = parseListMarker(lines[index]);
-        if (!lineMarker || lineMarker.indent !== indent || lineMarker.ordered !== ordered) {
-            break;
-        }
-
-        index++;
-        parts.push('<li>');
-
-        const inlineLines = [];
-        if (lineMarker.content.trim()) {
-            inlineLines.push(lineMarker.content.trimEnd());
-        }
-
-        while (index < lines.length) {
-            if (!lines[index].trim()) {
-                if (hasListContinuation(lines, index, indent)) {
-                    index++;
-                    continue;
-                }
-
-                break;
-            }
-
-            const nestedMarker = parseListMarker(lines[index]);
-            if (nestedMarker) {
-                if (nestedMarker.indent === indent) {
-                    break;
-                }
-
-                if (nestedMarker.indent > indent) {
-                    if (inlineLines.length > 0) {
-                        parts.push(renderInlineMarkdown(inlineLines.join('\n')).replace(/\n/g, '<br />'));
-                        inlineLines.length = 0;
-                    }
-
-                    const nestedList = renderList(lines, index);
-                    parts.push(nestedList.html);
-                    index = nestedList.nextIndex;
-                    continue;
-                }
-            }
-
-            const continuationIndent = countLeadingSpaces(lines[index]);
-            if (continuationIndent <= indent) {
-                break;
-            }
-
-            const continuationText = stripIndent(lines[index], Math.min(lines[index].length, indent + 2)).trimEnd();
-            if (continuationText) {
-                inlineLines.push(continuationText);
-            }
-
-            index++;
-        }
-
-        if (inlineLines.length > 0) {
-            parts.push(renderInlineMarkdown(inlineLines.join('\n')).replace(/\n/g, '<br />'));
-        }
-
-        parts.push('</li>');
-    }
-
-    parts.push(`</${tagName}>`);
-    return {
-        html: parts.join(''),
-        nextIndex: index
-    };
-}
-
-function renderBlocksFromLines(lines: string[], startIndex = 0): BlockRenderResult {
-    const parts = [];
-    let index = startIndex;
-
-    while (index < lines.length) {
-        if (!lines[index].trim()) {
-            index++;
-            continue;
-        }
-
-        if (parseAlignmentMarker(lines[index])) {
-            const block = renderAlignmentBlock(lines, index);
-            parts.push(block.html);
-            index = block.nextIndex;
-            continue;
-        }
-
-        if (parseIframeMarker(lines[index])) {
-            const block = renderIframeBlock(lines, index);
-            parts.push(block.html);
-            index = block.nextIndex;
-            continue;
-        }
-
-        if (isCodeFenceLine(lines[index])) {
-            const block = renderCodeBlock(lines, index);
-            parts.push(block.html);
-            index = block.nextIndex;
-            continue;
-        }
-
-        if (isBlockQuoteLine(lines[index])) {
-            const block = renderBlockQuote(lines, index);
-            parts.push(block.html);
-            index = block.nextIndex;
-            continue;
-        }
-
-        if (parseListMarker(lines[index])) {
-            const block = renderList(lines, index);
-            parts.push(block.html);
-            index = block.nextIndex;
-            continue;
-        }
-
-        if (isTableStart(lines, index)) {
-            const block = renderTable(lines, index);
-            parts.push(block.html);
-            index = block.nextIndex;
-            continue;
-        }
-
-        if (isHtmlTableStart(lines, index)) {
-            const block = renderHtmlTableBlock(lines, index);
-            parts.push(block.html);
-            index = block.nextIndex;
-            continue;
-        }
-
-        const headingMatch = lines[index].trim().match(/^(#{1,6})\s+(.+)$/s);
-        if (headingMatch) {
-            const level = headingMatch[1].length;
-            parts.push(`<h${level}>${renderInlineMarkdown(headingMatch[2].trim())}</h${level}>`);
-            index++;
-            continue;
-        }
-
-        const block = renderParagraph(lines, index);
-        parts.push(block.html);
-        index = block.nextIndex;
-    }
-
-    return { html: parts.join(''), nextIndex: index };
-}
-
-function markdownToHtml(markdown: string): string {
-    const normalized = normalizeNewLines(markdown);
-    if (!normalized.trim()) {
-        return '';
-    }
-
-    return renderBlocksFromLines(normalized.split('\n')).html;
-}
-
-function escapeMarkdownText(value: unknown): string {
-    return `${value ?? ''}`.replace(/([\\*_\[\]\(\)])/g, '\\$1');
-}
-
-function escapeMarkdownAttribute(value: unknown): string {
-    return escapeMarkdownText(value).replace(/\n/g, ' ');
 }
 
 function normalizeAlignment(value: unknown): Alignment {
@@ -2628,149 +2076,6 @@ function getElementAlignment(element: unknown): Alignment {
     return normalizeAlignment(textAlign || element.getAttribute?.('align') || '');
 }
 
-function hasRenderableBlockChildren(element: Maybe<Element>): boolean {
-    return toArray(element?.children)
-        .filter((child) => child instanceof Element)
-        .some((child) => blockNodeTags.has(child.tagName) || child.tagName === 'IMG');
-}
-
-function wrapAlignedMarkdown(alignment: Alignment, markdown: string): string {
-    const normalizedAlignment = normalizeAlignment(alignment);
-    if (!normalizedAlignment || normalizedAlignment === 'left' || !markdown.trim()) {
-        return markdown;
-    }
-
-    return `<div align="${normalizedAlignment}">\n${markdown}\n</div>`;
-}
-
-function serializeInline(node: Maybe<Node>): string {
-    if (!node) {
-        return '';
-    }
-
-    if (node.nodeType === Node.TEXT_NODE) {
-        return escapeMarkdownText(node.textContent ?? '');
-    }
-
-    if (!(node instanceof Element)) {
-        return '';
-    }
-
-    const tagName = node.tagName.toLowerCase();
-    const content = toArray(node.childNodes).map(serializeInline).join('');
-
-    switch (tagName) {
-        case 'strong':
-        case 'b':
-            return `**${content}**`;
-        case 'em':
-        case 'i':
-            return `*${content}*`;
-        case 'u':
-            return `<u>${content}</u>`;
-        case 's':
-        case 'strike':
-        case 'del':
-            return `~~${content}~~`;
-        case 'span': {
-            const textColor = normalizeTextColorValue(getElementTextColor(node)) || getElementTextColor(node);
-            return textColor ? `<span style="color:${escapeMarkdownAttribute(textColor)};">${content}</span>` : content;
-        }
-        case 'br':
-            return '\n';
-        case 'img':
-            return buildImageMarkdown(getImageDetails(node));
-        case 'a': {
-            const href = normalizeSafeUrl(node.getAttribute('href') ?? '', 'link');
-            if (!href) {
-                return content;
-            }
-
-            return canUseMarkdownUrl(href)
-                ? `[${content}](${href})`
-                : `<a href="${href}">${content}</a>`;
-        }
-        default:
-            return content;
-    }
-}
-
-function indentMarkdownBlock(markdown: string, indent: number): string {
-    const indentation = ' '.repeat(indent);
-    return markdown
-        .split('\n')
-        .map((line) => line.length > 0 ? `${indentation}${line}` : line)
-        .join('\n');
-}
-
-function serializeCodeBlock(block: HTMLElement): string {
-    const codeElement = block.querySelector('code');
-    const language = codeElement?.dataset.language ?? block.dataset.language ?? '';
-    const codeText = normalizeNewLines(codeElement?.textContent ?? block.textContent ?? '').replace(/\n+$/g, '');
-    return `\`\`\`${language}\n${codeText}\n\`\`\``;
-}
-
-function serializeBlockQuote(block: HTMLElement): string {
-    const innerMarkdown = serializeContainerBlocks(block);
-    return innerMarkdown
-        .split('\n')
-        .map((line) => line.length > 0 ? `> ${line}` : '>')
-        .join('\n');
-}
-
-function serializeListItemContent(indent: number, marker: string, content: string): string {
-    const lines = content.split('\n');
-    const firstLine = lines.shift() ?? '';
-    const result = [`${' '.repeat(indent)}${marker}${firstLine}`.trimEnd()];
-    const continuationIndent = ' '.repeat(indent + 2);
-
-    for (const line of lines) {
-        result.push(`${continuationIndent}${line}`.trimEnd());
-    }
-
-    return result.join('\n');
-}
-
-function serializeList(listElement: HTMLOListElement | HTMLUListElement, indent = 0): string {
-    const ordered = listElement.tagName.toLowerCase() === 'ol';
-    const items: string[] = [];
-    const listItems = toArray(listElement.children).filter((child) => child instanceof HTMLLIElement);
-
-    listItems.forEach((item, itemIndex) => {
-        const marker = ordered ? `${itemIndex + 1}. ` : '- ';
-        let inlineContent = '';
-        const nestedBlocks: string[] = [];
-
-        for (const child of toArray(item.childNodes)) {
-            if (child instanceof Element && blockNodeTags.has(child.tagName)) {
-                if (child instanceof HTMLUListElement || child instanceof HTMLOListElement) {
-                    nestedBlocks.push(serializeList(child, indent + 2));
-                    continue;
-                }
-
-                nestedBlocks.push(indentMarkdownBlock(serializeBlock(child), indent + 2));
-                continue;
-            }
-
-            inlineContent += serializeInline(child);
-        }
-
-        const normalizedInline = inlineContent.replace(/\u00a0/g, ' ').replace(/\n+$/g, '').trimEnd();
-        const lines: string[] = [];
-
-        if (normalizedInline.length > 0 || nestedBlocks.length === 0) {
-            lines.push(serializeListItemContent(indent, marker, normalizedInline));
-        } else {
-            lines.push(`${' '.repeat(indent)}${marker}`.trimEnd());
-        }
-
-        lines.push(...nestedBlocks);
-        items.push(lines.join('\n'));
-    });
-
-    return items.join('\n');
-}
-
 function getTableRows(tableElement: HTMLTableElement): HTMLTableRowElement[] {
     const rows: HTMLTableRowElement[] = [];
     const headRows = toArray(tableElement.querySelectorAll(':scope > thead > tr')).filter(isTableRowElement);
@@ -2789,171 +2094,19 @@ function getTableRows(tableElement: HTMLTableElement): HTMLTableRowElement[] {
     return rows;
 }
 
-function serializeTableCell(cell: HTMLTableCellElement): string {
-    return toArray(cell.childNodes)
-        .map(serializeInline)
-        .join('')
-        .replace(/\u00a0/g, ' ')
-        .replace(/\s*\n+\s*/g, ' ')
-        .trim();
+function surfaceToValue(_element: HTMLElement, surface: HTMLElement): string {
+    return sanitizeEditorHtml(surface.innerHTML);
 }
 
-function getTableCellAlignment(cell: HTMLTableCellElement): Alignment {
-    const alignment = getElementAlignment(cell);
-    if (alignment) {
-        return alignment;
-    }
-
-    return getElementAlignment(cell.closest('table'));
-}
-
-function formatTableSeparator(alignment: Alignment): string {
-    switch (alignment) {
-        case 'center':
-            return ':---:';
-        case 'right':
-            return '---:';
-        case 'left':
-            return ':---';
-        default:
-            return '---';
-    }
-}
-
-function serializeHtmlTableCell(cell: HTMLTableCellElement, tagName: 'th' | 'td'): string {
-    const alignment = getTableCellAlignment(cell);
-    const alignmentStyle = alignment ? ` style="text-align:${escapeHtml(alignment)};"` : '';
-    return `<${tagName}${alignmentStyle}>${serializeTableCell(cell)}</${tagName}>`;
-}
-
-function serializeHtmlTable(tableElement: HTMLTableElement, borderColor?: string): string {
-    const rows = getTableRows(tableElement);
-    if (rows.length === 0) {
-        return '';
-    }
-
-    const headerCells = getTableCells(rows[0]);
-    if (headerCells.length === 0) {
-        return '';
-    }
-
-    const bodyRows = rows.slice(1)
-        .map((row) => getTableCells(row))
-        .filter((cells) => cells.length > 0)
-        .map((cells) => `<tr>${normalizeTableCells(cells, headerCells.length).map((cell) => cell instanceof Element
-            ? serializeHtmlTableCell(cell, cell.tagName === 'TH' ? 'th' : 'td')
-            : '<td></td>').join('')}</tr>`);
-
-    return [
-        `<table${buildTableStyleAttribute(borderColor ?? '')}>`,
-        '<thead>',
-        `<tr>${headerCells.map((cell) => serializeHtmlTableCell(cell, 'th')).join('')}</tr>`,
-        '</thead>',
-        ...(bodyRows.length > 0 ? ['<tbody>', ...bodyRows, '</tbody>'] : []),
-        '</table>'
-    ].join('\n');
-}
-
-function serializeTable(tableElement: HTMLTableElement): string {
-    const rows = getTableRows(tableElement);
-    if (rows.length === 0) {
-        return '';
-    }
-
-    const headerCells = getTableCells(rows[0]);
-    if (headerCells.length === 0) {
-        return '';
-    }
-
-    const borderColor = getTableBorderColor(tableElement);
-    return serializeHtmlTable(tableElement, borderColor);
-}
-
-function serializeBlock(block: Maybe<Element>): string {
-    if (!(block instanceof Element)) {
-        return '';
-    }
-
-    const tagName = block.tagName.toLowerCase();
-    const alignment = getElementAlignment(block);
-    let markdown = '';
-
-    if (/^h[1-6]$/.test(tagName)) {
-        const text = toArray(block.childNodes).map(serializeInline).join('');
-        const normalized = text.replace(/\u00a0/g, ' ').replace(/\n{3,}/g, '\n\n').replace(/\n+$/g, '').trimEnd();
-        markdown = `${'#'.repeat(Number.parseInt(tagName[1], 10))} ${normalized}`.trimEnd();
-    } else if (block instanceof HTMLUListElement || block instanceof HTMLOListElement) {
-        markdown = serializeList(block);
-    } else if (tagName === 'blockquote' && block instanceof HTMLElement) {
-        markdown = serializeBlockQuote(block);
-    } else if (tagName === 'pre' && block instanceof HTMLElement) {
-        markdown = serializeCodeBlock(block);
-    } else if (block instanceof HTMLTableElement) {
-        markdown = serializeTable(block);
-    } else if (tagName === 'img') {
-        markdown = serializeInline(block);
-    } else if (tagName === 'iframe') {
-        const iframeSource = normalizeSafeUrl(block.getAttribute('src') ?? '', 'iframe');
-        markdown = iframeSource
-            ? `<iframe src="${iframeSource}" title="${escapeMarkdownAttribute(block.getAttribute('title') ?? '')}" width="${block.getAttribute('width') ?? '100%'}" height="${block.getAttribute('height') ?? '315'}" loading="lazy"></iframe>`
-            : '';
-    } else if (hasRenderableBlockChildren(block)) {
-        markdown = serializeContainerBlocks(block);
-    } else {
-        const text = toArray(block.childNodes).map(serializeInline).join('');
-        markdown = text.replace(/\u00a0/g, ' ').replace(/\n{3,}/g, '\n\n').replace(/\n+$/g, '').trimEnd();
-    }
-
-    return wrapAlignedMarkdown(alignment, markdown);
-}
-
-function serializeContainerBlocks(container: Element | DocumentFragment): string {
-    const blocks: string[] = [];
-    let inlineBuffer = '';
-
-    for (const child of toArray(container.childNodes)) {
-        if (child instanceof Element && (blockNodeTags.has(child.tagName) || child.tagName === 'IMG')) {
-            if (inlineBuffer.trim().length > 0) {
-                blocks.push(inlineBuffer.replace(/\n+$/g, ''));
-                inlineBuffer = '';
-            }
-
-            blocks.push(serializeBlock(child));
-            continue;
-        }
-
-        inlineBuffer += serializeInline(child);
-    }
-
-    if (inlineBuffer.trim().length > 0) {
-        blocks.push(inlineBuffer.replace(/\n+$/g, ''));
-    }
-
-    return blocks
-        .map((block) => block.replace(/\u00a0/g, ' ').trimEnd())
-        .filter((block) => block.length > 0)
-        .join('\n\n')
-        .replace(/\n{3,}/g, '\n\n')
-        .trim();
-}
-
-function surfaceToMarkdown(surface: HTMLElement): string {
-    if (!surface) {
-        return '';
-    }
-
-    return serializeContainerBlocks(surface);
-}
-
-function updateSourceValue(element: HTMLElement, markdown: string): void {
+function updateSourceValue(element: HTMLElement, value: string): void {
     const sourceValueElement = getSourceValueElement(element);
     if (sourceValueElement) {
-        sourceValueElement.textContent = markdown;
+        sourceValueElement.textContent = value;
     }
 
     const hiddenInput = getHiddenInput(element);
     if (hiddenInput) {
-        hiddenInput.value = markdown;
+        hiddenInput.value = value;
     }
 }
 
@@ -2967,7 +2120,7 @@ function updateEmptyState(surface: Maybe<HTMLElement>): void {
     surface.dataset.empty = hasContent ? 'false' : 'true';
 }
 
-function updateLength(element: HTMLElement, markdown: string): void {
+function updateLength(element: HTMLElement, value: string): void {
     const lengthElement = getLengthElement(element);
     if (!lengthElement) {
         return;
@@ -2978,26 +2131,31 @@ function updateLength(element: HTMLElement, markdown: string): void {
         return;
     }
 
-    lengthElement.textContent = `${markdown.length}/${maxLength}`;
+    lengthElement.textContent = `${value.length}/${maxLength}`;
 }
 
-function applyMarkdownToSurface(element: HTMLElement, markdown: string): void {
+function applyHtmlToSurface(element: HTMLElement, html: string): void {
     const surface = getSurface(element);
     const state = editorState.get(element);
     if (!surface) {
         return;
     }
 
-    const html = markdownToHtml(markdown);
-    surface.innerHTML = html;
+    const sanitizedHtml = sanitizeEditorHtml(html);
+    surface.innerHTML = sanitizedHtml;
     updateEmptyState(surface);
-    updateLength(element, markdown);
-    updateSourceValue(element, markdown);
+    updateLength(element, sanitizedHtml);
+    updateSourceValue(element, sanitizedHtml);
     if (state) {
-        state.lastMarkdown = markdown;
-        state.lastHtml = html;
+        state.lastValue = sanitizedHtml;
+        state.lastHtml = sanitizedHtml;
     }
+
     updateToolbarState(element);
+}
+
+function applySourceToSurface(element: HTMLElement, value: string): void {
+    applyHtmlToSurface(element, value);
 }
 
 function scheduleSyncValueFromSurface(element: HTMLElement, notifyDotNet: boolean): void {
@@ -3020,18 +2178,22 @@ function syncValueFromSurface(element: HTMLElement, notifyDotNet: boolean): void
         return;
     }
 
-    const markdown = surfaceToMarkdown(surface);
-    const html = surface.innerHTML;
-    const didValueChange = markdown !== state.lastMarkdown || html !== state.lastHtml;
-    state.lastMarkdown = markdown;
+    const html = sanitizeEditorHtml(surface.innerHTML);
+    if (html !== surface.innerHTML) {
+        surface.innerHTML = html;
+    }
+
+    const value = html;
+    const didValueChange = value !== state.lastValue || html !== state.lastHtml;
+    state.lastValue = value;
     state.lastHtml = html;
     updateEmptyState(surface);
-    updateLength(element, markdown);
-    updateSourceValue(element, markdown);
+    updateLength(element, value);
+    updateSourceValue(element, value);
     updateToolbarState(element);
 
     if (notifyDotNet && didValueChange && state.dotNetRef) {
-        invokeDotNetVoid(state.dotNetRef, 'UpdateValueFromJs', markdown, html);
+        invokeDotNetVoid(state.dotNetRef, 'UpdateValueFromJs', value, html);
     }
 }
 
@@ -3043,16 +2205,20 @@ function commitValue(element: HTMLElement): void {
     }
 
     clearPendingSync(state);
-    const markdown = surfaceToMarkdown(surface);
-    const html = surface.innerHTML;
-    state.lastMarkdown = markdown;
+    const html = sanitizeEditorHtml(surface.innerHTML);
+    if (html !== surface.innerHTML) {
+        surface.innerHTML = html;
+    }
+
+    const value = html;
+    state.lastValue = value;
     state.lastHtml = html;
     updateEmptyState(surface);
-    updateLength(element, markdown);
-    updateSourceValue(element, markdown);
+    updateLength(element, value);
+    updateSourceValue(element, value);
     updateToolbarState(element);
 
-    invokeDotNetVoid(state.dotNetRef, 'CommitValueFromJs', markdown, html);
+    invokeDotNetVoid(state.dotNetRef, 'CommitValueFromJs', value, html);
 }
 
 function updateToolbarState(element: HTMLElement): void {
@@ -3497,7 +2663,7 @@ function ensureState(element: Maybe<HTMLElement>, dotNetRef: DotNetEditorRef | n
         toolCommands: [],
         selectionRange: null,
         toolStates: new Map<string, unknown>(),
-        lastMarkdown: normalizeNewLines(getSourceValueElement(element)?.textContent ?? ''),
+        lastValue: getSourceValueElement(element)?.textContent ?? '',
         lastHtml: '',
         onInput: () => {
             const shouldNotify = element.dataset.bindOnInput === 'true';
@@ -3578,15 +2744,14 @@ function synchronizeElement(element: Maybe<HTMLElement>, dotNetRef: DotNetEditor
     state.isDisposed = false;
     state.dotNetRef = dotNetRef ?? state.dotNetRef;
 
-    const markdown = normalizeNewLines(getSourceValueElement(element)?.textContent ?? '');
-    if (state.requiresInitialRender || markdown !== state.lastMarkdown) {
-        applyMarkdownToSurface(element, markdown);
-        state.lastMarkdown = markdown;
+    const value = getSourceValueElement(element)?.textContent ?? '';
+    if (state.requiresInitialRender || value !== state.lastValue) {
+        applySourceToSurface(element, value);
         state.requiresInitialRender = false;
     } else {
-        updateLength(element, markdown);
+        updateLength(element, value);
         updateEmptyState(getSurface(element));
-        updateSourceValue(element, markdown);
+        updateSourceValue(element, value);
     }
 
     const isEditable = element.dataset.editable === 'true';
@@ -3610,7 +2775,11 @@ function synchronizeElement(element: Maybe<HTMLElement>, dotNetRef: DotNetEditor
         closeOtherTools(element, state);
     }
 
-    const currentHtml = surface?.innerHTML ?? '';
+    const currentHtml = surface ? sanitizeEditorHtml(surface.innerHTML) : '';
+    if (surface && currentHtml !== surface.innerHTML) {
+        surface.innerHTML = currentHtml;
+    }
+
     if (currentHtml !== state.lastHtml) {
         state.lastHtml = currentHtml;
         invokeDotNetVoid(state.dotNetRef, 'UpdateMarkupValueFromJs', currentHtml);
@@ -3754,7 +2923,6 @@ export const __testHooks = {
     invokeDotNetVoid,
     extractUrlScheme,
     normalizeSafeUrl,
-    canUseMarkdownUrl,
     unbindToolbarButtons,
     bindToolbarButtons,
     getChildNodeIndex,
@@ -3767,75 +2935,29 @@ export const __testHooks = {
     normalizeHexColor,
     convertRgbChannelToHex,
     normalizeTextColorValue,
-    normalizeNewLines,
-    countLeadingSpaces,
-    stripIndent,
     escapeHtml,
-    createInlineToken,
+    sanitizeDimensionAttribute,
+    sanitizeElementStyle,
+    sanitizeElementAttributes,
+    sanitizeHtmlFragment,
+    sanitizeEditorHtml,
     normalizeImageDimension,
     normalizeTableBorderColor,
     buildTableStyleAttribute,
     buildImageHtml,
-    buildImageMarkdown,
-    renderMarkdownImage,
     renderHtmlImage,
     getImageDetails,
-    renderHtmlAnchor,
-    renderLink,
-    renderTextColor,
-    renderInlineMarkdown,
-    isCodeFenceLine,
-    isBlockQuoteLine,
-    stripBlockQuoteMarker,
-    parseListMarker,
-    parseAlignmentMarker,
-    parseIframeMarker,
-    splitTableRow,
-    parseTableSeparator,
-    isTableStart,
-    isBlockBoundary,
-    hasListContinuation,
-    renderParagraph,
-    renderCodeBlock,
-    renderAlignmentBlock,
-    renderIframeBlock,
     normalizeTableCells,
-    isHtmlTableStart,
     getTableBorderColor,
-    renderTableCellFromElement,
-    renderHtmlTableElement,
-    renderHtmlTableBlock,
-    renderTable,
-    renderBlockQuote,
-    renderList,
-    renderBlocksFromLines,
-    markdownToHtml,
-    escapeMarkdownText,
-    escapeMarkdownAttribute,
     normalizeAlignment,
     getElementAlignment,
-    hasRenderableBlockChildren,
-    wrapAlignedMarkdown,
-    serializeInline,
-    indentMarkdownBlock,
-    serializeCodeBlock,
-    serializeBlockQuote,
-    serializeListItemContent,
-    serializeList,
     getTableRows,
-    serializeTableCell,
-    getTableCellAlignment,
-    formatTableSeparator,
-    serializeHtmlTableCell,
-    serializeHtmlTable,
-    serializeTable,
-    serializeBlock,
-    serializeContainerBlocks,
-    surfaceToMarkdown,
+    surfaceToValue,
     updateSourceValue,
     updateEmptyState,
     updateLength,
-    applyMarkdownToSurface,
+    applyHtmlToSurface,
+    applySourceToSurface,
     scheduleSyncValueFromSurface,
     syncValueFromSurface,
     commitValue,

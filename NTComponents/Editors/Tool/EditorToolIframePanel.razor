@@ -12,7 +12,7 @@
         <NTInputText Label="Iframe URL"
                      @bind-Value="_iframeUrl"
                      Appearance="NTFormAppearance.Outlined"
-                     Density="NTFormDensity.Dense"
+                     Density="NTFormDensity.Standard"
                      InputType="TextInputType.Url"
                      Placeholder="https://example.com/embed"
                      Disabled="@Disabled"
@@ -21,7 +21,7 @@
         <NTInputText Label="Title"
                      @bind-Value="_iframeTitle"
                      Appearance="NTFormAppearance.Outlined"
-                     Density="NTFormDensity.Dense"
+                     Density="NTFormDensity.Standard"
                      Placeholder="Embedded content"
                      Disabled="@Disabled"
                      SubmitValue="false"
@@ -29,7 +29,7 @@
         <NTInputText Label="Width"
                      @bind-Value="_iframeWidth"
                      Appearance="NTFormAppearance.Outlined"
-                     Density="NTFormDensity.Dense"
+                     Density="NTFormDensity.Standard"
                      Placeholder="100%"
                      Disabled="@Disabled"
                      SubmitValue="false"
@@ -37,25 +37,24 @@
         <NTInputText Label="Height"
                      @bind-Value="_iframeHeight"
                      Appearance="NTFormAppearance.Outlined"
-                     Density="NTFormDensity.Dense"
+                     Density="NTFormDensity.Standard"
                      Placeholder="315"
                      Disabled="@Disabled"
                      SubmitValue="false"
                      data-role="iframe-height" />
     </div>
     <div class="tnt-rich-text-editor-inline-tool-actions">
-        <button type="button"
-                class="tnt-rich-text-editor-toolbar-button"
-                data-role="iframe-apply"
-                disabled="@Disabled">
-            Apply iframe
-        </button>
-        <button type="button"
-                class="tnt-rich-text-editor-toolbar-button"
-                data-role="iframe-cancel"
-                disabled="@Disabled">
-            Cancel
-        </button>
+        <NTButton Label="Apply iframe"
+                  ButtonSize="Size.Small"
+                  Disabled="@Disabled"
+                  Type="ButtonType.Button"
+                  data-role="iframe-apply" />
+        <NTButton Label="Cancel"
+                  ButtonSize="Size.Small"
+                  Disabled="@Disabled"
+                  Type="ButtonType.Button"
+                  Variant="NTButtonVariant.Text"
+                  data-role="iframe-cancel" />
     </div>
 </div>
 

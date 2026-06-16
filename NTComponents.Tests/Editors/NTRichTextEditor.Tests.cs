@@ -81,6 +81,7 @@ public class NTRichTextEditor_Tests : BunitContext {
         cut.Find("[data-tool-command='image']").Should().NotBeNull();
         cut.Find("[data-role='image-url']").GetAttribute("type").Should().Be("url");
         cut.Find("[data-role='image-file']").GetAttribute("type").Should().Be("file");
+        cut.Find("[data-role='image-title']").GetAttribute("type").Should().Be("text");
         cut.Find("[data-role='image-width']").GetAttribute("type").Should().Be("number");
         cut.Find("[data-role='image-height']").GetAttribute("type").Should().Be("number");
         cut.Find("[data-role='table-editor']").Should().NotBeNull();
@@ -88,6 +89,7 @@ public class NTRichTextEditor_Tests : BunitContext {
         cut.Find("[data-role='table-columns']").GetAttribute("type").Should().Be("number");
         cut.Find("[data-role='table-rows']").GetAttribute("type").Should().Be("number");
         cut.Find("[data-role='table-border-color']").GetAttribute("type").Should().Be("color");
+        cut.Find("[data-role='table-caption']").GetAttribute("type").Should().Be("text");
         cut.Find("[data-role='text-color-editor']").Should().NotBeNull();
         cut.Find("[data-tool-command='textColor']").Should().NotBeNull();
         cut.Find("[data-role='text-color-value']").GetAttribute("type").Should().Be("color");
@@ -95,6 +97,8 @@ public class NTRichTextEditor_Tests : BunitContext {
         cut.Find("[data-tool-command='link']").Should().NotBeNull();
         cut.Find("[data-role='link-url']").GetAttribute("type").Should().Be("url");
         cut.Find("[data-role='link-text']").GetAttribute("type").Should().Be("text");
+        cut.Find("[data-role='link-aria-label']").GetAttribute("type").Should().Be("text");
+        cut.Find("[data-role='link-title']").GetAttribute("type").Should().Be("text");
         cut.Find("[data-role='iframe-editor']").Should().NotBeNull();
         cut.Find("[data-tool-command='iframe']").Should().NotBeNull();
         cut.Find("[data-role='iframe-url']").GetAttribute("type").Should().Be("url");
@@ -108,13 +112,13 @@ public class NTRichTextEditor_Tests : BunitContext {
     }
 
     [Fact]
-    public void Interactive_Renderer_Leaves_Markdown_Rendering_To_JavaScript() {
+    public void Interactive_Renderer_Leaves_Html_Rendering_To_JavaScript() {
         var cut = RenderEditor(parameters => parameters
-            .Add(x => x.Value, "This is **bold**, *italic*, <u>underline</u>, ~~crossed out~~, <span style=\"color:#2563eb;\">blue text</span>, [linked](https://example.com), and a table.\n\n| Name | Role |\n| --- | --- |\n| Avery | Host |\n\n<iframe src=\"https://example.com/embed\" title=\"Example embed\" width=\"100%\" height=\"315\" loading=\"lazy\"></iframe>"));
+            .Add(x => x.Value, "<p>This is <strong>bold</strong>, <em>italic</em>, <u>underline</u>, <s>crossed out</s>, <span style=\"color:#2563eb;\">blue text</span>, <a href=\"https://example.com\">linked</a>, and a table.</p><table><thead><tr><th>Name</th><th>Role</th></tr></thead><tbody><tr><td>Avery</td><td>Host</td></tr></tbody></table><iframe src=\"https://example.com/embed\" title=\"Example embed\" width=\"100%\" height=\"315\" loading=\"lazy\"></iframe>"));
 
         cut.Find(".tnt-rich-text-editor-surface").InnerHtml.Should().BeEmpty();
-        cut.Find(".tnt-rich-text-editor-value").TextContent.Should().Contain("**bold**");
-        cut.Find(".tnt-rich-text-editor-value").TextContent.Should().Contain("| Name | Role |");
+        cut.Find(".tnt-rich-text-editor-value").TextContent.Should().Contain("<strong>bold</strong>");
+        cut.Find(".tnt-rich-text-editor-value").TextContent.Should().Contain("<table>");
         cut.Find(".tnt-rich-text-editor-value").TextContent.Should().Contain("<iframe src=\"https://example.com/embed\"");
     }
 
@@ -125,15 +129,24 @@ public class NTRichTextEditor_Tests : BunitContext {
         var model = new RichTextEditorModel();
         var cut = Render<NTRichTextEditor>(parameters => parameters
             .Add(x => x.ValueExpression, () => model.Value)
-            .Add(x => x.Value, "## SSR markdown")
-            .Add(x => x.Placeholder, "Write markdown"));
+            .Add(x => x.Value, "<h2>SSR HTML</h2>")
+            .Add(x => x.Placeholder, "Write HTML"));
 
         cut.Find(".tnt-rich-text-editor-hidden-input").GetAttribute("name").Should().Contain(nameof(RichTextEditorModel.Value));
-        cut.Find(".tnt-rich-text-editor-hidden-input").GetAttribute("value").Should().Be("## SSR markdown");
-        cut.Find(".tnt-rich-text-editor-value").TextContent.Should().Be("## SSR markdown");
+        cut.Find(".tnt-rich-text-editor-hidden-input").GetAttribute("value").Should().Be("<h2>SSR HTML</h2>");
+        cut.Find(".tnt-rich-text-editor-value").TextContent.Should().Be("<h2>SSR HTML</h2>");
         cut.Find(".tnt-rich-text-editor-toolbar").Should().NotBeNull();
-        cut.Find(".tnt-rich-text-editor-surface").GetAttribute("data-placeholder").Should().Be("Write markdown");
+        cut.Find(".tnt-rich-text-editor-surface").GetAttribute("data-placeholder").Should().Be("Write HTML");
         cut.FindAll("textarea.tnt-rich-text-editor-ssr-input").Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Renders_Html_Source_Mode() {
+        var cut = RenderEditor(parameters => parameters
+            .Add(x => x.Value, "<p>HTML source</p>"));
+
+        cut.Find(".tnt-rich-text-editor-hidden-input").GetAttribute("value").Should().Be("<p>HTML source</p>");
+        cut.Find(".tnt-rich-text-editor-value").TextContent.Should().Be("<p>HTML source</p>");
     }
 
     [Fact]
@@ -145,12 +158,12 @@ public class NTRichTextEditor_Tests : BunitContext {
             .Add(x => x.MarkupValueChanged, EventCallback.Factory.Create<MarkupString>(this, value => markupValue = value.Value))
             .Add(x => x.BindAfter, EventCallback.Factory.Create<string?>(this, value => bindAfterValue = value ?? string.Empty)));
 
-        await cut.Instance.UpdateValueFromJs("Updated **markdown**", "<p>Updated <strong>markdown</strong></p>");
+        await cut.Instance.UpdateValueFromJs("<p>Updated <strong>HTML</strong></p>", "<p>Updated <strong>HTML</strong></p>");
 
-        cut.Instance.Value.Should().Be("Updated **markdown**");
-        cut.Instance.MarkupValue.Value.Should().Be("<p>Updated <strong>markdown</strong></p>");
-        markupValue.Should().Be("<p>Updated <strong>markdown</strong></p>");
-        bindAfterValue.Should().Be("Updated **markdown**");
+        cut.Instance.Value.Should().Be("<p>Updated <strong>HTML</strong></p>");
+        cut.Instance.MarkupValue.Value.Should().Be("<p>Updated <strong>HTML</strong></p>");
+        markupValue.Should().Be("<p>Updated <strong>HTML</strong></p>");
+        bindAfterValue.Should().Be("<p>Updated <strong>HTML</strong></p>");
     }
 
     [Fact]
