@@ -7,14 +7,14 @@ using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
-///     Declares a single option inside <see cref="NTInputSelect{TInputType}" />.
+///     Declares a single option inside obsolete <see cref="NTInputSelect{TInputType}" />.
 /// </summary>
 /// <typeparam name="TInputType">The bound value type.</typeparam>
-[System.Obsolete("This legacy Form element is obsolete. Use the NT form components instead.")]
+[System.Obsolete("NTInputSelectOption is obsolete because NTInputSelect is obsolete. Use NTAutocompleteOption with NTAutocomplete or native option content with NTSelect.")]
 [NTDocumentation(
     RenderCompatibility = NTComponentRenderCompatibility.InteractiveRequired,
-    CompatibilitySummary = "Participates in parent component rendering and inherits the parent interaction model.",
-    CompatibilityDetails = "The option contributes metadata to NTInputSelect, whose legacy searchable selection behavior requires interactive Blazor and page script support.")]
+    CompatibilitySummary = "Obsolete option metadata for the obsolete NTInputSelect component.",
+    CompatibilityDetails = "The option contributes metadata to obsolete NTInputSelect, whose legacy searchable selection behavior requires interactive Blazor and page script support. Use NTAutocompleteOption with NTAutocomplete for searchable text suggestions or native option content with NTSelect for single-select choices.")]
 public sealed class NTInputSelectOption<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TInputType> : ComponentBase, IDisposable {
 
     /// <summary>
