@@ -282,6 +282,27 @@ describe('NTInputDateTime picker behavior', () => {
         expect(document.activeElement).toBe(input);
     });
 
+    test.each([
+        ['date', 'date', '2026-03-15'],
+        ['datetime', 'datetime-local', '2026-03-15T14:05'],
+        ['month', 'month', '2026-03'],
+        ['time', 'time', '14:05:00'],
+    ])('custom %s picker suppresses and restores the native input type', (mode, nativeType, value) => {
+        const { input, root } = createPickerFixture({ mode, value });
+
+        expect(input.type).toBe(nativeType);
+
+        onLoad(root, null);
+
+        expect(input.type).toBe('text');
+        expect(input.value).toBe(value);
+
+        onDispose(root, null);
+
+        expect(input.type).toBe(nativeType);
+        expect(input.value).toBe(value);
+    });
+
     test('creates picker panel controls lazily on first open', () => {
         const { picker, trigger } = createPickerFixture({ lazy: true, mode: 'date', value: '' });
 

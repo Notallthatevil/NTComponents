@@ -7,17 +7,17 @@
 
 $nt-dtp-motion-duration: motion.$nt-motion-duration-short_3;
 $nt-dtp-motion-easing: motion.$nt-motion-easing-standard;
-$nt-dtp-container-width: 360px;
-$nt-dtp-modal-width: 360px;
+$nt-dtp-container-width: 320px;
+$nt-dtp-modal-width: 320px;
 $nt-dtp-clock-size: 256px;
-$nt-dtp-touch-target: 48px;
-$nt-dtp-date-cell-size: 40px;
-$nt-dtp-picker-grid-gap: 6px;
+$nt-dtp-touch-target: 40px;
+$nt-dtp-date-cell-size: 34px;
+$nt-dtp-picker-grid-gap: 4px;
 $nt-dtp-picker-option-column: calc((100% - (#{$nt-dtp-picker-grid-gap} * 2)) / 3);
 $nt-dtp-picker-option-radius: calc(#{$nt-dtp-touch-target} / 2);
-$nt-dtp-time-input-width: 96px;
-$nt-dtp-time-input-height: 72px;
-$nt-dtp-period-selector-width: 52px;
+$nt-dtp-time-input-width: 72px;
+$nt-dtp-time-input-height: 56px;
+$nt-dtp-period-selector-width: 44px;
 $nt-dtp-trigger-top-comfortable: 28px;
 $nt-dtp-trigger-top-standard: 21px;
 $nt-dtp-trigger-top-dense: 14px;
@@ -34,7 +34,7 @@ $nt-dtp-trigger-top-dense: 14px;
 
     &.nt-input-date-time-custom-picker {
         ::deep .nt-input-field {
-            padding-inline-end: 52px;
+            padding-inline-end: 48px;
         }
 
         .tnt-dtp-trigger {
@@ -56,7 +56,7 @@ $nt-dtp-trigger-top-dense: 14px;
 
     .tnt-dtp-trigger {
         position: absolute;
-        inset-inline-end: 12px;
+        inset-inline-end: 10px;
         z-index: 3;
         display: inline-grid;
         place-items: center;
@@ -192,7 +192,7 @@ $nt-dtp-trigger-top-dense: 14px;
 
     .tnt-dtp-header {
         display: none;
-        padding: 12px 16px 10px 16px;
+        padding: 10px 14px 8px 14px;
         background-color: colors.$tnt-color-primary-container;
         color: colors.$tnt-color-on-primary-container;
         border-bottom: 1px solid color-mix(in srgb, colors.$tnt-color-on-primary-container 18%, transparent);
@@ -209,21 +209,21 @@ $nt-dtp-trigger-top-dense: 14px;
     }
 
     .tnt-dtp-content {
-        padding: 12px 16px 4px;
+        padding: 8px 12px 2px;
         display: grid;
-        gap: 12px;
+        gap: 8px;
     }
 
     .tnt-dtp-date-panel {
         display: grid;
-        gap: 8px;
+        gap: 6px;
     }
 
     .tnt-dtp-calendar-nav {
         display: grid;
         grid-template-columns: $nt-dtp-touch-target 1fr $nt-dtp-touch-target;
         align-items: center;
-        gap: 8px;
+        gap: 4px;
 
         .tnt-dtp-month-label {
             text-align: center;
@@ -257,7 +257,7 @@ $nt-dtp-trigger-top-dense: 14px;
 
         span {
             display: block;
-            padding: 2px 0;
+            padding: 1px 0;
         }
     }
 
@@ -349,13 +349,13 @@ $nt-dtp-trigger-top-dense: 14px;
 
     .tnt-dtp-time-panel {
         border-top: 1px solid color-mix(in srgb, colors.$tnt-color-outline 50%, transparent);
-        padding: 12px 8px 0;
+        padding: 8px 4px 0;
     }
 
     .tnt-dtp-time-fields {
         display: flex;
         justify-content: center;
-        gap: 8px;
+        gap: 6px;
         align-items: start;
     }
 
@@ -374,10 +374,10 @@ $nt-dtp-trigger-top-dense: 14px;
             height: $nt-dtp-time-input-height;
             box-sizing: border-box;
             border: 1px solid colors.$tnt-color-outline-variant;
-            border-radius: 12px;
+            border-radius: 10px;
             background-color: colors.$tnt-color-surface-container-low;
             color: colors.$tnt-color-on-surface;
-            padding: 8px 10px;
+            padding: 6px 8px;
             outline: none;
             text-align: center;
             @include typescale.tnt-body-large;
@@ -414,7 +414,7 @@ $nt-dtp-trigger-top-dense: 14px;
         display: flex;
         justify-content: center;
         align-items: center;
-        gap: 6px;
+        gap: 4px;
         inline-size: 100%;
         min-width: 0;
     }
@@ -426,10 +426,10 @@ $nt-dtp-trigger-top-dense: 14px;
         gap: 4px;
         min-width: 0;
         max-width: 100%;
-        min-height: 36px;
+        min-height: 32px;
         border: 1px solid color-mix(in srgb, colors.$tnt-color-outline-variant 72%, transparent);
         border-radius: measurements.$tnt-pill-border-radius-small;
-        padding: 0 10px 0 16px;
+        padding: 0 8px 0 12px;
         background-color: colors.$tnt-color-surface-container-highest;
         color: colors.$tnt-color-on-surface;
         cursor: pointer;
@@ -529,17 +529,17 @@ $nt-dtp-trigger-top-dense: 14px;
         display: flex;
         justify-content: flex-end;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
         flex-wrap: nowrap;
         overflow-x: auto;
-        padding: 4px 12px 12px 12px;
+        padding: 2px 10px 10px 10px;
         border-top: 0;
     }
 
     .tnt-dtp-action-group {
         display: inline-flex;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
         flex-wrap: nowrap;
         white-space: nowrap;
     }
@@ -547,7 +547,7 @@ $nt-dtp-trigger-top-dense: 14px;
     .tnt-dtp-action-button {
         border: none;
         border-radius: 20px;
-        padding: 6px 10px;
+        padding: 5px 10px;
         cursor: pointer;
         transition: background-color 180ms ease, color 180ms ease, box-shadow 180ms ease;
         @include typescale.tnt-label-large;

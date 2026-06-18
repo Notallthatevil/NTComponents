@@ -47,6 +47,7 @@ interface PickerState {
     meridiem: Meridiem;
     minDraft: PickerDraft | null;
     mode: DateTimePickerMode;
+    nativeInputType: string;
     onInputFocus: () => void;
     onInputInput: () => void;
     onInputKeyDown: (event: KeyboardEvent) => void;
@@ -547,6 +548,40 @@ function parseMode(state: PickerState): DateTimePickerMode {
     return 'none';
 }
 
+function getNativeInputType(mode: DateTimePickerMode): string | null {
+    if (mode === 'datetime') {
+        return 'datetime-local';
+    }
+
+    return mode === 'date' || mode === 'month' || mode === 'time' ? mode : null;
+}
+
+function setInputTypePreservingValue(input: HTMLInputElement, type: string): void {
+    if (input.type === type) {
+        return;
+    }
+
+    const value = input.value;
+    input.type = type;
+    input.value = value;
+}
+
+function suppressNativeInputPicker(state: PickerState): void {
+    const nativeInputType = getNativeInputType(state.mode);
+    if (!nativeInputType) {
+        return;
+    }
+
+    state.nativeInputType = nativeInputType;
+    setInputTypePreservingValue(state.input, 'text');
+}
+
+function restoreNativeInputPicker(state: PickerState): void {
+    if (state.nativeInputType) {
+        setInputTypePreservingValue(state.input, state.nativeInputType);
+    }
+}
+
 function getModeConfig(mode: DateTimePickerMode): { hasDate: boolean; hasTime: boolean; supportsSubSelection: boolean } {
     return MODE_CONFIG[mode] ?? MODE_CONFIG.none;
 }
@@ -676,7 +711,7 @@ function formatDraft(mode: DateTimePickerMode, draft: PickerDraft, format: Maybe
     }
 
     if (mode === 'datetime') {
-        return `${padYear(draft.year)}-${padTwo(draft.month + 1)}-${padTwo(draft.day)}T${padTwo(draft.hour)}:${padTwo(draft.minute)}:${padTwo(draft.second)}`;
+        return `${padYear(draft.year)}-${padTwo(draft.month + 1)}-${padTwo(draft.day)}T${padTwo(draft.hour)}:${padTwo(draft.minute)}`;
     }
 
     return '';
@@ -1644,6 +1679,7 @@ function configureStateFromAttributes(state: PickerState): void {
 
     state.label = state.input.closest('label') ?? state.input.labels?.[0] ?? state.label ?? null;
     state.mode = parseMode(state);
+    suppressNativeInputPicker(state);
     state.openOnFocus = state.input?.dataset?.tntDtpOpenOnFocus !== 'false';
     setTrigger(state, findTrigger(state.input, state.picker));
     updateConstraints(state);
@@ -1697,6 +1733,7 @@ function createPickerState(input: HTMLInputElement, picker: HTMLElement): Picker
         meridiem: 'am',
         minDraft: null,
         mode: 'none',
+        nativeInputType: input.type,
         onInputFocus: () => { },
         onInputInput: () => { },
         onInputKeyDown: () => { },
@@ -1899,6 +1936,7 @@ function cleanupPickerState(state: Maybe<PickerState>): void {
     state.picker?.removeEventListener('input', state.onPickerInput);
     state.picker?.removeEventListener('keydown', state.onPickerKeyDown);
     state.elements.yearList?.removeEventListener('scroll', state.onYearListScroll);
+    restoreNativeInputPicker(state);
 }
 
 function shouldAutoOpenForFocusedInput(state: Maybe<PickerState>): boolean {
