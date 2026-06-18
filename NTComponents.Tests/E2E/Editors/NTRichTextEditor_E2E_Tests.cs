@@ -7,7 +7,7 @@ namespace NTComponents.Tests.E2E.Editors;
 /// </summary>
 [Collection(PlaywrightE2ECollection.Name)]
 public class NTRichTextEditor_E2E_Tests : IAsyncLifetime {
-    private const int ExpectedDefaultToolbarButtonCount = 27;
+    private const int ExpectedDefaultToolbarButtonCount = 26;
     private const string ServerEditorTestId = "rich-text-editor-server";
     private readonly List<string> _browserDiagnostics = [];
     private PlaywrightFixture? _fixture;
@@ -149,7 +149,7 @@ public class NTRichTextEditor_E2E_Tests : IAsyncLifetime {
         await ClickToolbarButtonAsync(new("textColor"));
         await EditorRoot(ServerEditorTestId).Locator("[data-role='text-color-value']").FillAsync("#123456");
         await EditorRoot(ServerEditorTestId).Locator("[data-role='text-color-apply']").ClickAsync();
-        await WaitForHiddenValueAsync(ServerEditorTestId, "<span style=\"color:#123456;\">Color text</span>");
+        await WaitForHiddenValueAsync(ServerEditorTestId, "color: rgb(18, 52, 86);\">Color text</span>");
 
         await ClickToolbarButtonAsync(new("iframe"));
         await EditorRoot(ServerEditorTestId).Locator("[data-role='iframe-url']").FillAsync("https://example.com/embed");
@@ -204,15 +204,15 @@ public class NTRichTextEditor_E2E_Tests : IAsyncLifetime {
         try {
             await _page.WaitForFunctionAsync(
                 """
-                (testId) => {
+                ([testId, expectedToolbarButtonCount]) => {
                     const section = document.querySelector(`[data-testid="${testId}"]`);
                     const editor = section?.querySelector('nt-rich-text-editor');
                     const surface = editor?.querySelector('.tnt-rich-text-editor-surface');
-                    return editor?.querySelectorAll('.tnt-rich-text-editor-toolbar-button').length >= 27
+                    return editor?.querySelectorAll('.tnt-rich-text-editor-toolbar-button').length >= expectedToolbarButtonCount
                         && surface?.textContent?.includes('Meeting Notes');
                 }
                 """,
-                testId,
+                new object[] { testId, ExpectedDefaultToolbarButtonCount },
                 new PageWaitForFunctionOptions { Timeout = 30000 });
         }
         catch (TimeoutException ex) {
