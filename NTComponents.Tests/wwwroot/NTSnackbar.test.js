@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import { addSnackbar, clearSnackbars, closeSnackbar, closeSnackbarFromBlazor, onDispose, onLoad, queueSnackbar } from '../../NTComponents/Snackbar/NTSnackbar.razor.js';
+import { addSnackbar, clearSnackbars, closeSnackbar, closeSnackbarFromBlazor, onDispose, onLoad, queueSnackbar, queueSnackbarFromBlazor } from '../../NTComponents/Snackbar/NTSnackbar.razor.js';
 
 describe('NTSnackbar module', () => {
    let consoleErrorSpy;
@@ -96,6 +96,33 @@ describe('NTSnackbar module', () => {
       const host = loadHostFromPageScript();
 
       expect(host.querySelector('.nt-snackbar-message').textContent).toBe('Queued before render');
+   });
+
+   test('queueSnackbarFromBlazor renders scalar service payload without property metadata', () => {
+      const host = loadHostFromPageScript();
+      const dotNetReference = { invokeMethodAsync: jest.fn(() => Promise.resolve()) };
+
+      queueSnackbarFromBlazor(
+         'service-snackbar',
+         'Saved',
+         'Undo',
+         9,
+         true,
+         'var(--tnt-color-primary)',
+         'var(--tnt-color-on-primary)',
+         'var(--tnt-color-secondary)',
+         dotNetReference,
+         'InvokeActionFromJavaScript',
+         'NotifyClosedFromJavaScript');
+
+      const snackbar = host.querySelector('.nt-snackbar');
+      expect(snackbar.id).toBe('service-snackbar');
+      expect(snackbar.querySelector('.nt-snackbar-message').textContent).toBe('Saved');
+      expect(snackbar.querySelector('.nt-snackbar-action').textContent).toBe('Undo');
+      expect(snackbar.querySelector('.nt-snackbar-close')).not.toBeNull();
+      expect(snackbar.style.getPropertyValue('--nt-snackbar-background-color')).toBe('var(--tnt-color-primary)');
+      expect(snackbar.style.getPropertyValue('--nt-snackbar-text-color')).toBe('var(--tnt-color-on-primary)');
+      expect(snackbar.style.getPropertyValue('--nt-snackbar-action-color')).toBe('var(--tnt-color-secondary)');
    });
 
    test('addSnackbar renders action and close buttons for action snackbars', async () => {

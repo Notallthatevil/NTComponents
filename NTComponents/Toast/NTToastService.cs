@@ -80,7 +80,20 @@ internal sealed class NTToastService(IJSRuntime _jsRuntime) : INTToastService, I
         TrackToast(toast);
         try {
             var module = await GetModuleAsync();
-            await module.InvokeAsync<string>("queueToast", JavaScriptToastOptions.From(toast, DotNetReference, backgroundColor is not null, textColor is not null, iconColor is not null));
+            await module.InvokeAsync<string>(
+                "queueToastFromBlazor",
+                toast.Id,
+                toast.Title,
+                toast.Message,
+                toast.Variant.ToString().ToLowerInvariant(),
+                toast.Timeout,
+                toast.ShowClose,
+                toast.Icon,
+                backgroundColor is not null ? toast.BackgroundColor.ToCssTnTColorVariable() : null,
+                textColor is not null ? toast.TextColor.ToCssTnTColorVariable() : null,
+                iconColor is not null ? toast.IconColor.ToCssTnTColorVariable() : null,
+                DotNetReference,
+                _dotNetCloseMethod);
         }
         catch {
             RemoveTrackedToast(toast.Id, out _);
@@ -199,38 +212,6 @@ internal sealed class NTToastService(IJSRuntime _jsRuntime) : INTToastService, I
                 NTToastVariant.Error => new NTToastDefaults(MaterialIcon.Error, TnTColor.ErrorContainer, TnTColor.OnErrorContainer, TnTColor.Error),
                 NTToastVariant.Assert => new NTToastDefaults(MaterialIcon.Rule, TnTColor.AssertContainer, TnTColor.OnAssertContainer, TnTColor.Assert),
                 _ => new NTToastDefaults(MaterialIcon.Info, TnTColor.SurfaceContainerHigh, TnTColor.OnSurface, TnTColor.Primary)
-            };
-        }
-    }
-
-    private sealed class JavaScriptToastOptions {
-        public required string? BackgroundColor { get; init; }
-        public required string DotNetCloseMethod { get; init; }
-        public required DotNetObjectReference<NTToastService> DotNetReference { get; init; }
-        public required string? Icon { get; init; }
-        public required string? IconColor { get; init; }
-        public required string Id { get; init; }
-        public required string? Message { get; init; }
-        public required bool ShowClose { get; init; }
-        public required string? TextColor { get; init; }
-        public required double Timeout { get; init; }
-        public required string Title { get; init; }
-        public required string Variant { get; init; }
-
-        public static JavaScriptToastOptions From(NTToastImplementation toast, DotNetObjectReference<NTToastService> dotNetReference, bool hasCustomBackgroundColor, bool hasCustomTextColor, bool hasCustomIconColor) {
-            return new JavaScriptToastOptions {
-                BackgroundColor = hasCustomBackgroundColor ? toast.BackgroundColor.ToCssTnTColorVariable() : null,
-                DotNetCloseMethod = _dotNetCloseMethod,
-                DotNetReference = dotNetReference,
-                Icon = toast.Icon,
-                IconColor = hasCustomIconColor ? toast.IconColor.ToCssTnTColorVariable() : null,
-                Id = toast.Id,
-                Message = toast.Message,
-                ShowClose = toast.ShowClose,
-                TextColor = hasCustomTextColor ? toast.TextColor.ToCssTnTColorVariable() : null,
-                Timeout = toast.Timeout,
-                Title = toast.Title,
-                Variant = toast.Variant.ToString().ToLowerInvariant()
             };
         }
     }

@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import { addToast, clearToasts, clearToastsFromBlazor, closeToast, closeToastFromBlazor, onDispose, onLoad, queueToast } from '../../NTComponents/Toast/NTToast.razor.js';
+import { addToast, clearToasts, clearToastsFromBlazor, closeToast, closeToastFromBlazor, onDispose, onLoad, queueToast, queueToastFromBlazor } from '../../NTComponents/Toast/NTToast.razor.js';
 
 describe('NTToast module', () => {
    let consoleErrorSpy;
@@ -100,6 +100,36 @@ describe('NTToast module', () => {
       const host = loadHostFromPageScript();
 
       expect(host.querySelector('.nt-toast-title').textContent).toBe('Queued before render');
+   });
+
+   test('queueToastFromBlazor renders scalar service payload without property metadata', () => {
+      const host = loadHostFromPageScript();
+      const dotNetReference = { invokeMethodAsync: jest.fn(() => Promise.resolve()) };
+
+      queueToastFromBlazor(
+         'service-toast',
+         'Saved',
+         'Changes stored',
+         'success',
+         9,
+         false,
+         'check_circle',
+         'var(--tnt-color-success-container)',
+         'var(--tnt-color-on-success-container)',
+         'var(--tnt-color-success)',
+         dotNetReference,
+         'NotifyClosedFromJavaScript');
+
+      const toast = host.querySelector('.nt-toast');
+      expect(toast.id).toBe('service-toast');
+      expect(toast.classList.contains('nt-toast-success')).toBe(true);
+      expect(toast.querySelector('.nt-toast-title').textContent).toBe('Saved');
+      expect(toast.querySelector('.nt-toast-message').textContent).toBe('Changes stored');
+      expect(toast.querySelector('.nt-toast-close')).toBeNull();
+      expect(toast.style.getPropertyValue('--nt-toast-background-color')).toBe('var(--tnt-color-success-container)');
+      expect(toast.style.getPropertyValue('--nt-toast-text-color')).toBe('var(--tnt-color-on-success-container)');
+      expect(toast.style.getPropertyValue('--nt-toast-icon-color')).toBe('var(--tnt-color-success)');
+      expect(toast.style.getPropertyValue('--nt-toast-timeout')).toBe('9s');
    });
 
    test('toasts stack up to five visible messages and queue the rest', () => {

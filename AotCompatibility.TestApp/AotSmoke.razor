@@ -1,3 +1,6 @@
+@inject INTToastService ToastService
+@inject INTSnackbarService SnackbarService
+
 <main class="aot-smoke" data-aot-smoke-ready="true">
     <h1>NTComponents AOT smoke</h1>
 
@@ -37,6 +40,7 @@
     </section>
 
     <NTToast />
+    <NTSnackbar />
     <p id="aot-smoke-status">@_status</p>
 </main>
 
@@ -52,9 +56,36 @@
     }.AsQueryable();
 
     private bool _selected;
+    private bool _notificationsShown;
     private string _status = "Rendered";
 
     private string ToggleLabel => _selected ? "Selected" : "Not selected";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender) {
+        if (!firstRender || _notificationsShown) {
+            return;
+        }
+
+        _notificationsShown = true;
+
+        await ToastService.ShowAsync(
+            "AOT toast title",
+            "AOT toast message",
+            NTToastVariant.Success,
+            timeout: 0,
+            backgroundColor: TnTColor.PrimaryContainer,
+            textColor: TnTColor.OnPrimaryContainer,
+            iconColor: TnTColor.Primary);
+
+        await SnackbarService.ShowAsync(
+            "AOT snackbar message",
+            "Undo",
+            () => Task.CompletedTask,
+            timeout: 0,
+            backgroundColor: TnTColor.SecondaryContainer,
+            textColor: TnTColor.OnSecondaryContainer,
+            actionColor: TnTColor.Tertiary);
+    }
 
     private Task HandleButtonClickAsync(MouseEventArgs args) {
         _status = "Clicked";

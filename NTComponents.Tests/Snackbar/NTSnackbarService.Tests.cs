@@ -9,12 +9,12 @@ namespace NTComponents.Tests.Snackbar;
 /// </summary>
 public class NTSnackbarService_Tests : BunitContext {
     private bool _closeShouldFail;
-    private object? _queuedOptions;
+    private IReadOnlyList<object?> _queuedArguments = [];
 
     public NTSnackbarService_Tests() {
         var module = JSInterop.SetupModule(NTSnackbar.JsModulePathValue);
-        module.Setup<string>("queueSnackbar", invocation => {
-            _queuedOptions = invocation.Arguments[0];
+        module.Setup<string>("queueSnackbarFromBlazor", invocation => {
+            _queuedArguments = invocation.Arguments.ToArray();
             return true;
         }).SetResult("queued");
         module.Setup<bool>("closeSnackbarFromBlazor", _ => !_closeShouldFail).SetResult(true);
@@ -55,14 +55,15 @@ public class NTSnackbarService_Tests : BunitContext {
         openedSnackbar.ActionColor.Should().Be(TnTColor.InversePrimary);
         openedSnackbar.HasAction.Should().BeFalse();
 
-        GetOption<string>("Message").Should().Be("Saved");
-        GetOption<double>("Timeout").Should().Be(4);
-        GetOption<bool>("ShowClose").Should().BeFalse();
-        GetOption<string>("BackgroundColor").Should().Be("var(--tnt-color-inverse-surface)");
-        GetOption<string>("TextColor").Should().Be("var(--tnt-color-inverse-on-surface)");
-        GetOption<string>("ActionColor").Should().Be("var(--tnt-color-inverse-primary)");
+        GetQueuedArgument<string>(1).Should().Be("Saved");
+        GetQueuedArgument<double>(3).Should().Be(4);
+        GetQueuedArgument<bool>(4).Should().BeFalse();
+        GetQueuedArgument<string>(5).Should().Be("var(--tnt-color-inverse-surface)");
+        GetQueuedArgument<string>(6).Should().Be("var(--tnt-color-inverse-on-surface)");
+        GetQueuedArgument<string>(7).Should().Be("var(--tnt-color-inverse-primary)");
         JSInterop.VerifyInvoke("import", 1);
-        JSInterop.VerifyInvoke("queueSnackbar", 1);
+        JSInterop.VerifyInvoke("queueSnackbarFromBlazor", 1);
+        JSInterop.Invocations.Should().NotContain(invocation => invocation.Identifier == "queueSnackbar");
     }
 
     [Fact]
@@ -76,12 +77,12 @@ public class NTSnackbarService_Tests : BunitContext {
         // Assert
         service.ActiveSnackbar.Should().NotBeNull();
         service.ActiveSnackbar!.HasAction.Should().BeTrue();
-        GetOption<string>("ActionLabel").Should().Be("Undo");
-        GetOption<bool>("ShowClose").Should().BeTrue();
-        GetOption<double>("Timeout").Should().Be(0);
-        GetOption<object>("DotNetReference").Should().NotBeNull();
-        GetOption<string>("DotNetActionMethod").Should().Be(nameof(NTSnackbarService.InvokeActionFromJavaScript));
-        GetOption<string>("DotNetCloseMethod").Should().Be(nameof(NTSnackbarService.NotifyClosedFromJavaScript));
+        GetQueuedArgument<string>(2).Should().Be("Undo");
+        GetQueuedArgument<bool>(4).Should().BeTrue();
+        GetQueuedArgument<double>(3).Should().Be(0);
+        GetQueuedArgument<object>(8).Should().NotBeNull();
+        GetQueuedArgument<string>(9).Should().Be(nameof(NTSnackbarService.InvokeActionFromJavaScript));
+        GetQueuedArgument<string>(10).Should().Be(nameof(NTSnackbarService.NotifyClosedFromJavaScript));
     }
 
     [Fact]
@@ -93,11 +94,11 @@ public class NTSnackbarService_Tests : BunitContext {
         await service.ShowAsync("Saved", "Undo", () => Task.CompletedTask, timeout: 9, showClose: false, backgroundColor: TnTColor.Primary, textColor: TnTColor.OnPrimary, actionColor: TnTColor.Secondary);
 
         // Assert
-        GetOption<double>("Timeout").Should().Be(9);
-        GetOption<bool>("ShowClose").Should().BeFalse();
-        GetOption<string>("BackgroundColor").Should().Be("var(--tnt-color-primary)");
-        GetOption<string>("TextColor").Should().Be("var(--tnt-color-on-primary)");
-        GetOption<string>("ActionColor").Should().Be("var(--tnt-color-secondary)");
+        GetQueuedArgument<double>(3).Should().Be(9);
+        GetQueuedArgument<bool>(4).Should().BeFalse();
+        GetQueuedArgument<string>(5).Should().Be("var(--tnt-color-primary)");
+        GetQueuedArgument<string>(6).Should().Be("var(--tnt-color-on-primary)");
+        GetQueuedArgument<string>(7).Should().Be("var(--tnt-color-secondary)");
     }
 
     [Fact]
@@ -277,8 +278,8 @@ public class NTSnackbarService_Tests : BunitContext {
         return new NTSnackbarService(Services.GetRequiredService<IJSRuntime>());
     }
 
-    private T? GetOption<T>(string propertyName) {
-        _queuedOptions.Should().NotBeNull();
-        return (T?)_queuedOptions!.GetType().GetProperty(propertyName)!.GetValue(_queuedOptions);
+    private T? GetQueuedArgument<T>(int index) {
+        _queuedArguments.Should().HaveCountGreaterThan(index);
+        return (T?)_queuedArguments[index];
     }
 }

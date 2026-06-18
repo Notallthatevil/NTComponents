@@ -94,7 +94,19 @@ internal sealed class NTSnackbarService(IJSRuntime _jsRuntime) : INTSnackbarServ
         TrackSnackbar(snackbar);
         try {
             var module = await GetModuleAsync();
-            await module.InvokeAsync<string>("queueSnackbar", JavaScriptSnackbarOptions.From(snackbar, DotNetReference));
+            await module.InvokeAsync<string>(
+                "queueSnackbarFromBlazor",
+                snackbar.Id,
+                snackbar.Message,
+                snackbar.ActionLabel,
+                snackbar.Timeout,
+                snackbar.ShowClose,
+                snackbar.BackgroundColor.ToCssTnTColorVariable(),
+                snackbar.TextColor.ToCssTnTColorVariable(),
+                snackbar.ActionColor.ToCssTnTColorVariable(),
+                DotNetReference,
+                _dotNetActionMethod,
+                _dotNetCloseMethod);
         }
         catch {
             RemoveTrackedSnackbar(snackbar.Id, out _);
@@ -184,35 +196,5 @@ internal sealed class NTSnackbarService(IJSRuntime _jsRuntime) : INTSnackbarServ
         public bool ShowClose { get; set; }
         public double Timeout { get; set; } = 4;
         public TnTColor TextColor { get; set; } = TnTColor.InverseOnSurface;
-    }
-
-    private sealed class JavaScriptSnackbarOptions {
-        public required string ActionColor { get; init; }
-        public required string? ActionLabel { get; init; }
-        public required string BackgroundColor { get; init; }
-        public required string DotNetActionMethod { get; init; }
-        public required string DotNetCloseMethod { get; init; }
-        public required DotNetObjectReference<NTSnackbarService> DotNetReference { get; init; }
-        public required string Id { get; init; }
-        public required string Message { get; init; }
-        public required bool ShowClose { get; init; }
-        public required string TextColor { get; init; }
-        public required double Timeout { get; init; }
-
-        public static JavaScriptSnackbarOptions From(NTSnackbarImplementation snackbar, DotNetObjectReference<NTSnackbarService> dotNetReference) {
-            return new JavaScriptSnackbarOptions {
-                ActionColor = snackbar.ActionColor.ToCssTnTColorVariable(),
-                ActionLabel = snackbar.ActionLabel,
-                BackgroundColor = snackbar.BackgroundColor.ToCssTnTColorVariable(),
-                DotNetActionMethod = _dotNetActionMethod,
-                DotNetCloseMethod = _dotNetCloseMethod,
-                DotNetReference = dotNetReference,
-                Id = snackbar.Id,
-                Message = snackbar.Message,
-                ShowClose = snackbar.ShowClose,
-                TextColor = snackbar.TextColor.ToCssTnTColorVariable(),
-                Timeout = snackbar.Timeout
-            };
-        }
     }
 }

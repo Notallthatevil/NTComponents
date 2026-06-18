@@ -58,6 +58,7 @@ export interface NTSnackbarBridge {
     closeSnackbar(id?: string, host?: HTMLElement | string | null): boolean;
     closeSnackbarFromBlazor(id: string, host?: HTMLElement | string | null): boolean;
     queueSnackbar(messageOrOptions: SnackbarInput, options?: Partial<SnackbarOptions>): string;
+    queueSnackbarFromBlazor(id: string, message: string, actionLabel: string | null, timeout: number, showClose: boolean, backgroundColor: string, textColor: string, actionColor: string, dotNetReference: DotNetSnackbarReference, dotNetActionMethod: string, dotNetCloseMethod: string): string;
 }
 
 export interface DotNetSnackbarReference {
@@ -638,6 +639,22 @@ export function queueSnackbar(messageOrOptions: SnackbarInput, options?: Partial
     return snackbar.id;
 }
 
+export function queueSnackbarFromBlazor(id: string, message: string, actionLabel: string | null, timeout: number, showClose: boolean, backgroundColor: string, textColor: string, actionColor: string, dotNetReference: DotNetSnackbarReference, dotNetActionMethod: string, dotNetCloseMethod: string): string {
+    return queueSnackbar({
+        actionColor,
+        actionLabel,
+        backgroundColor,
+        dotNetActionMethod,
+        dotNetCloseMethod,
+        dotNetReference,
+        id,
+        message,
+        showClose,
+        textColor,
+        timeout
+    });
+}
+
 export function addSnackbar(messageOrOptions: SnackbarInput, options?: Partial<SnackbarOptions>): string {
     return queueSnackbar(messageOrOptions, options);
 }
@@ -741,5 +758,6 @@ window.NTSnackbar = {
     clearSnackbars,
     closeSnackbarFromBlazor,
     closeSnackbar,
-    queueSnackbar
+    queueSnackbar,
+    queueSnackbarFromBlazor
 };

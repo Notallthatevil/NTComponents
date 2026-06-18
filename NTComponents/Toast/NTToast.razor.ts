@@ -59,6 +59,7 @@ export interface NTToastBridge {
     closeToast(id?: string, host?: HTMLElement | string | null): boolean;
     closeToastFromBlazor(id: string, host?: HTMLElement | string | null): boolean;
     queueToast(messageOrOptions: ToastInput, options?: Partial<ToastOptions>): string;
+    queueToastFromBlazor(id: string, title: string, message: string | null, variant: ToastVariant | string | null, timeout: number, showClose: boolean, icon: string | null, backgroundColor: string | null, textColor: string | null, iconColor: string | null, dotNetReference: DotNetToastReference, dotNetCloseMethod: string): string;
 }
 
 export interface DotNetToastReference {
@@ -709,6 +710,23 @@ export function queueToast(messageOrOptions: ToastInput, options?: Partial<Toast
     return toast.id;
 }
 
+export function queueToastFromBlazor(id: string, title: string, message: string | null, variant: ToastVariant | string | null, timeout: number, showClose: boolean, icon: string | null, backgroundColor: string | null, textColor: string | null, iconColor: string | null, dotNetReference: DotNetToastReference, dotNetCloseMethod: string): string {
+    return queueToast({
+        backgroundColor,
+        dotNetCloseMethod,
+        dotNetReference,
+        icon,
+        iconColor,
+        id,
+        message,
+        showClose,
+        textColor,
+        timeout,
+        title,
+        variant
+    });
+}
+
 export function addToast(messageOrOptions: ToastInput, options?: Partial<ToastOptions>): string {
     return queueToast(messageOrOptions, options);
 }
@@ -858,5 +876,6 @@ window.NTToast = {
     clearToasts,
     closeToastFromBlazor,
     closeToast,
-    queueToast
+    queueToast,
+    queueToastFromBlazor
 };

@@ -10,12 +10,12 @@ namespace NTComponents.Tests.Toast;
 /// </summary>
 public class NTToastService_Tests : BunitContext {
     private bool _closeShouldFail;
-    private object? _queuedOptions;
+    private IReadOnlyList<object?> _queuedArguments = [];
 
     public NTToastService_Tests() {
         var module = JSInterop.SetupModule(NTToast.JsModulePathValue);
-        module.Setup<string>("queueToast", invocation => {
-            _queuedOptions = invocation.Arguments[0];
+        module.Setup<string>("queueToastFromBlazor", invocation => {
+            _queuedArguments = invocation.Arguments.ToArray();
             return true;
         }).SetResult("queued");
         module.SetupVoid("clearToastsFromBlazor", _ => true).SetVoidResult();
@@ -67,18 +67,19 @@ public class NTToastService_Tests : BunitContext {
         openedToast.IconColor.Should().Be(TnTColor.Primary);
         openedToast.Variant.Should().Be(NTToastVariant.Default);
 
-        GetOption<string>("Title").Should().Be("Saved");
-        GetOption<string>("Message").Should().Be("Changes were stored.");
-        GetOption<double>("Timeout").Should().Be(4);
-        GetOption<bool>("ShowClose").Should().BeTrue();
-        GetOption<string>("BackgroundColor").Should().BeNull();
-        GetOption<string>("TextColor").Should().BeNull();
-        GetOption<string>("IconColor").Should().BeNull();
-        GetOption<string>("Variant").Should().Be("default");
-        GetOption<object>("DotNetReference").Should().NotBeNull();
-        GetOption<string>("DotNetCloseMethod").Should().Be(nameof(NTToastService.NotifyClosedFromJavaScript));
+        GetQueuedArgument<string>(1).Should().Be("Saved");
+        GetQueuedArgument<string>(2).Should().Be("Changes were stored.");
+        GetQueuedArgument<double>(4).Should().Be(4);
+        GetQueuedArgument<bool>(5).Should().BeTrue();
+        GetQueuedArgument<string>(7).Should().BeNull();
+        GetQueuedArgument<string>(8).Should().BeNull();
+        GetQueuedArgument<string>(9).Should().BeNull();
+        GetQueuedArgument<string>(3).Should().Be("default");
+        GetQueuedArgument<object>(10).Should().NotBeNull();
+        GetQueuedArgument<string>(11).Should().Be(nameof(NTToastService.NotifyClosedFromJavaScript));
         JSInterop.VerifyInvoke("import", 1);
-        JSInterop.VerifyInvoke("queueToast", 1);
+        JSInterop.VerifyInvoke("queueToastFromBlazor", 1);
+        JSInterop.Invocations.Should().NotContain(invocation => invocation.Identifier == "queueToast");
     }
 
     [Fact]
@@ -90,13 +91,13 @@ public class NTToastService_Tests : BunitContext {
         await service.ShowAsync("Custom", "Overrides", NTToastVariant.Warning, timeout: 9, showClose: false, icon: "star", backgroundColor: TnTColor.Primary, textColor: TnTColor.OnPrimary, iconColor: TnTColor.Secondary);
 
         // Assert
-        GetOption<double>("Timeout").Should().Be(9);
-        GetOption<bool>("ShowClose").Should().BeFalse();
-        GetOption<string>("Icon").Should().Be("star");
-        GetOption<string>("BackgroundColor").Should().Be("var(--tnt-color-primary)");
-        GetOption<string>("TextColor").Should().Be("var(--tnt-color-on-primary)");
-        GetOption<string>("IconColor").Should().Be("var(--tnt-color-secondary)");
-        GetOption<string>("Variant").Should().Be("warning");
+        GetQueuedArgument<double>(4).Should().Be(9);
+        GetQueuedArgument<bool>(5).Should().BeFalse();
+        GetQueuedArgument<string>(6).Should().Be("star");
+        GetQueuedArgument<string>(7).Should().Be("var(--tnt-color-primary)");
+        GetQueuedArgument<string>(8).Should().Be("var(--tnt-color-on-primary)");
+        GetQueuedArgument<string>(9).Should().Be("var(--tnt-color-secondary)");
+        GetQueuedArgument<string>(3).Should().Be("warning");
     }
 
     [Theory]
@@ -116,10 +117,10 @@ public class NTToastService_Tests : BunitContext {
         service.ActiveToasts[^1].BackgroundColor.ToCssTnTColorVariable().Should().Be(backgroundColor);
         service.ActiveToasts[^1].TextColor.ToCssTnTColorVariable().Should().Be(textColor);
         service.ActiveToasts[^1].IconColor.ToCssTnTColorVariable().Should().Be(iconColor);
-        GetOption<string>("BackgroundColor").Should().BeNull();
-        GetOption<string>("TextColor").Should().BeNull();
-        GetOption<string>("IconColor").Should().BeNull();
-        GetOption<string>("Variant").Should().Be(variant.ToString().ToLowerInvariant());
+        GetQueuedArgument<string>(7).Should().BeNull();
+        GetQueuedArgument<string>(8).Should().BeNull();
+        GetQueuedArgument<string>(9).Should().BeNull();
+        GetQueuedArgument<string>(3).Should().Be(variant.ToString().ToLowerInvariant());
     }
 
     [Fact]
@@ -141,7 +142,7 @@ public class NTToastService_Tests : BunitContext {
             NTToastVariant.Warning,
             NTToastVariant.Error,
             NTToastVariant.Assert);
-        JSInterop.Invocations.Count(invocation => invocation.Identifier == "queueToast").Should().Be(5);
+        JSInterop.Invocations.Count(invocation => invocation.Identifier == "queueToastFromBlazor").Should().Be(5);
     }
 
     [Fact]
@@ -239,9 +240,9 @@ public class NTToastService_Tests : BunitContext {
         return new NTToastService(Services.GetRequiredService<IJSRuntime>());
     }
 
-    private T? GetOption<T>(string propertyName) {
-        _queuedOptions.Should().NotBeNull();
-        return (T?)_queuedOptions!.GetType().GetProperty(propertyName)!.GetValue(_queuedOptions);
+    private T? GetQueuedArgument<T>(int index) {
+        _queuedArguments.Should().HaveCountGreaterThan(index);
+        return (T?)_queuedArguments[index];
     }
 
     private sealed class UnavailableJavaScriptRuntime : IJSRuntime {
