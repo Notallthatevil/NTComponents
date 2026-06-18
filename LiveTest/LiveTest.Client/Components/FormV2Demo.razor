@@ -349,8 +349,8 @@
             OnInvalidSubmit="HandleInvalidSubmit">
         <DataAnnotationsValidator />
 
-        <div style="display:grid;gap:16px;">
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;">
+        <div style="display:grid;gap:24px;">
+            <NTFormSectionView Heading="Core fields" Description="Default section layout uses balanced responsive columns and only asks for spans where a field needs more or less room." MaxColumns="3">
                 <NTInputText @bind-Value="_model.Name"
                              Appearance="@FieldAppearanceOverride"
                              ActiveIndicatorColor="@ActiveIndicatorColorOverride"
@@ -464,7 +464,7 @@
                              ShowCharacterCounter="@_showCounter"
                              AdditionalAttributes="@PhoneAttributes" />
 
-                <div style="grid-column:1 / -1;">
+                <NTFormFieldLayoutSpan Span="NTFormFieldSpan.Full">
                     <NTTextArea @bind-Value="_model.Notes"
                                 Appearance="@FieldAppearanceOverride"
                                 ActiveIndicatorColor="@ActiveIndicatorColorOverride"
@@ -503,9 +503,9 @@
                                 BindOnInput="@_bindOnInput"
                                 ShowCharacterCounter="@_showCounter"
                                 AdditionalAttributes="@TextAreaAttributes" />
-                </div>
+                </NTFormFieldLayoutSpan>
 
-                <div style="grid-column:1 / -1;">
+                <NTFormFieldLayoutSpan Span="NTFormFieldSpan.Full">
                     <NTFileUpload @bind-Value="_model.Files"
                                   Appearance="@FieldAppearanceOverride"
                                   ActiveIndicatorColor="@ActiveIndicatorColorOverride"
@@ -541,154 +541,164 @@
                                   MaximumFileSize="5242880000"
                                   OnUploadFile="OnDemoUploadFileAsync"
                                   AdditionalAttributes="@FileAttributes" />
-                </div>
+                </NTFormFieldLayoutSpan>
 
-                <NTInputNumeric TNumber="int"
-                                @bind-Value="_model.Quantity"
-                                Appearance="@FieldAppearanceOverride"
-                                ActiveIndicatorColor="@ActiveIndicatorColorOverride"
-                                BackgroundColor="@BackgroundColorOverride"
-                                CaretColor="@CaretColorOverride"
-                                Density="@FieldDensityOverride"
-                                DisabledContainerColor="@DisabledContainerColorOverride"
-                                DisabledContentColor="@DisabledContentColorOverride"
-                                DisabledOutlineColor="@DisabledOutlineColorOverride"
-                                Disabled="@FieldDisabledOverride"
-                                ErrorCaretColor="@ErrorCaretColorOverride"
-                                ErrorColor="@ErrorColorOverride"
-                                FocusColor="@FocusColorOverride"
-                                HoverActiveIndicatorColor="@HoverActiveIndicatorColorOverride"
-                                HoverOutlineColor="@HoverOutlineColorOverride"
-                                IconColor="@IconColorOverride"
-                                LabelColor="@LabelColorOverride"
-                                ReadOnly="@FieldReadOnlyOverride"
-                                Label="@QuantityLabel"
-                                OutlineColor="@OutlineColorOverride"
-                                Placeholder="@Placeholder"
-                                PlaceholderColor="@PlaceholderColorOverride"
-                                PrefixSuffixColor="@PrefixSuffixColorOverride"
-                                StateLayerColor="@StateLayerColorOverride"
-                                SupportingText="@SupportingText"
-                                SupportingTextColor="@SupportingTextColorOverride"
-                                TextColor="@TextColorOverride"
-                                ErrorText="@ErrorText"
-                                LeadingIcon="@LeadingIcon"
-                                TrailingIcon="@TrailingIcon"
-                                PrefixText="@PrefixText"
-                                SuffixText="@QuantitySuffixText"
-                                BindOnInput="@_bindOnInput"
-                                AdditionalAttributes="@NumericAttributes" />
-
-                <NTInputCurrency @bind-Value="_model.Price"
-                                 Appearance="@FieldAppearanceOverride"
-                                 ActiveIndicatorColor="@ActiveIndicatorColorOverride"
-                                 BackgroundColor="@BackgroundColorOverride"
-                                 CaretColor="@CaretColorOverride"
-                                 Density="@FieldDensityOverride"
-                                 DisabledContainerColor="@DisabledContainerColorOverride"
-                                 DisabledContentColor="@DisabledContentColorOverride"
-                                 DisabledOutlineColor="@DisabledOutlineColorOverride"
-                                 Disabled="@FieldDisabledOverride"
-                                 ErrorCaretColor="@ErrorCaretColorOverride"
-                                 ErrorColor="@ErrorColorOverride"
-                                 FocusColor="@FocusColorOverride"
-                                 HoverActiveIndicatorColor="@HoverActiveIndicatorColorOverride"
-                                 HoverOutlineColor="@HoverOutlineColorOverride"
-                                 IconColor="@IconColorOverride"
-                                 LabelColor="@LabelColorOverride"
-                                 ReadOnly="@FieldReadOnlyOverride"
-                                 Label="@PriceLabel"
-                                 OutlineColor="@OutlineColorOverride"
-                                 Placeholder="@Placeholder"
-                                 PlaceholderColor="@PlaceholderColorOverride"
-                                 PrefixSuffixColor="@PrefixSuffixColorOverride"
-                                 StateLayerColor="@StateLayerColorOverride"
-                                 SupportingText="@SupportingText"
-                                 SupportingTextColor="@SupportingTextColorOverride"
-                                 TextColor="@TextColorOverride"
-                                 ErrorText="@ErrorText"
-                                 LeadingIcon="@LeadingIcon"
-                                 TrailingIcon="@TrailingIcon"
-                                 SuffixText="@SuffixText"
-                                 BindOnInput="@_bindOnInput"
-                                 AdditionalAttributes="@NumericAttributes" />
-
-                <NTInputSlider TNumber="int"
-                               @bind-Value="_model.Volume"
-                               ActiveTrackColor="@ActiveIndicatorColorOverride"
-                               Disabled="@FieldDisabledOverride"
-                               DisabledColor="@DisabledContentColorOverride"
-                               ErrorColor="@ErrorColorOverride"
-                               FocusColor="@FocusColorOverride"
-                               HandleColor="@ActiveIndicatorColorOverride"
-                               InsetIcon="@VolumeSliderInsetIcon"
-                               Label="@VolumeSliderLabel"
-                               LabelColor="@LabelColorOverride"
-                               Max="100"
-                               Min="0"
-                               Orientation="@_sliderOrientation"
-                               ReadOnly="@FieldReadOnlyOverride"
-                               ShowStops="@_showSliderStops"
-                               ShowValueIndicator="@_showSliderValueIndicator"
-                               Size="@_sliderSize"
-                               StateLayerColor="@StateLayerColorOverride"
-                               StopCount="11"
-                               SupportingText="@VolumeSliderSupportingText"
-                               SupportingTextColor="@SupportingTextColorOverride"
-                               BindOnInput="@_bindOnInput"
-                               ErrorText="@ErrorText"
-                               AdditionalAttributes="@VolumeSliderAttributes" />
-
-                <NTInputSlider TNumber="int"
-                               @bind-Value="_model.TemperatureOffset"
-                               ActiveTrackColor="@ActiveIndicatorColorOverride"
-                               Disabled="@FieldDisabledOverride"
-                               DisabledColor="@DisabledContentColorOverride"
-                               ErrorColor="@ErrorColorOverride"
-                               FocusColor="@FocusColorOverride"
-                               HandleColor="@ActiveIndicatorColorOverride"
-                               Label="@TemperatureSliderLabel"
-                               LabelColor="@LabelColorOverride"
-                               Max="50"
-                               Min="-50"
-                               ReadOnly="@FieldReadOnlyOverride"
-                               ShowStops="@_showSliderStops"
-                               ShowValueIndicator="@_showSliderValueIndicator"
-                               Size="@_sliderSize"
-                               StateLayerColor="@StateLayerColorOverride"
-                               StopCount="11"
-                               SupportingText="@TemperatureSliderSupportingText"
-                               SupportingTextColor="@SupportingTextColorOverride"
-                               Variant="NTSliderVariant.Centered"
-                               BindOnInput="@_bindOnInput"
-                               ErrorText="@ErrorText"
-                               AdditionalAttributes="@TemperatureSliderAttributes" />
-
-                <NTInputRangeSlider TNumber="int"
-                                    @bind-Value="_model.BudgetRange"
-                                    ActiveTrackColor="@ActiveIndicatorColorOverride"
+                <NTFormFieldLayoutSpan Span="NTFormFieldSpan.Compact">
+                    <NTInputNumeric TNumber="int"
+                                    @bind-Value="_model.Quantity"
+                                    Appearance="@FieldAppearanceOverride"
+                                    ActiveIndicatorColor="@ActiveIndicatorColorOverride"
+                                    BackgroundColor="@BackgroundColorOverride"
+                                    CaretColor="@CaretColorOverride"
+                                    Density="@FieldDensityOverride"
+                                    DisabledContainerColor="@DisabledContainerColorOverride"
+                                    DisabledContentColor="@DisabledContentColorOverride"
+                                    DisabledOutlineColor="@DisabledOutlineColorOverride"
                                     Disabled="@FieldDisabledOverride"
-                                    DisabledColor="@DisabledContentColorOverride"
+                                    ErrorCaretColor="@ErrorCaretColorOverride"
                                     ErrorColor="@ErrorColorOverride"
                                     FocusColor="@FocusColorOverride"
-                                    HandleColor="@ActiveIndicatorColorOverride"
-                                    Label="@BudgetRangeLabel"
+                                    HoverActiveIndicatorColor="@HoverActiveIndicatorColorOverride"
+                                    HoverOutlineColor="@HoverOutlineColorOverride"
+                                    IconColor="@IconColorOverride"
                                     LabelColor="@LabelColorOverride"
-                                    Max="100"
-                                    Min="0"
                                     ReadOnly="@FieldReadOnlyOverride"
-                                    ShowStops="@_showSliderStops"
-                                    ShowValueIndicator="@_showSliderValueIndicator"
-                                    Size="@_sliderSize"
+                                    Label="@QuantityLabel"
+                                    OutlineColor="@OutlineColorOverride"
+                                    Placeholder="@Placeholder"
+                                    PlaceholderColor="@PlaceholderColorOverride"
+                                    PrefixSuffixColor="@PrefixSuffixColorOverride"
                                     StateLayerColor="@StateLayerColorOverride"
-                                    StopCount="11"
-                                    SupportingText="@BudgetRangeSupportingText"
+                                    SupportingText="@SupportingText"
                                     SupportingTextColor="@SupportingTextColorOverride"
-                                    BindOnInput="@_bindOnInput"
+                                    TextColor="@TextColorOverride"
                                     ErrorText="@ErrorText"
-                                    AdditionalAttributes="@BudgetRangeAttributes" />
+                                    LeadingIcon="@LeadingIcon"
+                                    TrailingIcon="@TrailingIcon"
+                                    PrefixText="@PrefixText"
+                                    SuffixText="@QuantitySuffixText"
+                                    BindOnInput="@_bindOnInput"
+                                    AdditionalAttributes="@NumericAttributes" />
+                </NTFormFieldLayoutSpan>
 
-                <div style="min-height:280px;">
+                <NTFormFieldLayoutSpan Span="NTFormFieldSpan.OneThird">
+                    <NTInputCurrency @bind-Value="_model.Price"
+                                     Appearance="@FieldAppearanceOverride"
+                                     ActiveIndicatorColor="@ActiveIndicatorColorOverride"
+                                     BackgroundColor="@BackgroundColorOverride"
+                                     CaretColor="@CaretColorOverride"
+                                     Density="@FieldDensityOverride"
+                                     DisabledContainerColor="@DisabledContainerColorOverride"
+                                     DisabledContentColor="@DisabledContentColorOverride"
+                                     DisabledOutlineColor="@DisabledOutlineColorOverride"
+                                     Disabled="@FieldDisabledOverride"
+                                     ErrorCaretColor="@ErrorCaretColorOverride"
+                                     ErrorColor="@ErrorColorOverride"
+                                     FocusColor="@FocusColorOverride"
+                                     HoverActiveIndicatorColor="@HoverActiveIndicatorColorOverride"
+                                     HoverOutlineColor="@HoverOutlineColorOverride"
+                                     IconColor="@IconColorOverride"
+                                     LabelColor="@LabelColorOverride"
+                                     ReadOnly="@FieldReadOnlyOverride"
+                                     Label="@PriceLabel"
+                                     OutlineColor="@OutlineColorOverride"
+                                     Placeholder="@Placeholder"
+                                     PlaceholderColor="@PlaceholderColorOverride"
+                                     PrefixSuffixColor="@PrefixSuffixColorOverride"
+                                     StateLayerColor="@StateLayerColorOverride"
+                                     SupportingText="@SupportingText"
+                                     SupportingTextColor="@SupportingTextColorOverride"
+                                     TextColor="@TextColorOverride"
+                                     ErrorText="@ErrorText"
+                                     LeadingIcon="@LeadingIcon"
+                                     TrailingIcon="@TrailingIcon"
+                                     SuffixText="@SuffixText"
+                                     BindOnInput="@_bindOnInput"
+                                     AdditionalAttributes="@NumericAttributes" />
+                </NTFormFieldLayoutSpan>
+
+                <NTFormFieldLayoutSpan Span="NTFormFieldSpan.Half">
+                    <NTInputSlider TNumber="int"
+                                   @bind-Value="_model.Volume"
+                                   ActiveTrackColor="@ActiveIndicatorColorOverride"
+                                   Disabled="@FieldDisabledOverride"
+                                   DisabledColor="@DisabledContentColorOverride"
+                                   ErrorColor="@ErrorColorOverride"
+                                   FocusColor="@FocusColorOverride"
+                                   HandleColor="@ActiveIndicatorColorOverride"
+                                   InsetIcon="@VolumeSliderInsetIcon"
+                                   Label="@VolumeSliderLabel"
+                                   LabelColor="@LabelColorOverride"
+                                   Max="100"
+                                   Min="0"
+                                   Orientation="@_sliderOrientation"
+                                   ReadOnly="@FieldReadOnlyOverride"
+                                   ShowStops="@_showSliderStops"
+                                   ShowValueIndicator="@_showSliderValueIndicator"
+                                   Size="@_sliderSize"
+                                   StateLayerColor="@StateLayerColorOverride"
+                                   StopCount="11"
+                                   SupportingText="@VolumeSliderSupportingText"
+                                   SupportingTextColor="@SupportingTextColorOverride"
+                                   BindOnInput="@_bindOnInput"
+                                   ErrorText="@ErrorText"
+                                   AdditionalAttributes="@VolumeSliderAttributes" />
+                </NTFormFieldLayoutSpan>
+
+                <NTFormFieldLayoutSpan Span="NTFormFieldSpan.Half">
+                    <NTInputSlider TNumber="int"
+                                   @bind-Value="_model.TemperatureOffset"
+                                   ActiveTrackColor="@ActiveIndicatorColorOverride"
+                                   Disabled="@FieldDisabledOverride"
+                                   DisabledColor="@DisabledContentColorOverride"
+                                   ErrorColor="@ErrorColorOverride"
+                                   FocusColor="@FocusColorOverride"
+                                   HandleColor="@ActiveIndicatorColorOverride"
+                                   Label="@TemperatureSliderLabel"
+                                   LabelColor="@LabelColorOverride"
+                                   Max="50"
+                                   Min="-50"
+                                   ReadOnly="@FieldReadOnlyOverride"
+                                   ShowStops="@_showSliderStops"
+                                   ShowValueIndicator="@_showSliderValueIndicator"
+                                   Size="@_sliderSize"
+                                   StateLayerColor="@StateLayerColorOverride"
+                                   StopCount="11"
+                                   SupportingText="@TemperatureSliderSupportingText"
+                                   SupportingTextColor="@SupportingTextColorOverride"
+                                   Variant="NTSliderVariant.Centered"
+                                   BindOnInput="@_bindOnInput"
+                                   ErrorText="@ErrorText"
+                                   AdditionalAttributes="@TemperatureSliderAttributes" />
+                </NTFormFieldLayoutSpan>
+
+                <NTFormFieldLayoutSpan Span="NTFormFieldSpan.Full">
+                    <NTInputRangeSlider TNumber="int"
+                                        @bind-Value="_model.BudgetRange"
+                                        ActiveTrackColor="@ActiveIndicatorColorOverride"
+                                        Disabled="@FieldDisabledOverride"
+                                        DisabledColor="@DisabledContentColorOverride"
+                                        ErrorColor="@ErrorColorOverride"
+                                        FocusColor="@FocusColorOverride"
+                                        HandleColor="@ActiveIndicatorColorOverride"
+                                        Label="@BudgetRangeLabel"
+                                        LabelColor="@LabelColorOverride"
+                                        Max="100"
+                                        Min="0"
+                                        ReadOnly="@FieldReadOnlyOverride"
+                                        ShowStops="@_showSliderStops"
+                                        ShowValueIndicator="@_showSliderValueIndicator"
+                                        Size="@_sliderSize"
+                                        StateLayerColor="@StateLayerColorOverride"
+                                        StopCount="11"
+                                        SupportingText="@BudgetRangeSupportingText"
+                                        SupportingTextColor="@SupportingTextColorOverride"
+                                        BindOnInput="@_bindOnInput"
+                                        ErrorText="@ErrorText"
+                                        AdditionalAttributes="@BudgetRangeAttributes" />
+                </NTFormFieldLayoutSpan>
+
+                <NTFormFieldLayoutSpan Span="NTFormFieldSpan.Compact" style="min-height:280px;">
                     <NTInputSlider TNumber="int"
                                    @bind-Value="_model.Brightness"
                                    ActiveTrackColor="@ActiveIndicatorColorOverride"
@@ -713,7 +723,7 @@
                                    BindOnInput="@_bindOnInput"
                                    ErrorText="@ErrorText"
                                    AdditionalAttributes="@BrightnessSliderAttributes" />
-                </div>
+                </NTFormFieldLayoutSpan>
 
                 <NTSelect TValue="string"
                           @bind-Value="_model.Status"
@@ -1170,7 +1180,73 @@
                                          EnableCustomPicker="@_enableCustomDatePicker" />
                         break;
                 }
-            </div>
+            </NTFormSectionView>
+
+            <NTFormSectionView Heading="Span presets" Description="Preset items keep the same field component API and only change layout width." MaxColumns="4">
+                <NTFormFieldLayoutSpan Span="NTFormFieldSpan.Auto">
+                    <NTInputText @bind-Value="_layoutAuto" Label="Auto" SupportingText="Parent default span" />
+                </NTFormFieldLayoutSpan>
+
+                <NTFormFieldLayoutSpan Span="NTFormFieldSpan.Compact">
+                    <NTInputText @bind-Value="_layoutCompact" Label="Compact" SupportingText="Short values" />
+                </NTFormFieldLayoutSpan>
+
+                <NTFormFieldLayoutSpan Span="NTFormFieldSpan.OneQuarter">
+                    <NTInputText @bind-Value="_layoutQuarter" Label="Quarter" SupportingText="One quarter" />
+                </NTFormFieldLayoutSpan>
+
+                <NTFormFieldLayoutSpan Span="NTFormFieldSpan.OneThird">
+                    <NTInputText @bind-Value="_layoutThird" Label="Third" SupportingText="One third" />
+                </NTFormFieldLayoutSpan>
+
+                <NTFormFieldLayoutSpan Span="NTFormFieldSpan.Half">
+                    <NTInputText @bind-Value="_layoutHalf" Label="Half" SupportingText="Half row" />
+                </NTFormFieldLayoutSpan>
+
+                <NTFormFieldLayoutSpan Span="NTFormFieldSpan.TwoThirds">
+                    <NTInputText @bind-Value="_layoutTwoThirds" Label="Two thirds" SupportingText="Wide field" />
+                </NTFormFieldLayoutSpan>
+
+                <NTFormFieldLayoutSpan Span="NTFormFieldSpan.ThreeQuarters">
+                    <NTInputText @bind-Value="_layoutThreeQuarters" Label="Three quarters" SupportingText="Wider field" />
+                </NTFormFieldLayoutSpan>
+
+                <NTFormFieldLayoutSpan Span="NTFormFieldSpan.Full">
+                    <NTTextArea @bind-Value="_layoutFull" Label="Full" SupportingText="Full-width content" MinVisibleLines="2" />
+                </NTFormFieldLayoutSpan>
+
+                <NTFormFieldLayoutSpan SmallColumns="12" MediumColumns="5" LargeColumns="7">
+                    <NTInputText @bind-Value="_layoutExplicit" Label="Explicit 12 / 5 / 7" SupportingText="Column override" />
+                </NTFormFieldLayoutSpan>
+            </NTFormSectionView>
+
+            <NTFormSectionView Heading="Fieldset group" Description="Use fieldset semantics when multiple controls answer one grouped question." UseFieldset="true" MaxColumns="2">
+                <NTInputRadioGroup TValue="string" @bind-Value="_layoutChoice" Label="Grouped choice">
+                    <NTInputRadio TValue="string" Value="@("email")" Label="Email" />
+                    <NTInputRadio TValue="string" Value="@("sms")" Label="SMS" />
+                    <NTInputRadio TValue="string" Value="@("phone")" Label="Phone" />
+                </NTInputRadioGroup>
+
+                <NTInputSwitch @bind-Value="_layoutEnabled" Label="Grouped switch" SupportingText="Shares the fieldset context" />
+            </NTFormSectionView>
+
+            <NTFormFieldGridView MaxColumns="6" ColumnGap="12px" RowGap="12px">
+                <NTFormFieldLayoutSpan Span="NTFormFieldSpan.Compact">
+                    <NTInputText @bind-Value="_layoutStandaloneA" Label="Standalone A" />
+                </NTFormFieldLayoutSpan>
+
+                <NTFormFieldLayoutSpan Span="NTFormFieldSpan.OneQuarter">
+                    <NTInputText @bind-Value="_layoutStandaloneB" Label="Standalone B" />
+                </NTFormFieldLayoutSpan>
+
+                <NTFormFieldLayoutSpan Span="NTFormFieldSpan.Half">
+                    <NTInputText @bind-Value="_layoutStandaloneC" Label="Standalone C" />
+                </NTFormFieldLayoutSpan>
+
+                <NTFormFieldLayoutSpan Span="NTFormFieldSpan.Full">
+                    <NTTextArea @bind-Value="_layoutStandaloneD" Label="Standalone full width" MinVisibleLines="2" />
+                </NTFormFieldLayoutSpan>
+            </NTFormFieldGridView>
 
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
                 <button type="submit">Submit</button>
@@ -1197,7 +1273,22 @@
     private NTSliderOrientation _sliderOrientation = NTSliderOrientation.Horizontal;
     private NTSliderSize _sliderSize = NTSliderSize.Medium;
     private NTSwitchVariant _switchVariant = NTSwitchVariant.Leading;
+    private string _layoutAuto = "Auto";
+    private string _layoutChoice = "email";
+    private string _layoutCompact = "Compact";
+    private string _layoutExplicit = "Explicit";
+    private string _layoutFull = "Full-width notes";
+    private string _layoutHalf = "Half";
+    private string _layoutQuarter = "Quarter";
+    private string _layoutStandaloneA = "A";
+    private string _layoutStandaloneB = "B";
+    private string _layoutStandaloneC = "C";
+    private string _layoutStandaloneD = "Standalone full width";
+    private string _layoutThird = "Third";
+    private string _layoutThreeQuarters = "Three quarters";
+    private string _layoutTwoThirds = "Two thirds";
     private string _submitMessage = "Not submitted";
+    private bool _layoutEnabled = true;
     private bool _addLengthLimits = true;
     private bool _addRangeLimits = true;
     private bool _autoFocus;

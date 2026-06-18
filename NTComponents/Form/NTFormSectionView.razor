@@ -1,0 +1,44 @@
+@namespace NTComponents
+@using NTComponents.Core
+@inherits NTComponentBase
+
+@if (UseFieldset) {
+    <fieldset @attributes="ElementAttributes" aria-describedby="@DescribedBy" @ref="Element">
+        @if (HasHeading) {
+            <legend class="nt-form-section-view-heading" id="@HeadingId">@Heading</legend>
+        }
+
+        @if (Description is not null) {
+            <div class="nt-form-section-view-header">
+                <div class="nt-form-section-view-title">
+                    <p class="nt-form-section-view-description" id="@DescriptionId">@Description</p>
+                </div>
+            </div>
+        }
+
+        <NTFormFieldGridView MaxColumns="@MaxColumns">
+            @ChildContent
+        </NTFormFieldGridView>
+    </fieldset>
+}
+else {
+    <section @attributes="ElementAttributes" aria-labelledby="@AriaLabelledBy" aria-describedby="@DescribedBy" @ref="Element">
+        @if (HasHeaderContent) {
+            <div class="nt-form-section-view-header">
+                <div class="nt-form-section-view-title">
+                    @if (HasHeading) {
+                        <h2 class="nt-form-section-view-heading" id="@HeadingId">@Heading</h2>
+                    }
+
+                    @if (Description is not null) {
+                        <p class="nt-form-section-view-description" id="@DescriptionId">@Description</p>
+                    }
+                </div>
+            </div>
+        }
+
+        <NTFormFieldGridView MaxColumns="@MaxColumns">
+            @ChildContent
+        </NTFormFieldGridView>
+    </section>
+}

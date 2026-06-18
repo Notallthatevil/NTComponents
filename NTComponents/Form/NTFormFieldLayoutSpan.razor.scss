@@ -1,0 +1,8 @@
+.nt-form-field-layout-span {
+    display: block;
+    min-inline-size: 0;
+
+    > * {
+        inline-size: 100%;
+    }
+}

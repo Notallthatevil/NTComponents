@@ -1,0 +1,47 @@
+.nt-form-field-grid-view {
+    container-type: inline-size;
+    display: grid;
+    gap: var(--nt-form-field-grid-view-row-gap, 16px) var(--nt-form-field-grid-view-column-gap, 16px);
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+
+    ::deep > * {
+        grid-column: span var(--nt-form-field-layout-span-small, 12);
+        min-inline-size: 0;
+    }
+}
+
+@container (min-width: 600px) {
+    .nt-form-field-grid-view {
+        ::deep > * {
+            grid-column: span var(--nt-form-field-layout-span-medium, var(--nt-form-field-grid-view-default-span-medium, 6));
+        }
+    }
+}
+
+@container (min-width: 960px) {
+    .nt-form-field-grid-view {
+        &.nt-form-field-grid-view-max-1 {
+            --nt-form-field-grid-view-default-span-large: 12;
+        }
+
+        &.nt-form-field-grid-view-max-2 {
+            --nt-form-field-grid-view-default-span-large: 6;
+        }
+
+        &.nt-form-field-grid-view-max-3 {
+            --nt-form-field-grid-view-default-span-large: 4;
+        }
+
+        &.nt-form-field-grid-view-max-4 {
+            --nt-form-field-grid-view-default-span-large: 3;
+        }
+
+        &.nt-form-field-grid-view-max-6 {
+            --nt-form-field-grid-view-default-span-large: 2;
+        }
+
+        ::deep > * {
+            grid-column: span var(--nt-form-field-layout-span-large, var(--nt-form-field-grid-view-default-span-large, 4));
+        }
+    }
+}
