@@ -63,9 +63,9 @@ public partial class NTFormFieldLayoutSpan : NTComponentBase {
         base.OnParametersSet();
 
         var span = ResolveSpan(Span);
-        var smallSpan = NormalizeColumns(SmallColumns ?? span.Small);
-        var mediumSpan = NormalizeColumns(MediumColumns ?? span.Medium);
-        var largeSpan = NormalizeColumns(LargeColumns ?? span.Large);
+        var smallSpan = ResolveColumns(SmallColumns, span?.Small);
+        var mediumSpan = ResolveColumns(MediumColumns, span?.Medium);
+        var largeSpan = ResolveColumns(LargeColumns, span?.Large);
 
         _elementClass = CssClassBuilder.Create()
             .AddFromAdditionalAttributes(AdditionalAttributes)
@@ -75,9 +75,9 @@ public partial class NTFormFieldLayoutSpan : NTComponentBase {
 
         _elementStyle = CssStyleBuilder.Create()
             .AddFromAdditionalAttributes(AdditionalAttributes)
-            .AddVariable("nt-form-field-layout-span-small", smallSpan.ToString(System.Globalization.CultureInfo.InvariantCulture))
-            .AddVariable("nt-form-field-layout-span-medium", mediumSpan.ToString(System.Globalization.CultureInfo.InvariantCulture))
-            .AddVariable("nt-form-field-layout-span-large", largeSpan.ToString(System.Globalization.CultureInfo.InvariantCulture))
+            .AddVariable("nt-form-field-layout-span-small", smallSpan?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty, smallSpan.HasValue)
+            .AddVariable("nt-form-field-layout-span-medium", mediumSpan?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty, mediumSpan.HasValue)
+            .AddVariable("nt-form-field-layout-span-large", largeSpan?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty, largeSpan.HasValue)
             .Build();
 
         BuildElementAttributes();
@@ -92,7 +92,12 @@ public partial class NTFormFieldLayoutSpan : NTComponentBase {
         }
 
         _elementAttributes["class"] = _elementClass!;
-        _elementAttributes["style"] = _elementStyle!;
+        if (!string.IsNullOrWhiteSpace(_elementStyle)) {
+            _elementAttributes["style"] = _elementStyle!;
+        }
+        else {
+            _elementAttributes.Remove("style");
+        }
 
         if (AutoFocus == true) {
             _elementAttributes["autofocus"] = true;
@@ -112,9 +117,12 @@ public partial class NTFormFieldLayoutSpan : NTComponentBase {
         _elementAttributes[attributeName] = value;
     }
 
+    private static int? ResolveColumns(int? explicitColumns, int? presetColumns) =>
+        explicitColumns.HasValue ? NormalizeColumns(explicitColumns.Value) : presetColumns;
+
     private static int NormalizeColumns(int columns) => Math.Clamp(columns, 1, 12);
 
-    private static FieldSpan ResolveSpan(NTFormFieldSpan span) =>
+    private static FieldSpan? ResolveSpan(NTFormFieldSpan span) =>
         span switch {
             NTFormFieldSpan.Compact => new(12, 4, 3),
             NTFormFieldSpan.OneQuarter => new(12, 6, 3),
@@ -123,7 +131,7 @@ public partial class NTFormFieldLayoutSpan : NTComponentBase {
             NTFormFieldSpan.TwoThirds => new(12, 12, 8),
             NTFormFieldSpan.ThreeQuarters => new(12, 12, 9),
             NTFormFieldSpan.Full => new(12, 12, 12),
-            _ => new(12, 6, 4)
+            _ => null
         };
 
     private readonly record struct FieldSpan(int Small, int Medium, int Large);

@@ -1230,6 +1230,33 @@
                 <NTInputSwitch @bind-Value="_layoutEnabled" Label="Grouped switch" SupportingText="Shares the fieldset context" />
             </NTFormSectionView>
 
+            <NTFormSectionView Heading="Inline alignment" Description="Radio groups and text inputs should share the same top edge when placed as inline siblings." MaxColumns="3">
+                <NTFormFieldLayoutSpan Span="NTFormFieldSpan.Full">
+                    <style>
+                        .inline-alignment-demo {
+                            font-size: 0;
+                        }
+
+                        .inline-alignment-demo > .nt-radio,
+                        .inline-alignment-demo > .nt-input {
+                            width: min(360px, calc(50% - 8px));
+                            margin-inline-end: 16px;
+                            margin-block-end: 16px;
+                            font-size: 1rem;
+                        }
+                    </style>
+
+                    <div class="inline-alignment-demo">
+                        <NTInputRadioGroup TValue="string" @bind-Value="_inlineAlignmentChoice" Label="Delivery method" SupportingText="Inline with adjacent input" class="inline-alignment-field">
+                            <NTInputRadio TValue="string" Value="@("email")" Label="Email" />
+                            <NTInputRadio TValue="string" Value="@("sms")" Label="SMS" />
+                        </NTInputRadioGroup>
+
+                        <NTInputText @bind-Value="_inlineAlignmentName" Label="Recipient" SupportingText="Top edge should align with radio group" class="inline-alignment-field" />
+                    </div>
+                </NTFormFieldLayoutSpan>
+            </NTFormSectionView>
+
             <NTFormFieldGridView MaxColumns="6" ColumnGap="12px" RowGap="12px">
                 <NTFormFieldLayoutSpan Span="NTFormFieldSpan.Compact">
                     <NTInputText @bind-Value="_layoutStandaloneA" Label="Standalone A" />
@@ -1273,6 +1300,8 @@
     private NTSliderOrientation _sliderOrientation = NTSliderOrientation.Horizontal;
     private NTSliderSize _sliderSize = NTSliderSize.Medium;
     private NTSwitchVariant _switchVariant = NTSwitchVariant.Leading;
+    private string _inlineAlignmentChoice = "email";
+    private string _inlineAlignmentName = "Ada Lovelace";
     private string _layoutAuto = "Auto";
     private string _layoutChoice = "email";
     private string _layoutCompact = "Compact";

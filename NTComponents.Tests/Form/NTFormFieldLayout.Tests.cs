@@ -37,6 +37,36 @@ public class NTFormFieldLayout_Tests : BunitContext {
     }
 
     [Fact]
+    public void LayoutSpan_Auto_Defers_To_Parent_Grid_Defaults() {
+        var cut = Render<NTFormFieldLayoutSpan>(parameters => parameters
+            .Add(p => p.Span, NTFormFieldSpan.Auto)
+            .Add(p => p.ChildContent, builder => {
+                builder.OpenElement(0, "input");
+                builder.CloseElement();
+            }));
+
+        var item = cut.Find("div.nt-form-field-layout-span");
+        item.ClassList.Should().Contain("nt-form-field-layout-span-auto");
+        item.HasAttribute("style").Should().BeFalse();
+    }
+
+    [Fact]
+    public void LayoutSpan_Auto_Explicit_Columns_Override_Only_Provided_Breakpoints() {
+        var cut = Render<NTFormFieldLayoutSpan>(parameters => parameters
+            .Add(p => p.Span, NTFormFieldSpan.Auto)
+            .Add(p => p.LargeColumns, 99)
+            .Add(p => p.ChildContent, builder => {
+                builder.OpenElement(0, "input");
+                builder.CloseElement();
+            }));
+
+        var style = cut.Find("div.nt-form-field-layout-span").GetAttribute("style");
+        style.Should().NotContain("--nt-form-field-layout-span-small");
+        style.Should().NotContain("--nt-form-field-layout-span-medium");
+        style.Should().Contain("--nt-form-field-layout-span-large:12");
+    }
+
+    [Fact]
     public void LayoutSpan_Emits_Preset_Span_Variables() {
         var cut = Render<NTFormFieldLayoutSpan>(parameters => parameters
             .Add(p => p.Span, NTFormFieldSpan.Full)
