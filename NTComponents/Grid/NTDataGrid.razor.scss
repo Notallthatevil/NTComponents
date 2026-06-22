@@ -223,14 +223,24 @@ $nt-data-grid-spacer-animation-duration: motion.$nt-motion-duration-extra_long_2
 }
 
 .nt-data-grid-sort-indicator {
+    display: inline-flex;
+    block-size: $nt-data-grid-sort-indicator-size;
+    inline-size: $nt-data-grid-sort-indicator-size;
+    align-items: center;
+    justify-content: center;
     font-size: $nt-data-grid-sort-indicator-size;
     line-height: 1;
     color: inherit;
     pointer-events: none;
     transform-origin: center;
+    transition: transform motion.$nt-motion-duration-short_2 motion.$nt-motion-easing-standard;
 
     &-ascending {
         transform: rotate(180deg);
+    }
+
+    &-descending {
+        transform: rotate(0deg);
     }
 }
 

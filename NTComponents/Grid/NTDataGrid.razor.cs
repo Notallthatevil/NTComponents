@@ -716,6 +716,7 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
 
     private static string GetSortIndicatorClass(SortDirection sortDirection) => CssClassBuilder.Create("nt-data-grid-sort-indicator")
         .AddClass("nt-data-grid-sort-indicator-ascending", sortDirection == SortDirection.Ascending)
+        .AddClass("nt-data-grid-sort-indicator-descending", sortDirection == SortDirection.Descending)
         .Build();
 
     private static string GetSortIndicator() => "arrow_drop_down";

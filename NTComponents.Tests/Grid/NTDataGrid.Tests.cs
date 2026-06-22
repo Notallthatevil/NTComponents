@@ -186,7 +186,9 @@ public class NTDataGrid_Tests : BunitContext {
         cut.Find(".nt-data-grid-sort-link").Click();
         cut.WaitForAssertion(() => {
             cut.Find("th").GetAttribute("aria-sort").Should().Be("descending");
-            cut.Find(".nt-data-grid-sort-indicator").ClassList.Should().NotContain("nt-data-grid-sort-indicator-ascending");
+            var indicator = cut.Find(".nt-data-grid-sort-indicator");
+            indicator.ClassList.Should().Contain("nt-data-grid-sort-indicator-descending");
+            indicator.ClassList.Should().NotContain("nt-data-grid-sort-indicator-ascending");
             cut.FindAll("tbody tr")[0].TextContent.Should().Contain("Gamma");
         });
 
