@@ -78,6 +78,19 @@ function getTargetRails(rail: Maybe<NavigationRailElement>): NavigationRailEleme
         : getRails();
 }
 
+function getTargetRailsForDispose(target: Maybe<Element>): NavigationRailElement[] {
+    if (!(target instanceof HTMLElement)) {
+        return target == null ? getRails() : [];
+    }
+
+    if (target.classList.contains('nt-navigation-rail')) {
+        return [target as NavigationRailElement];
+    }
+
+    const containingRail = target.closest<NavigationRailElement>('.nt-navigation-rail');
+    return containingRail ? [containingRail] : [];
+}
+
 function getMenuButton(rail: NavigationRailElement): HTMLButtonElement | null {
     return rail.querySelector<HTMLButtonElement>(':scope .nt-navigation-rail-menu-button');
 }
@@ -1482,6 +1495,6 @@ export function onUpdate(rail?: Maybe<NavigationRailElement>): void {
     getTargetRails(rail).forEach(updateRail);
 }
 
-export function onDispose(rail?: Maybe<NavigationRailElement>): void {
-    getTargetRails(rail).forEach(disposeRail);
+export function onDispose(rail?: Maybe<Element>): void {
+    getTargetRailsForDispose(rail).forEach(disposeRail);
 }

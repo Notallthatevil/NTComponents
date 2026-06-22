@@ -124,6 +124,53 @@ describe('NTNavigationRail module', () => {
     expect(button.getAttribute('aria-expanded')).toBe('false');
   });
 
+  test('disposing a page-script marker does not unregister other active rails', () => {
+    document.body.innerHTML = `
+      <nav id="primary-rail" class="nt-navigation-rail nt-navigation-rail-expanded">
+        <button class="nt-navigation-rail-menu-button"
+                type="button"
+                aria-label="Collapse navigation rail"
+                aria-expanded="true"
+                data-nt-navigation-rail-expanded-label="Collapse navigation rail"
+                data-nt-navigation-rail-collapsed-label="Expand navigation rail">
+          Menu
+        </button>
+        <div class="nt-navigation-rail-group" data-nt-navigation-rail-group-expanded="true">
+          <button class="nt-navigation-rail-group-trigger nt-navigation-rail-item"
+                  type="button"
+                  aria-expanded="false"
+                  aria-controls="primary-buttons-panel"
+                  data-nt-navigation-rail-group-trigger="true">
+            Buttons
+          </button>
+          <div id="primary-buttons-panel" class="nt-navigation-rail-group-panel" popover="auto">
+            <div class="nt-navigation-rail-group-items">
+              <a class="nt-navigation-rail-item" href="/buttons">Buttons</a>
+            </div>
+          </div>
+        </div>
+      </nav>
+      <tnt-page-script src="./_content/NTComponents/NavRail/NTNavigationRail.razor.js"></tnt-page-script>`;
+
+    module.onLoad();
+
+    const marker = document.querySelector('tnt-page-script');
+    const rail = document.querySelector('#primary-rail');
+    const menuButton = rail.querySelector('.nt-navigation-rail-menu-button');
+    const groupTrigger = rail.querySelector('.nt-navigation-rail-group-trigger');
+
+    module.onDispose(marker);
+    groupTrigger.click();
+
+    expect(groupTrigger.getAttribute('aria-expanded')).toBe('false');
+    expect(groupTrigger.closest('.nt-navigation-rail-group').classList.contains('nt-navigation-rail-group-open')).toBe(false);
+
+    menuButton.click();
+
+    expect(rail.classList.contains('nt-navigation-rail-collapsed')).toBe(true);
+    expect(menuButton.getAttribute('aria-expanded')).toBe('false');
+  });
+
   test('open by default expands collapsed rail on initial load for medium and larger screens', () => {
     window.matchMedia = jest.fn(query => ({
       matches: query === '(min-width: 840px)',

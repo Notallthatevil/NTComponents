@@ -121,9 +121,64 @@ public class NTNavigationRail_E2E_Tests : IAsyncLifetime {
             "a visible collapsed rail below the medium breakpoint should use the modal item layout");
     }
 
+    [Fact]
+    public async Task LiveTest_NestedLayoutNavigation_Does_Not_Dispose_Primary_Rail_Interactions() {
+        ArgumentNullException.ThrowIfNull(_page);
+
+        await NavigateToLiveTestHomeAsync();
+
+        await GetPrimaryLiveTestRail().GetByRole(AriaRole.Link, new LocatorGetByRoleOptions { Name = "Buttons", Exact = true }).ClickAsync();
+        await _page.WaitForURLAsync("**/buttons");
+
+        await GetPrimaryLiveTestRail().GetByRole(AriaRole.Link, new LocatorGetByRoleOptions { Name = "Nested Layout", Exact = true }).ClickAsync();
+        await _page.WaitForURLAsync("**/nestedLayout");
+
+        var nestedRail = GetNestedLiveTestRail();
+        await nestedRail.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 5000 });
+        await nestedRail.GetByRole(AriaRole.Link, new LocatorGetByRoleOptions { Name = "Forms", Exact = true }).ClickAsync();
+        await _page.WaitForURLAsync("**/forms");
+
+        var primaryRail = GetPrimaryLiveTestRail();
+        var buttonsGroup = primaryRail.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Buttons", Exact = true });
+
+        (await buttonsGroup.GetAttributeAsync("aria-expanded")).Should().Be("true");
+
+        await buttonsGroup.ClickAsync();
+        (await buttonsGroup.GetAttributeAsync("aria-expanded")).Should().Be("false");
+
+        await buttonsGroup.ClickAsync();
+        (await buttonsGroup.GetAttributeAsync("aria-expanded")).Should().Be("true");
+
+        var collapseButton = primaryRail.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Collapse navigation rail", Exact = true });
+        await collapseButton.ClickAsync();
+
+        await _page.WaitForFunctionAsync(
+            """
+            () => {
+                const rail = document.querySelector('nav[aria-label="LiveTest primary navigation"]');
+                const button = rail?.querySelector('.nt-navigation-rail-menu-button');
+
+                return rail?.classList.contains('nt-navigation-rail-collapsed') === true
+                    && button?.getAttribute('aria-expanded') === 'false';
+            }
+            """,
+            null,
+            new PageWaitForFunctionOptions { Timeout = 5000 });
+    }
+
     private ILocator GetRail() {
         ArgumentNullException.ThrowIfNull(_page);
         return _page.GetByRole(AriaRole.Navigation, new PageGetByRoleOptions { Name = "E2E primary navigation" });
+    }
+
+    private ILocator GetPrimaryLiveTestRail() {
+        ArgumentNullException.ThrowIfNull(_page);
+        return _page.GetByRole(AriaRole.Navigation, new PageGetByRoleOptions { Name = "LiveTest primary navigation" });
+    }
+
+    private ILocator GetNestedLiveTestRail() {
+        ArgumentNullException.ThrowIfNull(_page);
+        return _page.GetByRole(AriaRole.Navigation, new PageGetByRoleOptions { Name = "Nested layout navigation" });
     }
 
     private ILocator GetExpandButton() {
@@ -157,6 +212,15 @@ public class NTNavigationRail_E2E_Tests : IAsyncLifetime {
         await GetRail().WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 5000 });
         await GetExpandButton().WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 5000 });
         await GetHomeLink().WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 5000 });
+    }
+
+    private async Task NavigateToLiveTestHomeAsync() {
+        ArgumentNullException.ThrowIfNull(_page);
+
+        await _page.GotoAsync(AppBaseUrl, new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await _page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await GetPrimaryLiveTestRail().WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 5000 });
+        await GetPrimaryLiveTestRail().GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Collapse navigation rail", Exact = true }).WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 5000 });
     }
 
     private async Task WaitForMenuStateAsync(bool expanded) {
