@@ -53,6 +53,7 @@ public class NTAutocomplete_Tests : BunitContext {
         cut.Find("ul[role='listbox']").GetAttribute("id").Should().Be("city-autocomplete-listbox");
         cut.FindAll(".nt-combobox-list > .nt-combobox-list-item [data-nt-autocomplete-option='true']").Should().BeEmpty();
         cut.FindAll("script[type='application/json'][data-nt-autocomplete-options='true']").Should().HaveCount(1);
+        cut.Find(".nt-combobox-menu").GetAttribute("popover").Should().Be("manual");
         cut.FindAll("datalist").Should().BeEmpty();
     }
 

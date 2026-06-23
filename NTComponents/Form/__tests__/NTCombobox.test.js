@@ -41,6 +41,7 @@ describe('NTCombobox browser behavior', () => {
         const menu = document.createElement('div');
         menu.className = 'nt-combobox-menu';
         menu.dataset.ntComboboxMenu = 'true';
+        menu.setAttribute('popover', 'manual');
         menu.hidden = true;
         menu.setAttribute('aria-hidden', 'true');
 
@@ -132,6 +133,7 @@ describe('NTCombobox browser behavior', () => {
 
         expect(root.classList.contains('nt-combobox-open')).toBe(true);
         expect(menu.hidden).toBe(false);
+        expect(menu.classList.contains('nt-combobox-menu-layer')).toBe(true);
         expect(input.getAttribute('aria-expanded')).toBe('true');
     });
 
@@ -287,6 +289,62 @@ describe('NTCombobox browser behavior', () => {
 
         expect(menu.classList.contains('nt-combobox-menu-above')).toBe(true);
         expect(menu.style.maxHeight).toBe('320px');
+        expect(menu.style.top).toBe('376px');
+        expect(menu.style.left).toBe('8px');
+        expect(menu.style.width).toBe('300px');
+    });
+
+    test('uses native popover when opening and closing the menu', () => {
+        const { input, menu } = createFixture();
+        menu.showPopover = jest.fn(() => {
+            menu.matches = selector => selector === ':popover-open';
+        });
+        menu.hidePopover = jest.fn(() => {
+            menu.matches = () => false;
+        });
+
+        input.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+        expect(menu.showPopover).toHaveBeenCalledTimes(1);
+
+        input.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'Escape' }));
+
+        expect(menu.hidePopover).toHaveBeenCalledTimes(1);
+        expect(menu.classList.contains('nt-combobox-menu-layer')).toBe(false);
+    });
+
+    test('repositions the open menu when scrolling a parent', () => {
+        const { input, menu, root } = createFixture();
+        Object.defineProperty(window, 'innerHeight', { configurable: true, value: 760 });
+        root.getBoundingClientRect = () => ({
+            bottom: 144,
+            height: 40,
+            left: 24,
+            right: 324,
+            top: 104,
+            width: 300,
+            x: 24,
+            y: 104,
+            toJSON: () => ({}),
+        });
+
+        input.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        expect(menu.style.top).toBe('148px');
+
+        root.getBoundingClientRect = () => ({
+            bottom: 94,
+            height: 40,
+            left: 24,
+            right: 324,
+            top: 54,
+            width: 300,
+            x: 24,
+            y: 54,
+            toJSON: () => ({}),
+        });
+        document.dispatchEvent(new Event('scroll'));
+
+        expect(menu.style.top).toBe('98px');
     });
 
     test('backspace narrows the internal typeahead filter without editing selected display text', () => {

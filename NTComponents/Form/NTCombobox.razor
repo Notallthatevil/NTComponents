@@ -99,7 +99,7 @@
             </span>
         </label>
 
-        <div class="nt-combobox-menu" hidden="@(!_isOpen)" aria-hidden="@(!_isOpen ? "true" : "false")" data-nt-combobox-menu="true">
+        <div class="nt-combobox-menu" hidden="@(!_isOpen)" aria-hidden="@(!_isOpen ? "true" : "false")" popover="manual" data-nt-combobox-menu="true">
             @if (items.Count > 0) {
                 var selectedValueSet = BuildSelectedValueSet(selectedValues);
 

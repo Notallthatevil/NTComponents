@@ -60,6 +60,13 @@ $nt-menu-field-disabled-opacity: 0.38;
             box-shadow: map.get(elevation.$elevation-shadows, 3);
         }
 
+        ::deep .nt-combobox-menu-layer {
+            position: fixed;
+            inset: auto;
+            margin: 0;
+            min-width: 0;
+        }
+
         ::deep .nt-combobox-menu-above {
             inset-block-start: auto;
             inset-block-end: calc(100% + $nt-menu-field-menu-offset);

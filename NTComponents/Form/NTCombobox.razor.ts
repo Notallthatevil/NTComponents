@@ -32,6 +32,8 @@ interface ComboboxState {
     onInputKeyDown: (event: KeyboardEvent) => void;
     onMenuClick: (event: MouseEvent) => void;
     onMenuMouseDown: (event: MouseEvent) => void;
+    onDocumentScroll: (event: Event) => void;
+    onWindowResize: (event: UIEvent) => void;
     options: ComboboxOptionState[];
     root: HTMLElement;
     selectionNotificationInFlight: boolean;
@@ -41,6 +43,7 @@ interface ComboboxState {
 
 const stateByInput = new Map<HTMLInputElement, ComboboxState>();
 const activeOptionClass = 'nt-combobox-option-active';
+const menuLayerClass = 'nt-combobox-menu-layer';
 const menuViewportMargin = 8;
 const menuViewportOffset = 4;
 const menuPreferredMaxHeight = 320;
@@ -123,13 +126,70 @@ function updateMenuPlacement(state: ComboboxState): void {
     }
 
     const rootRect = state.root.getBoundingClientRect();
-    const spaceBelow = Math.max(0, window.innerHeight - rootRect.bottom - menuViewportMargin - menuViewportOffset);
+    const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+    const maxViewportWidth = Math.max(0, viewportWidth - menuViewportMargin * 2);
+    const width = Math.min(rootRect.width, maxViewportWidth);
+    const left = Math.min(Math.max(rootRect.left, menuViewportMargin), Math.max(menuViewportMargin, viewportWidth - width - menuViewportMargin));
+    const spaceBelow = Math.max(0, viewportHeight - rootRect.bottom - menuViewportMargin - menuViewportOffset);
     const spaceAbove = Math.max(0, rootRect.top - menuViewportMargin - menuViewportOffset);
     const openAbove = spaceBelow < menuPreferredMaxHeight && spaceAbove > spaceBelow;
     const availableSpace = openAbove ? spaceAbove : spaceBelow;
+    const maxHeight = Math.min(menuPreferredMaxHeight, availableSpace);
+    const height = Math.min(state.menu.scrollHeight || maxHeight, maxHeight);
+    const top = openAbove ? rootRect.top - menuViewportOffset - height : rootRect.bottom + menuViewportOffset;
 
     state.menu.classList.toggle('nt-combobox-menu-above', openAbove);
-    state.menu.style.maxHeight = `${Math.min(menuPreferredMaxHeight, availableSpace)}px`;
+    state.menu.classList.add(menuLayerClass);
+    state.menu.style.left = `${left}px`;
+    state.menu.style.maxHeight = `${maxHeight}px`;
+    state.menu.style.top = `${Math.max(menuViewportMargin, top)}px`;
+    state.menu.style.width = `${width}px`;
+}
+
+function showMenuSurface(state: ComboboxState): void {
+    if (!state.menu) {
+        return;
+    }
+
+    if (typeof state.menu.showPopover === 'function' && !isMenuPopoverOpen(state.menu)) {
+        try {
+            state.menu.showPopover();
+        }
+        catch {
+            // Already-open or unsupported popover transitions should not block the fallback positioned menu.
+        }
+    }
+}
+
+function hideMenuSurface(state: ComboboxState): void {
+    if (!state.menu) {
+        return;
+    }
+
+    if (typeof state.menu.hidePopover === 'function' && isMenuPopoverOpen(state.menu)) {
+        try {
+            state.menu.hidePopover();
+        }
+        catch {
+            // Best-effort cleanup only.
+        }
+    }
+
+    state.menu.classList.remove(menuLayerClass, 'nt-combobox-menu-above');
+    state.menu.style.removeProperty('left');
+    state.menu.style.removeProperty('max-height');
+    state.menu.style.removeProperty('top');
+    state.menu.style.removeProperty('width');
+}
+
+function isMenuPopoverOpen(menu: HTMLElement): boolean {
+    try {
+        return menu.matches(':popover-open');
+    }
+    catch {
+        return false;
+    }
 }
 
 function scrollOptionIntoView(option: ComboboxOptionState): void {
@@ -319,12 +379,12 @@ function setOpen(state: ComboboxState, isOpen: boolean, notifyTouched = false): 
         state.menu.hidden = !isOpen;
         state.menu.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
         if (!isOpen) {
-            state.menu.classList.remove('nt-combobox-menu-above');
-            state.menu.style.removeProperty('max-height');
+            hideMenuSurface(state);
         }
     }
 
     if (isOpen) {
+        showMenuSurface(state);
         updateMenuPlacement(state);
         filterOptions(state, isSearchable(state.input) ? state.filterQuery : '');
         return;
@@ -423,6 +483,8 @@ function createState(input: HTMLInputElement, dotNetRef: Maybe<unknown>): Combob
         onInputKeyDown: () => { },
         onMenuClick: () => { },
         onMenuMouseDown: () => { },
+        onDocumentScroll: () => { },
+        onWindowResize: () => { },
         options: [],
         root: queryRoot(input),
         selectionNotificationInFlight: false,
@@ -547,12 +609,22 @@ function createState(input: HTMLInputElement, dotNetRef: Maybe<unknown>): Combob
         setOpen(state, false, true);
     };
 
+    state.onDocumentScroll = () => {
+        updateMenuPlacement(state);
+    };
+
+    state.onWindowResize = () => {
+        updateMenuPlacement(state);
+    };
+
     input.addEventListener('click', state.onInputClick);
     input.addEventListener('beforeinput', state.onInputBeforeInput);
     input.addEventListener('input', state.onInputInput);
     input.addEventListener('keydown', state.onInputKeyDown);
     document.addEventListener('mousedown', state.onDocumentMouseDown);
     document.addEventListener('focusin', state.onDocumentFocusIn);
+    document.addEventListener('scroll', state.onDocumentScroll, true);
+    window.addEventListener('resize', state.onWindowResize);
     updateElements(state);
     state.menu?.addEventListener('mousedown', state.onMenuMouseDown);
     state.menu?.addEventListener('click', state.onMenuClick);
@@ -570,8 +642,11 @@ function cleanupState(state: Maybe<ComboboxState>): void {
     state.input.removeEventListener('keydown', state.onInputKeyDown);
     state.menu?.removeEventListener('mousedown', state.onMenuMouseDown);
     state.menu?.removeEventListener('click', state.onMenuClick);
+    hideMenuSurface(state);
     document.removeEventListener('mousedown', state.onDocumentMouseDown);
     document.removeEventListener('focusin', state.onDocumentFocusIn);
+    document.removeEventListener('scroll', state.onDocumentScroll, true);
+    window.removeEventListener('resize', state.onWindowResize);
 }
 
 function synchronizeInput(input: Maybe<HTMLInputElement>, dotNetRef: Maybe<unknown>): void {

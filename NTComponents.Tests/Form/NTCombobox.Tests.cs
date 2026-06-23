@@ -49,6 +49,7 @@ public class NTCombobox_Tests : BunitContext {
         listbox.GetAttribute("aria-multiselectable").Should().Be("true");
         listbox.GetAttribute("id").Should().Be("tags-combobox-listbox");
         cut.Find(".nt-combobox-menu").HasAttribute("hidden").Should().BeTrue();
+        cut.Find(".nt-combobox-menu").GetAttribute("popover").Should().Be("manual");
         cut.FindAll("[data-nt-combobox-option='true']").Should().HaveCount(3);
     }
 
