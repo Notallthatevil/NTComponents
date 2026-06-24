@@ -10,6 +10,12 @@ on:
     paths-ignore:
     - '**.md'
 
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
+  DOTNET_CLI_WORKLOAD_UPDATE_NOTIFY_DISABLE: 'true'
+  DOTNET_NOLOGO: 'true'
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 'true'
+
 jobs:
   aot-test:
     name: AOT smoke (${{ matrix.tfm }}, ${{ matrix.runner.name }})
@@ -31,25 +37,29 @@ jobs:
         - name: macOS arm64
           os: macos-latest
     runs-on: ${{ matrix.runner.os }}
-    timeout-minutes: 10
+    timeout-minutes: 20
     # determine dotnet SDK version from the TFM (job-level env to avoid schema ambiguity)
     env:
       DOTNET_VERSION: ${{ matrix.tfm == 'net10.0' && '10.0.x' || '9.0.x' }}
 
     steps:
     - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0 # fetching all
 
     - name: Setup dotnet
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 8.0.x
+        dotnet-version: |
+          8.0.x
+          ${{ env.DOTNET_VERSION }}
 
-    - name: Setup dotnet
-      uses: actions/setup-dotnet@v4
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
       with:
-        dotnet-version: ${{ env.DOTNET_VERSION }}
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-${{ runner.arch }}-${{ matrix.tfm }}-nuget-${{ hashFiles('global.json', 'Directory.Build.props', 'AotCompatibility.TestApp/AotCompatibility.TestApp.csproj', 'NTComponents/NTComponents.csproj', 'NTComponents.Analyzers/NTComponents.Analyzers.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-${{ runner.arch }}-${{ matrix.tfm }}-nuget-
+          ${{ runner.os }}-${{ runner.arch }}-nuget-
 
     - name: Display runner architecture
       shell: pwsh
@@ -76,7 +86,7 @@ jobs:
 
     - name: Restore WebAssembly workloads
       shell: pwsh
-      run: dotnet workload restore AotCompatibility.TestApp/AotCompatibility.TestApp.csproj
+      run: dotnet workload restore AotCompatibility.TestApp/AotCompatibility.TestApp.csproj --skip-manifest-update
 
     - name: Publish AOT smoke app, assert static analysis warning count, and browser-smoke the app
       shell: pwsh
