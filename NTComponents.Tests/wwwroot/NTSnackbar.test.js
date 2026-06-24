@@ -98,6 +98,86 @@ describe('NTSnackbar module', () => {
       expect(host.querySelector('.nt-snackbar-message').textContent).toBe('Queued before render');
    });
 
+   test('queueSnackbar ignores duplicate explicit ids while pending', () => {
+      const firstId = queueSnackbar({ message: 'Original pending', id: 'pending-duplicate', timeout: 0 });
+      const duplicateId = queueSnackbar({ message: 'Duplicate pending', id: 'pending-duplicate', timeout: 0 });
+
+      const host = loadHostFromPageScript();
+
+      expect(duplicateId).toBe(firstId);
+      expect(host.querySelectorAll('.nt-snackbar')).toHaveLength(1);
+      expect(host.querySelector('.nt-snackbar-message').textContent).toBe('Original pending');
+   });
+
+   test('queueSnackbar ignores duplicate explicit ids while active', () => {
+      const host = loadHostFromPageScript();
+      const firstId = queueSnackbar({ message: 'Original active', id: 'active-duplicate', timeout: 0 });
+      const duplicateId = queueSnackbar({ message: 'Duplicate active', id: 'active-duplicate', timeout: 0 });
+
+      expect(duplicateId).toBe(firstId);
+      expect(host.querySelectorAll('.nt-snackbar')).toHaveLength(1);
+      expect(host.querySelector('.nt-snackbar-message').textContent).toBe('Original active');
+   });
+
+   test('queueSnackbar ignores duplicate explicit ids while queued', () => {
+      const host = loadHostFromPageScript();
+      queueSnackbar({ message: 'Visible', id: 'visible', timeout: 0 });
+
+      const firstId = queueSnackbar({ message: 'Original queued', id: 'queued-duplicate', timeout: 0 });
+      const duplicateId = queueSnackbar({ message: 'Duplicate queued', id: 'queued-duplicate', timeout: 0 });
+
+      closeSnackbar(undefined, host);
+      jest.advanceTimersByTime(200);
+
+      expect(duplicateId).toBe(firstId);
+      expect(host.querySelectorAll('.nt-snackbar')).toHaveLength(1);
+      expect(host.querySelector('.nt-snackbar-message').textContent).toBe('Original queued');
+
+      closeSnackbar(undefined, host);
+      jest.advanceTimersByTime(200);
+
+      expect(host.querySelector('.nt-snackbar')).toBeNull();
+   });
+
+   test('queueSnackbar preserves pending host target until that host loads', () => {
+      queueSnackbar({ message: 'Targeted pending', host: 'target-snackbar-host', id: 'targeted-pending', timeout: 0 });
+      const defaultHost = loadHostFromPageScript();
+
+      const targetHost = createHost();
+      targetHost.id = 'target-snackbar-host';
+      loadHostFromPageScript(targetHost);
+
+      expect(defaultHost.querySelector('.nt-snackbar')).toBeNull();
+      expect(targetHost.querySelector('.nt-snackbar-message').textContent).toBe('Targeted pending');
+   });
+
+   test('closeSnackbarFromBlazor removes targeted pending snackbar when a default host exists', () => {
+      queueSnackbar({ message: 'Targeted pending close', host: 'target-snackbar-host', id: 'targeted-pending-close', timeout: 0 });
+      loadHostFromPageScript();
+
+      expect(closeSnackbarFromBlazor('targeted-pending-close')).toBe(true);
+
+      const targetHost = createHost();
+      targetHost.id = 'target-snackbar-host';
+      loadHostFromPageScript(targetHost);
+
+      expect(targetHost.querySelector('.nt-snackbar')).toBeNull();
+   });
+
+   test('clearSnackbars for one host preserves pending snackbars for another host', () => {
+      queueSnackbar({ message: 'Other pending', host: 'other-snackbar-host', id: 'other-pending', timeout: 0 });
+      const firstHost = loadHostFromPageScript();
+
+      clearSnackbars(firstHost);
+
+      const otherHost = createHost();
+      otherHost.id = 'other-snackbar-host';
+      loadHostFromPageScript(otherHost);
+
+      expect(firstHost.querySelector('.nt-snackbar')).toBeNull();
+      expect(otherHost.querySelector('.nt-snackbar-message').textContent).toBe('Other pending');
+   });
+
    test('queueSnackbarFromBlazor renders scalar service payload without property metadata', () => {
       const host = loadHostFromPageScript();
       const dotNetReference = { invokeMethodAsync: jest.fn(() => Promise.resolve()) };

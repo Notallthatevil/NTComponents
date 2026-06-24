@@ -23,6 +23,7 @@ interface ToastRecord {
     dotNetCloseMethod: string | null;
     dotNetReference: DotNetToastReference | null;
     element: HTMLElement | null;
+    host: HTMLElement | string | null;
     icon: string | null;
     iconColor: string | null;
     id: string;
@@ -68,6 +69,7 @@ export interface DotNetToastReference {
 
 declare global {
     interface Window {
+        __ntToastPendingQueue?: ToastOptions[];
         NTToast?: NTToastBridge;
     }
 }
@@ -202,6 +204,7 @@ function normalizeToast(messageOrOptions: ToastInput, options?: Partial<ToastOpt
         dotNetCloseMethod: source.dotNetCloseMethod ?? null,
         dotNetReference: source.dotNetReference ?? null,
         element: null,
+        host: source.host ?? null,
         icon: source.icon === '' ? null : source.icon ?? defaults.icon,
         iconColor: source.iconColor ?? defaults.iconColor,
         id: source.id?.trim() || `nt-toast-js-${++nextToastId}`,
@@ -214,6 +217,11 @@ function normalizeToast(messageOrOptions: ToastInput, options?: Partial<ToastOpt
         title: source.title,
         variant
     };
+}
+
+function getExplicitToastId(messageOrOptions: ToastInput, options?: Partial<ToastOptions>): string | null {
+    const id = typeof messageOrOptions === 'string' ? options?.id : options?.id ?? messageOrOptions.id;
+    return id?.trim() || null;
 }
 
 function setStyleVariables(element: HTMLElement, toast: ToastRecord): void {
@@ -263,23 +271,27 @@ function reportToastError(message: string, error: unknown): void {
     console.error(message, error);
 }
 
+function removeToastAt(queue: ToastRecord[], index: number, notifyDotNet: boolean): boolean {
+    const removedToast = queue.splice(index, 1)[0];
+    if (!removedToast) {
+        return false;
+    }
+
+    if (notifyDotNet) {
+        notifyToastClosed(removedToast);
+    } else {
+        releaseToastReference(removedToast);
+    }
+    return true;
+}
+
 function removePendingToast(id: string, notifyDotNet: boolean): boolean {
     const existingIndex = pendingToasts.findIndex(toast => toast.id === id);
     if (existingIndex < 0) {
         return false;
     }
 
-    const removedToasts = pendingToasts.splice(existingIndex, 1);
-    const removedToast = removedToasts[0];
-    if (removedToast) {
-        if (notifyDotNet) {
-            notifyToastClosed(removedToast);
-        } else {
-            releaseToastReference(removedToast);
-        }
-    }
-
-    return true;
+    return removeToastAt(pendingToasts, existingIndex, notifyDotNet);
 }
 
 function trimToastQueue(queue: ToastRecord[], maxCount: number): void {
@@ -314,6 +326,23 @@ function findHostByToastId(id: string): NTToastHostElement | null {
         const state = hostStates.get(host);
         if (state?.activeToasts.some(toast => toast.id === id) || state?.queue.some(toast => toast.id === id)) {
             return host;
+        }
+    }
+
+    return null;
+}
+
+function findToastById(id: string): ToastRecord | null {
+    const pendingToast = pendingToasts.find(toast => toast.id === id);
+    if (pendingToast) {
+        return pendingToast;
+    }
+
+    for (const host of getRegisteredHosts()) {
+        const state = hostStates.get(host);
+        const toast = state?.activeToasts.find(toast => toast.id === id) ?? state?.queue.find(toast => toast.id === id);
+        if (toast) {
+            return toast;
         }
     }
 
@@ -479,16 +508,71 @@ function closeToastRecord(host: NTToastHostElement, state: NTToastHostState, toa
     return true;
 }
 
-function flushPendingToasts(): void {
-    const host = getHost();
-    if (!host || pendingToasts.length === 0) {
+function flushBrowserPendingToasts(): void {
+    const pendingQueue = window.__ntToastPendingQueue;
+    if (!pendingQueue || pendingQueue.length === 0) {
+        return;
+    }
+
+    delete window.__ntToastPendingQueue;
+    for (const toast of pendingQueue) {
+        queueToast(toast);
+    }
+}
+
+function flushPendingToasts(host: NTToastHostElement): void {
+    if (pendingToasts.length === 0) {
+        return;
+    }
+
+    const toFlush: ToastRecord[] = [];
+    let writeIndex = 0;
+    for (let readIndex = 0; readIndex < pendingToasts.length; readIndex++) {
+        const toast = pendingToasts[readIndex];
+        if (pendingToastMatchesHost(toast, host, host)) {
+            toFlush.push(toast);
+        } else {
+            pendingToasts[writeIndex++] = toast;
+        }
+    }
+    pendingToasts.length = writeIndex;
+
+    if (toFlush.length === 0) {
         return;
     }
 
     const state = getOrCreateState(host);
-    state.queue.push(...pendingToasts.splice(0));
+    state.queue.push(...toFlush);
     trimToastQueue(state.queue, maxQueuedToasts);
     tryShowNext(host);
+}
+
+function clearPendingToasts(host?: HTMLElement | string | null): void {
+    if (!host) {
+        notifyToastsClosed(pendingToasts);
+        pendingToasts.length = 0;
+        return;
+    }
+
+    const resolvedHost = getHost(host);
+    for (let index = pendingToasts.length - 1; index >= 0; index--) {
+        const toast = pendingToasts[index];
+        if (toast && pendingToastMatchesHost(toast, host, resolvedHost)) {
+            removeToastAt(pendingToasts, index, true);
+        }
+    }
+}
+
+function pendingToastMatchesHost(toast: ToastRecord, host: HTMLElement | string, resolvedHost: NTToastHostElement | null): boolean {
+    if (toast.host instanceof HTMLElement) {
+        return toast.host === host || toast.host === resolvedHost;
+    }
+
+    if (typeof toast.host === 'string' && toast.host.length > 0) {
+        return typeof host === 'string' ? toast.host === host : toast.host === resolvedHost?.id;
+    }
+
+    return resolvedHost !== null && defaultHost === resolvedHost;
 }
 
 function initializeHost(host: NTToastHostElement): void {
@@ -498,7 +582,7 @@ function initializeHost(host: NTToastHostElement): void {
     syncToastHostForegroundContainer(host);
     showToastHostPopover(host);
     defaultHost = host;
-    flushPendingToasts();
+    flushPendingToasts(host);
 }
 
 function showToastHostPopover(host: NTToastHostElement, moveToForeground = false): void {
@@ -694,9 +778,16 @@ function disposeHost(host: NTToastHostElement): void {
 }
 
 export function queueToast(messageOrOptions: ToastInput, options?: Partial<ToastOptions>): string {
-    const host = typeof messageOrOptions === 'string' ? getHost(options?.host) : getHost(options?.host ?? messageOrOptions.host);
-    const toast = normalizeToast(messageOrOptions, options);
+    const explicitId = getExplicitToastId(messageOrOptions, options);
+    if (explicitId) {
+        const duplicateToast = findToastById(explicitId);
+        if (duplicateToast) {
+            return duplicateToast.id;
+        }
+    }
 
+    const toast = normalizeToast(messageOrOptions, options);
+    const host = getHost(toast.host);
     if (!host) {
         pendingToasts.push(toast);
         trimToastQueue(pendingToasts, maxPendingToasts);
@@ -752,16 +843,7 @@ function closeToastCore(id?: string, host?: HTMLElement | string | null, notifyD
         return removePendingToast(id, notifyDotNet);
     }
 
-    const removedToasts = state.queue.splice(existingIndex, 1);
-    const removedToast = removedToasts[0];
-    if (removedToast) {
-        if (notifyDotNet) {
-            notifyToastClosed(removedToast);
-        } else {
-            releaseToastReference(removedToast);
-        }
-    }
-    return true;
+    return removeToastAt(state.queue, existingIndex, notifyDotNet);
 }
 
 export function closeToast(id?: string, host?: HTMLElement | string | null): boolean {
@@ -773,8 +855,7 @@ export function closeToastFromBlazor(id: string, host?: HTMLElement | string | n
 }
 
 export function clearToasts(host?: HTMLElement | string | null): void {
-    notifyToastsClosed(pendingToasts);
-    pendingToasts.length = 0;
+    clearPendingToasts(host);
 
     if (!host) {
         for (const registeredHost of getRegisteredHosts()) {
@@ -879,3 +960,5 @@ window.NTToast = {
     queueToast,
     queueToastFromBlazor
 };
+
+flushBrowserPendingToasts();

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using NTComponents.Core;
 using NTComponents.Snackbar;
 
 namespace NTComponents.Tests.Snackbar;
@@ -50,6 +51,50 @@ public class NTSnackbar_Tests : BunitContext {
         var container = cut.Find(".nt-snackbar-container");
         container.ClassList.Should().Contain("nt-snackbar-top-right-corner");
         container.ClassList.Should().NotContain("nt-snackbar-bottom-center");
+    }
+
+    [Fact]
+    public void RenderQueueScript_RendersHelperScriptWithConfiguredSnackbarOptions() {
+        // Arrange & Act
+        var cut = Render(NTSnackbar.RenderQueueScript(new NTSnackbarQueueScriptOptions {
+            Message = "Photos deleted",
+            ActionLabel = "Undo",
+            Timeout = 0,
+            ShowClose = true,
+            BackgroundColor = TnTColor.InverseSurface,
+            TextColor = TnTColor.InverseOnSurface,
+            ActionColor = TnTColor.InversePrimary,
+            Id = "photos-deleted",
+            Host = "snackbar-host"
+        }));
+
+        // Assert
+        var script = cut.Find("script").TextContent;
+        script.Should().Contain("const snackbar = {");
+        script.Should().Contain("message: \"Photos deleted\"");
+        script.Should().Contain("actionLabel: \"Undo\"");
+        script.Should().Contain("timeout: 0");
+        script.Should().Contain("showClose: true");
+        script.Should().Contain("backgroundColor: \"var(--tnt-color-inverse-surface)\"");
+        script.Should().Contain("textColor: \"var(--tnt-color-inverse-on-surface)\"");
+        script.Should().Contain("actionColor: \"var(--tnt-color-inverse-primary)\"");
+        script.Should().Contain("id: \"photos-deleted\"");
+        script.Should().Contain("host: \"snackbar-host\"");
+        script.Should().Contain("if (window.NTSnackbar?.queueSnackbar)");
+        script.Should().Contain("window.NTSnackbar.queueSnackbar(snackbar)");
+        script.Should().Contain("(window.__ntSnackbarPendingQueue ??= []).push(snackbar)");
+        script.Should().NotContain("setTimeout");
+    }
+
+    [Fact]
+    public void RenderQueueScript_EncodesScriptBreakingCharacters() {
+        // Arrange & Act
+        var cut = Render(NTSnackbar.RenderQueueScript("</script><script>alert('bad')</script>"));
+
+        // Assert
+        var script = cut.Find("script").TextContent;
+        script.Should().Contain("\\u003C/script\\u003E");
+        script.Should().NotContain("</script>");
     }
 
     private IRenderedComponent<NTSnackbar> RenderSnackbarComponent(Action<ComponentParameterCollectionBuilder<NTSnackbar>>? configure = null) {

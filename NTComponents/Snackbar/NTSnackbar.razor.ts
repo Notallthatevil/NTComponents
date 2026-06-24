@@ -28,6 +28,7 @@ interface SnackbarRecord {
     dotNetActionMethod: string | null;
     dotNetCloseMethod: string | null;
     dotNetReference: DotNetSnackbarReference | null;
+    host: HTMLElement | string | null;
     id: string;
     isActionInProgress: boolean;
     message: string;
@@ -67,6 +68,7 @@ export interface DotNetSnackbarReference {
 
 declare global {
     interface Window {
+        __ntSnackbarPendingQueue?: SnackbarOptions[];
         NTSnackbar?: NTSnackbarBridge;
     }
 }
@@ -163,6 +165,7 @@ function normalizeSnackbar(messageOrOptions: SnackbarInput, options?: Partial<Sn
         dotNetActionMethod: source.dotNetActionMethod ?? null,
         dotNetCloseMethod: source.dotNetCloseMethod ?? null,
         dotNetReference: source.dotNetReference ?? null,
+        host: source.host ?? null,
         id: source.id?.trim() || `nt-snackbar-js-${++nextSnackbarId}`,
         isActionInProgress: false,
         message: source.message,
@@ -170,6 +173,11 @@ function normalizeSnackbar(messageOrOptions: SnackbarInput, options?: Partial<Sn
         textColor: source.textColor ?? defaultTextColor,
         timeout
     };
+}
+
+function getExplicitSnackbarId(messageOrOptions: SnackbarInput, options?: Partial<SnackbarOptions>): string | null {
+    const id = typeof messageOrOptions === 'string' ? options?.id : options?.id ?? messageOrOptions.id;
+    return id?.trim() || null;
 }
 
 function setStyleVariables(element: HTMLElement, snackbar: SnackbarRecord): void {
@@ -220,8 +228,29 @@ function notifySnackbarsClosed(snackbars: Iterable<SnackbarRecord>): void {
     }
 }
 
+function releaseSnackbarReference(snackbar: SnackbarRecord): void {
+    snackbar.actionCallback = null;
+    snackbar.dotNetActionMethod = null;
+    snackbar.dotNetCloseMethod = null;
+    snackbar.dotNetReference = null;
+}
+
 function reportSnackbarError(message: string, error: unknown): void {
     console.error(message, error);
+}
+
+function removeSnackbarAt(queue: SnackbarRecord[], index: number, notifyDotNet: boolean): boolean {
+    const removedSnackbar = queue.splice(index, 1)[0];
+    if (!removedSnackbar) {
+        return false;
+    }
+
+    if (notifyDotNet) {
+        notifySnackbarClosed(removedSnackbar);
+    } else {
+        releaseSnackbarReference(removedSnackbar);
+    }
+    return true;
 }
 
 function removePendingSnackbar(id: string, notifyDotNet: boolean): boolean {
@@ -230,12 +259,7 @@ function removePendingSnackbar(id: string, notifyDotNet: boolean): boolean {
         return false;
     }
 
-    const removedSnackbars = pendingSnackbars.splice(existingIndex, 1);
-    if (notifyDotNet && removedSnackbars[0]) {
-        notifySnackbarClosed(removedSnackbars[0]);
-    }
-
-    return true;
+    return removeSnackbarAt(pendingSnackbars, existingIndex, notifyDotNet);
 }
 
 function trimPendingSnackbars(): void {
@@ -279,6 +303,23 @@ function findHostBySnackbarId(id: string): NTSnackbarHostElement | null {
         const state = hostStates.get(host);
         if (state?.activeSnackbar?.id === id || state?.queue.some(snackbar => snackbar.id === id)) {
             return host;
+        }
+    }
+
+    return null;
+}
+
+function findSnackbarById(id: string): SnackbarRecord | null {
+    const pendingSnackbar = pendingSnackbars.find(snackbar => snackbar.id === id);
+    if (pendingSnackbar) {
+        return pendingSnackbar;
+    }
+
+    for (const host of getRegisteredHosts()) {
+        const state = hostStates.get(host);
+        const snackbar = state?.activeSnackbar?.id === id ? state.activeSnackbar : state?.queue.find(snackbar => snackbar.id === id);
+        if (snackbar) {
+            return snackbar;
         }
     }
 
@@ -387,6 +428,9 @@ function closeActiveSnackbar(host: NTSnackbarHostElement, state: NTSnackbarHostS
 
     activeElement.querySelector('.nt-snackbar')?.classList.add('nt-closing');
     state.isClosing = true;
+    if (!notifyDotNet && activeSnackbar) {
+        releaseSnackbarReference(activeSnackbar);
+    }
 
     state.closeAnimationTimeout = window.setTimeout(() => {
         activeElement.remove();
@@ -411,16 +455,71 @@ function closeActiveSnackbar(host: NTSnackbarHostElement, state: NTSnackbarHostS
     return true;
 }
 
-function flushPendingSnackbars(): void {
-    const host = getHost();
-    if (!host || pendingSnackbars.length === 0) {
+function flushBrowserPendingSnackbars(): void {
+    const pendingQueue = window.__ntSnackbarPendingQueue;
+    if (!pendingQueue || pendingQueue.length === 0) {
+        return;
+    }
+
+    delete window.__ntSnackbarPendingQueue;
+    for (const snackbar of pendingQueue) {
+        queueSnackbar(snackbar);
+    }
+}
+
+function flushPendingSnackbars(host: NTSnackbarHostElement): void {
+    if (pendingSnackbars.length === 0) {
+        return;
+    }
+
+    const toFlush: SnackbarRecord[] = [];
+    let writeIndex = 0;
+    for (let readIndex = 0; readIndex < pendingSnackbars.length; readIndex++) {
+        const snackbar = pendingSnackbars[readIndex];
+        if (pendingSnackbarMatchesHost(snackbar, host, host)) {
+            toFlush.push(snackbar);
+        } else {
+            pendingSnackbars[writeIndex++] = snackbar;
+        }
+    }
+    pendingSnackbars.length = writeIndex;
+
+    if (toFlush.length === 0) {
         return;
     }
 
     const state = getOrCreateState(host);
-    state.queue.push(...pendingSnackbars.splice(0));
+    state.queue.push(...toFlush);
     trimQueuedSnackbars(state.queue);
     tryShowNext(host);
+}
+
+function clearPendingSnackbars(host?: HTMLElement | string | null): void {
+    if (!host) {
+        notifySnackbarsClosed(pendingSnackbars);
+        pendingSnackbars.length = 0;
+        return;
+    }
+
+    const resolvedHost = getHost(host);
+    for (let index = pendingSnackbars.length - 1; index >= 0; index--) {
+        const snackbar = pendingSnackbars[index];
+        if (snackbar && pendingSnackbarMatchesHost(snackbar, host, resolvedHost)) {
+            removeSnackbarAt(pendingSnackbars, index, true);
+        }
+    }
+}
+
+function pendingSnackbarMatchesHost(snackbar: SnackbarRecord, host: HTMLElement | string, resolvedHost: NTSnackbarHostElement | null): boolean {
+    if (snackbar.host instanceof HTMLElement) {
+        return snackbar.host === host || snackbar.host === resolvedHost;
+    }
+
+    if (typeof snackbar.host === 'string' && snackbar.host.length > 0) {
+        return typeof host === 'string' ? snackbar.host === host : snackbar.host === resolvedHost?.id;
+    }
+
+    return resolvedHost !== null && defaultHost === resolvedHost;
 }
 
 function initializeHost(host: NTSnackbarHostElement): void {
@@ -430,7 +529,7 @@ function initializeHost(host: NTSnackbarHostElement): void {
     syncSnackbarHostForegroundContainer(host);
     showSnackbarHostPopover(host);
     defaultHost = host;
-    flushPendingSnackbars();
+    flushPendingSnackbars(host);
 }
 
 function showSnackbarHostPopover(host: NTSnackbarHostElement, moveToForeground = false): void {
@@ -623,9 +722,16 @@ function disposeHost(host: NTSnackbarHostElement): void {
 }
 
 export function queueSnackbar(messageOrOptions: SnackbarInput, options?: Partial<SnackbarOptions>): string {
-    const host = typeof messageOrOptions === 'string' ? getHost(options?.host) : getHost(options?.host ?? messageOrOptions.host);
-    const snackbar = normalizeSnackbar(messageOrOptions, options);
+    const explicitId = getExplicitSnackbarId(messageOrOptions, options);
+    if (explicitId) {
+        const duplicateSnackbar = findSnackbarById(explicitId);
+        if (duplicateSnackbar) {
+            return duplicateSnackbar.id;
+        }
+    }
 
+    const snackbar = normalizeSnackbar(messageOrOptions, options);
+    const host = getHost(snackbar.host);
     if (!host) {
         pendingSnackbars.push(snackbar);
         trimPendingSnackbars();
@@ -672,14 +778,10 @@ function closeSnackbarCore(id?: string, host?: HTMLElement | string | null, noti
 
     const existingIndex = state.queue.findIndex(snackbar => snackbar.id === id);
     if (existingIndex < 0) {
-        return false;
+        return removePendingSnackbar(id, notifyDotNet);
     }
 
-    const removedSnackbars = state.queue.splice(existingIndex, 1);
-    if (notifyDotNet && removedSnackbars[0]) {
-        notifySnackbarClosed(removedSnackbars[0]);
-    }
-    return true;
+    return removeSnackbarAt(state.queue, existingIndex, notifyDotNet);
 }
 
 export function closeSnackbar(id?: string, host?: HTMLElement | string | null): boolean {
@@ -691,8 +793,7 @@ export function closeSnackbarFromBlazor(id: string, host?: HTMLElement | string 
 }
 
 export function clearSnackbars(host?: HTMLElement | string | null): void {
-    notifySnackbarsClosed(pendingSnackbars);
-    pendingSnackbars.length = 0;
+    clearPendingSnackbars(host);
 
     if (!host) {
         for (const registeredHost of getRegisteredHosts()) {
@@ -761,3 +862,5 @@ window.NTSnackbar = {
     queueSnackbar,
     queueSnackbarFromBlazor
 };
+
+flushBrowserPendingSnackbars();

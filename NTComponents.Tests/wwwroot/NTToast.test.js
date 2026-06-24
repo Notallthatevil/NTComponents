@@ -102,6 +102,72 @@ describe('NTToast module', () => {
       expect(host.querySelector('.nt-toast-title').textContent).toBe('Queued before render');
    });
 
+   test('queueToast ignores duplicate explicit ids while pending', () => {
+      const firstId = queueToast({ title: 'Original pending', id: 'pending-duplicate', timeout: 0 });
+      const duplicateId = queueToast({ title: 'Duplicate pending', id: 'pending-duplicate', timeout: 0 });
+
+      const host = loadHostFromPageScript();
+
+      expect(duplicateId).toBe(firstId);
+      expect(host.querySelectorAll('.nt-toast')).toHaveLength(1);
+      expect(host.querySelector('.nt-toast-title').textContent).toBe('Original pending');
+   });
+
+   test('queueToast ignores duplicate explicit ids while active', () => {
+      const host = loadHostFromPageScript();
+      const firstId = queueToast({ title: 'Original active', id: 'active-duplicate', timeout: 0 });
+      const duplicateId = queueToast({ title: 'Duplicate active', id: 'active-duplicate', timeout: 0 });
+
+      expect(duplicateId).toBe(firstId);
+      expect(host.querySelectorAll('.nt-toast')).toHaveLength(1);
+      expect(host.querySelector('.nt-toast-title').textContent).toBe('Original active');
+   });
+
+   test('queueToast ignores duplicate explicit ids while queued', () => {
+      const host = loadHostFromPageScript();
+      for (let index = 0; index < 5; index++) {
+         queueToast({ title: `Visible ${index}`, id: `visible-${index}`, timeout: 0 });
+      }
+
+      const firstId = queueToast({ title: 'Original queued', id: 'queued-duplicate', timeout: 0 });
+      const duplicateId = queueToast({ title: 'Duplicate queued', id: 'queued-duplicate', timeout: 0 });
+
+      closeToast(undefined, host);
+      jest.advanceTimersByTime(150);
+
+      const titles = [...host.querySelectorAll('.nt-toast-title')].map(title => title.textContent);
+      expect(duplicateId).toBe(firstId);
+      expect(host.querySelectorAll('.nt-toast')).toHaveLength(5);
+      expect(titles).toContain('Original queued');
+      expect(titles).not.toContain('Duplicate queued');
+   });
+
+   test('queueToast preserves pending host target until that host loads', () => {
+      queueToast({ title: 'Targeted pending', host: 'target-toast-host', id: 'targeted-pending', timeout: 0 });
+      const defaultHost = loadHostFromPageScript();
+
+      const targetHost = createHost();
+      targetHost.id = 'target-toast-host';
+      loadHostFromPageScript(targetHost);
+
+      expect(defaultHost.querySelector('.nt-toast')).toBeNull();
+      expect(targetHost.querySelector('.nt-toast-title').textContent).toBe('Targeted pending');
+   });
+
+   test('clearToasts for one host preserves pending toasts for another host', () => {
+      queueToast({ title: 'Other pending', host: 'other-toast-host', id: 'other-pending', timeout: 0 });
+      const firstHost = loadHostFromPageScript();
+
+      clearToasts(firstHost);
+
+      const otherHost = createHost();
+      otherHost.id = 'other-toast-host';
+      loadHostFromPageScript(otherHost);
+
+      expect(firstHost.querySelector('.nt-toast')).toBeNull();
+      expect(otherHost.querySelector('.nt-toast-title').textContent).toBe('Other pending');
+   });
+
    test('queueToastFromBlazor renders scalar service payload without property metadata', () => {
       const host = loadHostFromPageScript();
       const dotNetReference = { invokeMethodAsync: jest.fn(() => Promise.resolve()) };

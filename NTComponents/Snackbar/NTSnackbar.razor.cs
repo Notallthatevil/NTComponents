@@ -1,3 +1,6 @@
+using System.Globalization;
+using System.Text;
+using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Components;
 using NTComponents.Core;
 using NTComponents.Snackbar;
@@ -34,6 +37,54 @@ namespace NTComponents;
     CompatibilitySummary = "Renders a snackbar host and registers the browser snackbar bridge.",
     CompatibilityDetails = "Static SSR emits the host container and page script. Displaying queued snackbars requires the browser module or the interactive snackbar service after the page reaches the browser.")]
 public partial class NTSnackbar {
+    private const string _queueScriptFormat = """
+    (() => {{
+        const snackbar = {{
+    {0}
+        }};
+        if (window.NTSnackbar?.queueSnackbar) {{
+            window.NTSnackbar.queueSnackbar(snackbar);
+            return;
+        }}
+
+        (window.__ntSnackbarPendingQueue ??= []).push(snackbar);
+    }})();
+    """;
+
+    /// <summary>
+    ///     Returns a static helper script that queues a snackbar after the <c>window.NTSnackbar</c> browser bridge is available.
+    /// </summary>
+    public static RenderFragment RenderQueueScript(string message) {
+        ArgumentNullException.ThrowIfNull(message);
+        return RenderQueueScript(new NTSnackbarQueueScriptOptions { Message = message });
+    }
+
+    /// <summary>
+    ///     Returns a static helper script that queues a snackbar after the <c>window.NTSnackbar</c> browser bridge is available.
+    /// </summary>
+    public static RenderFragment RenderQueueScript(NTSnackbarQueueScriptOptions options) {
+        ArgumentNullException.ThrowIfNull(options);
+        var message = options.Message;
+        ArgumentNullException.ThrowIfNull(message);
+        var properties = new StringBuilder();
+        var hasPreviousProperty = false;
+        AppendStringProperty(properties, ref hasPreviousProperty, "message", message);
+        AppendStringProperty(properties, ref hasPreviousProperty, "actionLabel", options.ActionLabel);
+        AppendNumberProperty(properties, ref hasPreviousProperty, "timeout", options.Timeout);
+        AppendBooleanProperty(properties, ref hasPreviousProperty, "showClose", options.ShowClose);
+        AppendColorProperty(properties, ref hasPreviousProperty, "backgroundColor", options.BackgroundColor);
+        AppendColorProperty(properties, ref hasPreviousProperty, "textColor", options.TextColor);
+        AppendColorProperty(properties, ref hasPreviousProperty, "actionColor", options.ActionColor);
+        AppendStringProperty(properties, ref hasPreviousProperty, "id", options.Id);
+        AppendStringProperty(properties, ref hasPreviousProperty, "host", options.Host);
+
+        var script = string.Format(CultureInfo.InvariantCulture, _queueScriptFormat, properties);
+        return builder => {
+            builder.OpenElement(0, "script");
+            builder.AddMarkupContent(1, script);
+            builder.CloseElement();
+        };
+    }
 
     /// <summary>
     ///     Controls where the snackbar container is placed in the viewport.
@@ -57,4 +108,94 @@ public partial class NTSnackbar {
             _ => "nt-snackbar-bottom-center"
         })
         .Build() ?? string.Empty;
+
+    private static void AppendBooleanProperty(StringBuilder builder, ref bool hasPreviousProperty, string name, bool? value) {
+        if (value.HasValue) {
+            AppendPropertyName(builder, ref hasPreviousProperty, name);
+            builder.Append(value.Value ? "true" : "false");
+        }
+    }
+
+    private static void AppendColorProperty(StringBuilder builder, ref bool hasPreviousProperty, string name, TnTColor? value) {
+        if (value.HasValue) {
+            AppendStringProperty(builder, ref hasPreviousProperty, name, value.Value.ToCssTnTColorVariable());
+        }
+    }
+
+    private static void AppendNumberProperty(StringBuilder builder, ref bool hasPreviousProperty, string name, int? value) {
+        if (value.HasValue) {
+            AppendPropertyName(builder, ref hasPreviousProperty, name);
+            builder.Append(value.Value.ToString(CultureInfo.InvariantCulture));
+        }
+    }
+
+    private static void AppendPropertyName(StringBuilder builder, ref bool hasPreviousProperty, string name) {
+        if (hasPreviousProperty) {
+            builder.AppendLine(",");
+        }
+
+        hasPreviousProperty = true;
+        builder.Append("        ");
+        builder.Append(name);
+        builder.Append(": ");
+    }
+
+    private static void AppendStringProperty(StringBuilder builder, ref bool hasPreviousProperty, string name, string? value) {
+        if (value is not null) {
+            AppendPropertyName(builder, ref hasPreviousProperty, name);
+            builder.Append('"');
+            builder.Append(JavaScriptEncoder.Default.Encode(value));
+            builder.Append('"');
+        }
+    }
+}
+
+/// <summary>
+///     Options for rendering an <see cref="NTSnackbar" /> static queue script.
+/// </summary>
+public sealed class NTSnackbarQueueScriptOptions {
+    /// <summary>
+    ///     Gets or sets the action text color.
+    /// </summary>
+    public TnTColor? ActionColor { get; set; }
+
+    /// <summary>
+    ///     Gets or sets the action label, when an action is available.
+    /// </summary>
+    public string? ActionLabel { get; set; }
+
+    /// <summary>
+    ///     Gets or sets the snackbar container background color.
+    /// </summary>
+    public TnTColor? BackgroundColor { get; set; }
+
+    /// <summary>
+    ///     Gets or sets the host element id to target, when a specific host should receive the snackbar.
+    /// </summary>
+    public string? Host { get; set; }
+
+    /// <summary>
+    ///     Gets or sets a caller-provided snackbar id. Explicit ids are used to prevent duplicate pending, queued, or active snackbars.
+    /// </summary>
+    public string? Id { get; set; }
+
+    /// <summary>
+    ///     Gets or sets the supporting text shown in the snackbar.
+    /// </summary>
+    public required string Message { get; set; }
+
+    /// <summary>
+    ///     Gets or sets a value indicating whether the dismiss affordance should be shown.
+    /// </summary>
+    public bool? ShowClose { get; set; }
+
+    /// <summary>
+    ///     Gets or sets the supporting text color.
+    /// </summary>
+    public TnTColor? TextColor { get; set; }
+
+    /// <summary>
+    ///     Gets or sets the timeout in seconds before auto-dismiss. Zero or less disables auto-dismiss.
+    /// </summary>
+    public int? Timeout { get; set; }
 }
