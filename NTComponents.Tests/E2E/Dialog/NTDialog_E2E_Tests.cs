@@ -131,6 +131,19 @@ public class NTDialog_E2E_Tests : IAsyncLifetime {
         await _page.GotoAsync($"{AppBaseUrl}/dialog", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
         await _page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await _page.WaitForFunctionAsync("() => document.getElementById('native-nt-dialog') instanceof HTMLDialogElement", new PageWaitForFunctionOptions { Timeout = 10000 });
+        await ClosePreopenedDialogAsync();
+    }
+
+    private async Task ClosePreopenedDialogAsync() {
+        ArgumentNullException.ThrowIfNull(_page);
+
+        var preopenedDialog = _page.Locator("#preopened-nt-dialog");
+        if (!await preopenedDialog.EvaluateAsync<bool>("dialog => dialog.open === true")) {
+            return;
+        }
+
+        await preopenedDialog.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Exact = true, Name = "Close" }).ClickAsync();
+        await _page.WaitForFunctionAsync("() => document.getElementById('preopened-nt-dialog')?.open === false");
     }
 
     private async Task VerifyDialogCanOpenFromJavaScriptAsync() {

@@ -289,7 +289,7 @@ public partial class NTDialog {
     /// Opens the dialog when the component is interactive and supplies parameters to the dialog body template.
     /// </summary>
     public async ValueTask<bool> OpenAsync(NTDialogParameters? parameters, CancellationToken cancellationToken = default) {
-        if (IsolatedJsModule is null) {
+        if (!RendererInfo.IsInteractive) {
             throw new InvalidOperationException($"{nameof(NTDialog)} cannot be opened from .NET until it has rendered interactively.");
         }
 
@@ -297,7 +297,7 @@ public partial class NTDialog {
             return false;
         }
 
-        if (await IsolatedJsModule.InvokeAsync<bool>("isOpen", cancellationToken, Element)) {
+        if (IsolatedJsModule is not null && await IsolatedJsModule.InvokeAsync<bool>("isOpen", cancellationToken, Element)) {
             return false;
         }
 

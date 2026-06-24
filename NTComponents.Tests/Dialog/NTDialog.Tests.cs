@@ -103,6 +103,18 @@ public class NTDialog_Tests : BunitContext {
     }
 
     [Fact]
+    public void OpenAsync_From_Parent_OnAfterRender_Queues_Until_Dialog_Module_Loads() {
+        var component = Render<OpenOnAfterRenderHost>();
+
+        component.WaitForAssertion(() => {
+            component.Instance.OpenException.Should().BeNull();
+            component.Instance.Opened.Should().BeTrue();
+            component.Markup.Should().Contain("Queued body");
+            JSInterop.Invocations.Should().Contain(invocation => invocation.Identifier == "openDialogFromBlazor");
+        });
+    }
+
+    [Fact]
     public async Task OpenAsync_With_Null_Parameters_Renders_ChildContent_With_Empty_Parameters() {
         NTDialogParameters? receivedParameters = null;
         var component = Render<NTDialog>(parameters => parameters
@@ -415,6 +427,35 @@ public class NTDialog_Tests : BunitContext {
 
         protected override void BuildRenderTree(RenderTreeBuilder builder) {
             builder.AddContent(0, $"Record {Value}");
+        }
+    }
+
+    private sealed class OpenOnAfterRenderHost : ComponentBase {
+        private NTDialog? _dialog;
+
+        public Exception? OpenException { get; private set; }
+
+        public bool Opened { get; private set; }
+
+        protected override void BuildRenderTree(RenderTreeBuilder builder) {
+            builder.OpenComponent<NTDialog>(0);
+            builder.AddComponentParameter(1, nameof(NTDialog.Id), "parent-after-render-dialog");
+            builder.AddComponentParameter(2, nameof(NTDialog.ChildContent), (RenderFragment<NTDialogParameters>)(_ => childBuilder => childBuilder.AddContent(0, "Queued body")));
+            builder.AddComponentReferenceCapture(3, value => _dialog = (NTDialog)value);
+            builder.CloseComponent();
+        }
+
+        protected override async Task OnAfterRenderAsync(bool firstRender) {
+            if (!firstRender || _dialog is null) {
+                return;
+            }
+
+            try {
+                Opened = await _dialog.OpenAsync();
+            }
+            catch (Exception exception) {
+                OpenException = exception;
+            }
         }
     }
 }
