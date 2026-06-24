@@ -39,7 +39,9 @@ public partial class NTDialog {
     private readonly RenderFragment _defaultButtons;
     private long _childContentRenderKey;
     private NTDialogParameters _dialogParameters = [];
+    private bool _openParameterModalRequested;
     private PendingOpenRequest? _pendingOpenRequest;
+    private bool _previousOpen;
     private bool _renderChildContent;
 
     /// <summary>
@@ -50,6 +52,8 @@ public partial class NTDialog {
     private string CloseOnBackdropAttribute => CloseOnBackdrop ? "true" : "false";
 
     private string CloseOnEscapeAttribute => CloseOnEscape ? "true" : "false";
+
+    private string? OpenAttribute => !RendererInfo.IsInteractive && Open ? "open" : null;
 
     private string ResolvedElementId => Id ?? ElementId ?? ComponentIdentifier;
 
@@ -159,12 +163,11 @@ public partial class NTDialog {
     public RenderFragment? Icon { get; set; }
 
     /// <summary>
-    /// Gets or sets whether the dialog is rendered open during static markup rendering.
+    /// Gets or sets whether the dialog is opened.
     /// </summary>
     /// <remarks>
-    /// Use this for static SSR scenarios where the initial HTML should include an open dialog. Interactive opening
-    /// after render should use <see cref="OpenAsync(CancellationToken)" />, native command attributes, or the
-    /// JavaScript module.
+    /// Static SSR renders the native <c>open</c> attribute. Interactive rendering opens the dialog as a modal after
+    /// render using the same native modal behavior as <see cref="OpenAsync(CancellationToken)" />.
     /// </remarks>
     [Parameter]
     public bool Open { get; set; }
@@ -255,6 +258,15 @@ public partial class NTDialog {
     /// Gets the default action button content.
     /// </summary>
     protected RenderFragment DefaultButtons => _defaultButtons;
+
+    /// <inheritdoc />
+    protected override void OnParametersSet() {
+        if (Open && !_previousOpen) {
+            _openParameterModalRequested = true;
+        }
+
+        _previousOpen = Open;
+    }
 
     private void BuildDefaultButtons(RenderTreeBuilder builder) {
         builder.OpenElement(0, "button");
@@ -421,7 +433,11 @@ public partial class NTDialog {
     /// <inheritdoc />
     protected override async Task OnAfterRenderAsync(bool firstRender) {
         await base.OnAfterRenderAsync(firstRender);
+        await CompletePendingOpenRequestAsync();
+        await OpenFromParameterAsync();
+    }
 
+    private async Task CompletePendingOpenRequestAsync() {
         if (_pendingOpenRequest is null) {
             return;
         }
@@ -448,6 +464,31 @@ public partial class NTDialog {
         }
         catch (Exception exception) {
             pendingOpenRequest.Completion.TrySetException(exception);
+        }
+    }
+
+    private async Task OpenFromParameterAsync() {
+        if (!_openParameterModalRequested) {
+            return;
+        }
+
+        _openParameterModalRequested = false;
+        if (IsolatedJsModule is null || _pendingOpenRequest is not null) {
+            return;
+        }
+
+        try {
+            if (!await RequestOpenAsync()) {
+                return;
+            }
+
+            var opened = await IsolatedJsModule.InvokeAsync<bool>("openDialogFromBlazor", Element);
+            if (opened) {
+                await NotifyOpenedAsync(null);
+            }
+        }
+        catch (JSDisconnectedException) {
+            // JS runtime was disconnected, safe to ignore during render.
         }
     }
 

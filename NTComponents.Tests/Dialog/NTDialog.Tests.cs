@@ -229,12 +229,34 @@ public class NTDialog_Tests : BunitContext {
     }
 
     [Fact]
-    public void NTDialog_Renders_Open_Attribute_Only_When_Open_Is_True() {
+    public void NTDialog_Renders_Open_Attribute_When_Static_Renderer_Is_Open() {
+        Renderer.SetRendererInfo(new RendererInfo("Static", isInteractive: false));
+
         var component = Render<NTDialog>(parameters => parameters
             .Add(p => p.Id, "open-attribute-dialog")
             .Add(p => p.Open, true));
 
         component.Find("dialog").GetAttribute("open").Should().Be("open");
+    }
+
+    [Fact]
+    public void NTDialog_Open_Parameter_Opens_Modal_When_Renderer_Is_Interactive() {
+        var events = new List<string>();
+
+        var component = Render<NTDialog>(parameters => parameters
+            .Add(p => p.Id, "open-modal-dialog")
+            .Add(p => p.Open, true)
+            .Add(p => p.OnOpen, EventCallback.Factory.Create<NTDialogEventArgs>(this, args => events.Add($"open:{args.DialogId}")))
+            .Add(p => p.OnOpening, EventCallback.Factory.Create<NTDialogEventArgs>(this, args => events.Add($"opening:{args.DialogId}")))
+            .Add(p => p.OnOpened, EventCallback.Factory.Create<NTDialogEventArgs>(this, args => events.Add($"opened:{args.DialogId}")))
+            .Add(p => p.ChildContent, _ => builder => builder.AddContent(0, "Modal body")));
+
+        component.Find("dialog").HasAttribute("open").Should().BeFalse();
+        component.Markup.Should().Contain("Modal body");
+        component.WaitForAssertion(() => {
+            events.Should().Equal("open:open-modal-dialog", "opening:open-modal-dialog", "opened:open-modal-dialog");
+            JSInterop.Invocations.Should().Contain(invocation => invocation.Identifier == "openDialogFromBlazor");
+        });
     }
 
     [Fact]

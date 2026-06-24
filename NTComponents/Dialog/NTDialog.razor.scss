@@ -26,19 +26,24 @@ $nt-dialog-enter-duration: motion.$nt-motion-duration-medium_4;
 $nt-dialog-enter-easing: motion.$nt-motion-easing-emphasized-decelerate;
 $nt-dialog-exit-duration: motion.$nt-motion-duration-short_4;
 $nt-dialog-exit-easing: motion.$nt-motion-easing-emphasized-accelerate;
+$nt-dialog-static-scrim-spread: 100vmax;
 
 .nt-dialog {
     background-color: colors.$tnt-color-surface-container-high;
     border: 0;
     border-radius: $nt-dialog-container-shape;
+    block-size: fit-content;
     box-sizing: border-box;
     color: colors.$tnt-color-on-surface;
     flex-direction: column;
     inline-size: min(#{$nt-dialog-container-max-inline-size}, calc(100vw - #{$nt-dialog-viewport-margin}));
+    inset: 0;
+    margin: auto;
     max-block-size: calc(100dvh - #{$nt-dialog-viewport-margin});
     min-inline-size: min(#{$nt-dialog-container-min-inline-size}, calc(100vw - #{$nt-dialog-viewport-margin}));
     overflow: hidden;
     padding: $nt-dialog-container-padding;
+    position: fixed;
     transform-origin: center;
 
     &::backdrop {
@@ -48,6 +53,11 @@ $nt-dialog-exit-easing: motion.$nt-motion-easing-emphasized-accelerate;
     &[open] {
         animation: nt-dialog-enter $nt-dialog-enter-duration $nt-dialog-enter-easing;
         display: flex;
+    }
+
+    &:not(:modal)[open] {
+        box-shadow: 0 0 0 $nt-dialog-static-scrim-spread color-mix(in srgb, #{colors.$tnt-color-scrim} 32%, transparent);
+        z-index: 1000;
     }
 
     &:not([open]) {

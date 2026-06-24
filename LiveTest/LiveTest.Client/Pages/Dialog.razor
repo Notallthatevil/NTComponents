@@ -8,6 +8,19 @@
 <h4>Top-layer notifications</h4>
 <LiveTest.Client.Components.DialogToastLayeringDemo @rendermode="InteractiveAuto" />
 
+<NTDialog Id="preopened-nt-dialog"
+          Open="true"
+          Title="Preopened NT dialog"
+          SupportingText="Rendered with Open=true so static markup and page-script initialization can verify the initial modal path.">
+    <ChildContent>
+        <p>This dialog starts open when the dialog page loads. Closing it should leave the rest of the dialog demos available.</p>
+    </ChildContent>
+
+    <Buttons>
+        <button type="button" class="nt-dialog-button" command="request-close" commandfor="preopened-nt-dialog">Close</button>
+    </Buttons>
+</NTDialog>
+
 <button type="button" command="show-modal" commandfor="native-nt-dialog">Open native NT dialog</button>
 
 <NTDialog Id="native-nt-dialog"

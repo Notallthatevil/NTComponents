@@ -10,6 +10,7 @@ interface NTDialogElement extends HTMLDialogElement {
 }
 
 interface NTDialogState {
+    autoOpenApplied: boolean;
     dotNetRef: DotNetDialogReference | null;
     dialogId: string;
     mutationObserver: MutationObserver | null;
@@ -146,9 +147,25 @@ function observeScrollableContent(dialog: NTDialogElement): void {
     scheduleScrollableStateUpdate(dialog);
 }
 
+function isModalDialog(dialog: HTMLDialogElement): boolean {
+    if (typeof dialog.matches !== 'function') {
+        return false;
+    }
+
+    try {
+        return dialog.matches(':modal');
+    } catch {
+        return false;
+    }
+}
+
 function showDialog(dialog: HTMLDialogElement): boolean {
     if (dialog.open) {
-        return false;
+        if (isModalDialog(dialog)) {
+            return false;
+        }
+
+        dialog.removeAttribute('open');
     }
 
     dialog.classList.remove(dialogClosingClass);
@@ -162,6 +179,18 @@ function showDialog(dialog: HTMLDialogElement): boolean {
         scheduleScrollableStateUpdate(dialog as NTDialogElement);
         return true;
     }
+}
+
+function openInitialModalDialog(dialog: NTDialogElement): void {
+    if (!dialog.open || dialog.__ntDialogState?.autoOpenApplied === true) {
+        return;
+    }
+
+    if (dialog.__ntDialogState) {
+        dialog.__ntDialogState.autoOpenApplied = true;
+    }
+
+    showDialog(dialog);
 }
 
 function prefersReducedMotion(): boolean {
@@ -336,10 +365,12 @@ function initializeDialog(dialog: NTDialogElement, dotNetRef: Maybe<unknown>): v
             initializedDialogsById.set(dialog.id, dialog);
         }
         observeScrollableContent(dialog);
+        openInitialModalDialog(dialog);
         return;
     }
 
     const state: NTDialogState = {
+        autoOpenApplied: false,
         dotNetRef: effectiveDotNetRef,
         dialogId: dialog.id,
         mutationObserver: null,
@@ -377,6 +408,7 @@ function initializeDialog(dialog: NTDialogElement, dotNetRef: Maybe<unknown>): v
     initializedDialogsById.set(dialog.id, dialog);
     ensureDocumentCommandClickListener();
     observeScrollableContent(dialog);
+    openInitialModalDialog(dialog);
 }
 
 function disposeDialog(dialog: NTDialogElement): void {

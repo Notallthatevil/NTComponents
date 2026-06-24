@@ -77,6 +77,34 @@ describe('NTDialog module', () => {
       expect(dialog.returnValue).toBe('closed');
    });
 
+   test('Blazor open helper promotes a non-modal open dialog to modal', () => {
+      const dialog = createDialog();
+      const originalMatches = dialog.matches.bind(dialog);
+      dialog.matches = jest.fn(selector => selector === ':modal' ? false : originalMatches(selector));
+      dialog.open = true;
+
+      expect(openDialogFromBlazor(dialog)).toBe(true);
+
+      expect(dialog.showModal).toHaveBeenCalled();
+      expect(dialog.open).toBe(true);
+   });
+
+   test('page script init promotes a non-modal open dialog to modal', () => {
+      const dialog = createDialog();
+      const originalMatches = dialog.matches.bind(dialog);
+      dialog.matches = jest.fn(selector => selector === ':modal' ? false : originalMatches(selector));
+      dialog.open = true;
+
+      onUpdate(dialog);
+
+      expect(dialog.showModal).toHaveBeenCalledTimes(1);
+      expect(dialog.open).toBe(true);
+
+      onUpdate(dialog);
+
+      expect(dialog.showModal).toHaveBeenCalledTimes(1);
+   });
+
    test('commandfor show-modal runs cancelable lifecycle when interactive', async () => {
       const dialog = createDialog();
       const button = document.createElement('button');
