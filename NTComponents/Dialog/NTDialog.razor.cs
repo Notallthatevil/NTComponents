@@ -41,6 +41,7 @@ public partial class NTDialog {
     private NTDialogParameters _dialogParameters = [];
     private bool _openParameterModalRequested;
     private PendingOpenRequest? _pendingOpenRequest;
+    private bool _pendingOpenRetryRenderQueued;
     private bool _previousOpen;
     private bool _renderChildContent;
 
@@ -443,18 +444,31 @@ public partial class NTDialog {
         }
 
         var pendingOpenRequest = _pendingOpenRequest;
-        _pendingOpenRequest = null;
-
         if (pendingOpenRequest.Completion.Task.IsCompleted) {
+            _pendingOpenRequest = null;
+            _pendingOpenRetryRenderQueued = false;
             return;
         }
 
-        try {
-            if (IsolatedJsModule is null) {
-                pendingOpenRequest.Completion.TrySetException(new InvalidOperationException($"{nameof(NTDialog)} cannot be opened from .NET until it has rendered interactively."));
-                return;
-            }
+        if (pendingOpenRequest.CancellationToken.IsCancellationRequested) {
+            _pendingOpenRequest = null;
+            _pendingOpenRetryRenderQueued = false;
+            pendingOpenRequest.Completion.TrySetCanceled(pendingOpenRequest.CancellationToken);
+            return;
+        }
 
+        if (IsolatedJsModule is null) {
+            if (!_pendingOpenRetryRenderQueued) {
+                _pendingOpenRetryRenderQueued = true;
+                _ = InvokeAsync(StateHasChanged);
+            }
+            return;
+        }
+
+        _pendingOpenRequest = null;
+        _pendingOpenRetryRenderQueued = false;
+
+        try {
             var opened = await IsolatedJsModule.InvokeAsync<bool>("openDialogFromBlazor", pendingOpenRequest.CancellationToken, Element);
             if (opened) {
                 await NotifyOpenedAsync(null);
@@ -499,6 +513,7 @@ public partial class NTDialog {
 
         var pendingOpenRequest = new PendingOpenRequest(cancellationToken);
         _pendingOpenRequest = pendingOpenRequest;
+        _pendingOpenRetryRenderQueued = false;
 
         _ = InvokeAsync(StateHasChanged);
         return pendingOpenRequest.Completion.Task;

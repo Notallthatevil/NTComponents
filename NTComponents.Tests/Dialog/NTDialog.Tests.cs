@@ -1,5 +1,8 @@
+using System.Reflection;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
+using Microsoft.JSInterop;
+using NTComponents.Core;
 
 namespace NTComponents.Tests.Dialog;
 
@@ -112,6 +115,63 @@ public class NTDialog_Tests : BunitContext {
             component.Markup.Should().Contain("Queued body");
             JSInterop.Invocations.Should().Contain(invocation => invocation.Identifier == "openDialogFromBlazor");
         });
+    }
+
+    [Fact]
+    public async Task OpenAsync_Retries_Pending_Request_When_Module_Loads_After_Open_Render() {
+        var events = new List<string>();
+        var component = Render<ModuleRetryDialog>(parameters => parameters
+            .Add(p => p.Id, "delayed-module-dialog")
+            .Add(p => p.OnOpened, EventCallback.Factory.Create<NTDialogEventArgs>(this, args => events.Add($"opened:{args.DialogId}")))
+            .Add(p => p.ChildContent, _ => builder => builder.AddContent(0, "Delayed module body")));
+
+        var loadedModule = component.Instance.IsolatedJsModule;
+        loadedModule.Should().NotBeNull();
+        SetIsolatedJsModule(component.Instance, null);
+        component.Instance.ModuleToRestore = loadedModule;
+        component.Instance.RestoreModuleAfterPendingRetry = true;
+
+        var openTask = component.Instance.OpenAsync(Xunit.TestContext.Current.CancellationToken).AsTask();
+
+        component.WaitForAssertion(() => component.Instance.MissingModuleRetryObserved.Should().BeTrue());
+        component.WaitForAssertion(() => openTask.IsCompletedSuccessfully.Should().BeTrue());
+        var opened = await openTask;
+
+        opened.Should().BeTrue();
+        component.Markup.Should().Contain("Delayed module body");
+        events.Should().Equal("opened:delayed-module-dialog");
+        JSInterop.Invocations.Count(invocation => invocation.Identifier == "openDialogFromBlazor").Should().Be(1);
+    }
+
+    [Fact]
+    public async Task OpenAsync_Clears_Pending_Request_When_Cancelled_Before_Module_Loads() {
+        var component = Render<ModuleRetryDialog>(parameters => parameters
+            .Add(p => p.Id, "cancelled-delayed-module-dialog")
+            .Add(p => p.ChildContent, _ => builder => builder.AddContent(0, "Cancelled delayed module body")));
+
+        var loadedModule = component.Instance.IsolatedJsModule;
+        loadedModule.Should().NotBeNull();
+        SetIsolatedJsModule(component.Instance, null);
+        component.Instance.ModuleToRestore = loadedModule;
+        component.Instance.RestoreModuleAfterPendingRetry = false;
+
+        using var cancellationTokenSource = new CancellationTokenSource();
+        var openTask = component.Instance.OpenAsync(cancellationTokenSource.Token).AsTask();
+
+        component.WaitForAssertion(() => component.Markup.Should().Contain("Cancelled delayed module body"));
+        openTask.IsCompleted.Should().BeFalse();
+
+        cancellationTokenSource.Cancel();
+        component.Render();
+
+        await Assert.ThrowsAsync<TaskCanceledException>(() => openTask);
+        JSInterop.Invocations.Count(invocation => invocation.Identifier == "openDialogFromBlazor").Should().Be(0);
+
+        SetIsolatedJsModule(component.Instance, loadedModule);
+        var opened = await component.Instance.OpenAsync(Xunit.TestContext.Current.CancellationToken);
+
+        opened.Should().BeTrue();
+        JSInterop.Invocations.Count(invocation => invocation.Identifier == "openDialogFromBlazor").Should().Be(1);
     }
 
     [Fact]
@@ -429,6 +489,28 @@ public class NTDialog_Tests : BunitContext {
             builder.AddContent(0, $"Record {Value}");
         }
     }
+
+    private sealed class ModuleRetryDialog : NTDialog {
+        public bool MissingModuleRetryObserved { get; private set; }
+
+        public IJSObjectReference? ModuleToRestore { get; set; }
+
+        public bool RestoreModuleAfterPendingRetry { get; set; }
+
+        protected override async Task OnAfterRenderAsync(bool firstRender) {
+            await base.OnAfterRenderAsync(firstRender);
+            if (!firstRender && RestoreModuleAfterPendingRetry && IsolatedJsModule is null) {
+                MissingModuleRetryObserved = true;
+                RestoreModuleAfterPendingRetry = false;
+                SetIsolatedJsModule(this, ModuleToRestore);
+            }
+        }
+    }
+
+    private static void SetIsolatedJsModule(NTDialog dialog, IJSObjectReference? jsObjectReference) =>
+        typeof(NTPageScriptComponent<NTDialog>)
+            .GetProperty(nameof(NTDialog.IsolatedJsModule), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)!
+            .SetValue(dialog, jsObjectReference);
 
     private sealed class OpenOnAfterRenderHost : ComponentBase {
         private NTDialog? _dialog;
