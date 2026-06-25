@@ -22,7 +22,11 @@ public class NTSelect_Tests : BunitContext {
 
         public TestSelectEnum? OptionalMode { get; set; }
 
-        public int UnsupportedValue { get; set; }
+        public int Number { get; set; }
+
+        public int? OptionalNumber { get; set; }
+
+        public object? UnsupportedReferenceValue { get; set; }
     }
 
     [Fact]
@@ -143,17 +147,54 @@ public class NTSelect_Tests : BunitContext {
     }
 
     [Fact]
-    public void Unsupported_Value_Type_Throws() {
+    public void Parses_Value_Type() {
         var model = new TestModel();
 
-        var act = () => Render<NTSelect<int>>(parameters => parameters
-            .Add(p => p.Value, model.UnsupportedValue)
-            .Add(p => p.ValueChanged, EventCallback.Factory.Create<int>(this, value => model.UnsupportedValue = value))
-            .Add(p => p.ValueExpression, (Expression<Func<int>>)(() => model.UnsupportedValue))
+        var cut = Render<NTSelect<int>>(parameters => parameters
+            .Add(p => p.Value, model.Number)
+            .Add(p => p.ValueChanged, EventCallback.Factory.Create<int>(this, value => model.Number = value))
+            .Add(p => p.ValueExpression, (Expression<Func<int>>)(() => model.Number))
+            .AddChildContent("""
+                <option value="1">One</option>
+                <option value="2">Two</option>
+                """));
+
+        cut.Find("select").Change("2");
+
+        model.Number.Should().Be(2);
+    }
+
+    [Fact]
+    public void Parses_Nullable_Value_Type_Empty_Value() {
+        var model = new TestModel { OptionalNumber = 2 };
+
+        var cut = Render<NTSelect<int?>>(parameters => parameters
+            .Add(p => p.Value, model.OptionalNumber)
+            .Add(p => p.ValueChanged, EventCallback.Factory.Create<int?>(this, value => model.OptionalNumber = value))
+            .Add(p => p.ValueExpression, (Expression<Func<int?>>)(() => model.OptionalNumber))
+            .AddChildContent("""
+                <option value="">Unset</option>
+                <option value="1">One</option>
+                <option value="2">Two</option>
+                """));
+
+        cut.Find("select").Change("");
+
+        model.OptionalNumber.Should().BeNull();
+    }
+
+    [Fact]
+    public void Unsupported_Reference_Type_Throws() {
+        var model = new TestModel();
+
+        var act = () => Render<NTSelect<object?>>(parameters => parameters
+            .Add(p => p.Value, model.UnsupportedReferenceValue)
+            .Add(p => p.ValueChanged, EventCallback.Factory.Create<object?>(this, value => model.UnsupportedReferenceValue = value))
+            .Add(p => p.ValueExpression, (Expression<Func<object?>>)(() => model.UnsupportedReferenceValue))
             .AddChildContent("<option value=\"1\">One</option>"));
 
         act.Should().Throw<InvalidOperationException>()
-            .WithMessage("*supports string, bool, enum, nullable bool, and nullable enum values*");
+            .WithMessage("*supports string and value types*");
     }
 
     [Fact]

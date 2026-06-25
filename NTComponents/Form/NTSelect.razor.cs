@@ -28,9 +28,10 @@ namespace NTComponents;
 ///         <item>Do not use rich markup or nested controls inside options. Browser support for option markup is inconsistent and harms accessibility.</item>
 ///     </list>
 ///     <para>
-///         <typeparamref name="TValue" /> is intentionally constrained at runtime to string, bool, enum, nullable bool, and
-///         nullable enum values. Match each <c>option</c> value to the bound type: strings bind directly, bool values should
-///         use <c>true</c> or <c>false</c>, and enum values should use the enum member name.
+///         <typeparamref name="TValue" /> is intentionally constrained at runtime to string and value types. Match each
+///         <c>option</c> value to the bound type: strings bind directly, bool values should use <c>true</c> or
+///         <c>false</c>, enum values should use the enum member name, and other value types should use a parseable text
+///         representation.
 ///     </para>
 ///     <para>
 ///         Because this is a native select, it works well with static SSR and normal form posts. When readonly, the native
@@ -83,7 +84,7 @@ public partial class NTSelect<[DynamicallyAccessedMembers(DynamicallyAccessedMem
 
     private static bool AllowsEmptyValue => !typeof(TValue).IsValueType || Nullable.GetUnderlyingType(typeof(TValue)) is not null;
 
-    private static bool IsSupportedValueType => NullableValueType == typeof(string) || NullableValueType == typeof(bool) || NullableValueType.IsEnum;
+    private static bool IsSupportedValueType => NullableValueType == typeof(string) || NullableValueType.IsValueType;
 
     private string SelectClass {
         get {
@@ -100,11 +101,11 @@ public partial class NTSelect<[DynamicallyAccessedMembers(DynamicallyAccessedMem
     /// <inheritdoc />
     protected override void OnParametersSet() {
         if (TryGetAdditionalAttribute("multiple", out _)) {
-            throw new InvalidOperationException($"{nameof(NTSelect<TValue>)} does not support multi-select. Use a dedicated multi-select component instead.");
+            throw new InvalidOperationException($"{nameof(NTSelect<TValue>)} does not support multi-select. Use {typeof(NTCombobox<TValue>).Name} instead.");
         }
 
         if (!IsSupportedValueType) {
-            throw new InvalidOperationException($"{nameof(NTSelect<TValue>)} supports string, bool, enum, nullable bool, and nullable enum values. The type '{typeof(TValue)}' is not supported.");
+            throw new InvalidOperationException($"{nameof(NTSelect<TValue>)} supports string and value types. The type '{typeof(TValue)}' is not supported.");
         }
 
         base.OnParametersSet();
