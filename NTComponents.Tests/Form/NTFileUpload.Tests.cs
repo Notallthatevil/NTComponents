@@ -142,7 +142,8 @@ public class NTFileUpload_Tests : BunitContext {
         cut.FindComponent<InputFile>().UploadFiles(InputFileContent.CreateFromText("large", "large.txt"));
 
         model.Files.Should().BeNull();
-        cut.Find(".nt-input").GetAttribute("class")!.Should().Contain("nt-input-invalid");
+        cut.Find(".nt-input").ClassList.Should().NotContain("nt-invalid");
+        cut.Find(".nt-input").ClassList.Should().NotContain("nt-modified");
         cut.Find("input[type=file]").GetAttribute("aria-invalid").Should().Be("true");
         cut.Find(".nt-input-error-text").TextContent.Should().Be("large.txt is too large. Maximum file size is 4 bytes.");
         cut.Find(".nt-file-upload-value").TextContent.Should().Be("large.txt");

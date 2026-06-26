@@ -68,7 +68,7 @@ public partial class NTRichTextEditor : INTPageScriptComponent<NTRichTextEditor>
     /// <inheritdoc />
     public string? JsModulePath => "./_content/NTComponents/Editors/NTRichTextEditor.razor.js";
 
-    string? INTComponentBase.ElementClass => GetRootClass(!string.IsNullOrWhiteSpace(CurrentErrorText));
+    string? INTComponentBase.ElementClass => GetRootClass();
 
     string? INTComponentBase.ElementStyle => ElementStyle;
 

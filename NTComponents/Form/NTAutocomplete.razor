@@ -7,7 +7,7 @@
     var hasErrorText = !string.IsNullOrWhiteSpace(errorText);
 }
 
-<div class="@GetRootClass(hasErrorText)" style="@ElementStyle">
+<div class="@GetRootClass()" style="@ElementStyle">
     @{
         var supportingText = hasErrorText ? null : CurrentSupportingText;
         var hasSupportingText = !string.IsNullOrWhiteSpace(supportingText);

@@ -235,7 +235,7 @@ public class NTInputSwitch_Tests : BunitContext {
         cut.Find("form").Submit();
 
         var input = cut.Find("input[type=checkbox]");
-        cut.Find(".nt-switch").GetAttribute("class").Should().Contain("nt-switch-invalid");
+        cut.Find(".nt-switch").GetAttribute("class").Should().Contain("nt-invalid");
         cut.Find(".nt-switch-error-text").TextContent.Should().Be("Enable this setting");
         input.GetAttribute("aria-invalid").Should().Be("true");
         input.GetAttribute("aria-errormessage").Should().EndWith("-error");
@@ -252,11 +252,11 @@ public class NTInputSwitch_Tests : BunitContext {
 
         input.Change(true);
         cut.FindAll(".nt-switch-error-text").Should().BeEmpty();
-        cut.Find(".nt-switch").GetAttribute("class").Should().NotContain("nt-switch-invalid");
+        cut.Find(".nt-switch").GetAttribute("class").Should().NotContain("nt-invalid");
 
         input.Change(false);
         cut.Find(".nt-switch-error-text").TextContent.Should().Be("Enable alerts before submitting");
-        cut.Find(".nt-switch").GetAttribute("class").Should().Contain("nt-switch-invalid");
+        cut.Find(".nt-switch").GetAttribute("class").Should().Contain("nt-invalid");
     }
 
     [Fact]

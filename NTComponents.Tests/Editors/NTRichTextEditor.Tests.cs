@@ -280,7 +280,7 @@ public class NTRichTextEditor_Tests : BunitContext {
             editContext.NotifyValidationStateChanged();
         });
 
-        cut.WaitForAssertion(() => cut.Find(".nt-input.nt-rich-text-editor").ClassList.Should().Contain("nt-input-invalid"));
+        cut.WaitForAssertion(() => cut.Find(".nt-input.nt-rich-text-editor").ClassList.Should().Contain("nt-invalid"));
     }
 
     [Fact]

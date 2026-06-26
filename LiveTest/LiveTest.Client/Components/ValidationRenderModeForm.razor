@@ -1,0 +1,65 @@
+@using NTComponents
+
+<NTForm Model="Model"
+        FormName="@FormName"
+        Appearance="NTFormAppearance.Outlined"
+        Density="NTFormDensity.Standard"
+        ShowRequiredSupportingText="true"
+        RequiredSupportingText="Required"
+        OnValidSubmit="HandleValidSubmit"
+        OnInvalidSubmit="HandleInvalidSubmit">
+    <DataAnnotationsValidator />
+
+    <div class="validation-render-mode-form" data-testid="@($"{ModeKey}-form")">
+        <p class="validation-render-mode-runtime" data-testid="@($"{ModeKey}-runtime")">
+            @ModeName runtime: @(RendererInfo.IsInteractive ? "interactive" : "static")
+        </p>
+
+        <NTInputText @bind-Value="Model.ClaimTitle"
+                     Label="Claim title"
+                     Placeholder="Leave blank, blur, then submit"
+                     SupportingText="Required through DataAnnotations. Blur should add nt-modified before invalid styles appear."
+                     LeadingIcon="MaterialIcon.Description"
+                     OnBlurCallback="HandleBlurAsync" />
+
+        <div class="validation-render-mode-group">
+            <label class="validation-render-mode-group-label">Severity</label>
+            <NTButtonGroup TObjectType="string"
+                           AriaLabel="@($"{ModeName} severity")"
+                           DisplayType="NTButtonGroupDisplayType.Connected"
+                           Variant="NTButtonVariant.Outlined"
+                           SelectedKey="Model.Severity"
+                           SelectedKeyChanged="HandleSeverityChanged"
+                           SelectedKeyExpression="@(() => Model.Severity)">
+                <NTButtonGroupItem Key="@SeverityLow" Label="Low" />
+                <NTButtonGroupItem Key="@SeverityMedium" Label="Medium" />
+                <NTButtonGroupItem Key="@SeverityHigh" Label="High" />
+            </NTButtonGroup>
+        </div>
+
+        <NTInputCheckbox @bind-Value="Model.Confirmed"
+                         Required="true"
+                         RequiredErrorText="Confirm the validation behavior."
+                         Label="I checked the validation state"
+                         SupportingText="Required through the NT checkbox validation message store." />
+
+        <div class="validation-render-mode-actions">
+            <NTButton Type="ButtonType.Submit"
+                      Label="Submit"
+                      LeadingIcon="MaterialIcon.Check"
+                      Variant="NTButtonVariant.Filled" />
+            <NTButton Type="ButtonType.Button"
+                      Label="Reset"
+                      LeadingIcon="MaterialIcon.RestartAlt"
+                      Variant="NTButtonVariant.Outlined"
+                      OnClickCallback="ResetAsync" />
+        </div>
+
+        <output class="validation-render-mode-status" data-testid="@($"{ModeKey}-submit-status")">
+            @SubmitStatus
+        </output>
+        <output class="validation-render-mode-status" data-testid="@($"{ModeKey}-blur-status")">
+            @BlurStatus
+        </output>
+    </div>
+</NTForm>

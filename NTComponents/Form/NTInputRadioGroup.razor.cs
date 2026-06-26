@@ -318,15 +318,11 @@ public partial class NTInputRadioGroup<[DynamicallyAccessedMembers(DynamicallyAc
         }
     }
 
-    private string BuildRootClass(bool isInvalid) {
+    private string BuildRootClass() {
         var builder = new StringBuilder("nt-radio ");
         builder.Append(_appearanceClass);
         builder.Append(' ');
         builder.Append(_densityClass);
-
-        if (isInvalid) {
-            builder.Append(" nt-radio-invalid");
-        }
 
         if (FieldDisabled) {
             builder.Append(" nt-radio-disabled");
@@ -340,12 +336,13 @@ public partial class NTInputRadioGroup<[DynamicallyAccessedMembers(DynamicallyAc
             builder.Append(" nt-radio-no-label");
         }
 
-        if (!string.IsNullOrWhiteSpace(CssClass)) {
+        var additionalClass = GetAdditionalAttributeString("class");
+        if (!string.IsNullOrWhiteSpace(additionalClass)) {
             builder.Append(' ');
-            builder.Append(CssClass);
+            builder.Append(additionalClass);
         }
 
-        return builder.ToString();
+        return AppendFieldCssClass(builder.ToString());
     }
 
     private string? BuildElementStyle() => CssStyleBuilder.Create()

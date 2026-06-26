@@ -1,0 +1,35 @@
+@page "/validation-render-modes"
+@using LiveTest.Client.Components
+
+<main class="validation-render-modes-page">
+    <header class="validation-render-modes-page-header">
+        <h1>Validation render modes</h1>
+        <p>Compare NT validation class behavior in static SSR, InteractiveServer, and InteractiveWebAssembly render modes.</p>
+    </header>
+
+    <section class="validation-render-modes-grid" aria-label="Validation render mode demos">
+        <article class="validation-render-modes-demo" data-testid="validation-render-mode-ssr">
+            <header>
+                <h2>Static SSR</h2>
+                <p>Submit posts back to the statically rendered form.</p>
+            </header>
+            <ValidationRenderModeForm ModeName="SSR" FormName="validation-render-mode-ssr" />
+        </article>
+
+        <article class="validation-render-modes-demo" data-testid="validation-render-mode-server">
+            <header>
+                <h2>InteractiveServer</h2>
+                <p>Blur and submit validation flow through the server circuit.</p>
+            </header>
+            <ValidationRenderModeForm ModeName="Server" FormName="validation-render-mode-server" @rendermode="InteractiveServer" />
+        </article>
+
+        <article class="validation-render-modes-demo" data-testid="validation-render-mode-wasm">
+            <header>
+                <h2>InteractiveWebAssembly</h2>
+                <p>Blur and submit validation run in the browser after WebAssembly loads.</p>
+            </header>
+            <ValidationRenderModeForm ModeName="WASM" FormName="validation-render-mode-wasm" @rendermode="InteractiveWebAssembly" />
+        </article>
+    </section>
+</main>

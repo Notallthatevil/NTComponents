@@ -1,0 +1,27 @@
+.validation-render-mode-form {
+    display: grid;
+    gap: 16px;
+}
+
+.validation-render-mode-runtime,
+.validation-render-mode-status,
+.validation-render-mode-group-label {
+    color: var(--tnt-color-on-surface-variant);
+    font: var(--tnt-body-medium-font);
+    margin: 0;
+}
+
+.validation-render-mode-group {
+    display: grid;
+    gap: 8px;
+}
+
+.validation-render-mode-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.validation-render-mode-status {
+    min-height: 20px;
+}

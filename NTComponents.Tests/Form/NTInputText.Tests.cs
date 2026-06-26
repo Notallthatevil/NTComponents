@@ -68,8 +68,10 @@ public class NTInputText_Tests : BunitContext {
             .Add(p => p.ErrorText, "Name is required"));
 
         var input = cut.Find("input");
+        var root = cut.Find(".nt-input");
 
-        cut.Find(".nt-input").GetAttribute("class").Should().Contain("nt-input-invalid");
+        root.ClassList.Should().NotContain("nt-invalid");
+        root.ClassList.Should().NotContain("nt-modified");
         cut.Find(".nt-input-error-text").TextContent.Should().Be("Name is required");
         cut.FindAll(".nt-input-supporting:not(.nt-input-error-text)").Should().BeEmpty();
         input.GetAttribute("aria-invalid").Should().Be("true");
@@ -205,12 +207,14 @@ public class NTInputText_Tests : BunitContext {
                 builder.CloseComponent();
             }));
 
-        cut.Find(".nt-input").GetAttribute("class").Should().NotContain("nt-input-invalid");
+        cut.Find(".nt-input").ClassList.Should().NotContain("nt-invalid");
+        cut.Find(".nt-input").ClassList.Should().NotContain("nt-modified");
         cut.Find("input").GetAttribute("aria-invalid").Should().Be("false");
 
         cut.Find("input").Blur();
 
-        cut.Find(".nt-input").GetAttribute("class").Should().Contain("nt-input-invalid");
+        cut.Find(".nt-input").ClassList.Should().Contain("nt-invalid");
+        cut.Find(".nt-input").ClassList.Should().Contain("nt-modified");
         cut.Find(".nt-input-error-text").TextContent.Should().Be("The Name field is required.");
         cut.Find("input").GetAttribute("aria-invalid").Should().Be("true");
         cut.Find("input").GetAttribute("aria-errormessage").Should().EndWith("-error");

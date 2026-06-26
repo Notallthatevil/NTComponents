@@ -6,6 +6,7 @@ using System.Linq.Expressions;
 using System.Text;
 
 using NTComponents.CodeDocumentation;
+using NTComponents.Core;
 namespace NTComponents;
 
 /// <summary>
@@ -214,6 +215,9 @@ public abstract class NTFormControlBaseCore<TValue> : InputBase<TValue> {
         FieldReadOnly = ReadOnly ?? Form?.ReadOnly ?? false;
         _resolvedElementName = ResolveElementName();
         _generatedInputId = ResolveGeneratedInputId();
+        if (EditContext is not null) {
+            NTFieldCssClassProvider.Configure(EditContext);
+        }
     }
 
     /// <summary>
@@ -228,6 +232,13 @@ public abstract class NTFormControlBaseCore<TValue> : InputBase<TValue> {
 
         await OnBlurCallback.InvokeAsync(args);
     }
+
+    /// <summary>
+    ///     Appends EditContext field CSS classes to a root class value.
+    /// </summary>
+    /// <param name="className">The root class value.</param>
+    /// <returns>The updated root class value.</returns>
+    protected string AppendFieldCssClass(string className) => CssClassBuilder.Create(className).AddClass(EditContext?.FieldCssClass(FieldIdentifier)).Build();
 
     /// <summary>
     ///     Builds the aria-describedby value from existing additional attributes and internal text ids.

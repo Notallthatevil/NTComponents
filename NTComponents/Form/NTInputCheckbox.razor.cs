@@ -213,7 +213,7 @@ public partial class NTInputCheckbox {
         .AddVariable("nt-checkbox-supporting-text-color", SupportingTextColor.ToCssTnTColorVariable(), SupportingTextColor.HasValue)
         .Build();
 
-    private string BuildRootClass(bool isInvalid) {
+    private string BuildRootClass() {
         var className = new StringBuilder(RootClassBase);
         className.Append(Variant switch {
             NTInputCheckboxVariant.Leading => " nt-checkbox-leading-control",
@@ -233,10 +233,6 @@ public partial class NTInputCheckbox {
 
         if (_isIndeterminate) {
             className.Append(" nt-checkbox-indeterminate");
-        }
-
-        if (isInvalid) {
-            className.Append(" nt-checkbox-invalid");
         }
 
         if (FieldDisabled) {
@@ -259,7 +255,7 @@ public partial class NTInputCheckbox {
             className.Append(" nt-checkbox-no-label");
         }
 
-        return className.ToString();
+        return AppendFieldCssClass(className.ToString());
     }
 }
 

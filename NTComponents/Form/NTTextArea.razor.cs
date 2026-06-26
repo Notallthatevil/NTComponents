@@ -62,7 +62,7 @@ public partial class NTTextArea : INTPageScriptComponent<NTTextArea> {
     /// <inheritdoc />
     public string? JsModulePath => TextAreaJsModulePath;
 
-    string? INTComponentBase.ElementClass => GetRootClass(!string.IsNullOrWhiteSpace(CurrentErrorText));
+    string? INTComponentBase.ElementClass => GetRootClass();
 
     string? INTComponentBase.ElementStyle => ElementStyle;
 

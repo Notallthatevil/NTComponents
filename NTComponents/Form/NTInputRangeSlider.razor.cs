@@ -315,9 +315,8 @@ public partial class NTInputRangeSlider<TNumber> where TNumber : struct, INumber
     /// <summary>
     ///     Builds the root class for the current state.
     /// </summary>
-    /// <param name="hasErrorText">Whether the field is invalid.</param>
     /// <returns>The root CSS class.</returns>
-    protected string BuildRootClass(bool hasErrorText) {
+    protected string BuildRootClass() {
         var builder = new StringBuilder("nt-slider nt-slider-range nt-slider-horizontal");
         builder.Append(Size switch {
             NTSliderSize.Small => " nt-slider-small",
@@ -335,10 +334,6 @@ public partial class NTInputRangeSlider<TNumber> where TNumber : struct, INumber
             builder.Append(" nt-slider-with-value-indicator");
         }
 
-        if (hasErrorText) {
-            builder.Append(" nt-slider-invalid");
-        }
-
         if (FieldDisabled) {
             builder.Append(" nt-slider-disabled");
         }
@@ -347,7 +342,7 @@ public partial class NTInputRangeSlider<TNumber> where TNumber : struct, INumber
             builder.Append(" nt-slider-readonly");
         }
 
-        return builder.ToString();
+        return AppendFieldCssClass(builder.ToString());
     }
 
     /// <summary>

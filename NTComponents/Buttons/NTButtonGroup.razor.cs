@@ -347,6 +347,10 @@ public partial class NTButtonGroup<TObjectType> : NTComponentBase {
         SelectedKeys ??= Array.Empty<TObjectType>();
         RebuildSelectedKeySet();
 
+        if (EditContext is not null) {
+            NTFieldCssClassProvider.Configure(EditContext);
+        }
+
         if (EditContext is not null && SelectedKeyExpression is not null) {
             _fieldIdentifier = FieldIdentifier.Create(SelectedKeyExpression);
         }

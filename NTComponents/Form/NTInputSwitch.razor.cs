@@ -187,7 +187,7 @@ public partial class NTInputSwitch {
         .AddVariable("nt-switch-unselected-track-color", UnselectedTrackColor.ToCssTnTColorVariable(), UnselectedTrackColor.HasValue)
         .Build();
 
-    private string BuildRootClass(bool isInvalid) {
+    private string BuildRootClass() {
         var className = new StringBuilder(RootClassBase);
         className.Append(Variant switch {
             NTSwitchVariant.Leading => " nt-switch-leading-control",
@@ -203,10 +203,6 @@ public partial class NTInputSwitch {
 
         if (CurrentValue) {
             className.Append(" nt-switch-selected");
-        }
-
-        if (isInvalid) {
-            className.Append(" nt-switch-invalid");
         }
 
         if (FieldDisabled) {
@@ -233,7 +229,7 @@ public partial class NTInputSwitch {
             className.Append(" nt-switch-no-label");
         }
 
-        return className.ToString();
+        return AppendFieldCssClass(className.ToString());
     }
 }
 

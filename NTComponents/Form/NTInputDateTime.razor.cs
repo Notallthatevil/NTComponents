@@ -39,6 +39,8 @@ public partial class NTInputDateTime<[DynamicallyAccessedMembers(DynamicallyAcce
     private string _pickerId = string.Empty;
     private string _rootClass = "nt-input-date-time nt-input-date-time-standard";
 
+    private string RootClass => AppendFieldCssClass(_rootClass);
+
     /// <summary>
     ///     Gets or sets a value indicating whether the Material 3 aligned custom picker should be rendered.
     /// </summary>

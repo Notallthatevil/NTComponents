@@ -261,7 +261,7 @@ $nt-button-group-sizes: (
         content: '';
     }
 
-    &.invalid > .nt-btn-grp-btn {
+    &.nt-invalid.nt-modified > .nt-btn-grp-btn {
         color: colors.$tnt-color-on-error-container;
 
         &::after {

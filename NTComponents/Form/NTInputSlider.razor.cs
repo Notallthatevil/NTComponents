@@ -291,9 +291,8 @@ public partial class NTInputSlider<TNumber> where TNumber : struct, INumber<TNum
     /// <summary>
     ///     Builds the root class for the current state.
     /// </summary>
-    /// <param name="hasErrorText">Whether the field is invalid.</param>
     /// <returns>The root CSS class.</returns>
-    protected string BuildRootClass(bool hasErrorText) {
+    protected string BuildRootClass() {
         var builder = new StringBuilder("nt-slider");
         builder.Append(Variant == NTSliderVariant.Centered ? " nt-slider-centered" : " nt-slider-standard-variant");
         builder.Append(Orientation == NTSliderOrientation.Vertical ? " nt-slider-vertical" : " nt-slider-horizontal");
@@ -317,10 +316,6 @@ public partial class NTInputSlider<TNumber> where TNumber : struct, INumber<TNum
             builder.Append(" nt-slider-with-inset-icon");
         }
 
-        if (hasErrorText) {
-            builder.Append(" nt-slider-invalid");
-        }
-
         if (FieldDisabled) {
             builder.Append(" nt-slider-disabled");
         }
@@ -329,7 +324,7 @@ public partial class NTInputSlider<TNumber> where TNumber : struct, INumber<TNum
             builder.Append(" nt-slider-readonly");
         }
 
-        return builder.ToString();
+        return AppendFieldCssClass(builder.ToString());
     }
 
     /// <summary>

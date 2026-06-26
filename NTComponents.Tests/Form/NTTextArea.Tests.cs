@@ -302,12 +302,12 @@ public class NTTextArea_Tests : BunitContext {
                 builder.CloseComponent();
             }));
 
-        cut.Find(".nt-input").GetAttribute("class").Should().NotContain("nt-input-invalid");
+        cut.Find(".nt-input").GetAttribute("class").Should().NotContain("nt-invalid");
         cut.Find("textarea").GetAttribute("aria-invalid").Should().Be("false");
 
         cut.Find("textarea").Blur();
 
-        cut.Find(".nt-input").GetAttribute("class").Should().Contain("nt-input-invalid");
+        cut.Find(".nt-input").GetAttribute("class").Should().Contain("nt-invalid");
         cut.Find(".nt-input-error-text").TextContent.Should().Be("The Notes field is required.");
         cut.Find("textarea").GetAttribute("aria-invalid").Should().Be("true");
         cut.Find("textarea").GetAttribute("aria-errormessage").Should().EndWith("-error");

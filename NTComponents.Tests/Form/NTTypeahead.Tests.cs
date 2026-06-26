@@ -389,7 +389,7 @@ public class NTTypeahead_Tests : BunitContext {
 
         cut.Find("input[role='combobox']").Blur();
 
-        cut.Find(".nt-input").GetAttribute("class").Should().Contain("nt-input-invalid");
+        cut.Find(".nt-input").GetAttribute("class").Should().Contain("nt-invalid");
         cut.Find(".nt-input-error-text").TextContent.Should().Be("The City field is required.");
         cut.Find("input[role='combobox']").GetAttribute("aria-invalid").Should().Be("true");
     }
@@ -420,7 +420,7 @@ public class NTTypeahead_Tests : BunitContext {
         await cut.Find(".nt-combobox-option").TriggerEventAsync("onpointerdown", new PointerEventArgs());
 
         model.City.Should().Be(CityOptions[0]);
-        cut.Find(".nt-input").GetAttribute("class").Should().NotContain("nt-input-invalid");
+        cut.Find(".nt-input").GetAttribute("class").Should().NotContain("nt-invalid");
         cut.FindAll(".nt-input-error-text").Should().BeEmpty();
     }
 

@@ -236,7 +236,7 @@ $nt-radio-disabled-outline-opacity: 0.12;
         box-shadow: 0 0 0 ($nt-radio-outline-width-focused - $nt-radio-outline-width) var(--nt-radio-focus-color);
     }
 
-    &.nt-radio-invalid {
+    &.nt-invalid.nt-modified {
         --nt-radio-active-indicator-color: var(--nt-radio-error-color);
         --nt-radio-focus-color: var(--nt-radio-error-color);
         --nt-radio-hover-active-indicator-color: var(--nt-radio-error-color);

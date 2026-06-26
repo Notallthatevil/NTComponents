@@ -1,6 +1,9 @@
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Linq.Expressions;
 using AwesomeAssertions;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Forms;
 using NTComponents.Core;
 
 namespace NTComponents.Tests.Buttons.NTButtonGroup;
@@ -115,6 +118,40 @@ public sealed class Render_Tests : NTButtonGroupTestContext {
 
         // Assert
         container.ClassList.Should().Contain("nt-button-group-full-width");
+    }
+
+    [Fact]
+    public async Task SubmitInvalidSelection_ThenSelectItem_UsesNtValidationClasses() {
+        var model = new RequiredSelectionModel();
+        var items = CreateItems();
+
+        var cut = Render<EditForm>(parameters => parameters
+            .Add(p => p.Model, model)
+            .Add(p => p.ChildContent, (EditContext _) => builder => {
+                builder.OpenComponent<DataAnnotationsValidator>(0);
+                builder.CloseComponent();
+                builder.OpenComponent<NTButtonGroup<string>>(1);
+                builder.AddAttribute(2, nameof(NTButtonGroup<string>.SelectedKey), model.SelectedKey);
+                builder.AddAttribute(3, nameof(NTButtonGroup<string>.SelectedKeyChanged), EventCallback.Factory.Create<string?>(this, value => model.SelectedKey = value));
+                builder.AddAttribute(4, nameof(NTButtonGroup<string>.SelectedKeyExpression), (Expression<Func<string?>>)(() => model.SelectedKey));
+                builder.AddAttribute(5, nameof(NTButtonGroup<string>.ChildContent), RenderItems(items));
+                builder.CloseComponent();
+            }));
+
+        cut.Find("form").Submit();
+
+        var group = cut.Find("div.nt-button-group");
+        group.ClassList.Should().Contain("nt-invalid");
+        group.ClassList.Should().Contain("nt-modified");
+        cut.Find(".tnt-validation-message").TextContent.Should().Be("Choose an option");
+
+        await cut.Find("button.nt-btn-grp-btn").ClickAsync();
+
+        group = cut.Find("div.nt-button-group");
+        group.ClassList.Should().Contain("nt-modified");
+        group.ClassList.Should().Contain("nt-valid");
+        group.ClassList.Should().NotContain("nt-invalid");
+        cut.FindAll(".tnt-validation-message").Should().BeEmpty();
     }
 
     /// <summary>
@@ -255,5 +292,10 @@ public sealed class Render_Tests : NTButtonGroupTestContext {
 
         // Assert
         cut.FindAll("span.nt-button-icon").Should().BeEmpty();
+    }
+
+    private sealed class RequiredSelectionModel {
+        [Required(ErrorMessage = "Choose an option")]
+        public string? SelectedKey { get; set; }
     }
 }

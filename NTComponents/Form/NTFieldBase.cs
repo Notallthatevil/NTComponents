@@ -21,8 +21,7 @@ namespace NTComponents;
 public abstract class NTFieldBase<TValue> : NTFormControlBase<TValue> {
     private string _appearanceClass = "nt-input-outlined";
     private string _densityClass = "nt-input-standard";
-    private string? _rootClassWithInvalid;
-    private string? _rootClassWithoutInvalid;
+    private string _rootClass = "nt-input";
 
     /// <summary>
     ///     Gets or sets the field appearance. When null, the containing <see cref="NTForm" /> value is used.
@@ -272,11 +271,10 @@ public abstract class NTFieldBase<TValue> : NTFormControlBase<TValue> {
     }
 
     /// <summary>
-    ///     Gets the root CSS class for the current validation state.
+    ///     Gets the root CSS class with the current EditContext field state appended.
     /// </summary>
-    /// <param name="hasErrorText">Whether the field has active error text.</param>
     /// <returns>The root CSS class.</returns>
-    protected string GetRootClass(bool hasErrorText) => hasErrorText ? _rootClassWithInvalid ?? "nt-input" : _rootClassWithoutInvalid ?? "nt-input";
+    protected string GetRootClass() => AppendFieldCssClass(_rootClass);
 
     /// <summary>
     ///     Builds additional described-by ids for concrete fields.
@@ -330,21 +328,16 @@ public abstract class NTFieldBase<TValue> : NTFormControlBase<TValue> {
         };
 
         EffectivePlaceholder = string.IsNullOrWhiteSpace(Placeholder) ? " " : Placeholder;
-        _rootClassWithoutInvalid = BuildRootClass(isInvalid: false);
-        _rootClassWithInvalid = BuildRootClass(isInvalid: true);
+        _rootClass = BuildRootClass();
     }
 
     private IReadOnlyDictionary<string, object?>? BuildControlAttributes() => BuildFilteredAttributes(ExplicitControlAttributeNames, BuildAdditionalControlAttributes());
 
-    private string BuildRootClass(bool isInvalid) {
+    private string BuildRootClass() {
         var className = new StringBuilder("nt-input ");
         className.Append(_appearanceClass);
         className.Append(' ');
         className.Append(_densityClass);
-
-        if (isInvalid) {
-            className.Append(" nt-input-invalid");
-        }
 
         if (FieldDisabled) {
             className.Append(" nt-input-disabled");

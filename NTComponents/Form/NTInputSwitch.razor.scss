@@ -334,7 +334,7 @@ $nt-switch-exit-easing: motion.$nt-motion-easing-emphasized-accelerate;
         }
     }
 
-    &.nt-switch-invalid {
+    &.nt-invalid.nt-modified {
         --nt-switch-selected-track-color: var(--nt-switch-error-color);
         --nt-switch-selected-state-layer-color: var(--nt-switch-error-color);
         --nt-switch-focus-indicator-color: var(--nt-switch-error-color);

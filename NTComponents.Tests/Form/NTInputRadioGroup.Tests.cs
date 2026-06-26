@@ -197,7 +197,7 @@ public class NTInputRadioGroup_Tests : BunitContext {
         cut.Find("form").Submit();
 
         var fieldset = cut.Find("fieldset.nt-radio-fieldset");
-        cut.Find(".nt-radio").GetAttribute("class").Should().Contain("nt-radio-invalid");
+        cut.Find(".nt-radio").GetAttribute("class").Should().Contain("nt-invalid");
         cut.Find(".nt-radio-error-text").TextContent.Should().Be("The Choice field is required.");
         fieldset.GetAttribute("aria-invalid").Should().Be("true");
         fieldset.GetAttribute("aria-errormessage").Should().EndWith("-error");

@@ -492,7 +492,7 @@ $nt-slider-motion-easing: motion.$nt-motion-easing-standard;
         }
     }
 
-    &.nt-slider-invalid {
+    &.nt-invalid.nt-modified {
         --nt-slider-active-track-color: var(--nt-slider-error-color);
         --nt-slider-focus-color: var(--nt-slider-error-color);
         --nt-slider-handle-color: var(--nt-slider-error-color);

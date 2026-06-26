@@ -123,6 +123,9 @@ public sealed class NTForm : EditForm {
     protected override void OnParametersSet() {
         ThrowIfNested();
         base.OnParametersSet();
+        if (EditContext is not null) {
+            NTFieldCssClassProvider.Configure(EditContext);
+        }
     }
 
     /// <inheritdoc />

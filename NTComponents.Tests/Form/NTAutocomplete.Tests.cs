@@ -193,7 +193,7 @@ public class NTAutocomplete_Tests : BunitContext {
         cut.Find("input[role='combobox']").Blur();
 
         model.City.Should().BeNull();
-        cut.Find(".nt-input").GetAttribute("class").Should().Contain("nt-input-invalid");
+        cut.Find(".nt-input").GetAttribute("class").Should().Contain("nt-invalid");
         cut.Find(".nt-input-error-text").TextContent.Should().Be("The City field must match one of the available options.");
     }
 
@@ -207,7 +207,7 @@ public class NTAutocomplete_Tests : BunitContext {
         cut.Find("input[role='combobox']").Change("Austin");
 
         model.City.Should().Be("Austin");
-        cut.Find(".nt-input").GetAttribute("class").Should().NotContain("nt-input-invalid");
+        cut.Find(".nt-input").GetAttribute("class").Should().NotContain("nt-invalid");
     }
 
     [Fact]
@@ -290,7 +290,7 @@ public class NTAutocomplete_Tests : BunitContext {
 
         cut.Find("input[role='combobox']").Blur();
 
-        cut.Find(".nt-input").GetAttribute("class").Should().Contain("nt-input-invalid");
+        cut.Find(".nt-input").GetAttribute("class").Should().Contain("nt-invalid");
         cut.Find(".nt-input-error-text").TextContent.Should().Be("The City field is required.");
         cut.Find("input[role='combobox']").GetAttribute("aria-invalid").Should().Be("true");
     }

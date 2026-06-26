@@ -310,7 +310,9 @@ public class NTInputCheckbox_Tests : BunitContext {
         cut.Find("form").Submit();
 
         var input = cut.Find("input[type=checkbox]");
-        cut.Find(".nt-checkbox").GetAttribute("class").Should().Contain("nt-checkbox-invalid");
+        var checkboxClass = cut.Find(".nt-checkbox").GetAttribute("class");
+        checkboxClass.Should().Contain("nt-invalid");
+        checkboxClass.Should().Contain("nt-modified");
         cut.Find(".nt-checkbox-error-text").TextContent.Should().Be("You must agree");
         input.GetAttribute("aria-invalid").Should().Be("true");
         input.GetAttribute("aria-errormessage").Should().EndWith("-error");
@@ -325,7 +327,9 @@ public class NTInputCheckbox_Tests : BunitContext {
         cut.Find("form").Submit();
 
         var input = cut.Find("input[type=checkbox]");
-        cut.Find(".nt-checkbox").GetAttribute("class").Should().Contain("nt-checkbox-invalid");
+        var checkboxClass = cut.Find(".nt-checkbox").GetAttribute("class");
+        checkboxClass.Should().Contain("nt-invalid");
+        checkboxClass.Should().Contain("nt-modified");
         cut.Find(".nt-checkbox-error-text").TextContent.Should().Be("Accept terms before submitting");
         input.GetAttribute("aria-invalid").Should().Be("true");
         input.GetAttribute("aria-errormessage").Should().EndWith("-error");
@@ -376,11 +380,11 @@ public class NTInputCheckbox_Tests : BunitContext {
 
         input.Change(true);
         cut.FindAll(".nt-checkbox-error-text").Should().BeEmpty();
-        cut.Find(".nt-checkbox").GetAttribute("class").Should().NotContain("nt-checkbox-invalid");
+        cut.Find(".nt-checkbox").GetAttribute("class").Should().NotContain("nt-invalid");
 
         input.Change(false);
         cut.Find(".nt-checkbox-error-text").TextContent.Should().Be("Accept terms before submitting");
-        cut.Find(".nt-checkbox").GetAttribute("class").Should().Contain("nt-checkbox-invalid");
+        cut.Find(".nt-checkbox").GetAttribute("class").Should().Contain("nt-invalid");
     }
 
     [Fact]

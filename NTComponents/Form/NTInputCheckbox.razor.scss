@@ -277,7 +277,7 @@ $nt-checkbox-exit-easing: motion.$nt-motion-easing-emphasized-accelerate;
         }
     }
 
-    &.nt-checkbox-invalid {
+    &.nt-invalid.nt-modified {
         --nt-checkbox-outline-color: var(--nt-checkbox-error-color);
         --nt-checkbox-focus-indicator-color: var(--nt-checkbox-error-color);
         --nt-checkbox-hover-outline-color: var(--nt-checkbox-error-color);
