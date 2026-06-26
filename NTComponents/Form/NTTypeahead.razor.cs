@@ -239,19 +239,20 @@ public partial class NTTypeahead<TItem> : IAsyncDisposable {
     protected override async Task OnAfterRenderAsync(bool firstRender) {
         await base.OnAfterRenderAsync(firstRender);
 
-        if (!firstRender) {
-            return;
-        }
-
         try {
-            _jsModule = await JSRuntime.ImportIsolatedJs(this, JsModulePath);
-            await _jsModule.InvokeVoidAsync("onLoad", Element);
+            if (firstRender) {
+                _jsModule = await JSRuntime.ImportIsolatedJs(this, JsModulePath);
+                await _jsModule.InvokeVoidAsync("onLoad", Element);
+            }
+            else if (_jsModule is not null) {
+                await _jsModule.InvokeVoidAsync("onUpdate", Element);
+            }
         }
         catch (JSDisconnectedException) {
             // JS runtime was disconnected, safe to ignore during render.
         }
         catch (JSException) {
-            // Scrolling enhancement failed. Keep the typeahead usable instead of failing the circuit.
+            // Menu positioning is a progressive enhancement. Keep the typeahead usable instead of failing the circuit.
             _jsModule = null;
         }
     }

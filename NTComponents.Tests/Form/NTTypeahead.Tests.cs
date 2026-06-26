@@ -19,6 +19,7 @@ public class NTTypeahead_Tests : BunitContext {
     public NTTypeahead_Tests() {
         var module = JSInterop.SetupModule(JsModulePath);
         module.SetupVoid("onLoad", _ => true).SetVoidResult();
+        module.SetupVoid("onUpdate", _ => true).SetVoidResult();
         module.SetupVoid("onDispose", _ => true).SetVoidResult();
         module.SetupVoid("scrollActiveOptionIntoView", _ => true).SetVoidResult();
     }
@@ -49,6 +50,10 @@ public class NTTypeahead_Tests : BunitContext {
         input.GetAttribute("data-nt-typeahead-input").Should().Be("true");
         cut.Find("input[type='hidden']").GetAttribute("name").Should().Be("model.City");
         cut.Find(".nt-input").GetAttribute("class").Should().Contain("nt-typeahead");
+        var menu = cut.Find("[data-nt-typeahead-menu='true']");
+        menu.HasAttribute("hidden").Should().BeTrue();
+        menu.GetAttribute("aria-hidden").Should().Be("true");
+        menu.GetAttribute("popover").Should().Be("manual");
         cut.Find(".nt-input-supporting").TextContent.Should().Be("Search by city");
     }
 
@@ -63,6 +68,10 @@ public class NTTypeahead_Tests : BunitContext {
             options.Should().HaveCount(2);
             options[0].TextContent.Should().Contain("Austin");
             options[1].TextContent.Should().Contain("Dallas");
+            var menu = cut.Find("[data-nt-typeahead-menu='true']");
+            menu.HasAttribute("hidden").Should().BeFalse();
+            menu.GetAttribute("aria-hidden").Should().Be("false");
+            menu.GetAttribute("popover").Should().Be("manual");
             cut.Find("input[role='combobox']").GetAttribute("aria-expanded").Should().Be("true");
         });
     }

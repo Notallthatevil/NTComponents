@@ -109,51 +109,49 @@
             </span>
         </label>
 
-        @if (_isOpen) {
-            <div class="nt-combobox-menu" data-nt-typeahead-menu="true">
-                <ul class="nt-combobox-list" id="@listboxId" role="listbox" aria-label="@ListboxLabel">
-                    @if (_items.Count > 0) {
-                        @for (var index = 0; index < _items.Count; index++) {
-                            var item = _items[index];
-                            var optionId = GetOptionId(index);
-                            var isActive = index == _activeIndex;
-                            var isSelected = EqualityComparer<TItem?>.Default.Equals(CurrentValue, item);
-                            var itemSupportingText = GetItemSupportingText(item);
+        <div class="nt-combobox-menu" hidden="@(!_isOpen)" aria-hidden="@(!_isOpen ? "true" : "false")" popover="manual" data-nt-typeahead-menu="true">
+            <ul class="nt-combobox-list" id="@listboxId" role="listbox" aria-label="@ListboxLabel">
+                @if (_items.Count > 0) {
+                    @for (var index = 0; index < _items.Count; index++) {
+                        var item = _items[index];
+                        var optionId = GetOptionId(index);
+                        var isActive = index == _activeIndex;
+                        var isSelected = EqualityComparer<TItem?>.Default.Equals(CurrentValue, item);
+                        var itemSupportingText = GetItemSupportingText(item);
 
-                            <li class="nt-combobox-list-item" role="presentation">
-                                <button type="button"
-                                        id="@optionId"
-                                        tabindex="-1"
-                                        class="@GetOptionClass(isActive, isSelected)"
-                                        role="option"
-                                        aria-selected="@(isSelected ? "true" : "false")"
-                                        @onpointerdown:preventDefault="true"
-                                        @onpointerdown:stopPropagation="true"
-                                        @onpointerdown="() => SelectItemAsync(item)">
-                                    @if (ResultTemplate is not null) {
-                                        @ResultTemplate(item)
-                                    }
-                                    else {
-                                        <span class="nt-combobox-option-content">
-                                            <span class="nt-combobox-option-label">@ItemTextSelector(item)</span>
-                                            @if (!string.IsNullOrWhiteSpace(itemSupportingText)) {
-                                                <span class="nt-combobox-option-supporting">@itemSupportingText</span>
-                                            }
-                                        </span>
-                                    }
-                                </button>
-                            </li>
-                        }
+                        <li class="nt-combobox-list-item" role="presentation">
+                            <button type="button"
+                                    id="@optionId"
+                                    tabindex="-1"
+                                    class="@GetOptionClass(isActive, isSelected)"
+                                    role="option"
+                                    aria-selected="@(isSelected ? "true" : "false")"
+                                    @onpointerdown:preventDefault="true"
+                                    @onpointerdown:stopPropagation="true"
+                                    @onpointerdown="() => SelectItemAsync(item)">
+                                @if (ResultTemplate is not null) {
+                                    @ResultTemplate(item)
+                                }
+                                else {
+                                    <span class="nt-combobox-option-content">
+                                        <span class="nt-combobox-option-label">@ItemTextSelector(item)</span>
+                                        @if (!string.IsNullOrWhiteSpace(itemSupportingText)) {
+                                            <span class="nt-combobox-option-supporting">@itemSupportingText</span>
+                                        }
+                                    </span>
+                                }
+                            </button>
+                        </li>
                     }
-                </ul>
-
-                @if (_items.Count == 0) {
-                    <div class="nt-combobox-empty" role="status">
-                        @(_searching ? LoadingText : EmptyText)
-                    </div>
                 }
-            </div>
-        }
+            </ul>
+
+            @if (_items.Count == 0) {
+                <div class="nt-combobox-empty" role="status">
+                    @(_searching ? LoadingText : EmptyText)
+                </div>
+            }
+        </div>
     </div>
 
     @if (hasErrorText || hasSupportingText) {

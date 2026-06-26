@@ -61,6 +61,34 @@ public class NTTypeahead_E2E_Tests : IAsyncLifetime {
         reviewerFocused.Should().BeTrue();
     }
 
+    [Fact]
+    public async Task Live_Demo_Menu_Escapes_Clipped_Container_And_Selects() {
+        ArgumentNullException.ThrowIfNull(_page);
+
+        await NavigateToTypeaheadDemoAsync();
+
+        var clippedFrame = _page.GetByTestId("nt-typeahead-clipped-frame");
+        var clippedInput = _page.GetByTestId("nt-typeahead-clipped");
+        var clippedRoot = clippedFrame.Locator(".nt-typeahead");
+        await TypeIntoAsync(clippedInput, "Margaret");
+
+        var firstOption = await WaitForFirstOptionAsync(clippedRoot, clippedInput);
+        var frameBox = await clippedFrame.BoundingBoxAsync();
+        var optionBox = await firstOption.BoundingBoxAsync();
+        frameBox.Should().NotBeNull();
+        optionBox.Should().NotBeNull();
+        var escapesClippedFrame = optionBox!.Y < frameBox!.Y || optionBox.Y + optionBox.Height > frameBox.Y + frameBox.Height;
+        escapesClippedFrame.Should().BeTrue("the typeahead menu should escape the clipped ancestor in either vertical direction");
+
+        await _page.Mouse.ClickAsync(optionBox.X + optionBox.Width / 2, optionBox.Y + optionBox.Height / 2);
+
+        await _page.WaitForFunctionAsync(
+            "() => document.querySelector('[data-testid=\"nt-typeahead-clipped-status\"]')?.textContent?.includes('Selected clipped customer: Margaret Hamilton') === true",
+            null,
+            new PageWaitForFunctionOptions { Timeout = 5000 });
+        (await clippedInput.InputValueAsync()).Should().Be("Margaret Hamilton");
+    }
+
     private async Task NavigateToTypeaheadDemoAsync() {
         ArgumentNullException.ThrowIfNull(_page);
 

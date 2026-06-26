@@ -20,6 +20,16 @@
         min-width: 0;
     }
 
+    .typeahead-demo .clipped-frame {
+        max-inline-size: 24rem;
+        block-size: 5.25rem;
+        border: 1px dashed var(--tnt-color-outline);
+        border-radius: 8px;
+        padding: 0.75rem;
+        overflow: hidden;
+        background: var(--tnt-color-surface-container-low);
+    }
+
     .typeahead-demo .header {
         display: grid;
         gap: 0.25rem;
@@ -188,6 +198,28 @@
         </NTForm>
     </section>
 
+    <section class="surface" aria-labelledby="typeahead-clipped-title">
+        <div class="header">
+            <h2 id="typeahead-clipped-title">Clipped Container</h2>
+            <p class="muted">The suggestions menu should escape this constrained ancestor.</p>
+        </div>
+
+        <div class="clipped-frame" data-testid="nt-typeahead-clipped-frame">
+            <NTTypeahead TItem="Customer"
+                         @bind-Value="_clippedCustomer"
+                         @bind-SearchText="_clippedSearchText"
+                         ItemsLookupFunc="SearchCustomersAsync"
+                         ItemTextSelector="@(customer => customer.Name)"
+                         ItemSupportingTextSelector="@(customer => customer.Region)"
+                         ItemSelectedCallback="OnClippedCustomerSelectedAsync"
+                         Label="Clipped customer"
+                         Placeholder="Search customers"
+                         data-testid="nt-typeahead-clipped" />
+        </div>
+
+        <p class="muted" data-testid="nt-typeahead-clipped-status">@_clippedStatus</p>
+    </section>
+
     <section class="status" aria-live="polite" data-testid="nt-typeahead-status">
         <strong>@_status</strong>
         <span>Selected customer: @(_model.Customer?.Name ?? "None")</span>
@@ -218,10 +250,13 @@
 
     private readonly List<Customer> _selectedCustomers = [];
     private TypeaheadDemoModel _model = new();
+    private Customer? _clippedCustomer;
     private NTFormAppearance _appearance = NTFormAppearance.Outlined;
     private NTFormDensity _density = NTFormDensity.Standard;
+    private string? _clippedSearchText;
     private string? _customerSearchText;
     private string? _reviewerSearchText;
+    private string _clippedStatus = "No clipped selection yet";
     private string _status = "No submission yet";
 
     private async Task<IEnumerable<Customer>> SearchCustomersAsync(string? search, CancellationToken cancellationToken) {
@@ -249,6 +284,11 @@
         return Task.CompletedTask;
     }
 
+    private Task OnClippedCustomerSelectedAsync(Customer? customer) {
+        _clippedStatus = customer is null ? "No clipped selection yet" : $"Selected clipped customer: {customer.Name}";
+        return Task.CompletedTask;
+    }
+
     private Task OnValidSubmitAsync(EditContext context) {
         _status = $"Valid submit for {_model.Customer?.Name}";
         return Task.CompletedTask;
@@ -261,9 +301,12 @@
 
     private Task ResetAsync() {
         _model = new TypeaheadDemoModel();
+        _clippedCustomer = null;
+        _clippedSearchText = null;
         _customerSearchText = null;
         _reviewerSearchText = null;
         _selectedCustomers.Clear();
+        _clippedStatus = "No clipped selection yet";
         _status = "Demo reset";
         return Task.CompletedTask;
     }
