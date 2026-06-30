@@ -167,9 +167,10 @@ public partial class NTWizard : NTComponentBase, IDisposable {
     private bool HasNextEnterableStep => FindNextEnterableStepIndex(_stepIndex) is not null;
     private bool HasPreviousEnterableStep => FindPreviousEnterableStepIndex(_stepIndex) is not null;
     private bool IsCurrentStepFormInvalid => _currentStep is NTWizardFormStep && !_currentStepFormIsValid;
-    private bool EffectiveNextButtonDisabled => NextButtonDisabled || !HasNextEnterableStep || ShouldDisableProgressButtonsForInvalidForm();
-    private bool EffectiveSubmitButtonDisabled => SubmitButtonDisabled || ShouldDisableProgressButtonsForInvalidForm();
-    private string? ProgressButtonInvalidClass => IsCurrentStepFormInvalid && InvalidFormButtonBehavior == NTWizardInvalidFormButtonBehavior.GrayOutOnly ? "tnt-disabled" : null;
+    private bool EffectiveNextButtonDisabled => NextButtonDisabled || !HasNextEnterableStep || ShouldDisableNavigationButtonForInvalidForm();
+    private bool EffectiveSubmitButtonDisabled => SubmitButtonDisabled || ShouldDisableSubmitButtonForInvalidForm();
+    private string? NavigationButtonInvalidClass => IsCurrentStepFormInvalid && ShouldValidateCurrentStepOnNavigation() && InvalidFormButtonBehavior == NTWizardInvalidFormButtonBehavior.GrayOutOnly ? "tnt-disabled" : null;
+    private string? SubmitButtonInvalidClass => IsCurrentStepFormInvalid && InvalidFormButtonBehavior == NTWizardInvalidFormButtonBehavior.GrayOutOnly ? "tnt-disabled" : null;
 
     /// <inheritdoc />
     protected override void OnParametersSet() {
@@ -231,7 +232,7 @@ public partial class NTWizard : NTComponentBase, IDisposable {
             return;
         }
 
-        if (!await ValidateCurrentStepAsync()) {
+        if (ShouldValidateCurrentStepOnNavigation() && !await ValidateCurrentStepAsync()) {
             StateHasChanged();
             return;
         }
@@ -500,7 +501,11 @@ public partial class NTWizard : NTComponentBase, IDisposable {
         return await OnStepChanging.Invoke(new NTWizardStepChangeContext(fromStepIndex, toStepIndex, _steps.ElementAtOrDefault(fromStepIndex), _steps.ElementAtOrDefault(toStepIndex)));
     }
 
-    private bool ShouldDisableProgressButtonsForInvalidForm() => IsCurrentStepFormInvalid && InvalidFormButtonBehavior == NTWizardInvalidFormButtonBehavior.DisableButtons;
+    private bool ShouldValidateCurrentStepOnNavigation() => _currentStep is not NTWizardFormStep formStep || formStep.ValidateOnNavigation;
+
+    private bool ShouldDisableNavigationButtonForInvalidForm() => IsCurrentStepFormInvalid && ShouldValidateCurrentStepOnNavigation() && InvalidFormButtonBehavior == NTWizardInvalidFormButtonBehavior.DisableButtons;
+
+    private bool ShouldDisableSubmitButtonForInvalidForm() => IsCurrentStepFormInvalid && InvalidFormButtonBehavior == NTWizardInvalidFormButtonBehavior.DisableButtons;
 
     private bool SyncCurrentStepValidationSubscription() {
         var formStep = _currentStep as NTWizardFormStep;

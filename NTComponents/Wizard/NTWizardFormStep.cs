@@ -74,6 +74,11 @@ public interface INTWizardFormStep {
     bool ValidateOnInput { get; set; }
 
     /// <summary>
+    ///     Gets or sets a value indicating whether the form should validate before navigating to the next step.
+    /// </summary>
+    bool ValidateOnNavigation { get; set; }
+
+    /// <summary>
     ///     Gets or sets the supporting text shown for required inputs.
     /// </summary>
     string RequiredSupportingText { get; set; }
@@ -137,6 +142,10 @@ public class NTWizardFormStep : NTWizardStepBase, INTWizardFormStep {
     /// <inheritdoc />
     [Parameter]
     public bool ValidateOnInput { get; set; } = true;
+
+    /// <inheritdoc />
+    [Parameter]
+    public bool ValidateOnNavigation { get; set; } = true;
 
     /// <inheritdoc />
     [Parameter]

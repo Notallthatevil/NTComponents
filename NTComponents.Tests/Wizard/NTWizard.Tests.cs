@@ -310,6 +310,59 @@ public class NTWizard_Tests : BunitContext {
     }
 
     [Fact]
+    public async Task ValidateOnNavigation_False_Allows_Invalid_Form_To_Advance() {
+        var invalidSubmitCalled = false;
+        var model = new WizardRequiredModel();
+        var cut = Render<NTWizard>(p => p
+            .Add(w => w.InvalidFormButtonBehavior, NTWizardInvalidFormButtonBehavior.DisableButtons)
+            .AddChildContent(builder => {
+                builder.OpenComponent<NTWizardFormStep>(0);
+                builder.AddComponentParameter(10, nameof(NTWizardFormStep.Title), "Form");
+                builder.AddComponentParameter(20, nameof(NTWizardFormStep.Model), model);
+                builder.AddComponentParameter(30, nameof(NTWizardFormStep.ValidateOnNavigation), false);
+                builder.AddComponentParameter(40, nameof(NTWizardFormStep.OnInvalidSubmitCallback), EventCallback.Factory.Create<object>(this, _ => invalidSubmitCalled = true));
+                builder.AddComponentParameter(50, nameof(NTWizardFormStep.ChildContent), (RenderFragment<EditContext>)(_ => b => b.AddContent(0, "Form content")));
+                builder.CloseComponent();
+
+                builder.OpenComponent<NTWizardStep>(60);
+                builder.AddComponentParameter(70, nameof(NTWizardStep.Title), "Step 2");
+                builder.AddComponentParameter(80, nameof(NTWizardStep.ChildContent), (RenderFragment)(b => b.AddContent(0, "Step 2 content")));
+                builder.CloseComponent();
+            }));
+
+        cut.WaitForAssertion(() => FindNextButton(cut).HasAttribute("disabled").Should().BeFalse());
+        await FindNextButton(cut).ClickAsync(new MouseEventArgs());
+
+        invalidSubmitCalled.Should().BeFalse();
+        cut.FindAll("li.nt-wizard-step-indicator")[1].GetAttribute("class")!.Should().Contain("current-step");
+        cut.Find("div.nt-wizard-content").TextContent.Should().Contain("Step 2 content");
+    }
+
+    [Fact]
+    public async Task ValidateOnNavigation_False_Submit_Still_Validates_Current_Form() {
+        var invalidSubmitCalled = false;
+        var submitCalled = false;
+        var model = new WizardRequiredModel();
+        var cut = Render<NTWizard>(p => p
+            .Add(w => w.InvalidFormButtonBehavior, NTWizardInvalidFormButtonBehavior.GrayOutOnly)
+            .Add(w => w.OnSubmitCallback, EventCallback.Factory.Create(this, () => submitCalled = true))
+            .AddChildContent(builder => {
+                builder.OpenComponent<NTWizardFormStep>(0);
+                builder.AddComponentParameter(10, nameof(NTWizardFormStep.Title), "Form");
+                builder.AddComponentParameter(20, nameof(NTWizardFormStep.Model), model);
+                builder.AddComponentParameter(30, nameof(NTWizardFormStep.ValidateOnNavigation), false);
+                builder.AddComponentParameter(40, nameof(NTWizardFormStep.OnInvalidSubmitCallback), EventCallback.Factory.Create<object>(this, _ => invalidSubmitCalled = true));
+                builder.AddComponentParameter(50, nameof(NTWizardFormStep.ChildContent), (RenderFragment<EditContext>)(_ => b => b.AddContent(0, "Form content")));
+                builder.CloseComponent();
+            }));
+
+        await cut.FindAll("button").Single(button => button.TextContent.Contains("Submit")).ClickAsync(new MouseEventArgs());
+
+        invalidSubmitCalled.Should().BeTrue();
+        submitCalled.Should().BeFalse();
+    }
+
+    [Fact]
     public void DisableButtons_Mode_Reevaluates_On_Field_Change_Without_Global_Validation() {
         var model = new WizardRequiredModel();
         var cut = RenderWizardWithFormStep(model, NTWizardInvalidFormButtonBehavior.DisableButtons);

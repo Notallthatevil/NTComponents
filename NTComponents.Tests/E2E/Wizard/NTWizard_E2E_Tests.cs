@@ -585,6 +585,44 @@ public class NTWizard_E2E_Tests : IAsyncLifetime {
         (await optionsForm.GetByLabel("Options Name").EvaluateAsync<bool>("element => element.hasAttribute('readonly')")).Should().BeTrue();
     }
 
+    [Fact]
+    public async Task Deferred_Validation_Demo_Allows_Later_Step_Navigation_But_Blocks_Submit_Until_All_Complete() {
+        ArgumentNullException.ThrowIfNull(_page);
+
+        await NavigateToWizardDemoAsync();
+
+        var demo = _page.GetByTestId("nt-wizard-deferred-validation-demo");
+        await demo.ScrollIntoViewIfNeededAsync();
+
+        await WaitForButtonDisabledAsync("nt-wizard-deferred-validation-demo", "Next Step");
+        await demo.GetByLabel("Account Name").FillAsync("Account ready");
+        await WaitForButtonEnabledAsync("nt-wizard-deferred-validation-demo", "Next Step");
+
+        await demo.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Next Step" }).ClickAsync();
+        await WaitForCurrentStepAsync("nt-wizard-deferred-validation-demo", "Details");
+        await WaitForButtonEnabledAsync("nt-wizard-deferred-validation-demo", "Next Step");
+
+        await demo.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Next Step" }).ClickAsync();
+        await WaitForCurrentStepAsync("nt-wizard-deferred-validation-demo", "Review");
+        await WaitForButtonDisabledAsync("nt-wizard-deferred-validation-demo", "Submit");
+
+        await demo.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Previous Step" }).ClickAsync();
+        await WaitForCurrentStepAsync("nt-wizard-deferred-validation-demo", "Details");
+        await demo.GetByLabel("Details Name").FillAsync("Details ready");
+        await demo.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Next Step" }).ClickAsync();
+        await WaitForCurrentStepAsync("nt-wizard-deferred-validation-demo", "Review");
+        await WaitForButtonDisabledAsync("nt-wizard-deferred-validation-demo", "Submit");
+
+        await demo.GetByLabel("Review Name").FillAsync("Review ready");
+        await WaitForButtonEnabledAsync("nt-wizard-deferred-validation-demo", "Submit");
+        await demo.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Submit" }).ClickAsync();
+
+        await _page.WaitForFunctionAsync(
+            "() => document.querySelector('[data-testid=\"nt-wizard-deferred-validation-status\"]')?.textContent?.includes('Deferred validation submitted') === true",
+            null,
+            new PageWaitForFunctionOptions { Timeout = 5000 });
+    }
+
     private static async Task AssertBoundingBoxesSimilarAsync(ILocator legacyWizard, ILocator ntWizard) {
         var legacyBox = await legacyWizard.BoundingBoxAsync();
         var ntBox = await ntWizard.BoundingBoxAsync();

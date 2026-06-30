@@ -88,13 +88,13 @@
             <NTButton Label="Submit"
                       BackgroundColor="TnTColor.Success"
                       TextColor="TnTColor.OnSuccess"
-                      class="@ProgressButtonInvalidClass"
+                      class="@SubmitButtonInvalidClass"
                       OnClickCallback="@SubmitClickedAsync"
                       Disabled="@EffectiveSubmitButtonDisabled" />
         }
         else {
             <NTButton Label="Next Step"
-                      class="@ProgressButtonInvalidClass"
+                      class="@NavigationButtonInvalidClass"
                       OnClickCallback="@NextStepAsync"
                       Disabled="@EffectiveNextButtonDisabled" />
         }

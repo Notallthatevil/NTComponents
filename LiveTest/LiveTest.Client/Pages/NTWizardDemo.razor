@@ -224,6 +224,45 @@
         </div>
     </section>
 
+    <section class="surface" aria-labelledby="nt-wizard-deferred-validation-title">
+        <div>
+            <h2 id="nt-wizard-deferred-validation-title">Deferred Step Validation</h2>
+            <p class="muted">The first form step must be complete before moving forward. Later form steps can be revisited, and final submit stays disabled until every step is complete.</p>
+        </div>
+        <div class="wizard-shell" data-testid="nt-wizard-deferred-validation-demo">
+            <NTWizard Title="Deferred Validation Setup"
+                      LayoutDirection="LayoutDirection.Horizontal"
+                      HideStepsInsteadOfRemovingFromDom="true"
+                      InvalidFormButtonBehavior="NTWizardInvalidFormButtonBehavior.DisableButtons"
+                      SubmitButtonDisabled="@(!DeferredValidationReadyToSubmit)"
+                      OnSubmitCallback="HandleDeferredValidationSubmitAsync">
+                <NTWizardFormStep Title="Account"
+                                  SubTitle="Required first"
+                                  Model="@_deferredAccount"
+                                  ShowRequiredSupportingText="true"
+                                  RequiredSupportingText="Required before continuing">
+                    <NTInputText @bind-Value="_deferredAccount.Name" Label="Account Name" Placeholder="Required before step 2" />
+                </NTWizardFormStep>
+                <NTWizardFormStep Title="Details"
+                                  SubTitle="Can revisit"
+                                  Model="@_deferredDetails"
+                                  ValidateOnNavigation="false"
+                                  ShowRequiredSupportingText="true"
+                                  RequiredSupportingText="Required before submit">
+                    <NTInputText @bind-Value="_deferredDetails.Name" Label="Details Name" Placeholder="Can be completed later" />
+                </NTWizardFormStep>
+                <NTWizardFormStep Title="Review"
+                                  SubTitle="Submit last"
+                                  Model="@_deferredReview"
+                                  ShowRequiredSupportingText="true"
+                                  RequiredSupportingText="Required before submit">
+                    <NTInputText @bind-Value="_deferredReview.Name" Label="Review Name" Placeholder="Complete to enable submit" />
+                    <p class="muted">Submit is enabled only when Account, Details, and Review are all filled out.</p>
+                </NTWizardFormStep>
+            </NTWizard>
+            <p class="status" data-testid="nt-wizard-deferred-validation-status">@_deferredValidationStatus</p>
+        </div>
+    </section>
     <section class="surface" aria-labelledby="nt-wizard-permutations-title">
         <div>
             <h2 id="nt-wizard-permutations-title">NTWizard Permutations</h2>
@@ -554,12 +593,16 @@
     private AccountModel _account = new();
     private AccountModel _grayAccount = new();
     private AccountModel _optionsAccount = new() { Name = "Read only" };
+    private AccountModel _deferredAccount = new();
+    private AccountModel _deferredDetails = new();
+    private AccountModel _deferredReview = new();
     private int _controlledStepIndex;
     private string _controlledStatus = "Controlled: 0";
     private string _guardedStatus = "Guard: waiting";
     private string _disabledSubmitStatus = "Submit disabled";
     private string _grayFormStatus = "Gray form waiting";
     private string _optionsFormStatus = "Options form waiting";
+    private string _deferredValidationStatus = "Complete all deferred steps before submitting";
     private int _e2eSkippedStepIndex = -1;
     private string _e2eValidationStatus = "Not validated";
 
@@ -606,6 +649,13 @@
 
     private Task HandleOptionsValidSubmitAsync(object model) {
         _optionsFormStatus = "Options form valid";
+        return Task.CompletedTask;
+    }
+
+    private bool DeferredValidationReadyToSubmit => !string.IsNullOrWhiteSpace(_deferredAccount.Name) && !string.IsNullOrWhiteSpace(_deferredDetails.Name) && !string.IsNullOrWhiteSpace(_deferredReview.Name);
+
+    private Task HandleDeferredValidationSubmitAsync() {
+        _deferredValidationStatus = DeferredValidationReadyToSubmit ? "Deferred validation submitted" : "Complete all deferred steps before submitting";
         return Task.CompletedTask;
     }
 
