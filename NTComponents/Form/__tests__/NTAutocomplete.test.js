@@ -31,6 +31,7 @@ describe('NTAutocomplete browser behavior', () => {
         input.type = 'text';
         input.value = value;
         input.dataset.ntAutocompleteInput = 'true';
+        input.dataset.ntAutocompleteAllowCustomValue = allowCustomValue ? 'true' : 'false';
         input.setAttribute('role', 'combobox');
         input.setAttribute('aria-expanded', 'false');
         root.appendChild(input);
@@ -54,15 +55,11 @@ describe('NTAutocomplete browser behavior', () => {
         menu.appendChild(empty);
         root.appendChild(menu);
 
-        const source = document.createElement('script');
-        source.type = 'application/json';
-        source.dataset.ntAutocompleteOptions = 'true';
-        const optionDefinitions = options.map((option, index) => createOptionDefinition(option[0], option[1], option[2], index));
+        const optionDefinitions = options.map((option, index) => createOptionDefinition(option[0], option[1], option[2], index, option[4] ?? false, false, option[3]));
         if (allowCustomValue) {
             optionDefinitions.push(createOptionDefinition('', '', '', options.length, false, true));
         }
-        source.textContent = JSON.stringify(optionDefinitions);
-        menu.insertBefore(source, list);
+        appendOptionDefinitions(menu, list, optionDefinitions);
 
         document.body.appendChild(root);
 
@@ -81,11 +78,36 @@ describe('NTAutocomplete browser behavior', () => {
             .map(option => option.dataset.ntAutocompleteValue);
     }
 
-    function createOptionDefinition(value, label, supporting, index, disabled = false, custom = false) {
+    function getVisibleMenuRows(root) {
+        return Array.from(root.querySelectorAll('.nt-combobox-list > .nt-combobox-list-item'))
+            .filter(item => !item.hidden)
+            .sort((left, right) => Number.parseInt(left.style.order || '0', 10) - Number.parseInt(right.style.order || '0', 10))
+            .map(item => {
+                const groupLabel = item.querySelector('.nt-combobox-group-label');
+                if (groupLabel) {
+                    return `group:${groupLabel.textContent}`;
+                }
+
+                return `option:${item.querySelector('[data-nt-autocomplete-option="true"]')?.dataset.ntAutocompleteLabel}`;
+            });
+    }
+
+    function appendOptionDefinitions(parent, before, definitions) {
+        for (const definition of definitions) {
+            const source = document.createElement('script');
+            source.type = 'application/json';
+            source.dataset.ntAutocompleteOptionDefinition = 'true';
+            source.textContent = JSON.stringify(definition);
+            parent.insertBefore(source, before);
+        }
+    }
+
+    function createOptionDefinition(value, label, supporting, index, disabled = false, custom = false, group = undefined) {
         return {
             cssClass: 'nt-combobox-option',
             customFormat: custom ? 'Use "{0}"' : undefined,
             disabled,
+            group,
             id: `option-${index}`,
             isCustom: custom,
             label,
@@ -129,7 +151,20 @@ describe('NTAutocomplete browser behavior', () => {
         expect(menu.classList.contains('nt-combobox-menu-layer')).toBe(true);
         expect(input.getAttribute('aria-expanded')).toBe('true');
         expect(root.querySelector('.nt-combobox-list [data-nt-autocomplete-option="true"]')).not.toBeNull();
+        expect(root.querySelector('[data-nt-autocomplete-value="Austin"]').classList.contains('nt-autocomplete-group-option')).toBe(false);
         expect(dotNetRef.invokeMethodAsync).not.toHaveBeenCalled();
+    });
+
+    test('marks the existing value selected when opening', () => {
+        const { input, root } = createFixture({ allowCustomValue: false, value: 'Austin' });
+
+        input.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+        const selectedOption = root.querySelector('[data-nt-autocomplete-value="Austin"]');
+        expect(selectedOption.classList.contains('nt-combobox-option-selected')).toBe(true);
+        expect(selectedOption.getAttribute('aria-selected')).toBe('true');
+        expect(selectedOption.querySelector('.nt-combobox-option-trailing')).not.toBeNull();
+        expect(root.querySelector('[data-nt-autocomplete-value="Boston"] .nt-combobox-option-trailing')).toBeNull();
     });
 
     test('preserves static metadata when closing and reopening', () => {
@@ -139,7 +174,7 @@ describe('NTAutocomplete browser behavior', () => {
         expect(root.querySelectorAll('.nt-combobox-list > .nt-combobox-list-item')).toHaveLength(4);
 
         input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-        expect(root.querySelector('script[data-nt-autocomplete-options="true"]')).not.toBeNull();
+        expect(root.querySelector('script[data-nt-autocomplete-option-definition="true"]')).not.toBeNull();
         expect(root.querySelectorAll('.nt-combobox-list > .nt-combobox-list-item')).toHaveLength(0);
 
         input.dispatchEvent(new MouseEvent('click', { bubbles: true }));
@@ -153,6 +188,17 @@ describe('NTAutocomplete browser behavior', () => {
         onDispose(input);
 
         expect(input.hasAttribute('list')).toBe(false);
+    });
+
+    test('synchronizes native pattern when custom values are disallowed', () => {
+        const options = [
+            ['Austin', 'Austin', 'Texas'],
+            ['A/B (North)', 'A/B (North)', 'Neighborhood'],
+            ['Phoenix', 'Phoenix', 'Arizona', undefined, true],
+        ];
+        const { input } = createFixture({ allowCustomValue: false, options });
+
+        expect(input.getAttribute('pattern')).toBe('(?:Austin|A\\/B \\(North\\))');
     });
 
     test('filters to exact and contains matches without matching supporting text', () => {
@@ -192,6 +238,81 @@ describe('NTAutocomplete browser behavior', () => {
 
         expect(getVisibleMenuValues(root)).toEqual(['North Austin']);
         expect(root.querySelectorAll('.nt-combobox-list > .nt-combobox-list-item')).toHaveLength(4);
+    });
+
+    test('renders option groups and hides empty groups while filtering', () => {
+        const options = [
+            ['Austin', 'Austin', 'Texas', 'Texas'],
+            ['Dallas', 'Dallas', 'Texas', 'Texas'],
+            ['Boston', 'Boston', 'Massachusetts', 'Massachusetts'],
+        ];
+        const { input, root } = createFixture({ allowCustomValue: false, options });
+        const visibleGroups = () => Array.from(root.querySelectorAll('.nt-combobox-group-label'))
+            .filter(label => !label.closest('.nt-combobox-list-item')?.hidden)
+            .map(label => label.textContent);
+
+        input.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+        expect(visibleGroups()).toEqual(['Texas', 'Massachusetts']);
+        expect(getVisibleMenuValues(root)).toEqual(['Austin', 'Dallas', 'Boston']);
+        expect(root.querySelector('[data-nt-autocomplete-value="Austin"]').classList.contains('nt-autocomplete-group-option')).toBe(true);
+
+        input.value = 'Boston';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+
+        expect(visibleGroups()).toEqual(['Massachusetts']);
+        expect(getVisibleMenuValues(root)).toEqual(['Boston']);
+    });
+
+    test('keeps filtered options under their group headers when ranked', () => {
+        const options = [
+            ['Austin', 'Austin', 'Texas', 'Texas'],
+            ['Dallas', 'Dallas', 'Texas', 'Texas'],
+            ['San Antonio', 'San Antonio', 'Texas', 'Texas'],
+            ['East Austin', 'East Austin', 'Neighborhood', 'Neighborhood'],
+            ['North Austin', 'North Austin', 'Neighborhood', 'Neighborhood'],
+            ['Los Angeles', 'Los Angeles', 'California', 'California'],
+            ['San Diego', 'San Diego', 'California', 'California'],
+            ['Washington', 'Washington', 'District of Columbia', 'District of Columbia'],
+        ];
+        const { input, root } = createFixture({ allowCustomValue: false, options });
+
+        input.value = 'a';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+
+        expect(getVisibleMenuRows(root)).toEqual([
+            'group:Texas',
+            'option:Austin',
+            'option:Dallas',
+            'option:San Antonio',
+            'group:Neighborhood',
+            'option:East Austin',
+            'option:North Austin',
+            'group:California',
+            'option:Los Angeles',
+            'option:San Diego',
+            'group:District of Columbia',
+            'option:Washington',
+        ]);
+    });
+
+    test('renders the checkmark only for the selected option', () => {
+        const { input, root } = createFixture({ allowCustomValue: false });
+
+        input.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        expect(root.querySelectorAll('.nt-combobox-option-trailing')).toHaveLength(0);
+
+        input.value = 'Austin';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+
+        expect(root.querySelector('[data-nt-autocomplete-value="Austin"] .nt-combobox-option-trailing')).not.toBeNull();
+        expect(root.querySelector('[data-nt-autocomplete-value="North Austin"] .nt-combobox-option-trailing')).toBeNull();
+
+        input.value = 'North Austin';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+
+        expect(root.querySelector('[data-nt-autocomplete-value="Austin"] .nt-combobox-option-trailing')).toBeNull();
+        expect(root.querySelector('[data-nt-autocomplete-value="North Austin"] .nt-combobox-option-trailing')).not.toBeNull();
     });
 
     test('shows custom value option last by default', () => {
@@ -256,8 +377,12 @@ describe('NTAutocomplete browser behavior', () => {
 
     test('refreshes option state when rerendered items shrink', () => {
         const { input, root } = createFixture({ allowCustomValue: false });
-        const source = root.querySelector('script[data-nt-autocomplete-options="true"]');
-        source.textContent = JSON.stringify([createOptionDefinition('Boston', 'Boston', 'Massachusetts', 0)]);
+        for (const source of root.querySelectorAll('script[data-nt-autocomplete-option-definition="true"]')) {
+            source.remove();
+        }
+        appendOptionDefinitions(root.querySelector('.nt-combobox-menu'), root.querySelector('.nt-combobox-list'), [
+            createOptionDefinition('Boston', 'Boston', 'Massachusetts', 0),
+        ]);
         onUpdate(input, null);
 
         input.value = 'Austin';

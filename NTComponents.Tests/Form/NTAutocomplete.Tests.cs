@@ -9,16 +9,10 @@ namespace NTComponents.Tests.Form;
 public class NTAutocomplete_Tests : BunitContext {
     private const string JsModulePath = "./_content/NTComponents/Form/NTAutocomplete.razor.js";
 
-    private static readonly IReadOnlyList<NTAutocompleteOption> Options = [
-        new("Austin", "Austin") {
-            SupportingText = "Texas"
-        },
-        new("Boston", "Boston") {
-            SupportingText = "Massachusetts"
-        },
-        new("Dallas", "Dallas") {
-            SupportingText = "Texas"
-        }
+    private static readonly IReadOnlyList<AutocompleteOption> Options = [
+        new("Austin", "Austin", "Texas"),
+        new("Boston", "Boston", "Massachusetts"),
+        new("Dallas", "Dallas", "Texas")
     ];
 
     public NTAutocomplete_Tests() {
@@ -27,6 +21,8 @@ public class NTAutocomplete_Tests : BunitContext {
         module.SetupVoid("onUpdate", _ => true).SetVoidResult();
         module.SetupVoid("onDispose", _ => true).SetVoidResult();
     }
+
+    private sealed record AutocompleteOption(string Value, string Label, string? SupportingText = null, bool Disabled = false, TnTIcon? LeadingIcon = null);
 
     private sealed class RequiredModel {
         [Required]
@@ -52,7 +48,7 @@ public class NTAutocomplete_Tests : BunitContext {
         input.GetAttribute("data-nt-autocomplete-input").Should().Be("true");
         cut.Find("ul[role='listbox']").GetAttribute("id").Should().Be("city-autocomplete-listbox");
         cut.FindAll(".nt-combobox-list > .nt-combobox-list-item [data-nt-autocomplete-option='true']").Should().BeEmpty();
-        cut.FindAll("script[type='application/json'][data-nt-autocomplete-options='true']").Should().HaveCount(1);
+        cut.FindAll("script[type='application/json'][data-nt-autocomplete-option-definition='true']").Should().HaveCount(4);
         cut.Find(".nt-combobox-menu").GetAttribute("popover").Should().Be("manual");
         cut.FindAll("datalist").Should().BeEmpty();
     }
@@ -61,11 +57,39 @@ public class NTAutocomplete_Tests : BunitContext {
     public void Renders_Static_Option_Metadata_For_Typescript_Enhancement() {
         var cut = RenderAutocomplete();
 
-        var metadata = cut.Find("script[type='application/json'][data-nt-autocomplete-options='true']").TextContent;
+        var metadata = RenderedOptionMetadata(cut);
 
         cut.FindAll(".nt-combobox-list > .nt-combobox-list-item").Should().BeEmpty();
         metadata.Should().Contain("Austin");
         metadata.Should().Contain("customFormat");
+    }
+
+    [Fact]
+    public void Renders_Option_Group_Metadata_From_ChildContent() {
+        var model = new TestModel {
+            City = "Austin"
+        };
+
+        var cut = Render<NTAutocomplete>(parameters => parameters
+            .Add(p => p.Value, model.City)
+            .Add(p => p.ValueChanged, EventCallback.Factory.Create<string?>(this, value => model.City = value))
+            .Add(p => p.ValueExpression, (Expression<Func<string?>>)(() => model.City))
+            .Add(p => p.AllowCustomValue, false)
+            .Add(p => p.ChildContent, builder => {
+                builder.OpenComponent<NTAutocompleteOptionGroup>(0);
+                builder.AddAttribute(1, nameof(NTAutocompleteOptionGroup.Label), "Texas");
+                builder.AddAttribute(2, nameof(NTAutocompleteOptionGroup.ChildContent), (RenderFragment)(groupBuilder => {
+                    groupBuilder.OpenComponent<NTAutocompleteOption>(0);
+                    groupBuilder.AddAttribute(1, nameof(NTAutocompleteOption.Value), "Austin");
+                    groupBuilder.AddAttribute(2, nameof(NTAutocompleteOption.Label), "Austin");
+                    groupBuilder.CloseComponent();
+                }));
+                builder.CloseComponent();
+            }));
+
+        var metadata = RenderedOptionMetadata(cut);
+
+        metadata.Should().Contain("\"group\":\"Texas\"");
     }
 
     [Fact]
@@ -88,7 +112,7 @@ public class NTAutocomplete_Tests : BunitContext {
         var cut = RenderAutocomplete(configure: parameters => parameters
             .Add(p => p.CustomValueOptionFormat, "Add {0}"));
 
-        var metadata = cut.Find("script[type='application/json'][data-nt-autocomplete-options='true']").TextContent;
+        var metadata = RenderedOptionMetadata(cut);
 
         metadata.Should().Contain("\"isCustom\":true");
         metadata.Should().Contain("\"customFormat\":\"Add {0}\"");
@@ -99,7 +123,7 @@ public class NTAutocomplete_Tests : BunitContext {
         var cut = RenderAutocomplete(configure: parameters => parameters
             .Add(p => p.AllowCustomValue, false));
 
-        var metadata = cut.Find("script[type='application/json'][data-nt-autocomplete-options='true']").TextContent;
+        var metadata = RenderedOptionMetadata(cut);
 
         metadata.Should().NotContain("\"isCustom\":true");
     }
@@ -112,7 +136,7 @@ public class NTAutocomplete_Tests : BunitContext {
         var cut = RenderAutocomplete(configure: parameters => parameters
             .Add(p => p.CustomValueOptionFormat, format));
 
-        var metadata = cut.Find("script[type='application/json'][data-nt-autocomplete-options='true']").TextContent;
+        var metadata = RenderedOptionMetadata(cut);
 
         metadata.Should().Contain(format);
         FormatCustomValueOptionTextForTest(format, string.Empty).Should().Be(expectedText);
@@ -150,28 +174,23 @@ public class NTAutocomplete_Tests : BunitContext {
     }
 
     [Fact]
-    public void Disallow_Custom_Value_Renders_Native_Pattern_For_Form_Post_Parameter_Binding() {
+    public void Disallow_Custom_Value_Renders_Option_Metadata_For_Form_Post_Parameter_Binding() {
         var model = new TestModel();
         var options = new[] {
-            new NTAutocompleteOption("Austin", "Austin"),
-            new NTAutocompleteOption("A/B (North)", "A/B (North)"),
-            new NTAutocompleteOption("Phoenix", "Phoenix") {
-                Disabled = true
-            }
+            new AutocompleteOption("Austin", "Austin"),
+            new AutocompleteOption("A/B (North)", "A/B (North)"),
+            new AutocompleteOption("Phoenix", "Phoenix", Disabled: true)
         };
 
-        var cut = Render<NTAutocomplete>(parameters => parameters
-            .Add(p => p.Value, model.City)
-            .Add(p => p.ValueChanged, EventCallback.Factory.Create<string?>(this, value => model.City = value))
-            .Add(p => p.ValueExpression, (Expression<Func<string?>>)(() => model.City))
-            .Add(p => p.Items, options)
+        var cut = RenderAutocomplete(model, parameters => parameters
+            .Add(p => p.ChildContent, RenderOptions(options))
             .Add(p => p.AllowCustomValue, false)
             .AddUnmatched("name", "Input.City"));
 
         var input = cut.Find("input[role='combobox']");
 
         input.GetAttribute("name").Should().Be("Input.City");
-        input.GetAttribute("pattern").Should().Be(@"(?:Austin|A\/B \(North\))");
+        RenderedOptionMetadata(cut).Should().Contain("A/B (North)");
     }
 
     [Fact]
@@ -184,7 +203,7 @@ public class NTAutocomplete_Tests : BunitContext {
                 builder.AddAttribute(1, nameof(NTAutocomplete.Value), model.City);
                 builder.AddAttribute(2, nameof(NTAutocomplete.ValueChanged), EventCallback.Factory.Create<string?>(this, value => model.City = value));
                 builder.AddAttribute(3, nameof(NTAutocomplete.ValueExpression), (Expression<Func<string?>>)(() => model.City));
-                builder.AddAttribute(4, nameof(NTAutocomplete.Items), Options);
+                builder.AddAttribute(4, nameof(NTAutocomplete.ChildContent), RenderOptions(Options));
                 builder.AddAttribute(5, nameof(NTAutocomplete.AllowCustomValue), false);
                 builder.CloseComponent();
             }));
@@ -222,7 +241,7 @@ public class NTAutocomplete_Tests : BunitContext {
             .Add(p => p.Value, model.City)
             .Add(p => p.ValueChanged, EventCallback.Factory.Create<string?>(this, value => model.City = value))
             .Add(p => p.ValueExpression, (Expression<Func<string?>>)(() => model.City))
-            .Add(p => p.Items, Options));
+            .Add(p => p.ChildContent, RenderOptions(Options)));
 
         var input = cut.Find("input[role='combobox']");
 
@@ -260,7 +279,7 @@ public class NTAutocomplete_Tests : BunitContext {
                 builder.AddAttribute(1, nameof(NTAutocomplete.Value), model.City);
                 builder.AddAttribute(2, nameof(NTAutocomplete.ValueChanged), EventCallback.Factory.Create<string?>(this, value => model.City = value));
                 builder.AddAttribute(3, nameof(NTAutocomplete.ValueExpression), (Expression<Func<string?>>)(() => model.City));
-                builder.AddAttribute(4, nameof(NTAutocomplete.Items), Options);
+                builder.AddAttribute(4, nameof(NTAutocomplete.ChildContent), RenderOptions(Options));
                 builder.CloseComponent();
             }));
 
@@ -284,7 +303,7 @@ public class NTAutocomplete_Tests : BunitContext {
                 builder.AddAttribute(2, nameof(NTAutocomplete.Value), model.City);
                 builder.AddAttribute(3, nameof(NTAutocomplete.ValueChanged), EventCallback.Factory.Create<string?>(this, value => model.City = value));
                 builder.AddAttribute(4, nameof(NTAutocomplete.ValueExpression), (Expression<Func<string?>>)(() => model.City));
-                builder.AddAttribute(5, nameof(NTAutocomplete.Items), Options);
+                builder.AddAttribute(5, nameof(NTAutocomplete.ChildContent), RenderOptions(Options));
                 builder.CloseComponent();
             }));
 
@@ -302,10 +321,27 @@ public class NTAutocomplete_Tests : BunitContext {
                 .Add(p => p.Value, model.City)
                 .Add(p => p.ValueChanged, EventCallback.Factory.Create<string?>(this, value => model.City = value))
                 .Add(p => p.ValueExpression, (Expression<Func<string?>>)(() => model.City))
-                .Add(p => p.Items, Options);
+                .Add(p => p.ChildContent, RenderOptions(Options));
             configure?.Invoke(parameters);
         });
     }
+
+    private static RenderFragment RenderOptions(IEnumerable<AutocompleteOption> options) => builder => {
+        foreach (var option in options) {
+            builder.OpenComponent<NTAutocompleteOption>(0);
+            builder.AddAttribute(1, nameof(NTAutocompleteOption.Value), option.Value);
+            builder.AddAttribute(2, nameof(NTAutocompleteOption.Label), option.Label);
+            builder.AddAttribute(3, nameof(NTAutocompleteOption.SupportingText), option.SupportingText);
+            builder.AddAttribute(4, nameof(NTAutocompleteOption.Disabled), option.Disabled);
+            if (option.LeadingIcon is not null) {
+                builder.AddAttribute(5, nameof(NTAutocompleteOption.LeadingIcon), option.LeadingIcon);
+            }
+
+            builder.CloseComponent();
+        }
+    };
+
+    private static string RenderedOptionMetadata(IRenderedComponent<NTAutocomplete> cut) => string.Concat(cut.FindAll("script[type='application/json'][data-nt-autocomplete-option-definition='true']").Select(script => script.TextContent));
 
     private static string FormatCustomValueOptionTextForTest(string format, string value) {
         var placeholderIndex = format.IndexOf("{0}", StringComparison.Ordinal);
@@ -314,3 +350,6 @@ public class NTAutocomplete_Tests : BunitContext {
             : string.Concat(format.AsSpan(0, placeholderIndex), value, format.AsSpan(placeholderIndex + 3));
     }
 }
+
+
+

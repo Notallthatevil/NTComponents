@@ -919,10 +919,20 @@
                                 TrailingIcon="@TrailingIcon"
                                 PrefixText="@PrefixText"
                                 SuffixText="@SuffixText"
-                                Items="@CityOptions"
                                 AllowCustomValue="@_allowAutocompleteCustomValue"
                                 MenuItemAppearance="@_menuItemAppearance"
-                                AdditionalAttributes="@AutocompleteAttributes" />
+                                AdditionalAttributes="@AutocompleteAttributes">
+                    @foreach (var group in CityOptions.GroupBy(option => option.SupportingText)) {
+                        <NTAutocompleteOptionGroup Label="@(group.Key ?? "Other")">
+                            @foreach (var option in group) {
+                                <NTAutocompleteOption Value="@option.Value"
+                                                      Label="@option.Label"
+                                                      Disabled="@option.Disabled"
+                                                      LeadingIcon="@option.LeadingIcon" />
+                            }
+                        </NTAutocompleteOptionGroup>
+                    }
+                </NTAutocomplete>
 
                 <NTInputCheckbox @bind-Value="_model.Accepted"
                             Density="@FieldDensityOverride"
@@ -1596,52 +1606,24 @@
         }
     ];
 
-    private static readonly IReadOnlyList<NTAutocompleteOption> CityOptions = [
-        new("Austin", "Austin") {
-            SupportingText = "Texas"
-        },
-        new("Boston", "Boston") {
-            SupportingText = "Massachusetts"
-        },
-        new("Dallas", "Dallas") {
-            SupportingText = "Texas"
-        },
-        new("East Austin", "East Austin") {
-            SupportingText = "Neighborhood"
-        },
-        new("Denver", "Denver") {
-            SupportingText = "Colorado"
-        },
-        new("Detroit", "Detroit") {
-            SupportingText = "Michigan"
-        },
-        new("Fort Worth", "Fort Worth") {
-            SupportingText = "Texas"
-        },
-        new("Houston", "Houston") {
-            SupportingText = "Texas"
-        },
-        new("Los Angeles", "Los Angeles") {
-            SupportingText = "California"
-        },
-        new("New York", "New York") {
-            SupportingText = "New York"
-        },
-        new("North Austin", "North Austin") {
-            SupportingText = "Neighborhood"
-        },
-        new("Phoenix", "Phoenix") {
-            SupportingText = "Arizona"
-        },
-        new("San Antonio", "San Antonio") {
-            SupportingText = "Texas"
-        },
-        new("San Diego", "San Diego") {
-            SupportingText = "California"
-        },
-        new("Washington", "Washington") {
-            SupportingText = "District of Columbia"
-        }
+    private sealed record AutocompleteCityOption(string Value, string Label, string? SupportingText = null, bool Disabled = false, TnTIcon? LeadingIcon = null);
+
+    private static readonly IReadOnlyList<AutocompleteCityOption> CityOptions = [
+        new("Austin", "Austin", "Texas"),
+        new("Boston", "Boston", "Massachusetts"),
+        new("Dallas", "Dallas", "Texas"),
+        new("East Austin", "East Austin", "Neighborhood"),
+        new("Denver", "Denver", "Colorado"),
+        new("Detroit", "Detroit", "Michigan"),
+        new("Fort Worth", "Fort Worth", "Texas"),
+        new("Houston", "Houston", "Texas"),
+        new("Los Angeles", "Los Angeles", "California"),
+        new("New York", "New York", "New York"),
+        new("North Austin", "North Austin", "Neighborhood"),
+        new("Phoenix", "Phoenix", "Arizona"),
+        new("San Antonio", "San Antonio", "Texas"),
+        new("San Diego", "San Diego", "California"),
+        new("Washington", "Washington", "District of Columbia")
     ];
 
     private string Summary => string.Join(Environment.NewLine, [

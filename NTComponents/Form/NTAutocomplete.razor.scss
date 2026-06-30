@@ -1,5 +1,7 @@
 @use 'NTInputBase.razor';
 @use 'NTMenuField' as menu;
+@use '../Styles/_Variables/_colors.scss' as colors;
+@use '../Styles/_Variables/_typescale.scss' as typescale;
 
 @include menu.nt-menu-field(
     $root-selector: '.nt-input.nt-autocomplete',
@@ -7,3 +9,84 @@
     $indicator-selector: '.nt-autocomplete-indicator',
     $condensed-class: 'nt-autocomplete-menu-items-condensed'
 );
+
+.nt-input.nt-autocomplete {
+    ::deep .nt-combobox-list-group {
+        display: flex;
+        align-items: flex-end;
+        box-sizing: border-box;
+        min-height: 32px;
+        padding: 8px 12px 4px;
+        color: colors.$tnt-color-on-surface-variant;
+        pointer-events: none;
+    }
+
+    ::deep .nt-combobox-list-group + .nt-combobox-list-group,
+    ::deep .nt-combobox-list-item:not(.nt-combobox-list-group) + .nt-combobox-list-group {
+        margin-block-start: 4px;
+    }
+
+    ::deep .nt-autocomplete-group-option .nt-combobox-option-content {
+        padding-inline-start: 16px;
+    }
+
+    ::deep .nt-combobox-option-label {
+        font-weight: var(--nt-ref-typeface-weight-regular, 400);
+    }
+
+    ::deep .nt-combobox-group-label {
+        @include typescale.nt-label-large;
+
+        overflow: hidden;
+        color: colors.$tnt-color-primary;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    &.nt-input-dense {
+        ::deep .nt-combobox-list-group {
+            min-height: 28px;
+            padding-block: 6px 2px;
+        }
+    }
+
+    &.nt-autocomplete-menu-items-condensed {
+        ::deep .nt-combobox-list {
+            padding-block: 4px;
+        }
+
+        ::deep .nt-combobox-option {
+            gap: 8px;
+            height: 34px;
+            max-height: 34px;
+            padding-inline: 8px;
+        }
+
+        ::deep .nt-combobox-empty {
+            padding: 6px 8px;
+        }
+
+        ::deep .nt-autocomplete-group-option .nt-combobox-option-content {
+            padding-inline-start: 12px;
+        }
+
+        ::deep .nt-combobox-option-label {
+            @include typescale.nt-body-medium;
+            font-weight: var(--nt-ref-typeface-weight-regular, 400);
+        }
+
+        ::deep .nt-combobox-list-group {
+            min-height: 20px;
+            padding: 2px 8px 1px;
+        }
+
+        ::deep .nt-combobox-list-group + .nt-combobox-list-group,
+        ::deep .nt-combobox-list-item:not(.nt-combobox-list-group) + .nt-combobox-list-group {
+            margin-block-start: 0;
+        }
+
+        ::deep .nt-combobox-group-label {
+            @include typescale.nt-label-large;
+        }
+    }
+}

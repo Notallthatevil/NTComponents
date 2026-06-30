@@ -1,5 +1,4 @@
 @namespace NTComponents
-@using Microsoft.AspNetCore.Components.Rendering
 @inherits NTFieldBase<string?>
 
 @{
@@ -68,6 +67,7 @@
                            role="combobox"
                            class="@AutocompleteControlClass"
                            data-nt-autocomplete-input="true"
+                           data-nt-autocomplete-allow-custom-value="@AllowCustomValueAttribute"
                            value="@CurrentValueAsString"
                            @onchange="OnChangeAsync"
                            @onblur="OnBlurAsync"
@@ -95,7 +95,15 @@
         </label>
 
         <div class="nt-combobox-menu" hidden aria-hidden="true" popover="manual" data-nt-autocomplete-menu="true">
-            <script type="application/json" data-nt-autocomplete-options="true">@((MarkupString)AutocompleteOptionsJson)</script>
+            <div hidden data-nt-autocomplete-options-source="true">
+                <CascadingValue Value="this" IsFixed="false">
+                    @ChildContent
+                </CascadingValue>
+
+                @if (AllowCustomValue) {
+                    <script type="application/json" data-nt-autocomplete-option-definition="true">@((MarkupString)AutocompleteCustomOptionJson)</script>
+                }
+            </div>
             <ul class="nt-combobox-list" id="@listboxId" role="listbox" aria-label="@ListboxLabel">
             </ul>
             <div class="nt-combobox-empty" role="status" hidden>@EmptyText</div>

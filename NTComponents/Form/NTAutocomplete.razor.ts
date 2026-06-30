@@ -7,9 +7,7 @@ interface DotNetAutocompleteRef {
 
 interface AutocompleteOptionState {
     element: HTMLButtonElement;
-    filterText: string;
     isCustom: boolean;
-    label: string;
     labelElement: HTMLElement | null;
     listItem: HTMLElement | null;
     lowerLabel: string;
@@ -30,7 +28,8 @@ interface AutocompleteOptionDefinition {
     cssClass: string;
     customFormat?: string;
     disabled: boolean;
-    id: string;
+    group?: string;
+    id?: string;
     isCustom: boolean;
     label: string;
     leadingIcon?: AutocompleteIconDefinition;
@@ -57,11 +56,8 @@ interface AutocompleteState {
     onMenuMouseDown: (event: MouseEvent) => void;
     onWindowResize: (event: UIEvent) => void;
     options: AutocompleteOptionState[];
-    optionsSource: HTMLScriptElement | null;
+    optionSources: HTMLScriptElement[];
     root: HTMLElement;
-    valueNotificationInFlight: boolean;
-    valueNotificationPendingCloseMenu: boolean;
-    valueNotificationPending: boolean;
 }
 
 const stateByInput = new Map<HTMLInputElement, AutocompleteState>();
@@ -84,7 +80,6 @@ function queryOptions(root: HTMLElement): HTMLButtonElement[] {
 }
 
 function getOptionState(option: HTMLButtonElement, index: number): AutocompleteOptionState {
-    option.dataset.ntAutocompleteIndex = index.toString();
     const label = option.dataset.ntAutocompleteLabel ?? option.textContent?.trim() ?? '';
     const value = option.dataset.ntAutocompleteValue ?? label;
     const lowerLabel = label.toLocaleLowerCase();
@@ -93,14 +88,12 @@ function getOptionState(option: HTMLButtonElement, index: number): AutocompleteO
     const isCustom = option.dataset.ntAutocompleteCustomOption === 'true';
     return {
         element: option,
-        filterText: `${lowerValue} ${lowerLabel}`,
         isCustom,
-        label,
         labelElement,
         listItem: option.closest<HTMLElement>('.nt-combobox-list-item'),
         lowerLabel,
         lowerValue,
-        originalIndex: Number.parseInt(option.dataset.ntAutocompleteIndex, 10) || index,
+        originalIndex: index,
         trailing: option.querySelector<HTMLElement>('.nt-combobox-option-trailing'),
         value,
     };
@@ -210,8 +203,13 @@ function updateSelectedOptionDom(state: AutocompleteState): void {
         const selected = !option.isCustom && option.value === state.input.value;
         option.element.classList.toggle('nt-combobox-option-selected', selected);
         option.element.setAttribute('aria-selected', selected ? 'true' : 'false');
-        if (option.trailing) {
-            option.trailing.hidden = !selected;
+        if (selected && !option.trailing) {
+            option.trailing = createTrailingCheckElement();
+            option.element.appendChild(option.trailing);
+        }
+        else if (!selected && option.trailing) {
+            option.trailing.remove();
+            option.trailing = null;
         }
     }
 }
@@ -264,7 +262,7 @@ function rankOption(option: AutocompleteOptionState, query: string): number {
         return 1;
     }
 
-    return option.filterText.includes(query) ? 2 : -1;
+    return option.lowerValue.includes(query) || option.lowerLabel.includes(query) ? 2 : -1;
 }
 
 function collectRankedOptions(options: AutocompleteOptionState[], query: string): AutocompleteOptionState[] {
@@ -296,8 +294,75 @@ function formatCustomOptionText(option: AutocompleteOptionState, value: string):
     return format.replace('{0}', value);
 }
 
+function setOptionOrder(option: AutocompleteOptionState, order: number): void {
+    const orderValue = order.toString();
+    option.element.style.order = orderValue;
+    if (option.listItem) {
+        option.listItem.style.order = orderValue;
+    }
+}
+
+function clearOptionOrder(option: AutocompleteOptionState): void {
+    option.element.style.removeProperty('order');
+    option.listItem?.style.removeProperty('order');
+}
+
+function orderVisibleOptions(state: AutocompleteState, visibleRankedOptions: AutocompleteOptionState[], customOption: AutocompleteOptionState | null): void {
+    const headers = new Map<string, HTMLElement>();
+    for (const header of Array.from(state.root.querySelectorAll<HTMLElement>('[data-nt-autocomplete-group-header]'))) {
+        header.style.removeProperty('order');
+        const groupId = header.dataset.ntAutocompleteGroupHeader;
+        if (groupId) {
+            headers.set(groupId, header);
+        }
+    }
+
+    const groupOptions = new Map<string, AutocompleteOptionState[]>();
+    const entries: { groupId: string | null; option: AutocompleteOptionState | null }[] = [];
+    for (const option of visibleRankedOptions) {
+        const groupId = option.listItem?.dataset.ntAutocompleteGroup;
+        if (!groupId) {
+            entries.push({ groupId: null, option });
+            continue;
+        }
+
+        const options = groupOptions.get(groupId);
+        if (options) {
+            options.push(option);
+            continue;
+        }
+
+        groupOptions.set(groupId, [option]);
+        entries.push({ groupId, option: null });
+    }
+
+    let order = 0;
+    for (const entry of entries) {
+        if (entry.groupId) {
+            const header = headers.get(entry.groupId);
+            if (header) {
+                header.style.order = order.toString();
+            }
+
+            order++;
+            for (const option of groupOptions.get(entry.groupId) ?? []) {
+                setOptionOrder(option, order++);
+            }
+        }
+        else if (entry.option) {
+            setOptionOrder(entry.option, order++);
+        }
+    }
+
+    if (customOption) {
+        setOptionOrder(customOption, order);
+    }
+}
+
 function filterOptions(state: AutocompleteState, updateActive = state.isOpen): void {
     if (state.options.length === 0) {
+        updateGroupVisibility(state);
+        synchronizeNativePattern(state);
         if (updateActive) {
             clearActiveOption(state);
         }
@@ -314,30 +379,12 @@ function filterOptions(state: AutocompleteState, updateActive = state.isOpen): v
     if (customOption && showCustomOption) {
         visibleOptions.add(customOption);
         customOption.value = typedValue;
-        customOption.label = typedValue;
         customOption.lowerValue = typedValue.toLocaleLowerCase();
         customOption.lowerLabel = customOption.lowerValue;
-        customOption.filterText = customOption.lowerValue;
         customOption.element.dataset.ntAutocompleteValue = typedValue;
         customOption.element.dataset.ntAutocompleteLabel = typedValue;
         if (customOption.labelElement) {
             customOption.labelElement.textContent = formatCustomOptionText(customOption, typedValue);
-        }
-    }
-
-    let order = 0;
-    for (const option of visibleRankedOptions) {
-        option.element.style.order = order.toString();
-        if (option.listItem) {
-            option.listItem.style.order = order.toString();
-        }
-        order++;
-    }
-
-    if (showCustomOption && customOption) {
-        customOption.element.style.order = order.toString();
-        if (customOption.listItem) {
-            customOption.listItem.style.order = order.toString();
         }
     }
 
@@ -346,10 +393,13 @@ function filterOptions(state: AutocompleteState, updateActive = state.isOpen): v
         option.element.hidden = !visible;
         option.listItem?.toggleAttribute('hidden', !visible);
         if (!visible) {
-            option.element.style.removeProperty('order');
-            option.listItem?.style.removeProperty('order');
+            clearOptionOrder(option);
         }
     }
+
+    orderVisibleOptions(state, visibleRankedOptions, showCustomOption && customOption ? customOption : null);
+    updateGroupVisibility(state);
+    synchronizeNativePattern(state);
 
     const empty = state.root.querySelector<HTMLElement>('.nt-combobox-empty');
     if (empty) {
@@ -365,6 +415,48 @@ function filterOptions(state: AutocompleteState, updateActive = state.isOpen): v
     }
     else {
         clearActiveOption(state);
+    }
+}
+
+function updateGroupVisibility(state: AutocompleteState): void {
+    const visibleGroupIds = new Set<string>();
+    for (const item of Array.from(state.root.querySelectorAll<HTMLElement>('[data-nt-autocomplete-group]'))) {
+        const groupId = item.dataset.ntAutocompleteGroup;
+        if (groupId && !item.hidden && item.querySelector<HTMLButtonElement>('[data-nt-autocomplete-option="true"]')?.hidden === false) {
+            visibleGroupIds.add(groupId);
+        }
+    }
+
+    for (const header of Array.from(state.root.querySelectorAll<HTMLElement>('[data-nt-autocomplete-group-header]'))) {
+        const groupId = header.dataset.ntAutocompleteGroupHeader;
+        header.hidden = !groupId || !visibleGroupIds.has(groupId);
+    }
+}
+
+function buildAllowedValuesPattern(state: AutocompleteState): string | null {
+    const values = state.options.length > 0
+        ? state.options
+            .filter(option => !option.isCustom && !option.element.disabled)
+            .map(option => option.value)
+        : parseOptionDefinitions(state)
+            .filter(option => !option.isCustom && !option.disabled)
+            .map(option => option.value);
+    if (values.length === 0) {
+        return null;
+    }
+
+    return `(?:${values.map(value => value.replace(/[\^$.|?*+()[\]{}\-/]/g, '\\$&')).join('|')})`;
+}
+
+function synchronizeNativePattern(state: AutocompleteState): void {
+    if (state.input.dataset.ntAutocompleteAllowCustomValue !== 'false') {
+        state.input.removeAttribute('pattern');
+        return;
+    }
+
+    const pattern = buildAllowedValuesPattern(state);
+    if (pattern) {
+        state.input.setAttribute('pattern', pattern);
     }
 }
 
@@ -449,28 +541,13 @@ function openAutocomplete(state: AutocompleteState): boolean {
 }
 
 function notifyValueChanged(state: AutocompleteState, closeMenu: boolean): void {
-    updateSelectedOptionDom(state);
-    if (!state.dotNetRef) {
-        return;
-    }
-
-    if (state.valueNotificationInFlight) {
-        state.valueNotificationPending = true;
-        state.valueNotificationPendingCloseMenu ||= closeMenu;
+    const dotNetRef = state.dotNetRef;
+    if (!dotNetRef) {
         return;
     }
 
     const value = state.input.value;
-    state.valueNotificationInFlight = true;
-    void invokeDotNetSafely(() => state.dotNetRef?.invokeMethodAsync('NotifyAutocompleteValueChanged', value, closeMenu)).finally(() => {
-        state.valueNotificationInFlight = false;
-        if (state.valueNotificationPending) {
-            const pendingCloseMenu = state.valueNotificationPendingCloseMenu;
-            state.valueNotificationPending = false;
-            state.valueNotificationPendingCloseMenu = false;
-            notifyValueChanged(state, pendingCloseMenu);
-        }
-    });
+    void invokeDotNetSafely(() => dotNetRef.invokeMethodAsync('NotifyAutocompleteValueChanged', value, closeMenu));
 }
 
 function selectOption(state: AutocompleteState, option: AutocompleteOptionState): void {
@@ -479,7 +556,6 @@ function selectOption(state: AutocompleteState, option: AutocompleteOptionState)
     }
 
     state.input.value = option.value;
-    updateSelectedOptionDom(state);
     setOpen(state, false);
     notifyValueChanged(state, true);
 }
@@ -488,7 +564,7 @@ function updateElements(state: AutocompleteState): void {
     state.root = queryRoot(state.input);
     state.list = state.root.querySelector<HTMLElement>('.nt-combobox-list');
     state.menu = state.root.querySelector<HTMLElement>('[data-nt-autocomplete-menu="true"]');
-    state.optionsSource = state.root.querySelector<HTMLScriptElement>('script[data-nt-autocomplete-options="true"]');
+    state.optionSources = Array.from(state.root.querySelectorAll<HTMLScriptElement>('script[data-nt-autocomplete-option-definition="true"], script[data-nt-autocomplete-options="true"]'));
     const shouldBeOpen = state.root.classList.contains('nt-autocomplete-open') || state.menu?.hidden === false;
     if (shouldBeOpen) {
         renderMenuOptions(state);
@@ -498,7 +574,6 @@ function updateElements(state: AutocompleteState): void {
     }
 
     applyOpenState(state, shouldBeOpen);
-    updateSelectedOptionDom(state);
     filterOptions(state, shouldBeOpen);
 }
 
@@ -507,17 +582,27 @@ function hasLiveMenuOptions(state: AutocompleteState): boolean {
 }
 
 function parseOptionDefinitions(state: AutocompleteState): AutocompleteOptionDefinition[] {
-    if (!state.optionsSource?.textContent) {
-        return [];
+    const definitions: AutocompleteOptionDefinition[] = [];
+    for (const source of state.optionSources) {
+        if (!source.textContent) {
+            continue;
+        }
+
+        try {
+            const value = JSON.parse(source.textContent) as AutocompleteOptionDefinition | AutocompleteOptionDefinition[];
+            if (Array.isArray(value)) {
+                definitions.push(...value);
+            }
+            else if (value && typeof value === 'object') {
+                definitions.push(value);
+            }
+        }
+        catch {
+            // Ignore malformed option metadata and keep the native input usable.
+        }
     }
 
-    try {
-        const value = JSON.parse(state.optionsSource.textContent) as AutocompleteOptionDefinition[];
-        return Array.isArray(value) ? value : [];
-    }
-    catch {
-        return [];
-    }
+    return definitions;
 }
 
 function createIconElement(icon: AutocompleteIconDefinition): HTMLElement {
@@ -536,17 +621,47 @@ function createIconElement(icon: AutocompleteIconDefinition): HTMLElement {
     return wrapper;
 }
 
-function createOptionElement(definition: AutocompleteOptionDefinition): HTMLElement {
+function createTrailingCheckElement(): HTMLElement {
+    const trailing = document.createElement('span');
+    trailing.className = 'nt-combobox-option-trailing';
+    trailing.setAttribute('aria-hidden', 'true');
+
+    const check = document.createElement('span');
+    check.className = 'tnt-components tnt-icon material-symbols-outlined mi-medium';
+    check.title = 'check';
+    check.textContent = 'check';
+    trailing.appendChild(check);
+    return trailing;
+}
+
+function createGroupElement(label: string, groupId: string): HTMLElement {
+    const item = document.createElement('li');
+    item.className = 'nt-combobox-list-item nt-combobox-list-group';
+    item.dataset.ntAutocompleteGroupHeader = groupId;
+    item.setAttribute('role', 'presentation');
+
+    const labelElement = document.createElement('div');
+    labelElement.className = 'nt-combobox-group-label';
+    labelElement.textContent = label;
+    item.appendChild(labelElement);
+    return item;
+}
+
+function createOptionElement(definition: AutocompleteOptionDefinition, index: number, listboxId: string, groupId: string | null): HTMLElement {
     const item = document.createElement('li');
     item.className = 'nt-combobox-list-item';
     item.setAttribute('role', 'presentation');
+    if (groupId) {
+        item.dataset.ntAutocompleteGroup = groupId;
+    }
     if (definition.isCustom) {
         item.hidden = true;
     }
 
     const option = document.createElement('button');
     option.className = definition.cssClass || 'nt-combobox-option';
-    option.id = definition.id;
+    option.classList.toggle('nt-autocomplete-group-option', groupId !== null);
+    option.id = definition.id || `${listboxId}-option-${index}`;
     option.type = 'button';
     option.setAttribute('role', 'option');
     option.setAttribute('aria-selected', definition.selected ? 'true' : 'false');
@@ -581,17 +696,8 @@ function createOptionElement(definition: AutocompleteOptionDefinition): HTMLElem
     }
     option.appendChild(content);
 
-    if (!definition.isCustom) {
-        const trailing = document.createElement('span');
-        trailing.className = 'nt-combobox-option-trailing';
-        trailing.setAttribute('aria-hidden', 'true');
-        trailing.hidden = !definition.selected;
-        const check = document.createElement('span');
-        check.className = 'tnt-components tnt-icon material-symbols-outlined mi-medium';
-        check.title = 'check';
-        check.textContent = 'check';
-        trailing.appendChild(check);
-        option.appendChild(trailing);
+    if (!definition.isCustom && definition.selected) {
+        option.appendChild(createTrailingCheckElement());
     }
 
     item.appendChild(option);
@@ -601,15 +707,34 @@ function createOptionElement(definition: AutocompleteOptionDefinition): HTMLElem
 function renderMenuOptions(state: AutocompleteState): void {
     if (!state.list || hasLiveMenuOptions(state)) {
         state.options = queryOptions(state.root).map(getOptionState);
+        updateSelectedOptionDom(state);
+        updateGroupVisibility(state);
         return;
     }
 
     const fragment = document.createDocumentFragment();
-    for (const definition of parseOptionDefinitions(state)) {
-        fragment.appendChild(createOptionElement(definition));
+    const listboxId = state.list.id || state.input.id || 'nt-autocomplete-listbox';
+    let currentGroup: string | null = null;
+    let currentGroupId: string | null = null;
+    let groupIndex = 0;
+    const definitions = parseOptionDefinitions(state);
+    for (let index = 0; index < definitions.length; index++) {
+        const definition = definitions[index];
+        const group = definition.isCustom ? null : definition.group?.trim() || null;
+        if (group !== currentGroup) {
+            currentGroup = group;
+            currentGroupId = group ? `${listboxId}-group-${groupIndex++}` : null;
+            if (group && currentGroupId) {
+                fragment.appendChild(createGroupElement(group, currentGroupId));
+            }
+        }
+
+        fragment.appendChild(createOptionElement(definition, index, listboxId, currentGroupId));
     }
     state.list.appendChild(fragment);
     state.options = queryOptions(state.root).map(getOptionState);
+    updateSelectedOptionDom(state);
+    updateGroupVisibility(state);
 }
 
 function clearMenuOptions(state: AutocompleteState): void {
@@ -641,11 +766,8 @@ function createState(input: HTMLInputElement, dotNetRef: Maybe<unknown>): Autoco
         onMenuMouseDown: () => { },
         onWindowResize: () => { },
         options: [],
-        optionsSource: null,
+        optionSources: [],
         root: queryRoot(input),
-        valueNotificationInFlight: false,
-        valueNotificationPendingCloseMenu: false,
-        valueNotificationPending: false,
     };
 
     state.onInputClick = () => {
