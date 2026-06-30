@@ -465,6 +465,10 @@ public partial class NTAutocomplete : IAsyncDisposable {
 ///     <see cref="NTAutocompleteOptionGroup" />. The option renders as JSON metadata for static SSR and does not render a
 ///     visible menu item until the autocomplete browser module enhances the parent field.
 /// </remarks>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Renders inert option metadata for the autocomplete enhancement module.",
+    CompatibilityDetails = "Static SSR emits JSON metadata that the parent autocomplete browser module reads to build the enhanced suggestion menu. The option has no standalone interactive surface.")]
 public sealed class NTAutocompleteOption : ComponentBase, IDisposable {
     private bool _hasParameterSnapshot;
     private bool _lastDisabled;
@@ -599,6 +603,10 @@ public sealed class NTAutocompleteOption : ComponentBase, IDisposable {
 ///     Use groups for select-like section labels in longer suggestion lists. Add items through <see cref="ChildContent" />;
 ///     the group cascades its label and disabled state to child options without rendering a native <c>optgroup</c> element.
 /// </remarks>
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
+    CompatibilitySummary = "Groups autocomplete option metadata for the enhanced suggestion menu.",
+    CompatibilityDetails = "Static SSR cascades group metadata to child options. The parent autocomplete browser module uses that metadata to render select-like grouped suggestions.")]
 public sealed class NTAutocompleteOptionGroup : ComponentBase {
     /// <summary>
     ///     Gets or sets the grouped <see cref="NTAutocompleteOption" /> entries.
