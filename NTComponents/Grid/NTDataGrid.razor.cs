@@ -268,6 +268,19 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
 
     private string? ScrollStyle => Virtualize ? $"max-height: {Math.Max(1, VirtualizationInitialItemCount) * ResolvedVirtualizationItemSize}px;" : null;
 
+    /// <summary>
+    /// Refreshes the data grid by re-resolving the current data source and updating the rendered rows.
+    /// </summary>
+    public Task RefreshDataGridAsync(CancellationToken cancellationToken = default) {
+        if (Virtualize) {
+            ResetVirtualizedData();
+        }
+        else {
+            await RefreshDataAsync(cancellationToken.CanBeCanceled ? cancellationToken : _componentCancellation.Token);
+        }
+        await InvokeAsync(StateHasChanged);
+    }
+
     /// <inheritdoc />
     public override Task SetParametersAsync(ParameterView parameters) {
         _hasVirtualizationItemSizeParameter = parameters.TryGetValue<float>(nameof(VirtualizationItemSize), out _);

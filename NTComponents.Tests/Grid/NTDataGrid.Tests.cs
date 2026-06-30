@@ -427,6 +427,32 @@ public class NTDataGrid_Tests : BunitContext {
     }
 
     [Fact]
+    public async Task RefreshDataGridAsync_Requeries_ItemsProvider() {
+        var calls = 0;
+        var useSecondItems = false;
+        var firstItems = new[] { new TestGridItem(1, "Old", new DateOnly(2026, 1, 1), 1) };
+        var secondItems = new[] { new TestGridItem(2, "New", new DateOnly(2026, 1, 2), 2) };
+        var cut = Render<NTDataGrid<TestGridItem>>(parameters => parameters
+            .Add(grid => grid.ItemsProvider, _ => {
+                calls++;
+                var items = useSecondItems ? secondItems : firstItems;
+                return ValueTask.FromResult(new NTItemsProviderResult<TestGridItem>(items, items.Length));
+            })
+            .Add(grid => grid.ChildContent, DefaultColumns));
+
+        cut.WaitForAssertion(() => cut.Markup.Should().Contain("Old"));
+        var initialCalls = calls;
+        useSecondItems = true;
+        await cut.InvokeAsync(() => cut.Instance.RefreshDataGridAsync());
+
+        cut.WaitForAssertion(() => {
+            calls.Should().BeGreaterThan(initialCalls);
+            cut.Markup.Should().Contain("New");
+            cut.Markup.Should().NotContain("Old");
+        });
+    }
+
+    [Fact]
     public void Virtualized_Grid_Uses_Virtualized_Provider_Range() {
         var captured = new List<NTDataGridItemsProviderRequest<TestGridItem>>();
         var cut = Render<NTDataGrid<TestGridItem>>(parameters => parameters
@@ -442,6 +468,35 @@ public class NTDataGrid_Tests : BunitContext {
         cut.InvokeAsync(() => virtualize.Instance.LoadItems(0, 0, 0, 3));
 
         cut.WaitForAssertion(() => captured.Should().Contain(request => request.StartIndex == 0 && request.Count > 0));
+    }
+
+    [Fact]
+    public async Task RefreshDataGridAsync_Virtualized_Resets_Cached_Items() {
+        var firstItems = new[] { new TestGridItem(1, "Old", new DateOnly(2026, 1, 1), 1) };
+        var secondItems = new[] { new TestGridItem(2, "New", new DateOnly(2026, 1, 2), 2) };
+        var useSecondItems = false;
+        var cut = Render<NTDataGrid<TestGridItem>>(parameters => parameters
+            .Add(grid => grid.ItemsProvider, _ => {
+                var items = useSecondItems ? secondItems : firstItems;
+                return ValueTask.FromResult(new NTItemsProviderResult<TestGridItem>(items, items.Length));
+            })
+            .Add(grid => grid.Virtualize, true)
+            .Add(grid => grid.VirtualizationInitialItemCount, 1)
+            .Add(grid => grid.ChildContent, DefaultColumns));
+
+        var virtualize = cut.FindComponent<NTVirtualize<TestGridItem>>();
+        await cut.InvokeAsync(() => virtualize.Instance.LoadItems(0, 0, 0, 1));
+        cut.WaitForAssertion(() => cut.Markup.Should().Contain("Old"));
+
+        useSecondItems = true;
+        await cut.InvokeAsync(() => cut.Instance.RefreshDataGridAsync());
+        virtualize = cut.FindComponent<NTVirtualize<TestGridItem>>();
+        await cut.InvokeAsync(() => virtualize.Instance.LoadItems(0, 0, 0, 1));
+
+        cut.WaitForAssertion(() => {
+            cut.Markup.Should().Contain("New");
+            cut.Markup.Should().NotContain("Old");
+        });
     }
 
     [Fact]
