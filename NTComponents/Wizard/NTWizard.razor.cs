@@ -252,12 +252,17 @@ public partial class NTWizard : NTComponentBase, IDisposable {
     }
 
     internal async Task NavigateToStepAsync(int stepIndex) {
-        if (stepIndex == _stepIndex || !CanNavigateToStep(stepIndex)) {
+        if (stepIndex == _stepIndex || !CanUseStepIndicator(stepIndex)) {
             return;
         }
 
         if (IsImmediateNextStep(stepIndex)) {
             await NextStepAsync();
+            return;
+        }
+
+        if (stepIndex > _stepIndex && ShouldValidateCurrentStepOnNavigation() && !await ValidateCurrentStepAsync()) {
+            StateHasChanged();
             return;
         }
 
@@ -307,6 +312,7 @@ public partial class NTWizard : NTComponentBase, IDisposable {
         .AddClass("current-step", _stepIndex == stepIndex)
         .AddClass("completed-step", IsStepCompleted(stepIndex))
         .AddClass("disabled-step", IsStepDisabled(stepIndex))
+        .AddClass("available-step", CanUseStepIndicator(stepIndex))
         .AddClass("invalid-step", IsStepInvalid(stepIndex))
         .AddClass("next-step", IsImmediateNextStep(stepIndex))
         .AddClass("optional-step", _steps.ElementAtOrDefault(stepIndex)?.Optional == true)
@@ -315,9 +321,11 @@ public partial class NTWizard : NTComponentBase, IDisposable {
 
     private string GetStepIndicatorState(int stepIndex) => GetStepState(stepIndex).ToString().ToLowerInvariant();
 
-    private bool GetStepIndicatorAriaDisabled(int stepIndex) => stepIndex != _stepIndex && !CanNavigateToStep(stepIndex);
+    private bool GetStepIndicatorAriaDisabled(int stepIndex) => !CanUseStepIndicator(stepIndex);
 
     private int GetStepIndicatorTabIndex(int stepIndex) => GetStepIndicatorAriaDisabled(stepIndex) ? -1 : 0;
+
+    private bool CanUseStepIndicator(int stepIndex) => stepIndex == _stepIndex || (CanNavigateToStep(stepIndex) && (stepIndex <= _stepIndex || !ShouldDisableNavigationButtonForInvalidForm()));
 
     private string GetStepPanelId(int stepIndex) => $"{ElementId ?? "nt-wizard"}-step-panel-{stepIndex}";
 
@@ -450,7 +458,7 @@ public partial class NTWizard : NTComponentBase, IDisposable {
             return NTWizardStepState.Completed;
         }
 
-        if (CanNavigateToStep(stepIndex)) {
+        if (CanUseStepIndicator(stepIndex)) {
             return NTWizardStepState.Available;
         }
 

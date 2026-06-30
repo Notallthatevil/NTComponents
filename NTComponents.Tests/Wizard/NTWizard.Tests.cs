@@ -88,8 +88,77 @@ public class NTWizard_Tests : BunitContext {
     public async Task Free_Navigation_Allows_Unvisited_Enabled_Step_Header_Click() {
         var cut = RenderWizardWithThreeSteps(configureWizard: wizard => wizard.Add(w => w.NavigationMode, NTWizardNavigationMode.Free));
 
+        cut.FindAll("li.nt-wizard-step-indicator")[2].GetAttribute("class")!.Should().Contain("available-step");
+
         await FindStepButton(cut, "Step 3").ClickAsync(new MouseEventArgs());
 
+        cut.Find("div.nt-wizard-content").TextContent.Should().Contain("Step 3 content");
+    }
+
+    [Fact]
+    public async Task Free_Navigation_Validates_Current_Form_Before_Jumping_To_Future_Step() {
+        var invalidSubmitCalled = false;
+        var model = new WizardRequiredModel();
+        var cut = Render<NTWizard>(p => p
+            .Add(w => w.NavigationMode, NTWizardNavigationMode.Free)
+            .Add(w => w.InvalidFormButtonBehavior, NTWizardInvalidFormButtonBehavior.GrayOutOnly)
+            .AddChildContent(builder => {
+                builder.OpenComponent<NTWizardFormStep>(0);
+                builder.AddComponentParameter(10, nameof(NTWizardFormStep.Title), "Form");
+                builder.AddComponentParameter(20, nameof(NTWizardFormStep.Model), model);
+                builder.AddComponentParameter(30, nameof(NTWizardFormStep.OnInvalidSubmitCallback), EventCallback.Factory.Create<object>(this, _ => invalidSubmitCalled = true));
+                builder.AddComponentParameter(40, nameof(NTWizardFormStep.ChildContent), (RenderFragment<EditContext>)(_ => b => b.AddContent(0, "Form content")));
+                builder.CloseComponent();
+
+                builder.OpenComponent<NTWizardStep>(50);
+                builder.AddComponentParameter(60, nameof(NTWizardStep.Title), "Step 2");
+                builder.AddComponentParameter(70, nameof(NTWizardStep.ChildContent), (RenderFragment)(b => b.AddContent(0, "Step 2 content")));
+                builder.CloseComponent();
+
+                builder.OpenComponent<NTWizardStep>(80);
+                builder.AddComponentParameter(90, nameof(NTWizardStep.Title), "Step 3");
+                builder.AddComponentParameter(100, nameof(NTWizardStep.ChildContent), (RenderFragment)(b => b.AddContent(0, "Step 3 content")));
+                builder.CloseComponent();
+            }));
+
+        await FindStepButton(cut, "Step 3").ClickAsync(new MouseEventArgs());
+
+        invalidSubmitCalled.Should().BeTrue();
+        cut.FindAll("li.nt-wizard-step-indicator")[0].GetAttribute("class")!.Should().Contain("current-step");
+        cut.Find("div.nt-wizard-content").TextContent.Should().Contain("Form content");
+    }
+
+    [Fact]
+    public async Task Free_Navigation_ValidateOnNavigation_False_Allows_Jumping_To_Future_Step() {
+        var invalidSubmitCalled = false;
+        var model = new WizardRequiredModel();
+        var cut = Render<NTWizard>(p => p
+            .Add(w => w.NavigationMode, NTWizardNavigationMode.Free)
+            .Add(w => w.InvalidFormButtonBehavior, NTWizardInvalidFormButtonBehavior.DisableButtons)
+            .AddChildContent(builder => {
+                builder.OpenComponent<NTWizardFormStep>(0);
+                builder.AddComponentParameter(10, nameof(NTWizardFormStep.Title), "Form");
+                builder.AddComponentParameter(20, nameof(NTWizardFormStep.Model), model);
+                builder.AddComponentParameter(30, nameof(NTWizardFormStep.ValidateOnNavigation), false);
+                builder.AddComponentParameter(40, nameof(NTWizardFormStep.OnInvalidSubmitCallback), EventCallback.Factory.Create<object>(this, _ => invalidSubmitCalled = true));
+                builder.AddComponentParameter(50, nameof(NTWizardFormStep.ChildContent), (RenderFragment<EditContext>)(_ => b => b.AddContent(0, "Form content")));
+                builder.CloseComponent();
+
+                builder.OpenComponent<NTWizardStep>(60);
+                builder.AddComponentParameter(70, nameof(NTWizardStep.Title), "Step 2");
+                builder.AddComponentParameter(80, nameof(NTWizardStep.ChildContent), (RenderFragment)(b => b.AddContent(0, "Step 2 content")));
+                builder.CloseComponent();
+
+                builder.OpenComponent<NTWizardStep>(90);
+                builder.AddComponentParameter(100, nameof(NTWizardStep.Title), "Step 3");
+                builder.AddComponentParameter(110, nameof(NTWizardStep.ChildContent), (RenderFragment)(b => b.AddContent(0, "Step 3 content")));
+                builder.CloseComponent();
+            }));
+
+        await FindStepButton(cut, "Step 3").ClickAsync(new MouseEventArgs());
+
+        invalidSubmitCalled.Should().BeFalse();
+        cut.FindAll("li.nt-wizard-step-indicator")[2].GetAttribute("class")!.Should().Contain("current-step");
         cut.Find("div.nt-wizard-content").TextContent.Should().Contain("Step 3 content");
     }
 
@@ -150,9 +219,12 @@ public class NTWizard_Tests : BunitContext {
     public async Task Step_Click_Does_Not_Allow_Unvisited_Non_Immediate_Next() {
         var cut = RenderWizardWithThreeSteps();
 
+        var indicators = cut.FindAll("li.nt-wizard-step-indicator");
+        indicators[2].GetAttribute("class")!.Should().NotContain("available-step");
+
         await cut.FindAll("button.nt-wizard-step-button")[2].ClickAsync(new MouseEventArgs());
 
-        var indicators = cut.FindAll("li.nt-wizard-step-indicator");
+        indicators = cut.FindAll("li.nt-wizard-step-indicator");
         indicators[0].GetAttribute("class")!.Should().Contain("current-step");
         indicators[2].GetAttribute("class")!.Should().NotContain("current-step");
         cut.Find("div.nt-wizard-content").TextContent.Should().Contain("Step 1 content");
@@ -267,7 +339,10 @@ public class NTWizard_Tests : BunitContext {
         var model = new WizardRequiredModel();
         var cut = RenderWizardWithFormStep(model, NTWizardInvalidFormButtonBehavior.DisableButtons);
 
-        cut.WaitForAssertion(() => FindNextButton(cut).HasAttribute("disabled").Should().BeTrue());
+        cut.WaitForAssertion(() => {
+            FindNextButton(cut).HasAttribute("disabled").Should().BeTrue();
+            cut.FindAll("li.nt-wizard-step-indicator")[1].GetAttribute("class")!.Should().NotContain("available-step");
+        });
     }
 
     [Fact]

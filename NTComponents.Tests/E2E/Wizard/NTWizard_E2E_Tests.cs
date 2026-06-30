@@ -185,6 +185,7 @@ public class NTWizard_E2E_Tests : IAsyncLifetime {
         (await tabs.Nth(1).GetAttributeAsync("aria-disabled")).Should().Be("false");
         (await tabs.Nth(2).GetAttributeAsync("aria-disabled")).Should().Be("true");
         (await tabs.Nth(2).GetAttributeAsync("tabindex")).Should().Be("-1");
+        (await tabs.Nth(2).EvaluateAsync<string>("element => getComputedStyle(element).cursor")).Should().Be("not-allowed");
     }
 
     [Fact]
@@ -231,6 +232,7 @@ public class NTWizard_E2E_Tests : IAsyncLifetime {
         await NavigateToWizardDemoAsync();
 
         var demo = _page.GetByTestId("nt-wizard-e2e-free");
+        (await demo.Locator("button.nt-wizard-step-button").Nth(2).EvaluateAsync<string>("element => getComputedStyle(element).cursor")).Should().Be("pointer");
         await demo.Locator("button.nt-wizard-step-button").Nth(2).ClickAsync();
 
         await WaitForCurrentStepAsync("nt-wizard-e2e-free", "Free Three");
@@ -594,7 +596,11 @@ public class NTWizard_E2E_Tests : IAsyncLifetime {
         var demo = _page.GetByTestId("nt-wizard-deferred-validation-demo");
         await demo.ScrollIntoViewIfNeededAsync();
 
+        (await demo.Locator(".nt-wizard-step-button").Nth(2).EvaluateAsync<string>("element => getComputedStyle(element).cursor")).Should().Be("not-allowed");
+        await demo.Locator(".nt-wizard-step-button").Nth(2).ClickAsync(new LocatorClickOptions { Force = true });
+        await WaitForCurrentStepAsync("nt-wizard-deferred-validation-demo", "Account");
         await WaitForButtonDisabledAsync("nt-wizard-deferred-validation-demo", "Next Step");
+
         await demo.GetByLabel("Account Name").FillAsync("Account ready");
         await WaitForButtonEnabledAsync("nt-wizard-deferred-validation-demo", "Next Step");
 

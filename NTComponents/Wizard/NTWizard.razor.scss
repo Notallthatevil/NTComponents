@@ -341,7 +341,6 @@ $wizard-medium-screen-up-plus: measurements.$medium-screen-up + 1px;
 
             &.current-step {
                 color: colors.$tnt-color-primary;
-                cursor: pointer;
 
                 .nt-wizard-step-index {
                     background-color: colors.$tnt-color-primary;
@@ -360,7 +359,6 @@ $wizard-medium-screen-up-plus: measurements.$medium-screen-up + 1px;
 
             &.completed-step {
                 color: colors.$tnt-color-secondary;
-                cursor: pointer;
 
                 .nt-wizard-step-index {
                     background-color: colors.$tnt-color-secondary;
@@ -373,7 +371,7 @@ $wizard-medium-screen-up-plus: measurements.$medium-screen-up + 1px;
                 }
             }
 
-            &.next-step {
+            &.available-step {
                 cursor: pointer;
             }
 

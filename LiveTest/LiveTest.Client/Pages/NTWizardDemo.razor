@@ -233,6 +233,7 @@
             <NTWizard Title="Deferred Validation Setup"
                       LayoutDirection="LayoutDirection.Horizontal"
                       HideStepsInsteadOfRemovingFromDom="true"
+                      NavigationMode="NTWizardNavigationMode.Free"
                       InvalidFormButtonBehavior="NTWizardInvalidFormButtonBehavior.DisableButtons"
                       SubmitButtonDisabled="@(!DeferredValidationReadyToSubmit)"
                       OnSubmitCallback="HandleDeferredValidationSubmitAsync">
