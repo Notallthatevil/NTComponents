@@ -175,7 +175,7 @@
                 <p class="muted">NT implementation using NT classes, tokens, buttons, and form shell.</p>
             </div>
             <div class="wizard-shell" data-testid="nt-wizard-demo">
-                <NTWizard Title="Wizard" LayoutDirection="@_layoutDirection" HideStepsInsteadOfRemovingFromDom="true">
+                <NTWizard Title="Wizard" LayoutDirection="@_layoutDirection" VerticalOnSmallScreens="false" HideStepsInsteadOfRemovingFromDom="true">
                     <NTWizardStep Title="Details" SubTitle="Start here" Icon="@MaterialIcon.Search">
                         <div class="step-content">
                             <h3>Project details</h3>
@@ -294,6 +294,25 @@
                     <NTWizardStep Title="Final Confirmation Step" SubTitle="Submit">
                         <div class="step-content">
                             <h3>Final step</h3>
+                        </div>
+                    </NTWizardStep>
+                </NTWizard>
+            </div>
+            <div class="wizard-shell compact-shell constrained-shell" data-testid="nt-wizard-permutation-vertical-small">
+                <NTWizard Title="Vertical Small Screen Wizard" LayoutDirection="LayoutDirection.Horizontal" PushNavigationToBottom="false" VerticalOnSmallScreens="true">
+                    <NTWizardStep Title="Small Intro" SubTitle="Stacked shell">
+                        <div class="step-content">
+                            <h3>Small vertical intro</h3>
+                        </div>
+                    </NTWizardStep>
+                    <NTWizardStep Title="Small Details" SubTitle="Below steps">
+                        <div class="step-content">
+                            <h3>Small vertical details</h3>
+                        </div>
+                    </NTWizardStep>
+                    <NTWizardStep Title="Small Review" SubTitle="Finish">
+                        <div class="step-content">
+                            <h3>Small vertical review</h3>
                         </div>
                     </NTWizardStep>
                 </NTWizard>

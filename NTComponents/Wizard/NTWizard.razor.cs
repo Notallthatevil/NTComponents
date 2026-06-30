@@ -58,7 +58,7 @@ public partial class NTWizard : NTComponentBase, IDisposable {
     ///     Determines whether the wizard should remain vertical when viewed on smaller screens.
     /// </summary>
     [Parameter]
-    public bool VerticalOnSmallScreens { get; set; } = true;
+    public bool VerticalOnSmallScreens { get; set; } = false;
 
     /// <summary>
     ///     A value indicating whether the "Next" button is disabled.

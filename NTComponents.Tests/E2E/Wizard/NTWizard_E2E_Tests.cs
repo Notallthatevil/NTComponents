@@ -399,6 +399,92 @@ public class NTWizard_E2E_Tests : IAsyncLifetime {
     }
 
     [Fact]
+    public async Task VerticalOnSmallScreens_Uses_Horizontal_Stacked_Shell_On_Small_Screens() {
+        ArgumentNullException.ThrowIfNull(_page);
+
+        await NavigateToWizardDemoAsync(390, 900);
+
+        var demo = _page.GetByTestId("nt-wizard-permutation-vertical-small");
+        var wizard = demo.Locator(".nt-wizard");
+        await wizard.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 5000 });
+        await demo.ScrollIntoViewIfNeededAsync();
+
+        var wizardClass = await wizard.GetAttributeAsync("class");
+        wizardClass.Should().Contain("nt-wizard-layout-horizontal");
+        wizardClass.Should().Contain("nt-wizard-vertical-on-small-screens");
+
+        var layout = await wizard.EvaluateAsync<string[]>(
+            """
+            element => {
+                const style = getComputedStyle(element);
+                const steps = element.querySelector('.nt-wizard-steps');
+                const content = element.querySelector('.nt-wizard-content, .nt-wizard-current-step');
+                const buttons = element.querySelector('.nt-wizard-buttons');
+                const stepsBox = steps.getBoundingClientRect();
+                const contentBox = content.getBoundingClientRect();
+                const buttonsBox = buttons.getBoundingClientRect();
+
+                return [
+                    style.gridTemplateAreas,
+                    style.gridTemplateColumns,
+                    getComputedStyle(steps).flexDirection,
+                    String(contentBox.top >= stepsBox.bottom - 1),
+                    String(buttonsBox.top >= contentBox.bottom - 1)
+                ];
+            }
+            """);
+
+        layout[0].Should().Contain("title");
+        layout[0].Should().Contain("steps");
+        layout[0].Should().Contain("content");
+        layout[0].Should().Contain("buttons");
+        layout[1].Split(' ', StringSplitOptions.RemoveEmptyEntries).Should().HaveCount(1);
+        layout[2].Should().Be("column");
+        layout[3].Should().Be("true");
+        layout[4].Should().Be("true");
+    }
+
+    [Fact]
+    public async Task Horizontal_Small_Screen_Centers_Current_Middle_Step_With_Adjacent_Steps() {
+        ArgumentNullException.ThrowIfNull(_page);
+
+        await NavigateToWizardDemoAsync(390, 900);
+
+        var demo = _page.GetByTestId("nt-wizard-permutation-constrained-parent");
+        var wizard = demo.Locator(".nt-wizard");
+        await wizard.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 5000 });
+        await demo.ScrollIntoViewIfNeededAsync();
+        await demo.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Next Step" }).ClickAsync();
+        await WaitForCurrentStepAsync("nt-wizard-permutation-constrained-parent", "Second Step With A Long Name");
+
+        var layout = await wizard.Locator(".nt-wizard-steps").EvaluateAsync<string[]>(
+            """
+            steps => {
+                const visibleIndicators = Array.from(steps.querySelectorAll('.nt-wizard-step-indicator'))
+                    .filter(element => getComputedStyle(element).display !== 'none');
+                const current = steps.querySelector('.nt-wizard-step-indicator.current-step');
+                const stepsBox = steps.getBoundingClientRect();
+                const currentBox = current.getBoundingClientRect();
+                const currentCenterDelta = Math.abs((currentBox.left + currentBox.width / 2) - (stepsBox.left + stepsBox.width / 2));
+
+                return [
+                    getComputedStyle(steps).display,
+                    visibleIndicators.length.toString(),
+                    visibleIndicators.map(element => element.textContent.trim()).join('|'),
+                    currentCenterDelta.toString()
+                ];
+            }
+            """);
+
+        layout[0].Should().Be("grid");
+        layout[1].Should().Be("3");
+        layout[2].Should().Contain("Extremely Long Introductory Step Title");
+        layout[2].Should().Contain("Second Step With A Long Name");
+        layout[2].Should().Contain("Final Confirmation Step");
+        double.Parse(layout[3], System.Globalization.CultureInfo.InvariantCulture).Should().BeLessThanOrEqualTo(2);
+    }
+
+    [Fact]
     public async Task Horizontal_Step_Labels_Are_Not_Clipped_And_Connectors_Fill_Remaining_Distance() {
         ArgumentNullException.ThrowIfNull(_page);
 
@@ -409,13 +495,11 @@ public class NTWizard_E2E_Tests : IAsyncLifetime {
         await wizard.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 5000 });
         await demo.ScrollIntoViewIfNeededAsync();
 
-        var clippedStepText = await wizard.Locator(".nt-wizard-step-title, .nt-wizard-step-subtitle").EvaluateAllAsync<string[]>(
+        var midWordWrappingRules = await wizard.Locator(".nt-wizard-step-title, .nt-wizard-step-label, .nt-wizard-step-subtitle").EvaluateAllAsync<string[]>(
             """
-            elements => elements
-                .filter(element => Math.ceil(element.scrollWidth) > Math.floor(element.clientWidth) + 1 || Math.ceil(element.scrollHeight) > Math.floor(element.clientHeight) + 1)
-                .map(element => element.textContent.trim())
+            elements => Array.from(new Set(elements.map(element => getComputedStyle(element).overflowWrap)))
             """);
-        clippedStepText.Should().BeEmpty();
+        midWordWrappingRules.Should().NotContain("anywhere");
 
         var connectorFillDeltas = await wizard.Locator(".nt-wizard-step-indicator:not(:last-child)").EvaluateAllAsync<double[]>(
             """

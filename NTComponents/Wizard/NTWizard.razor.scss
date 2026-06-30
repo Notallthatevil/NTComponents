@@ -21,7 +21,7 @@ $wizard-medium-screen-up-plus: measurements.$medium-screen-up + 1px;
     min-inline-size: 0;
 }
 
-@mixin horizontal-layout {
+@mixin stacked-layout {
     grid-template-areas: "steps" "content" "buttons";
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: min-content min-content auto;
@@ -41,13 +41,21 @@ $wizard-medium-screen-up-plus: measurements.$medium-screen-up + 1px;
 
     .nt-wizard-steps {
         background-color: inherit;
-        flex-direction: row;
-        gap: $wizard-horizontal-step-gap-size;
         grid-area: steps;
-        justify-content: space-between;
+        max-inline-size: none;
         position: sticky;
         top: 0;
         z-index: 10;
+    }
+}
+
+@mixin horizontal-layout {
+    @include stacked-layout;
+
+    .nt-wizard-steps {
+        flex-direction: row;
+        gap: $wizard-horizontal-step-gap-size;
+        justify-content: space-between;
 
         .nt-wizard-step-indicator {
             align-items: center;
@@ -118,6 +126,44 @@ $wizard-medium-screen-up-plus: measurements.$medium-screen-up + 1px;
 
     @media only screen and (max-width: measurements.$medium-screen-up) {
         .nt-wizard-steps {
+            &:has(.current-step:not(:first-child):not(:last-child)) {
+                align-items: center;
+                display: grid;
+                grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+                justify-content: stretch;
+
+                .nt-wizard-step-indicator {
+                    display: none;
+                    flex: 0 1 auto;
+                    width: auto;
+
+                    &:not(:last-child)::after {
+                        content: none;
+                    }
+                }
+
+                .nt-wizard-step-indicator:has(+ .current-step),
+                .nt-wizard-step-indicator.current-step,
+                .nt-wizard-step-indicator.current-step + .nt-wizard-step-indicator {
+                    display: grid;
+                }
+
+                .nt-wizard-step-indicator:has(+ .current-step) {
+                    grid-column: 1;
+                    justify-self: end;
+                }
+
+                .nt-wizard-step-indicator.current-step {
+                    grid-column: 2;
+                    justify-self: center;
+                }
+
+                .nt-wizard-step-indicator.current-step + .nt-wizard-step-indicator {
+                    grid-column: 3;
+                    justify-self: start;
+                }
+            }
+
             .nt-wizard-step-indicator {
                 .nt-wizard-step-title {
                     align-items: flex-start;
@@ -127,7 +173,6 @@ $wizard-medium-screen-up-plus: measurements.$medium-screen-up + 1px;
                     min-block-size: $wizard-title-height;
                     min-inline-size: 0;
                     overflow: visible;
-                    overflow-wrap: anywhere;
                     text-overflow: clip;
                     white-space: normal;
                 }
@@ -135,7 +180,6 @@ $wizard-medium-screen-up-plus: measurements.$medium-screen-up + 1px;
                 .nt-wizard-step-label {
                     flex: 1 1 min-content;
                     min-inline-size: 0;
-                    overflow-wrap: anywhere;
                 }
 
                 .nt-wizard-step-subtitle {
@@ -144,7 +188,6 @@ $wizard-medium-screen-up-plus: measurements.$medium-screen-up + 1px;
                     min-block-size: $wizard-subtitle-height;
                     min-inline-size: 0;
                     overflow: visible;
-                    overflow-wrap: anywhere;
                     text-overflow: clip;
                     white-space: normal;
                 }
@@ -407,6 +450,10 @@ $wizard-medium-screen-up-plus: measurements.$medium-screen-up + 1px;
     }
 
     @media only screen and (max-width: measurements.$medium-screen-up) {
+        &.nt-wizard-vertical-on-small-screens {
+            @include stacked-layout;
+        }
+
         &:not(.nt-wizard-vertical-on-small-screens) {
             @include horizontal-layout;
         }
