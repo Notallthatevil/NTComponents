@@ -271,7 +271,7 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
     /// <summary>
     /// Refreshes the data grid by re-resolving the current data source and updating the rendered rows.
     /// </summary>
-    public Task RefreshDataGridAsync(CancellationToken cancellationToken = default) {
+    public async Task RefreshDataGridAsync(CancellationToken cancellationToken = default) {
         if (Virtualize) {
             ResetVirtualizedData();
         }
