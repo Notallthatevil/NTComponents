@@ -537,15 +537,12 @@ public partial class NTWizard : NTComponentBase, IDisposable {
     }
 
     private bool SetCurrentStepFormValidity(bool isValid) {
+        var stepValidityChanged = _currentStep is NTWizardFormStep && SetStepValidity(_currentStep, isValid);
         if (_currentStepFormIsValid == isValid) {
-            return false;
+            return stepValidityChanged;
         }
 
         _currentStepFormIsValid = isValid;
-        if (_currentStep is NTWizardFormStep) {
-            SetStepValidity(_currentStep, isValid);
-        }
-
         return true;
     }
 

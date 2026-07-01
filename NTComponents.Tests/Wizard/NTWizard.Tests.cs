@@ -520,6 +520,31 @@ public class NTWizard_Tests : BunitContext {
     }
 
     [Fact]
+    public async Task ValidateOnNavigation_False_Marks_Each_Visited_Invalid_Form_Step_Invalid() {
+        var firstModel = new WizardRequiredModel();
+        var secondModel = new WizardRequiredModel();
+        var thirdModel = new WizardRequiredModel();
+        var cut = Render<NTWizard>(p => p.AddChildContent(builder => {
+            AddRequiredFormStep(builder, "Step 1", firstModel, validateOnNavigation: false);
+            AddRequiredFormStep(builder, "Step 2", secondModel, validateOnNavigation: false);
+            AddRequiredFormStep(builder, "Step 3", thirdModel, validateOnNavigation: false);
+            AddStep(builder, "Review", "Review content");
+        }));
+
+        await FindNextButton(cut).ClickAsync(new MouseEventArgs());
+        await FindNextButton(cut).ClickAsync(new MouseEventArgs());
+        await FindNextButton(cut).ClickAsync(new MouseEventArgs());
+
+        cut.WaitForAssertion(() => {
+            var indicators = cut.FindAll("li.nt-wizard-step-indicator");
+            indicators[0].GetAttribute("class")!.Should().Contain("invalid-step").And.NotContain("completed-step");
+            indicators[1].GetAttribute("class")!.Should().Contain("invalid-step").And.NotContain("completed-step");
+            indicators[2].GetAttribute("class")!.Should().Contain("invalid-step").And.NotContain("completed-step");
+            indicators[3].GetAttribute("class")!.Should().Contain("current-step");
+        });
+    }
+
+    [Fact]
     public async Task ValidateOnNavigation_False_Submit_Still_Validates_Current_Form() {
         var invalidSubmitCalled = false;
         var submitCalled = false;
