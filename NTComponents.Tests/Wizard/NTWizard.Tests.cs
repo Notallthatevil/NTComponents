@@ -287,6 +287,112 @@ public class NTWizard_Tests : BunitContext {
     }
 
     [Fact]
+    public async Task Optional_Form_Step_With_Required_Field_Skip_Marks_Skipped_And_Invalid() {
+        var invalidSubmitCalled = false;
+        var model = new WizardRequiredModel();
+        var cut = Render<NTWizard>(p => p.AddChildContent(builder => {
+            AddStep(builder, "Step 1", "Step 1 content");
+
+            builder.OpenComponent<NTWizardFormStep>(10);
+            builder.AddComponentParameter(20, nameof(NTWizardFormStep.Title), "Step 2");
+            builder.AddComponentParameter(30, nameof(NTWizardFormStep.Optional), true);
+            builder.AddComponentParameter(40, nameof(NTWizardFormStep.Model), model);
+            builder.AddComponentParameter(50, nameof(NTWizardFormStep.OnInvalidSubmitCallback), EventCallback.Factory.Create<object>(this, _ => invalidSubmitCalled = true));
+            builder.AddComponentParameter(60, nameof(NTWizardFormStep.ChildContent), (RenderFragment<EditContext>)(_ => b => b.AddContent(0, "Step 2 form")));
+            builder.CloseComponent();
+
+            AddStep(builder, "Step 3", "Step 3 content");
+        }));
+
+        await FindNextButton(cut).ClickAsync(new MouseEventArgs());
+        await FindSkipButton(cut).ClickAsync(new MouseEventArgs());
+
+        invalidSubmitCalled.Should().BeFalse();
+        var indicators = cut.FindAll("li.nt-wizard-step-indicator");
+        indicators[1].GetAttribute("class")!.Should().Contain("skipped-step");
+        indicators[1].GetAttribute("class")!.Should().Contain("invalid-step");
+        indicators[1].GetAttribute("data-state").Should().Be("invalid");
+        cut.FindAll("button.nt-wizard-step-button")[1].GetAttribute("aria-invalid").Should().Be("true");
+        indicators[2].GetAttribute("class")!.Should().Contain("current-step");
+    }
+
+    [Fact]
+    public async Task Visited_Form_Step_State_Persists_When_Navigating_Forward_And_Back() {
+        var step1 = new WizardRequiredModel { Name = "Ready" };
+        var step3 = new WizardRequiredModel();
+        var step5 = new WizardRequiredModel();
+        var cut = Render<NTWizard>(p => p
+            .Add(w => w.InvalidFormButtonBehavior, NTWizardInvalidFormButtonBehavior.DisableButtons)
+            .AddChildContent(builder => {
+                AddRequiredFormStep(builder, "Step 1", step1);
+                AddStep(builder, "Step 2", "Step 2 content");
+                AddRequiredFormStep(builder, "Step 3", step3, validateOnNavigation: false);
+                AddStep(builder, "Step 4", "Step 4 content");
+                AddRequiredFormStep(builder, "Step 5", step5);
+            }));
+
+        await AssertStepStateAsync(cut, current: 0, completed: [], invalid: []);
+
+        await FindNextButton(cut).ClickAsync(new MouseEventArgs());
+        await AssertStepStateAsync(cut, current: 1, completed: [0], invalid: []);
+
+        await FindNextButton(cut).ClickAsync(new MouseEventArgs());
+        await AssertStepStateAsync(cut, current: 2, completed: [0, 1], invalid: [2]);
+
+        await FindNextButton(cut).ClickAsync(new MouseEventArgs());
+        await AssertStepStateAsync(cut, current: 3, completed: [0, 1], invalid: [2]);
+
+        await FindNextButton(cut).ClickAsync(new MouseEventArgs());
+        await AssertStepStateAsync(cut, current: 4, completed: [0, 1, 3], invalid: [2, 4]);
+
+        await FindPreviousButton(cut).ClickAsync(new MouseEventArgs());
+        await AssertStepStateAsync(cut, current: 3, completed: [0, 1], invalid: [2, 4]);
+
+        await FindPreviousButton(cut).ClickAsync(new MouseEventArgs());
+        await AssertStepStateAsync(cut, current: 2, completed: [0, 1, 3], invalid: [2, 4]);
+
+        await FindPreviousButton(cut).ClickAsync(new MouseEventArgs());
+        await AssertStepStateAsync(cut, current: 1, completed: [0, 3], invalid: [2, 4]);
+
+        await FindPreviousButton(cut).ClickAsync(new MouseEventArgs());
+        await AssertStepStateAsync(cut, current: 0, completed: [1, 3], invalid: [2, 4]);
+
+        static async Task AssertStepStateAsync(IRenderedComponent<NTWizard> cut, int current, int[] completed, int[] invalid) {
+            await cut.InvokeAsync(() => Task.CompletedTask);
+            cut.WaitForAssertion(() => {
+                var indicators = cut.FindAll("li.nt-wizard-step-indicator");
+                indicators.Should().HaveCount(5);
+                for (var i = 0; i < indicators.Count; i++) {
+                    var classes = indicators[i].GetAttribute("class")!;
+                    classes.Should().Contain("nt-wizard-step-indicator");
+                    if (i == current) {
+                        classes.Should().Contain("current-step");
+                    }
+                    if (i != current) {
+                        classes.Should().NotContain("current-step");
+                    }
+
+                    if (completed.Contains(i)) {
+                        classes.Should().Contain("completed-step");
+                    }
+                    else {
+                        classes.Should().NotContain("completed-step");
+                    }
+
+                    if (invalid.Contains(i)) {
+                        classes.Should().Contain("invalid-step");
+                        cut.FindAll("button.nt-wizard-step-button")[i].GetAttribute("aria-invalid").Should().Be("true");
+                    }
+                    else {
+                        classes.Should().NotContain("invalid-step");
+                        cut.FindAll("button.nt-wizard-step-button")[i].GetAttribute("aria-invalid").Should().Be("false");
+                    }
+                }
+            });
+        }
+    }
+
+    [Fact]
     public async Task Optional_Step_Skip_Does_Not_Reset_When_Parent_Callback_Renders() {
         var cut = Render<WizardSkipCallbackHost>();
 
@@ -622,11 +728,26 @@ public class NTWizard_Tests : BunitContext {
     private static IElement FindSkipButton(IRenderedComponent<NTWizard> cut) =>
         FindButton(cut, "Skip");
 
+    private static IElement FindPreviousButton(IRenderedComponent<NTWizard> cut) =>
+        FindButton(cut, "Previous Step");
+
     private static IElement FindButton(IRenderedComponent<NTWizard> cut, string text) =>
         cut.FindAll("button").Single(b => b.TextContent.Contains(text, StringComparison.Ordinal));
 
     private static IElement FindStepButton(IRenderedComponent<NTWizard> cut, string text) =>
         cut.FindAll("ol.nt-wizard-steps button").Single(b => b.TextContent.Contains(text, StringComparison.Ordinal));
+
+    private static void AddRequiredFormStep(RenderTreeBuilder builder, string title, WizardRequiredModel model, bool validateOnNavigation = true) {
+        builder.OpenComponent<NTWizardFormStep>(0);
+        builder.AddComponentParameter(1, nameof(NTWizardFormStep.Title), title);
+        builder.AddComponentParameter(2, nameof(NTWizardFormStep.Model), model);
+        if (!validateOnNavigation) {
+            builder.AddComponentParameter(3, nameof(NTWizardFormStep.ValidateOnNavigation), false);
+        }
+
+        builder.AddComponentParameter(4, nameof(NTWizardFormStep.ChildContent), (RenderFragment<EditContext>)(_ => b => b.AddContent(0, $"{title} form")));
+        builder.CloseComponent();
+    }
 
     private static void AddStep(RenderTreeBuilder builder, string title, string content, bool optional = false, bool skipped = false, bool disabled = false, bool hasError = false, bool completed = false) {
         builder.OpenComponent<NTWizardStep>(0);

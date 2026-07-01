@@ -10,6 +10,7 @@ $wizard-title-gap-size: 4px;
 $wizard-step-gap-size: 12px;
 $wizard-step-rail-width: 250px;
 $wizard-horizontal-step-gap-size: 16px;
+$wizard-horizontal-step-button-min-width: 10rem;
 $wizard-horizontal-step-connector-gap-size: 8px;
 $wizard-step-connector-thickness: 4px;
 $wizard-step-connector-radius: 9999px;
@@ -77,13 +78,16 @@ $wizard-medium-screen-up-plus: measurements.$medium-screen-up + 1px;
                 grid-template-rows: auto auto;
             }
 
+            .nt-wizard-step-button {
+                min-inline-size: min(100%, $wizard-horizontal-step-button-min-width);
+            }
+
             .nt-wizard-step-title {
                 align-items: center;
                 block-size: auto;
                 grid-area: step-title;
                 max-inline-size: none;
-                min-inline-size: max-content;
-                white-space: nowrap;
+                min-inline-size: 0;
             }
 
             .nt-wizard-step-index {
@@ -91,7 +95,7 @@ $wizard-medium-screen-up-plus: measurements.$medium-screen-up + 1px;
             }
 
             .nt-wizard-step-label {
-                min-inline-size: max-content;
+                min-inline-size: 0;
             }
 
             .nt-wizard-step-subtitle {
@@ -100,8 +104,7 @@ $wizard-medium-screen-up-plus: measurements.$medium-screen-up + 1px;
                 grid-row: 2;
                 margin-inline-start: 0;
                 max-inline-size: none;
-                min-inline-size: max-content;
-                white-space: nowrap;
+                min-inline-size: 0;
             }
 
             &:has(.tnt-icon) {
@@ -253,7 +256,7 @@ $wizard-medium-screen-up-plus: measurements.$medium-screen-up + 1px;
             @include contain-inline;
 
             color: colors.$tnt-color-outline;
-            cursor: not-allowed;
+            cursor: default;
             display: flex;
             flex-direction: column;
             gap: $wizard-step-gap-size;
@@ -269,7 +272,7 @@ $wizard-medium-screen-up-plus: measurements.$medium-screen-up + 1px;
                 background: none;
                 border: 0;
                 color: inherit;
-                cursor: inherit;
+                cursor: default;
                 display: block;
                 font: inherit;
                 margin: 0;
@@ -280,12 +283,14 @@ $wizard-medium-screen-up-plus: measurements.$medium-screen-up + 1px;
             .nt-wizard-step-title {
                 @include typescale.nt-title-medium;
 
-                align-items: center;
+                align-items: flex-start;
                 display: flex;
-                height: $wizard-title-height;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
+                height: auto;
+                min-block-size: $wizard-title-height;
+                overflow: visible;
+                text-overflow: clip;
+                white-space: normal;
+                word-break: normal;
             }
 
             .nt-wizard-step-index {
@@ -297,7 +302,7 @@ $wizard-medium-screen-up-plus: measurements.$medium-screen-up + 1px;
                 color: inherit;
                 display: flex;
                 flex: 0 0 auto;
-                height: 100%;
+                height: $wizard-title-height;
                 justify-content: center;
                 margin-inline-end: 8px;
                 padding: 0;
@@ -313,11 +318,13 @@ $wizard-medium-screen-up-plus: measurements.$medium-screen-up + 1px;
                 @include typescale.nt-title-small;
 
                 color: inherit;
-                height: $wizard-subtitle-height;
+                height: auto;
                 margin-inline-start: calc($wizard-title-height + 8px);
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
+                min-block-size: $wizard-subtitle-height;
+                overflow: visible;
+                text-overflow: clip;
+                white-space: normal;
+                word-break: normal;
             }
 
             &:has(.tnt-icon) {
@@ -371,13 +378,21 @@ $wizard-medium-screen-up-plus: measurements.$medium-screen-up + 1px;
                 }
             }
 
-            &.available-step {
-                cursor: pointer;
+            &:not(.available-step),
+            &.disabled-step {
+                .nt-wizard-step-button {
+                    cursor: not-allowed;
+                }
+            }
+
+            &.available-step:not(.current-step) {
+                .nt-wizard-step-button {
+                    cursor: pointer;
+                }
             }
 
             &.disabled-step {
                 color: colors.$tnt-color-outline-variant;
-                cursor: not-allowed;
                 opacity: 0.72;
             }
 

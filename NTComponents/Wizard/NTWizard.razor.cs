@@ -287,7 +287,7 @@ public partial class NTWizard : NTComponentBase, IDisposable {
 
         _skippedStepIds.Add(skippedStep._internalId);
         _completedStepIds.Remove(skippedStep._internalId);
-        _invalidStepIds.Remove(skippedStep._internalId);
+        SetStepValidity(skippedStep, GetStepValidityWithoutMessageEmission(skippedStep));
         MoveToStep(nextStepIndex.Value, notify: true);
         await OnStepSkipped.InvokeAsync(skippedStepIndex);
     }
@@ -600,6 +600,8 @@ public partial class NTWizard : NTComponentBase, IDisposable {
 
         return formStep.RequiredFieldsSatisfiedWithoutMessageEmission();
     }
+
+    private static bool GetStepValidityWithoutMessageEmission(NTWizardStepBase step) => step is not NTWizardFormStep formStep || formStep.RequiredFieldsSatisfiedWithoutMessageEmission();
 
     private bool GetCurrentStepFormValidityAfterFieldChange(EditContext editContext) {
         if (_currentStep is not NTWizardFormStep { ValidateOnInput: true }) {

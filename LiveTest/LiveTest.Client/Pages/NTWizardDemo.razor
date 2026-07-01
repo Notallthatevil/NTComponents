@@ -247,6 +247,7 @@
                 <NTWizardFormStep Title="Details"
                                   SubTitle="Can revisit"
                                   Model="@_deferredDetails"
+                                  Optional="true"
                                   ValidateOnNavigation="false"
                                   ShowRequiredSupportingText="true"
                                   RequiredSupportingText="Required before submit">
@@ -264,6 +265,55 @@
             <p class="status" data-testid="nt-wizard-deferred-validation-status">@_deferredValidationStatus</p>
         </div>
     </section>
+
+    <section class="surface" aria-labelledby="nt-wizard-visited-state-title">
+        <div>
+            <h2 id="nt-wizard-visited-state-title">Visited Step State</h2>
+            <p class="muted">Steps 1, 3, and 5 have required fields. Navigate forward through all five steps and back again to verify visited steps keep their valid or error state.</p>
+        </div>
+        <div class="wizard-shell" data-testid="nt-wizard-visited-state-demo">
+            <NTWizard Title="Visited State Flow"
+                      LayoutDirection="LayoutDirection.Horizontal"
+                      HideStepsInsteadOfRemovingFromDom="true"
+                      InvalidFormButtonBehavior="NTWizardInvalidFormButtonBehavior.DisableButtons">
+                <NTWizardFormStep Title="Step 1"
+                                  SubTitle="Required valid"
+                                  Model="@_visitedStep1"
+                                  ShowRequiredSupportingText="true"
+                                  RequiredSupportingText="Required before continuing">
+                    <NTInputText @bind-Value="_visitedStep1.Name" Label="Step 1 Name" Placeholder="Required" />
+                </NTWizardFormStep>
+                <NTWizardStep Title="Step 2" SubTitle="No fields">
+                    <div class="step-content">
+                        <h3>Step 2</h3>
+                        <p class="muted">This step has no required fields.</p>
+                    </div>
+                </NTWizardStep>
+                <NTWizardFormStep Title="Step 3"
+                                  SubTitle="Required deferred"
+                                  Model="@_visitedStep3"
+                                  ValidateOnNavigation="false"
+                                  ShowRequiredSupportingText="true"
+                                  RequiredSupportingText="Required before submit">
+                    <NTInputText @bind-Value="_visitedStep3.Name" Label="Step 3 Name" Placeholder="Leave empty to keep error state" />
+                </NTWizardFormStep>
+                <NTWizardStep Title="Step 4" SubTitle="No fields">
+                    <div class="step-content">
+                        <h3>Step 4</h3>
+                        <p class="muted">This step has no required fields.</p>
+                    </div>
+                </NTWizardStep>
+                <NTWizardFormStep Title="Step 5"
+                                  SubTitle="Required final"
+                                  Model="@_visitedStep5"
+                                  ShowRequiredSupportingText="true"
+                                  RequiredSupportingText="Required before submit">
+                    <NTInputText @bind-Value="_visitedStep5.Name" Label="Step 5 Name" Placeholder="Leave empty to keep error state" />
+                </NTWizardFormStep>
+            </NTWizard>
+        </div>
+    </section>
+
     <section class="surface" aria-labelledby="nt-wizard-permutations-title">
         <div>
             <h2 id="nt-wizard-permutations-title">NTWizard Permutations</h2>
@@ -597,6 +647,9 @@
     private AccountModel _deferredAccount = new();
     private AccountModel _deferredDetails = new();
     private AccountModel _deferredReview = new();
+    private AccountModel _visitedStep1 = new() { Name = "Ready" };
+    private AccountModel _visitedStep3 = new();
+    private AccountModel _visitedStep5 = new();
     private int _controlledStepIndex;
     private string _controlledStatus = "Controlled: 0";
     private string _guardedStatus = "Guard: waiting";
