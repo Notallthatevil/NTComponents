@@ -1,3 +1,5 @@
+using NTComponents.Virtualization;
+
 namespace NTComponents;
 
 /// <summary>
@@ -23,6 +25,29 @@ public readonly struct NTDataGridItemsProviderRequest<TItem>() where TItem : cla
     ///     Gets the current sort descriptors in priority order.
     /// </summary>
     public IReadOnlyList<NTSortDescriptor> Sorts { get; init; } = [];
+
+    /// <summary>
+    ///     Implicitly converts an <see cref="NTItemsProviderRequest" /> to an <see cref="NTDataGridItemsProviderRequest{TItem}" />.
+    /// </summary>
+    public static implicit operator NTDataGridItemsProviderRequest<TItem>(NTItemsProviderRequest request) {
+        return new NTDataGridItemsProviderRequest<TItem> {
+            StartIndex = request.StartIndex,
+            Count = request.Count,
+            Sorts = [.. request.SortOnProperties.Select(sort => new NTSortDescriptor(sort.Key, sort.Value))],
+            CancellationToken = default
+        };
+    }
+
+    /// <summary>
+    ///     Implicitly converts an <see cref="NTDataGridItemsProviderRequest{TItem}" /> to an <see cref="NTItemsProviderRequest" />.
+    /// </summary>
+    public static implicit operator NTItemsProviderRequest(NTDataGridItemsProviderRequest<TItem> request) {
+        return new NTItemsProviderRequest {
+            StartIndex = request.StartIndex,
+            Count = request.Count,
+            Sorts = [.. request.Sorts.Where(sort => !string.IsNullOrWhiteSpace(sort.PropertyName)).Select(sort => $"{sort.PropertyName},{sort.Direction}")]
+        };
+    }
 }
 
 /// <summary>

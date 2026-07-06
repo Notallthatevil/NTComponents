@@ -63,6 +63,21 @@ public readonly record struct NTItemsProviderRequest() {
         });
     }
 
+    internal static string[] FormatSorts(IEnumerable<KeyValuePair<string, SortDirection>>? sortOnProperties) {
+        if (sortOnProperties is null) {
+            return [];
+        }
+
+        var sorts = new List<string>();
+        foreach (var sort in sortOnProperties) {
+            if (!string.IsNullOrWhiteSpace(sort.Key)) {
+                sorts.Add($"{sort.Key},{sort.Value}");
+            }
+        }
+
+        return [.. sorts];
+    }
+
     private static IReadOnlyList<KeyValuePair<string, SortDirection>> ParseSorts(string[]? sorts) {
         if (sorts is not { Length: > 0 }) {
             return [];

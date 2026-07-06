@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
+using NTComponents;
 using NTComponents.Virtualization;
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
@@ -100,4 +101,84 @@ public class NTItemsProviderRequest_Tests {
         property!.GetCustomAttributes(inherit: false).Should().Contain(attribute => attribute is IgnoreDataMemberAttribute);
         property.GetCustomAttributes(inherit: false).Should().Contain(attribute => attribute is JsonIgnoreAttribute);
     }
+
+    [Fact]
+    public void ImplicitOperator_To_NTVirtualizeItemsProviderRequest_Copies_Values() {
+        var request = new NTItemsProviderRequest {
+            StartIndex = 4,
+            Count = 12,
+            Sorts = ["Name,Ascending", "Age,Descending"]
+        };
+
+        NTVirtualizeItemsProviderRequest<TestItem> virtualizeRequest = request;
+
+        virtualizeRequest.StartIndex.Should().Be(4);
+        virtualizeRequest.Count.Should().Be(12);
+        virtualizeRequest.CancellationToken.CanBeCanceled.Should().BeFalse();
+        virtualizeRequest.CancellationToken.IsCancellationRequested.Should().BeFalse();
+        virtualizeRequest.SortOnProperties.Should().Equal([
+            new KeyValuePair<string, SortDirection>("Name", SortDirection.Ascending),
+            new KeyValuePair<string, SortDirection>("Age", SortDirection.Descending)
+        ]);
+    }
+
+    [Fact]
+    public void ImplicitOperator_From_NTVirtualizeItemsProviderRequest_Copies_Values() {
+        var virtualizeRequest = new NTVirtualizeItemsProviderRequest<TestItem> {
+            StartIndex = 3,
+            Count = 9,
+            CancellationToken = new CancellationToken(canceled: true),
+            SortOnProperties = [
+                new KeyValuePair<string, SortDirection>("Name", SortDirection.Ascending),
+                new KeyValuePair<string, SortDirection>("Age", SortDirection.Descending)
+            ]
+        };
+
+        NTItemsProviderRequest request = virtualizeRequest;
+
+        request.StartIndex.Should().Be(3);
+        request.Count.Should().Be(9);
+        request.Sorts.Should().Equal("Name,Ascending", "Age,Descending");
+    }
+
+    [Fact]
+    public void ImplicitOperator_To_NTDataGridItemsProviderRequest_Copies_Values() {
+        var request = new NTItemsProviderRequest {
+            StartIndex = 7,
+            Count = 14,
+            Sorts = ["Name,Ascending", "Age,Descending"]
+        };
+
+        NTDataGridItemsProviderRequest<TestItem> gridRequest = request;
+
+        gridRequest.StartIndex.Should().Be(7);
+        gridRequest.Count.Should().Be(14);
+        gridRequest.CancellationToken.CanBeCanceled.Should().BeFalse();
+        gridRequest.CancellationToken.IsCancellationRequested.Should().BeFalse();
+        gridRequest.Sorts.Should().Equal([
+            new NTSortDescriptor("Name", SortDirection.Ascending),
+            new NTSortDescriptor("Age", SortDirection.Descending)
+        ]);
+    }
+
+    [Fact]
+    public void ImplicitOperator_From_NTDataGridItemsProviderRequest_Copies_Values() {
+        var gridRequest = new NTDataGridItemsProviderRequest<TestItem> {
+            StartIndex = 2,
+            Count = 6,
+            CancellationToken = new CancellationToken(canceled: true),
+            Sorts = [
+                new NTSortDescriptor("Name", SortDirection.Ascending),
+                new NTSortDescriptor("Age", SortDirection.Descending)
+            ]
+        };
+
+        NTItemsProviderRequest request = gridRequest;
+
+        request.StartIndex.Should().Be(2);
+        request.Count.Should().Be(6);
+        request.Sorts.Should().Equal("Name,Ascending", "Age,Descending");
+    }
+
+    private sealed class TestItem;
 }

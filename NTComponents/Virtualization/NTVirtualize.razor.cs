@@ -626,6 +626,24 @@ public struct NTVirtualizeItemsProviderRequest<TItem>() {
     }
 
     /// <summary>
+    ///     Implicitly converts an <see cref="NTItemsProviderRequest" /> to a <see cref="NTVirtualizeItemsProviderRequest{TItem}" />.
+    /// </summary>
+    /// <param name="request">The items provider request to convert.</param>
+    /// <returns>A new <see cref="NTVirtualizeItemsProviderRequest{TItem}" /> with properties copied from the source request.</returns>
+    /// <remarks>
+    ///     This conversion allows a query-friendly items provider request to be used in virtualization contexts. The <see cref="CancellationToken" /> is set to the default value since it is not
+    ///     available in the source request.
+    /// </remarks>
+    public static implicit operator NTVirtualizeItemsProviderRequest<TItem>(NTItemsProviderRequest request) {
+        return new NTVirtualizeItemsProviderRequest<TItem> {
+            Count = request.Count,
+            SortOnProperties = request.SortOnProperties,
+            StartIndex = request.StartIndex,
+            CancellationToken = default
+        };
+    }
+
+    /// <summary>
     ///     Implicitly converts a <see cref="NTVirtualizeItemsProviderRequest{TItem}" /> to a <see cref="TnTItemsProviderRequest" />.
     /// </summary>
     /// <param name="request">The virtualize items provider request to convert.</param>
@@ -636,6 +654,20 @@ public struct NTVirtualizeItemsProviderRequest<TItem>() {
             StartIndex = request.StartIndex,
             SortOnProperties = request.SortOnProperties,
             Count = request.Count
+        };
+    }
+
+    /// <summary>
+    ///     Implicitly converts a <see cref="NTVirtualizeItemsProviderRequest{TItem}" /> to an <see cref="NTItemsProviderRequest" />.
+    /// </summary>
+    /// <param name="request">The virtualize items provider request to convert.</param>
+    /// <returns>A new <see cref="NTItemsProviderRequest" /> with properties copied from the source request.</returns>
+    /// <remarks>This conversion enables interoperability between the virtualization-specific request type and the query-friendly items provider request type.</remarks>
+    public static implicit operator NTItemsProviderRequest(NTVirtualizeItemsProviderRequest<TItem> request) {
+        return new NTItemsProviderRequest {
+            StartIndex = request.StartIndex,
+            Count = request.Count,
+            Sorts = NTItemsProviderRequest.FormatSorts(request.SortOnProperties)
         };
     }
 }
