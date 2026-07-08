@@ -55,13 +55,16 @@ internal sealed class NTSnackbarService(IJSRuntime _jsRuntime) : INTSnackbarServ
         _moduleLock.Dispose();
     }
 
-    public async Task InvokeActionAsync(INTSnackbar snackbar) {
-        if (snackbar is not NTSnackbarImplementation implementation || implementation.ActionCallback is null) {
+    public Task InvokeActionAsync(INTSnackbar snackbar) => InvokeActionAsync(snackbar, 0);
+
+    public async Task InvokeActionAsync(INTSnackbar snackbar, int actionIndex) {
+        if (snackbar is not NTSnackbarImplementation implementation || !TryGetAction(implementation, actionIndex, out var action)) {
             return;
         }
 
-        await implementation.ActionCallback();
-        await CloseAsync(snackbar);
+        if (await action.Callback()) {
+            await CloseAsync(snackbar);
+        }
     }
 
     public async Task ShowAsync(
@@ -79,11 +82,36 @@ internal sealed class NTSnackbarService(IJSRuntime _jsRuntime) : INTSnackbarServ
             throw new ArgumentException("Snackbar actions require both an action label and an action callback.");
         }
 
+        var actions = hasAction
+            ? new[] { new NTSnackbarAction(actionLabel!, async () => {
+                await actionCallback!();
+                return true;
+            }) }
+            : [];
+
+        await ShowAsync(message, actions, timeout, showClose, backgroundColor, textColor, actionColor);
+    }
+
+    public async Task ShowAsync(
+        string message,
+        IReadOnlyList<NTSnackbarAction> actions,
+        int? timeout = null,
+        bool? showClose = null,
+        TnTColor backgroundColor = TnTColor.InverseSurface,
+        TnTColor textColor = TnTColor.InverseOnSurface,
+        TnTColor actionColor = TnTColor.InversePrimary
+    ) {
+        ArgumentNullException.ThrowIfNull(actions);
+        if (actions.Any(static action => action is null)) {
+            throw new ArgumentException("Snackbar actions cannot contain null values.", nameof(actions));
+        }
+
+        var materializedActions = actions.ToArray();
+        var hasAction = materializedActions.Length > 0;
         var snackbar = new NTSnackbarImplementation() {
             Id = TnTComponentIdentifier.NewId(),
             Message = message,
-            ActionLabel = actionLabel,
-            ActionCallback = actionCallback,
+            Actions = materializedActions,
             Timeout = timeout ?? (hasAction ? 0 : 4),
             ShowClose = showClose ?? hasAction,
             BackgroundColor = backgroundColor,
@@ -98,7 +126,7 @@ internal sealed class NTSnackbarService(IJSRuntime _jsRuntime) : INTSnackbarServ
                 "queueSnackbarFromBlazor",
                 snackbar.Id,
                 snackbar.Message,
-                snackbar.ActionLabel,
+                snackbar.Actions.Select(static action => action.Label).ToArray(),
                 snackbar.Timeout,
                 snackbar.ShowClose,
                 snackbar.BackgroundColor.ToCssTnTColorVariable(),
@@ -117,12 +145,12 @@ internal sealed class NTSnackbarService(IJSRuntime _jsRuntime) : INTSnackbarServ
     }
 
     [JSInvokable]
-    public async Task InvokeActionFromJavaScript(string id) {
-        if (!TryGetTrackedSnackbar(id, out var snackbar) || snackbar.ActionCallback is null) {
-            return;
+    public async Task<bool> InvokeActionFromJavaScript(string id, int actionIndex) {
+        if (!TryGetTrackedSnackbar(id, out var snackbar) || !TryGetAction(snackbar, actionIndex, out var action)) {
+            return false;
         }
 
-        await snackbar.ActionCallback();
+        return await action.Callback();
     }
 
     [JSInvokable]
@@ -181,16 +209,26 @@ internal sealed class NTSnackbarService(IJSRuntime _jsRuntime) : INTSnackbarServ
         }
     }
 
+    private static bool TryGetAction(NTSnackbarImplementation snackbar, int actionIndex, out NTSnackbarAction action) {
+        if (actionIndex < 0 || actionIndex >= snackbar.Actions.Count) {
+            action = default!;
+            return false;
+        }
+
+        action = snackbar.Actions[actionIndex];
+        return true;
+    }
+
     /// <summary>
     ///     Internal snackbar implementation stored by the snackbar service.
     /// </summary>
     internal sealed class NTSnackbarImplementation : INTSnackbar {
-        public string? ActionLabel { get; set; }
-        internal Func<Task>? ActionCallback { get; set; }
+        public string? ActionLabel => Actions.FirstOrDefault()?.Label;
+        public IReadOnlyList<NTSnackbarAction> Actions { get; set; } = [];
         public TnTColor ActionColor { get; set; } = TnTColor.InversePrimary;
         public TnTColor BackgroundColor { get; set; } = TnTColor.InverseSurface;
         public bool Closing => false;
-        public bool HasAction => ActionCallback is not null && !string.IsNullOrWhiteSpace(ActionLabel);
+        public bool HasAction => Actions.Count > 0;
         public string Id { get; set; } = string.Empty;
         public string Message { get; set; } = default!;
         public bool ShowClose { get; set; }

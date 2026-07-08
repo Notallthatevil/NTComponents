@@ -54,6 +54,7 @@ public class NTSnackbarService_Tests : BunitContext {
         openedSnackbar.TextColor.Should().Be(TnTColor.InverseOnSurface);
         openedSnackbar.ActionColor.Should().Be(TnTColor.InversePrimary);
         openedSnackbar.HasAction.Should().BeFalse();
+        openedSnackbar.Actions.Should().BeEmpty();
 
         GetQueuedArgument<string>(1).Should().Be("Saved");
         GetQueuedArgument<double>(3).Should().Be(4);
@@ -77,12 +78,33 @@ public class NTSnackbarService_Tests : BunitContext {
         // Assert
         service.ActiveSnackbar.Should().NotBeNull();
         service.ActiveSnackbar!.HasAction.Should().BeTrue();
-        GetQueuedArgument<string>(2).Should().Be("Undo");
+        GetQueuedArgument<string[]>(2).Should().Equal("Undo");
         GetQueuedArgument<bool>(4).Should().BeTrue();
         GetQueuedArgument<double>(3).Should().Be(0);
         GetQueuedArgument<object>(8).Should().NotBeNull();
         GetQueuedArgument<string>(9).Should().Be(nameof(NTSnackbarService.InvokeActionFromJavaScript));
         GetQueuedArgument<string>(10).Should().Be(nameof(NTSnackbarService.NotifyClosedFromJavaScript));
+    }
+
+    [Fact]
+    public async Task ShowAsync_WithMultipleActions_PassesActionLabels() {
+        // Arrange
+        var service = CreateService();
+
+        // Act
+        await service.ShowAsync("Draft saved", [
+            new NTSnackbarAction("Copy", () => Task.FromResult(false)),
+            new NTSnackbarAction("Open", () => Task.FromResult(true))
+        ]);
+
+        // Assert
+        service.ActiveSnackbar.Should().NotBeNull();
+        service.ActiveSnackbar!.HasAction.Should().BeTrue();
+        service.ActiveSnackbar.ActionLabel.Should().Be("Copy");
+        service.ActiveSnackbar.Actions.Select(action => action.Label).Should().Equal("Copy", "Open");
+        service.ActiveSnackbar.Timeout.Should().Be(0);
+        service.ActiveSnackbar.ShowClose.Should().BeTrue();
+        GetQueuedArgument<string[]>(2).Should().Equal("Copy", "Open");
     }
 
     [Fact]
@@ -187,6 +209,74 @@ public class NTSnackbarService_Tests : BunitContext {
     }
 
     [Fact]
+    public async Task InvokeActionAsync_WhenCallbackReturnsFalse_KeepsSnackbarOpen() {
+        // Arrange
+        var service = CreateService();
+        var callbackInvoked = false;
+        await service.ShowAsync("Draft saved", [
+            new NTSnackbarAction("Copy Link", () => {
+                callbackInvoked = true;
+                return Task.FromResult(false);
+            })
+        ]);
+
+        // Act
+        await service.InvokeActionAsync(service.ActiveSnackbar!);
+
+        // Assert
+        callbackInvoked.Should().BeTrue();
+        service.ActiveSnackbar.Should().NotBeNull();
+        service.ActiveSnackbar!.Message.Should().Be("Draft saved");
+        JSInterop.Invocations.Count(invocation => invocation.Identifier == "closeSnackbarFromBlazor").Should().Be(0);
+    }
+
+    [Fact]
+    public async Task InvokeActionAsync_UsesRequestedActionIndex() {
+        // Arrange
+        var service = CreateService();
+        var invoked = string.Empty;
+        await service.ShowAsync("Draft saved", [
+            new NTSnackbarAction("Copy", () => {
+                invoked = "copy";
+                return Task.FromResult(false);
+            }),
+            new NTSnackbarAction("Open", () => {
+                invoked = "open";
+                return Task.FromResult(true);
+            })
+        ]);
+
+        // Act
+        await service.InvokeActionAsync(service.ActiveSnackbar!, 1);
+
+        // Assert
+        invoked.Should().Be("open");
+        service.ActiveSnackbar.Should().BeNull();
+        JSInterop.VerifyInvoke("closeSnackbarFromBlazor", 1);
+    }
+
+    [Fact]
+    public async Task InvokeActionAsync_WithInvalidActionIndex_DoesNothing() {
+        // Arrange
+        var service = CreateService();
+        var callbackInvoked = false;
+        await service.ShowAsync("Draft saved", [
+            new NTSnackbarAction("Copy Link", () => {
+                callbackInvoked = true;
+                return Task.FromResult(true);
+            })
+        ]);
+
+        // Act
+        await service.InvokeActionAsync(service.ActiveSnackbar!, 3);
+
+        // Assert
+        callbackInvoked.Should().BeFalse();
+        service.ActiveSnackbar.Should().NotBeNull();
+        JSInterop.Invocations.Count(invocation => invocation.Identifier == "closeSnackbarFromBlazor").Should().Be(0);
+    }
+
+    [Fact]
     public async Task InvokeActionFromJavaScript_ExecutesCallback_WithoutClosingImmediately() {
         // Arrange
         var service = CreateService();
@@ -199,12 +289,30 @@ public class NTSnackbarService_Tests : BunitContext {
         var snackbarId = ((NTSnackbarService.NTSnackbarImplementation)service.ActiveSnackbar!).Id;
 
         // Act
-        await service.InvokeActionFromJavaScript(snackbarId);
+        var shouldClose = await service.InvokeActionFromJavaScript(snackbarId, 0);
 
         // Assert
+        shouldClose.Should().BeTrue();
         callbackInvoked.Should().BeTrue();
         service.ActiveSnackbar.Should().NotBeNull();
         JSInterop.Invocations.Count(invocation => invocation.Identifier == "closeSnackbarFromBlazor").Should().Be(0);
+    }
+
+    [Fact]
+    public async Task InvokeActionFromJavaScript_ReturnsFalse_WhenActionReturnsFalse() {
+        // Arrange
+        var service = CreateService();
+        await service.ShowAsync("Draft saved", [
+            new NTSnackbarAction("Copy Link", () => Task.FromResult(false))
+        ]);
+        var snackbarId = ((NTSnackbarService.NTSnackbarImplementation)service.ActiveSnackbar!).Id;
+
+        // Act
+        var shouldClose = await service.InvokeActionFromJavaScript(snackbarId, 0);
+
+        // Assert
+        shouldClose.Should().BeFalse();
+        service.ActiveSnackbar.Should().NotBeNull();
     }
 
     [Fact]
@@ -236,7 +344,7 @@ public class NTSnackbarService_Tests : BunitContext {
         var snackbarId = ((NTSnackbarService.NTSnackbarImplementation)service.ActiveSnackbar!).Id;
 
         // Act
-        var action = () => service.InvokeActionFromJavaScript(snackbarId);
+        var action = () => service.InvokeActionFromJavaScript(snackbarId, 0);
 
         // Assert
         await action.Should().ThrowAsync<InvalidOperationException>();
@@ -271,6 +379,7 @@ public class NTSnackbarService_Tests : BunitContext {
         snackbar.TextColor.Should().Be(TnTColor.InverseOnSurface);
         snackbar.ActionColor.Should().Be(TnTColor.InversePrimary);
         snackbar.HasAction.Should().BeFalse();
+        snackbar.Actions.Should().BeEmpty();
         snackbar.Closing.Should().BeFalse();
     }
 

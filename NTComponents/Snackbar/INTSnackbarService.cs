@@ -38,10 +38,17 @@ public interface INTSnackbarService
     Task CloseAsync(INTSnackbar snackbar);
 
     /// <summary>
-    ///     Executes the snackbar action callback, when present, and closes the snackbar on success.
+    ///     Executes the first snackbar action callback, when present, and closes the snackbar when the action returns <c>true</c>.
     /// </summary>
     /// <param name="snackbar">The snackbar whose action should run.</param>
     Task InvokeActionAsync(INTSnackbar snackbar);
+
+    /// <summary>
+    ///     Executes a snackbar action callback, when present, and closes the snackbar when the action returns <c>true</c>.
+    /// </summary>
+    /// <param name="snackbar">The snackbar whose action should run.</param>
+    /// <param name="actionIndex">The zero-based action index.</param>
+    Task InvokeActionAsync(INTSnackbar snackbar, int actionIndex);
 
     /// <summary>
     ///     Shows a snackbar. By default, snackbars without actions auto-dismiss after 4 seconds, while
@@ -60,4 +67,21 @@ public interface INTSnackbarService
     /// <param name="textColor">Supporting text color.</param>
     /// <param name="actionColor">Action label color.</param>
     Task ShowAsync(string message, string? actionLabel = null, Func<Task>? actionCallback = null, int? timeout = null, bool? showClose = null, TnTColor backgroundColor = TnTColor.InverseSurface, TnTColor textColor = TnTColor.InverseOnSurface, TnTColor actionColor = TnTColor.InversePrimary);
+
+    /// <summary>
+    ///     Shows a snackbar with zero or more actions. By default, snackbars without actions auto-dismiss after 4 seconds, while
+    ///     action snackbars remain visible until acted on or dismissed.
+    /// </summary>
+    /// <param name="message">The snackbar supporting text.</param>
+    /// <param name="actions">Optional action buttons. Return <c>true</c> from an action to close the snackbar, or <c>false</c> to keep it open.</param>
+    /// <param name="timeout">
+    ///     Optional timeout in seconds. When null, defaults to 4 seconds for non-action snackbars and 0 for action snackbars.
+    /// </param>
+    /// <param name="showClose">
+    ///     Optional close-affordance flag. When null, defaults to false for non-action snackbars and true for action snackbars.
+    /// </param>
+    /// <param name="backgroundColor">Snackbar container color.</param>
+    /// <param name="textColor">Supporting text color.</param>
+    /// <param name="actionColor">Action label color.</param>
+    Task ShowAsync(string message, IReadOnlyList<NTSnackbarAction> actions, int? timeout = null, bool? showClose = null, TnTColor backgroundColor = TnTColor.InverseSurface, TnTColor textColor = TnTColor.InverseOnSurface, TnTColor actionColor = TnTColor.InversePrimary);
 }

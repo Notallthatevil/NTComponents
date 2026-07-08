@@ -1,5 +1,5 @@
 type Maybe<T> = T | null | undefined;
-export type SnackbarActionCallback = () => void | Promise<void>;
+export type SnackbarActionCallback = () => boolean | void | Promise<boolean | void>;
 export type SnackbarInput = string | SnackbarOptions;
 
 interface NTSnackbarHostElement extends HTMLElement {
@@ -20,10 +20,15 @@ interface NTSnackbarHostState {
     queue: SnackbarRecord[];
 }
 
+interface SnackbarActionRecord {
+    callback: SnackbarActionCallback | null;
+    index: number;
+    label: string;
+}
+
 interface SnackbarRecord {
-    actionCallback: SnackbarActionCallback | null;
-    actionLabel: string | null;
     actionColor: string | null;
+    actions: SnackbarActionRecord[];
     backgroundColor: string | null;
     dotNetActionMethod: string | null;
     dotNetCloseMethod: string | null;
@@ -37,9 +42,15 @@ interface SnackbarRecord {
     timeout: number;
 }
 
+export interface SnackbarActionOptions {
+    actionCallback?: SnackbarActionCallback | null;
+    label: string;
+}
+
 export interface SnackbarOptions {
     actionCallback?: SnackbarActionCallback | null;
     actionLabel?: string | null;
+    actions?: SnackbarActionOptions[] | null;
     actionColor?: string | null;
     backgroundColor?: string | null;
     dotNetActionMethod?: string | null;
@@ -59,7 +70,7 @@ export interface NTSnackbarBridge {
     closeSnackbar(id?: string, host?: HTMLElement | string | null): boolean;
     closeSnackbarFromBlazor(id: string, host?: HTMLElement | string | null): boolean;
     queueSnackbar(messageOrOptions: SnackbarInput, options?: Partial<SnackbarOptions>): string;
-    queueSnackbarFromBlazor(id: string, message: string, actionLabel: string | null, timeout: number, showClose: boolean, backgroundColor: string, textColor: string, actionColor: string, dotNetReference: DotNetSnackbarReference, dotNetActionMethod: string, dotNetCloseMethod: string): string;
+    queueSnackbarFromBlazor(id: string, message: string, actionLabels: string[] | string | null, timeout: number, showClose: boolean, backgroundColor: string, textColor: string, actionColor: string, dotNetReference: DotNetSnackbarReference, dotNetActionMethod: string, dotNetCloseMethod: string): string;
 }
 
 export interface DotNetSnackbarReference {
@@ -153,14 +164,13 @@ function normalizeSnackbar(messageOrOptions: SnackbarInput, options?: Partial<Sn
         ? { ...options, message: messageOrOptions }
         : { ...messageOrOptions, ...options };
 
-    const actionLabel = source.actionLabel?.trim() || null;
-    const hasAction = actionLabel !== null;
+    const actions = normalizeActions(source);
+    const hasAction = actions.length > 0;
     const timeout = typeof source.timeout === 'number' ? source.timeout : hasAction ? 0 : 4;
 
     return {
-        actionCallback: typeof source.actionCallback === 'function' ? source.actionCallback : null,
         actionColor: source.actionColor ?? defaultActionColor,
-        actionLabel,
+        actions,
         backgroundColor: source.backgroundColor ?? defaultBackgroundColor,
         dotNetActionMethod: source.dotNetActionMethod ?? null,
         dotNetCloseMethod: source.dotNetCloseMethod ?? null,
@@ -173,6 +183,36 @@ function normalizeSnackbar(messageOrOptions: SnackbarInput, options?: Partial<Sn
         textColor: source.textColor ?? defaultTextColor,
         timeout
     };
+}
+
+function normalizeActions(source: Partial<SnackbarOptions>): SnackbarActionRecord[] {
+    const actions: SnackbarActionRecord[] = [];
+    if (Array.isArray(source.actions)) {
+        for (let index = 0; index < source.actions.length; index++) {
+            const action = source.actions[index];
+            const label = action?.label?.trim();
+            if (label) {
+                actions.push({
+                    callback: typeof action.actionCallback === 'function' ? action.actionCallback : null,
+                    index,
+                    label
+                });
+            }
+        }
+    }
+
+    if (actions.length === 0) {
+        const label = source.actionLabel?.trim();
+        if (label) {
+            actions.push({
+                callback: typeof source.actionCallback === 'function' ? source.actionCallback : null,
+                index: 0,
+                label
+            });
+        }
+    }
+
+    return actions;
 }
 
 function getExplicitSnackbarId(messageOrOptions: SnackbarInput, options?: Partial<SnackbarOptions>): string | null {
@@ -201,16 +241,17 @@ function createCloseIcon(): HTMLElement {
     return icon;
 }
 
-function invokeSnackbarAction(snackbar: SnackbarRecord): Promise<void> {
-    if (snackbar.actionCallback) {
-        return Promise.resolve(snackbar.actionCallback());
+function invokeSnackbarAction(snackbar: SnackbarRecord, action: SnackbarActionRecord): Promise<boolean> {
+    if (action.callback) {
+        return Promise.resolve(action.callback()).then(result => result !== false);
     }
 
     if (snackbar.dotNetReference && snackbar.dotNetActionMethod) {
-        return snackbar.dotNetReference.invokeMethodAsync<void>(snackbar.dotNetActionMethod, snackbar.id);
+        return snackbar.dotNetReference.invokeMethodAsync<boolean>(snackbar.dotNetActionMethod, snackbar.id, action.index)
+            .then(result => result !== false);
     }
 
-    return Promise.resolve();
+    return Promise.resolve(true);
 }
 
 function notifySnackbarClosed(snackbar: SnackbarRecord): void {
@@ -229,7 +270,9 @@ function notifySnackbarsClosed(snackbars: Iterable<SnackbarRecord>): void {
 }
 
 function releaseSnackbarReference(snackbar: SnackbarRecord): void {
-    snackbar.actionCallback = null;
+    for (const action of snackbar.actions) {
+        action.callback = null;
+    }
     snackbar.dotNetActionMethod = null;
     snackbar.dotNetCloseMethod = null;
     snackbar.dotNetReference = null;
@@ -344,27 +387,44 @@ function createSnackbarElement(host: NTSnackbarHostElement, state: NTSnackbarHos
     message.textContent = snackbar.message;
     snackbarElement.appendChild(message);
 
-    if (snackbar.actionLabel || snackbar.showClose) {
+    if (snackbar.actions.length > 0 || snackbar.showClose) {
         const actions = document.createElement('div');
         actions.className = 'nt-snackbar-actions';
+        const actionButtons: HTMLButtonElement[] = [];
 
-        if (snackbar.actionLabel) {
+        for (const snackbarAction of snackbar.actions) {
             const action = document.createElement('button');
             action.className = 'nt-snackbar-action tnt-interactable';
             action.type = 'button';
-            action.textContent = snackbar.actionLabel;
+            action.textContent = snackbarAction.label;
+            actionButtons.push(action);
             action.addEventListener('click', () => {
                 if (snackbar.isActionInProgress) {
                     return;
                 }
 
                 snackbar.isActionInProgress = true;
-                action.disabled = true;
-                void invokeSnackbarAction(snackbar)
-                    .then(() => closeActiveSnackbar(host, state))
+                for (const actionButton of actionButtons) {
+                    actionButton.disabled = true;
+                }
+
+                void invokeSnackbarAction(snackbar, snackbarAction)
+                    .then(shouldClose => {
+                        if (shouldClose) {
+                            closeActiveSnackbar(host, state);
+                            return;
+                        }
+
+                        snackbar.isActionInProgress = false;
+                        for (const actionButton of actionButtons) {
+                            actionButton.disabled = false;
+                        }
+                    })
                     .catch(error => {
                         snackbar.isActionInProgress = false;
-                        action.disabled = false;
+                        for (const actionButton of actionButtons) {
+                            actionButton.disabled = false;
+                        }
                         reportSnackbarError('Snackbar action failed.', error);
                     });
             });
@@ -745,10 +805,16 @@ export function queueSnackbar(messageOrOptions: SnackbarInput, options?: Partial
     return snackbar.id;
 }
 
-export function queueSnackbarFromBlazor(id: string, message: string, actionLabel: string | null, timeout: number, showClose: boolean, backgroundColor: string, textColor: string, actionColor: string, dotNetReference: DotNetSnackbarReference, dotNetActionMethod: string, dotNetCloseMethod: string): string {
+export function queueSnackbarFromBlazor(id: string, message: string, actionLabels: string[] | string | null, timeout: number, showClose: boolean, backgroundColor: string, textColor: string, actionColor: string, dotNetReference: DotNetSnackbarReference, dotNetActionMethod: string, dotNetCloseMethod: string): string {
+    const actions = Array.isArray(actionLabels)
+        ? actionLabels.map(label => ({ label }))
+        : actionLabels
+            ? [{ label: actionLabels }]
+            : [];
+
     return queueSnackbar({
         actionColor,
-        actionLabel,
+        actions,
         backgroundColor,
         dotNetActionMethod,
         dotNetCloseMethod,

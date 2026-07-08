@@ -21,6 +21,12 @@
         <TnTButton OnClickCallback="ShowRetryAsync">
             Show retry action
         </TnTButton>
+        <TnTButton OnClickCallback="ShowMultiActionAsync">
+            Show multi action
+        </TnTButton>
+        <TnTButton OnClickCallback="ShowFiveActionAsync">
+            Show five actions
+        </TnTButton>
     </TnTColumn>
 </TnTRow>
 
@@ -69,6 +75,26 @@
 
     private async Task ShowLongMessageAsync() {
         await _snackbarService.ShowAsync("Draft saved to your workspace and synchronized with the server.");
+    }
+
+    private async Task ShowMultiActionAsync() {
+        await _snackbarService.ShowAsync("Draft link ready", [
+            new NTSnackbarAction("Copy", async () => {
+                await Task.Delay(150);
+                return false;
+            }),
+            new NTSnackbarAction("Open", () => Task.FromResult(true))
+        ]);
+    }
+
+    private async Task ShowFiveActionAsync() {
+        await _snackbarService.ShowAsync("Choose an action", [
+            new NTSnackbarAction("One", () => Task.FromResult(false)),
+            new NTSnackbarAction("Two", () => Task.FromResult(false)),
+            new NTSnackbarAction("Three", () => Task.FromResult(false)),
+            new NTSnackbarAction("Four", () => Task.FromResult(false)),
+            new NTSnackbarAction("Done", () => Task.FromResult(true))
+        ]);
     }
 
     private async Task ShowRetryAsync() {

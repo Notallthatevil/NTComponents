@@ -13,6 +13,11 @@ public interface INTSnackbar {
     string? ActionLabel { get; }
 
     /// <summary>
+    ///     Gets the action buttons, when actions are available.
+    /// </summary>
+    IReadOnlyList<NTSnackbarAction> Actions { get; }
+
+    /// <summary>
     ///     Gets the action text color.
     /// </summary>
     TnTColor ActionColor { get; }

@@ -213,9 +213,50 @@ describe('NTSnackbar module', () => {
       host.querySelector('.nt-snackbar-action').click();
       await Promise.resolve();
       await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
       jest.advanceTimersByTime(200);
 
       expect(actionCallback).toHaveBeenCalledTimes(1);
+      expect(host.querySelector('.nt-snackbar')).toBeNull();
+   });
+
+   test('addSnackbar supports multiple actions and keeps open when action returns false', async () => {
+      const host = loadHostFromPageScript();
+      const copyCallback = jest.fn(() => false);
+      const openCallback = jest.fn(() => true);
+
+      addSnackbar({
+         message: 'Draft saved',
+         actions: [
+            { label: 'Copy', actionCallback: copyCallback },
+            { label: 'Open', actionCallback: openCallback }
+         ],
+         timeout: 0
+      });
+
+      const actions = host.querySelectorAll('.nt-snackbar-action');
+      expect(actions).toHaveLength(2);
+      expect(actions[0].textContent).toBe('Copy');
+      expect(actions[1].textContent).toBe('Open');
+
+      actions[0].click();
+      await Promise.resolve();
+      await Promise.resolve();
+      jest.advanceTimersByTime(200);
+
+      expect(copyCallback).toHaveBeenCalledTimes(1);
+      expect(openCallback).not.toHaveBeenCalled();
+      expect(host.querySelector('.nt-snackbar-message').textContent).toBe('Draft saved');
+      expect(actions[0].disabled).toBe(false);
+      expect(actions[1].disabled).toBe(false);
+
+      actions[1].click();
+      await Promise.resolve();
+      await Promise.resolve();
+      jest.advanceTimersByTime(200);
+
+      expect(openCallback).toHaveBeenCalledTimes(1);
       expect(host.querySelector('.nt-snackbar')).toBeNull();
    });
 
@@ -269,9 +310,36 @@ describe('NTSnackbar module', () => {
       await Promise.resolve();
       jest.advanceTimersByTime(200);
 
-      expect(dotNetReference.invokeMethodAsync).toHaveBeenCalledWith('InvokeActionFromJavaScript', 'service-snackbar');
+      expect(dotNetReference.invokeMethodAsync).toHaveBeenCalledWith('InvokeActionFromJavaScript', 'service-snackbar', 0);
       expect(dotNetReference.invokeMethodAsync).toHaveBeenCalledWith('NotifyClosedFromJavaScript', 'service-snackbar');
       expect(host.querySelector('.nt-snackbar')).toBeNull();
+   });
+
+   test('dotnet action returning false keeps snackbar visible', async () => {
+      const host = loadHostFromPageScript();
+      const dotNetReference = { invokeMethodAsync: jest.fn(() => Promise.resolve(false)) };
+
+      addSnackbar({
+         message: 'Draft saved',
+         actionLabel: 'Copy',
+         dotNetActionMethod: 'InvokeActionFromJavaScript',
+         dotNetCloseMethod: 'NotifyClosedFromJavaScript',
+         dotNetReference,
+         id: 'service-snackbar',
+         timeout: 0
+      });
+
+      host.querySelector('.nt-snackbar-action').click();
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+      jest.advanceTimersByTime(200);
+
+      expect(dotNetReference.invokeMethodAsync).toHaveBeenCalledWith('InvokeActionFromJavaScript', 'service-snackbar', 0);
+      expect(dotNetReference.invokeMethodAsync).not.toHaveBeenCalledWith('NotifyClosedFromJavaScript', 'service-snackbar');
+      expect(host.querySelector('.nt-snackbar-message').textContent).toBe('Draft saved');
+      expect(host.querySelector('.nt-snackbar-action').disabled).toBe(false);
    });
 
    test('dotnet action rejection keeps snackbar visible', async () => {
@@ -292,6 +360,7 @@ describe('NTSnackbar module', () => {
       await Promise.resolve();
       await Promise.resolve();
       jest.advanceTimersByTime(200);
+      await Promise.resolve();
 
       expect(host.querySelector('.nt-snackbar-message').textContent).toBe('Email archived');
       expect(dotNetReference.invokeMethodAsync).not.toHaveBeenCalledWith('NotifyClosedFromJavaScript', 'service-snackbar');
@@ -314,6 +383,7 @@ describe('NTSnackbar module', () => {
       expect(action.disabled).toBe(true);
 
       resolveAction();
+      await Promise.resolve();
       await Promise.resolve();
       jest.advanceTimersByTime(200);
 
