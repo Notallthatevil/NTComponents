@@ -77,6 +77,25 @@ describe('NTContainerView quick navigation runtime', () => {
     expect(links[0].getAttribute('aria-current')).toBe('location');
   });
 
+  test('enhances quick nav when static page script is rendered inside the container', () => {
+    const view = setContainerMarkup(`
+      <h1 id="intro">Intro</h1>
+      <h2>Details</h2>
+      <tnt-page-script src="./_content/NTComponents/Layout/Views/NTContainerView.razor.js"></tnt-page-script>`);
+    const pageScript = view.querySelector('tnt-page-script');
+
+    onLoad(pageScript);
+
+    const nav = view.querySelector('[data-nt-container-view-quick-nav]');
+    const links = Array.from(view.querySelectorAll('.nt-container-view-quick-nav-list a'));
+
+    expect(nav.hidden).toBe(false);
+    expect(view.classList.contains('nt-container-view-with-quick-nav')).toBe(true);
+    expect(links.map(link => link.textContent)).toEqual(['Intro', 'Details']);
+    expect(links.map(link => link.getAttribute('href'))).toEqual(['#intro', '#docs-details']);
+    expect(links[0].getAttribute('aria-current')).toBe('location');
+  });
+
   test('does not include headings from nested container views', () => {
     const view = setContainerMarkup(`
       <h1 id="intro">Intro</h1>

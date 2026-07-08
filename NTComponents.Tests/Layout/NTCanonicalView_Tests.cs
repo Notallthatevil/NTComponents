@@ -154,6 +154,18 @@ public class NTCanonicalView_Tests : BunitContext {
     }
 
     [Fact]
+    public void Container_Renders_PageScript_Inside_View_For_Static_Enhancement() {
+        var cut = Render<NTContainerView>(p => p
+            .AddChildContent("<h2>Heading</h2><p>Content</p>"));
+
+        var view = cut.Find("div.nt-container-view");
+        var pageScript = view.QuerySelector("tnt-page-script");
+
+        pageScript.Should().NotBeNull();
+        pageScript!.GetAttribute("src").Should().Be("./_content/NTComponents/Layout/Views/NTContainerView.razor.js");
+    }
+
+    [Fact]
     public void Container_Can_Disable_OnThisPage_Navigation() {
         var cut = Render<NTContainerView>(p => p
             .Add(c => c.EnableOnThisPageNavigation, false)
