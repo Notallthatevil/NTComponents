@@ -404,7 +404,7 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
                 StartIndex = Math.Max(0, startIndex),
                 Count = count,
                 CancellationToken = cancellationToken,
-                Sorts = _sorts.ToArray()
+                Sorts = GetProviderSortDescriptors()
             });
         }
 
@@ -459,17 +459,23 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
                 continue;
             }
 
-            ordered = ordered is null
+            var customSort = column.ApplyLocalSort(ordered ?? source, sort.Direction, ordered is not null);
+            ordered = customSort ?? (ordered is null
                 ? sort.Direction == SortDirection.Descending
                     ? source.OrderByDescending(column.GetSortValue, NTDataGridObjectComparer.Instance)
                     : source.OrderBy(column.GetSortValue, NTDataGridObjectComparer.Instance)
                 : sort.Direction == SortDirection.Descending
                     ? ordered.ThenByDescending(column.GetSortValue, NTDataGridObjectComparer.Instance)
-                    : ordered.ThenBy(column.GetSortValue, NTDataGridObjectComparer.Instance);
+                    : ordered.ThenBy(column.GetSortValue, NTDataGridObjectComparer.Instance));
         }
 
         return ordered ?? source;
     }
+
+    private IReadOnlyList<NTSortDescriptor> GetProviderSortDescriptors() => [.. _sorts.SelectMany(sort => {
+        var column = _columns.FirstOrDefault(candidate => string.Equals(candidate.SortPropertyName, sort.PropertyName, StringComparison.Ordinal));
+        return column?.GetSortDescriptors(sort.Direction) ?? [sort];
+    })];
 
     private async Task SetTotalItemCountAsync(int totalItemCount) {
         totalItemCount = Math.Max(0, totalItemCount);

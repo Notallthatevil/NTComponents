@@ -53,6 +53,74 @@ public class NTDataGrid_Tests : BunitContext {
     }
 
     [Fact]
+    public void TemplateColumn_WithSortBy_Sorts_Direct_Items_Without_Sortable_Parameter() {
+        var sortBy = NTGridSort<TestGridItem>.ByAscending(item => item.Created);
+        var cut = RenderGrid(columns: builder => {
+            builder.OpenComponent<NTPropertyColumn<TestGridItem, DateOnly>>(0);
+            builder.AddAttribute(1, nameof(NTPropertyColumn<TestGridItem, DateOnly>.Title), "Created");
+            builder.AddAttribute(2, nameof(NTPropertyColumn<TestGridItem, DateOnly>.Property), (System.Linq.Expressions.Expression<Func<TestGridItem, DateOnly>>)(item => item.Created));
+            builder.CloseComponent();
+            builder.OpenComponent<NTTemplateColumn<TestGridItem>>(3);
+            builder.AddAttribute(4, nameof(NTTemplateColumn<TestGridItem>.Title), "CustomDate");
+            builder.AddAttribute(5, nameof(NTTemplateColumn<TestGridItem>.SortBy), sortBy);
+            builder.AddAttribute(6, nameof(NTTemplateColumn<TestGridItem>.ChildContent), (RenderFragment<TestGridItem>)(item => cellBuilder => cellBuilder.AddContent(0, item.Name)));
+            builder.CloseComponent();
+        });
+
+        cut.WaitForAssertion(() => cut.FindAll(".nt-data-grid-sort-link")[1].GetAttribute("href").Should().Contain("ntdg-sort=CustomDate%3Aasc"));
+        cut.FindAll(".nt-data-grid-sort-link")[1].Click();
+
+        cut.WaitForAssertion(() => {
+            cut.FindAll("tbody tr")[0].TextContent.Should().Contain("Alpha");
+            cut.FindAll(".nt-data-grid-sort-link-sorted").Should().ContainSingle();
+            cut.FindAll("th")[1].GetAttribute("aria-sort").Should().Be("ascending");
+        });
+    }
+
+    [Fact]
+    public void TemplateColumn_WithSortBy_And_SortableFalse_Does_Not_Render_Sort_Link() {
+        var sortBy = NTGridSort<TestGridItem>.ByAscending(item => item.Created);
+        var cut = RenderGrid(columns: builder => {
+            builder.OpenComponent<NTTemplateColumn<TestGridItem>>(0);
+            builder.AddAttribute(1, nameof(NTTemplateColumn<TestGridItem>.Title), "Custom date");
+            builder.AddAttribute(2, nameof(NTTemplateColumn<TestGridItem>.SortBy), sortBy);
+            builder.AddAttribute(3, nameof(NTTemplateColumn<TestGridItem>.Sortable), false);
+            builder.AddAttribute(4, nameof(NTTemplateColumn<TestGridItem>.ChildContent), (RenderFragment<TestGridItem>)(item => cellBuilder => cellBuilder.AddContent(0, item.Name)));
+            builder.CloseComponent();
+        });
+
+        cut.WaitForAssertion(() => cut.FindAll(".nt-data-grid-sort-link").Should().BeEmpty());
+    }
+
+    [Fact]
+    public void TemplateColumn_WithSortBy_Expands_Provider_Sort_Descriptors() {
+        var captured = new List<NTDataGridItemsProviderRequest<TestGridItem>>();
+        var sortBy = NTGridSort<TestGridItem>.ByDescending(item => (int?)item.Id).ThenAscending(item => item.Name);
+        var cut = Render<NTDataGrid<TestGridItem>>(parameters => parameters
+            .Add(grid => grid.ItemsProvider, request => {
+                captured.Add(request);
+                return ValueTask.FromResult(new NTItemsProviderResult<TestGridItem>(_items.ToArray(), _items.Count()));
+            })
+            .Add(grid => grid.ChildContent, builder => {
+                builder.OpenComponent<NTTemplateColumn<TestGridItem>>(0);
+                builder.AddAttribute(1, nameof(NTTemplateColumn<TestGridItem>.Title), "Custom name");
+                builder.AddAttribute(2, nameof(NTTemplateColumn<TestGridItem>.SortBy), sortBy);
+                builder.AddAttribute(3, nameof(NTTemplateColumn<TestGridItem>.ChildContent), (RenderFragment<TestGridItem>)(item => cellBuilder => cellBuilder.AddContent(0, item.Name)));
+                builder.CloseComponent();
+            }));
+
+        cut.WaitForAssertion(() => cut.Find(".nt-data-grid-sort-link").Should().NotBeNull());
+        cut.Find(".nt-data-grid-sort-link").Click();
+
+        cut.WaitForAssertion(() => {
+            var sorts = captured.Last().Sorts;
+            sorts.Should().HaveCount(2);
+            sorts[0].Should().Be(new NTSortDescriptor("Id", SortDirection.Descending));
+            sorts[1].Should().Be(new NTSortDescriptor("Name", SortDirection.Ascending));
+        });
+    }
+
+    [Fact]
     public void EmptyItems_Render_Empty_State() {
         var cut = Render<NTDataGrid<TestGridItem>>(parameters => parameters
             .Add(grid => grid.Items, Array.Empty<TestGridItem>().AsQueryable())

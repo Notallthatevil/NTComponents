@@ -84,6 +84,10 @@ public abstract class NTDataGridColumn<TItem> : ComponentBase, IDisposable where
 
     internal virtual IOrderedQueryable<TItem>? ApplyQueryableSort(IQueryable<TItem> source, SortDirection direction, bool thenBy) => null;
 
+    internal virtual IOrderedEnumerable<TItem>? ApplyLocalSort(IEnumerable<TItem> source, SortDirection direction, bool thenBy) => null;
+
+    internal virtual IReadOnlyList<NTSortDescriptor> GetSortDescriptors(SortDirection direction) => [new(SortPropertyName!, direction)];
+
     internal abstract RenderFragment RenderCell(TItem item);
 
     /// <inheritdoc />

@@ -70,3 +70,4 @@ NTC1064 | Usage | Warning | NTForm RequiredSupportingText cannot be empty when S
 NTC1065 | Usage | Warning | NTDataGrid requires either Items or ItemsProvider, not both.
 NTC1066 | Usage | Warning | NTDataGrid requires Items or ItemsProvider.
 NTC1067 | Usage | Warning | NTDataGrid does not support using Virtualize and ShowPagination together.
+NTC1068 | Usage | Warning | NTPropertyColumn computed aggregate properties may fail when sorting a database-backed IQueryable.

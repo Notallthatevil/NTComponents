@@ -32,7 +32,7 @@
             <NTPropertyColumn TItem="DataGridItem" TValue="string" Title="Customer" Property="item => item.Customer" MinWidth="220px" />
             <NTPropertyColumn TItem="DataGridItem" TValue="DateTime" Title="Created" Property="item => item.Created" Format="MMM d, yyyy" MinWidth="160px" />
             <NTPropertyColumn TItem="DataGridItem" TValue="decimal" Title="Amount" Property="item => item.Amount" Format="C" TextAlign="TextAlign.Right" HeaderTextAlign="TextAlign.Right" />
-            <NTTemplateColumn TItem="DataGridItem" Title="Action">
+            <NTTemplateColumn TItem="DataGridItem" Title="Action" SortBy="_actionSort">
                 <button type="button" class="nt-data-grid-demo-action" @onclick="@(() => ActionClicked(context))" @onclick:stopPropagation="true" @onkeydown:stopPropagation="true">Open</button>
             </NTTemplateColumn>
         </NTDataGrid>
@@ -64,6 +64,7 @@
     private INTSnackbarService SnackbarService { get; set; } = default!;
 
     private readonly IQueryable<DataGridItem> Items = BuildItems().AsQueryable();
+    private static readonly NTGridSort<DataGridItem> _actionSort = NTGridSort<DataGridItem>.ByAscending(item => item.Id);
     private bool _compact;
     private bool _striped = true;
 

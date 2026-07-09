@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Operations;
@@ -7,7 +8,7 @@ using Microsoft.CodeAnalysis.Operations;
 namespace NTComponents.Analyzers;
 
 /// <summary>
-///     Warns when <c>NTDataGrid</c> is configured in a way that the component rejects at runtime.
+///     Warns when <c>NTDataGrid</c> or its columns are configured in a way that can fail at runtime.
 /// </summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class NTDataGridConfigurationAnalyzer : DiagnosticAnalyzer {
@@ -15,6 +16,7 @@ public sealed class NTDataGridConfigurationAnalyzer : DiagnosticAnalyzer {
     public const string DuplicateSourceDiagnosticId = "NTC1065";
     public const string MissingSourceDiagnosticId = "NTC1066";
     public const string VirtualizedPaginationDiagnosticId = "NTC1067";
+    public const string ComputedPropertySortDiagnosticId = "NTC1068";
 
     private static readonly DiagnosticDescriptor DuplicateSourceRule = new(
         DuplicateSourceDiagnosticId,
@@ -40,11 +42,20 @@ public sealed class NTDataGridConfigurationAnalyzer : DiagnosticAnalyzer {
         DiagnosticSeverity.Warning,
         isEnabledByDefault: true);
 
+    private static readonly DiagnosticDescriptor ComputedPropertySortRule = new(
+        ComputedPropertySortDiagnosticId,
+        "Computed aggregate properties cannot be translated reliably",
+        "NTPropertyColumn Property '{0}' combines other instance members and may fail when sorting a database-backed IQueryable; use NTTemplateColumn with SortBy targeting mapped properties",
+        "Usage",
+        DiagnosticSeverity.Warning,
+        isEnabledByDefault: true);
+
     /// <inheritdoc />
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => [
         DuplicateSourceRule,
         MissingSourceRule,
-        VirtualizedPaginationRule
+        VirtualizedPaginationRule,
+        ComputedPropertySortRule
     ];
 
     /// <inheritdoc />
@@ -53,12 +64,13 @@ public sealed class NTDataGridConfigurationAnalyzer : DiagnosticAnalyzer {
         context.EnableConcurrentExecution();
         context.RegisterCompilationStartAction(static startContext => {
             var ntDataGridType = startContext.Compilation.GetTypeByMetadataName("NTComponents.NTDataGrid`1");
-            if (ntDataGridType is null) {
+            var ntPropertyColumnType = startContext.Compilation.GetTypeByMetadataName("NTComponents.NTPropertyColumn`2");
+            if (ntDataGridType is null && ntPropertyColumnType is null) {
                 return;
             }
 
             startContext.RegisterSyntaxNodeAction(
-                nodeContext => AnalyzeExecutableNode(nodeContext, ntDataGridType),
+                nodeContext => AnalyzeExecutableNode(nodeContext, ntDataGridType, ntPropertyColumnType),
                 Microsoft.CodeAnalysis.CSharp.SyntaxKind.MethodDeclaration,
                 Microsoft.CodeAnalysis.CSharp.SyntaxKind.ConstructorDeclaration,
                 Microsoft.CodeAnalysis.CSharp.SyntaxKind.LocalFunctionStatement,
@@ -68,7 +80,7 @@ public sealed class NTDataGridConfigurationAnalyzer : DiagnosticAnalyzer {
         });
     }
 
-    private static void AnalyzeExecutableNode(SyntaxNodeAnalysisContext context, INamedTypeSymbol ntDataGridType) {
+    private static void AnalyzeExecutableNode(SyntaxNodeAnalysisContext context, INamedTypeSymbol? ntDataGridType, INamedTypeSymbol? ntPropertyColumnType) {
         var bodyNode = GetBodyNode(context.Node);
         if (bodyNode is null) {
             return;
@@ -82,8 +94,8 @@ public sealed class NTDataGridConfigurationAnalyzer : DiagnosticAnalyzer {
         var stack = new Stack<ComponentFrame>();
 
         foreach (var invocation in invocations) {
-            if (TryGetOpenedComponent(invocation, context.SemanticModel, ntDataGridType, out var isNtDataGridComponent)) {
-                stack.Push(new ComponentFrame(isNtDataGridComponent, invocation.GetLocation()));
+            if (TryGetOpenedComponent(invocation, context.SemanticModel, ntDataGridType, ntPropertyColumnType, out var componentKind)) {
+                stack.Push(new ComponentFrame(componentKind, invocation.GetLocation()));
                 continue;
             }
 
@@ -93,14 +105,17 @@ public sealed class NTDataGridConfigurationAnalyzer : DiagnosticAnalyzer {
                 }
 
                 var frame = stack.Pop();
-                if (frame.IsNtDataGrid) {
-                    AnalyzeComponentFrame(context, frame);
+                if (frame.Kind == ComponentKind.DataGrid) {
+                    AnalyzeDataGridFrame(context, frame);
+                }
+                else if (frame.Kind == ComponentKind.PropertyColumn) {
+                    AnalyzePropertyColumnFrame(context, frame);
                 }
 
                 continue;
             }
 
-            if (stack.Count == 0 || !stack.Peek().IsNtDataGrid) {
+            if (stack.Count == 0 || stack.Peek().Kind == ComponentKind.Other) {
                 continue;
             }
 
@@ -110,7 +125,7 @@ public sealed class NTDataGridConfigurationAnalyzer : DiagnosticAnalyzer {
         }
     }
 
-    private static void AnalyzeComponentFrame(SyntaxNodeAnalysisContext context, ComponentFrame frame) {
+    private static void AnalyzeDataGridFrame(SyntaxNodeAnalysisContext context, ComponentFrame frame) {
         var hasItems = HasSuppliedNonNullAttribute(frame, "Items");
         var hasItemsProvider = HasSuppliedNonNullAttribute(frame, "ItemsProvider");
 
@@ -128,6 +143,95 @@ public sealed class NTDataGridConfigurationAnalyzer : DiagnosticAnalyzer {
             context.ReportDiagnostic(Diagnostic.Create(VirtualizedPaginationRule, GetAttributeOrComponentLocation(frame, "ShowPagination")));
         }
     }
+
+    private static void AnalyzePropertyColumnFrame(SyntaxNodeAnalysisContext context, ComponentFrame frame) {
+        if (!frame.Attributes.TryGetValue("Property", out var attribute)
+            || TryGetSelectedProperty(attribute.Operation) is not { } property
+            || !IsComputedAggregateProperty(property, context.CancellationToken)) {
+            return;
+        }
+
+        context.ReportDiagnostic(Diagnostic.Create(ComputedPropertySortRule, attribute.Location, property.Name));
+    }
+
+    private static IPropertySymbol? TryGetSelectedProperty(IOperation? operation) {
+        operation = UnwrapOperation(operation);
+        if (operation is IDelegateCreationOperation delegateCreation) {
+            operation = UnwrapOperation(delegateCreation.Target);
+        }
+
+        if (operation is not IAnonymousFunctionOperation anonymousFunction) {
+            return null;
+        }
+
+        var returnedValues = anonymousFunction.Body
+            .DescendantsAndSelf()
+            .OfType<IReturnOperation>()
+            .Where(static returnOperation => returnOperation.ReturnedValue is not null)
+            .Select(static returnOperation => returnOperation.ReturnedValue!)
+            .Take(2)
+            .ToArray();
+
+        return returnedValues.Length == 1
+            && UnwrapOperation(returnedValues[0]) is IPropertyReferenceOperation propertyReference
+                ? propertyReference.Property
+                : null;
+    }
+
+    private static bool IsComputedAggregateProperty(IPropertySymbol property, CancellationToken cancellationToken) {
+        foreach (var syntaxReference in property.DeclaringSyntaxReferences) {
+            if (syntaxReference.GetSyntax(cancellationToken) is not PropertyDeclarationSyntax propertyDeclaration) {
+                continue;
+            }
+
+            SyntaxNode? getterImplementation = propertyDeclaration.ExpressionBody?.Expression;
+            if (getterImplementation is null) {
+                var getter = propertyDeclaration.AccessorList?.Accessors.FirstOrDefault(static accessor => accessor.IsKind(SyntaxKind.GetAccessorDeclaration));
+                getterImplementation = getter?.ExpressionBody?.Expression ?? (SyntaxNode?)getter?.Body;
+            }
+
+            if (getterImplementation is null) {
+                continue;
+            }
+
+            var dependencies = new HashSet<ISymbol>(SymbolEqualityComparer.Default);
+            var shadowedNames = new HashSet<string>(
+                getterImplementation
+                    .DescendantNodes(static node => !IsNestedExecutableBoundary(node))
+                    .OfType<VariableDeclaratorSyntax>()
+                    .Select(static variable => variable.Identifier.ValueText),
+                StringComparer.Ordinal);
+
+            foreach (var identifier in getterImplementation.DescendantNodesAndSelf(static node => !IsNestedExecutableBoundary(node)).OfType<IdentifierNameSyntax>()) {
+                var name = identifier.Identifier.ValueText;
+                if (shadowedNames.Contains(name) || !IsDirectMemberIdentifier(identifier)) {
+                    continue;
+                }
+
+                for (var containingType = property.ContainingType; containingType is not null; containingType = containingType.BaseType) {
+                    foreach (var member in containingType.GetMembers(name)) {
+                        if (member is not (IPropertySymbol or IFieldSymbol)
+                            || member.IsStatic
+                            || SymbolEqualityComparer.Default.Equals(member, property)
+                            || !dependencies.Add(member)) {
+                            continue;
+                        }
+
+                        if (dependencies.Count >= 2) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static bool IsDirectMemberIdentifier(IdentifierNameSyntax identifier) =>
+        identifier.Parent is not MemberAccessExpressionSyntax memberAccess
+        || memberAccess.Name != identifier
+        || memberAccess.Expression is ThisExpressionSyntax or BaseExpressionSyntax;
 
     private static bool HasSuppliedNonNullAttribute(ComponentFrame frame, string attributeName) =>
         frame.Attributes.TryGetValue(attributeName, out var attribute) && !IsNullConstant(attribute.Operation);
@@ -171,8 +275,8 @@ public sealed class NTDataGridConfigurationAnalyzer : DiagnosticAnalyzer {
             or AnonymousMethodExpressionSyntax;
     }
 
-    private static bool TryGetOpenedComponent(InvocationExpressionSyntax invocation, SemanticModel semanticModel, INamedTypeSymbol ntDataGridType, out bool isNtDataGridComponent) {
-        isNtDataGridComponent = false;
+    private static bool TryGetOpenedComponent(InvocationExpressionSyntax invocation, SemanticModel semanticModel, INamedTypeSymbol? ntDataGridType, INamedTypeSymbol? ntPropertyColumnType, out ComponentKind componentKind) {
+        componentKind = ComponentKind.Other;
 
         if (!TryGetInvocationTarget(invocation, semanticModel, out var methodSymbol)
             || methodSymbol.Name != "OpenComponent"
@@ -195,7 +299,13 @@ public sealed class NTDataGridConfigurationAnalyzer : DiagnosticAnalyzer {
             return false;
         }
 
-        isNtDataGridComponent = SymbolEqualityComparer.Default.Equals(openedNamedType.OriginalDefinition, ntDataGridType);
+        if (SymbolEqualityComparer.Default.Equals(openedNamedType.OriginalDefinition, ntDataGridType)) {
+            componentKind = ComponentKind.DataGrid;
+        }
+        else if (SymbolEqualityComparer.Default.Equals(openedNamedType.OriginalDefinition, ntPropertyColumnType)) {
+            componentKind = ComponentKind.PropertyColumn;
+        }
+
         return true;
     }
 
@@ -264,12 +374,18 @@ public sealed class NTDataGridConfigurationAnalyzer : DiagnosticAnalyzer {
         return methodSymbol is not null;
     }
 
-    private sealed class ComponentFrame(bool isNtDataGrid, Location location) {
+    private sealed class ComponentFrame(ComponentKind kind, Location location) {
         public Dictionary<string, RecordedAttribute> Attributes { get; } = new(StringComparer.Ordinal);
 
-        public bool IsNtDataGrid { get; } = isNtDataGrid;
+        public ComponentKind Kind { get; } = kind;
 
         public Location Location { get; } = location;
+    }
+
+    private enum ComponentKind {
+        Other,
+        DataGrid,
+        PropertyColumn
     }
 
     private readonly struct RecordedAttribute {
