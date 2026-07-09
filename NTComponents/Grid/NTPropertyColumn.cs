@@ -1,8 +1,9 @@
 using Microsoft.AspNetCore.Components;
+using NTComponents.CodeDocumentation;
+using NTComponents.Ext;
 using System.Globalization;
 using System.Linq.Expressions;
-
-using NTComponents.CodeDocumentation;
+using System.Text.RegularExpressions;
 namespace NTComponents;
 
 /// <summary>
@@ -34,7 +35,7 @@ public sealed class NTPropertyColumn<TItem, TValue> : NTDataGridColumn<TItem> wh
     [Parameter]
     public string? Format { get; set; }
 
-    internal override string DefaultTitle => NTDataGridColumn<TItem>.GetMemberName(Property);
+    internal override string DefaultTitle => NTDataGridColumn<TItem>.GetMemberName(Property).SplitPascalCase();
 
     internal override string? SortPropertyName => DefaultTitle;
 
