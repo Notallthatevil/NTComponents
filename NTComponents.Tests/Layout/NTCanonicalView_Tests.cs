@@ -129,6 +129,7 @@ public class NTCanonicalView_Tests : BunitContext {
         cut.Find(".nt-container-view-quick-nav").GetAttribute("aria-label").Should().Be("On this page");
         cut.Find(".nt-container-view-quick-nav-title").TextContent.Should().Be("On this page");
         cut.FindAll(".nt-container-view-quick-nav-heading").Should().BeEmpty();
+        cut.Find(".nt-container-view-content article").TextContent.Should().Be("Container content");
         view.InnerHtml.Should().Contain("<article>Container content</article>");
         cut.Find("tnt-page-script").GetAttribute("src").Should().Be("./_content/NTComponents/Layout/Views/NTContainerView.razor.js");
     }
@@ -173,6 +174,7 @@ public class NTCanonicalView_Tests : BunitContext {
 
         var view = cut.Find("div.nt-container-view");
 
+        cut.Find(".nt-container-view-content h2").TextContent.Should().Be("Heading");
         view.InnerHtml.Should().Contain("<h2>Heading</h2>");
         view.HasAttribute("data-nt-container-view-quick-nav-enabled").Should().BeFalse();
         cut.Instance.IsolatedJsModule.Should().BeNull();
