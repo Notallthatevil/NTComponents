@@ -38,6 +38,7 @@ public static class IQueryableExt {
     /// <param name="query">  The source query to apply operations to.</param>
     /// <param name="request">The request containing sorting and paging parameters.</param>
     /// <returns>A filtered and sorted <see cref="IQueryable{T}" /> with paging applied.</returns>
+    [Obsolete("Use Apply(NTItemsProviderRequest) instead.")]
     public static IQueryable<T> Apply<T>(this IQueryable<T> query, TnTItemsProviderRequest request) {
         if (request.SortOnProperties?.Any() == true) {
             query = query.OrderBy(request.SortOnProperties);
