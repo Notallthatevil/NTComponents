@@ -13,7 +13,7 @@ namespace NTComponents.Virtualization;
 ///     This endpoint accepts query parameters in the form: <c>?StartIndex=0&amp;Count=10&amp;Sorts=Name,Ascending&amp;Sorts=Age,Descending</c>.
 /// </remarks>
 [ExcludeFromCodeCoverage]
-public readonly record struct NTItemsProviderRequest() {
+public sealed record NTItemsProviderRequest {
     /// <summary>
     ///     Gets the start index of the requested items.
     /// </summary>

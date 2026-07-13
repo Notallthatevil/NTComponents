@@ -1,13 +1,38 @@
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Primitives;
 using NTComponents;
 using NTComponents.Virtualization;
+using System.Net.Http.Json;
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 
 namespace NTComponents.Tests.Virtualization;
 
 public class NTItemsProviderRequest_Tests {
+
+    [Fact]
+    public async Task ControllerParameter_Binds_QueryValues() {
+        var cancellationToken = Xunit.TestContext.Current.CancellationToken;
+        var builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.Services.AddControllers().AddApplicationPart(typeof(NTItemsProviderRequestTestController).Assembly);
+        await using var app = builder.Build();
+        app.MapControllers();
+        await app.StartAsync(cancellationToken);
+
+        var response = await app.GetTestClient().GetAsync("/test/nt-items-provider-request?StartIndex=5&Count=10&Sorts=Name%2CAscending&Sorts=Age%2CDescending", cancellationToken);
+
+        response.EnsureSuccessStatusCode();
+        var request = await response.Content.ReadFromJsonAsync<NTItemsProviderRequest>(cancellationToken);
+        request.Should().NotBeNull();
+        request!.StartIndex.Should().Be(5);
+        request.Count.Should().Be(10);
+        request.Sorts.Should().Equal("Name,Ascending", "Age,Descending");
+    }
 
     [Fact]
     public async Task BindAsync_Parses_Sorts_QueryValues() {
@@ -21,11 +46,11 @@ public class NTItemsProviderRequest_Tests {
         var request = await NTItemsProviderRequest.BindAsync(context);
 
         request.Should().NotBeNull();
-        request.Value.StartIndex.Should().Be(5);
-        request.Value.Count.Should().Be(10);
-        request.Value.Sorts.Should().Equal("Name,Ascending", "Age,Descending");
+        request!.StartIndex.Should().Be(5);
+        request.Count.Should().Be(10);
+        request.Sorts.Should().Equal("Name,Ascending", "Age,Descending");
 
-        var sorts = request.Value.SortOnProperties;
+        var sorts = request.SortOnProperties;
         sorts.Should().HaveCount(2);
         sorts[0].Key.Should().Be("Name");
         sorts[0].Value.Should().Be(SortDirection.Ascending);
@@ -44,8 +69,8 @@ public class NTItemsProviderRequest_Tests {
         var request = await NTItemsProviderRequest.BindAsync(context);
 
         request.Should().NotBeNull();
-        request.Value.Sorts.Should().Equal("[Name,Ascending],[Age,Descending]");
-        request.Value.SortOnProperties.Select(sort => sort.Key).Should().Equal("Name", "Age");
+        request!.Sorts.Should().Equal("[Name,Ascending],[Age,Descending]");
+        request.SortOnProperties.Select(sort => sort.Key).Should().Equal("Name", "Age");
     }
 
     [Fact]
@@ -181,4 +206,12 @@ public class NTItemsProviderRequest_Tests {
     }
 
     private sealed class TestItem;
+}
+
+[ApiController]
+[Route("test/nt-items-provider-request")]
+public sealed class NTItemsProviderRequestTestController : ControllerBase {
+
+    [HttpGet]
+    public NTItemsProviderRequest Get([FromQuery] NTItemsProviderRequest request) => request;
 }
