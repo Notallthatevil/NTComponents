@@ -35,6 +35,8 @@ public sealed class NTTemplateColumn<TItem> : NTDataGridColumn<TItem> where TIte
 
     internal override string? SortPropertyName => !string.IsNullOrWhiteSpace(Title) ? Title : SortBy?.PropertyName;
 
+    internal override SortDirection DefaultSortDirection => SortBy?.DefaultDirection ?? base.DefaultSortDirection;
+
     internal override IOrderedEnumerable<TItem>? ApplyLocalSort(IEnumerable<TItem> source, SortDirection direction, bool thenBy) => SortBy?.Apply(source, direction, thenBy);
 
     internal override IOrderedQueryable<TItem>? ApplyQueryableSort(IQueryable<TItem> source, SortDirection direction, bool thenBy) =>

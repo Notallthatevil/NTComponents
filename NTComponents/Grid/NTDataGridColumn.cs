@@ -80,6 +80,8 @@ public abstract class NTDataGridColumn<TItem> : ComponentBase, IDisposable where
 
     internal abstract string? SortPropertyName { get; }
 
+    internal virtual SortDirection DefaultSortDirection => SortDirection.Ascending;
+
     internal virtual object? GetSortValue(TItem item) => null;
 
     internal virtual IOrderedQueryable<TItem>? ApplyQueryableSort(IQueryable<TItem> source, SortDirection direction, bool thenBy) => null;

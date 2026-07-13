@@ -52,15 +52,17 @@ public sealed class NTGridSort<TItem> where TItem : class {
 
     internal string PropertyName => _first.PropertyName;
 
+    internal SortDirection DefaultDirection => _first.Ascending ? SortDirection.Ascending : SortDirection.Descending;
+
     internal string StateSignature => _stateSignature;
 
     internal IOrderedEnumerable<TItem> Apply(IEnumerable<TItem> source, SortDirection direction, bool thenBy) {
-        var ascending = direction == SortDirection.Ascending;
-        var ordered = _first.Apply(source, ascending, thenBy);
+        var useConfiguredDirections = direction == DefaultDirection;
+        var ordered = _first.Apply(source, useConfiguredDirections, thenBy);
 
         if (_then is not null) {
             foreach (var clause in _then) {
-                ordered = clause.Apply(ordered, ascending, true);
+                ordered = clause.Apply(ordered, useConfiguredDirections, true);
             }
         }
 
@@ -68,12 +70,12 @@ public sealed class NTGridSort<TItem> where TItem : class {
     }
 
     internal IOrderedQueryable<TItem> Apply(IQueryable<TItem> source, SortDirection direction, bool thenBy) {
-        var ascending = direction == SortDirection.Ascending;
-        var ordered = _first.Apply(source, ascending, thenBy);
+        var useConfiguredDirections = direction == DefaultDirection;
+        var ordered = _first.Apply(source, useConfiguredDirections, thenBy);
 
         if (_then is not null) {
             foreach (var clause in _then) {
-                ordered = clause.Apply(ordered, ascending, true);
+                ordered = clause.Apply(ordered, useConfiguredDirections, true);
             }
         }
 
@@ -81,13 +83,13 @@ public sealed class NTGridSort<TItem> where TItem : class {
     }
 
     internal IReadOnlyList<NTSortDescriptor> GetSortDescriptors(SortDirection direction) {
-        var ascending = direction == SortDirection.Ascending;
+        var useConfiguredDirections = direction == DefaultDirection;
         var descriptors = new NTSortDescriptor[1 + (_then?.Count ?? 0)];
-        descriptors[0] = CreateSortDescriptor(_first, ascending);
+        descriptors[0] = CreateSortDescriptor(_first, useConfiguredDirections);
 
         if (_then is not null) {
             for (var i = 0; i < _then.Count; i++) {
-                descriptors[i + 1] = CreateSortDescriptor(_then[i], ascending);
+                descriptors[i + 1] = CreateSortDescriptor(_then[i], useConfiguredDirections);
             }
         }
 
@@ -108,8 +110,8 @@ public sealed class NTGridSort<TItem> where TItem : class {
         return this;
     }
 
-    private static NTSortDescriptor CreateSortDescriptor(ISortClause clause, bool ascending) =>
-        new(clause.PropertyName, clause.Ascending == ascending ? SortDirection.Ascending : SortDirection.Descending);
+    private static NTSortDescriptor CreateSortDescriptor(ISortClause clause, bool useConfiguredDirections) =>
+        new(clause.PropertyName, clause.Ascending == useConfiguredDirections ? SortDirection.Ascending : SortDirection.Descending);
 
     private static string CreateStateSignature(ISortClause clause) => string.Concat(clause.PropertyName, ":", clause.Ascending ? "asc" : "desc");
 
@@ -118,9 +120,9 @@ public sealed class NTGridSort<TItem> where TItem : class {
 
         bool Ascending { get; }
 
-        IOrderedEnumerable<TItem> Apply(IEnumerable<TItem> source, bool ascending, bool thenBy);
+        IOrderedEnumerable<TItem> Apply(IEnumerable<TItem> source, bool useConfiguredDirections, bool thenBy);
 
-        IOrderedQueryable<TItem> Apply(IQueryable<TItem> source, bool ascending, bool thenBy);
+        IOrderedQueryable<TItem> Apply(IQueryable<TItem> source, bool useConfiguredDirections, bool thenBy);
     }
 
     private sealed class SortClause<TValue>(Expression<Func<TItem, TValue>> _expression, bool _ascending) : ISortClause {
@@ -130,21 +132,21 @@ public sealed class NTGridSort<TItem> where TItem : class {
 
         public bool Ascending => _ascending;
 
-        public IOrderedEnumerable<TItem> Apply(IEnumerable<TItem> source, bool ascending, bool thenBy) {
+        public IOrderedEnumerable<TItem> Apply(IEnumerable<TItem> source, bool useConfiguredDirections, bool thenBy) {
             var accessor = _accessor ??= _expression.Compile(preferInterpretation: true);
             if (thenBy && source is IOrderedEnumerable<TItem> orderedSource) {
-                return ascending == _ascending ? orderedSource.ThenBy(accessor) : orderedSource.ThenByDescending(accessor);
+                return useConfiguredDirections == _ascending ? orderedSource.ThenBy(accessor) : orderedSource.ThenByDescending(accessor);
             }
 
-            return ascending == _ascending ? source.OrderBy(accessor) : source.OrderByDescending(accessor);
+            return useConfiguredDirections == _ascending ? source.OrderBy(accessor) : source.OrderByDescending(accessor);
         }
 
-        public IOrderedQueryable<TItem> Apply(IQueryable<TItem> source, bool ascending, bool thenBy) {
+        public IOrderedQueryable<TItem> Apply(IQueryable<TItem> source, bool useConfiguredDirections, bool thenBy) {
             if (thenBy && source is IOrderedQueryable<TItem> orderedSource) {
-                return ascending == _ascending ? orderedSource.ThenBy(_expression) : orderedSource.ThenByDescending(_expression);
+                return useConfiguredDirections == _ascending ? orderedSource.ThenBy(_expression) : orderedSource.ThenByDescending(_expression);
             }
 
-            return ascending == _ascending ? source.OrderBy(_expression) : source.OrderByDescending(_expression);
+            return useConfiguredDirections == _ascending ? source.OrderBy(_expression) : source.OrderByDescending(_expression);
         }
     }
 

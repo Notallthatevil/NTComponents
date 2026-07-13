@@ -126,6 +126,43 @@ public class NTDataGrid_Tests : BunitContext {
             sorts.Should().HaveCount(2);
             sorts[0].Should().Be(new NTSortDescriptor("Id", SortDirection.Descending));
             sorts[1].Should().Be(new NTSortDescriptor("Name", SortDirection.Ascending));
+            cut.Find("th").GetAttribute("aria-sort").Should().Be("descending");
+            cut.Find(".nt-data-grid-sort-indicator").ClassList.Should().Contain("nt-data-grid-sort-indicator-descending");
+        });
+
+        cut.Find(".nt-data-grid-sort-link").Click();
+
+        cut.WaitForAssertion(() => {
+            var sorts = captured.Last().Sorts;
+            sorts.Should().HaveCount(2);
+            sorts[0].Should().Be(new NTSortDescriptor("Id", SortDirection.Ascending));
+            sorts[1].Should().Be(new NTSortDescriptor("Name", SortDirection.Descending));
+            cut.Find("th").GetAttribute("aria-sort").Should().Be("ascending");
+            cut.Find(".nt-data-grid-sort-indicator").ClassList.Should().Contain("nt-data-grid-sort-indicator-ascending");
+        });
+    }
+
+    [Fact]
+    public void TemplateColumn_WithDescendingInitialSort_Passes_Descending_Provider_Descriptor() {
+        var captured = new List<NTDataGridItemsProviderRequest<TestGridItem>>();
+        var sortBy = NTGridSort<TestGridItem>.ByDescending(item => item.Id);
+        var cut = Render<NTDataGrid<TestGridItem>>(parameters => parameters
+            .Add(grid => grid.ItemsProvider, request => {
+                captured.Add(request);
+                return ValueTask.FromResult(new NTItemsProviderResult<TestGridItem>(_items.ToArray(), _items.Count()));
+            })
+            .Add(grid => grid.ChildContent, builder => {
+                builder.OpenComponent<NTTemplateColumn<TestGridItem>>(0);
+                builder.AddAttribute(1, nameof(NTTemplateColumn<TestGridItem>.Title), "Custom name");
+                builder.AddAttribute(2, nameof(NTTemplateColumn<TestGridItem>.SortBy), sortBy);
+                builder.AddAttribute(3, nameof(NTTemplateColumn<TestGridItem>.InitialSortDirection), SortDirection.Descending);
+                builder.AddAttribute(4, nameof(NTTemplateColumn<TestGridItem>.ChildContent), (RenderFragment<TestGridItem>)(item => cellBuilder => cellBuilder.AddContent(0, item.Name)));
+                builder.CloseComponent();
+            }));
+
+        cut.WaitForAssertion(() => {
+            captured.Last().Sorts.Should().Equal(new NTSortDescriptor("Id", SortDirection.Descending));
+            cut.Find("th").GetAttribute("aria-sort").Should().Be("descending");
         });
     }
 

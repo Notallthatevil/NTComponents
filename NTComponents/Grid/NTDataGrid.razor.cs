@@ -603,23 +603,23 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
             return _sorts;
         }
 
-        return ApplySortTransition(_sorts, column.SortPropertyName!, AllowMultiSort);
+        return ApplySortTransition(_sorts, column.SortPropertyName!, column.DefaultSortDirection, AllowMultiSort);
     }
 
-    private static IReadOnlyList<NTSortDescriptor> ApplySortTransition(IEnumerable<NTSortDescriptor> currentSorts, string propertyName, bool allowMultiSort) {
+    private static IReadOnlyList<NTSortDescriptor> ApplySortTransition(IEnumerable<NTSortDescriptor> currentSorts, string propertyName, SortDirection defaultDirection, bool allowMultiSort) {
         var nextSorts = currentSorts.ToList();
         var currentIndex = nextSorts.FindIndex(sort => string.Equals(sort.PropertyName, propertyName, StringComparison.Ordinal));
         if (!allowMultiSort) {
             SortDirection? currentDirection = currentIndex < 0 ? null : nextSorts[currentIndex].Direction;
-            var nextDirection = GetNextSortDirection(currentDirection);
+            var nextDirection = GetNextSortDirection(currentDirection, defaultDirection);
             return nextDirection is null ? [] : [new NTSortDescriptor(propertyName, nextDirection.Value)];
         }
 
         if (currentIndex < 0) {
-            nextSorts.Add(new NTSortDescriptor(propertyName, SortDirection.Ascending));
+            nextSorts.Add(new NTSortDescriptor(propertyName, defaultDirection));
         }
         else {
-            var nextDirection = GetNextSortDirection(nextSorts[currentIndex].Direction);
+            var nextDirection = GetNextSortDirection(nextSorts[currentIndex].Direction, defaultDirection);
             if (nextDirection is null) {
                 nextSorts.RemoveAt(currentIndex);
             }
@@ -631,13 +631,15 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
         return nextSorts;
     }
 
-    private static SortDirection? GetNextSortDirection(SortDirection? currentDirection) =>
-        currentDirection switch {
-            null => SortDirection.Ascending,
-            SortDirection.Ascending => SortDirection.Descending,
-            SortDirection.Descending => null,
-            _ => throw new ArgumentOutOfRangeException(nameof(currentDirection), currentDirection, null)
-        };
+    private static SortDirection? GetNextSortDirection(SortDirection? currentDirection, SortDirection defaultDirection) {
+        if (currentDirection is null) {
+            return defaultDirection;
+        }
+
+        return currentDirection == defaultDirection
+            ? defaultDirection == SortDirection.Ascending ? SortDirection.Descending : SortDirection.Ascending
+            : null;
+    }
 
     private void ApplyQueryState() {
         var uri = _navManager.ToAbsoluteUri(_navManager.Uri);
