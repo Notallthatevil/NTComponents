@@ -22,6 +22,23 @@ public class IQueryableExt_Tests {
     ];
 
     [Fact]
+    public void Apply_WithNTItemsProviderRequest_AppliesSortingBeforePaging() {
+        // Arrange
+        var query = _testItems.AsQueryable();
+        var request = new NTItemsProviderRequest {
+            StartIndex = 1,
+            Count = 2,
+            Sorts = [$"{nameof(TestItem.Age)},Ascending"]
+        };
+
+        // Act
+        var result = query.Apply(request).ToList();
+
+        // Assert
+        result.Select(item => item.Name).Should().Equal("Ivy", "Frank");
+    }
+
+    [Fact]
     public void Apply_WithAllParameters_AppliesSortingPagingAndFiltering() {
         // Arrange
         var query = _testItems.AsQueryable();

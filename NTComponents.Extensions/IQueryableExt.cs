@@ -9,6 +9,29 @@ namespace NTComponents.Extensions;
 public static class IQueryableExt {
 
     /// <summary>
+    ///     Applies sorting and paging to an <see cref="IQueryable{T}" /> based on the provided request parameters.
+    /// </summary>
+    /// <typeparam name="T">The type of elements in the query.</typeparam>
+    /// <param name="query">The source query to apply operations to.</param>
+    /// <param name="request">The request containing sorting and paging parameters.</param>
+    /// <returns>A sorted <see cref="IQueryable{T}" /> with paging applied.</returns>
+    public static IQueryable<T> Apply<T>(this IQueryable<T> query, NTItemsProviderRequest request) {
+        if (request.SortOnProperties.Count > 0) {
+            query = query.OrderBy(request.SortOnProperties);
+        }
+
+        if (request.StartIndex != 0) {
+            query = query.Skip(request.StartIndex);
+        }
+
+        if (request.Count.HasValue) {
+            query = query.Take(request.Count.Value);
+        }
+
+        return query;
+    }
+
+    /// <summary>
     ///     Applies sorting, paging, and filtering to an <see cref="IQueryable{T}" /> based on the provided request parameters.
     /// </summary>
     /// <typeparam name="T">The type of elements in the query.</typeparam>
