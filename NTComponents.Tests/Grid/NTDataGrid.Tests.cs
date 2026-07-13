@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.DependencyInjection;
+using Bunit.TestDoubles;
 using NTComponents.Virtualization;
 
 namespace NTComponents.Tests.Grid;
@@ -74,6 +75,14 @@ public class NTDataGrid_Tests : BunitContext {
             cut.FindAll("tbody tr")[0].TextContent.Should().Contain("Alpha");
             cut.FindAll(".nt-data-grid-sort-link-sorted").Should().ContainSingle();
             cut.FindAll("th")[1].GetAttribute("aria-sort").Should().Be("ascending");
+        });
+
+        cut.FindAll(".nt-data-grid-sort-link")[1].Click();
+
+        cut.WaitForAssertion(() => {
+            cut.FindAll("tbody tr")[0].TextContent.Should().Contain("Gamma");
+            cut.FindAll("th")[1].GetAttribute("aria-sort").Should().Be("descending");
+            cut.Find(".nt-data-grid-sort-indicator").ClassList.Should().Contain("nt-data-grid-sort-indicator-descending");
         });
     }
 
@@ -230,12 +239,18 @@ public class NTDataGrid_Tests : BunitContext {
 
     [Fact]
     public void Header_Click_Sorts_Direct_Items_In_Place() {
+        var navigationManager = (BunitNavigationManager)Services.GetRequiredService<NavigationManager>();
         var cut = RenderGrid();
+        var uri = navigationManager.Uri;
 
         cut.WaitForAssertion(() => cut.FindAll("tbody tr").Should().HaveCount(3));
         cut.Find(".nt-data-grid-sort-link").Click();
 
-        cut.WaitForAssertion(() => cut.FindAll("tbody tr")[0].TextContent.Should().Contain("Alpha"));
+        cut.WaitForAssertion(() => {
+            cut.FindAll("tbody tr")[0].TextContent.Should().Contain("Alpha");
+            navigationManager.Uri.Should().Be(uri);
+            navigationManager.History.Should().BeEmpty();
+        });
     }
 
     [Fact]
@@ -406,6 +421,7 @@ public class NTDataGrid_Tests : BunitContext {
 
     [Fact]
     public void Pagination_Renders_Links_And_Requests_Page_Range() {
+        var navigationManager = (BunitNavigationManager)Services.GetRequiredService<NavigationManager>();
         var captured = new List<NTDataGridItemsProviderRequest<TestGridItem>>();
         var cut = Render<NTDataGrid<TestGridItem>>(parameters => parameters
             .Add(grid => grid.ItemsProvider, request => {
@@ -429,7 +445,13 @@ public class NTDataGrid_Tests : BunitContext {
 
         cut.Find(".nt-data-grid-pagination-buttons .pagination-next-page").Click();
 
-        cut.WaitForAssertion(() => captured.Should().Contain(request => request.StartIndex == 2 && request.Count == 2));
+        cut.WaitForAssertion(() => {
+            captured.Should().Contain(request => request.StartIndex == 2 && request.Count == 2);
+            navigationManager.History.Should().ContainSingle();
+            var navigation = navigationManager.History.Single();
+            navigation.Uri.Should().Contain("ntdg-page=2");
+            navigation.Options.ReplaceHistoryEntry.Should().BeTrue();
+        });
     }
 
     [Fact]

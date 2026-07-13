@@ -222,7 +222,7 @@ $nt-data-grid-spacer-animation-duration: motion.$nt-motion-duration-extra_long_2
     color: inherit;
 }
 
-.nt-data-grid-sort-indicator {
+.nt-data-grid-sort-state ::deep .nt-data-grid-sort-indicator {
     display: inline-flex;
     block-size: $nt-data-grid-sort-indicator-size;
     inline-size: $nt-data-grid-sort-indicator-size;

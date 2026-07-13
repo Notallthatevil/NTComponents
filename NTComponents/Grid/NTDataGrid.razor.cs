@@ -558,6 +558,7 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
         _currentPageIndex = nextPageIndex;
         await PageIndexChanged.InvokeAsync(nextPageIndex);
         await RefreshDataAsync(_componentCancellation.Token);
+        _navManager.NavigateTo(BuildPageHref(nextPageIndex), replace: true);
     }
 
     private async Task ChangePageSizeAsync(ChangeEventArgs args) {
