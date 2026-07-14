@@ -57,6 +57,7 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
     private const string _clickableStripedEvenRowClass = "nt-data-grid-row nt-data-grid-row-clickable nt-data-grid-row-striped-even";
     private const string _emptyRowClass = "nt-data-grid-row nt-data-grid-row-empty";
     private readonly List<NTDataGridColumn<TItem>> _columns = [];
+    private readonly Dictionary<string, NTDataGridColumn<TItem>> _columnsBySortProperty = new(StringComparer.Ordinal);
     private readonly List<TItem> _loadedItems = [];
     private readonly List<NTSortDescriptor> _sorts = [];
     private readonly Dictionary<object, int> _rowIndices = [];
@@ -72,6 +73,7 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
     private bool _refreshQueued;
     private bool _sortsInitialized;
     private bool _hasVirtualizationItemSizeParameter;
+    private SortPlan? _sortPlan;
     private int _currentPageIndex;
     private int _currentPageSize;
     private int _totalItemCount;
@@ -325,6 +327,7 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
 
         column.Sequence = _columns.Count;
         _columns.Add(column);
+        RebuildColumnSortLookup();
         TryAddInitialSort(column);
         QueueRefresh();
     }
@@ -335,6 +338,7 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
         }
 
         if (sortStateChanged) {
+            RebuildColumnSortLookup();
             ResetSorts();
         }
 
@@ -344,6 +348,7 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
     internal void UnregisterColumn(NTDataGridColumn<TItem> column) {
         if (_columns.Remove(column)) {
             ReindexColumns();
+            RebuildColumnSortLookup();
             ResetSorts();
             QueueRefresh();
         }
@@ -372,6 +377,17 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
         for (var i = 0; i < _columns.Count; i++) {
             _columns[i].Sequence = i;
         }
+    }
+
+    private void RebuildColumnSortLookup() {
+        _columnsBySortProperty.Clear();
+        foreach (var column in _columns) {
+            if (!string.IsNullOrWhiteSpace(column.SortPropertyName)) {
+                _columnsBySortProperty.TryAdd(column.SortPropertyName, column);
+            }
+        }
+
+        InvalidateSortPlan();
     }
 
     private void ValidateConfiguration() {
@@ -446,13 +462,8 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
     private bool TryApplyQueryableSorts(IQueryable<TItem> source, out IQueryable<TItem> query) {
         query = source;
         IOrderedQueryable<TItem>? ordered = null;
-        foreach (var sort in _sorts) {
-            var column = _columns.FirstOrDefault(candidate => string.Equals(candidate.SortPropertyName, sort.PropertyName, StringComparison.Ordinal));
-            if (column is null) {
-                continue;
-            }
-
-            ordered = column.ApplyQueryableSort(ordered ?? source, sort.Direction, ordered is not null);
+        foreach (var sort in GetSortPlan().ResolvedSorts) {
+            ordered = sort.Column.ApplyQueryableSort(ordered ?? source, sort.Direction, ordered is not null);
             if (ordered is null) {
                 return false;
             }
@@ -464,29 +475,44 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
 
     private IEnumerable<TItem> ApplyLocalSorts(IEnumerable<TItem> source) {
         IOrderedEnumerable<TItem>? ordered = null;
-        foreach (var sort in _sorts) {
-            var column = _columns.FirstOrDefault(candidate => string.Equals(candidate.SortPropertyName, sort.PropertyName, StringComparison.Ordinal));
-            if (column is null) {
-                continue;
-            }
-
-            var customSort = column.ApplyLocalSort(ordered ?? source, sort.Direction, ordered is not null);
+        foreach (var sort in GetSortPlan().ResolvedSorts) {
+            var customSort = sort.Column.ApplyLocalSort(ordered ?? source, sort.Direction, ordered is not null);
             ordered = customSort ?? (ordered is null
                 ? sort.Direction == SortDirection.Descending
-                    ? source.OrderByDescending(column.GetSortValue, NTDataGridObjectComparer.Instance)
-                    : source.OrderBy(column.GetSortValue, NTDataGridObjectComparer.Instance)
+                    ? source.OrderByDescending(sort.Column.GetSortValue, NTDataGridObjectComparer.Instance)
+                    : source.OrderBy(sort.Column.GetSortValue, NTDataGridObjectComparer.Instance)
                 : sort.Direction == SortDirection.Descending
-                    ? ordered.ThenByDescending(column.GetSortValue, NTDataGridObjectComparer.Instance)
-                    : ordered.ThenBy(column.GetSortValue, NTDataGridObjectComparer.Instance));
+                    ? ordered.ThenByDescending(sort.Column.GetSortValue, NTDataGridObjectComparer.Instance)
+                    : ordered.ThenBy(sort.Column.GetSortValue, NTDataGridObjectComparer.Instance));
         }
 
         return ordered ?? source;
     }
 
-    private IReadOnlyList<NTSortDescriptor> GetProviderSortDescriptors() => [.. _sorts.SelectMany(sort => {
-        var column = _columns.FirstOrDefault(candidate => string.Equals(candidate.SortPropertyName, sort.PropertyName, StringComparison.Ordinal));
-        return column?.GetSortDescriptors(sort.Direction) ?? [sort];
-    })];
+    private IReadOnlyList<NTSortDescriptor> GetProviderSortDescriptors() => GetSortPlan().ProviderDescriptors;
+
+    private SortPlan GetSortPlan() {
+        if (_sortPlan is not null) {
+            return _sortPlan;
+        }
+
+        var resolvedSorts = new List<ResolvedSort>(_sorts.Count);
+        var providerDescriptors = new List<NTSortDescriptor>(_sorts.Count);
+        foreach (var sort in _sorts) {
+            if (_columnsBySortProperty.TryGetValue(sort.PropertyName, out var column)) {
+                resolvedSorts.Add(new ResolvedSort(column, sort.Direction));
+                providerDescriptors.AddRange(column.GetSortDescriptors(sort.Direction));
+            }
+            else {
+                providerDescriptors.Add(sort);
+            }
+        }
+
+        _sortPlan = new SortPlan(resolvedSorts.ToArray(), Array.AsReadOnly(providerDescriptors.ToArray()));
+        return _sortPlan;
+    }
+
+    private void InvalidateSortPlan() => _sortPlan = null;
 
     private async Task SetTotalItemCountAsync(int totalItemCount) {
         totalItemCount = Math.Max(0, totalItemCount);
@@ -513,7 +539,7 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
 
     private void ResetSorts() {
         _sortsInitialized = false;
-        _sorts.Clear();
+        SetSorts([]);
         ApplyQueryState();
         InitializeSorts();
     }
@@ -532,6 +558,7 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
         }
 
         _sorts.Add(new NTSortDescriptor(column.SortPropertyName!, column.InitialSortDirection.Value));
+        InvalidateSortPlan();
     }
 
     private bool CanSort(NTDataGridColumn<TItem> column) => column.CanSort;
@@ -542,8 +569,7 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
         }
 
         var nextSorts = GetNextSorts(column);
-        _sorts.Clear();
-        _sorts.AddRange(nextSorts);
+        SetSorts(nextSorts);
 
         _currentPageIndex = 0;
         await PageIndexChanged.InvokeAsync(_currentPageIndex);
@@ -665,10 +691,29 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
         }
 
         if (query.TryGetValue(GetQueryName("sort"), out var sortValue)) {
-            _sorts.Clear();
-            _sorts.AddRange(NormalizeSorts(ParseSorts(sortValue)));
+            SetSorts(NormalizeSorts(ParseSorts(sortValue)));
             _sortsInitialized = true;
         }
+    }
+
+    private void SetSorts(IReadOnlyList<NTSortDescriptor> sorts) {
+        if (_sorts.Count == sorts.Count) {
+            var unchanged = true;
+            for (var i = 0; i < sorts.Count; i++) {
+                if (_sorts[i] != sorts[i]) {
+                    unchanged = false;
+                    break;
+                }
+            }
+
+            if (unchanged) {
+                return;
+            }
+        }
+
+        _sorts.Clear();
+        _sorts.AddRange(sorts);
+        InvalidateSortPlan();
     }
 
     private string GetQueryName(string name) => string.IsNullOrWhiteSpace(QueryParameterPrefix) ? name : $"{QueryParameterPrefix}-{name}";
@@ -927,6 +972,10 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
         builder.AddAttribute(3, "style", $"height: {size}px;");
         builder.CloseElement();
     };
+
+    private readonly record struct ResolvedSort(NTDataGridColumn<TItem> Column, SortDirection Direction);
+
+    private sealed record SortPlan(ResolvedSort[] ResolvedSorts, IReadOnlyList<NTSortDescriptor> ProviderDescriptors);
 
     private sealed class NTDataGridObjectComparer : IComparer<object?> {
         public static readonly NTDataGridObjectComparer Instance = new();

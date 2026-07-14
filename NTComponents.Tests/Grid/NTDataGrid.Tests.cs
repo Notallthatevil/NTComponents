@@ -168,6 +168,80 @@ public class NTDataGrid_Tests : BunitContext {
     }
 
     [Fact]
+    public async Task Provider_Sort_Plan_Is_Reused_Until_Sorts_Change() {
+        var captured = new List<NTDataGridItemsProviderRequest<TestGridItem>>();
+        var sortBy = NTGridSort<TestGridItem>.ByAscending(item => item.Id).ThenDescending(item => item.Name);
+        var cut = Render<NTDataGrid<TestGridItem>>(parameters => parameters
+            .Add(grid => grid.ItemsProvider, request => {
+                captured.Add(request);
+                return ValueTask.FromResult(new NTItemsProviderResult<TestGridItem>(_items.ToArray(), _items.Count()));
+            })
+            .Add(grid => grid.ChildContent, builder => {
+                builder.OpenComponent<NTTemplateColumn<TestGridItem>>(0);
+                builder.AddAttribute(1, nameof(NTTemplateColumn<TestGridItem>.Title), "Custom name");
+                builder.AddAttribute(2, nameof(NTTemplateColumn<TestGridItem>.SortBy), sortBy);
+                builder.AddAttribute(3, nameof(NTTemplateColumn<TestGridItem>.InitialSortDirection), SortDirection.Ascending);
+                builder.AddAttribute(4, nameof(NTTemplateColumn<TestGridItem>.ChildContent), (RenderFragment<TestGridItem>)(item => cellBuilder => cellBuilder.AddContent(0, item.Name)));
+                builder.CloseComponent();
+            }));
+
+        cut.WaitForAssertion(() => captured.Last().Sorts.Should().Equal(
+            new NTSortDescriptor("Id", SortDirection.Ascending),
+            new NTSortDescriptor("Name", SortDirection.Descending)));
+        captured.Clear();
+
+        await cut.InvokeAsync(() => cut.Instance.RefreshDataGridAsync());
+        await cut.InvokeAsync(() => cut.Instance.RefreshDataGridAsync());
+
+        captured.Should().HaveCount(2);
+        captured[0].Sorts.Should().BeSameAs(captured[1].Sorts);
+        var cachedSorts = captured[1].Sorts;
+
+        cut.Find(".nt-data-grid-sort-link").Click();
+
+        cut.WaitForAssertion(() => {
+            captured.Last().Sorts.Should().NotBeSameAs(cachedSorts);
+            captured.Last().Sorts.Should().Equal(
+                new NTSortDescriptor("Id", SortDirection.Descending),
+                new NTSortDescriptor("Name", SortDirection.Ascending));
+        });
+    }
+
+    [Fact]
+    public void Provider_Sort_Plan_Is_Rebuilt_When_Column_Sort_Changes() {
+        var captured = new List<NTDataGridItemsProviderRequest<TestGridItem>>();
+        var sortBy = NTGridSort<TestGridItem>.ByAscending(item => item.Id);
+        NTDataGridItemsProvider<TestGridItem> provider = request => {
+            captured.Add(request);
+            return ValueTask.FromResult(new NTItemsProviderResult<TestGridItem>(_items.ToArray(), _items.Count()));
+        };
+        RenderFragment columns = builder => {
+            builder.OpenComponent<NTTemplateColumn<TestGridItem>>(0);
+            builder.AddAttribute(1, nameof(NTTemplateColumn<TestGridItem>.Title), "Custom name");
+            builder.AddAttribute(2, nameof(NTTemplateColumn<TestGridItem>.SortBy), sortBy);
+            builder.AddAttribute(3, nameof(NTTemplateColumn<TestGridItem>.InitialSortDirection), SortDirection.Ascending);
+            builder.AddAttribute(4, nameof(NTTemplateColumn<TestGridItem>.ChildContent), (RenderFragment<TestGridItem>)(item => cellBuilder => cellBuilder.AddContent(0, item.Name)));
+            builder.CloseComponent();
+        };
+        var cut = Render<NTDataGrid<TestGridItem>>(parameters => parameters
+            .Add(grid => grid.ItemsProvider, provider)
+            .Add(grid => grid.ChildContent, columns));
+
+        cut.WaitForAssertion(() => captured.Last().Sorts.Should().Equal(new NTSortDescriptor("Id", SortDirection.Ascending)));
+        var cachedSorts = captured.Last().Sorts;
+        sortBy = NTGridSort<TestGridItem>.ByAscending(item => item.Name);
+
+        cut.Render(parameters => parameters
+            .Add(grid => grid.ItemsProvider, provider)
+            .Add(grid => grid.ChildContent, columns));
+
+        cut.WaitForAssertion(() => {
+            captured.Last().Sorts.Should().NotBeSameAs(cachedSorts);
+            captured.Last().Sorts.Should().Equal(new NTSortDescriptor("Name", SortDirection.Ascending));
+        });
+    }
+
+    [Fact]
     public void PropertyColumn_Uses_Property_Name_For_Provider_Sort_Instead_Of_Display_Title() {
         var captured = new List<NTDataGridItemsProviderRequest<TestGridItem>>();
         var cut = Render<NTDataGrid<TestGridItem>>(parameters => parameters
