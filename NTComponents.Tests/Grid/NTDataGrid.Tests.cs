@@ -323,6 +323,7 @@ public class NTDataGrid_Tests : BunitContext {
             uri.Should().Contain("existing=true");
             uri.Should().Contain("ntdg-page=1");
             uri.Should().Contain("ntdg-sort=Name%3Aasc");
+            typeof(NTDataGrid<TestGridItem>).GetField("_currentUri", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.GetValue(cut.Instance).Should().Be(uri);
             navigationManager.History.Should().HaveCount(navigationCount);
         });
     }
@@ -535,6 +536,29 @@ public class NTDataGrid_Tests : BunitContext {
             firstRowCells[1].ClassList.Should().Contain("nt-data-grid-align-right");
             firstRowCells[1].QuerySelector(".nt-data-grid-cell-content").Should().NotBeNull();
         });
+    }
+
+    [Fact]
+    public void Href_Generation_Reuses_The_Parsed_Uri_State() {
+        Services.GetRequiredService<NavigationManager>().NavigateTo("https://example.test/orders?filter=hello%20world&ntdg-pageSize=99");
+        var cut = Render<NTDataGrid<TestGridItem>>(parameters => parameters
+            .Add(grid => grid.Items, _items)
+            .Add(grid => grid.ShowPagination, true)
+            .Add(grid => grid.PageSize, 1)
+            .Add(grid => grid.ChildContent, DefaultColumns));
+        var buildPageHref = typeof(NTDataGrid<TestGridItem>).GetMethod("BuildPageHref", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
+        var uriStateField = typeof(NTDataGrid<TestGridItem>).GetField("_uriState", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
+
+        var first = (string)buildPageHref.Invoke(cut.Instance, [1])!;
+        var firstUriState = uriStateField.GetValue(cut.Instance);
+        var second = (string)buildPageHref.Invoke(cut.Instance, [1])!;
+
+        firstUriState.Should().NotBeNull();
+        uriStateField.GetValue(cut.Instance).Should().BeSameAs(firstUriState);
+        second.Should().Be(first);
+        first.Should().Contain("filter=hello%20world");
+        first.Should().Contain("ntdg-page=2");
+        first.Should().NotContain("ntdg-pageSize");
     }
 
     [Fact]
@@ -763,6 +787,151 @@ public class NTDataGrid_Tests : BunitContext {
             cut.Markup.Should().Contain("New");
             cut.Markup.Should().NotContain("Old");
         });
+    }
+
+    [Fact]
+    public async Task NonVirtual_Refresh_Cancels_Superseded_Provider_And_Ignores_Its_Result() {
+        var pending = new List<(NTDataGridItemsProviderRequest<TestGridItem> Request, TaskCompletionSource<NTItemsProviderResult<TestGridItem>> Completion)>();
+        var holdRequests = false;
+        var initialItems = new[] { new TestGridItem(1, "Initial", new DateOnly(2026, 1, 1), 1) };
+        var cut = Render<NTDataGrid<TestGridItem>>(parameters => parameters
+            .Add(grid => grid.ItemsProvider, request => {
+                if (!holdRequests) {
+                    return ValueTask.FromResult(new NTItemsProviderResult<TestGridItem>(initialItems, initialItems.Length));
+                }
+
+                var completion = new TaskCompletionSource<NTItemsProviderResult<TestGridItem>>(TaskCreationOptions.RunContinuationsAsynchronously);
+                pending.Add((request, completion));
+                return new ValueTask<NTItemsProviderResult<TestGridItem>>(completion.Task);
+            })
+            .Add(grid => grid.ChildContent, DefaultColumns));
+        cut.WaitForAssertion(() => cut.Markup.Should().Contain("Initial"));
+        holdRequests = true;
+
+        var firstRefresh = cut.InvokeAsync(() => cut.Instance.RefreshDataGridAsync());
+        cut.WaitForAssertion(() => pending.Should().HaveCount(1));
+        var secondRefresh = cut.InvokeAsync(() => cut.Instance.RefreshDataGridAsync());
+        cut.WaitForAssertion(() => pending.Should().HaveCount(2));
+
+        pending[0].Request.CancellationToken.IsCancellationRequested.Should().BeTrue();
+        pending[1].Request.CancellationToken.IsCancellationRequested.Should().BeFalse();
+
+        var newestItems = new[] { new TestGridItem(2, "Newest", new DateOnly(2026, 1, 2), 2) };
+        pending[1].Completion.SetResult(new NTItemsProviderResult<TestGridItem>(newestItems, newestItems.Length));
+        await secondRefresh;
+        cut.WaitForAssertion(() => cut.Markup.Should().Contain("Newest"));
+
+        var staleItems = new[] { new TestGridItem(3, "Stale", new DateOnly(2026, 1, 3), 3) };
+        pending[0].Completion.SetResult(new NTItemsProviderResult<TestGridItem>(staleItems, staleItems.Length));
+        await firstRefresh;
+
+        cut.Markup.Should().Contain("Newest");
+        cut.Markup.Should().NotContain("Stale");
+    }
+
+    [Fact]
+    public async Task NonVirtual_Dispose_Cancels_Provider_And_Does_Not_Swallow_Disposal_Cancellation() {
+        var pending = new TaskCompletionSource<NTItemsProviderResult<TestGridItem>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var pendingToken = CancellationToken.None;
+        var holdRequests = false;
+        var initialItems = new[] { new TestGridItem(1, "Initial", new DateOnly(2026, 1, 1), 1) };
+        var cut = Render<NTDataGrid<TestGridItem>>(parameters => parameters
+            .Add(grid => grid.ItemsProvider, request => {
+                if (!holdRequests) {
+                    return ValueTask.FromResult(new NTItemsProviderResult<TestGridItem>(initialItems, initialItems.Length));
+                }
+
+                pendingToken = request.CancellationToken;
+                return new ValueTask<NTItemsProviderResult<TestGridItem>>(pending.Task);
+            })
+            .Add(grid => grid.ChildContent, DefaultColumns));
+        cut.WaitForAssertion(() => cut.Markup.Should().Contain("Initial"));
+        holdRequests = true;
+        var refresh = cut.InvokeAsync(() => cut.Instance.RefreshDataGridAsync());
+        cut.WaitForAssertion(() => pendingToken.CanBeCanceled.Should().BeTrue());
+
+        cut.Instance.Dispose();
+
+        pendingToken.IsCancellationRequested.Should().BeTrue();
+        pending.SetResult(new NTItemsProviderResult<TestGridItem>(initialItems, initialItems.Length));
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => refresh);
+        Record.Exception(cut.Instance.Dispose).Should().BeNull();
+    }
+
+    [Fact]
+    public async Task Superseding_Refresh_Disposes_Its_Source_When_Previous_Cancellation_Callback_Throws() {
+        var pending = new TaskCompletionSource<NTItemsProviderResult<TestGridItem>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var refreshCancellationField = typeof(NTDataGrid<TestGridItem>).GetField("_refreshCancellation", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
+        NTDataGrid<TestGridItem>? grid = null;
+        CancellationTokenSource? failedRefreshCancellation = null;
+        var cancellationCallbackRegistered = false;
+        var holdRequests = false;
+        var initialItems = new[] { new TestGridItem(1, "Initial", new DateOnly(2026, 1, 1), 1) };
+        var cut = Render<NTDataGrid<TestGridItem>>(parameters => parameters
+            .Add(component => component.ItemsProvider, request => {
+                if (!holdRequests) {
+                    return ValueTask.FromResult(new NTItemsProviderResult<TestGridItem>(initialItems, initialItems.Length));
+                }
+
+                request.CancellationToken.Register(() => {
+                    failedRefreshCancellation = (CancellationTokenSource?)refreshCancellationField.GetValue(grid);
+                    throw new InvalidOperationException("Cancellation callback failed.");
+                });
+                cancellationCallbackRegistered = true;
+                return new ValueTask<NTItemsProviderResult<TestGridItem>>(pending.Task);
+            })
+            .Add(component => component.ChildContent, DefaultColumns));
+        grid = cut.Instance;
+        cut.WaitForAssertion(() => cut.Markup.Should().Contain("Initial"));
+        holdRequests = true;
+        var firstRefresh = cut.InvokeAsync(() => cut.Instance.RefreshDataGridAsync());
+        cut.WaitForAssertion(() => cancellationCallbackRegistered.Should().BeTrue());
+
+        var secondRefresh = cut.InvokeAsync(() => cut.Instance.RefreshDataGridAsync());
+
+        await Assert.ThrowsAsync<AggregateException>(() => secondRefresh);
+        failedRefreshCancellation.Should().NotBeNull();
+        Action readFailedToken = () => _ = failedRefreshCancellation!.Token;
+        readFailedToken.Should().Throw<ObjectDisposedException>();
+        refreshCancellationField.GetValue(cut.Instance).Should().BeNull();
+
+        pending.SetResult(new NTItemsProviderResult<TestGridItem>(initialItems, initialItems.Length));
+        await firstRefresh;
+    }
+
+    [Fact]
+    public async Task Dispose_Disposes_Component_Source_When_Cancellation_Callback_Throws() {
+        var pending = new TaskCompletionSource<NTItemsProviderResult<TestGridItem>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var componentCancellationField = typeof(NTDataGrid<TestGridItem>).GetField("_componentCancellation", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
+        var cancellationCallbackRegistered = false;
+        var holdRequests = false;
+        var initialItems = new[] { new TestGridItem(1, "Initial", new DateOnly(2026, 1, 1), 1) };
+        var cut = Render<NTDataGrid<TestGridItem>>(parameters => parameters
+            .Add(grid => grid.ItemsProvider, request => {
+                if (!holdRequests) {
+                    return ValueTask.FromResult(new NTItemsProviderResult<TestGridItem>(initialItems, initialItems.Length));
+                }
+
+                request.CancellationToken.Register(() => throw new InvalidOperationException("Cancellation callback failed."));
+                cancellationCallbackRegistered = true;
+                return new ValueTask<NTItemsProviderResult<TestGridItem>>(pending.Task);
+            })
+            .Add(grid => grid.ChildContent, DefaultColumns));
+        cut.WaitForAssertion(() => cut.Markup.Should().Contain("Initial"));
+        holdRequests = true;
+        var refresh = cut.InvokeAsync(() => cut.Instance.RefreshDataGridAsync());
+        cut.WaitForAssertion(() => cancellationCallbackRegistered.Should().BeTrue());
+        var componentCancellation = (CancellationTokenSource)componentCancellationField.GetValue(cut.Instance)!;
+
+        Action dispose = cut.Instance.Dispose;
+
+        dispose.Should().Throw<AggregateException>();
+        Action readComponentToken = () => _ = componentCancellation.Token;
+        readComponentToken.Should().Throw<ObjectDisposedException>();
+        Record.Exception(cut.Instance.Dispose).Should().BeNull();
+
+        pending.SetResult(new NTItemsProviderResult<TestGridItem>(initialItems, initialItems.Length));
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => refresh);
     }
 
     [Fact]

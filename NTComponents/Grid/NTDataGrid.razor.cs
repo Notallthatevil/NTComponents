@@ -63,13 +63,18 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
     private readonly Dictionary<object, int> _rowIndices = [];
     private readonly CancellationTokenSource _componentCancellation = new();
     private IReadOnlyDictionary<string, object>? _rootAttributes;
+    private CancellationTokenSource? _refreshCancellation;
+    private UriState? _uriState;
     private IQueryable<TItem>? _previousItems;
     private NTDataGridItemsProvider<TItem>? _previousItemsProvider;
     private Func<TItem, object>? _previousRowKey;
     private string? _class;
+    private string? _currentUri;
+    private string? _lastNavigationManagerUri;
     private string? _previousDataState;
     private string? _style;
     private bool _hasDataStateSnapshot;
+    private bool _disposed;
     private bool _refreshQueued;
     private bool _sortsInitialized;
     private bool _hasVirtualizationItemSizeParameter;
@@ -287,14 +292,29 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
     /// <summary>
     /// Refreshes the data grid by re-resolving the current data source and updating the rendered rows.
     /// </summary>
-    public async Task RefreshDataGridAsync(CancellationToken cancellationToken = default) {
+    public Task RefreshDataGridAsync(CancellationToken cancellationToken = default) {
+        if (_disposed) {
+            return Task.CompletedTask;
+        }
+
+        return InvokeAsync(() => RefreshDataGridCoreAsync(cancellationToken));
+    }
+
+    private async Task RefreshDataGridCoreAsync(CancellationToken cancellationToken) {
+        if (_disposed) {
+            return;
+        }
+
         if (Virtualize) {
             ResetVirtualizedData();
         }
         else {
-            await RefreshDataAsync(cancellationToken.CanBeCanceled ? cancellationToken : _componentCancellation.Token);
+            await RefreshDataAsync(cancellationToken);
         }
-        await InvokeAsync(StateHasChanged);
+
+        if (!_disposed) {
+            StateHasChanged();
+        }
     }
 
     /// <inheritdoc />
@@ -318,7 +338,7 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
             }
         }
         else if (_columns.Count > 0 && dataStateChanged && !_refreshQueued) {
-            await RefreshDataAsync(_componentCancellation.Token);
+            await RefreshDataAsync();
         }
     }
 
@@ -364,14 +384,21 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
         _refreshQueued = true;
         _ = InvokeAsync(async () => {
             _refreshQueued = false;
+            if (_disposed) {
+                return;
+            }
+
             InitializeSorts();
             if (!Virtualize) {
-                await RefreshDataAsync(_componentCancellation.Token);
+                await RefreshDataAsync();
             }
             else {
                 ResetVirtualizedData();
             }
-            StateHasChanged();
+
+            if (!_disposed) {
+                StateHasChanged();
+            }
         });
     }
 
@@ -406,16 +433,36 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
         }
     }
 
-    private async Task RefreshDataAsync(CancellationToken cancellationToken) {
-        InitializeSorts();
-        var startIndex = ShowPagination ? CurrentPageIndex * CurrentPageSize : 0;
-        int? count = ShowPagination || ItemsProvider is not null ? CurrentPageSize : null;
-        var result = await ResolveItemsAsync(startIndex, count, cancellationToken);
-        _loadedItems.Clear();
-        _loadedItems.AddRange(result.Items);
-        _rowIndices.Clear();
-        RegisterRowIndices(startIndex, _loadedItems);
-        await SetTotalItemCountAsync(result.TotalItemCount);
+    private async Task RefreshDataAsync(CancellationToken cancellationToken = default) {
+        var refreshCancellation = cancellationToken.CanBeCanceled
+            ? CancellationTokenSource.CreateLinkedTokenSource(_componentCancellation.Token, cancellationToken)
+            : CancellationTokenSource.CreateLinkedTokenSource(_componentCancellation.Token);
+        var previousRefreshCancellation = _refreshCancellation;
+        _refreshCancellation = refreshCancellation;
+
+        try {
+            previousRefreshCancellation?.Cancel();
+            InitializeSorts();
+            var startIndex = ShowPagination ? CurrentPageIndex * CurrentPageSize : 0;
+            int? count = ShowPagination || ItemsProvider is not null ? CurrentPageSize : null;
+            var result = await ResolveItemsAsync(startIndex, count, refreshCancellation.Token);
+            refreshCancellation.Token.ThrowIfCancellationRequested();
+            _loadedItems.Clear();
+            _loadedItems.AddRange(result.Items);
+            _rowIndices.Clear();
+            RegisterRowIndices(startIndex, _loadedItems);
+            await SetTotalItemCountAsync(result.TotalItemCount);
+        }
+        catch (OperationCanceledException) when (!_disposed && !ReferenceEquals(_refreshCancellation, refreshCancellation)) {
+            // A newer refresh owns the rendered state.
+        }
+        finally {
+            if (ReferenceEquals(_refreshCancellation, refreshCancellation)) {
+                _refreshCancellation = null;
+            }
+
+            refreshCancellation.Dispose();
+        }
     }
 
     private async ValueTask<TnTItemsProviderResult<TItem>> ProvideVirtualizedItemsAsync(NTVirtualizeItemsProviderRequest<TItem> request) {
@@ -580,7 +627,7 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
             StateHasChanged();
         }
         else {
-            await RefreshDataAsync(_componentCancellation.Token);
+            await RefreshDataAsync();
         }
 
         await UpdateBrowserUriAsync();
@@ -598,7 +645,7 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
 
         _currentPageIndex = nextPageIndex;
         await PageIndexChanged.InvokeAsync(nextPageIndex);
-        await RefreshDataAsync(_componentCancellation.Token);
+        await RefreshDataAsync();
         await UpdateBrowserUriAsync();
     }
 
@@ -611,11 +658,19 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
         _currentPageIndex = 0;
         await PageSizeChanged.InvokeAsync(pageSize);
         await PageIndexChanged.InvokeAsync(0);
-        await RefreshDataAsync(_componentCancellation.Token);
+        await RefreshDataAsync();
         await UpdateBrowserUriAsync();
     }
 
-    private ValueTask UpdateBrowserUriAsync() => RendererInfo.IsInteractive ? _jsRuntime.UpdateUriAsync(BuildPageHref(CurrentPageIndex)) : ValueTask.CompletedTask;
+    private async ValueTask UpdateBrowserUriAsync() {
+        if (_disposed || !RendererInfo.IsInteractive) {
+            return;
+        }
+
+        var uri = BuildPageHref(CurrentPageIndex);
+        await _jsRuntime.UpdateUriAsync(uri);
+        SetCurrentUri(uri);
+    }
 
     private string BuildSortHref(NTDataGridColumn<TItem> column) {
         var nextSorts = GetNextSorts(column);
@@ -625,21 +680,62 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
     private string BuildPageHref(int pageIndex) => BuildHref(Math.Clamp(pageIndex, 0, PageCount - 1), _sorts);
 
     private string BuildHref(int pageIndex, IReadOnlyList<NTSortDescriptor> sorts) {
-        var uri = _navManager.ToAbsoluteUri(_navManager.Uri);
-        var query = ParseQuery(uri.Query);
-        query[GetQueryName("page")] = (Math.Max(0, pageIndex) + 1).ToString(CultureInfo.InvariantCulture);
-        query.Remove(GetQueryName("pageSize"));
-
+        pageIndex = Math.Max(0, pageIndex);
         var sortValue = SerializeSorts(sorts);
-        if (string.IsNullOrWhiteSpace(sortValue)) {
-            query.Remove(GetQueryName("sort"));
-        }
-        else {
-            query[GetQueryName("sort")] = sortValue;
+        var uriState = GetUriState();
+        var href = uriState.PageHrefPrefix + (pageIndex + 1).ToString(CultureInfo.InvariantCulture);
+        if (!string.IsNullOrWhiteSpace(sortValue)) {
+            href += $"&{uriState.SortParameter}={Uri.EscapeDataString(sortValue)}";
         }
 
-        var queryString = string.Join("&", query.Select(pair => $"{Uri.EscapeDataString(pair.Key)}={Uri.EscapeDataString(pair.Value)}"));
-        return uri.GetLeftPart(UriPartial.Path) + (string.IsNullOrEmpty(queryString) ? string.Empty : "?" + queryString);
+        return href;
+    }
+
+    private UriState GetUriState() {
+        var currentUri = GetCurrentUri();
+        if (_uriState is not null
+            && string.Equals(_uriState.SourceUri, currentUri, StringComparison.Ordinal)
+            && string.Equals(_uriState.GridQueryPrefix, QueryParameterPrefix, StringComparison.Ordinal)) {
+            return _uriState;
+        }
+
+        var uri = _navManager.ToAbsoluteUri(currentUri);
+        var query = ParseQuery(uri.Query);
+        var pageParameter = GetQueryName("page");
+        var pageSizeParameter = GetQueryName("pageSize");
+        var sortParameter = GetQueryName("sort");
+        var baseQuery = string.Join("&", query
+            .Where(pair => !pair.Key.Equals(pageParameter, StringComparison.OrdinalIgnoreCase)
+                && !pair.Key.Equals(pageSizeParameter, StringComparison.OrdinalIgnoreCase)
+                && !pair.Key.Equals(sortParameter, StringComparison.OrdinalIgnoreCase))
+            .Select(pair => $"{Uri.EscapeDataString(pair.Key)}={Uri.EscapeDataString(pair.Value)}"));
+        var pageHrefPrefix = uri.GetLeftPart(UriPartial.Path)
+            + "?"
+            + (string.IsNullOrEmpty(baseQuery) ? string.Empty : baseQuery + "&")
+            + Uri.EscapeDataString(pageParameter)
+            + "=";
+
+        _uriState = new UriState(currentUri, QueryParameterPrefix, pageHrefPrefix, Uri.EscapeDataString(sortParameter), query);
+        return _uriState;
+    }
+
+    private string GetCurrentUri() {
+        var navigationManagerUri = _navManager.Uri;
+        if (!string.Equals(_lastNavigationManagerUri, navigationManagerUri, StringComparison.Ordinal)) {
+            _lastNavigationManagerUri = navigationManagerUri;
+            SetCurrentUri(navigationManagerUri);
+        }
+
+        return _currentUri ?? navigationManagerUri;
+    }
+
+    private void SetCurrentUri(string uri) {
+        if (string.Equals(_currentUri, uri, StringComparison.Ordinal)) {
+            return;
+        }
+
+        _currentUri = uri;
+        _uriState = null;
     }
 
     private IReadOnlyList<NTSortDescriptor> GetNextSorts(NTDataGridColumn<TItem> column) {
@@ -686,8 +782,7 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
     }
 
     private void ApplyQueryState() {
-        var uri = _navManager.ToAbsoluteUri(_navManager.Uri);
-        var query = ParseQuery(uri.Query);
+        var query = GetUriState().Query;
         if (query.TryGetValue(GetQueryName("page"), out var pageValue) && int.TryParse(pageValue, out var pageNumber)) {
             _currentPageIndex = Math.Max(1, pageNumber) - 1;
         }
@@ -861,7 +956,7 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
     }
 
     private bool CaptureDataStateChanged() {
-        var state = string.Join("|", CurrentPageIndex, CurrentPageSize, ShowPagination, Virtualize, AllowMultiSort, _navManager.Uri, SerializeSorts(_sorts));
+        var state = string.Join("|", CurrentPageIndex, CurrentPageSize, ShowPagination, Virtualize, AllowMultiSort, GetCurrentUri(), SerializeSorts(_sorts));
         var changed = !_hasDataStateSnapshot
             || !ReferenceEquals(Items, _previousItems)
             || ItemsProvider != _previousItemsProvider
@@ -955,6 +1050,8 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
 
     private sealed record SortPlan(ResolvedSort[] ResolvedSorts, IReadOnlyList<NTSortDescriptor> ProviderDescriptors);
 
+    private sealed record UriState(string SourceUri, string? GridQueryPrefix, string PageHrefPrefix, string SortParameter, IReadOnlyDictionary<string, string> Query);
+
     private sealed class NTDataGridObjectComparer : IComparer<object?> {
         public static readonly NTDataGridObjectComparer Instance = new();
 
@@ -981,7 +1078,17 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
 
     /// <inheritdoc />
     public void Dispose() {
-        _componentCancellation.Cancel();
-        _componentCancellation.Dispose();
+        if (_disposed) {
+            return;
+        }
+
+        _disposed = true;
+        _refreshCancellation = null;
+        try {
+            _componentCancellation.Cancel();
+        }
+        finally {
+            _componentCancellation.Dispose();
+        }
     }
 }
