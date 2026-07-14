@@ -21,7 +21,7 @@ public class NTDataGrid_Tests : BunitContext {
         module.SetupVoid("onDispose", _ => true).SetVoidResult();
         module.SetupVoid("init", _ => true).SetVoidResult();
         module.SetupVoid("updateRenderState", _ => true).SetVoidResult();
-        JSInterop.SetupVoid("history.replaceState", _ => true).SetVoidResult();
+        JSInterop.SetupVoid("NTComponents.updateUri", _ => true).SetVoidResult();
     }
 
     [Fact]
@@ -318,8 +318,8 @@ public class NTDataGrid_Tests : BunitContext {
         cut.Find(".nt-data-grid-sort-link").Click();
 
         cut.WaitForAssertion(() => {
-            var invocation = JSInterop.Invocations.Last(invocation => invocation.Identifier == "history.replaceState");
-            var uri = invocation.Arguments[2].Should().BeOfType<string>().Subject;
+            var invocation = JSInterop.Invocations.Last(invocation => invocation.Identifier == "NTComponents.updateUri");
+            var uri = invocation.Arguments[0].Should().BeOfType<string>().Subject;
             uri.Should().Contain("existing=true");
             uri.Should().Contain("ntdg-page=1");
             uri.Should().Contain("ntdg-sort=Name%3Aasc");
@@ -667,8 +667,8 @@ public class NTDataGrid_Tests : BunitContext {
 
         cut.WaitForAssertion(() => {
             captured.Should().Contain(request => request.StartIndex == 2 && request.Count == 2);
-            var invocation = JSInterop.Invocations.Last(invocation => invocation.Identifier == "history.replaceState");
-            var uri = invocation.Arguments[2].Should().BeOfType<string>().Subject;
+            var invocation = JSInterop.Invocations.Last(invocation => invocation.Identifier == "NTComponents.updateUri");
+            var uri = invocation.Arguments[0].Should().BeOfType<string>().Subject;
             uri.Should().Contain("existing=true");
             uri.Should().Contain("ntdg-page=2");
             navigationManager.History.Should().HaveCount(navigationCount);
@@ -701,8 +701,8 @@ public class NTDataGrid_Tests : BunitContext {
             pageSizeChanged.Should().Be(3);
             pageIndexChanged.Should().Be(0);
             captured.Should().Contain(request => request.StartIndex == 0 && request.Count == 3);
-            var invocation = JSInterop.Invocations.Last(invocation => invocation.Identifier == "history.replaceState");
-            invocation.Arguments[2].Should().BeOfType<string>().Subject.Should().Contain("ntdg-page=1");
+            var invocation = JSInterop.Invocations.Last(invocation => invocation.Identifier == "NTComponents.updateUri");
+            invocation.Arguments[0].Should().BeOfType<string>().Subject.Should().Contain("ntdg-page=1");
         });
     }
 
@@ -781,6 +781,19 @@ public class NTDataGrid_Tests : BunitContext {
         cut.InvokeAsync(() => virtualize.Instance.LoadItems(0, 0, 0, 3));
 
         cut.WaitForAssertion(() => captured.Should().Contain(request => request.StartIndex == 0 && request.Count > 0));
+    }
+
+    [Fact]
+    public void Virtualized_Grid_Uses_Query_Prefix_As_Scroll_Restoration_Key() {
+        var cut = Render<NTDataGrid<TestGridItem>>(parameters => parameters
+            .Add(grid => grid.ItemsProvider, _ => ValueTask.FromResult(new NTItemsProviderResult<TestGridItem>(_items.ToArray(), _items.Count())))
+            .Add(grid => grid.Virtualize, true)
+            .Add(grid => grid.QueryParameterPrefix, "jobs")
+            .Add(grid => grid.ChildContent, DefaultColumns));
+
+        var virtualize = cut.FindComponent<NTVirtualize<TestGridItem>>();
+
+        virtualize.Instance.ScrollRestorationKey.Should().Be("jobs-scroll");
     }
 
     [Fact]

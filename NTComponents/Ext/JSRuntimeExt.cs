@@ -79,7 +79,7 @@ public static class JSRuntimeExt {
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="newUri" /> is null.</exception>
     public static async ValueTask UpdateUriAsync(this IJSRuntime jsRuntime, string newUri) {
         ArgumentNullException.ThrowIfNull(newUri, nameof(newUri));
-        await jsRuntime.InvokeVoidAsync("history.replaceState", new object(), "", newUri);
+        await jsRuntime.InvokeVoidAsync("NTComponents.updateUri", newUri);
     }
 
     /// <summary>

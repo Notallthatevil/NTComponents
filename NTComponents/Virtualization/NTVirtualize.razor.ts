@@ -35,19 +35,23 @@ interface VirtualizeObservers {
     overflowAnchorElement: HTMLElement;
     previousOverflowAnchor: string;
     removeScrollListener: () => void;
+    removeScrollPersistenceListeners: () => void;
     requestVisibleItemDistribution: (forceUpdate: boolean) => void;
+    restoreScrollPosition: () => boolean;
     state: VirtualizeState;
 }
 
 type DotNetVirtualizeRefKey = DotNetVirtualizeRef | number | string;
 
 const observersByDotNetRef = new Map<DotNetVirtualizeRefKey, VirtualizeObservers>();
+const scrollPositionsStateKey = '__ntVirtualizeScrollPositions';
+const scrollPersistenceInterval = 100;
 
 /**
  * Initializes the virtualization component by setting up intersection observers and mutation observers
  * for the top and bottom spacers to handle dynamic loading of items in a virtualized list.
  */
-export function init(dotNetRef: DotNetVirtualizeRef, topSpacer: HTMLElement, bottomSpacer: HTMLElement, itemSize: number, overscanCount: number, maxItemCount: number, rootMargin = 50): void {
+export function init(dotNetRef: DotNetVirtualizeRef, topSpacer: HTMLElement, bottomSpacer: HTMLElement, itemSize: number, overscanCount: number, maxItemCount: number, scrollRestorationKey?: string | null, rootMargin = 50): void {
     const dotNetRefKey = getDotNetRefKey(dotNetRef);
     const existingState = observersByDotNetRef.get(dotNetRefKey)?.state;
     dispose(dotNetRef);
@@ -75,7 +79,10 @@ export function init(dotNetRef: DotNetVirtualizeRef, topSpacer: HTMLElement, bot
     const mutationObserverBefore = createSpacerMutationObserver(topSpacer);
     const mutationObserverAfter = createSpacerMutationObserver(bottomSpacer);
     const scrollUpdateTargets = getScrollUpdateTargets(topSpacer, scrollContainer);
+    const resolvedScrollRestorationKey = scrollRestorationKey?.trim() || null;
+    let pendingScrollTop = getPersistedScrollPosition(resolvedScrollRestorationKey);
     let scheduledScrollUpdate: number | null = null;
+    let lastScrollPersistenceTime = Number.NEGATIVE_INFINITY;
     const scheduleFrame = window.requestAnimationFrame ?? ((callback: FrameRequestCallback) => window.setTimeout(() => callback(performance.now()), 0));
     const cancelFrame = window.cancelAnimationFrame ?? window.clearTimeout;
     const scrollListenerOptions: AddEventListenerOptions = { passive: true, capture: true };
@@ -88,10 +95,17 @@ export function init(dotNetRef: DotNetVirtualizeRef, topSpacer: HTMLElement, bot
         scheduledScrollUpdate = scheduleFrame(() => {
             scheduledScrollUpdate = null;
             requestVisibleItemDistribution(false);
+            persistScrollPosition();
         });
     };
 
+    const flushScrollPersistence = (): void => persistScrollPosition(true);
+
     scrollUpdateTargets.forEach(target => target.addEventListener('scroll', scrollCallback, scrollListenerOptions));
+    if (resolvedScrollRestorationKey) {
+        document.addEventListener('click', flushScrollPersistence, true);
+        window.addEventListener('pagehide', flushScrollPersistence);
+    }
     const scrollPollInterval = window.setInterval(() => {
         const observedScrollTop = getObservedScrollTop();
         if (observedScrollTop === lastObservedScrollTop) {
@@ -129,7 +143,12 @@ export function init(dotNetRef: DotNetVirtualizeRef, topSpacer: HTMLElement, bot
         overflowAnchorElement,
         previousOverflowAnchor,
         removeScrollListener: () => scrollUpdateTargets.forEach(target => target.removeEventListener('scroll', scrollCallback, scrollListenerOptions)),
+        removeScrollPersistenceListeners: () => {
+            document.removeEventListener('click', flushScrollPersistence, true);
+            window.removeEventListener('pagehide', flushScrollPersistence);
+        },
         requestVisibleItemDistribution,
+        restoreScrollPosition,
         state,
     });
 
@@ -144,10 +163,80 @@ export function init(dotNetRef: DotNetVirtualizeRef, topSpacer: HTMLElement, bot
 
             intersectionObserver.unobserve(spacer);
             intersectionObserver.observe(spacer);
+
+            if (restoreScrollPosition()) {
+                requestVisibleItemDistribution(true);
+            }
         });
 
         mutationObserver.observe(spacer, observerOptions);
         return mutationObserver;
+    }
+
+    function persistScrollPosition(force = false): void {
+        if (!resolvedScrollRestorationKey || pendingScrollTop !== null) {
+            return;
+        }
+
+        const now = performance.now();
+        if (!force && now - lastScrollPersistenceTime < scrollPersistenceInterval) {
+            return;
+        }
+
+        lastScrollPersistenceTime = now;
+        const scrollTop = getObservedScrollTop();
+        const historyState = isRecord(history.state) ? history.state : {};
+        const existingPositions = isRecord(historyState[scrollPositionsStateKey]) ? historyState[scrollPositionsStateKey] : {};
+        if (existingPositions[resolvedScrollRestorationKey] === scrollTop) {
+            return;
+        }
+
+        try {
+            history.replaceState({
+                ...historyState,
+                [scrollPositionsStateKey]: {
+                    ...existingPositions,
+                    [resolvedScrollRestorationKey]: scrollTop,
+                },
+            }, '');
+        }
+        catch {
+            // Scroll restoration must never interrupt virtualization when history state is unavailable.
+        }
+    }
+
+    function restoreScrollPosition(): boolean {
+        if (pendingScrollTop === null) {
+            return false;
+        }
+
+        if (pendingScrollTop > 0 && state.itemCount === 0) {
+            return false;
+        }
+
+        scrollContainer ??= findClosestScrollContainer(topSpacer);
+        const { containerSize } = getScrollMetrics(scrollContainer, topSpacer);
+        const targetScrollTop = Math.min(pendingScrollTop, Math.max(0, state.itemCount * state.itemSize - containerSize));
+        const availableScrollTop = scrollContainer
+            ? Math.max(0, scrollContainer.scrollHeight - scrollContainer.clientHeight)
+            : Math.max(0, document.documentElement.scrollHeight - (window.innerHeight || document.documentElement.clientHeight));
+        if (availableScrollTop + 1 < targetScrollTop) {
+            return false;
+        }
+
+        if (scrollContainer) {
+            scrollContainer.scrollTop = targetScrollTop;
+        }
+        else {
+            window.scrollTo(0, targetScrollTop);
+        }
+
+        if (Math.abs(getObservedScrollTop() - targetScrollTop) >= 1) {
+            return false;
+        }
+
+        pendingScrollTop = null;
+        return true;
     }
 
     function intersectionCallback(entries: IntersectionObserverEntry[]): void {
@@ -219,6 +308,24 @@ export function init(dotNetRef: DotNetVirtualizeRef, topSpacer: HTMLElement, bot
 
 function getDotNetRefKey(dotNetRef: DotNetVirtualizeRef): DotNetVirtualizeRefKey {
     return dotNetRef._id ?? dotNetRef;
+}
+
+function getPersistedScrollPosition(scrollRestorationKey: string | null): number | null {
+    if (!scrollRestorationKey || !isRecord(history.state)) {
+        return null;
+    }
+
+    const positions = history.state[scrollPositionsStateKey];
+    if (!isRecord(positions)) {
+        return null;
+    }
+
+    const scrollTop = positions[scrollRestorationKey];
+    return typeof scrollTop === 'number' && Number.isFinite(scrollTop) && scrollTop >= 0 ? scrollTop : null;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 function isValidTableElement(element: Maybe<Element>): boolean {
@@ -318,6 +425,7 @@ function dispose(dotNetRef: Maybe<DotNetVirtualizeRef>): void {
     observers.cancelPendingScrollUpdate();
     observers.cancelScrollPolling();
     observers.removeScrollListener();
+    observers.removeScrollPersistenceListeners();
 
     if (observers.overflowAnchorElement.isConnected) {
         observers.overflowAnchorElement.style.overflowAnchor = observers.previousOverflowAnchor;
@@ -338,8 +446,9 @@ export function updateRenderState(dotNetRef: Maybe<DotNetVirtualizeRef>, itemCou
 
     const previousItemCount = observers.state.itemCount;
     observers.state.itemCount = Math.max(0, itemCount ?? 0);
+    const restoredScrollPosition = observers.restoreScrollPosition();
 
-    if (observers.state.itemCount !== previousItemCount) {
+    if (observers.state.itemCount !== previousItemCount || restoredScrollPosition) {
         observers.requestVisibleItemDistribution(true);
     }
 }

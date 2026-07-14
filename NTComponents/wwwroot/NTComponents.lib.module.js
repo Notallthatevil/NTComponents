@@ -1185,6 +1185,9 @@ window.NTComponents = Object.assign(window.NTComponents || {}, {
     getCurrentLocation: () => {
         return window.location.href;
     },
+    updateUri: (newUri) => {
+        history.replaceState(history.state, '', newUri);
+    },
     setupRipple: () => {
         ensureRippleHandlers();
 

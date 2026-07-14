@@ -282,6 +282,8 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
 
     private string? ScrollStyle => Virtualize ? $"max-height: {Math.Max(1, VirtualizationInitialItemCount) * ResolvedVirtualizationItemSize}px;" : null;
 
+    private string VirtualizedScrollRestorationKey => GetQueryName("scroll");
+
     /// <summary>
     /// Refreshes the data grid by re-resolving the current data source and updating the rendered rows.
     /// </summary>

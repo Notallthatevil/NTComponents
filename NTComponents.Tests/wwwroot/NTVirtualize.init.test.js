@@ -50,6 +50,7 @@ describe('NTVirtualize.init', () => {
 
         document.documentElement.scrollTop = 0;
         document.body.scrollTop = 0;
+        history.replaceState(null, '', '/');
     });
 
     afterEach(() => {
@@ -187,6 +188,61 @@ describe('NTVirtualize.init', () => {
             window.requestAnimationFrame = originalRequestAnimationFrame;
             window.cancelAnimationFrame = originalCancelAnimationFrame;
         }
+    });
+
+    test('persists the scroll position in the current history entry without replacing existing state', () => {
+        const originalRequestAnimationFrame = window.requestAnimationFrame;
+        const originalCancelAnimationFrame = window.cancelAnimationFrame;
+        window.requestAnimationFrame = callback => {
+            callback(0);
+            return 1;
+        };
+        window.cancelAnimationFrame = jest.fn();
+
+        try {
+            history.replaceState({ navigationIndex: 3 }, '', '/virtualized-grid');
+            const { topSpacer, bottomSpacer, dotNetRef, scrollAncestor } = createVirtualizedElements('auto');
+            Object.defineProperty(scrollAncestor, 'clientHeight', { configurable: true, value: 400 });
+            Object.defineProperty(scrollAncestor, 'scrollHeight', { configurable: true, value: 2000 });
+
+            init(dotNetRef, topSpacer, bottomSpacer, 20, 1, 100, 'jobs-scroll');
+            updateRenderState(dotNetRef, 1000, 0, 0);
+
+            scrollAncestor.scrollTop = 480;
+            scrollAncestor.dispatchEvent(new Event('scroll'));
+
+            expect(history.state).toEqual({
+                navigationIndex: 3,
+                __ntVirtualizeScrollPositions: {
+                    'jobs-scroll': 480,
+                },
+            });
+        }
+        finally {
+            window.requestAnimationFrame = originalRequestAnimationFrame;
+            window.cancelAnimationFrame = originalCancelAnimationFrame;
+        }
+    });
+
+    test('restores a saved scroll position when its history entry is revisited', () => {
+        history.replaceState({
+            __ntVirtualizeScrollPositions: {
+                'jobs-scroll': 480,
+            },
+        }, '', '/virtualized-grid');
+        const { topSpacer, bottomSpacer, dotNetRef, scrollAncestor } = createVirtualizedElements('auto');
+        Object.defineProperty(scrollAncestor, 'clientHeight', { configurable: true, value: 400 });
+        Object.defineProperty(scrollAncestor, 'scrollHeight', { configurable: true, value: 2000 });
+
+        init(dotNetRef, topSpacer, bottomSpacer, 20, 1, 100, 'jobs-scroll');
+        updateRenderState(dotNetRef, 0, 0, 0);
+
+        expect(scrollAncestor.scrollTop).toBe(0);
+
+        updateRenderState(dotNetRef, 1000, 0, 0);
+
+        expect(scrollAncestor.scrollTop).toBe(480);
+        expect(dotNetRef.invokeMethodAsync).toHaveBeenLastCalledWith('LoadItems', 460, 19100, 23, 22);
     });
 
     test('disposes observers and restores scroll overflow anchoring without disposing dotnet reference', () => {

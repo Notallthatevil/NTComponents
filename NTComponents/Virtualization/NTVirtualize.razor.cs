@@ -107,6 +107,12 @@ public partial class NTVirtualize<TItem>() : NTPageScriptComponent<NTVirtualize<
     public bool RevalidateCachedItems { get; set; }
 
     /// <summary>
+    ///     Gets or sets the key used to preserve this virtualizer's scroll position in the current browser history entry.
+    /// </summary>
+    [Parameter]
+    public string? ScrollRestorationKey { get; set; }
+
+    /// <summary>
     ///     Gets or sets the maximum number of items kept in the virtualizer cache.
     /// </summary>
     [Parameter]
@@ -217,7 +223,7 @@ public partial class NTVirtualize<TItem>() : NTPageScriptComponent<NTVirtualize<
         await base.OnAfterRenderAsync(firstRender);
         if (IsolatedJsModule is not null) {
             if (firstRender) {
-                await IsolatedJsModule.InvokeVoidAsync("init", DotNetObjectRef, Element, _afterPlaceholder, _itemSize, OverscanCount, MaxItemCount);
+                await IsolatedJsModule.InvokeVoidAsync("init", DotNetObjectRef, Element, _afterPlaceholder, _itemSize, OverscanCount, MaxItemCount, ScrollRestorationKey);
             }
 
             if (_itemCount != _lastReportedItemCount
