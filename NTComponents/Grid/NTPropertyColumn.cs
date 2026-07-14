@@ -17,6 +17,11 @@ namespace NTComponents;
 public sealed class NTPropertyColumn<TItem, TValue> : NTDataGridColumn<TItem> where TItem : class {
     private Func<TItem, TValue>? _accessor;
     private string? _accessorExpressionText;
+    private string? _previousFormat;
+    private string? _previousPropertyExpressionText;
+    private Expression<Func<TItem, TValue>>? _propertyMetadataSource;
+    private string _defaultTitle = string.Empty;
+    private string _memberName = string.Empty;
 
     /// <summary>
     ///     Gets or sets whether the column can be sorted.
@@ -36,12 +41,21 @@ public sealed class NTPropertyColumn<TItem, TValue> : NTDataGridColumn<TItem> wh
     [Parameter]
     public string? Format { get; set; }
 
-    internal override string DefaultTitle => NTDataGridColumn<TItem>.GetMemberName(Property).SplitPascalCase();
+    internal override string DefaultTitle => _defaultTitle;
 
-    internal override string? SortPropertyName => NTDataGridColumn<TItem>.GetMemberName(Property);
+    internal override string? SortPropertyName => _memberName;
 
     /// <inheritdoc />
     protected override void OnParametersSet() {
+        if (!ReferenceEquals(_propertyMetadataSource, Property)) {
+            _propertyMetadataSource = Property;
+            var memberName = NTDataGridColumn<TItem>.GetMemberName(Property);
+            if (!string.Equals(_memberName, memberName, StringComparison.Ordinal)) {
+                _memberName = memberName;
+                _defaultTitle = memberName.SplitPascalCase();
+            }
+        }
+
         var expressionText = Property?.ToString();
         if (_accessor is null || !string.Equals(_accessorExpressionText, expressionText, StringComparison.Ordinal)) {
             _accessor = Property?.Compile();
@@ -70,10 +84,18 @@ public sealed class NTPropertyColumn<TItem, TValue> : NTDataGridColumn<TItem> wh
     }
 
     /// <inheritdoc />
-    protected override string GetStateSignature() => string.Join("|", base.GetStateSignature(), Property?.ToString(), Format);
+    private protected override bool HasAdditionalStateChanged() =>
+        !string.Equals(_previousPropertyExpressionText, _accessorExpressionText, StringComparison.Ordinal)
+        || !string.Equals(_previousFormat, Format, StringComparison.Ordinal);
 
     /// <inheritdoc />
-    protected override string GetSortStateSignature() => string.Join("|", base.GetSortStateSignature(), Property?.ToString());
+    private protected override bool HasAdditionalSortStateChanged() => !string.Equals(_previousPropertyExpressionText, _accessorExpressionText, StringComparison.Ordinal);
+
+    /// <inheritdoc />
+    private protected override void CaptureAdditionalState() {
+        _previousPropertyExpressionText = _accessorExpressionText;
+        _previousFormat = Format;
+    }
 
     internal override void RenderCell(RenderTreeBuilder builder, TItem item) {
         if (CellTemplate is not null) {

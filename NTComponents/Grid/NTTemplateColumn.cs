@@ -13,6 +13,8 @@ namespace NTComponents;
     CompatibilityDetails = "The templates are rendered by the parent grid into static markup. Interactive row, sort, paging, or virtualized behavior depends on the parent grid render mode.")]
 public sealed class NTTemplateColumn<TItem> : NTDataGridColumn<TItem> where TItem : class {
     private bool _hasSortableParameter;
+    private RenderFragment<TItem>? _previousChildContent;
+    private string? _previousSortState;
 
     /// <summary>
     ///     Gets or sets whether the column can be sorted.
@@ -61,10 +63,18 @@ public sealed class NTTemplateColumn<TItem> : NTDataGridColumn<TItem> where TIte
     }
 
     /// <inheritdoc />
-    protected override string GetStateSignature() => string.Join("|", base.GetStateSignature(), ChildContent?.GetHashCode(), SortBy?.StateSignature);
+    private protected override bool HasAdditionalStateChanged() =>
+        !Equals(_previousChildContent, ChildContent)
+        || !string.Equals(_previousSortState, SortBy?.StateSignature, StringComparison.Ordinal);
 
     /// <inheritdoc />
-    protected override string GetSortStateSignature() => string.Join("|", base.GetSortStateSignature(), SortBy?.StateSignature);
+    private protected override bool HasAdditionalSortStateChanged() => !string.Equals(_previousSortState, SortBy?.StateSignature, StringComparison.Ordinal);
+
+    /// <inheritdoc />
+    private protected override void CaptureAdditionalState() {
+        _previousChildContent = ChildContent;
+        _previousSortState = SortBy?.StateSignature;
+    }
 
     internal override void RenderCell(RenderTreeBuilder builder, TItem item) {
         var template = CellTemplate ?? ChildContent;

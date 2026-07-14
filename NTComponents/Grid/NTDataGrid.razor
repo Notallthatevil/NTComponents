@@ -3,9 +3,7 @@
 @using NTComponents.Virtualization
 
 <CascadingValue Value="this" IsFixed="true">
-    <div hidden>
-        @ChildContent
-    </div>
+    @ChildContent
 </CascadingValue>
 
 <div @attributes="_rootAttributes" class="@RootClass" style="@_style">

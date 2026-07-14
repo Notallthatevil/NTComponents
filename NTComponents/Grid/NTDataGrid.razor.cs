@@ -67,7 +67,9 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
     private UriState? _uriState;
     private IQueryable<TItem>? _previousItems;
     private NTDataGridItemsProvider<TItem>? _previousItemsProvider;
+    private IReadOnlyList<int>? _pageSizeOptionsSource;
     private Func<TItem, object>? _previousRowKey;
+    private IReadOnlyList<int> _resolvedPageSizeOptions = [];
     private string? _class;
     private string? _currentUri;
     private string? _lastNavigationManagerUri;
@@ -81,6 +83,7 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
     private SortPlan? _sortPlan;
     private int _currentPageIndex;
     private int _currentPageSize;
+    private int _resolvedPageSizeOptionsPageSize;
     private int _totalItemCount;
     private int _virtualizeVersion;
 
@@ -888,14 +891,19 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
         .Build();
 
     private IReadOnlyList<int> GetResolvedPageSizeOptions() {
-        var options = PageSizeOptions
+        if (ReferenceEquals(_pageSizeOptionsSource, PageSizeOptions) && _resolvedPageSizeOptionsPageSize == CurrentPageSize) {
+            return _resolvedPageSizeOptions;
+        }
+
+        _pageSizeOptionsSource = PageSizeOptions;
+        _resolvedPageSizeOptionsPageSize = CurrentPageSize;
+        _resolvedPageSizeOptions = PageSizeOptions
             .Where(option => option > 0)
             .Append(CurrentPageSize)
             .Distinct()
             .OrderBy(option => option)
             .ToArray();
-
-        return options.Length == 0 ? [CurrentPageSize] : options;
+        return _resolvedPageSizeOptions;
     }
 
     private string GetRowClass(TItem item) {

@@ -35,7 +35,28 @@ public class NTDataGrid_Tests : BunitContext {
             cut.FindAll("tbody tr").Should().HaveCount(3);
             cut.Markup.Should().Contain("Gamma");
             cut.Markup.Should().Contain(30.25m.ToString("C", System.Globalization.CultureInfo.CurrentCulture));
+            cut.FindAll("[hidden]").Should().BeEmpty();
         });
+    }
+
+    [Fact]
+    public void PropertyColumn_Updates_Generated_Title_When_Property_Changes() {
+        System.Linq.Expressions.Expression<Func<TestGridItem, object>> property = item => item.DaysOpen;
+        RenderFragment columns = builder => {
+            builder.OpenComponent<NTPropertyColumn<TestGridItem, object>>(0);
+            builder.AddAttribute(1, nameof(NTPropertyColumn<TestGridItem, object>.Property), property);
+            builder.CloseComponent();
+        };
+        var cut = RenderGrid(columns);
+
+        cut.WaitForAssertion(() => cut.Find("th").TextContent.Should().Contain("Days Open"));
+        property = item => item.Name;
+        cut.Render(parameters => parameters
+            .Add(grid => grid.Items, _items)
+            .Add(grid => grid.Caption, "Invoices")
+            .Add(grid => grid.ChildContent, columns));
+
+        cut.WaitForAssertion(() => cut.Find("th").TextContent.Should().Contain("Name").And.NotContain("Days Open"));
     }
 
     [Fact]
@@ -559,6 +580,36 @@ public class NTDataGrid_Tests : BunitContext {
         first.Should().Contain("filter=hello%20world");
         first.Should().Contain("ntdg-page=2");
         first.Should().NotContain("ntdg-pageSize");
+    }
+
+    [Fact]
+    public void Page_Size_Options_Are_Normalized_Once_Per_Input_State() {
+        IReadOnlyList<int> pageSizeOptions = [50, 10, 10, 0];
+        var cut = Render<NTDataGrid<TestGridItem>>(parameters => parameters
+            .Add(grid => grid.Items, _items)
+            .Add(grid => grid.ShowPagination, true)
+            .Add(grid => grid.PageSize, 25)
+            .Add(grid => grid.PageSizeOptions, pageSizeOptions)
+            .Add(grid => grid.ChildContent, DefaultColumns));
+        var getOptions = typeof(NTDataGrid<TestGridItem>).GetMethod("GetResolvedPageSizeOptions", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
+
+        var first = (IReadOnlyList<int>)getOptions.Invoke(cut.Instance, null)!;
+        var second = (IReadOnlyList<int>)getOptions.Invoke(cut.Instance, null)!;
+
+        first.Should().Equal(10, 25, 50);
+        second.Should().BeSameAs(first);
+
+        pageSizeOptions = [5, 25];
+        cut.Render(parameters => parameters
+            .Add(grid => grid.Items, _items)
+            .Add(grid => grid.ShowPagination, true)
+            .Add(grid => grid.PageSize, 25)
+            .Add(grid => grid.PageSizeOptions, pageSizeOptions)
+            .Add(grid => grid.ChildContent, DefaultColumns));
+        var updated = (IReadOnlyList<int>)getOptions.Invoke(cut.Instance, null)!;
+
+        updated.Should().Equal(5, 25);
+        updated.Should().NotBeSameAs(first);
     }
 
     [Fact]

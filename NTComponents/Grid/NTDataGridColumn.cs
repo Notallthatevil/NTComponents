@@ -13,8 +13,20 @@ namespace NTComponents;
     CompatibilitySummary = "Participates in parent component rendering and inherits the parent interaction model.",
     CompatibilityDetails = "Column definitions participate in parent grid rendering without their own browser APIs. User-driven sort, row, paging, or virtualization behavior depends on the parent grid render mode.")]
 public abstract class NTDataGridColumn<TItem> : ComponentBase, IDisposable where TItem : class {
-    private string? _sortStateSignature;
-    private string? _stateSignature;
+    private RenderFragment<TItem>? _previousCellTemplate;
+    private string? _previousHeaderTitle;
+    private string? _previousMaxWidth;
+    private string? _previousMinWidth;
+    private string? _previousStateSignature;
+    private string? _previousSortPropertyName;
+    private string? _previousSortStateSignature;
+    private string? _previousTitle;
+    private string? _previousWidth;
+    private SortDirection? _previousInitialSortDirection;
+    private TextAlign? _previousHeaderTextAlign;
+    private TextAlign? _previousTextAlign;
+    private bool _hasParameterState;
+    private bool _previousSortable;
     private bool _registered;
 
     /// <summary>
@@ -111,19 +123,50 @@ public abstract class NTDataGridColumn<TItem> : ComponentBase, IDisposable where
 
     /// <inheritdoc />
     protected override void OnParametersSet() {
-        var sortStateSignature = GetSortStateSignature();
+        var headerTitle = HeaderTitle;
+        var sortPropertyName = SortPropertyName;
         var stateSignature = GetStateSignature();
-        var stateChanged = !string.Equals(_stateSignature, stateSignature, StringComparison.Ordinal);
+        var sortStateSignature = GetSortStateSignature();
+        var sortStateChanged = !_hasParameterState
+            || _previousSortable != Sortable
+            || _previousInitialSortDirection != InitialSortDirection
+            || !string.Equals(_previousSortPropertyName, sortPropertyName, StringComparison.Ordinal)
+            || !string.Equals(_previousSortStateSignature, sortStateSignature, StringComparison.Ordinal)
+            || HasAdditionalSortStateChanged();
+        var stateChanged = sortStateChanged
+            || !string.Equals(_previousTitle, Title, StringComparison.Ordinal)
+            || _previousTextAlign != TextAlign
+            || _previousHeaderTextAlign != HeaderTextAlign
+            || !string.Equals(_previousWidth, Width, StringComparison.Ordinal)
+            || !string.Equals(_previousMinWidth, MinWidth, StringComparison.Ordinal)
+            || !string.Equals(_previousMaxWidth, MaxWidth, StringComparison.Ordinal)
+            || !Equals(_previousCellTemplate, CellTemplate)
+            || !string.Equals(_previousHeaderTitle, headerTitle, StringComparison.Ordinal)
+            || !string.Equals(_previousStateSignature, stateSignature, StringComparison.Ordinal)
+            || HasAdditionalStateChanged();
         if (stateChanged) {
             UpdateCellClasses();
         }
 
         if (_registered && stateChanged) {
-            Owner?.NotifyColumnChanged(this, !string.Equals(_sortStateSignature, sortStateSignature, StringComparison.Ordinal));
+            Owner?.NotifyColumnChanged(this, sortStateChanged);
         }
 
-        _sortStateSignature = sortStateSignature;
-        _stateSignature = stateSignature;
+        _hasParameterState = true;
+        _previousTitle = Title;
+        _previousSortable = Sortable;
+        _previousInitialSortDirection = InitialSortDirection;
+        _previousTextAlign = TextAlign;
+        _previousHeaderTextAlign = HeaderTextAlign;
+        _previousWidth = Width;
+        _previousMinWidth = MinWidth;
+        _previousMaxWidth = MaxWidth;
+        _previousCellTemplate = CellTemplate;
+        _previousHeaderTitle = headerTitle;
+        _previousSortPropertyName = sortPropertyName;
+        _previousStateSignature = stateSignature;
+        _previousSortStateSignature = sortStateSignature;
+        CaptureAdditionalState();
     }
 
     /// <inheritdoc />
@@ -134,17 +177,33 @@ public abstract class NTDataGridColumn<TItem> : ComponentBase, IDisposable where
     }
 
     /// <summary>
-    ///     Gets the column state that should notify the owning grid when it changes.
+    /// Determines whether derived column state affecting rendered data has changed.
     /// </summary>
-    /// <returns>A stable signature for data-affecting column state.</returns>
-    protected virtual string GetStateSignature() =>
-        string.Join("|", Title, Sortable, InitialSortDirection, TextAlign, HeaderTextAlign, Width, MinWidth, MaxWidth, CellTemplate?.GetHashCode(), HeaderTitle, SortPropertyName);
+    /// <returns><see langword="true" /> when derived state has changed; otherwise, <see langword="false" />.</returns>
+    private protected virtual bool HasAdditionalStateChanged() => false;
 
     /// <summary>
-    ///     Gets the column state that should reset the owning grid sort state when it changes.
+    /// Determines whether derived column state affecting sorting has changed.
     /// </summary>
-    /// <returns>A stable signature for sort-affecting column state.</returns>
-    protected virtual string GetSortStateSignature() => string.Join("|", Sortable, InitialSortDirection, SortPropertyName);
+    /// <returns><see langword="true" /> when derived sort state has changed; otherwise, <see langword="false" />.</returns>
+    private protected virtual bool HasAdditionalSortStateChanged() => false;
+
+    /// <summary>
+    /// Captures derived column state after parameter changes have been processed.
+    /// </summary>
+    private protected virtual void CaptureAdditionalState() { }
+
+    /// <summary>
+    /// Gets derived column state that should notify the owning grid when it changes.
+    /// </summary>
+    /// <returns>A stable signature for derived data-affecting state.</returns>
+    protected virtual string GetStateSignature() => string.Empty;
+
+    /// <summary>
+    /// Gets derived column state that should reset the owning grid sort state when it changes.
+    /// </summary>
+    /// <returns>A stable signature for derived sort-affecting state.</returns>
+    protected virtual string GetSortStateSignature() => string.Empty;
 
     private void UpdateCellClasses() {
         BodyCellClass = AddTextAlignment("nt-data-grid-cell", TextAlign);
