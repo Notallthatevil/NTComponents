@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.Web.Virtualization;
+using Microsoft.JSInterop;
 using NTComponents.Core;
+using NTComponents.Ext;
 using NTComponents.Virtualization;
 using System.Globalization;
 
@@ -189,7 +191,7 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
     public int VirtualizationInitialItemCount { get; set; } = 20;
 
     /// <summary>
-    /// Gets or sets the query parameter prefix used for SSR sort and page links.
+    /// Gets or sets the query parameter prefix used for sort and page state.
     /// </summary>
     [Parameter]
     public string QueryParameterPrefix { get; set; } = "ntdg";
@@ -238,6 +240,9 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
 
     [Inject]
     private NavigationManager _navManager { get; set; } = default!;
+
+    [Inject]
+    private IJSRuntime _jsRuntime { get; set; } = default!;
 
     private int VisibleColumnCount => Math.Max(_columns.Count, 1);
 
@@ -543,6 +548,8 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
         else {
             await RefreshDataAsync(_componentCancellation.Token);
         }
+
+        await UpdateBrowserUriAsync();
     }
 
     private async Task GoToPageAsync(int pageIndex) {
@@ -558,7 +565,7 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
         _currentPageIndex = nextPageIndex;
         await PageIndexChanged.InvokeAsync(nextPageIndex);
         await RefreshDataAsync(_componentCancellation.Token);
-        _navManager.NavigateTo(BuildPageHref(nextPageIndex), replace: true);
+        await UpdateBrowserUriAsync();
     }
 
     private async Task ChangePageSizeAsync(ChangeEventArgs args) {
@@ -571,7 +578,10 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
         await PageSizeChanged.InvokeAsync(pageSize);
         await PageIndexChanged.InvokeAsync(0);
         await RefreshDataAsync(_componentCancellation.Token);
+        await UpdateBrowserUriAsync();
     }
+
+    private ValueTask UpdateBrowserUriAsync() => RendererInfo.IsInteractive ? _jsRuntime.UpdateUriAsync(BuildPageHref(CurrentPageIndex)) : ValueTask.CompletedTask;
 
     private string BuildSortHref(NTDataGridColumn<TItem> column) {
         var nextSorts = GetNextSorts(column);

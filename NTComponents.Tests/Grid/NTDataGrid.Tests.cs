@@ -21,6 +21,7 @@ public class NTDataGrid_Tests : BunitContext {
         module.SetupVoid("onDispose", _ => true).SetVoidResult();
         module.SetupVoid("init", _ => true).SetVoidResult();
         module.SetupVoid("updateRenderState", _ => true).SetVoidResult();
+        JSInterop.SetupVoid("history.replaceState", _ => true).SetVoidResult();
     }
 
     [Fact]
@@ -203,7 +204,10 @@ public class NTDataGrid_Tests : BunitContext {
     }
 
     [Fact]
-    public void Header_Sort_Control_Is_NonNavigable_When_Interactive() {
+    public void Header_Sort_Control_Replaces_Url_Without_Navigating_When_Interactive() {
+        var navigationManager = (BunitNavigationManager)Services.GetRequiredService<NavigationManager>();
+        navigationManager.NavigateTo("https://example.test/orders?existing=true&ntdg-page=5");
+        var navigationCount = navigationManager.History.Count;
         var cut = RenderGrid();
 
         cut.WaitForAssertion(() => {
@@ -211,6 +215,17 @@ public class NTDataGrid_Tests : BunitContext {
             sortControl.TagName.Should().Be("BUTTON");
             sortControl.GetAttribute("type").Should().Be("button");
             sortControl.HasAttribute("href").Should().BeFalse();
+        });
+
+        cut.Find(".nt-data-grid-sort-link").Click();
+
+        cut.WaitForAssertion(() => {
+            var invocation = JSInterop.Invocations.Last(invocation => invocation.Identifier == "history.replaceState");
+            var uri = invocation.Arguments[2].Should().BeOfType<string>().Subject;
+            uri.Should().Contain("existing=true");
+            uri.Should().Contain("ntdg-page=1");
+            uri.Should().Contain("ntdg-sort=Name%3Aasc");
+            navigationManager.History.Should().HaveCount(navigationCount);
         });
     }
 
@@ -495,6 +510,8 @@ public class NTDataGrid_Tests : BunitContext {
     [Fact]
     public void Pagination_Renders_Links_And_Requests_Page_Range() {
         var navigationManager = (BunitNavigationManager)Services.GetRequiredService<NavigationManager>();
+        navigationManager.NavigateTo("https://example.test/orders?existing=true");
+        var navigationCount = navigationManager.History.Count;
         var captured = new List<NTDataGridItemsProviderRequest<TestGridItem>>();
         var cut = Render<NTDataGrid<TestGridItem>>(parameters => parameters
             .Add(grid => grid.ItemsProvider, request => {
@@ -520,10 +537,11 @@ public class NTDataGrid_Tests : BunitContext {
 
         cut.WaitForAssertion(() => {
             captured.Should().Contain(request => request.StartIndex == 2 && request.Count == 2);
-            navigationManager.History.Should().ContainSingle();
-            var navigation = navigationManager.History.Single();
-            navigation.Uri.Should().Contain("ntdg-page=2");
-            navigation.Options.ReplaceHistoryEntry.Should().BeTrue();
+            var invocation = JSInterop.Invocations.Last(invocation => invocation.Identifier == "history.replaceState");
+            var uri = invocation.Arguments[2].Should().BeOfType<string>().Subject;
+            uri.Should().Contain("existing=true");
+            uri.Should().Contain("ntdg-page=2");
+            navigationManager.History.Should().HaveCount(navigationCount);
         });
     }
 
@@ -553,6 +571,8 @@ public class NTDataGrid_Tests : BunitContext {
             pageSizeChanged.Should().Be(3);
             pageIndexChanged.Should().Be(0);
             captured.Should().Contain(request => request.StartIndex == 0 && request.Count == 3);
+            var invocation = JSInterop.Invocations.Last(invocation => invocation.Identifier == "history.replaceState");
+            invocation.Arguments[2].Should().BeOfType<string>().Subject.Should().Contain("ntdg-page=1");
         });
     }
 
