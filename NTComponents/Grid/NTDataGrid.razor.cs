@@ -748,11 +748,6 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
     private static string SerializeSorts(IEnumerable<NTSortDescriptor> sorts) =>
         string.Join(",", sorts.Select(sort => $"{sort.PropertyName}:{(sort.Direction == SortDirection.Descending ? "desc" : "asc")}"));
 
-    private string GetSortLinkClass(NTDataGridColumn<TItem> column) => CssClassBuilder.Create("nt-data-grid-sort-link")
-        .AddClass("nt-data-grid-sort-link-sorted", GetSortDirection(column) is not null)
-        .AddClass("nt-data-grid-sort-link-multi-sorted", ShouldShowSortOrder(GetSortOrder(column)))
-        .Build();
-
     private string? GetColumnStyle(NTDataGridColumn<TItem> column) {
         var declarations = new List<string>();
         AddDeclaration(declarations, "width", column.Width);
@@ -766,25 +761,6 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
             declarations.Add($"{propertyName}: {value};");
         }
     }
-
-    private string? GetAriaSort(NTDataGridColumn<TItem> column) {
-        var direction = GetSortDirection(column);
-        return direction switch {
-            SortDirection.Ascending => "ascending",
-            SortDirection.Descending => "descending",
-            _ => null
-        };
-    }
-
-    private SortDirection? GetSortDirection(NTDataGridColumn<TItem> column) =>
-        _sorts.FirstOrDefault(sort => string.Equals(sort.PropertyName, column.SortPropertyName, StringComparison.Ordinal))?.Direction;
-
-    private int? GetSortOrder(NTDataGridColumn<TItem> column) {
-        var sortIndex = _sorts.FindIndex(sort => string.Equals(sort.PropertyName, column.SortPropertyName, StringComparison.Ordinal));
-        return sortIndex < 0 ? null : sortIndex + 1;
-    }
-
-    private bool ShouldShowSortOrder(int? sortOrder) => _sorts.Count > 1 && sortOrder is not null;
 
     private static string GetSortIndicatorClass(SortDirection sortDirection) => CssClassBuilder.Create("nt-data-grid-sort-indicator")
         .AddClass("nt-data-grid-sort-indicator-ascending", sortDirection == SortDirection.Ascending)

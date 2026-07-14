@@ -24,16 +24,39 @@
             <thead>
                 <tr>
                     @foreach (var column in _columns) {
-                        <th scope="col" class="@column.HeaderCellClass" aria-sort="@GetAriaSort(column)">
-                            @if (CanSort(column)) {
-                                var sortDirection = GetSortDirection(column);
-                                var sortOrder = GetSortOrder(column);
+                        var canSort = CanSort(column);
+                        var sortIndex = -1;
+                        if (canSort) {
+                            var sortPropertyName = column.SortPropertyName;
+                            for (var i = 0; i < _sorts.Count; i++) {
+                                if (string.Equals(_sorts[i].PropertyName, sortPropertyName, StringComparison.Ordinal)) {
+                                    sortIndex = i;
+                                    break;
+                                }
+                            }
+                        }
+
+                        SortDirection? sortDirection = sortIndex >= 0 ? _sorts[sortIndex].Direction : null;
+                        var showSortOrder = sortIndex >= 0 && _sorts.Count > 1;
+                        var sortOrder = sortIndex + 1;
+                        var sortLinkClass = sortIndex < 0
+                            ? "nt-data-grid-sort-link"
+                            : showSortOrder
+                                ? "nt-data-grid-sort-link nt-data-grid-sort-link-sorted nt-data-grid-sort-link-multi-sorted"
+                                : "nt-data-grid-sort-link nt-data-grid-sort-link-sorted";
+                        var ariaSort = sortDirection switch {
+                            SortDirection.Ascending => "ascending",
+                            SortDirection.Descending => "descending",
+                            _ => null
+                        };
+                        <th scope="col" class="@column.HeaderCellClass" aria-sort="@ariaSort">
+                            @if (canSort) {
                                 @if (RendererInfo.IsInteractive) {
-                                    <button type="button" class="@GetSortLinkClass(column)" @onclick="() => SortByColumnAsync(column)">
+                                    <button type="button" class="@sortLinkClass" @onclick="() => SortByColumnAsync(column)">
                                         <span class="nt-data-grid-header-title">@column.HeaderTitle</span>
                                         @if (sortDirection is not null) {
                                             <span class="nt-data-grid-sort-state">
-                                                @if (ShouldShowSortOrder(sortOrder)) {
+                                                @if (showSortOrder) {
                                                     <span class="nt-data-grid-sort-order" aria-label="@($"Sort priority {sortOrder}")">@sortOrder</span>
                                                 }
                                                 <MaterialIcon class="@GetSortIndicatorClass(sortDirection.Value)" Icon="@GetSortIndicator()" Size="IconSize.Small" aria-hidden="true" />
@@ -42,11 +65,11 @@
                                     </button>
                                 }
                                 else {
-                                    <a class="@GetSortLinkClass(column)" href="@BuildSortHref(column)">
+                                    <a class="@sortLinkClass" href="@BuildSortHref(column)">
                                         <span class="nt-data-grid-header-title">@column.HeaderTitle</span>
                                         @if (sortDirection is not null) {
                                             <span class="nt-data-grid-sort-state">
-                                                @if (ShouldShowSortOrder(sortOrder)) {
+                                                @if (showSortOrder) {
                                                     <span class="nt-data-grid-sort-order" aria-label="@($"Sort priority {sortOrder}")">@sortOrder</span>
                                                 }
                                                 <MaterialIcon class="@GetSortIndicatorClass(sortDirection.Value)" Icon="@GetSortIndicator()" Size="IconSize.Small" aria-hidden="true" />
