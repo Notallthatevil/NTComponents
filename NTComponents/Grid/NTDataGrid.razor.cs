@@ -434,14 +434,13 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
             return new NTItemsProviderResult<TItem>(page.ToArray(), totalCount);
         }
 
-        var localQuery = ApplyLocalSorts(Items);
-        var localTotalCount = localQuery.Count();
-        var localPage = localQuery.Skip(Math.Max(0, startIndex));
-        if (count is > 0) {
-            localPage = localPage.Take(count.Value);
-        }
-
-        return new NTItemsProviderResult<TItem>(localPage.ToArray(), localTotalCount);
+        var localItems = ApplyLocalSorts(Items).ToArray();
+        var localStartIndex = Math.Min(Math.Max(0, startIndex), localItems.Length);
+        var localCount = count is > 0 ? Math.Min(count.Value, localItems.Length - localStartIndex) : localItems.Length - localStartIndex;
+        var localPage = localStartIndex == 0 && localCount == localItems.Length
+            ? localItems
+            : localItems.AsSpan(localStartIndex, localCount).ToArray();
+        return new NTItemsProviderResult<TItem>(localPage, localItems.Length);
     }
 
     private bool TryApplyQueryableSorts(IQueryable<TItem> source, out IQueryable<TItem> query) {

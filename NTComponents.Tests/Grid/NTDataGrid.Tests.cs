@@ -88,6 +88,30 @@ public class NTDataGrid_Tests : BunitContext {
     }
 
     [Fact]
+    public async Task Local_Sort_Enumerates_Source_Once_Per_Refresh() {
+        var source = new CountingEnumerable<TestGridItem>(_items.ToArray());
+        var sortBy = NTGridSort<TestGridItem>.ByAscending(item => item.Name);
+        var cut = Render<NTDataGrid<TestGridItem>>(parameters => parameters
+            .Add(grid => grid.Items, source.AsQueryable())
+            .Add(grid => grid.ChildContent, builder => {
+                builder.OpenComponent<NTTemplateColumn<TestGridItem>>(0);
+                builder.AddAttribute(1, nameof(NTTemplateColumn<TestGridItem>.Title), "Name");
+                builder.AddAttribute(2, nameof(NTTemplateColumn<TestGridItem>.SortBy), sortBy);
+                builder.AddAttribute(3, nameof(NTTemplateColumn<TestGridItem>.InitialSortDirection), SortDirection.Ascending);
+                builder.AddAttribute(4, nameof(NTTemplateColumn<TestGridItem>.ChildContent), (RenderFragment<TestGridItem>)(item => cellBuilder => cellBuilder.AddContent(0, item.Name)));
+                builder.CloseComponent();
+            }));
+
+        cut.WaitForAssertion(() => cut.FindAll("tbody tr")[0].TextContent.Should().Contain("Alpha"));
+        source.ResetEnumerationCount();
+
+        await cut.InvokeAsync(() => cut.Instance.RefreshDataGridAsync());
+
+        source.EnumerationCount.Should().Be(1);
+        cut.FindAll("tbody tr")[0].TextContent.Should().Contain("Alpha");
+    }
+
+    [Fact]
     public void TemplateColumn_WithSortBy_And_SortableFalse_Does_Not_Render_Sort_Link() {
         var sortBy = NTGridSort<TestGridItem>.ByAscending(item => item.Created);
         var cut = RenderGrid(columns: builder => {
@@ -984,6 +1008,19 @@ public class NTDataGrid_Tests : BunitContext {
         builder.AddAttribute(11, nameof(NTPropertyColumn<TestGridItem, decimal>.TextAlign), TextAlign.Right);
         builder.CloseComponent();
     };
+
+    private sealed class CountingEnumerable<T>(IEnumerable<T> items) : IEnumerable<T> {
+        public int EnumerationCount { get; private set; }
+
+        public IEnumerator<T> GetEnumerator() {
+            EnumerationCount++;
+            return items.GetEnumerator();
+        }
+
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+
+        public void ResetEnumerationCount() => EnumerationCount = 0;
+    }
 
     private sealed record TestGridItem(int Id, string Name, DateOnly Created, decimal Amount) {
         public int DaysOpen => Id;
