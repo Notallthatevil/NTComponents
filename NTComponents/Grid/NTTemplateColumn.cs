@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Rendering;
 
 using NTComponents.CodeDocumentation;
 namespace NTComponents;
@@ -65,5 +66,10 @@ public sealed class NTTemplateColumn<TItem> : NTDataGridColumn<TItem> where TIte
     /// <inheritdoc />
     protected override string GetSortStateSignature() => string.Join("|", base.GetSortStateSignature(), SortBy?.StateSignature);
 
-    internal override RenderFragment RenderCell(TItem item) => CellTemplate?.Invoke(item) ?? ChildContent?.Invoke(item) ?? (_ => { });
+    internal override void RenderCell(RenderTreeBuilder builder, TItem item) {
+        var template = CellTemplate ?? ChildContent;
+        if (template is not null) {
+            builder.AddContent(0, template, item);
+        }
+    }
 }

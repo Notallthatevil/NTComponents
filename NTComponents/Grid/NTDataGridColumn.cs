@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Rendering;
 using System.Linq.Expressions;
 
 using NTComponents.CodeDocumentation;
@@ -90,7 +91,7 @@ public abstract class NTDataGridColumn<TItem> : ComponentBase, IDisposable where
 
     internal virtual IReadOnlyList<NTSortDescriptor> GetSortDescriptors(SortDirection direction) => [new(SortPropertyName!, direction)];
 
-    internal abstract RenderFragment RenderCell(TItem item);
+    internal abstract void RenderCell(RenderTreeBuilder builder, TItem item);
 
     /// <inheritdoc />
     protected override void OnInitialized() {

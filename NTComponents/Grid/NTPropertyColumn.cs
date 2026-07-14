@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Rendering;
 using NTComponents.CodeDocumentation;
 using NTComponents.Ext;
 using System.Globalization;
@@ -74,15 +75,18 @@ public sealed class NTPropertyColumn<TItem, TValue> : NTDataGridColumn<TItem> wh
     /// <inheritdoc />
     protected override string GetSortStateSignature() => string.Join("|", base.GetSortStateSignature(), Property?.ToString());
 
-    internal override RenderFragment RenderCell(TItem item) {
+    internal override void RenderCell(RenderTreeBuilder builder, TItem item) {
         if (CellTemplate is not null) {
-            return CellTemplate(item);
+            builder.AddContent(0, CellTemplate, item);
+            return;
         }
 
-        return builder => builder.AddContent(0, FormatValue(GetSortValue(item)));
+        if (_accessor is not null) {
+            builder.AddContent(0, FormatValue(_accessor(item)));
+        }
     }
 
-    private string? FormatValue(object? value) {
+    private string? FormatValue(TValue value) {
         if (value is null) {
             return null;
         }

@@ -875,12 +875,13 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
 
         for (var i = 0; i < _columns.Count; i++) {
             var column = _columns[i];
-            var sequence = 10 + i * 10;
-            builder.OpenElement(sequence, "td");
-            builder.AddAttribute(sequence + 1, "class", GetBodyCellClass(column));
-            builder.OpenElement(sequence + 2, "div");
-            builder.AddAttribute(sequence + 3, "class", "nt-data-grid-cell-content");
-            builder.AddContent(sequence + 4, column.RenderCell(item));
+            builder.OpenElement(10, "td");
+            builder.AddAttribute(11, "class", GetBodyCellClass(column));
+            builder.OpenElement(12, "div");
+            builder.AddAttribute(13, "class", "nt-data-grid-cell-content");
+            builder.OpenRegion(14);
+            column.RenderCell(builder, item);
+            builder.CloseRegion();
             builder.CloseElement();
             builder.CloseElement();
         }
