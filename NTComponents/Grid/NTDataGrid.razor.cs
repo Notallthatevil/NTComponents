@@ -49,6 +49,13 @@ public enum NTDataGridAppearance {
     CompatibilitySummary = "Renders grid markup in static SSR and enhances sorting, paging, and virtualization interactively.",
     CompatibilityDetails = "Static SSR can emit the current table rows and query-link sorting or paging. Interactive sorting, paging, row callbacks, and Virtualize mode require an interactive render mode or browser enhancement.")]
 public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
+    private const string _rowClass = "nt-data-grid-row";
+    private const string _clickableRowClass = "nt-data-grid-row nt-data-grid-row-clickable";
+    private const string _stripedOddRowClass = "nt-data-grid-row nt-data-grid-row-striped-odd";
+    private const string _stripedEvenRowClass = "nt-data-grid-row nt-data-grid-row-striped-even";
+    private const string _clickableStripedOddRowClass = "nt-data-grid-row nt-data-grid-row-clickable nt-data-grid-row-striped-odd";
+    private const string _clickableStripedEvenRowClass = "nt-data-grid-row nt-data-grid-row-clickable nt-data-grid-row-striped-even";
+    private const string _emptyRowClass = "nt-data-grid-row nt-data-grid-row-empty";
     private readonly List<NTDataGridColumn<TItem>> _columns = [];
     private readonly List<TItem> _loadedItems = [];
     private readonly List<NTSortDescriptor> _sorts = [];
@@ -528,7 +535,7 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
         _sorts.Add(new NTSortDescriptor(column.SortPropertyName!, column.InitialSortDirection.Value));
     }
 
-    private bool CanSort(NTDataGridColumn<TItem> column) => column.Sortable && !string.IsNullOrWhiteSpace(column.SortPropertyName);
+    private bool CanSort(NTDataGridColumn<TItem> column) => column.CanSort;
 
     private async Task SortByColumnAsync(NTDataGridColumn<TItem> column) {
         if (!CanSort(column)) {
@@ -697,21 +704,10 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
     private static string SerializeSorts(IEnumerable<NTSortDescriptor> sorts) =>
         string.Join(",", sorts.Select(sort => $"{sort.PropertyName}:{(sort.Direction == SortDirection.Descending ? "desc" : "asc")}"));
 
-    private string GetHeaderCellClass(NTDataGridColumn<TItem> column) => CssClassBuilder.Create("nt-data-grid-header-cell")
-        .AddClass(GetTextAlignClass(column.HeaderTextAlign ?? column.TextAlign))
-        .AddClass("nt-data-grid-header-cell-sortable", CanSort(column))
-        .Build();
-
     private string GetSortLinkClass(NTDataGridColumn<TItem> column) => CssClassBuilder.Create("nt-data-grid-sort-link")
         .AddClass("nt-data-grid-sort-link-sorted", GetSortDirection(column) is not null)
         .AddClass("nt-data-grid-sort-link-multi-sorted", ShouldShowSortOrder(GetSortOrder(column)))
         .Build();
-
-    private string GetBodyCellClass(NTDataGridColumn<TItem> column) => CssClassBuilder.Create("nt-data-grid-cell")
-        .AddClass(GetTextAlignClass(column.TextAlign))
-        .Build();
-
-    private static string? GetTextAlignClass(TextAlign? textAlign) => textAlign is null ? null : $"nt-data-grid-align-{textAlign.ToCssString()}";
 
     private string? GetColumnStyle(NTDataGridColumn<TItem> column) {
         var declarations = new List<string>();
@@ -786,12 +782,16 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
     }
 
     private string GetRowClass(TItem item) {
-        var hasIndex = _rowIndices.TryGetValue(GetRowIdentity(item), out var rowIndex);
-        return CssClassBuilder.Create("nt-data-grid-row")
-            .AddClass("nt-data-grid-row-clickable", HasRowClickCallback)
-            .AddClass("nt-data-grid-row-striped-odd", HasStripedRows && hasIndex && rowIndex % 2 == 0)
-            .AddClass("nt-data-grid-row-striped-even", HasStripedRows && hasIndex && rowIndex % 2 != 0)
-            .Build();
+        if (!HasStripedRows || !_rowIndices.TryGetValue(GetRowIdentity(item), out var rowIndex)) {
+            return HasRowClickCallback ? _clickableRowClass : _rowClass;
+        }
+
+        return (HasRowClickCallback, rowIndex % 2 == 0) switch {
+            (true, true) => _clickableStripedOddRowClass,
+            (true, false) => _clickableStripedEvenRowClass,
+            (false, true) => _stripedOddRowClass,
+            _ => _stripedEvenRowClass
+        };
     }
 
     private object GetRowIdentity(TItem item) => RowKey?.Invoke(item) ?? (object?)item ?? DBNull.Value;
@@ -854,10 +854,6 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
         return changed;
     }
 
-    private string GetEmptyRowClass() => CssClassBuilder.Create("nt-data-grid-row")
-        .AddClass("nt-data-grid-row-empty")
-        .Build();
-
     private Task InvokeRowClickedAsync(TItem item) => HasRowClickCallback ? OnRowClicked.InvokeAsync(item) : Task.CompletedTask;
 
     private Task InvokeRowClickedFromKeyboardAsync(TItem item, KeyboardEventArgs args) =>
@@ -876,7 +872,7 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
         for (var i = 0; i < _columns.Count; i++) {
             var column = _columns[i];
             builder.OpenElement(10, "td");
-            builder.AddAttribute(11, "class", GetBodyCellClass(column));
+            builder.AddAttribute(11, "class", column.BodyCellClass);
             builder.OpenElement(12, "div");
             builder.AddAttribute(13, "class", "nt-data-grid-cell-content");
             builder.OpenRegion(14);
@@ -890,7 +886,7 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
 
     private RenderFragment RenderEmptyRow() => builder => {
         builder.OpenElement(0, "tr");
-        builder.AddAttribute(1, "class", GetEmptyRowClass());
+        builder.AddAttribute(1, "class", _emptyRowClass);
         builder.OpenElement(2, "td");
         builder.AddAttribute(3, "colspan", VisibleColumnCount);
         builder.AddContent(4, EmptyText);

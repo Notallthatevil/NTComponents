@@ -24,7 +24,7 @@
             <thead>
                 <tr>
                     @foreach (var column in _columns) {
-                        <th scope="col" class="@GetHeaderCellClass(column)" aria-sort="@GetAriaSort(column)">
+                        <th scope="col" class="@column.HeaderCellClass" aria-sort="@GetAriaSort(column)">
                             @if (CanSort(column)) {
                                 var sortDirection = GetSortDirection(column);
                                 var sortOrder = GetSortOrder(column);

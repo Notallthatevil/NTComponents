@@ -440,6 +440,38 @@ public class NTDataGrid_Tests : BunitContext {
     }
 
     [Fact]
+    public void Cell_Classes_Update_When_Alignment_Parameters_Change() {
+        var textAlign = TextAlign.Left;
+        var headerTextAlign = TextAlign.Right;
+        RenderFragment columns = builder => {
+            builder.OpenComponent<NTPropertyColumn<TestGridItem, string>>(0);
+            builder.AddAttribute(1, nameof(NTPropertyColumn<TestGridItem, string>.Title), "Name");
+            builder.AddAttribute(2, nameof(NTPropertyColumn<TestGridItem, string>.Property), (System.Linq.Expressions.Expression<Func<TestGridItem, string>>)(item => item.Name));
+            builder.AddAttribute(3, nameof(NTPropertyColumn<TestGridItem, string>.TextAlign), textAlign);
+            builder.AddAttribute(4, nameof(NTPropertyColumn<TestGridItem, string>.HeaderTextAlign), headerTextAlign);
+            builder.CloseComponent();
+        };
+        var cut = RenderGrid(columns: columns);
+
+        cut.WaitForAssertion(() => {
+            cut.Find("th").ClassList.Should().Contain("nt-data-grid-align-right");
+            cut.Find("tbody td").ClassList.Should().Contain("nt-data-grid-align-left");
+        });
+
+        textAlign = TextAlign.Center;
+        headerTextAlign = TextAlign.Justify;
+        cut.Render(parameters => parameters
+            .Add(grid => grid.Items, _items)
+            .Add(grid => grid.Caption, "Invoices")
+            .Add(grid => grid.ChildContent, columns));
+
+        cut.WaitForAssertion(() => {
+            cut.Find("th").ClassList.Should().Contain("nt-data-grid-align-justify").And.NotContain("nt-data-grid-align-right");
+            cut.Find("tbody td").ClassList.Should().Contain("nt-data-grid-align-center").And.NotContain("nt-data-grid-align-left");
+        });
+    }
+
+    [Fact]
     public void Rows_Are_Not_Interactive_When_Row_Click_Callback_Is_Not_Set() {
         var cut = RenderGrid();
 

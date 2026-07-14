@@ -44,14 +44,16 @@
 			builder.OpenRegion(50);
 
 			for (var renderIndex = _itemsBefore; renderIndex < renderLastItemIndex; renderIndex++) {
+				builder.OpenRegion(0);
 				if (_itemCache.TryGetValue(renderIndex, out var item)) {
-					ItemTemplate(item)(builder);
+					builder.AddContent(0, ItemTemplate, item);
 					_lastRenderedItemCount++;
 				}
 				else {
-					builder.AddContent(renderIndex, LoadingTemplate, new PlaceholderContext(renderIndex + 2, _itemSize));
+					builder.AddContent(1, LoadingTemplate, new PlaceholderContext(renderIndex + 2, _itemSize));
 					_lastRenderedPlaceholderCount++;
 				}
+				builder.CloseRegion();
 			}
 
 			builder.CloseRegion();

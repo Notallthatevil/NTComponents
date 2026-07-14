@@ -75,6 +75,12 @@ public abstract class NTDataGridColumn<TItem> : ComponentBase, IDisposable where
 
     internal int Sequence { get; set; }
 
+    internal string BodyCellClass { get; private set; } = "nt-data-grid-cell";
+
+    internal bool CanSort { get; private set; }
+
+    internal string HeaderCellClass { get; private set; } = "nt-data-grid-header-cell";
+
     internal string HeaderTitle => !string.IsNullOrWhiteSpace(Title) ? Title! : DefaultTitle;
 
     internal abstract string DefaultTitle { get; }
@@ -107,7 +113,12 @@ public abstract class NTDataGridColumn<TItem> : ComponentBase, IDisposable where
     protected override void OnParametersSet() {
         var sortStateSignature = GetSortStateSignature();
         var stateSignature = GetStateSignature();
-        if (_registered && !string.Equals(_stateSignature, stateSignature, StringComparison.Ordinal)) {
+        var stateChanged = !string.Equals(_stateSignature, stateSignature, StringComparison.Ordinal);
+        if (stateChanged) {
+            UpdateCellClasses();
+        }
+
+        if (_registered && stateChanged) {
             Owner?.NotifyColumnChanged(this, !string.Equals(_sortStateSignature, sortStateSignature, StringComparison.Ordinal));
         }
 
@@ -134,6 +145,17 @@ public abstract class NTDataGridColumn<TItem> : ComponentBase, IDisposable where
     /// </summary>
     /// <returns>A stable signature for sort-affecting column state.</returns>
     protected virtual string GetSortStateSignature() => string.Join("|", Sortable, InitialSortDirection, SortPropertyName);
+
+    private void UpdateCellClasses() {
+        BodyCellClass = AddTextAlignment("nt-data-grid-cell", TextAlign);
+        CanSort = Sortable && !string.IsNullOrWhiteSpace(SortPropertyName);
+        HeaderCellClass = AddTextAlignment("nt-data-grid-header-cell", HeaderTextAlign ?? TextAlign);
+        if (CanSort) {
+            HeaderCellClass += " nt-data-grid-header-cell-sortable";
+        }
+    }
+
+    private static string AddTextAlignment(string className, TextAlign? textAlign) => textAlign is null ? className : $"{className} nt-data-grid-align-{textAlign.ToCssString()}";
 
     internal static string GetMemberName<TValue>(Expression<Func<TItem, TValue>>? expression) {
         if (expression?.Body is MemberExpression memberExpression) {
