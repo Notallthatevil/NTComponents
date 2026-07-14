@@ -68,7 +68,7 @@ public class NTDataGrid_Tests : BunitContext {
             builder.CloseComponent();
         });
 
-        cut.WaitForAssertion(() => cut.FindAll(".nt-data-grid-sort-link")[1].GetAttribute("href").Should().Contain("ntdg-sort=CustomDate%3Aasc"));
+        cut.WaitForAssertion(() => cut.FindAll(".nt-data-grid-sort-link").Should().HaveCount(2));
         cut.FindAll(".nt-data-grid-sort-link")[1].Click();
 
         cut.WaitForAssertion(() => {
@@ -143,6 +143,29 @@ public class NTDataGrid_Tests : BunitContext {
     }
 
     [Fact]
+    public void PropertyColumn_Uses_Property_Name_For_Provider_Sort_Instead_Of_Display_Title() {
+        var captured = new List<NTDataGridItemsProviderRequest<TestGridItem>>();
+        var cut = Render<NTDataGrid<TestGridItem>>(parameters => parameters
+            .Add(grid => grid.ItemsProvider, request => {
+                captured.Add(request);
+                return ValueTask.FromResult(new NTItemsProviderResult<TestGridItem>(_items.ToArray(), _items.Count()));
+            })
+            .Add(grid => grid.ChildContent, builder => {
+                builder.OpenComponent<NTPropertyColumn<TestGridItem, int>>(0);
+                builder.AddAttribute(1, nameof(NTPropertyColumn<TestGridItem, int>.Title), "Days Open");
+                builder.AddAttribute(2, nameof(NTPropertyColumn<TestGridItem, int>.Property), (System.Linq.Expressions.Expression<Func<TestGridItem, int>>)(item => item.DaysOpen));
+                builder.CloseComponent();
+            }));
+
+        cut.WaitForAssertion(() => cut.Find("th").TextContent.Should().Contain("Days Open"));
+        cut.Find(".nt-data-grid-sort-link").Click();
+
+        cut.WaitForAssertion(() => {
+            captured.Last().Sorts.Should().Equal(new NTSortDescriptor("DaysOpen", SortDirection.Ascending));
+        });
+    }
+
+    [Fact]
     public void TemplateColumn_WithDescendingInitialSort_Passes_Descending_Provider_Descriptor() {
         var captured = new List<NTDataGridItemsProviderRequest<TestGridItem>>();
         var sortBy = NTGridSort<TestGridItem>.ByDescending(item => item.Id);
@@ -180,12 +203,26 @@ public class NTDataGrid_Tests : BunitContext {
     }
 
     [Fact]
+    public void Header_Sort_Control_Is_NonNavigable_When_Interactive() {
+        var cut = RenderGrid();
+
+        cut.WaitForAssertion(() => {
+            var sortControl = cut.Find(".nt-data-grid-sort-link");
+            sortControl.TagName.Should().Be("BUTTON");
+            sortControl.GetAttribute("type").Should().Be("button");
+            sortControl.HasAttribute("href").Should().BeFalse();
+        });
+    }
+
+    [Fact]
     public void Header_Sort_Link_Uses_Query_Parameters_For_Static_Ssr() {
+        SetRendererInfo(new RendererInfo("Static", false));
         Services.GetRequiredService<NavigationManager>().NavigateTo("https://example.test/orders?existing=true");
         var cut = RenderGrid();
 
         cut.WaitForAssertion(() => {
             var link = cut.Find(".nt-data-grid-sort-link");
+            link.TagName.Should().Be("A");
             link.GetAttribute("href").Should().Contain("ntdg-sort=Name%3Aasc");
             link.GetAttribute("href").Should().Contain("ntdg-page=1");
             link.GetAttribute("href").Should().NotContain("ntdg-pageSize");
@@ -317,7 +354,7 @@ public class NTDataGrid_Tests : BunitContext {
             cut.Find("th").HasAttribute("aria-sort").Should().BeFalse();
             cut.Find(".nt-data-grid-sort-link").ClassList.Should().NotContain("nt-data-grid-sort-link-sorted");
             cut.FindAll(".nt-data-grid-sort-indicator").Should().BeEmpty();
-            cut.Find(".nt-data-grid-sort-link").GetAttribute("href").Should().Contain("ntdg-sort=Name%3Aasc");
+            cut.Find(".nt-data-grid-sort-link").HasAttribute("href").Should().BeFalse();
         });
     }
 
@@ -345,8 +382,7 @@ public class NTDataGrid_Tests : BunitContext {
         cut.WaitForAssertion(() => captured.Should().Contain(request => request.Sorts.Count == 1 && request.Sorts[0].PropertyName == "Name"));
 
         var createdSortLink = cut.FindAll(".nt-data-grid-sort-link")[1];
-        createdSortLink.GetAttribute("href").Should().Contain("ntdg-sort=Created%3Aasc");
-        createdSortLink.GetAttribute("href").Should().NotContain("Name");
+        createdSortLink.HasAttribute("href").Should().BeFalse();
         createdSortLink.Click();
 
         cut.WaitForAssertion(() => {
@@ -897,5 +933,7 @@ public class NTDataGrid_Tests : BunitContext {
         builder.CloseComponent();
     };
 
-    private sealed record TestGridItem(int Id, string Name, DateOnly Created, decimal Amount);
+    private sealed record TestGridItem(int Id, string Name, DateOnly Created, decimal Amount) {
+        public int DaysOpen => Id;
+    }
 }

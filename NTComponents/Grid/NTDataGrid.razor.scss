@@ -168,7 +168,14 @@ $nt-data-grid-spacer-animation-duration: motion.$nt-motion-duration-extra_long_2
 
 .nt-data-grid-sort-link {
     position: relative;
+    box-sizing: border-box;
+    padding: $nt-data-grid-zero;
+    border: $nt-data-grid-zero;
     border-radius: $nt-data-grid-interactive-shape;
+    appearance: none;
+    background: transparent;
+    font: inherit;
+    cursor: pointer;
     outline: none;
 
     &:hover {

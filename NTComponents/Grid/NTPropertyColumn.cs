@@ -37,7 +37,7 @@ public sealed class NTPropertyColumn<TItem, TValue> : NTDataGridColumn<TItem> wh
 
     internal override string DefaultTitle => NTDataGridColumn<TItem>.GetMemberName(Property).SplitPascalCase();
 
-    internal override string? SortPropertyName => DefaultTitle;
+    internal override string? SortPropertyName => NTDataGridColumn<TItem>.GetMemberName(Property);
 
     /// <inheritdoc />
     protected override void OnParametersSet() {

@@ -28,20 +28,32 @@
                             @if (CanSort(column)) {
                                 var sortDirection = GetSortDirection(column);
                                 var sortOrder = GetSortOrder(column);
-                                <a class="@GetSortLinkClass(column)"
-                                   href="@BuildSortHref(column)"
-                                   @onclick="() => SortByColumnAsync(column)"
-                                   @onclick:preventDefault="true">
-                                    <span class="nt-data-grid-header-title">@column.HeaderTitle</span>
-                                    @if (sortDirection is not null) {
-                                        <span class="nt-data-grid-sort-state">
-                                            @if (ShouldShowSortOrder(sortOrder)) {
-                                                <span class="nt-data-grid-sort-order" aria-label="@($"Sort priority {sortOrder}")">@sortOrder</span>
-                                            }
-                                            <MaterialIcon class="@GetSortIndicatorClass(sortDirection.Value)" Icon="@GetSortIndicator()" Size="IconSize.Small" aria-hidden="true" />
-                                        </span>
-                                    }
-                                </a>
+                                @if (RendererInfo.IsInteractive) {
+                                    <button type="button" class="@GetSortLinkClass(column)" @onclick="() => SortByColumnAsync(column)">
+                                        <span class="nt-data-grid-header-title">@column.HeaderTitle</span>
+                                        @if (sortDirection is not null) {
+                                            <span class="nt-data-grid-sort-state">
+                                                @if (ShouldShowSortOrder(sortOrder)) {
+                                                    <span class="nt-data-grid-sort-order" aria-label="@($"Sort priority {sortOrder}")">@sortOrder</span>
+                                                }
+                                                <MaterialIcon class="@GetSortIndicatorClass(sortDirection.Value)" Icon="@GetSortIndicator()" Size="IconSize.Small" aria-hidden="true" />
+                                            </span>
+                                        }
+                                    </button>
+                                }
+                                else {
+                                    <a class="@GetSortLinkClass(column)" href="@BuildSortHref(column)">
+                                        <span class="nt-data-grid-header-title">@column.HeaderTitle</span>
+                                        @if (sortDirection is not null) {
+                                            <span class="nt-data-grid-sort-state">
+                                                @if (ShouldShowSortOrder(sortOrder)) {
+                                                    <span class="nt-data-grid-sort-order" aria-label="@($"Sort priority {sortOrder}")">@sortOrder</span>
+                                                }
+                                                <MaterialIcon class="@GetSortIndicatorClass(sortDirection.Value)" Icon="@GetSortIndicator()" Size="IconSize.Small" aria-hidden="true" />
+                                            </span>
+                                        }
+                                    </a>
+                                }
                             }
                             else {
                                 <span class="nt-data-grid-header-label">@column.HeaderTitle</span>
