@@ -75,7 +75,7 @@ public partial class NTInputDateTime<[DynamicallyAccessedMembers(DynamicallyAcce
     public InputType Type => _metadata.Type;
 
     /// <inheritdoc />
-    protected override InputType InputTypeAttribute => _metadata.Type;
+    protected override InputType InputTypeAttribute => EnableCustomPicker && !UsesNativeInputFormat() ? InputType.Text : _metadata.Type;
 
     /// <inheritdoc />
     protected override IReadOnlyDictionary<string, object?>? BuildAdditionalInputAttributes() {
@@ -139,6 +139,14 @@ public partial class NTInputDateTime<[DynamicallyAccessedMembers(DynamicallyAcce
     private bool IsPickerTriggerDisabled => Disabled ?? Form?.Disabled ?? false;
 
     private string BuildPickerId() => $"{EffectiveInputId}-picker";
+
+    private bool UsesNativeInputFormat() => _metadata.Type switch {
+        InputType.Date => _effectiveFormat == "yyyy-MM-dd",
+        InputType.DateTime => _effectiveFormat is "yyyy-MM-ddTHH:mm" or "yyyy-MM-ddTHH:mm:ss",
+        InputType.Month => _effectiveFormat == "yyyy-MM",
+        InputType.Time => _effectiveFormat is "HH:mm" or "HH:mm:ss",
+        _ => false
+    };
 
     private void CachePickerState() {
         _pickerId = BuildPickerId();

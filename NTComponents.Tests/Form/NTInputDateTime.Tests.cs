@@ -57,6 +57,21 @@ public class NTInputDateTime_Tests : BunitContext {
     }
 
     [Fact]
+    public void DateTime_Custom_Picker_Uses_Text_Input_For_NonNative_Format() {
+        var model = new DateTimeModel {
+            Value = new DateTime(2026, 5, 19, 14, 30, 0)
+        };
+
+        var cut = RenderDateTime(model, parameters => parameters
+            .Add(p => p.EnableCustomPicker, true)
+            .Add(p => p.Format, "MM/dd/yyyy hh:mm tt"));
+
+        var input = cut.Find("input[data-tnt-dtp-input='true']");
+        input.GetAttribute("type").Should().Be("text");
+        input.GetAttribute("value").Should().Be("05/19/2026 02:30 PM");
+    }
+
+    [Fact]
     public void DateTimeOffset_Renders_DateTimeLocal_Input_And_Default_Format() {
         var model = new DateTimeOffsetModel {
             Value = new DateTimeOffset(2026, 5, 19, 10, 30, 0, TimeSpan.Zero)

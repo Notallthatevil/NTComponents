@@ -50,6 +50,7 @@ describe('NTInputDateTime picker behavior', () => {
         min = null,
         mode = 'date',
         openOnFocus = false,
+        format = null,
         value = '',
     } = {}) {
         const suffix = ++idCounter;
@@ -62,6 +63,11 @@ describe('NTInputDateTime picker behavior', () => {
         input.dataset.tntDtpTarget = pickerId;
         input.dataset.tntDtpMode = mode;
         input.dataset.tntDtpOpenOnFocus = openOnFocus ? 'true' : 'false';
+
+        if (format) {
+            input.setAttribute('format', format);
+            input.setAttribute('value', value);
+        }
 
         const label = document.createElement('label');
         label.appendChild(input);
@@ -517,6 +523,32 @@ describe('NTInputDateTime picker behavior', () => {
         confirmButton.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 
         expect(input.value).toBe('2026-03-15T14:05');
+    });
+
+    test('custom datetime format preserves and confirms a 12-hour display value', () => {
+        const { confirmButton, input, minuteInput, picker, root, trigger } = createPickerFixture({
+            format: 'MM/dd/yyyy hh:mm tt',
+            mode: 'datetime',
+            value: '03/15/2026 02:05 PM',
+        });
+        input.type = 'text';
+        input.value = '03/15/2026 02:05 PM';
+
+        openPicker(trigger);
+
+        expect(input.type).toBe('text');
+        expect(input.value).toBe('03/15/2026 02:05 PM');
+        expect(picker.querySelector('[data-tnt-dtp-meridiem="pm"]').getAttribute('aria-pressed')).toBe('true');
+
+        minuteInput.value = '45';
+        minuteInput.dispatchEvent(new Event('input', { bubbles: true }));
+        confirmButton.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+        expect(input.value).toBe('03/15/2026 02:45 PM');
+
+        onDispose(root, null);
+        expect(input.type).toBe('text');
+        expect(input.value).toBe('03/15/2026 02:45 PM');
     });
 
     test('existing hidden seconds are not preserved for datetime confirmation', () => {

@@ -32,6 +32,11 @@ public record TnTEvent {
     public DateTimeOffset EventEnd { get; set; }
 
     /// <summary>
+    ///     Gets or sets whether the event should render in the all-day lane.
+    /// </summary>
+    public bool IsAllDay { get; set; }
+
+    /// <summary>
     ///     Gets the start time of the event.
     /// </summary>
     public virtual TimeOnly StartTime => TimeOnly.FromTimeSpan(EventStart.LocalDateTime.TimeOfDay);
@@ -62,9 +67,19 @@ public record TnTEvent {
     public TnTColor BackgroundColor { get; set; } = TnTColor.Tertiary;
 
     /// <summary>
+    ///     Gets or sets an optional CSS color value that overrides <see cref="BackgroundColor" />.
+    /// </summary>
+    public string? BackgroundColorCss { get; set; }
+
+    /// <summary>
     ///     Gets or sets the foreground color of the event.
     /// </summary>
     public TnTColor ForegroundColor { get; set; } = TnTColor.OnTertiary;
+
+    /// <summary>
+    ///     Gets or sets an optional CSS color value that overrides <see cref="ForegroundColor" />.
+    /// </summary>
+    public string? ForegroundColorCss { get; set; }
 
     /// <summary>
     ///     Gets or sets the tint color of the event.

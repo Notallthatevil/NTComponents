@@ -54,6 +54,7 @@ public class TnTEvent_Tests {
         tnTEvent.Description.Should().BeNull();
         tnTEvent.EventStart.Should().Be(default(DateTimeOffset));
         tnTEvent.EventEnd.Should().Be(default(DateTimeOffset));
+        tnTEvent.IsAllDay.Should().BeFalse();
         tnTEvent.BackgroundColor.Should().Be(TnTColor.Tertiary);
         tnTEvent.ForegroundColor.Should().Be(TnTColor.OnTertiary);
         tnTEvent.TintColor.Should().Be(TnTColor.SurfaceTint);
@@ -74,6 +75,7 @@ public class TnTEvent_Tests {
             Description = description,
             EventStart = eventStart,
             EventEnd = eventEnd,
+            IsAllDay = true,
             BackgroundColor = TnTColor.Primary,
             ForegroundColor = TnTColor.OnPrimary
         };
@@ -83,6 +85,7 @@ public class TnTEvent_Tests {
         tnTEvent.Description.Should().Be(description);
         tnTEvent.EventStart.Should().Be(eventStart);
         tnTEvent.EventEnd.Should().Be(eventEnd);
+        tnTEvent.IsAllDay.Should().BeTrue();
         tnTEvent.BackgroundColor.Should().Be(TnTColor.Primary);
         tnTEvent.ForegroundColor.Should().Be(TnTColor.OnPrimary);
     }

@@ -561,7 +561,7 @@ function setInputTypePreservingValue(input: HTMLInputElement, type: string): voi
         return;
     }
 
-    const value = input.value;
+    const value = input.value || input.getAttribute('value') || '';
     input.type = type;
     input.value = value;
 }
@@ -572,7 +572,9 @@ function suppressNativeInputPicker(state: PickerState): void {
         return;
     }
 
-    state.nativeInputType = nativeInputType;
+    if (state.input.type !== 'text') {
+        state.nativeInputType = nativeInputType;
+    }
     setInputTypePreservingValue(state.input, 'text');
 }
 
@@ -586,9 +588,93 @@ function getModeConfig(mode: DateTimePickerMode): { hasDate: boolean; hasTime: b
     return MODE_CONFIG[mode] ?? MODE_CONFIG.none;
 }
 
-function parseDraft(mode: DateTimePickerMode, value: Maybe<string>): PickerDraft | null {
+const FORMAT_TOKEN_PATTERN = /yyyy|MM|M|dd|d|HH|H|hh|h|mm|m|ss|s|tt/g;
+
+function escapeRegex(value: string): string {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function parseDraftWithPattern(format: string, value: string): PickerDraft | null {
+    const tokens: string[] = [];
+    let pattern = '^';
+    let previousIndex = 0;
+
+    for (const match of format.matchAll(FORMAT_TOKEN_PATTERN)) {
+        pattern += escapeRegex(format.slice(previousIndex, match.index));
+        tokens.push(match[0]);
+        pattern += match[0] === 'yyyy'
+            ? '(\\d{4})'
+            : match[0] === 'tt'
+                ? '(AM|PM)'
+                : match[0].length === 2
+                    ? '(\\d{2})'
+                    : '(\\d{1,2})';
+        previousIndex = match.index + match[0].length;
+    }
+
+    pattern += `${escapeRegex(format.slice(previousIndex))}$`;
+    const match = new RegExp(pattern, 'i').exec(value);
+    if (!match) {
+        return null;
+    }
+
+    const draft = createDefaultDraft();
+    let hour12: number | null = null;
+    let meridiem: string | null = null;
+
+    tokens.forEach((token, index) => {
+        const part = match[index + 1];
+        switch (token) {
+            case 'yyyy':
+                draft.year = toInt(part, draft.year);
+                break;
+            case 'MM':
+            case 'M':
+                draft.month = toInt(part, draft.month + 1) - 1;
+                break;
+            case 'dd':
+            case 'd':
+                draft.day = toInt(part, draft.day);
+                break;
+            case 'HH':
+            case 'H':
+                draft.hour = toInt(part, draft.hour);
+                break;
+            case 'hh':
+            case 'h':
+                hour12 = toInt(part, 12);
+                break;
+            case 'mm':
+            case 'm':
+                draft.minute = toInt(part, draft.minute);
+                break;
+            case 'ss':
+            case 's':
+                draft.second = toInt(part, draft.second);
+                break;
+            case 'tt':
+                meridiem = part.toLowerCase();
+                break;
+        }
+    });
+
+    if (hour12 !== null) {
+        draft.hour = toTwentyFourHour(hour12, meridiem === 'pm' ? 'pm' : 'am');
+    }
+
+    return draft;
+}
+
+function parseDraft(mode: DateTimePickerMode, value: Maybe<string>, format?: Maybe<string>): PickerDraft | null {
     if (!value) {
         return null;
+    }
+
+    if (format) {
+        const formattedDraft = parseDraftWithPattern(format, value);
+        if (formattedDraft) {
+            return formattedDraft;
+        }
     }
 
     if (mode === 'date') {
@@ -663,7 +749,7 @@ function parseDraft(mode: DateTimePickerMode, value: Maybe<string>): PickerDraft
 }
 
 function formatDraftWithPattern(format: string, draft: PickerDraft): string {
-    return format.replace(/yyyy|MM|M|dd|d|HH|H|mm|m|ss|s/g, token => {
+    return format.replace(FORMAT_TOKEN_PATTERN, token => {
         switch (token) {
             case 'yyyy':
                 return padYear(draft.year);
@@ -679,6 +765,10 @@ function formatDraftWithPattern(format: string, draft: PickerDraft): string {
                 return padTwo(draft.hour);
             case 'H':
                 return String(draft.hour);
+            case 'hh':
+                return padTwo(toTwelveHour(draft.hour).hour);
+            case 'h':
+                return String(toTwelveHour(draft.hour).hour);
             case 'mm':
                 return padTwo(draft.minute);
             case 'm':
@@ -687,6 +777,8 @@ function formatDraftWithPattern(format: string, draft: PickerDraft): string {
                 return padTwo(draft.second);
             case 's':
                 return String(draft.second);
+            case 'tt':
+                return draft.hour >= 12 ? 'PM' : 'AM';
             default:
                 return token;
         }
@@ -804,7 +896,7 @@ function setInputValue(state: PickerState, value: string): void {
 
 function syncDraftFromInputValue(state: PickerState): void {
     updateConstraints(state);
-    const parsed = parseDraft(state.mode, state.input?.value);
+    const parsed = parseDraft(state.mode, state.input?.value, state.input?.getAttribute('format'));
 
     if (!parsed) {
         const current = createDefaultDraft();
@@ -1794,7 +1886,7 @@ function createPickerState(input: HTMLInputElement, picker: HTMLElement): Picker
     };
 
     state.onInputInput = () => {
-        const parsed = parseDraft(state.mode, state.input?.value);
+        const parsed = parseDraft(state.mode, state.input?.value, state.input?.getAttribute('format'));
         if (parsed) {
             state.draft = clampDraftToConstraints(state, parsed);
             state.viewYear = state.draft.year;

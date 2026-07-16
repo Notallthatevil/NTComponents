@@ -24,7 +24,7 @@
             <NTPropertyColumn TItem="SmokeRow" TValue="int" Title="Id" Property="row => row.Id" Width="72px" TextAlign="TextAlign.Right" HeaderTextAlign="TextAlign.Right" />
             <NTPropertyColumn TItem="SmokeRow" TValue="string" Title="Name" Property="row => row.Name" MinWidth="180px" />
             <NTPropertyColumn TItem="SmokeRow" TValue="decimal" Title="Amount" Property="row => row.Amount" Format="C" TextAlign="TextAlign.Right" HeaderTextAlign="TextAlign.Right" />
-            <NTTemplateColumn TItem="SmokeRow" Title="State">
+            <NTTemplateColumn TItem="SmokeRow" Title="State" SortBy="_statusSort" InitialSortDirection="SortDirection.Ascending">
                 <span data-aot-smoke-row="@context.Id">@context.Status</span>
             </NTTemplateColumn>
         </NTDataGrid>
@@ -54,6 +54,8 @@
         new SmokeRow(1, "Alpha", 120.50m, "Ready"),
         new SmokeRow(2, "Beta", 240.75m, "Queued")
     }.AsQueryable();
+
+    private static readonly NTGridSort<SmokeRow> _statusSort = NTGridSort<SmokeRow>.ByAscending(row => row.Status);
 
     private bool _selected;
     private bool _notificationsShown;

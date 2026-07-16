@@ -4,15 +4,59 @@
 @using NTComponents.Scheduler.Events
 @rendermode InteractiveAuto
 
-<h3>Scheduler</h3>
+<NTScheduler TEventType="TnTEvent"
+             Events="_tasksList"
+             Date="_displayDate"
+             DateChanged="@(value => _displayDate = value)"
+             View="_selectedView"
+             ViewChanged="@(value => _selectedView = value)"
+             StartViewOn="DayOfWeek.Monday"
+             ShowDescription="true"
+             EventClicked="OpenEventEditorAsync"
+             SlotClicked="OpenNewEventEditorAsync"
+             SlotSelected="OpenNewEventEditorAsync"
+             EventDropped="OnEventDropped" />
 
+<NTDialog @ref="_eventDialog"
+          Id="scheduler-event-dialog"
+          Title="@EventDialogTitle"
+          ShowCloseButton="true">
+    <ChildContent>
+        @if (_eventEditor is not null) {
+            <div class="scheduler-event-editor">
+                <NTInputText @bind-Value="_eventEditor.Title" Label="Title" AutoFocus="true" />
+                <NTTextArea @bind-Value="_eventEditor.Description" Label="Description" MinVisibleLines="3" />
 
-<TnTScheduler TEventType="TnTEvent"
-              Events="TasksList.ToArray()"
-              EventClickedCallback="OnEventClicked"
-              EventSlotClickedCallback="OnEventSlotClicked">
-    <TnTWeekView StartViewOn="DayOfWeek.Monday" />
-</TnTScheduler>
+                <fieldset class="event-color-picker">
+                    <legend>Color</legend>
+                    <div class="color-options">
+                        @foreach (var color in _eventColorOptions) {
+                            <button type="button"
+                                    class="color-option"
+                                    style="@color.Style"
+                                    aria-label="@color.Name"
+                                    aria-pressed="@(_eventEditor.Color == color ? "true" : "false")"
+                                    title="@color.Name"
+                                    @onclick="() => SelectEventColor(color)">
+                                <span class="selection-mark" aria-hidden="true">✓</span>
+                            </button>
+                        }
+                    </div>
+                </fieldset>
 
-<br />
+                <NTInputSwitch @bind-Value="_eventEditor.IsAllDay" Label="All day" />
+                <NTInputDateTime @bind-Value="_eventEditor.EventStart" Label="Starts" Format="MM/dd/yyyy hh:mm tt" EnableCustomPicker="true" />
+                <NTInputDateTime @bind-Value="_eventEditor.EventEnd" Label="Ends" Format="MM/dd/yyyy hh:mm tt" EnableCustomPicker="true" />
 
+                @if (!string.IsNullOrWhiteSpace(_validationMessage)) {
+                    <p role="alert" style="margin: 0;">@_validationMessage</p>
+                }
+            </div>
+        }
+    </ChildContent>
+
+    <Buttons>
+        <button type="button" class="nt-dialog-button" @onclick="CloseEventEditorAsync">Cancel</button>
+        <button type="button" class="nt-dialog-button" @onclick="SaveEventAsync">Save</button>
+    </Buttons>
+</NTDialog>

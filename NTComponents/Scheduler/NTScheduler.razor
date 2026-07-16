@@ -1,0 +1,67 @@
+@namespace NTComponents
+@using NTComponents.Core
+@using NTComponents.Scheduler
+@inherits TnTDisposableComponentBase
+@typeparam TEventType
+
+<section @attributes="AdditionalAttributes"
+         @ref="Element"
+         id="@ElementId"
+         class="@ElementClass"
+         style="@ElementStyle"
+         title="@ElementTitle"
+         lang="@ElementLang"
+         data-nt-scheduler="true"
+         data-nt-scheduler-snap-minutes="@DragSnapMinutes"
+         data-nt-scheduler-drag-enabled="@AllowDraggingEvents.ToString().ToLowerInvariant()"
+         data-nt-scheduler-range-select-enabled="@SlotSelected.HasDelegate.ToString().ToLowerInvariant()"
+         aria-label="@AriaLabel">
+    @if (!HideDateControls) {
+        <header class="toolbar">
+            <div class="date-navigation" aria-label="Calendar navigation">
+                <NTIconButton Icon="MaterialIcon.ChevronLeft" AriaLabel="@PreviousButtonAriaLabel" OnClickCallback="@(_ => PreviousPageAsync())" />
+                <NTButton Label="@TodayButtonLabel" Variant="NTButtonVariant.Text" OnClickCallback="@(_ => GoToTodayAsync())" />
+                <NTIconButton Icon="MaterialIcon.ChevronRight" AriaLabel="@NextButtonAriaLabel" OnClickCallback="@(_ => NextPageAsync())" />
+            </div>
+
+            <div class="date-picker">
+                <NTInputDateTime DateTimeType="DateOnly"
+                                 Value="@PickerDate"
+                                 ValueChanged="@SetDisplayDateAsync"
+                                 ValueExpression="@(() => PickerDate)"
+                                 EnableCustomPicker="true"
+                                 MonthOnly="@(View == NTSchedulerView.Month)"
+                                 Density="NTFormDensity.Dense"
+                                 SubmitValue="false"
+                                 aria-label="Displayed date" />
+            </div>
+
+            <NTButtonGroup TObjectType="NTSchedulerView"
+                           class="view-switcher"
+                           AriaLabel="Scheduler view"
+                           DisplayType="NTButtonGroupDisplayType.Connected"
+                           SelectionMode="NTButtonGroupSelectionMode.Single"
+                           SelectionRequired="true"
+                           SelectedKey="@View"
+                           SelectedKeyChanged="@SetViewAsync"
+                           Variant="NTButtonVariant.Tonal">
+                <NTButtonGroupItem TObjectType="NTSchedulerView" Key="NTSchedulerView.Month" Label="Month" />
+                <NTButtonGroupItem TObjectType="NTSchedulerView" Key="NTSchedulerView.Week" Label="Week" />
+                <NTButtonGroupItem TObjectType="NTSchedulerView" Key="NTSchedulerView.Day" Label="Day" />
+            </NTButtonGroup>
+        </header>
+    }
+
+    @switch (View) {
+        case NTSchedulerView.Month:
+            @MonthView
+            break;
+        case NTSchedulerView.Week:
+            @WeekView
+            break;
+        case NTSchedulerView.Day:
+            @DayView
+            break;
+    }
+</section>
+@PageScript
