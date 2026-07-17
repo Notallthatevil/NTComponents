@@ -9,6 +9,35 @@ namespace NTComponents.Tests.Virtualization;
 
 public class NTItemsProviderRequest_Tests {
     [Fact]
+    public async Task WithoutStartIndex_ReturnsNull() {
+        var context = new DefaultHttpContext();
+        context.Request.Query = new QueryCollection(new Dictionary<string, StringValues> {
+            [nameof(NTItemsProviderRequest.Count)] = "10",
+            [nameof(NTItemsProviderRequest.Sorts)] = "Name,Ascending"
+        });
+
+        var request = await NTItemsProviderRequest.BindAsync(context);
+
+        request.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task WithOnlyStartIndex_UsesOptionalDefaults() {
+        var context = new DefaultHttpContext();
+        context.Request.Query = new QueryCollection(new Dictionary<string, StringValues> {
+            [nameof(NTItemsProviderRequest.StartIndex)] = "0"
+        });
+
+        var request = await NTItemsProviderRequest.BindAsync(context);
+
+        request.Should().NotBeNull();
+        request!.StartIndex.Should().Be(0);
+        request.Count.Should().BeNull();
+        request.Sorts.Should().BeEmpty();
+        request.SortOnProperties.Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task BindAsync_Parses_Sorts_QueryValues() {
         var context = new DefaultHttpContext();
         context.Request.Query = new QueryCollection(new Dictionary<string, StringValues> {

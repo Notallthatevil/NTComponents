@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
@@ -13,11 +14,16 @@ namespace NTComponents.Virtualization;
 ///     This endpoint accepts query parameters in the form: <c>?StartIndex=0&amp;Count=10&amp;Sorts=Name,Ascending&amp;Sorts=Age,Descending</c>.
 /// </remarks>
 [ExcludeFromCodeCoverage]
-public sealed record NTItemsProviderRequest {
+public sealed record NTItemsProviderRequest : IValidatableObject {
+    private readonly int? _startIndex;
+
     /// <summary>
     ///     Gets the start index of the requested items.
     /// </summary>
-    public int StartIndex { get; init; }
+    public int StartIndex {
+        get => _startIndex.GetValueOrDefault();
+        init => _startIndex = value;
+    }
 
     /// <summary>
     ///     Gets the maximum number of items to retrieve.
@@ -35,6 +41,12 @@ public sealed record NTItemsProviderRequest {
     [IgnoreDataMember]
     [JsonIgnore]
     public IReadOnlyList<KeyValuePair<string, SortDirection>> SortOnProperties => ParseSorts(Sorts);
+
+    IEnumerable<ValidationResult> IValidatableObject.Validate(ValidationContext validationContext) {
+        if (!_startIndex.HasValue) {
+            yield return new ValidationResult("StartIndex is required.", [nameof(StartIndex)]);
+        }
+    }
 
     /// <summary>
     ///     Binds the HTTP context query parameters to an <see cref="NTItemsProviderRequest" /> instance.
