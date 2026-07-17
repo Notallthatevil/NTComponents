@@ -1,0 +1,75 @@
+@using NTComponents.Virtualization
+@inject INTSnackbarService SnackbarService
+@inject INTToastService ToastService
+
+<div class="docs-curated-demo">
+    @switch (Component.Type.Name) {
+        case "NTDialog":
+        <div class="stack">
+            <NTButton Label="Open example dialog" OnClickCallback="OpenDialogAsync" />
+            <NTDialog @ref="_dialog"
+                      Id="docs-example-dialog"
+                      Title="Review changes"
+                      SupportingText="Confirm the documentation example."
+                      ShowCloseButton="true">
+                <ChildContent>
+                    <p>Dialogs keep focused content and actions together.</p>
+                </ChildContent>
+                <Buttons>
+                    <button type="button" class="nt-dialog-button" command="request-close" commandfor="docs-example-dialog" value="cancel">Cancel</button>
+                    <button type="button" class="nt-dialog-button" command="request-close" commandfor="docs-example-dialog" value="confirm">Confirm</button>
+                </Buttons>
+            </NTDialog>
+        </div>
+            break;
+        case "NTMenu":
+        <div class="menu">
+            <NTButton ElementId="docs-menu-trigger"
+                      Label="Open example menu"
+                      LeadingIcon="MaterialIcon.Menu"
+                      style="anchor-name: --docs-menu-anchor;"
+                      popovertarget="docs-example-menu"
+                      popovertargetaction="toggle" />
+            <NTMenu ElementId="docs-example-menu"
+                    AnchorName="--docs-menu-anchor"
+                    AnchorSelector="#docs-menu-trigger"
+                    AriaLabel="Example actions">
+                <NTMenuLabelItem Label="Actions" />
+                <NTMenuButtonItem Label="Edit" Icon="MaterialIcon.Edit" />
+                <NTMenuDividerItem />
+                <NTMenuAnchorItem Label="View details" Icon="MaterialIcon.Info" Href="#example" />
+            </NTMenu>
+        </div>
+            break;
+        case "NTSnackbar":
+        <div class="stack">
+            <NTButton Label="Show example snackbar" OnClickCallback="ShowSnackbarAsync" />
+            <NTSnackbar />
+        </div>
+            break;
+        case "NTToast":
+        <div class="stack">
+            <NTButton Label="Show example toast" OnClickCallback="ShowToastAsync" />
+            <NTToast />
+        </div>
+            break;
+        case "NTTooltip":
+        <button type="button" class="tooltip-target">
+            Hover or focus for help
+            <NTTooltip ShowDelay="100" HideDelay="100">This is a live tooltip.</NTTooltip>
+        </button>
+            break;
+        case "NTVirtualize":
+        <div class="virtualize">
+            <NTVirtualize TItem="string" ItemsProvider="LoadItemsAsync" ItemSize="48" ScrollRestorationKey="docs-virtualize-example">
+                <ItemTemplate Context="item">
+                    <div class="virtualize-item">@item</div>
+                </ItemTemplate>
+                <EmptyTemplate>
+                    <p>No items are available.</p>
+                </EmptyTemplate>
+            </NTVirtualize>
+        </div>
+            break;
+    }
+</div>

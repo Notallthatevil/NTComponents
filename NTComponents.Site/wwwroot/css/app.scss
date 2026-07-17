@@ -353,6 +353,46 @@ code {
     padding-top: 1rem;
 }
 
+.docs-curated-demo {
+    inline-size: 100%;
+
+    .stack {
+        display: grid;
+        gap: 1rem;
+        justify-items: start;
+    }
+
+    .menu {
+        min-block-size: 12rem;
+        padding: 1rem;
+    }
+
+    .tooltip-target {
+        background: var(--tnt-color-primary);
+        border: 0;
+        border-radius: var(--nt-sys-shape-corner-full, 999px);
+        color: var(--tnt-color-on-primary);
+        cursor: pointer;
+        min-block-size: 2.5rem;
+        padding-inline: 1.5rem;
+        position: relative;
+    }
+
+    .virtualize {
+        block-size: 15rem;
+        inline-size: 100%;
+        overflow: auto;
+    }
+
+    .virtualize-item {
+        align-items: center;
+        border-block-end: 1px solid var(--tnt-color-outline-variant);
+        display: flex;
+        min-block-size: 48px;
+        padding-inline: 1rem;
+    }
+}
+
 .docs-preview-label {
     color: var(--tnt-color-on-surface-variant);
     font-size: 0.75rem;

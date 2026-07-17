@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Forms;
 using NTComponents.GeneratedDocumentation;
+using NTComponents.Scheduler;
 using System.Globalization;
 using System.Reflection;
 using System.Text;
@@ -11,12 +13,32 @@ public sealed partial class DocumentationCatalog {
     private static readonly Assembly ComponentsAssembly = typeof(NTButton).Assembly;
     private static readonly IReadOnlyDictionary<string, string> DependentComponentParentsByName = new Dictionary<string, string>(StringComparer.Ordinal) {
         ["NTAccordionItem"] = "NTAccordion",
+        ["NTAutocompleteOption"] = "NTAutocomplete",
+        ["NTAutocompleteOptionGroup"] = "NTAutocomplete",
+        ["NTButtonGroupItem"] = "NTButtonGroup",
+        ["NTBody"] = "NTLayout",
         ["NTCarouselItem"] = "NTCarousel",
+        ["NTFabMenuAnchorItem"] = "NTFabMenu",
+        ["NTFabMenuButtonItem"] = "NTFabMenu",
+        ["NTFileUploadItem"] = "NTFileUpload",
+        ["NTFooter"] = "NTLayout",
+        ["NTHeader"] = "NTLayout",
         ["NTInputRadio"] = "NTInputRadioGroup",
+        ["NTInputSelectOption"] = "NTInputSelect",
+        ["NTMenuAnchorItem"] = "NTMenu",
+        ["NTMenuButtonItem"] = "NTMenu",
+        ["NTMenuDividerItem"] = "NTMenu",
+        ["NTMenuLabelItem"] = "NTMenu",
+        ["NTMenuSubMenuItem"] = "NTMenu",
         ["NTNavigationRailGroup"] = "NTNavigationRail",
         ["NTNavigationRailItem"] = "NTNavigationRail",
         ["NTNavigationRailSectionHeader"] = "NTNavigationRail",
-        ["NTTab"] = "NTTabView"
+        ["NTPageScript"] = "NTHeadDependencies",
+        ["NTPropertyColumn"] = "NTDataGrid",
+        ["NTTab"] = "NTTabView",
+        ["NTTemplateColumn"] = "NTDataGrid",
+        ["NTWizardFormStep"] = "NTWizard",
+        ["NTWizardStep"] = "NTWizard"
     };
 
     private static readonly IReadOnlyList<object> MaterialIconSandboxOptions = [
@@ -247,8 +269,12 @@ public sealed partial class DocumentationCatalog {
 
     private static bool Contains(string? value, string term) => value?.Contains(term, StringComparison.OrdinalIgnoreCase) == true;
 
-    private static Type? ResolveRuntimeType(TypeDocumentation documentation) =>
-        ComponentsAssembly.GetType(RemoveGenericArity(documentation.FullName), throwOnError: false, ignoreCase: false);
+    private static Type? ResolveRuntimeType(TypeDocumentation documentation) {
+        var fullName = RemoveGenericArity(documentation.FullName);
+        var genericArity = CountGenericArguments(documentation.FullName);
+        var runtimeName = genericArity == 0 ? fullName : $"{fullName}`{genericArity}";
+        return ComponentsAssembly.GetType(runtimeName, throwOnError: false, ignoreCase: false);
+    }
 
     private static bool IsDocumentedNtComponent(TypeDocumentation documentation, Type runtimeType) =>
         documentation.Kind == "Class" &&
@@ -298,10 +324,11 @@ public sealed partial class DocumentationCatalog {
             return SandboxDocumentation.Unsupported("Open generic component requires sample type data that cannot be inferred safely.");
         }
 
+        var defaultComponent = componentType.GetConstructor(Type.EmptyTypes) is null ? null : Activator.CreateInstance(componentType);
         var parameters = documentation.Parameters
             .Where(parameter => !parameter.IsFromBaseType && IsPublicOrProtected(parameter.Accessibility))
             .OrderBy(parameter => parameter.Name, StringComparer.Ordinal)
-            .Select(CreateSandboxParameter)
+            .Select(parameter => CreateSandboxParameter(documentation.Name, componentType, defaultComponent, parameter))
             .ToArray();
 
         var unsupportedRequiredParameters = parameters
@@ -315,37 +342,49 @@ public sealed partial class DocumentationCatalog {
         return new SandboxDocumentation(componentType, parameters);
     }
 
-    private static SandboxParameterDocumentation CreateSandboxParameter(PropertyDocumentation parameter) {
-        var typeName = NormalizeTypeName(parameter.TypeFullName);
-        if (IsBoolType(typeName)) {
-            return SandboxParameterDocumentation.Supported(parameter, SandboxParameterKind.Boolean, false);
+    private static SandboxParameterDocumentation CreateSandboxParameter(string componentName, Type componentType, object? defaultComponent, PropertyDocumentation parameter) {
+        var property = componentType.GetProperty(parameter.Name);
+        if (property is null) {
+            return SandboxParameterDocumentation.Unsupported(parameter, "Runtime parameter type could not be resolved.");
         }
 
-        if (IsStringType(typeName)) {
-            return SandboxParameterDocumentation.Supported(parameter, SandboxParameterKind.Text, BuildStringDefault(parameter.Name));
+        var propertyType = property.PropertyType;
+        var componentDefault = defaultComponent is null ? null : property.GetValue(defaultComponent);
+        var sample = CreateSampleParameter(componentName, parameter, propertyType);
+        if (sample is not null) {
+            return sample;
         }
 
-        if (IsNumericType(typeName)) {
-            return SandboxParameterDocumentation.Supported(parameter, SandboxParameterKind.Number, 1);
+        var valueType = Nullable.GetUnderlyingType(propertyType) ?? propertyType;
+        if (valueType == typeof(bool)) {
+            return SandboxParameterDocumentation.Supported(parameter, SandboxParameterKind.Boolean, componentDefault ?? false);
         }
 
-        if (IsDateTimeType(typeName)) {
-            return SandboxParameterDocumentation.Supported(parameter, SandboxParameterKind.Text, DateTime.Today.ToString("yyyy-MM-dd"));
+        if (valueType == typeof(string)) {
+            var sampleText = (string)BuildStringDefault(parameter);
+            return SandboxParameterDocumentation.Supported(parameter, SandboxParameterKind.Text, string.IsNullOrEmpty(sampleText) ? componentDefault ?? string.Empty : sampleText);
         }
 
-        if (IsEventCallbackType(typeName) || IsGenericEventCallbackType(typeName)) {
+        if (IsNumericType(valueType.FullName ?? valueType.Name)) {
+            return SandboxParameterDocumentation.Supported(parameter, SandboxParameterKind.Number, componentDefault ?? Activator.CreateInstance(valueType));
+        }
+
+        if (valueType == typeof(DateTime) || valueType == typeof(DateOnly) || valueType == typeof(TimeOnly) || valueType == typeof(DateTimeOffset)) {
+            return SandboxParameterDocumentation.Supported(parameter, SandboxParameterKind.Text, componentDefault ?? BuildTemporalDefault(valueType), valueType);
+        }
+
+        if (propertyType == typeof(EventCallback) || propertyType.IsGenericType && propertyType.GetGenericTypeDefinition() == typeof(EventCallback<>)) {
             return SandboxParameterDocumentation.Unsupported(parameter, "Event callback parameters are documented but not auto-controlled.", isControlVisible: false);
         }
 
-        if (IsIconType(typeName)) {
+        if (typeof(TnTIcon).IsAssignableFrom(valueType)) {
             var defaultIcon = ResolveDefaultIcon(parameter);
             return SandboxParameterDocumentation.Supported(parameter, SandboxParameterKind.Icon, defaultIcon, options: MaterialIconSandboxOptions);
         }
 
-        var runtimeType = ComponentsAssembly.GetType(typeName, throwOnError: false, ignoreCase: false);
-        if (runtimeType?.IsEnum == true) {
-            var values = GetDistinctEnumValues(runtimeType);
-            var isNullable = IsNullableTypeName(parameter.TypeFullName);
+        if (valueType.IsEnum) {
+            var values = GetDistinctEnumValues(valueType);
+            var isNullable = Nullable.GetUnderlyingType(propertyType) is not null;
             var options = values
                 .Select(value => new SandboxEnumOption(value.ToString() ?? string.Empty, value))
                 .OrderBy(option => option.Label, StringComparer.Ordinal)
@@ -355,27 +394,30 @@ public sealed partial class DocumentationCatalog {
                 options.Insert(0, new SandboxEnumOption("None", null));
             }
 
-            var defaultValue = isNullable
+            var defaultValue = componentDefault is null
                 ? options[0]
-                : options.OfType<SandboxEnumOption>().FirstOrDefault(option => Equals(option.Value, values.FirstOrDefault()));
-            return SandboxParameterDocumentation.Supported(parameter, SandboxParameterKind.Enum, defaultValue, runtimeType, options, isNullable: isNullable);
+                : options.OfType<SandboxEnumOption>().FirstOrDefault(option => Equals(option.Value, componentDefault)) ?? options[0];
+            return SandboxParameterDocumentation.Supported(parameter, SandboxParameterKind.Enum, defaultValue, valueType, options, isNullable: isNullable);
         }
 
-        if (IsRenderFragmentType(typeName)) {
+        if (propertyType == typeof(RenderFragment)) {
             return SandboxParameterDocumentation.Supported(parameter, SandboxParameterKind.ChildContent, BuildRenderFragment(parameter.Name), isControlVisible: false);
         }
 
-        if (IsGenericRenderFragmentType(typeName)) {
-            return SandboxParameterDocumentation.Unsupported(parameter, "Generic render fragment parameters are documented but not auto-controlled.", isControlVisible: false);
+        if (propertyType.IsGenericType && propertyType.GetGenericTypeDefinition() == typeof(RenderFragment<>)) {
+            return SandboxParameterDocumentation.Supported(parameter, SandboxParameterKind.ChildContent, null, propertyType, isControlVisible: false);
         }
 
         return SandboxParameterDocumentation.Unsupported(parameter, "Complex parameter type is documented but not auto-controlled.");
     }
 
-    private static object BuildStringDefault(string parameterName) =>
-        parameterName switch {
+    private static object BuildStringDefault(PropertyDocumentation parameter) =>
+        parameter.Name switch {
             "AriaLabel" => "Example action",
             "Label" => "Example",
+            "Title" => "Example title",
+            "Href" when parameter.IsEditorRequired => "#example",
+            "Src" => "./_content/NTComponents/NTComponents.lib.module.js",
             "ElementTitle" => "Example title",
             "SupportingText" => "Supporting text",
             "Placeholder" => "Placeholder",
@@ -383,6 +425,28 @@ public sealed partial class DocumentationCatalog {
         };
 
     private static RenderFragment BuildRenderFragment(string parameterName) => builder => builder.AddContent(0, "Example");
+
+    private static object BuildTemporalDefault(Type type) =>
+        type == typeof(DateTime) ? DateTime.Today :
+        type == typeof(DateOnly) ? DateOnly.FromDateTime(DateTime.Today) :
+        type == typeof(TimeOnly) ? new TimeOnly(9, 0) :
+        new DateTimeOffset(DateTime.Today.AddHours(9));
+
+    private static SandboxParameterDocumentation? CreateSampleParameter(string componentName, PropertyDocumentation parameter, Type propertyType) {
+        var markup = (componentName, parameter.Name) switch {
+            ("NTCombobox", "Items") => "@SampleOptions",
+            ("NTDataGrid", "Items") => "@SampleItems.AsQueryable()",
+            ("NTPropertyColumn", "Property") => "@(item => item.Name)",
+            ("NTScheduler", "Events") => "@SampleEvents",
+            ("NTTypeahead", "ItemsLookupFunc") => "LookupItemsAsync",
+            ("NTVirtualize", "ItemsProvider") => "LoadItemsAsync",
+            _ => null
+        };
+
+        return markup is null
+            ? null
+            : SandboxParameterDocumentation.Supported(parameter, SandboxParameterKind.Sample, null, propertyType, isControlVisible: false, sampleMarkup: markup);
+    }
 
     private static SandboxIconOption ResolveDefaultIcon(PropertyDocumentation parameter) {
         if (!parameter.IsEditorRequired) {
@@ -413,12 +477,17 @@ public sealed partial class DocumentationCatalog {
             return runtimeType;
         }
 
-        var genericArguments = runtimeType.GetGenericArguments();
-        var sampleArguments = genericArguments.Select(ResolveSampleGenericArgument).ToArray();
-        return sampleArguments.Any(argument => argument is null) ? null : runtimeType.MakeGenericType(sampleArguments.Cast<Type>().ToArray());
+        var sampleArguments = runtimeType.Name switch {
+            "NTDataGrid`1" or "NTPropertyColumn`2" or "NTTemplateColumn`1" => runtimeType.GetGenericArguments().Length == 2 ? [typeof(DocsSampleItem), typeof(string)] : [typeof(DocsSampleItem)],
+            "NTScheduler`1" => [typeof(DocsSampleEvent)],
+            "NTInputNumeric`1" or "NTInputRangeSlider`1" or "NTInputSlider`1" => [typeof(decimal)],
+            "NTInputDateTime`1" => [typeof(DateTime)],
+            _ => runtimeType.GetGenericArguments().Select(ResolveSampleGenericArgument).ToArray()
+        };
+        return runtimeType.MakeGenericType(sampleArguments);
     }
 
-    private static Type? ResolveSampleGenericArgument(Type parameter) {
+    private static Type ResolveSampleGenericArgument(Type parameter) {
         var constraints = parameter.GetGenericParameterConstraints();
         if (constraints.Any(constraint => constraint == typeof(Enum))) {
             return typeof(NTButtonVariant);
@@ -433,7 +502,35 @@ public sealed partial class DocumentationCatalog {
             return typeof(int);
         }
 
-        return typeof(DocsSampleItem);
+        return typeof(string);
+    }
+
+    private static int CountGenericArguments(string fullName) {
+        var openIndex = fullName.IndexOf('<');
+        if (openIndex < 0) {
+            return 0;
+        }
+
+        var depth = 0;
+        var count = 1;
+        for (var index = openIndex + 1; index < fullName.Length; index++) {
+            switch (fullName[index]) {
+                case '<':
+                    depth++;
+                    break;
+                case '>':
+                    if (depth == 0) {
+                        return count;
+                    }
+                    depth--;
+                    break;
+                case ',' when depth == 0:
+                    count++;
+                    break;
+            }
+        }
+
+        return 0;
     }
 
     private static string BuildReferenceGroupName(TypeDocumentation type) =>
@@ -585,11 +682,11 @@ public sealed record SandboxDocumentation(Type? ComponentType, IReadOnlyList<San
     public static SandboxDocumentation Unsupported(string reason) => new(null, [], reason);
 }
 
-public sealed record SandboxParameterDocumentation(PropertyDocumentation Property, SandboxParameterKind Kind, object? DefaultValue, Type? RuntimeType, IReadOnlyList<object> Options, string? UnsupportedReason, bool IsControlVisible = true, bool IsNullable = false) {
+public sealed record SandboxParameterDocumentation(PropertyDocumentation Property, SandboxParameterKind Kind, object? DefaultValue, Type? RuntimeType, IReadOnlyList<object> Options, string? UnsupportedReason, bool IsControlVisible = true, bool IsNullable = false, string? SampleMarkup = null) {
     public bool IsSupported => UnsupportedReason is null;
 
-    public static SandboxParameterDocumentation Supported(PropertyDocumentation property, SandboxParameterKind kind, object? defaultValue, Type? runtimeType = null, IReadOnlyList<object>? options = null, bool isControlVisible = true, bool isNullable = false) =>
-        new(property, kind, defaultValue, runtimeType, options ?? [], null, isControlVisible, isNullable);
+    public static SandboxParameterDocumentation Supported(PropertyDocumentation property, SandboxParameterKind kind, object? defaultValue, Type? runtimeType = null, IReadOnlyList<object>? options = null, bool isControlVisible = true, bool isNullable = false, string? sampleMarkup = null) =>
+        new(property, kind, defaultValue, runtimeType, options ?? [], null, isControlVisible, isNullable, sampleMarkup);
 
     public static SandboxParameterDocumentation Unsupported(PropertyDocumentation property, string reason, bool isControlVisible = true) => new(property, SandboxParameterKind.Unsupported, null, null, [], reason, isControlVisible);
 }
@@ -601,7 +698,8 @@ public enum SandboxParameterKind {
     Number,
     Enum,
     Icon,
-    ChildContent
+    ChildContent,
+    Sample
 }
 
 public sealed class DocsSampleItem {
@@ -609,5 +707,7 @@ public sealed class DocsSampleItem {
 
     public int Value { get; set; } = 1;
 }
+
+public sealed record DocsSampleEvent : TnTEvent;
 
 sealed record ComponentDocumentationMatch(ComponentDocumentationEntry Page, ComponentDocumentationEntry Component, bool IsDependent);

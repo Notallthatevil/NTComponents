@@ -52,4 +52,8 @@
 		<Using Include="Xunit" />
 		<Using Include="AwesomeAssertions" />
 	</ItemGroup>
+
+	<Target Name="BuildDocumentationSiteForBrowserTests" BeforeTargets="Build" Condition="'$(TargetFramework)' == 'net10.0' and '$(BuildingSolutionFile)' != 'true' and '$(BuildDocumentationSite)' != 'false'">
+		<MSBuild Projects="..\NTComponents.Site\NTComponents.Site.csproj" Targets="Build" Properties="Configuration=$(Configuration);TargetFramework=net10.0" />
+	</Target>
 </Project>

@@ -1,11 +1,15 @@
 @namespace NTComponents.Site.Components
 @using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Rendering
 @using NTComponents
 @using NTComponents.Site.Documentation
+@using NTComponents.Virtualization
 @using System.Globalization
+@using System.Linq.Expressions
 @using System.Text
 
 <div class="docs-sandbox">
+    <span data-docs-demo-component="@Component.Type.Name" hidden></span>
     <div class="docs-sandbox-toolbar">
         <NTButton Label="Preview" Variant="@(_showMarkup ? NTButtonVariant.Outlined : NTButtonVariant.Filled)" OnClickCallback="_ => ShowPreview()" />
         <NTButton Label="Razor" Variant="@(_showMarkup ? NTButtonVariant.Filled : NTButtonVariant.Outlined)" OnClickCallback="_ => ShowMarkup()" />
@@ -24,19 +28,40 @@
         <div class="docs-sandbox-grid">
             <div class="docs-sandbox-preview">
                 <div class="docs-generated-example">
+                    @if (DocumentationCuratedDemo.Supports(Component.Type.Name)) {
+                        <DocumentationCuratedDemo Component="Component" />
+                    }
+                    else if (Component.Type.Name == "NTHeadDependencies") {
+                        <div class="docs-callout">Place <code>NTHeadDependencies</code> in the document head. It supplies the shared NTComponents styles and browser loader and is intentionally not duplicated inside this page preview.</div>
+                        <NTPageScript Src="./js/docs.js" />
+                        <span data-docs-demo-component="NTPageScript" hidden></span>
+                    }
+                    else {
                     <ErrorBoundary @ref="_errorBoundary">
                         <ChildContent>
-                            <DynamicComponent Type="@Sandbox.ComponentType" Parameters="@BuildComponentParameters()" />
+                            @if (_editContext is not null) {
+                                <EditForm EditContext="_editContext">
+                                    <DynamicComponent Type="@Sandbox.ComponentType" Parameters="@BuildComponentParameters()" />
+                                </EditForm>
+                            }
+                            else {
+                                <DynamicComponent Type="@Sandbox.ComponentType" Parameters="@BuildComponentParameters()" />
+                            }
                         </ChildContent>
                         <ErrorContent>
                             <div class="docs-callout">This component requires additional sample data before it can render in the automatic sandbox.</div>
                         </ErrorContent>
                     </ErrorBoundary>
+                    @BuildSupplementalDependents()
+                    }
                 </div>
             </div>
 
             <div class="docs-sandbox-controls">
-                @foreach (var parameter in Sandbox.Parameters.Where(parameter => parameter.IsControlVisible)) {
+                @if (DocumentationCuratedDemo.Supports(Component.Type.Name)) {
+                    <p class="docs-muted">This example uses a curated composition so its trigger, host, service, or viewport behavior can be exercised as a complete working scenario.</p>
+                }
+                else @foreach (var parameter in Sandbox.Parameters.Where(parameter => parameter.IsControlVisible)) {
                     <div class="docs-control-row">
                         @if (!parameter.IsSupported) {
                             <div>
@@ -56,11 +81,11 @@
                                                    SubmitValue="false" />
                                     break;
                                 case SandboxParameterKind.Number:
-                                    <NTInputNumeric TNumber="int"
+                                    <NTInputNumeric TNumber="decimal"
                                                     Label="@parameter.Property.Name"
                                                     ElementId="@BuildControlElementId(parameter)"
-                                                    Value="@GetInt(parameter)"
-                                                    ValueChanged="value => SetValue(parameter, value ?? 0)"
+                                                    Value="@GetNumber(parameter)"
+                                                    ValueChanged="value => SetValue(parameter, value ?? 0m)"
                                                     ValueExpression="@(() => _form.NumberValue)"
                                                     SubmitValue="false" />
                                     break;
@@ -113,6 +138,8 @@
     private readonly HashSet<string> _modifiedParameterNames = new(StringComparer.Ordinal);
     private readonly SandboxFormModel _form = new();
     private ErrorBoundary? _errorBoundary;
+    private EditContext? _editContext;
+    private object? _valueHolder;
     private string? _componentKey;
     private bool _showMarkup;
 
@@ -126,6 +153,7 @@
             _componentKey = Component.Type.FullName;
             _values.Clear();
             _modifiedParameterNames.Clear();
+            PrepareInputContext();
         }
 
         foreach (var parameter in Sandbox.Parameters.Where(parameter => parameter.IsSupported)) {
@@ -147,13 +175,18 @@
                 continue;
             }
 
-            var convertedValue = ConvertValue(parameter, property.PropertyType);
+            var convertedValue = parameter.Kind == SandboxParameterKind.Sample
+                ? BuildSampleValue(parameter)
+                : ConvertValue(parameter, property.PropertyType);
             if (convertedValue is null && !ShouldPassNullParameter(parameter)) {
                 continue;
             }
 
             parameters[parameter.Property.Name] = convertedValue!;
         }
+
+        AddInputParameters(parameters);
+        AddPresentationDefaults(parameters);
 
         return parameters;
     }
@@ -165,7 +198,7 @@
         }
 
         if (parameter.Kind == SandboxParameterKind.ChildContent) {
-            return BuildChildContent(parameter);
+            return targetType == typeof(RenderFragment) ? BuildChildContent(parameter) : BuildContextualChildContent(targetType);
         }
 
         if (parameter.Kind == SandboxParameterKind.Icon && value is SandboxIconOption iconOption) {
@@ -193,10 +226,142 @@
             return Convert.ChangeType(value, nullableTargetType, CultureInfo.InvariantCulture);
         }
 
+        if (nullableTargetType == typeof(DateTime) || nullableTargetType == typeof(DateOnly) || nullableTargetType == typeof(TimeOnly) || nullableTargetType == typeof(DateTimeOffset)) {
+            if (value.GetType() == nullableTargetType) {
+                return value;
+            }
+
+            var text = Convert.ToString(value, CultureInfo.InvariantCulture);
+            return nullableTargetType == typeof(DateTime) ? DateTime.Parse(text!, CultureInfo.InvariantCulture) :
+                nullableTargetType == typeof(DateOnly) ? DateOnly.Parse(text!, CultureInfo.InvariantCulture) :
+                nullableTargetType == typeof(TimeOnly) ? TimeOnly.Parse(text!, CultureInfo.InvariantCulture) :
+                DateTimeOffset.Parse(text!, CultureInfo.InvariantCulture);
+        }
+
         return value;
     }
 
+    private void PrepareInputContext() {
+        _editContext = null;
+        _valueHolder = null;
+        var expressionProperty = Sandbox.ComponentType?.GetProperty("ValueExpression");
+        if (expressionProperty?.PropertyType.IsGenericType != true) {
+            return;
+        }
+
+        var functionType = expressionProperty.PropertyType.GetGenericArguments()[0];
+        var valueType = functionType.GetGenericArguments()[0];
+        _valueHolder = Activator.CreateInstance(typeof(SandboxValue<>).MakeGenericType(valueType));
+        _editContext = new EditContext(_valueHolder!);
+    }
+
+    private void AddInputParameters(IDictionary<string, object> parameters) {
+        if (_valueHolder is null || Sandbox.ComponentType is null) {
+            return;
+        }
+
+        var valueProperty = Sandbox.ComponentType.GetProperty("Value");
+        var expressionProperty = Sandbox.ComponentType.GetProperty("ValueExpression");
+        if (valueProperty is null || expressionProperty is null) {
+            return;
+        }
+
+        var value = BuildInputValue(valueProperty.PropertyType);
+        _valueHolder.GetType().GetProperty(nameof(SandboxValue<object>.Value))!.SetValue(_valueHolder, value);
+        parameters.TryAdd(valueProperty.Name, value!);
+        parameters.TryAdd(expressionProperty.Name, BuildValueExpression(valueProperty.PropertyType));
+    }
+
+    private object BuildValueExpression(Type valueType) =>
+        GetType().GetMethod(nameof(BuildValueExpressionCore), System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+            .MakeGenericMethod(valueType)
+            .Invoke(this, null)!;
+
+    private Expression<Func<TValue>> BuildValueExpressionCore<TValue>() {
+        var holder = (SandboxValue<TValue>)_valueHolder!;
+        return () => holder.Value!;
+    }
+
+    private object? BuildInputValue(Type valueType) {
+        if (valueType == typeof(string)) {
+            return Component.Type.Name is "NTInputRadioGroup" or "NTInputSelect" or "NTSelect" ? "one" : "Example";
+        }
+
+        if (valueType == typeof(bool)) {
+            return true;
+        }
+
+        if (valueType == typeof(decimal) || valueType == typeof(decimal?)) {
+            return 25m;
+        }
+
+        if (valueType == typeof(DateTime)) {
+            return DateTime.Today.AddHours(9);
+        }
+
+        if (valueType == typeof(IReadOnlyList<string>)) {
+            return new[] { "one" };
+        }
+
+        if (valueType == typeof(NTSliderRange<decimal>)) {
+            return new NTSliderRange<decimal>(25m, 75m);
+        }
+
+        return valueType.IsValueType ? Activator.CreateInstance(valueType) : null;
+    }
+
+    private void AddPresentationDefaults(IDictionary<string, object> parameters) {
+        if (Sandbox.ComponentType is null) {
+            return;
+        }
+
+        if (Sandbox.ComponentType.GetProperty("Label") is not null) {
+            parameters.TryAdd("Label", "Example");
+        }
+
+        if (Component.Type.Name == "NTButtonGroup") {
+            parameters.TryAdd("SelectedKey", "one");
+        }
+
+        if (Component.Type.Name == "NTForm") {
+            parameters.TryAdd("Model", _form);
+            parameters.TryAdd("ChildContent", (RenderFragment<EditContext>)(_ => content => content.AddContent(0, "Example form content")));
+        }
+        else if (Sandbox.ComponentType.GetProperty("ChildContent")?.PropertyType == typeof(RenderFragment)) {
+            parameters.TryAdd("ChildContent", Component.Type.Name == "NTLayout" ? BuildLayoutContent() : (RenderFragment)(content => content.AddContent(0, "Example content")));
+        }
+    }
+
+    private object? BuildSampleValue(SandboxParameterDocumentation parameter) =>
+        (Component.Type.Name, parameter.Property.Name) switch {
+            ("NTCombobox", "Items") => new[] { new NTComboboxOption<string>("one", "One"), new NTComboboxOption<string>("two", "Two") },
+            ("NTDataGrid", "Items") => new[] { new DocsSampleItem { Name = "Alpha", Value = 1 }, new DocsSampleItem { Name = "Beta", Value = 2 } }.AsQueryable(),
+            ("NTPropertyColumn", "Property") => (Expression<Func<DocsSampleItem, string>>)(item => item.Name),
+            ("NTScheduler", "Events") => new List<DocsSampleEvent> {
+                new() { Title = "Planning", EventStart = DateTimeOffset.Now.Date.AddHours(9), EventEnd = DateTimeOffset.Now.Date.AddHours(10) }
+            },
+            ("NTTypeahead", "ItemsLookupFunc") => (Func<string, CancellationToken, Task<IEnumerable<string>>>)LookupItemsAsync,
+            ("NTVirtualize", "ItemsProvider") => (NTVirtualizeItemsProvider<string>)(request => new ValueTask<TnTItemsProviderResult<string>>(new TnTItemsProviderResult<string>(["First item", "Second item"], 2))),
+            _ => null
+        };
+
+    private static Task<IEnumerable<string>> LookupItemsAsync(string query, CancellationToken cancellationToken) {
+        var items = new[] { "Alpha", "Beta", "Gamma" }.Where(item => item.Contains(query, StringComparison.OrdinalIgnoreCase));
+        return Task.FromResult<IEnumerable<string>>(items);
+    }
+
+    private object BuildContextualChildContent(Type renderFragmentType) =>
+        GetType().GetMethod(nameof(BuildContextualChildContentCore), System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic)!
+            .MakeGenericMethod(renderFragmentType.GetGenericArguments()[0])
+            .Invoke(null, null)!;
+
+    private static RenderFragment<TValue> BuildContextualChildContentCore<TValue>() => value => builder => builder.AddContent(0, value?.ToString() ?? "Example");
+
     private string BuildMarkup() {
+        if (DocumentationCuratedDemo.Supports(Component.Type.Name)) {
+            return DocumentationCuratedDemo.GetGeneratedRazorMarkup(Component.Type.Name);
+        }
+
         if (Sandbox.ComponentType is null) {
             return string.Empty;
         }
@@ -219,10 +384,137 @@
                 continue;
             }
 
-            attributes.Add(FormatMarkupAttribute(parameter, formattedValue));
+            attributes.Add(parameter.Kind == SandboxParameterKind.Sample
+                ? $"{parameter.Property.Name}=\"{parameter.SampleMarkup}\""
+                : FormatMarkupAttribute(parameter, formattedValue));
         }
 
-        return FormatElementMarkup(tagName, attributes, string.Join("\r\n", childContentBlocks));
+        AddPresentationMarkupDefaults(attributes);
+
+        if (childContentBlocks.Count == 0 && Sandbox.ComponentType.GetProperty("ChildContent")?.PropertyType == typeof(RenderFragment)) {
+            childContentBlocks.Add(Component.Type.Name == "NTLayout"
+                ? "<NTHeader>Example header</NTHeader>\r\n<NTBody>Example body content</NTBody>\r\n<NTFooter>Example footer</NTFooter>"
+                : "Example content");
+        }
+
+        var markup = FormatElementMarkup(tagName, attributes, string.Join("\r\n", childContentBlocks));
+        markup += Component.Type.Name switch {
+            "NTFileUpload" => "\r\n\r\n<NTFileUploadItem Name=\"example.txt\" Status=\"Ready\" Percent=\"100\" ShouldShowPercent=\"true\" />",
+            "NTHeadDependencies" => "\r\n\r\n<NTPageScript Src=\"./js/docs.js\" />",
+            _ => string.Empty
+        };
+
+        var code = BuildGeneratedCodeBlock();
+        return string.IsNullOrWhiteSpace(code) ? markup : $"{markup}\r\n\r\n@code {{\r\n{IndentMarkup(code, 1)}\r\n}}";
+    }
+
+    private void AddPresentationMarkupDefaults(ICollection<string> attributes) {
+        if (Sandbox.ComponentType?.GetProperty("Label") is not null && !attributes.Any(attribute => attribute.StartsWith("Label=", StringComparison.Ordinal))) {
+            attributes.Add("Label=\"Example\"");
+        }
+
+        if (_valueHolder is not null) {
+            attributes.Add("@bind-Value=\"_sampleValue\"");
+        }
+
+        if (Component.Type.Name == "NTButtonGroup") {
+            attributes.Add("SelectedKey=\"one\"");
+        }
+
+        else if (Component.Type.Name == "NTForm") {
+            attributes.Add("Model=\"@_sampleModel\"");
+        }
+    }
+
+    private string BuildGeneratedCodeBlock() {
+        var declarations = new List<string>();
+        var valueProperty = _valueHolder is null ? null : Sandbox.ComponentType?.GetProperty("Value");
+        if (valueProperty is not null) {
+            declarations.Add($"private {GetCSharpTypeName(valueProperty.PropertyType)} _sampleValue = {BuildInputInitializer(valueProperty.PropertyType)};");
+        }
+
+        switch (Component.Type.Name) {
+            case "NTCombobox":
+                declarations.Add("private static readonly IReadOnlyList<NTComboboxOption<string>> SampleOptions = [new(\"one\", \"One\"), new(\"two\", \"Two\")];");
+                break;
+            case "NTDataGrid":
+                declarations.Add("private static readonly SampleItem[] SampleItems = [new(\"Alpha\", 1), new(\"Beta\", 2)];");
+                declarations.Add("private sealed record SampleItem(string Name, int Value);");
+                break;
+            case "NTScheduler":
+                declarations.Add("private static readonly ICollection<NTComponents.Scheduler.TnTEvent> SampleEvents = [new() { Title = \"Planning\", EventStart = DateTimeOffset.Now.Date.AddHours(9), EventEnd = DateTimeOffset.Now.Date.AddHours(10) }];");
+                break;
+            case "NTTypeahead":
+                declarations.Add("private static Task<IEnumerable<string>> LookupItemsAsync(string query, CancellationToken cancellationToken) => Task.FromResult<IEnumerable<string>>([\"Alpha\", \"Beta\", \"Gamma\"]);");
+                break;
+            case "NTForm":
+                declarations.Add("private readonly object _sampleModel = new();");
+                break;
+            case "NTWizard":
+                declarations.Add("private readonly object _wizardModel = new();");
+                break;
+        }
+
+        return string.Join("\r\n", declarations);
+    }
+
+    private static string BuildInputInitializer(Type valueType) {
+        if (valueType == typeof(string)) {
+            return "\"Example\"";
+        }
+
+        if (valueType == typeof(bool)) {
+            return "true";
+        }
+
+        if (valueType == typeof(decimal) || valueType == typeof(decimal?)) {
+            return "25m";
+        }
+
+        if (valueType == typeof(DateTime)) {
+            return "DateTime.Today.AddHours(9)";
+        }
+
+        if (valueType == typeof(IReadOnlyList<string>)) {
+            return "[\"one\"]";
+        }
+
+        if (valueType == typeof(NTSliderRange<decimal>)) {
+            return "new(25m, 75m)";
+        }
+
+        return "default!";
+    }
+
+    private static string GetCSharpTypeName(Type type) {
+        var nullableType = Nullable.GetUnderlyingType(type);
+        if (nullableType is not null) {
+            return $"{GetCSharpTypeName(nullableType)}?";
+        }
+
+        if (type == typeof(string)) {
+            return "string";
+        }
+
+        if (type == typeof(bool)) {
+            return "bool";
+        }
+
+        if (type == typeof(decimal)) {
+            return "decimal";
+        }
+
+        if (type == typeof(int)) {
+            return "int";
+        }
+
+        if (!type.IsGenericType) {
+            return type.FullName?.Replace('+', '.') ?? type.Name;
+        }
+
+        var genericName = type.GetGenericTypeDefinition().FullName!;
+        genericName = genericName[..genericName.IndexOf('`')].Replace('+', '.');
+        return $"{genericName}<{string.Join(", ", type.GetGenericArguments().Select(GetCSharpTypeName))}>";
     }
 
     private static string FormatElementMarkup(string tagName, IReadOnlyList<string> attributes, string childContent) {
@@ -251,10 +543,7 @@
         return string.Join("\r\n", lines.Select(line => $"{indent}{line}"));
     }
 
-    private bool ShouldIncludeParameter(SandboxParameterDocumentation parameter) =>
-        parameter.Property.IsEditorRequired ||
-        parameter.Kind == SandboxParameterKind.ChildContent ||
-        _modifiedParameterNames.Contains(parameter.Property.Name);
+    private static bool ShouldIncludeParameter(SandboxParameterDocumentation parameter) => parameter.IsSupported;
 
     private bool ShouldPassNullParameter(SandboxParameterDocumentation parameter) =>
         parameter.Kind == SandboxParameterKind.Enum &&
@@ -267,6 +556,20 @@
     private RenderFragment BuildChildContent(SandboxParameterDocumentation parameter) =>
         Component.Type.Name switch {
             "NTAccordion" => BuildAccordionItems(),
+            "NTAutocomplete" => BuildAutocompleteOptions(),
+            "NTButtonGroup" => BuildButtonGroupItems(),
+            "NTCarousel" => BuildCarouselItems(),
+            "NTDataGrid" => BuildDataGridColumns(),
+            "NTFabMenu" => BuildFabMenuItems(),
+            "NTInputRadioGroup" => BuildRadioItems(),
+            "NTInputSelect" => BuildInputSelectItems(),
+            "NTMenu" => BuildMenuItems(),
+            "NTNavigationRail" => BuildNavigationRailItems(),
+            "NTSelect" => BuildNativeOptions(),
+            "NTSplitButton" => BuildMenuItems(),
+            "NTTabView" => BuildTabs(),
+            "NTLayout" => BuildLayoutContent(),
+            "NTWizard" => BuildWizardSteps(),
             _ => BuildTextChildContent(parameter)
         };
 
@@ -284,18 +587,249 @@
             content.AddContent(0, "Accordion content is generated from the source documentation model.");
         }));
         builder.CloseComponent();
+        AddDemoMarker(builder, 5, nameof(NTAccordionItem));
 
-        builder.OpenComponent<NTAccordionItem>(5);
-        builder.AddAttribute(6, nameof(NTAccordionItem.Label), "Details");
-        builder.AddAttribute(7, nameof(NTAccordionItem.ChildContent), (RenderFragment)(content => {
+        builder.OpenComponent<NTAccordionItem>(10);
+        builder.AddAttribute(11, nameof(NTAccordionItem.Label), "Details");
+        builder.AddAttribute(12, nameof(NTAccordionItem.ChildContent), (RenderFragment)(content => {
             content.AddContent(0, "Use accordion items for related sections that can expand and collapse.");
         }));
         builder.CloseComponent();
     };
 
+    private static RenderFragment BuildAutocompleteOptions() => builder => {
+        builder.OpenComponent<NTAutocompleteOptionGroup>(0);
+        builder.AddAttribute(1, nameof(NTAutocompleteOptionGroup.Label), "Examples");
+        builder.CloseComponent();
+        AddDemoMarker(builder, 2, nameof(NTAutocompleteOptionGroup));
+        builder.OpenComponent<NTAutocompleteOption>(10);
+        builder.AddAttribute(11, nameof(NTAutocompleteOption.Value), "First option");
+        builder.CloseComponent();
+        AddDemoMarker(builder, 12, nameof(NTAutocompleteOption));
+        builder.OpenComponent<NTAutocompleteOption>(20);
+        builder.AddAttribute(21, nameof(NTAutocompleteOption.Value), "Second option");
+        builder.CloseComponent();
+    };
+
+    private static RenderFragment BuildButtonGroupItems() => builder => {
+        builder.OpenComponent<NTButtonGroupItem<string>>(0);
+        builder.AddAttribute(1, nameof(NTButtonGroupItem<string>.Key), "one");
+        builder.AddAttribute(2, nameof(NTButtonGroupItem<string>.Label), "One");
+        builder.CloseComponent();
+        AddDemoMarker(builder, 3, "NTButtonGroupItem");
+        builder.OpenComponent<NTButtonGroupItem<string>>(10);
+        builder.AddAttribute(11, nameof(NTButtonGroupItem<string>.Key), "two");
+        builder.AddAttribute(12, nameof(NTButtonGroupItem<string>.Label), "Two");
+        builder.CloseComponent();
+    };
+
+    private static RenderFragment BuildCarouselItems() => builder => {
+        builder.OpenComponent<NTCarouselItem>(0);
+        builder.AddAttribute(1, nameof(NTCarouselItem.ChildContent), (RenderFragment)(content => content.AddContent(0, "First slide")));
+        builder.CloseComponent();
+        AddDemoMarker(builder, 2, nameof(NTCarouselItem));
+        builder.OpenComponent<NTCarouselItem>(10);
+        builder.AddAttribute(11, nameof(NTCarouselItem.ChildContent), (RenderFragment)(content => content.AddContent(0, "Second slide")));
+        builder.CloseComponent();
+    };
+
+    private static RenderFragment BuildDataGridColumns() => builder => {
+        builder.OpenComponent<NTPropertyColumn<DocsSampleItem, string>>(0);
+        builder.AddAttribute(1, nameof(NTPropertyColumn<DocsSampleItem, string>.Property), (Expression<Func<DocsSampleItem, string>>)(item => item.Name));
+        builder.AddAttribute(2, nameof(NTPropertyColumn<DocsSampleItem, string>.Title), "Name");
+        builder.CloseComponent();
+        AddDemoMarker(builder, 3, "NTPropertyColumn");
+        builder.OpenComponent<NTPropertyColumn<DocsSampleItem, int>>(10);
+        builder.AddAttribute(11, nameof(NTPropertyColumn<DocsSampleItem, int>.Property), (Expression<Func<DocsSampleItem, int>>)(item => item.Value));
+        builder.AddAttribute(12, nameof(NTPropertyColumn<DocsSampleItem, int>.Title), "Value");
+        builder.CloseComponent();
+        builder.OpenComponent<NTTemplateColumn<DocsSampleItem>>(20);
+        builder.AddAttribute(21, nameof(NTTemplateColumn<DocsSampleItem>.Title), "Summary");
+        builder.AddAttribute(22, nameof(NTTemplateColumn<DocsSampleItem>.ChildContent), (RenderFragment<DocsSampleItem>)(item => content => content.AddContent(0, $"{item.Name}: {item.Value}")));
+        builder.CloseComponent();
+        AddDemoMarker(builder, 23, "NTTemplateColumn");
+    };
+
+    private static RenderFragment BuildFabMenuItems() => builder => {
+        builder.OpenComponent<NTFabMenuButtonItem>(0);
+        builder.AddAttribute(1, nameof(NTFabMenuButtonItem.Label), "Create item");
+        builder.CloseComponent();
+        AddDemoMarker(builder, 2, nameof(NTFabMenuButtonItem));
+        builder.OpenComponent<NTFabMenuAnchorItem>(10);
+        builder.AddAttribute(11, nameof(NTFabMenuAnchorItem.Label), "View details");
+        builder.AddAttribute(12, nameof(NTFabMenuAnchorItem.Href), "#example");
+        builder.CloseComponent();
+        AddDemoMarker(builder, 13, nameof(NTFabMenuAnchorItem));
+    };
+
+    private static RenderFragment BuildRadioItems() => builder => {
+        builder.OpenComponent<NTInputRadio<string>>(0);
+        builder.AddAttribute(1, nameof(NTInputRadio<string>.Value), "one");
+        builder.AddAttribute(2, nameof(NTInputRadio<string>.Label), "One");
+        builder.CloseComponent();
+        AddDemoMarker(builder, 3, "NTInputRadio");
+        builder.OpenComponent<NTInputRadio<string>>(10);
+        builder.AddAttribute(11, nameof(NTInputRadio<string>.Value), "two");
+        builder.AddAttribute(12, nameof(NTInputRadio<string>.Label), "Two");
+        builder.CloseComponent();
+    };
+
+#pragma warning disable CS0618
+    private static RenderFragment BuildInputSelectItems() => builder => {
+        builder.OpenComponent<NTInputSelectOption<string>>(0);
+        builder.AddAttribute(1, nameof(NTInputSelectOption<string>.Value), "one");
+        builder.AddAttribute(2, nameof(NTInputSelectOption<string>.Label), "One");
+        builder.CloseComponent();
+        AddDemoMarker(builder, 3, "NTInputSelectOption");
+        builder.OpenComponent<NTInputSelectOption<string>>(10);
+        builder.AddAttribute(11, nameof(NTInputSelectOption<string>.Value), "two");
+        builder.AddAttribute(12, nameof(NTInputSelectOption<string>.Label), "Two");
+        builder.CloseComponent();
+    };
+#pragma warning restore CS0618
+
+    private static RenderFragment BuildMenuItems() => builder => {
+        builder.OpenComponent<NTMenuLabelItem>(0);
+        builder.AddAttribute(1, nameof(NTMenuLabelItem.Label), "Actions");
+        builder.CloseComponent();
+        AddDemoMarker(builder, 2, nameof(NTMenuLabelItem));
+        builder.OpenComponent<NTMenuButtonItem>(10);
+        builder.AddAttribute(11, nameof(NTMenuButtonItem.Label), "Edit");
+        builder.CloseComponent();
+        AddDemoMarker(builder, 12, nameof(NTMenuButtonItem));
+        builder.OpenComponent<NTMenuAnchorItem>(20);
+        builder.AddAttribute(21, nameof(NTMenuAnchorItem.Label), "Details");
+        builder.AddAttribute(22, nameof(NTMenuAnchorItem.Href), "#example");
+        builder.CloseComponent();
+        AddDemoMarker(builder, 23, nameof(NTMenuAnchorItem));
+        builder.OpenComponent<NTMenuDividerItem>(30);
+        builder.CloseComponent();
+        AddDemoMarker(builder, 31, nameof(NTMenuDividerItem));
+        builder.OpenComponent<NTMenuSubMenuItem>(40);
+        builder.AddAttribute(41, nameof(NTMenuSubMenuItem.Label), "More actions");
+        builder.AddAttribute(42, nameof(NTMenuSubMenuItem.ChildContent), (RenderFragment)(content => {
+            content.OpenComponent<NTMenuButtonItem>(0);
+            content.AddAttribute(1, nameof(NTMenuButtonItem.Label), "Archive");
+            content.CloseComponent();
+        }));
+        builder.CloseComponent();
+        AddDemoMarker(builder, 43, nameof(NTMenuSubMenuItem));
+    };
+
+    private static RenderFragment BuildNavigationRailItems() => builder => {
+        builder.OpenComponent<NTNavigationRailSectionHeader>(0);
+        builder.AddAttribute(1, nameof(NTNavigationRailSectionHeader.Label), "Navigation");
+        builder.CloseComponent();
+        AddDemoMarker(builder, 2, nameof(NTNavigationRailSectionHeader));
+        builder.OpenComponent<NTNavigationRailItem>(10);
+        builder.AddAttribute(11, nameof(NTNavigationRailItem.Label), "Home");
+        builder.AddAttribute(12, nameof(NTNavigationRailItem.Href), "/");
+        builder.CloseComponent();
+        AddDemoMarker(builder, 13, nameof(NTNavigationRailItem));
+        builder.OpenComponent<NTNavigationRailGroup>(20);
+        builder.AddAttribute(21, nameof(NTNavigationRailGroup.Label), "Resources");
+        builder.AddAttribute(22, nameof(NTNavigationRailGroup.ChildContent), (RenderFragment)(content => {
+            content.OpenComponent<NTNavigationRailItem>(0);
+            content.AddAttribute(1, nameof(NTNavigationRailItem.Label), "Components");
+            content.AddAttribute(2, nameof(NTNavigationRailItem.Href), "/components");
+            content.CloseComponent();
+        }));
+        builder.CloseComponent();
+        AddDemoMarker(builder, 23, nameof(NTNavigationRailGroup));
+    };
+
+    private static RenderFragment BuildLayoutContent() => builder => {
+        builder.OpenComponent<NTHeader>(0);
+        builder.AddAttribute(1, nameof(NTHeader.ChildContent), (RenderFragment)(content => content.AddContent(0, "Example header")));
+        builder.CloseComponent();
+        AddDemoMarker(builder, 2, nameof(NTHeader));
+        builder.OpenComponent<NTBody>(10);
+        builder.AddAttribute(11, nameof(NTBody.ChildContent), (RenderFragment)(content => content.AddContent(0, "Example body content")));
+        builder.CloseComponent();
+        AddDemoMarker(builder, 12, nameof(NTBody));
+        builder.OpenComponent<NTFooter>(20);
+        builder.AddAttribute(21, nameof(NTFooter.ChildContent), (RenderFragment)(content => content.AddContent(0, "Example footer")));
+        builder.CloseComponent();
+        AddDemoMarker(builder, 22, nameof(NTFooter));
+    };
+
+    private static RenderFragment BuildNativeOptions() => builder => {
+        builder.OpenElement(0, "option");
+        builder.AddAttribute(1, "value", "one");
+        builder.AddContent(2, "One");
+        builder.CloseElement();
+        builder.OpenElement(3, "option");
+        builder.AddAttribute(4, "value", "two");
+        builder.AddContent(5, "Two");
+        builder.CloseElement();
+    };
+
+    private static RenderFragment BuildTabs() => builder => {
+        builder.OpenComponent<NTTab>(0);
+        builder.AddAttribute(1, nameof(NTTab.Label), "Overview");
+        builder.AddAttribute(2, nameof(NTTab.ChildContent), (RenderFragment)(content => content.AddContent(0, "Overview content")));
+        builder.CloseComponent();
+        AddDemoMarker(builder, 3, nameof(NTTab));
+        builder.OpenComponent<NTTab>(10);
+        builder.AddAttribute(11, nameof(NTTab.Label), "Details");
+        builder.AddAttribute(12, nameof(NTTab.ChildContent), (RenderFragment)(content => content.AddContent(0, "Details content")));
+        builder.CloseComponent();
+    };
+
+    private static RenderFragment BuildWizardSteps() => builder => {
+        builder.OpenComponent<NTWizardStep>(0);
+        builder.AddAttribute(1, nameof(NTWizardStep.Title), "First step");
+        builder.AddAttribute(2, nameof(NTWizardStep.ChildContent), (RenderFragment)(content => content.AddContent(0, "First step content")));
+        builder.CloseComponent();
+        AddDemoMarker(builder, 3, nameof(NTWizardStep));
+        builder.OpenComponent<NTWizardStep>(10);
+        builder.AddAttribute(11, nameof(NTWizardStep.Title), "Second step");
+        builder.AddAttribute(12, nameof(NTWizardStep.ChildContent), (RenderFragment)(content => content.AddContent(0, "Second step content")));
+        builder.CloseComponent();
+        builder.OpenComponent<NTWizardFormStep>(20);
+        builder.AddAttribute(21, nameof(NTWizardFormStep.Title), "Form step");
+        builder.AddAttribute(22, nameof(NTWizardFormStep.Model), new object());
+        builder.AddAttribute(23, nameof(NTWizardFormStep.ChildContent), (RenderFragment<EditContext>)(_ => content => content.AddContent(0, "Example form content")));
+        builder.CloseComponent();
+        AddDemoMarker(builder, 24, nameof(NTWizardFormStep));
+    };
+
+    private RenderFragment BuildSupplementalDependents() => builder => {
+        if (Component.Type.Name != "NTFileUpload") {
+            return;
+        }
+
+        builder.OpenComponent<NTFileUploadItem>(0);
+        builder.AddAttribute(1, nameof(NTFileUploadItem.Name), "example.txt");
+        builder.AddAttribute(2, nameof(NTFileUploadItem.Status), "Ready");
+        builder.AddAttribute(3, nameof(NTFileUploadItem.Percent), 100);
+        builder.AddAttribute(4, nameof(NTFileUploadItem.ShouldShowPercent), true);
+        builder.CloseComponent();
+        AddDemoMarker(builder, 5, nameof(NTFileUploadItem));
+    };
+
+    private static void AddDemoMarker(RenderTreeBuilder builder, int sequence, string componentName) {
+        builder.OpenElement(sequence, "span");
+        builder.AddAttribute(sequence + 1, "data-docs-demo-component", componentName);
+        builder.AddAttribute(sequence + 2, "hidden", true);
+        builder.CloseElement();
+    }
+
     private string BuildChildContentMarkup(SandboxParameterDocumentation parameter) =>
         Component.Type.Name switch {
             "NTAccordion" => "<NTAccordionItem\r\n    Label=\"Getting started\"\r\n    SupportingText=\"Native disclosure item\"\r\n    Open=\"true\">\r\n    Accordion content is generated from the source documentation model.\r\n</NTAccordionItem>\r\n<NTAccordionItem\r\n    Label=\"Details\">\r\n    Use accordion items for related sections that can expand and collapse.\r\n</NTAccordionItem>",
+            "NTAutocomplete" => "<NTAutocompleteOptionGroup Label=\"Examples\" />\r\n<NTAutocompleteOption Value=\"First option\" />\r\n<NTAutocompleteOption Value=\"Second option\" />",
+            "NTButtonGroup" => "<NTButtonGroupItem Key=\"one\" Label=\"One\" />\r\n<NTButtonGroupItem Key=\"two\" Label=\"Two\" />",
+            "NTCarousel" => "<NTCarouselItem>First slide</NTCarouselItem>\r\n<NTCarouselItem>Second slide</NTCarouselItem>",
+            "NTDataGrid" => "<NTPropertyColumn Property=\"@(item => item.Name)\" Title=\"Name\" />\r\n<NTPropertyColumn Property=\"@(item => item.Value)\" Title=\"Value\" />\r\n<NTTemplateColumn Title=\"Summary\">\r\n    @context.Name: @context.Value\r\n</NTTemplateColumn>",
+            "NTFabMenu" => "<NTFabMenuButtonItem Label=\"Create item\" />\r\n<NTFabMenuAnchorItem Label=\"View details\" Href=\"#example\" />",
+            "NTInputRadioGroup" => "<NTInputRadio Value=\"one\" Label=\"One\" />\r\n<NTInputRadio Value=\"two\" Label=\"Two\" />",
+            "NTInputSelect" => "<NTInputSelectOption Value=\"one\" Label=\"One\" />\r\n<NTInputSelectOption Value=\"two\" Label=\"Two\" />",
+            "NTMenu" or "NTSplitButton" => "<NTMenuLabelItem Label=\"Actions\" />\r\n<NTMenuButtonItem Label=\"Edit\" />\r\n<NTMenuAnchorItem Label=\"Details\" Href=\"#example\" />\r\n<NTMenuDividerItem />\r\n<NTMenuSubMenuItem Label=\"More actions\">\r\n    <NTMenuButtonItem Label=\"Archive\" />\r\n</NTMenuSubMenuItem>",
+            "NTNavigationRail" => "<NTNavigationRailSectionHeader Label=\"Navigation\" />\r\n<NTNavigationRailItem Label=\"Home\" Href=\"/\" />\r\n<NTNavigationRailGroup Label=\"Resources\">\r\n    <NTNavigationRailItem Label=\"Components\" Href=\"/components\" />\r\n</NTNavigationRailGroup>",
+            "NTSelect" => "<option value=\"one\">One</option>\r\n<option value=\"two\">Two</option>",
+            "NTTabView" => "<NTTab Label=\"Overview\">Overview content</NTTab>\r\n<NTTab Label=\"Details\">Details content</NTTab>",
+            "NTWizard" => "<NTWizardStep Title=\"First step\">First step content</NTWizardStep>\r\n<NTWizardStep Title=\"Second step\">Second step content</NTWizardStep>\r\n<NTWizardFormStep Title=\"Form step\" Model=\"@_wizardModel\">\r\n    Example form content\r\n</NTWizardFormStep>",
             _ when string.Equals(parameter.Property.Name, "ChildContent", StringComparison.Ordinal) => BuildRenderFragmentText(parameter),
             _ => FormatElementMarkup(parameter.Property.Name, [], BuildRenderFragmentText(parameter))
         };
@@ -328,7 +862,7 @@
 
     private bool GetBool(SandboxParameterDocumentation parameter) => GetValue(parameter) as bool? ?? false;
 
-    private int? GetInt(SandboxParameterDocumentation parameter) => GetValue(parameter) as int? ?? 0;
+    private decimal? GetNumber(SandboxParameterDocumentation parameter) => Convert.ToDecimal(GetValue(parameter), CultureInfo.InvariantCulture);
 
     private string? GetString(SandboxParameterDocumentation parameter) => Convert.ToString(GetValue(parameter), CultureInfo.InvariantCulture);
 
@@ -353,7 +887,32 @@
     private void SetValue(SandboxParameterDocumentation parameter, object? value) {
         _values[parameter.Property.Name] = value;
         _modifiedParameterNames.Add(parameter.Property.Name);
+        CoordinateButtonElevation(parameter, value);
         _errorBoundary?.Recover();
+    }
+
+    private void CoordinateButtonElevation(SandboxParameterDocumentation changedParameter, object? value) {
+        if (Component.Type.Name is not ("NTButton" or "NTIconButton" or "NTSplitButton")) {
+            return;
+        }
+
+        if (changedParameter.Property.Name == "Variant" && value is SandboxEnumOption { Value: NTButtonVariant variant }) {
+            SetCoordinatedEnumValue("Elevation", variant == NTButtonVariant.Elevated ? nameof(NTElevation.Lowest) : nameof(NTElevation.None));
+        }
+        else if (changedParameter.Property.Name == "Elevation" && value is SandboxEnumOption { Value: NTElevation elevation }) {
+            SetCoordinatedEnumValue("Variant", elevation == NTElevation.None ? nameof(NTButtonVariant.Filled) : nameof(NTButtonVariant.Elevated));
+        }
+    }
+
+    private void SetCoordinatedEnumValue(string parameterName, string optionName) {
+        var parameter = Sandbox.Parameters.FirstOrDefault(candidate => string.Equals(candidate.Property.Name, parameterName, StringComparison.Ordinal));
+        var option = parameter?.Options.OfType<SandboxEnumOption>().FirstOrDefault(candidate => string.Equals(candidate.Label, optionName, StringComparison.Ordinal));
+        if (parameter is null || option is null) {
+            return;
+        }
+
+        _values[parameterName] = option;
+        _modifiedParameterNames.Add(parameterName);
     }
 
     private void ShowPreview() => _showMarkup = false;
@@ -368,12 +927,16 @@
     private sealed class SandboxFormModel {
         public bool BooleanValue { get; set; }
 
-        public int? NumberValue { get; set; }
+        public decimal? NumberValue { get; set; }
 
         public string? TextValue { get; set; }
 
         public string? EnumValue { get; set; }
 
         public string? IconValue { get; set; }
+    }
+
+    private sealed class SandboxValue<TValue> {
+        public TValue? Value { get; set; }
     }
 }
