@@ -6,6 +6,7 @@ namespace NTComponents.AspNetCore.ModelBinder;
 /// <summary>
 ///     Binder for <see cref="TnTItemsProviderRequest" />. This class is used to bind the HTTP context query parameters to a <see cref="TnTItemsProviderRequest" /> instance.
 /// </summary>
+[Obsolete("Use NTItemsProviderRequest with ASP.NET Core model binding instead.")]
 public class TnTItemsProviderRequestBinder : IModelBinder {
 
     /// <inheritdoc />
