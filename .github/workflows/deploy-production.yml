@@ -1,0 +1,106 @@
+name: Deploy Production
+
+on:
+  workflow_run:
+    workflows:
+      - Publish Prerelease
+    types:
+      - completed
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ntcomponents-production
+  cancel-in-progress: false
+
+env:
+  DEPLOY_REF: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || 'main' }}
+
+jobs:
+  deploy-mcp:
+    name: Deploy NTComponents.MCP
+    if: (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') || github.event.workflow_run.conclusion == 'success'
+    runs-on:
+      - self-hosted
+      - linux
+      - ARM64
+      - ntcomponents-production
+    environment: production
+    timeout-minutes: 30
+    steps:
+      - name: Checkout trusted main commit
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ env.DEPLOY_REF }}
+
+      - name: Configure SDK install directory
+        run: echo "DOTNET_INSTALL_DIR=$HOME/.dotnet" >> "$GITHUB_ENV"
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v5
+        with:
+          architecture: arm64
+          dotnet-version: 10.0.x
+
+      - name: Publish MCP for Raspberry Pi
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/ntcomponents-mcp"
+          rm -rf -- "$output"
+          dotnet restore ./NTComponents.MCP/NTComponents.MCP.csproj --runtime linux-arm64
+          dotnet publish ./NTComponents.MCP/NTComponents.MCP.csproj --no-restore --configuration Release --runtime linux-arm64 --self-contained true --output "$output"
+
+      - name: Deploy and verify MCP
+        env:
+          NTCOMPONENTS_DEPLOY_ROOT: ${{ vars.NTCOMPONENTS_DEPLOY_ROOT }}
+          NTCOMPONENTS_MCP_PORT: ${{ vars.NTCOMPONENTS_MCP_PORT }}
+          NTCOMPONENTS_MCP_HEALTH_URL: ${{ vars.NTCOMPONENTS_MCP_HEALTH_URL }}
+          NTCOMPONENTS_RELEASE_RETENTION: ${{ vars.NTCOMPONENTS_RELEASE_RETENTION }}
+        run: bash ./deployment/raspberry-pi/deploy.sh mcp "$RUNNER_TEMP/ntcomponents-mcp" "$(git rev-parse HEAD)"
+
+  deploy-site:
+    name: Deploy NTComponents.Site
+    if: (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') || github.event.workflow_run.conclusion == 'success'
+    runs-on:
+      - self-hosted
+      - linux
+      - ARM64
+      - ntcomponents-production
+    environment: production
+    timeout-minutes: 30
+    steps:
+      - name: Checkout trusted main commit
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ env.DEPLOY_REF }}
+          submodules: recursive
+
+      - name: Configure SDK install directory
+        run: echo "DOTNET_INSTALL_DIR=$HOME/.dotnet" >> "$GITHUB_ENV"
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v5
+        with:
+          architecture: arm64
+          dotnet-version: 10.0.x
+
+      - name: Restore WebAssembly workloads
+        run: dotnet workload restore ./NTComponents.Site/NTComponents.Site.csproj
+
+      - name: Publish static Site
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/ntcomponents-site"
+          rm -rf -- "$output"
+          dotnet publish ./NTComponents.Site/NTComponents.Site.csproj --configuration Release --output "$output"
+
+      - name: Deploy and verify Site
+        env:
+          NTCOMPONENTS_DEPLOY_ROOT: ${{ vars.NTCOMPONENTS_DEPLOY_ROOT }}
+          NTCOMPONENTS_RELEASE_RETENTION: ${{ vars.NTCOMPONENTS_RELEASE_RETENTION }}
+          NTCOMPONENTS_SITE_HEALTH_URL: ${{ vars.NTCOMPONENTS_SITE_HEALTH_URL }}
+        run: bash ./deployment/raspberry-pi/deploy.sh site "$RUNNER_TEMP/ntcomponents-site/wwwroot" "$(git rev-parse HEAD)"

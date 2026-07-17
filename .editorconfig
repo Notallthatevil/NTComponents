@@ -179,3 +179,6 @@ dotnet_style_qualification_for_event = false:silent
 
 # IDE0130: Namespace does not match folder structure
 dotnet_diagnostic.IDE0130.severity = none
+
+[*.sh]
+end_of_line = lf

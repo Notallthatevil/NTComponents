@@ -17,10 +17,16 @@
   </Folder>
   <Folder Name="/Solution Items/workflows/">
     <File Path=".github/workflows/build-template.yml" />
+    <File Path=".github/workflows/deploy-production.yml" />
     <File Path=".github/workflows/ensure-aot-build.yml" />
     <File Path=".github/workflows/publish-prerelease.yml" />
     <File Path=".github/workflows/pr-build.yml" />
     <File Path=".github/workflows/release.yml" />
+  </Folder>
+  <Folder Name="/Solution Items/deployment/">
+    <File Path="deployment/raspberry-pi/deploy.sh" />
+    <File Path="deployment/raspberry-pi/nginx.conf.example" />
+    <File Path="deployment/raspberry-pi/README.md" />
   </Folder>
   <Folder Name="/Tests/">
     <Project Path="Tests/AotCompatibility.TestApp/AotCompatibility.TestApp.csproj" Id="5fe8afae-706b-4160-a602-2463e8cec5fd" />
