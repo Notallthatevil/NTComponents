@@ -1,5 +1,11 @@
 namespace NTComponents.MCP.Contracts;
 
+public sealed record ServiceDiscovery(string Name, string Mcp, string OpenApi, string Health, string Api, CatalogOverview Catalog);
+
+public sealed record HealthStatus(string Status);
+
+public sealed record ErrorResponse(string Error);
+
 public sealed record CatalogOverview(int ComponentCount, int ReferenceTypeCount, IReadOnlyList<string> ComponentFolders, IReadOnlyList<string> ReferenceKinds);
 
 public sealed record ComponentSummary(string Name, string FullName, string Folder, string Summary, string RenderCompatibility, bool IsObsolete, IReadOnlyList<string> RequiredParameters);
