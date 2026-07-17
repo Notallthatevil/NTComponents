@@ -133,16 +133,6 @@ jobs:
         run: |
           npm install --no-save semantic-release @semantic-release/commit-analyzer @semantic-release/release-notes-generator @semantic-release/github conventional-changelog-conventionalcommits
 
-      - name: Validate NuGet API key
-        if: steps.check-tags.outputs.is_tagged == 'false'
-        env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
-        run: |
-          if [ -z "$NUGET_API_KEY" ]; then
-            echo "NUGET_API_KEY secret is missing or unavailable to this workflow."
-            exit 1
-          fi
-
       - name: Publish preview release
         if: steps.check-tags.outputs.is_tagged == 'false'
         env:
@@ -164,13 +154,24 @@ jobs:
           git fetch --tags
           release_tag=$(git tag --points-at HEAD | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+-preview\.[0-9]+$' | sort -V | tail -n 1 || true)
           if [ -z "$release_tag" ]; then
-            echo "No preview release tag found on this commit."
-            exit 1
+            echo "No preview release was created for this commit; skipping package publication."
+            echo "version=" >> $GITHUB_OUTPUT
+            exit 0
           fi
           echo "version=${release_tag#v}" >> $GITHUB_OUTPUT
 
+      - name: Validate NuGet API key
+        if: steps.check-tags.outputs.is_tagged == 'false' && steps.release-version.outputs.version != ''
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+          if [ -z "$NUGET_API_KEY" ]; then
+            echo "NUGET_API_KEY secret is missing or unavailable to this workflow."
+            exit 1
+          fi
+
       - name: Pack NuGet packages
-        if: steps.check-tags.outputs.is_tagged == 'false'
+        if: steps.check-tags.outputs.is_tagged == 'false' && steps.release-version.outputs.version != ''
         run: |
           set -euo pipefail
           rm -rf ./artifacts/nuget
@@ -178,9 +179,14 @@ jobs:
           dotnet pack ./NTComponents/NTComponents.csproj --configuration Release --output ./artifacts/nuget /p:PackageVersion=${{ steps.release-version.outputs.version }}
           dotnet pack ./NTComponents.AspNetCore/NTComponents.AspNetCore.csproj --configuration Release --output ./artifacts/nuget /p:PackageVersion=${{ steps.release-version.outputs.version }}
           dotnet pack ./NTComponents.Extensions/NTComponents.Extensions.csproj --configuration Release --output ./artifacts/nuget /p:PackageVersion=${{ steps.release-version.outputs.version }}
+          dotnet pack ./NTComponents.Analyzers/NTComponents.Analyzers.csproj --configuration Release --output ./artifacts/nuget /p:PackageVersion=${{ steps.release-version.outputs.version }}
+
+      - name: Verify analyzer package
+        if: steps.check-tags.outputs.is_tagged == 'false' && steps.release-version.outputs.version != ''
+        run: pwsh ./test-analyzer-package.ps1 -PackagePath "./artifacts/nuget/NTComponents.Analyzers.${{ steps.release-version.outputs.version }}.nupkg"
 
       - name: Publish NuGet packages
-        if: steps.check-tags.outputs.is_tagged == 'false'
+        if: steps.check-tags.outputs.is_tagged == 'false' && steps.release-version.outputs.version != ''
         env:
           NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
         run: |

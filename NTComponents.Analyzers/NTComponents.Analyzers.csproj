@@ -9,11 +9,32 @@
     <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
     <WarningLevel>8</WarningLevel>
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+    <PackageId>NTComponents.Analyzers</PackageId>
+    <Title>NTComponents Analyzers</Title>
+    <Description>Roslyn analyzers that validate NTComponents usage and accessibility at build time.</Description>
+    <Authors>NT Technologies</Authors>
+    <Company>NT Technologies</Company>
+    <PackageProjectUrl>https://github.com/Notallthatevil/NTComponents</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Notallthatevil/NTComponents</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>Blazor;Components;Analyzers;Roslyn;CodeAnalysis</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>Logo.png</PackageIcon>
+    <DevelopmentDependency>true</DevelopmentDependency>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
   </PropertyGroup>
 
   <ItemGroup>
     <AdditionalFiles Include="AnalyzerReleases.Shipped.md" />
     <AdditionalFiles Include="AnalyzerReleases.Unshipped.md" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.3.0" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="$(OutputPath)$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="..\Logo.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 </Project>

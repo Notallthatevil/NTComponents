@@ -113,6 +113,11 @@ jobs:
           dotnet pack ./NTComponents/NTComponents.csproj --no-build --configuration Release --output ./artifacts/nuget /p:PackageVersion=${{ steps.release-version.outputs.version }}
           dotnet pack ./NTComponents.AspNetCore/NTComponents.AspNetCore.csproj --no-build --configuration Release --output ./artifacts/nuget /p:PackageVersion=${{ steps.release-version.outputs.version }}
           dotnet pack ./NTComponents.Extensions/NTComponents.Extensions.csproj --no-build --configuration Release --output ./artifacts/nuget /p:PackageVersion=${{ steps.release-version.outputs.version }}
+          dotnet pack ./NTComponents.Analyzers/NTComponents.Analyzers.csproj --no-build --configuration Release --output ./artifacts/nuget /p:PackageVersion=${{ steps.release-version.outputs.version }}
+
+      - name: Verify analyzer package
+        if: steps.check-tags.outputs.is_tagged == 'false'
+        run: pwsh ./test-analyzer-package.ps1 -PackagePath "./artifacts/nuget/NTComponents.Analyzers.${{ steps.release-version.outputs.version }}.nupkg"
 
       - name: Publish NuGet packages
         if: steps.check-tags.outputs.is_tagged == 'false'
@@ -140,7 +145,7 @@ jobs:
           import urllib.request
 
           release = tuple(int(part) for part in sys.argv[1].split("."))
-          packages = ("NTComponents", "NTComponents.AspNetCore", "NTComponents.Extensions")
+          packages = ("NTComponents", "NTComponents.AspNetCore", "NTComponents.Extensions", "NTComponents.Analyzers")
 
           def prerelease_is_lower(version):
               version_without_build = version.split("+", 1)[0]
@@ -185,4 +190,84 @@ jobs:
             git tag -d "$tag" || true
             git push origin ":refs/tags/$tag"
           done
+
+  update-analyzer-release-tracking:
+    needs: publish-release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout released commit
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Resolve stable release version
+        id: release-version
+        run: |
+          set -euo pipefail
+          git fetch --tags
+          release_tag=$(git tag --points-at HEAD | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1 || true)
+          if [ -z "$release_tag" ]; then
+            echo "No stable release tag found on this commit; skipping analyzer release tracking."
+            echo "version=" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          echo "version=${release_tag#v}" >> $GITHUB_OUTPUT
+
+      - name: Promote analyzer release tracking
+        if: steps.release-version.outputs.version != ''
+        run: pwsh ./promote-analyzer-release.ps1 -Version "${{ steps.release-version.outputs.version }}"
+
+      - name: Detect analyzer release tracking changes
+        id: tracking-changes
+        if: steps.release-version.outputs.version != ''
+        run: |
+          if git diff --quiet -- NTComponents.Analyzers/AnalyzerReleases.Shipped.md NTComponents.Analyzers/AnalyzerReleases.Unshipped.md; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Validate analyzer release tracking
+        if: steps.tracking-changes.outputs.changed == 'true'
+        run: dotnet build ./NTComponents.Analyzers/NTComponents.Analyzers.csproj --configuration Release
+
+      - name: Commit analyzer release tracking
+        if: steps.tracking-changes.outputs.changed == 'true'
+        env:
+          VERSION: ${{ steps.release-version.outputs.version }}
+        run: |
+          set -euo pipefail
+          branch="chore/analyzer-release-$VERSION"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$branch"
+          git add NTComponents.Analyzers/AnalyzerReleases.Shipped.md NTComponents.Analyzers/AnalyzerReleases.Unshipped.md
+          git commit -m "chore(analyzers): record release $VERSION"
+          git fetch origin "+refs/heads/$branch:refs/remotes/origin/$branch" || true
+          git push --force-with-lease origin "HEAD:refs/heads/$branch"
+
+      - name: Open analyzer release tracking pull request
+        if: steps.tracking-changes.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.release-version.outputs.version }}
+        run: |
+          set -euo pipefail
+          branch="chore/analyzer-release-$VERSION"
+          existing_pr=$(gh pr list --head "$branch" --state open --json url --jq '.[0].url')
+          if [ -n "$existing_pr" ]; then
+            echo "Analyzer release tracking PR already exists: $existing_pr"
+            exit 0
+          fi
+          gh pr create --base main --head "$branch" --title "chore(analyzers): record release $VERSION" --body "Promotes the shipped analyzer rules for $VERSION and resets the unshipped release file."
 
