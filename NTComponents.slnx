@@ -28,6 +28,7 @@
   <Project Path="NTComponents.CodeDocumentation.Generator/NTComponents.CodeDocumentation.Generator.csproj" />
   <Project Path="NTComponents.AspNetCore/NTComponents.AspNetCore.csproj" />
   <Project Path="NTComponents.Extensions/NTComponents.Extensions.csproj" />
+  <Project Path="NTComponents.MCP/NTComponents.MCP.csproj" />
   <Project Path="NTComponents.Site/NTComponents.Site.csproj" />
   <Project Path="NTComponents.Tests/NTComponents.Tests.csproj" />
   <Project Path="NTComponents/NTComponents.csproj" />
