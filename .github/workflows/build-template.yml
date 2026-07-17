@@ -54,15 +54,23 @@ jobs:
       matrix:
         include:
           - name: ntcomponents-net9
-            project: NTComponents.Tests/NTComponents.Tests.csproj
+            project: Tests/NTComponents.Tests/NTComponents.Tests.csproj
+            framework: net9.0
+            install-playwright: false
+          - name: ntcomponents-net10
+            project: Tests/NTComponents.Tests/NTComponents.Tests.csproj
+            framework: net10.0
+            install-playwright: false
+          - name: ntcomponents-integration-net9
+            project: Tests/NTComponents.IntegrationTests/NTComponents.IntegrationTests.csproj
             framework: net9.0
             install-playwright: true
-          - name: ntcomponents-net10
-            project: NTComponents.Tests/NTComponents.Tests.csproj
+          - name: ntcomponents-integration-net10
+            project: Tests/NTComponents.IntegrationTests/NTComponents.IntegrationTests.csproj
             framework: net10.0
             install-playwright: true
           - name: analyzers-net10
-            project: NTComponents.Analyzers.Tests/NTComponents.Analyzers.Tests.csproj
+            project: Tests/NTComponents.Analyzers.Tests/NTComponents.Analyzers.Tests.csproj
             framework: net10.0
             install-playwright: false
     steps:
@@ -98,7 +106,7 @@ jobs:
 
       - name: Ensure browsers are installed
         if: matrix.install-playwright
-        run: pwsh NTComponents.Tests/bin/${{ inputs.configuration }}/${{ matrix.framework }}/playwright.ps1 install --with-deps
+        run: pwsh Tests/NTComponents.IntegrationTests/bin/${{ inputs.configuration }}/${{ matrix.framework }}/playwright.ps1 install --with-deps
 
       - name: Install dotnet-coverage
         run: dotnet tool install --global dotnet-coverage

@@ -173,7 +173,7 @@ Restore, build, and test from the repository root:
 ```powershell
 dotnet restore
 dotnet build NTComponents.slnx -c Release
-dotnet test NTComponents.Tests/NTComponents.Tests.csproj -c Release --no-build
+dotnet test Tests/NTComponents.Tests/NTComponents.Tests.csproj -c Release --no-build
 npm ci
 npm test
 ```

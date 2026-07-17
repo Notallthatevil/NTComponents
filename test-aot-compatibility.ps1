@@ -7,7 +7,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $rootDirectory = $PSScriptRoot
-$projectPath = Join-Path $rootDirectory 'AotCompatibility.TestApp/AotCompatibility.TestApp.csproj'
+$projectPath = Join-Path $rootDirectory 'Tests/AotCompatibility.TestApp/AotCompatibility.TestApp.csproj'
 
 if (-not $frameworks -or $frameworks.Length -eq 0) {
     if ($env:TARGET_FRAMEWORK) {
@@ -541,7 +541,7 @@ $failedRuns = 0
 foreach ($framework in $targetFrameworks) {
     Write-Host "--- Publishing Blazor WebAssembly AOT smoke app for framework: $framework ---"
 
-    $publishDirectory = Join-Path $rootDirectory "AotCompatibility.TestApp/bin/Release/$framework/publish"
+    $publishDirectory = Join-Path $rootDirectory "Tests/AotCompatibility.TestApp/bin/Release/$framework/publish"
     $publishWwwRoot = Join-Path $publishDirectory 'wwwroot'
 
     if (Test-Path $publishDirectory) {

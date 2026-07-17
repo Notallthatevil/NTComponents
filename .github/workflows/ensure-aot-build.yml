@@ -56,7 +56,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ~/.nuget/packages
-        key: ${{ runner.os }}-${{ runner.arch }}-${{ matrix.tfm }}-nuget-${{ hashFiles('global.json', 'Directory.Build.props', 'AotCompatibility.TestApp/AotCompatibility.TestApp.csproj', 'NTComponents/NTComponents.csproj', 'NTComponents.Analyzers/NTComponents.Analyzers.csproj') }}
+        key: ${{ runner.os }}-${{ runner.arch }}-${{ matrix.tfm }}-nuget-${{ hashFiles('global.json', 'Directory.Build.props', 'Tests/AotCompatibility.TestApp/AotCompatibility.TestApp.csproj', 'NTComponents/NTComponents.csproj', 'NTComponents.Analyzers/NTComponents.Analyzers.csproj') }}
         restore-keys: |
           ${{ runner.os }}-${{ runner.arch }}-${{ matrix.tfm }}-nuget-
           ${{ runner.os }}-${{ runner.arch }}-nuget-
@@ -86,7 +86,7 @@ jobs:
 
     - name: Restore WebAssembly workloads
       shell: pwsh
-      run: dotnet workload restore AotCompatibility.TestApp/AotCompatibility.TestApp.csproj --skip-manifest-update
+      run: dotnet workload restore Tests/AotCompatibility.TestApp/AotCompatibility.TestApp.csproj --skip-manifest-update
 
     - name: Publish AOT smoke app, assert static analysis warning count, and browser-smoke the app
       shell: pwsh

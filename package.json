@@ -33,7 +33,7 @@
       "<rootDir>/NTComponents/Layout/Views/__tests__",
       "<rootDir>/NTComponents/NavRail/__tests__",
       "<rootDir>/NTComponents/Progress/__tests__",
-      "<rootDir>/NTComponents.Tests/wwwroot"
+      "<rootDir>/Tests/NTComponents.Tests/wwwroot"
     ],
     "setupFiles": [
       "<rootDir>/NTComponents/Carousel/jest.setup.js"
@@ -49,7 +49,7 @@
     "testMatch": [
       "**/__tests__/**/*.test.js",
       "**/__tests__/**/*.spec.js",
-      "**/NTComponents.Tests/**/*.test.js"
+      "**/Tests/NTComponents.Tests/**/*.test.js"
     ],
     "testPathIgnorePatterns": [
       "/node_modules/",

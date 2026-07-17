@@ -43,7 +43,7 @@ Follow a granular structure to keep tests navigable and focused.
 
 ### Playwright
 - Use **Playwright** for browser-based integration and end-to-end (E2E) tests.
-- **Location:** Playwright tests can reside in the same project as other tests.
+- **Location:** Keep Playwright tests in the dedicated `Tests/[ProjectName].IntegrationTests` project so unit-test runs remain isolated from browser dependencies.
 - **Naming:** Suffix Playwright test files with `_IntegrationTests.cs`.
 - **Page Object Model (POM):** Use POM to abstract page interactions and selectors, keeping tests clean and maintainable.
 - **Locators:** Prefer user-facing locators (`GetByRole`, `GetByText`, `GetByLabel`) over brittle CSS or XPath selectors.

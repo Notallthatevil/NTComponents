@@ -20,17 +20,20 @@
     <File Path=".github/workflows/pr-build.yml" />
     <File Path=".github/workflows/release.yml" />
   </Folder>
-  <Project Path="AotCompatibility.TestApp/AotCompatibility.TestApp.csproj" Id="5fe8afae-706b-4160-a602-2463e8cec5fd" />
+  <Folder Name="/Tests/">
+    <Project Path="Tests/AotCompatibility.TestApp/AotCompatibility.TestApp.csproj" Id="5fe8afae-706b-4160-a602-2463e8cec5fd" />
+    <Project Path="Tests/NTComponents.Analyzers.Tests/NTComponents.Analyzers.Tests.csproj" />
+    <Project Path="Tests/NTComponents.IntegrationTests/NTComponents.IntegrationTests.csproj" />
+    <Project Path="Tests/NTComponents.Tests/NTComponents.Tests.csproj" />
+  </Folder>
   <Project Path="LiveTest/LiveTest.Client/LiveTest.Client.csproj" />
   <Project Path="LiveTest/LiveTest/LiveTest.csproj" />
-  <Project Path="NTComponents.Analyzers.Tests/NTComponents.Analyzers.Tests.csproj" />
   <Project Path="NTComponents.Analyzers/NTComponents.Analyzers.csproj" />
   <Project Path="NTComponents.CodeDocumentation.Generator/NTComponents.CodeDocumentation.Generator.csproj" />
   <Project Path="NTComponents.AspNetCore/NTComponents.AspNetCore.csproj" />
   <Project Path="NTComponents.Extensions/NTComponents.Extensions.csproj" />
   <Project Path="NTComponents.MCP/NTComponents.MCP.csproj" />
   <Project Path="NTComponents.Site/NTComponents.Site.csproj" />
-  <Project Path="NTComponents.Tests/NTComponents.Tests.csproj" />
   <Project Path="NTComponents/NTComponents.csproj" />
   <Project Path="Submodules/NTComponents.Charts/NTComponents.Charts/NTComponents.Charts.csproj" />
 </Solution>

@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 `NTComponents/` is the main Blazor component library. Features are grouped by folder (for example `Buttons/`, `Form/`, `Grid/`, `Dialog/`), and most components are split into `.razor`, `.razor.cs`, `.razor.scss`, and optional `.razor.js` files with the same base name.  
-`NTComponents.Tests/` contains .NET tests (xUnit/bUnit/Playwright) plus JS interop tests in `NTComponents.Tests/wwwroot/*.test.js`.  
+`Tests/NTComponents.Tests/` contains isolated .NET unit and bUnit component tests plus JS interop tests in `Tests/NTComponents.Tests/wwwroot/*.test.js`. `Tests/NTComponents.IntegrationTests/` contains Playwright and hosted integration tests, `Tests/NTComponents.Analyzers.Tests/` covers the analyzer package, and `Tests/AotCompatibility.TestApp/` is the trimming and Native AOT validation host.
 `NTComponents.AspNetCore/` and `NTComponents.Extensions/` provide supporting packages.  
 `NTComponents.Site/` and `LiveTest/` are sample/demo hosts.  
 `Submodules/NTComponents.Charts/` is a Git submodule and should be updated intentionally.
@@ -16,9 +16,10 @@ When designing or updating components, align structure, states, spacing, tokens,
 ## Build, Test, and Development Commands
 - `dotnet restore` - restore NuGet packages for all projects.
 - `dotnet build NTComponents.slnx -c Release` - build all projects with analyzers and Sass compilation.
-- `dotnet test NTComponents.Tests/NTComponents.Tests.csproj -c Release --no-build` - run C# unit/component/E2E tests.
+- `dotnet test Tests/NTComponents.Tests/NTComponents.Tests.csproj -c Release --no-build` - run C# unit and component tests.
+- `dotnet test Tests/NTComponents.IntegrationTests/NTComponents.IntegrationTests.csproj -c Release --no-build` - run hosted and Playwright integration tests.
 - `npm ci` - install JS test dependencies.
-- `npm test` - run Jest suites in `NTComponents/**/__tests__` and `NTComponents.Tests/wwwroot`.
+- `npm test` - run Jest suites in `NTComponents/**/__tests__` and `Tests/NTComponents.Tests/wwwroot`.
 - `pwsh ./test-aot-compatibility.ps1` - validate AOT publish compatibility.
 
 ## Coding Style & Naming Conventions
