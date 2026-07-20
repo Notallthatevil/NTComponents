@@ -52,7 +52,7 @@ jobs:
         run: pwsh Tests/NTComponents.IntegrationTests/bin/Release/net10.0/playwright.ps1 install --with-deps
 
       - name: Run .NET tests
-        run: dotnet test NTComponents.slnx --no-build --no-restore --configuration Release --results-directory ./TestResults -v minimal
+        run: dotnet test NTComponents.slnx --no-restore --configuration Release --results-directory ./TestResults -v minimal
 
       - name: Run node tests
         run: npm test
