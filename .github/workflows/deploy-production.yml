@@ -1,95 +1,48 @@
 name: Deploy Production
+run-name: Deploy production by @${{ github.actor }}
 
 on:
-  workflow_run:
-    workflows:
-      - Publish Prerelease
-    types:
-      - completed
-    branches:
-      - main
   workflow_dispatch:
 
 permissions:
   contents: read
+  id-token: write
 
 concurrency:
   group: ntcomponents-production
   cancel-in-progress: false
 
-env:
-  DEPLOY_REF: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || 'main' }}
-
 jobs:
-  deploy-mcp:
-    name: Deploy NTComponents.MCP
-    if: (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') || github.event.workflow_run.conclusion == 'success'
-    runs-on:
-      - self-hosted
-      - linux
-      - ARM64
-      - ntcomponents-production
+  deploy:
+    name: Build and deploy to Raspberry Pi
+    if: github.ref == 'refs/heads/main' && github.actor == vars.NTCOMPONENTS_DEPLOY_ACTOR
+    runs-on: ubuntu-latest
     environment: production
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
-      - name: Checkout trusted main commit
+      - name: Checkout main
         uses: actions/checkout@v6
         with:
-          ref: ${{ env.DEPLOY_REF }}
-
-      - name: Configure SDK install directory
-        run: echo "DOTNET_INSTALL_DIR=$HOME/.dotnet" >> "$GITHUB_ENV"
-
-      - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v5
-        with:
-          architecture: arm64
-          dotnet-version: 10.0.x
-
-      - name: Publish MCP for Raspberry Pi
-        run: |
-          set -euo pipefail
-          output="$RUNNER_TEMP/ntcomponents-mcp"
-          rm -rf -- "$output"
-          dotnet restore ./NTComponents.MCP/NTComponents.MCP.csproj --runtime linux-arm64
-          dotnet publish ./NTComponents.MCP/NTComponents.MCP.csproj --no-restore --configuration Release --runtime linux-arm64 --self-contained true --output "$output"
-
-      - name: Deploy and verify MCP
-        env:
-          NTCOMPONENTS_DEPLOY_ROOT: ${{ vars.NTCOMPONENTS_DEPLOY_ROOT }}
-          NTCOMPONENTS_MCP_PORT: ${{ vars.NTCOMPONENTS_MCP_PORT }}
-          NTCOMPONENTS_MCP_HEALTH_URL: ${{ vars.NTCOMPONENTS_MCP_HEALTH_URL }}
-          NTCOMPONENTS_RELEASE_RETENTION: ${{ vars.NTCOMPONENTS_RELEASE_RETENTION }}
-        run: bash ./deployment/raspberry-pi/deploy.sh mcp "$RUNNER_TEMP/ntcomponents-mcp" "$(git rev-parse HEAD)"
-
-  deploy-site:
-    name: Deploy NTComponents.Site
-    if: (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') || github.event.workflow_run.conclusion == 'success'
-    runs-on:
-      - self-hosted
-      - linux
-      - ARM64
-      - ntcomponents-production
-    environment: production
-    timeout-minutes: 30
-    steps:
-      - name: Checkout trusted main commit
-        uses: actions/checkout@v6
-        with:
-          ref: ${{ env.DEPLOY_REF }}
+          ref: main
           submodules: recursive
 
-      - name: Configure SDK install directory
-        run: echo "DOTNET_INSTALL_DIR=$HOME/.dotnet" >> "$GITHUB_ENV"
-
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v5
         with:
-          architecture: arm64
           dotnet-version: 10.0.x
 
       - name: Restore WebAssembly workloads
         run: dotnet workload restore ./NTComponents.Site/NTComponents.Site.csproj
+
+      - name: Publish MCP for 32-bit Raspberry Pi OS
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/ntcomponents-mcp"
+          rm -rf -- "$output"
+          dotnet restore ./NTComponents.MCP/NTComponents.MCP.csproj --runtime linux-arm
+          dotnet publish ./NTComponents.MCP/NTComponents.MCP.csproj --no-restore --configuration Release --runtime linux-arm --self-contained true --output "$output"
+          test -f "$output/NTComponents.MCP"
+          tar -C "$output" -czf "$RUNNER_TEMP/ntcomponents-mcp.tar.gz" .
 
       - name: Publish static Site
         run: |
@@ -97,10 +50,75 @@ jobs:
           output="$RUNNER_TEMP/ntcomponents-site"
           rm -rf -- "$output"
           dotnet publish ./NTComponents.Site/NTComponents.Site.csproj --configuration Release --output "$output"
+          test -f "$output/wwwroot/index.html"
+          test -d "$output/wwwroot/_framework"
+          tar -C "$output/wwwroot" -czf "$RUNNER_TEMP/ntcomponents-site.tar.gz" .
 
-      - name: Deploy and verify Site
+      - name: Connect to the production tailnet
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          audience: ${{ secrets.TS_AUDIENCE }}
+          tags: tag:ci
+          ping: ${{ vars.NTCOMPONENTS_PI_HOST }}
+
+      - name: Configure deployment SSH identity
         env:
-          NTCOMPONENTS_DEPLOY_ROOT: ${{ vars.NTCOMPONENTS_DEPLOY_ROOT }}
-          NTCOMPONENTS_RELEASE_RETENTION: ${{ vars.NTCOMPONENTS_RELEASE_RETENTION }}
-          NTCOMPONENTS_SITE_HEALTH_URL: ${{ vars.NTCOMPONENTS_SITE_HEALTH_URL }}
-        run: bash ./deployment/raspberry-pi/deploy.sh site "$RUNNER_TEMP/ntcomponents-site/wwwroot" "$(git rev-parse HEAD)"
+          PI_SSH_PRIVATE_KEY: ${{ secrets.NTCOMPONENTS_PI_SSH_PRIVATE_KEY }}
+          PI_KNOWN_HOSTS: ${{ secrets.NTCOMPONENTS_PI_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          test -n "$PI_SSH_PRIVATE_KEY"
+          test -n "$PI_KNOWN_HOSTS"
+          install -d -m 700 "$HOME/.ssh"
+          printf '%s\n' "$PI_SSH_PRIVATE_KEY" > "$HOME/.ssh/ntcomponents"
+          printf '%s\n' "$PI_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/ntcomponents" "$HOME/.ssh/known_hosts"
+
+      - name: Upload deployment payload
+        env:
+          PI_HOST: ${{ vars.NTCOMPONENTS_PI_HOST }}
+          PI_USER: ${{ vars.NTCOMPONENTS_PI_USER }}
+        run: |
+          set -euo pipefail
+          test -n "$PI_HOST"
+          test -n "$PI_USER"
+          [[ "$PI_HOST" =~ ^[A-Za-z0-9.-]+$ ]]
+          [[ "$PI_USER" =~ ^[a-z_][a-z0-9_-]*$ ]]
+          target="$PI_USER@$PI_HOST"
+          remote_directory="/tmp/ntcomponents-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          ssh -i "$HOME/.ssh/ntcomponents" -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes "$target" "install -d -m 700 '$remote_directory'"
+          scp -i "$HOME/.ssh/ntcomponents" -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            "$RUNNER_TEMP/ntcomponents-mcp.tar.gz" \
+            "$RUNNER_TEMP/ntcomponents-site.tar.gz" \
+            ./deployment/raspberry-pi/deploy.sh \
+            "$target:$remote_directory/"
+
+      - name: Deploy and verify production
+        env:
+          PI_HOST: ${{ vars.NTCOMPONENTS_PI_HOST }}
+          PI_USER: ${{ vars.NTCOMPONENTS_PI_USER }}
+        run: |
+          set -euo pipefail
+          target="$PI_USER@$PI_HOST"
+          remote_directory="/tmp/ntcomponents-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          revision="$(git rev-parse HEAD)"
+          ssh -i "$HOME/.ssh/ntcomponents" -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes "$target" \
+            "REMOTE_DIRECTORY='$remote_directory' REVISION='$revision' bash -s" <<'REMOTE'
+          set -euo pipefail
+          trap 'rm -rf -- "$REMOTE_DIRECTORY"' EXIT
+          mkdir -p "$REMOTE_DIRECTORY/mcp" "$REMOTE_DIRECTORY/site"
+          tar -xzf "$REMOTE_DIRECTORY/ntcomponents-mcp.tar.gz" -C "$REMOTE_DIRECTORY/mcp"
+          tar -xzf "$REMOTE_DIRECTORY/ntcomponents-site.tar.gz" -C "$REMOTE_DIRECTORY/site"
+          set -a
+          source "$HOME/.config/ntcomponents/deploy.env"
+          set +a
+          bash "$REMOTE_DIRECTORY/deploy.sh" mcp "$REMOTE_DIRECTORY/mcp" "$REVISION"
+          bash "$REMOTE_DIRECTORY/deploy.sh" site "$REMOTE_DIRECTORY/site" "$REVISION"
+          REMOTE
+
+      - name: Verify public endpoints
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --retry 12 --retry-delay 5 --retry-all-errors --max-time 10 https://mcp.ntcomponents.nttechnologies.dev/health >/dev/null
+          curl --fail --silent --show-error --retry 12 --retry-delay 5 --retry-all-errors --max-time 10 https://ntcomponents.nttechnologies.dev/ >/dev/null

@@ -1,57 +1,126 @@
 # Raspberry Pi production deployment
 
-`Deploy Production` builds and deploys `NTComponents.MCP` and `NTComponents.Site` directly on a 64-bit ARM Raspberry Pi. It runs automatically only after the existing `Publish Prerelease` workflow succeeds for `main`. Manual production runs are accepted only when the workflow is started from `main`.
+`Deploy Production` builds `NTComponents.MCP` and `NTComponents.Site` on a GitHub-hosted Ubuntu runner and deploys them to the Raspberry Pi through Tailscale and SSH. The workflow is manual-only, accepts only the `main` ref, and runs only when the triggering account matches the `NTCOMPONENTS_DEPLOY_ACTOR` repository variable.
 
-The MCP server is a self-contained ASP.NET Core process managed by a user-level systemd service. The Site is a static Blazor WebAssembly publish served directly by nginx. Releases are stored by Git commit, switched with an atomic `current` symlink, and rolled back when a configured health check fails.
+MCP is published self-contained for the .NET `linux-arm` runtime identifier used by 32-bit Raspberry Pi OS. The Pi does not need the .NET runtime or a GitHub Actions runner. MCP runs as a user-level systemd service; the static Blazor WebAssembly Site is served directly by nginx. Releases are stored by Git commit and switched with an atomic `current` symlink. MCP rolls back if its local process health check fails, and the GitHub-hosted runner verifies both public URLs after deployment.
 
-## One-time host setup
+## 1. Prepare the Pi
 
-1. Install a current 64-bit Raspberry Pi OS or Debian-family distribution and install the host tools:
+Install the host packages and Tailscale on the Pi, then connect it to your tailnet:
 
-   ```bash
-   sudo apt-get update
-   sudo apt-get install -y curl nginx
-   ```
+```bash
+sudo apt-get update
+sudo apt-get install -y curl nginx openssh-server
+sudo systemctl enable --now nginx ssh
+```
 
-2. Add a dedicated GitHub Actions runner for this repository. Use the current ARM64 runner package and configure the custom label `ntcomponents-production`. The runner must have the default `self-hosted`, `linux`, and `ARM64` labels and must be version 2.327.1 or newer for the Node 24 actions used by the workflow.
+Follow the official Tailscale Linux installation instructions, run `sudo tailscale up`, and note the Pi's stable Tailscale hostname from `tailscale status`. SSH does not need to be exposed through the router.
 
-3. Provision the deployment root for the runner user. Replace `github-runner` with the account that runs the Actions runner:
+Confirm that the operating system is 32-bit ARM before deploying. A typical Raspberry Pi OS 32-bit installation reports `armv7l` and `32`:
 
-   ```bash
-   sudo install -d -o github-runner -g www-data -m 0755 /srv/ntcomponents
-   sudo loginctl enable-linger github-runner
-   ```
+```bash
+uname -m
+getconf LONG_BIT
+```
 
-   Linger keeps the MCP user service running when the runner user has no interactive login. The workflow creates and enables `~/.config/systemd/user/ntcomponents-mcp.service` on its first successful MCP deployment.
+Create a dedicated unprivileged deployment account:
 
-4. Create a GitHub environment named `production` and define these environment variables:
+```bash
+sudo adduser --disabled-password --gecos '' ntdeploy
+sudo install -d -o ntdeploy -g ntdeploy -m 0700 /home/ntdeploy/.ssh
+sudo install -d -o ntdeploy -g www-data -m 0755 /srv/ntcomponents
+sudo loginctl enable-linger ntdeploy
+```
 
-   | Variable | Recommended value | Purpose |
-   | --- | --- | --- |
-   | `NTCOMPONENTS_DEPLOY_ROOT` | `/srv/ntcomponents` | Parent directory for both applications. |
-   | `NTCOMPONENTS_MCP_PORT` | `5080` | Localhost-only Kestrel port used by nginx. |
-   | `NTCOMPONENTS_MCP_HEALTH_URL` | `https://mcp.ntcomponents.nttechnologies.dev/health` | Public nginx URL checked after MCP restarts. |
-   | `NTCOMPONENTS_RELEASE_RETENTION` | `5` | Number of releases retained per application, from 2 through 20. |
-   | `NTCOMPONENTS_SITE_HEALTH_URL` | `https://ntcomponents.nttechnologies.dev/` | Public nginx URL checked after the Site symlink switches. |
+Generate a dedicated Ed25519 deployment key on a trusted workstation. Do not add a passphrase because the private key is consumed non-interactively by GitHub Actions:
 
-   No deployment secret is required because the runner writes to its local filesystem. Environment protection rules can require approval for production deployments if desired.
+```bash
+ssh-keygen -t ed25519 -f ntcomponents-deploy -C ntcomponents-production
+```
 
-5. Copy [nginx.conf.example](nginx.conf.example) to `/etc/nginx/sites-available/ntcomponents`. It is configured for `ntcomponents.nttechnologies.dev` and `mcp.ntcomponents.nttechnologies.dev`; adjust the deployment root or MCP port if the environment variables use different values. Then enable and validate it:
+Append `ntcomponents-deploy.pub` to `/home/ntdeploy/.ssh/authorized_keys` on the Pi. Prefix the key with `restrict` to disable SSH forwarding and interactive terminal features that the deployment does not need, then set ownership and permissions:
 
-   ```bash
-   sudo ln -s /etc/nginx/sites-available/ntcomponents /etc/nginx/sites-enabled/ntcomponents
-   sudo nginx -t
-   sudo systemctl reload nginx
-   ```
+```text
+restrict ssh-ed25519 AAAA... ntcomponents-production
+```
 
-6. Configure TLS for both host names. nginx terminates HTTPS and forwards MCP requests to Kestrel on `127.0.0.1`; the MCP port must not be exposed by the router or firewall.
+```bash
+sudo chown ntdeploy:ntdeploy /home/ntdeploy/.ssh/authorized_keys
+sudo chmod 0600 /home/ntdeploy/.ssh/authorized_keys
+```
+
+Create the deployment configuration consumed on the Pi:
+
+```bash
+sudo -u ntdeploy install -d -m 0700 /home/ntdeploy/.config/ntcomponents
+sudo tee /home/ntdeploy/.config/ntcomponents/deploy.env >/dev/null <<'EOF'
+NTCOMPONENTS_DEPLOY_ROOT=/srv/ntcomponents
+NTCOMPONENTS_MCP_PORT=5080
+NTCOMPONENTS_RELEASE_RETENTION=5
+EOF
+sudo chown ntdeploy:ntdeploy /home/ntdeploy/.config/ntcomponents/deploy.env
+sudo chmod 0600 /home/ntdeploy/.config/ntcomponents/deploy.env
+```
+
+## 2. Configure nginx and TLS
+
+Copy [nginx.conf.example](nginx.conf.example) to `/etc/nginx/sites-available/ntcomponents`. It is configured for `ntcomponents.nttechnologies.dev`, `mcp.ntcomponents.nttechnologies.dev`, `/srv/ntcomponents`, and MCP port `5080`.
+
+```bash
+sudo ln -s /etc/nginx/sites-available/ntcomponents /etc/nginx/sites-enabled/ntcomponents
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+Point both DNS names to the Pi, make TCP ports 80 and 443 reachable by nginx, and configure TLS before the first deployment. nginx terminates HTTPS and forwards MCP traffic to `127.0.0.1:5080`; that Kestrel port must remain private.
+
+## 3. Configure Tailscale access
+
+1. Tag the Pi with a server tag such as `tag:ntcomponents-server`.
+2. Create `tag:ci` for ephemeral GitHub-hosted deployment nodes.
+3. Add a tailnet access rule that permits only `tag:ci` to reach the Pi on TCP port 22.
+4. Create a Tailscale workload-identity federated identity authorized to create `tag:ci` nodes. Record its client ID and audience.
+
+The workflow uses `tailscale/github-action@v4`, creates an ephemeral CI node for the deployment, verifies connectivity to the Pi, and removes the node after the job.
+
+## 4. Configure GitHub
+
+Create a repository-level Actions variable:
+
+| Variable | Value |
+| --- | --- |
+| `NTCOMPONENTS_DEPLOY_ACTOR` | Your exact GitHub login, for example `Notallthatevil`. |
+
+Create a GitHub environment named `production`, restrict its deployment branches to `main`, and preferably add yourself as a required reviewer. Add these environment variables:
+
+| Variable | Value |
+| --- | --- |
+| `NTCOMPONENTS_PI_HOST` | The Pi's Tailscale hostname, for example `ntcomponents-pi.example.ts.net`. |
+| `NTCOMPONENTS_PI_USER` | `ntdeploy` |
+
+Add these environment secrets:
+
+| Secret | Value |
+| --- | --- |
+| `TS_OAUTH_CLIENT_ID` | Tailscale federated-identity client ID. |
+| `TS_AUDIENCE` | Tailscale federated-identity audience. |
+| `NTCOMPONENTS_PI_SSH_PRIVATE_KEY` | Complete contents of the generated `ntcomponents-deploy` private key. |
+| `NTCOMPONENTS_PI_KNOWN_HOSTS` | A pinned SSH known-hosts entry for the Pi's Tailscale hostname. |
+
+Create the known-hosts value on the Pi, replacing the example hostname with the same value used by `NTCOMPONENTS_PI_HOST`:
+
+```bash
+printf '%s ' 'ntcomponents-pi.example.ts.net'
+sudo cat /etc/ssh/ssh_host_ed25519_key.pub
+```
+
+Store the single output line as `NTCOMPONENTS_PI_KNOWN_HOSTS`. Pinning this key prevents the deployment from accepting an impersonated SSH host.
 
 ## Operations
 
-- Trigger a deployment from Actions by running `Deploy Production`, or merge a change to `main` and let the successful prerelease CI run trigger it.
-- Inspect MCP logs with `journalctl --user -u ntcomponents-mcp.service` while signed in as the runner user.
+- In GitHub, open **Actions → Deploy Production → Run workflow**, select `main`, and run it.
+- The workflow cross-publishes MCP for 32-bit `linux-arm`, publishes the static Site, opens an ephemeral Tailscale connection, uploads both archives, deploys them, and verifies both public URLs from GitHub's runner.
+- Inspect MCP logs on the Pi with `sudo -iu ntdeploy journalctl --user -u ntcomponents-mcp.service`.
 - Confirm MCP locally with `curl http://127.0.0.1:5080/health`.
 - Connect MCP clients to `https://mcp.ntcomponents.nttechnologies.dev/mcp`.
-- Each application keeps its active revision at `/srv/ntcomponents/<mcp|site>/current` and its retained revisions under `releases/`.
-
-Do not route pull-request jobs to this runner. Self-hosted runners are persistent machines, so untrusted workflow code would have access to the deployment host. This repository's deployment workflow checks out only the successful `main` revision, or `main` for a manual deployment.
+- Active revisions are `/srv/ntcomponents/<mcp|site>/current`; retained revisions are under each application's `releases/` directory.
