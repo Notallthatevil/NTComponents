@@ -135,8 +135,8 @@ public class NTNavigationRail_IntegrationTests : IAsyncLifetime {
 
         var nestedRail = GetNestedLiveTestRail();
         await nestedRail.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 5000 });
-        await nestedRail.GetByRole(AriaRole.Link, new LocatorGetByRoleOptions { Name = "Forms", Exact = true }).ClickAsync();
-        await _page.WaitForURLAsync("**/forms");
+        await nestedRail.GetByRole(AriaRole.Link, new LocatorGetByRoleOptions { Name = "Grid", Exact = true }).ClickAsync();
+        await _page.WaitForURLAsync("**/datagrid");
 
         var primaryRail = GetPrimaryLiveTestRail();
         var buttonsGroup = primaryRail.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Buttons", Exact = true });

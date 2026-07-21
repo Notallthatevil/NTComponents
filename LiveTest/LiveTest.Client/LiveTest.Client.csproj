@@ -30,4 +30,20 @@
     <ProjectReference Include="..\..\Submodules\NTComponents.Charts\NTComponents.Charts\NTComponents.Charts.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Remove="Components\CardTesting.razor" />
+    <Content Remove="Components\DialogComponent.razor" />
+    <Content Remove="Components\FormV2Demo.razor" />
+    <Content Remove="Components\FormWasmDemo.razor" />
+    <Content Remove="Components\ImageButtons.razor" />
+    <Content Remove="Components\InputFileServerProgressDemo.razor" />
+    <Content Remove="Components\InputFileSseProgressDemo.razor" />
+    <Content Remove="Components\InputFileTemplateProgressDemo.razor" />
+    <Content Remove="Components\InputFileWizardDemo.razor" />
+    <Content Remove="Components\InputTesting.razor" />
+    <Content Remove="Components\SearchableSelectSsrDemo.razor" />
+    <Content Remove="Components\SnackbarComponent.razor" />
+    <Content Remove="Components\TnTConfirmationButton.razor" />
+  </ItemGroup>
+
 </Project>

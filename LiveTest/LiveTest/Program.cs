@@ -13,7 +13,7 @@ using Microsoft.Net.Http.Headers;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddLogging();
-builder.Services.AddTnTServices();
+builder.Services.AddNTServices();
 builder.Services.AddScoped(sp => {
     var navigationManager = sp.GetRequiredService<NavigationManager>();
     return new HttpClient {

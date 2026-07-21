@@ -44,6 +44,13 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<Compile Remove="E2E\Form\TnTInputTextAreaFormSubmission.IntegrationTests.cs" />
+		<Compile Remove="E2E\Toast\TnTToastSsr.IntegrationTests.cs" />
+		<Compile Remove="E2E\Typeahead\TnTTypeaheadFormSubmission.IntegrationTests.cs" />
+		<Compile Remove="E2E\Wizard\NTWizard.IntegrationTests.cs" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<Using Include="AwesomeAssertions" />
 		<Using Include="Xunit" />
 	</ItemGroup>

@@ -9,6 +9,6 @@ builder.Services.AddScoped(sp =>
         BaseAddress = new Uri(builder.HostEnvironment.BaseAddress)
     });
 
-builder.Services.AddTnTServices();
+builder.Services.AddNTServices();
 
 await builder.Build().RunAsync();
