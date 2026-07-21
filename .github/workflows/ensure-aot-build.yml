@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        tfm: [ 'net9.0', 'net10.0' ]
+        tfm: [ 'net9.0', 'net10.0', 'net11.0' ]
         runner:
         - name: Windows x64
           os: windows-latest
@@ -40,7 +40,7 @@ jobs:
     timeout-minutes: 20
     # determine dotnet SDK version from the TFM (job-level env to avoid schema ambiguity)
     env:
-      DOTNET_VERSION: ${{ matrix.tfm == 'net10.0' && '10.0.x' || '9.0.x' }}
+      DOTNET_VERSION: ${{ matrix.tfm == 'net11.0' && '11.0.100-preview.6.26359.118' || matrix.tfm == 'net10.0' && '10.0.x' || '9.0.x' }}
 
     steps:
     - uses: actions/checkout@v4
@@ -51,6 +51,7 @@ jobs:
         dotnet-version: |
           8.0.x
           ${{ env.DOTNET_VERSION }}
+          11.0.100-preview.6.26359.118
 
     - name: Cache NuGet packages
       uses: actions/cache@v4

@@ -1,4 +1,4 @@
-#if NET10_0
+#if NET10_0_OR_GREATER
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Hosting;
@@ -61,8 +61,9 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
         var repositoryRoot = FindRepositoryRoot();
         var configuration = new DirectoryInfo(AppContext.BaseDirectory).Parent?.Name ?? "Debug";
         var siteRoot = Path.Combine(repositoryRoot, "NTComponents.Site");
-        var staticWebAssetsManifest = Path.Combine(siteRoot, "bin", configuration, "net10.0", "NTComponents.Site.staticwebassets.runtime.json");
-        var staticWebAssetsEndpoints = Path.Combine(siteRoot, "obj", configuration, "net10.0", "staticwebassets.build.endpoints.json");
+        var targetFramework = $"net{Environment.Version.Major}.0";
+        var staticWebAssetsManifest = Path.Combine(siteRoot, "bin", configuration, targetFramework, "NTComponents.Site.staticwebassets.runtime.json");
+        var staticWebAssetsEndpoints = Path.Combine(siteRoot, "obj", configuration, targetFramework, "staticwebassets.build.endpoints.json");
         if (!File.Exists(staticWebAssetsManifest)) {
             throw new FileNotFoundException($"Build NTComponents.Site before running its browser tests. Expected static-web-assets manifest: {staticWebAssetsManifest}");
         }

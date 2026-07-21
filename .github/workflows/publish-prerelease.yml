@@ -27,6 +27,7 @@ jobs:
             8.0.x
             9.0.x
             10.0.x
+            11.0.100-preview.6.26359.118
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -105,6 +106,7 @@ jobs:
             8.0.x
             9.0.x
             10.0.x
+            11.0.100-preview.6.26359.118
 
       - name: Setup Node.js
         if: steps.check-tags.outputs.is_tagged == 'false'

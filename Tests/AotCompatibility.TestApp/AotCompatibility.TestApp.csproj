@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
 
 	<PropertyGroup>
-		<TargetFrameworks>net9.0;net10.0</TargetFrameworks>
+		<TargetFrameworks>net9.0;net10.0;net11.0</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<StaticWebAssetProjectMode>Default</StaticWebAssetProjectMode>
@@ -16,12 +16,17 @@
 		<WasmBuildNative>true</WasmBuildNative>
 	</PropertyGroup>
 
+	<PropertyGroup Condition="'$(TargetFramework)' == 'net11.0'">
+		<WasmBuildNative>true</WasmBuildNative>
+	</PropertyGroup>
+
 	<ItemGroup>
 		<ProjectReference Include="..\..\NTComponents.Analyzers\NTComponents.Analyzers.csproj"
 		                  OutputItemType="Analyzer"
 		                  ReferenceOutputAssembly="false" />
 		<ProjectReference Include="..\..\NTComponents\NTComponents.csproj" />
-		<TrimmerRootAssembly Include="NTComponents" />
+		<!-- .NET 11 Preview 6 ILLink stack-overflows when the entire library is rooted. The smoke app still roots every exercised component through its render tree. -->
+		<TrimmerRootAssembly Include="NTComponents" Condition="'$(TargetFramework)' != 'net11.0'" />
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
@@ -30,6 +35,10 @@
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
 		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.9" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(TargetFramework)' == 'net11.0'">
+		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="11.0.0-preview.6.26359.118" />
 	</ItemGroup>
 
 </Project>

@@ -3,7 +3,7 @@
 [![PR Build](https://github.com/Notallthatevil/NTComponents/actions/workflows/pr-build.yml/badge.svg)](https://github.com/Notallthatevil/NTComponents/actions/workflows/pr-build.yml)
 [![AOT Compatibility](https://github.com/Notallthatevil/NTComponents/actions/workflows/ensure-aot-build.yml/badge.svg)](https://github.com/Notallthatevil/NTComponents/actions/workflows/ensure-aot-build.yml)
 
-NTComponents is a Material 3 inspired Blazor component library for .NET 9 and .NET 10 applications. The current component model is `NT*` first, with source-generated documentation metadata, render-compatibility guidance, static web assets, scoped CSS, optional JavaScript enhancement, and analyzer coverage for component usage rules.
+NTComponents is a Material 3 inspired Blazor component library for .NET 9, .NET 10, and .NET 11 applications. The current component model is `NT*` first, with source-generated documentation metadata, render-compatibility guidance, static web assets, scoped CSS, optional JavaScript enhancement, and analyzer coverage for component usage rules.
 
 The package is designed for Blazor Web Apps, Blazor WebAssembly, interactive render modes, and static SSR scenarios where components can render useful HTML before browser enhancement.
 

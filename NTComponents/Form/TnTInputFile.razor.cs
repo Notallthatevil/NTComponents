@@ -365,7 +365,16 @@ public partial class TnTInputFile {
     ///     Releases the unmanaged resources used by the component and optionally releases the managed resources.
     /// </summary>
     /// <param name="disposing">true to release both managed and unmanaged resources; false to release only unmanaged resources.</param>
-    protected virtual void Dispose(bool disposing) {
+    #if NET11_0_OR_GREATER
+    protected override void Dispose(bool disposing) {
+        DisposeCore(disposing);
+        base.Dispose(disposing);
+    }
+    #else
+    protected virtual void Dispose(bool disposing) => DisposeCore(disposing);
+    #endif
+
+    private void DisposeCore(bool disposing) {
         if (disposing) {
             DotNetObjectRef?.Dispose();
             DotNetObjectRef = null;

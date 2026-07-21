@@ -14,7 +14,7 @@ namespace NTComponents;
     RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
     CompatibilitySummary = "Renders native date and time input markup and enhances custom picker behavior with script.",
     CompatibilityDetails = "Static SSR emits native date/time-compatible input attributes for form posts. The custom picker, live parsing, and validation updates require browser or Blazor enhancement.")]
-public partial class NTInputDateTime<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] DateTimeType> {
+public partial class NTInputDateTime<DateTimeType> {
 
     private const string JsModulePath = "./_content/NTComponents/Form/NTInputDateTime.razor.js";
     private static readonly Type _underlyingDateTimeType = Nullable.GetUnderlyingType(typeof(DateTimeType)) ?? typeof(DateTimeType);
@@ -127,13 +127,57 @@ public partial class NTInputDateTime<[DynamicallyAccessedMembers(DynamicallyAcce
 
     /// <inheritdoc />
     protected override bool TryParseValueFromString(string? value, [MaybeNullWhen(false)] out DateTimeType result, [NotNullWhen(false)] out string? validationErrorMessage) {
-        if (BindConverter.TryConvertTo(value, CultureInfo.InvariantCulture, out result)) {
+        if (TryConvertValue(value, out result)) {
             validationErrorMessage = null;
             return true;
         }
 
         validationErrorMessage = $"Failed to parse {value} into a {typeof(DateTimeType).Name}";
         return false;
+    }
+
+    private static bool TryConvertValue(string? value, out DateTimeType result) {
+        object? parsedValue;
+        bool converted;
+        if (typeof(DateTimeType) == typeof(DateTime)) {
+            converted = BindConverter.TryConvertTo(value, CultureInfo.InvariantCulture, out DateTime parsed);
+            parsedValue = parsed;
+        }
+        else if (typeof(DateTimeType) == typeof(DateTime?)) {
+            converted = BindConverter.TryConvertTo(value, CultureInfo.InvariantCulture, out DateTime? parsed);
+            parsedValue = parsed;
+        }
+        else if (typeof(DateTimeType) == typeof(DateTimeOffset)) {
+            converted = BindConverter.TryConvertTo(value, CultureInfo.InvariantCulture, out DateTimeOffset parsed);
+            parsedValue = parsed;
+        }
+        else if (typeof(DateTimeType) == typeof(DateTimeOffset?)) {
+            converted = BindConverter.TryConvertTo(value, CultureInfo.InvariantCulture, out DateTimeOffset? parsed);
+            parsedValue = parsed;
+        }
+        else if (typeof(DateTimeType) == typeof(DateOnly)) {
+            converted = BindConverter.TryConvertTo(value, CultureInfo.InvariantCulture, out DateOnly parsed);
+            parsedValue = parsed;
+        }
+        else if (typeof(DateTimeType) == typeof(DateOnly?)) {
+            converted = BindConverter.TryConvertTo(value, CultureInfo.InvariantCulture, out DateOnly? parsed);
+            parsedValue = parsed;
+        }
+        else if (typeof(DateTimeType) == typeof(TimeOnly)) {
+            converted = BindConverter.TryConvertTo(value, CultureInfo.InvariantCulture, out TimeOnly parsed);
+            parsedValue = parsed;
+        }
+        else if (typeof(DateTimeType) == typeof(TimeOnly?)) {
+            converted = BindConverter.TryConvertTo(value, CultureInfo.InvariantCulture, out TimeOnly? parsed);
+            parsedValue = parsed;
+        }
+        else {
+            result = default!;
+            return false;
+        }
+
+        result = converted ? (DateTimeType)parsedValue! : default!;
+        return converted;
     }
 
     private bool IsPickerTriggerDisabled => Disabled ?? Form?.Disabled ?? false;

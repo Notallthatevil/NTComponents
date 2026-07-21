@@ -38,7 +38,7 @@ namespace NTComponents;
     RenderCompatibility = NTComponentRenderCompatibility.InteractiveRequired,
     CompatibilitySummary = "Requires browser enhancement for its multi-select combobox workflow.",
     CompatibilityDetails = "Static SSR renders the current selection and hidden form values, but opening, filtering, and toggling options depend on the JavaScript module and Blazor callbacks.")]
-public partial class NTCombobox<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TValue> : IAsyncDisposable {
+public partial class NTCombobox<TValue> : IAsyncDisposable {
     private const string JsModulePath = "./_content/NTComponents/Form/NTCombobox.razor.js";
     private static readonly HashSet<string> ComboboxExplicitControlAttributeNames = new(StringComparer.OrdinalIgnoreCase) {
         "id",

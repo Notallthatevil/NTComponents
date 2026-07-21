@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk.Razor">
 	<PropertyGroup>
-		<TargetFrameworks>net9.0;net10.0</TargetFrameworks>
+		<TargetFrameworks>net9.0;net10.0;net11.0</TargetFrameworks>
 		<TypeScriptBuildTargetFramework>net9.0</TypeScriptBuildTargetFramework>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
@@ -10,7 +10,7 @@
 		<Company>NT Technologies</Company>
 		<PackageProjectUrl>https://github.com/Notallthatevil/NTComponents</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/Notallthatevil/NTComponents</RepositoryUrl>
-		<PackageTags>Blazor;Web;UI;Components;Material;MaterialDesign;WebAssembly;BlazorComponents;.NET9;.NET10</PackageTags>
+		<PackageTags>Blazor;Web;UI;Components;Material;MaterialDesign;WebAssembly;BlazorComponents;.NET9;.NET10;.NET11</PackageTags>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
 		<WarningLevel>8</WarningLevel>
@@ -18,7 +18,7 @@
 		<NoWarn>$(NoWarn);CS0618</NoWarn>
 		<PackageId>NTComponents</PackageId>
 		<Authors>NT Technologies</Authors>
-		<Description>Collection of Material-design inspired Blazor UI components for Web and WebAssembly projects. Designed for .NET 9 and .NET 10.</Description>
+		<Description>Collection of Material-design inspired Blazor UI components for Web and WebAssembly projects. Designed for .NET 9, .NET 10, and .NET 11.</Description>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<RepositoryType>git</RepositoryType>
 		<IsAotCompatible>true</IsAotCompatible>
@@ -47,6 +47,9 @@
 	<ItemGroup>
 		<PackageReference Include="AspNetCore.SassCompiler" Version="1.100.0" />
 		<PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.11" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(TargetFramework)' != 'net11.0'">
 		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.9" />
 		<PackageReference Include="System.Text.Encodings.Web" Version="10.0.9" />
 	</ItemGroup>
@@ -61,6 +64,10 @@
 		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly">
 			<Version>10.0.9</Version>
 		</PackageReference>
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(TargetFramework)' == 'net11.0'">
+		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="11.0.0-preview.6.26359.118" PrivateAssets="all" />
 	</ItemGroup>
 
 	<ItemGroup>

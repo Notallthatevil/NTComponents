@@ -28,6 +28,7 @@ jobs:
             8.0.x
             9.0.x
             10.0.x
+            11.0.100-preview.6.26359.118
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -61,6 +62,10 @@ jobs:
             project: Tests/NTComponents.Tests/NTComponents.Tests.csproj
             framework: net10.0
             install-playwright: false
+          - name: ntcomponents-net11
+            project: Tests/NTComponents.Tests/NTComponents.Tests.csproj
+            framework: net11.0
+            install-playwright: false
           - name: ntcomponents-integration-net9
             project: Tests/NTComponents.IntegrationTests/NTComponents.IntegrationTests.csproj
             framework: net9.0
@@ -68,6 +73,10 @@ jobs:
           - name: ntcomponents-integration-net10
             project: Tests/NTComponents.IntegrationTests/NTComponents.IntegrationTests.csproj
             framework: net10.0
+            install-playwright: true
+          - name: ntcomponents-integration-net11
+            project: Tests/NTComponents.IntegrationTests/NTComponents.IntegrationTests.csproj
+            framework: net11.0
             install-playwright: true
           - name: analyzers-net10
             project: Tests/NTComponents.Analyzers.Tests/NTComponents.Analyzers.Tests.csproj
@@ -86,6 +95,7 @@ jobs:
             8.0.x
             9.0.x
             10.0.x
+            11.0.100-preview.6.26359.118
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -153,7 +163,7 @@ jobs:
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 10.0.x
+          dotnet-version: 11.0.100-preview.6.26359.118
 
       - name: Install dotnet-coverage
         run: dotnet tool install --global dotnet-coverage

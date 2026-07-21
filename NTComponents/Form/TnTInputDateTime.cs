@@ -12,7 +12,7 @@ namespace NTComponents;
 /// </summary>
 /// <typeparam name="DateTimeType">The type of the DateTime value.</typeparam>
 [System.Obsolete("This legacy Form element is obsolete. Use the NT form components instead.")]
-public class TnTInputDateTime<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] DateTimeType> : TnTInputBase<DateTimeType> {
+public class TnTInputDateTime<DateTimeType> : TnTInputBase<DateTimeType> {
 
     /// <summary>
     ///     Gets or sets the format string used to display the DateTime value.
@@ -80,7 +80,7 @@ public class TnTInputDateTime<[DynamicallyAccessedMembers(DynamicallyAccessedMem
 
     /// <inheritdoc />
     protected override bool TryParseValueFromString(string? value, [MaybeNullWhen(false)] out DateTimeType result, [NotNullWhen(false)] out string? validationErrorMessage) {
-        if (BindConverter.TryConvertTo(value, CultureInfo.InvariantCulture, out result)) {
+        if (TryConvertValue(value, out result)) {
             validationErrorMessage = null;
             return true;
         }
@@ -88,5 +88,49 @@ public class TnTInputDateTime<[DynamicallyAccessedMembers(DynamicallyAccessedMem
             validationErrorMessage = $"Failed to parse {value} into a {typeof(DateTimeType).Name}";
             return false;
         }
+    }
+
+    private static bool TryConvertValue(string? value, out DateTimeType result) {
+        object? parsedValue;
+        bool converted;
+        if (typeof(DateTimeType) == typeof(DateTime)) {
+            converted = BindConverter.TryConvertTo(value, CultureInfo.InvariantCulture, out DateTime parsed);
+            parsedValue = parsed;
+        }
+        else if (typeof(DateTimeType) == typeof(DateTime?)) {
+            converted = BindConverter.TryConvertTo(value, CultureInfo.InvariantCulture, out DateTime? parsed);
+            parsedValue = parsed;
+        }
+        else if (typeof(DateTimeType) == typeof(DateTimeOffset)) {
+            converted = BindConverter.TryConvertTo(value, CultureInfo.InvariantCulture, out DateTimeOffset parsed);
+            parsedValue = parsed;
+        }
+        else if (typeof(DateTimeType) == typeof(DateTimeOffset?)) {
+            converted = BindConverter.TryConvertTo(value, CultureInfo.InvariantCulture, out DateTimeOffset? parsed);
+            parsedValue = parsed;
+        }
+        else if (typeof(DateTimeType) == typeof(DateOnly)) {
+            converted = BindConverter.TryConvertTo(value, CultureInfo.InvariantCulture, out DateOnly parsed);
+            parsedValue = parsed;
+        }
+        else if (typeof(DateTimeType) == typeof(DateOnly?)) {
+            converted = BindConverter.TryConvertTo(value, CultureInfo.InvariantCulture, out DateOnly? parsed);
+            parsedValue = parsed;
+        }
+        else if (typeof(DateTimeType) == typeof(TimeOnly)) {
+            converted = BindConverter.TryConvertTo(value, CultureInfo.InvariantCulture, out TimeOnly parsed);
+            parsedValue = parsed;
+        }
+        else if (typeof(DateTimeType) == typeof(TimeOnly?)) {
+            converted = BindConverter.TryConvertTo(value, CultureInfo.InvariantCulture, out TimeOnly? parsed);
+            parsedValue = parsed;
+        }
+        else {
+            result = default!;
+            return false;
+        }
+
+        result = converted ? (DateTimeType)parsedValue! : default!;
+        return converted;
     }
 }

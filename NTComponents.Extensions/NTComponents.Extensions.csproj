@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-		<TargetFrameworks>net9.0;net10.0</TargetFrameworks>
+		<TargetFrameworks>net9.0;net10.0;net11.0</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <Authors>NT Technologies</Authors>
@@ -9,7 +9,7 @@
         <PackageProjectUrl>https://github.com/Notallthatevil/NTComponents</PackageProjectUrl>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <RepositoryUrl>https://github.com/Notallthatevil/NTComponents</RepositoryUrl>
-        <PackageTags>Blazor;Components;.NET9;.NET10</PackageTags>
+        <PackageTags>Blazor;Components;.NET9;.NET10;.NET11</PackageTags>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <PackageIcon>Logo.png</PackageIcon>
 

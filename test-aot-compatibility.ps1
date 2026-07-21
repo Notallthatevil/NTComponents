@@ -15,7 +15,7 @@ if (-not $frameworks -or $frameworks.Length -eq 0) {
     }
 }
 
-$targetFrameworks = @('net9.0', 'net10.0')
+$targetFrameworks = @('net9.0', 'net10.0', 'net11.0')
 if ($frameworks -and $frameworks.Length -gt 0) {
     $targetFrameworks = $frameworks
 }
@@ -300,7 +300,12 @@ function Invoke-ChromiumRuntimeExpression {
     finally {
         $cancellation.Dispose()
         if ($socket.State -eq [System.Net.WebSockets.WebSocketState]::Open) {
-            $socket.CloseAsync([System.Net.WebSockets.WebSocketCloseStatus]::NormalClosure, 'done', [System.Threading.CancellationToken]::None).GetAwaiter().GetResult()
+            try {
+                $socket.CloseAsync([System.Net.WebSockets.WebSocketCloseStatus]::NormalClosure, 'done', [System.Threading.CancellationToken]::None).GetAwaiter().GetResult()
+            }
+            catch {
+                $socket.Abort()
+            }
         }
 
         $socket.Dispose()
@@ -433,6 +438,7 @@ function Invoke-BrowserSmoke {
         $lastDom = 'DOM was not captured.'
         $lastBrowserExitCode = $null
         $lastBrowserOutput = 'Chromium output was not captured.'
+        $lastBrowserError = 'Chromium DevTools did not report an error.'
         foreach ($attempt in 1..3) {
             $debugPort = Get-FreePort
             $browserUserDataDirectory = Join-Path ([System.IO.Path]::GetTempPath()) "ntcomponents-aot-browser-$Port-$attempt"
@@ -510,6 +516,9 @@ function Invoke-BrowserSmoke {
                     }
                 }
             }
+            catch {
+                $lastBrowserError = $_.Exception.Message
+            }
             finally {
                 if ($browserProcess -and -not $browserProcess.HasExited) {
                     $browserProcess.Kill($true)
@@ -525,10 +534,10 @@ function Invoke-BrowserSmoke {
         }
 
         if ($null -ne $lastBrowserExitCode -and $lastBrowserExitCode -ne 0) {
-            throw "Browser smoke failed with exit code $lastBrowserExitCode. Output:`n$lastDom`nChromium output:`n$lastBrowserOutput"
+            throw "Browser smoke failed with exit code $lastBrowserExitCode. DevTools error: $lastBrowserError`nOutput:`n$lastDom`nChromium output:`n$lastBrowserOutput"
         }
 
-        throw "Browser smoke did not render the NTComponents AOT smoke marker. Output:`n$lastDom`nChromium output:`n$lastBrowserOutput"
+        throw "Browser smoke did not render the NTComponents AOT smoke marker. DevTools error: $lastBrowserError`nOutput:`n$lastDom`nChromium output:`n$lastBrowserOutput"
     }
     finally {
         Stop-StaticFileServer -Server $server
