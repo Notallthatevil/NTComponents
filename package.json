@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "devDependencies": {
-    "jest": "^29.7.0",
+    "jest": "^30.4.2",
     "jest-environment-jsdom": "^30.4.1",
     "terser": "^5.46.1",
     "typescript": "^6.0.2"
