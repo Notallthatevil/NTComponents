@@ -7,6 +7,60 @@ NTComponents is a Material 3 inspired Blazor component library for .NET 9, .NET 
 
 The package is designed for Blazor Web Apps, Blazor WebAssembly, interactive render modes, and static SSR scenarios where components can render useful HTML before browser enhancement.
 
+## Documentation And MCP
+
+- [NTComponents documentation](https://ntcomponents.nttechnologies.dev/) — generated component guides, live examples, API members, render-mode compatibility, enums, and constants.
+- [NTComponents MCP server](https://mcp.ntcomponents.nttechnologies.dev/mcp) — read-only Streamable HTTP endpoint for discovering and querying the same component documentation from MCP clients.
+- [MCP service discovery](https://mcp.ntcomponents.nttechnologies.dev/) — current catalog counts plus links to MCP, REST, OpenAPI, and health endpoints.
+- [OpenAPI document](https://mcp.ntcomponents.nttechnologies.dev/openapi/v1.json) — machine-readable contract for the documentation REST API.
+
+Connect an MCP client that supports Streamable HTTP to:
+
+```text
+https://mcp.ntcomponents.nttechnologies.dev/mcp
+```
+
+No API key, authorization header, or local server process is required.
+
+### Connect From Codex
+
+Add the server to your Codex user configuration:
+
+```powershell
+codex mcp add ntcomponents --url https://mcp.ntcomponents.nttechnologies.dev/mcp
+codex mcp list
+```
+
+Start a new Codex session after adding it so the NTComponents tools are available.
+
+### Connect From Claude Code
+
+Add the server with the remote HTTP transport. Use `--scope user` to make it available in every project, or omit that option to keep it local to the current project:
+
+```powershell
+claude mcp add --transport http --scope user ntcomponents https://mcp.ntcomponents.nttechnologies.dev/mcp
+claude mcp list
+```
+
+### Connect From Visual Studio Code
+
+Run **MCP: Open User Configuration** from the Command Palette, or create `.vscode/mcp.json` to share the connection with a workspace, then add:
+
+```json
+{
+  "servers": {
+    "ntcomponents": {
+      "type": "http",
+      "url": "https://mcp.ntcomponents.nttechnologies.dev/mcp"
+    }
+  }
+}
+```
+
+Start the server from **MCP: List Servers** if it does not start automatically. You can verify any connection by asking the client to search the NTComponents documentation for a component such as `NTDataGrid`.
+
+The public MCP service is anonymous and read-only. It exposes tools for searching the NTComponents catalog, reading component details, and retrieving generated documentation without cloning this repository. Client requests are rate-limited; applications should cache stable documentation results and retry `429 Too Many Requests` responses using the returned `Retry-After` value.
+
 ## Quick Getting Started
 
 ### 1. Install
@@ -172,9 +226,10 @@ Restore, build, and test from the repository root:
 
 ```powershell
 dotnet restore
+npm ci
+npm run build:ts:release
 dotnet build NTComponents.slnx -c Release
 dotnet test Tests/NTComponents.Tests/NTComponents.Tests.csproj -c Release --no-build
-npm ci
 npm test
 ```
 

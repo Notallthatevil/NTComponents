@@ -7,8 +7,23 @@
 }
 
 .docs-brand {
+    align-items: center;
     color: var(--tnt-color-primary);
+    display: inline-flex;
     font-weight: 700;
+    gap: 0.625rem;
+    text-decoration: none;
+
+    &:focus-visible {
+        border-radius: var(--tnt-corner-radius-small);
+        outline: 2px solid var(--tnt-color-primary);
+        outline-offset: 2px;
+    }
+
+    img {
+        height: 2.75rem;
+        width: 2.75rem;
+    }
 }
 
 .docs-topbar-subtitle {

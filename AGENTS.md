@@ -15,10 +15,11 @@ When designing or updating components, align structure, states, spacing, tokens,
 
 ## Build, Test, and Development Commands
 - `dotnet restore` - restore NuGet packages for all projects.
-- `dotnet build NTComponents.slnx -c Release` - build all projects with analyzers and Sass compilation.
+- `npm ci` - install JavaScript and TypeScript build dependencies.
+- `npm run build:ts:release` - generate and minify component JavaScript before building or publishing Release artifacts.
+- `dotnet build NTComponents.slnx -c Release` - build all projects with analyzers and Sass compilation after generating JavaScript assets.
 - `dotnet test Tests/NTComponents.Tests/NTComponents.Tests.csproj -c Release --no-build` - run C# unit and component tests.
 - `dotnet test Tests/NTComponents.IntegrationTests/NTComponents.IntegrationTests.csproj -c Release --no-build` - run hosted and Playwright integration tests.
-- `npm ci` - install JS test dependencies.
 - `npm test` - run Jest suites in `NTComponents/**/__tests__` and `Tests/NTComponents.Tests/wwwroot`.
 - `pwsh ./test-aot-compatibility.ps1` - validate AOT publish compatibility.
 

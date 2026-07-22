@@ -1,7 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk.Razor">
 	<PropertyGroup>
 		<TargetFrameworks>net9.0;net10.0;net11.0</TargetFrameworks>
-		<TypeScriptBuildTargetFramework>net9.0</TypeScriptBuildTargetFramework>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
@@ -78,21 +77,6 @@
 		<None Include="..\README.md" Pack="true" PackagePath="\" />
 		<None Include="compilerconfig.json" />
 	</ItemGroup>
-
-	<ItemGroup>
-		<TypeScriptSource Include="$(MSBuildProjectDirectory)\**\*.ts" Exclude="$(MSBuildProjectDirectory)\**\*.d.ts" />
-		<TypeScriptOutput Include="@(TypeScriptSource->'%(RootDir)%(Directory)%(Filename).js')" />
-	</ItemGroup>
-
-	<Target Name="CompileTypeScriptModules" BeforeTargets="BeforeBuild" Inputs="$(MSBuildProjectDirectory)/../tsconfig.json;@(TypeScriptSource)" Outputs="@(TypeScriptOutput)" Condition="'$(DesignTimeBuild)' != 'true' and '$(TargetFramework)' == '$(TypeScriptBuildTargetFramework)' and Exists('$(MSBuildProjectDirectory)/../tsconfig.json') and Exists('$(MSBuildProjectDirectory)/../node_modules/.bin/tsc')">
-		<Exec Command="&quot;$(MSBuildProjectDirectory)/../node_modules/.bin/tsc&quot; -p &quot;$(MSBuildProjectDirectory)/../tsconfig.json&quot; --pretty false" WorkingDirectory="$(MSBuildProjectDirectory)/.." />
-	</Target>
-
-	<Target Name="MinifyTypeScriptModules" BeforeTargets="BeforeBuild" DependsOnTargets="CompileTypeScriptModules" Inputs="@(TypeScriptOutput)" Outputs="$(IntermediateOutputPath)TypeScriptModules.min.stamp" Condition="'$(DesignTimeBuild)' != 'true' and '$(TargetFramework)' == '$(TypeScriptBuildTargetFramework)' and '$(Configuration)' == 'Release' and Exists('$(MSBuildProjectDirectory)/../node_modules/.bin/terser')">
-		<Exec Command="&quot;$(MSBuildProjectDirectory)/../node_modules/.bin/terser&quot; &quot;%(TypeScriptOutput.Identity)&quot; --module --compress --comments false --output &quot;%(TypeScriptOutput.Identity)&quot;" WorkingDirectory="$(MSBuildProjectDirectory)/.." />
-		<MakeDir Directories="$(IntermediateOutputPath)" />
-		<Touch Files="$(IntermediateOutputPath)TypeScriptModules.min.stamp" AlwaysCreate="true" />
-	</Target>
 
 	<Target Name="DeleteCssFiles" BeforeTargets="BeforeClean">
 		<ItemGroup>

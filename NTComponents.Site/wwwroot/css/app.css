@@ -51,6 +51,69 @@ code {
   font-family: var(--tnt-ref-typeface-brand, monospace);
 }
 
+.docs-loading {
+  align-items: center;
+  background: var(--tnt-color-background, #fff8f6);
+  color: var(--tnt-color-on-background, #251914);
+  display: grid;
+  min-height: 100vh;
+  min-height: 100svh;
+  padding: 1.5rem;
+  text-align: center;
+}
+.docs-loading .docs-loading-content {
+  align-items: center;
+  display: grid;
+  gap: 0.75rem;
+  justify-items: center;
+}
+.docs-loading .docs-loading-mark {
+  align-items: center;
+  background: var(--tnt-color-primary-container, #ffdbcf);
+  border-radius: var(--tnt-corner-radius-large, 1rem);
+  color: var(--tnt-color-on-primary-container, #3a0b00);
+  display: inline-flex;
+  font-size: 1.25rem;
+  font-weight: 700;
+  height: 4rem;
+  justify-content: center;
+  width: 4rem;
+}
+.docs-loading .docs-loading-message {
+  color: var(--tnt-color-on-surface-variant, #58423a);
+}
+.docs-loading .docs-loading-progress {
+  background: var(--tnt-color-surface-container-highest, #f4ded7);
+  border-radius: var(--nt-sys-shape-corner-full, 999px);
+  display: block;
+  height: 0.25rem;
+  margin-top: 0.5rem;
+  max-width: 100%;
+  overflow: hidden;
+  width: 14rem;
+}
+.docs-loading .docs-loading-progress span {
+  animation: docs-loading-progress 1.4s cubic-bezier(0.2, 0, 0, 1) infinite;
+  background: var(--tnt-color-primary, #9c4230);
+  display: block;
+  height: 100%;
+  transform: translateX(-120%);
+  width: 42%;
+}
+
+@keyframes docs-loading-progress {
+  to {
+    transform: translateX(340%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .docs-loading .docs-loading-progress span {
+    animation: none;
+    opacity: 0.55;
+    transform: none;
+    width: 100%;
+  }
+}
 .docs-page {
   display: grid;
   gap: 1.5rem;

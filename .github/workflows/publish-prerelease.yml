@@ -43,6 +43,9 @@ jobs:
       - name: Install node dependencies
         run: npm ci
 
+      - name: Build TypeScript modules
+        run: npm run build:ts:release
+
       - name: Build
         run: dotnet build NTComponents.slnx --no-restore --configuration Release
 
@@ -125,6 +128,10 @@ jobs:
       - name: Install node dependencies
         if: steps.check-tags.outputs.is_tagged == 'false'
         run: npm ci
+
+      - name: Build TypeScript modules
+        if: steps.check-tags.outputs.is_tagged == 'false'
+        run: npm run build:ts:release
 
       - name: Build
         if: steps.check-tags.outputs.is_tagged == 'false'

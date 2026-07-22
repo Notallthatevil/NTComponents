@@ -1,17 +1,20 @@
+limit_req_zone $binary_remote_addr zone=ntcomponents_mcp_requests:1m rate=2r/s;
+limit_conn_zone $binary_remote_addr zone=ntcomponents_mcp_connections:1m;
+
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name _;
+    return 444;
+}
+
 server {
     listen 80;
     listen [::]:80;
     server_name ntcomponents.nttechnologies.dev;
 
-    root /srv/ntcomponents/site/current;
-    index index.html;
-
-    location = /index.html {
-        add_header Cache-Control "no-cache" always;
-    }
-
     location / {
-        try_files $uri $uri/ /index.html;
+        return 308 https://ntcomponents.nttechnologies.dev$request_uri;
     }
 }
 
@@ -21,10 +24,65 @@ server {
     server_name mcp.ntcomponents.nttechnologies.dev;
 
     location / {
+        return 308 https://mcp.ntcomponents.nttechnologies.dev$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl default_server;
+    listen [::]:443 ssl default_server;
+    server_name _;
+
+    ssl_certificate /etc/letsencrypt/live/ntcomponents/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/ntcomponents/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    return 444;
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name ntcomponents.nttechnologies.dev;
+
+    ssl_certificate /etc/letsencrypt/live/ntcomponents/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/ntcomponents/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    add_header Strict-Transport-Security "max-age=31536000" always;
+
+    root /srv/ntcomponents/site/current;
+    index index.html;
+
+    location = /index.html {
+        add_header Cache-Control "no-cache" always;
+        add_header Strict-Transport-Security "max-age=31536000" always;
+    }
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name mcp.ntcomponents.nttechnologies.dev;
+
+    ssl_certificate /etc/letsencrypt/live/ntcomponents/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/ntcomponents/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    add_header Strict-Transport-Security "max-age=31536000" always;
+
+    client_max_body_size 64k;
+    client_body_timeout 10s;
+    limit_conn ntcomponents_mcp_connections 10;
+    limit_conn_status 429;
+    limit_req zone=ntcomponents_mcp_requests burst=20 nodelay;
+    limit_req_status 429;
+
+    location / {
         proxy_pass http://127.0.0.1:5080;
         proxy_http_version 1.1;
         proxy_buffering off;
-        proxy_request_buffering off;
         proxy_read_timeout 3600s;
         proxy_send_timeout 3600s;
         proxy_set_header Host $host;

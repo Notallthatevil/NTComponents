@@ -32,6 +32,8 @@
     <Project Path="Tests/AotCompatibility.TestApp/AotCompatibility.TestApp.csproj" Id="5fe8afae-706b-4160-a602-2463e8cec5fd" />
     <Project Path="Tests/NTComponents.Analyzers.Tests/NTComponents.Analyzers.Tests.csproj" />
     <Project Path="Tests/NTComponents.IntegrationTests/NTComponents.IntegrationTests.csproj" />
+    <Project Path="Tests/NTComponents.MCP.IntegrationTests/NTComponents.MCP.IntegrationTests.csproj" />
+    <Project Path="Tests/NTComponents.MCP.Tests/NTComponents.MCP.Tests.csproj" />
     <Project Path="Tests/NTComponents.Tests/NTComponents.Tests.csproj" />
   </Folder>
   <Project Path="LiveTest/LiveTest.Client/LiveTest.Client.csproj" />

@@ -26,11 +26,38 @@ public sealed record ComponentDetails(
     IReadOnlyList<ParameterDetails> Parameters,
     IReadOnlyList<MemberDetails> Methods,
     IReadOnlyList<ReferenceSummary> RelatedTypes,
-    IReadOnlyList<string> UsageGuidelines);
+    IReadOnlyList<string> UsageGuidelines,
+    string RazorUsage,
+    IReadOnlyList<RelatedEnumDetails> RelatedEnums) {
+    public ComponentDetails(
+        string name,
+        string fullName,
+        string folder,
+        string sourceFile,
+        string summary,
+        string remarks,
+        string renderCompatibility,
+        bool isSsrCompatible,
+        string compatibilitySummary,
+        string compatibilityDetails,
+        bool isObsolete,
+        string obsoleteMessage,
+        IReadOnlyList<ParameterDetails> parameters,
+        IReadOnlyList<MemberDetails> methods,
+        IReadOnlyList<ReferenceSummary> relatedTypes,
+        IReadOnlyList<string> usageGuidelines)
+        : this(name, fullName, folder, sourceFile, summary, remarks, renderCompatibility, isSsrCompatible, compatibilitySummary, compatibilityDetails, isObsolete, obsoleteMessage, parameters, methods, relatedTypes, usageGuidelines, string.Empty, []) { }
+}
 
-public sealed record ParameterDetails(string Name, string Type, string Summary, bool IsRequired, bool IsCascading, bool IsInherited, bool IsObsolete);
+public sealed record ParameterDetails(string Name, string Type, string Summary, bool IsRequired, bool IsCascading, bool IsInherited, bool IsObsolete, string Accessibility, string? DefaultValueExpression) {
+    public ParameterDetails(string name, string type, string summary, bool isRequired, bool isCascading, bool isInherited, bool isObsolete)
+        : this(name, type, summary, isRequired, isCascading, isInherited, isObsolete, string.Empty, null) { }
+}
 
-public sealed record MemberDetails(string Name, string Signature, string Summary, bool IsInherited, bool IsObsolete);
+public sealed record MemberDetails(string Name, string Signature, string Summary, bool IsInherited, bool IsObsolete, string Accessibility) {
+    public MemberDetails(string name, string signature, string summary, bool isInherited, bool isObsolete)
+        : this(name, signature, summary, isInherited, isObsolete, string.Empty) { }
+}
 
 public sealed record ReferenceSummary(string Name, string FullName, string Kind, string Summary, bool IsObsolete, IReadOnlyList<string> UsedByComponents);
 
@@ -50,6 +77,8 @@ public sealed record ReferenceDetails(
     IReadOnlyList<string> UsedByComponents);
 
 public sealed record FieldDetails(string Name, string Type, string Value, string Summary, bool IsObsolete);
+
+public sealed record RelatedEnumDetails(string Name, string FullName, IReadOnlyList<FieldDetails> Values, int TotalValueCount, bool IsTruncated);
 
 public sealed record DocumentationSearchResult(string Name, string FullName, string Category, string Summary, string Folder, int Score);
 

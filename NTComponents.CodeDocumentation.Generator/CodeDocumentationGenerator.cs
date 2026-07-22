@@ -153,6 +153,7 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
             property.DeclaredAccessibility.ToString(),
             property.Type.ToDisplayString(MemberTypeDisplayFormat),
             property.Type.ToDisplayString(TypeDisplayFormat),
+            GetDefaultValueExpression(property, cancellationToken),
             ExtractSummary(xmlDocumentation),
             xmlDocumentation,
             property.ContainingType?.ToDisplayString(TypeDisplayFormat) ?? string.Empty,
@@ -510,12 +511,35 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         builder.AppendLine("    /// <param name=\"isObsolete\">Indicates whether the property has the Obsolete attribute.</param>");
         builder.AppendLine("    /// <param name=\"obsoleteMessage\">The obsolete message, when provided.</param>");
         builder.AppendLine("    /// <param name=\"isObsoleteError\">Indicates whether use of the obsolete property is treated as an error.</param>");
-        builder.AppendLine("    public PropertyDocumentation(string name, string signature, string accessibility, string typeDisplayName, string typeFullName, string summary, string xmlDocumentation, string declaringTypeFullName, bool isFromBaseType, bool isParameter, bool isCascadingParameter, bool isEditorRequired, bool isObsolete, string obsoleteMessage, bool isObsoleteError) {");
+        builder.AppendLine("    public PropertyDocumentation(string name, string signature, string accessibility, string typeDisplayName, string typeFullName, string summary, string xmlDocumentation, string declaringTypeFullName, bool isFromBaseType, bool isParameter, bool isCascadingParameter, bool isEditorRequired, bool isObsolete, string obsoleteMessage, bool isObsoleteError)");
+        builder.AppendLine("        : this(name, signature, accessibility, typeDisplayName, typeFullName, string.Empty, summary, xmlDocumentation, declaringTypeFullName, isFromBaseType, isParameter, isCascadingParameter, isEditorRequired, isObsolete, obsoleteMessage, isObsoleteError) { }");
+        builder.AppendLine();
+        builder.AppendLine("    /// <summary>");
+        builder.AppendLine("    /// Creates a new instance of <see cref=\"PropertyDocumentation\" /> with its declared default-value expression.");
+        builder.AppendLine("    /// </summary>");
+        builder.AppendLine("    /// <param name=\"name\">The property name.</param>");
+        builder.AppendLine("    /// <param name=\"signature\">The property signature.</param>");
+        builder.AppendLine("    /// <param name=\"accessibility\">The declared accessibility.</param>");
+        builder.AppendLine("    /// <param name=\"typeDisplayName\">The display name of the property type.</param>");
+        builder.AppendLine("    /// <param name=\"typeFullName\">The fully qualified property type.</param>");
+        builder.AppendLine("    /// <param name=\"defaultValueExpression\">The source expression used to initialize the property, when declared.</param>");
+        builder.AppendLine("    /// <param name=\"summary\">The property summary.</param>");
+        builder.AppendLine("    /// <param name=\"xmlDocumentation\">The full XML documentation block.</param>");
+        builder.AppendLine("    /// <param name=\"declaringTypeFullName\">The fully qualified type that declares the property.</param>");
+        builder.AppendLine("    /// <param name=\"isFromBaseType\">Indicates whether the property was inherited from a base class.</param>");
+        builder.AppendLine("    /// <param name=\"isParameter\">Indicates whether the property has the Parameter attribute.</param>");
+        builder.AppendLine("    /// <param name=\"isCascadingParameter\">Indicates whether the property has the CascadingParameter attribute.</param>");
+        builder.AppendLine("    /// <param name=\"isEditorRequired\">Indicates whether the property has the EditorRequired attribute.</param>");
+        builder.AppendLine("    /// <param name=\"isObsolete\">Indicates whether the property has the Obsolete attribute.</param>");
+        builder.AppendLine("    /// <param name=\"obsoleteMessage\">The obsolete message, when provided.</param>");
+        builder.AppendLine("    /// <param name=\"isObsoleteError\">Indicates whether use of the obsolete property is treated as an error.</param>");
+        builder.AppendLine("    public PropertyDocumentation(string name, string signature, string accessibility, string typeDisplayName, string typeFullName, string defaultValueExpression, string summary, string xmlDocumentation, string declaringTypeFullName, bool isFromBaseType, bool isParameter, bool isCascadingParameter, bool isEditorRequired, bool isObsolete, string obsoleteMessage, bool isObsoleteError) {");
         builder.AppendLine("        Name = name;");
         builder.AppendLine("        Signature = signature;");
         builder.AppendLine("        Accessibility = accessibility;");
         builder.AppendLine("        TypeDisplayName = typeDisplayName;");
         builder.AppendLine("        TypeFullName = typeFullName;");
+        builder.AppendLine("        DefaultValueExpression = defaultValueExpression;");
         builder.AppendLine("        Summary = summary;");
         builder.AppendLine("        XmlDocumentation = xmlDocumentation;");
         builder.AppendLine("        DeclaringTypeFullName = declaringTypeFullName;");
@@ -548,6 +572,10 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         builder.AppendLine("    /// Gets the fully qualified property type.");
         builder.AppendLine("    /// </summary>");
         builder.AppendLine("    public string TypeFullName { get; }");
+        builder.AppendLine("    /// <summary>");
+        builder.AppendLine("    /// Gets the source expression used to initialize this property, or an empty string when no initializer is declared.");
+        builder.AppendLine("    /// </summary>");
+        builder.AppendLine("    public string DefaultValueExpression { get; }");
         builder.AppendLine("    /// <summary>");
         builder.AppendLine("    /// Gets the summary text.");
         builder.AppendLine("    /// </summary>");
@@ -756,6 +784,7 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
             builder.AppendLine($"                    {ToLiteral(property.Accessibility)},");
             builder.AppendLine($"                    {ToLiteral(property.TypeDisplayName)},");
             builder.AppendLine($"                    {ToLiteral(property.TypeFullName)},");
+            builder.AppendLine($"                    {ToLiteral(property.DefaultValueExpression)},");
             builder.AppendLine($"                    {ToLiteral(property.Summary)},");
             builder.AppendLine($"                    {ToLiteral(property.XmlDocumentation)},");
             builder.AppendLine($"                    {ToLiteral(property.DeclaringTypeFullName)},");
@@ -1051,16 +1080,96 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
 
         try {
             var document = XDocument.Parse("<root>" + xmlDocumentation + "</root>");
-            var value = document.Root?.Descendants(elementName).FirstOrDefault()?.Value;
-            if (string.IsNullOrWhiteSpace(value)) {
+            var element = document.Root?.Descendants(elementName).FirstOrDefault();
+            if (element is null) {
                 return string.Empty;
             }
 
-            return NormalizeWhitespace(value!);
+            var builder = new StringBuilder();
+            AppendDocumentationText(builder, element);
+            return NormalizeWhitespace(builder.ToString());
         }
         catch {
             return string.Empty;
         }
+    }
+
+    private static string GetDefaultValueExpression(IPropertySymbol property, CancellationToken cancellationToken) {
+        foreach (var syntaxReference in property.DeclaringSyntaxReferences) {
+            if (syntaxReference.GetSyntax(cancellationToken) is PropertyDeclarationSyntax { Initializer.Value: { } initializer }) {
+                return initializer.ToString();
+            }
+        }
+
+        return string.Empty;
+    }
+
+    private static void AppendDocumentationText(StringBuilder builder, XElement element) {
+        foreach (var node in element.Nodes()) {
+            if (node is XText text) {
+                builder.Append(text.Value);
+                continue;
+            }
+
+            if (node is not XElement child) {
+                continue;
+            }
+
+            var elementName = child.Name.LocalName;
+            var isStructuralElement = elementName is "para" or "item" or "term" or "description" or "list" or "br";
+            if (isStructuralElement) {
+                builder.Append(' ');
+            }
+
+            if (elementName == "see") {
+                var cref = child.Attribute("cref")?.Value;
+                builder.Append(cref is null ? child.Attribute("langword")?.Value : GetCrefDisplayText(cref));
+                if (cref is null && child.Attribute("langword") is null) {
+                    AppendDocumentationText(builder, child);
+                }
+            }
+            else if (elementName is "paramref" or "typeparamref") {
+                builder.Append(child.Attribute("name")?.Value);
+            }
+            else {
+                AppendDocumentationText(builder, child);
+            }
+
+            if (isStructuralElement) {
+                builder.Append(' ');
+            }
+        }
+    }
+
+    private static string GetCrefDisplayText(string cref) {
+        var memberKind = cref.Length > 1 && cref[1] == ':' ? cref[0] : '\0';
+        var value = memberKind == '\0' ? cref : cref.Substring(2);
+        var parametersIndex = value.IndexOf('(');
+        if (parametersIndex >= 0) {
+            value = value.Substring(0, parametersIndex);
+        }
+
+        var separatorIndex = value.LastIndexOf('.');
+        if (separatorIndex >= 0 && memberKind is 'F' or 'M' or 'P' or 'E') {
+            var declaringTypeIndex = value.LastIndexOf('.', separatorIndex - 1);
+            value = value.Substring(declaringTypeIndex + 1);
+        }
+        else if (separatorIndex >= 0) {
+            value = value.Substring(separatorIndex + 1);
+        }
+
+        var genericArityIndex = value.IndexOf('`');
+        while (genericArityIndex >= 0) {
+            var genericArityEndIndex = genericArityIndex + 1;
+            while (genericArityEndIndex < value.Length && char.IsDigit(value[genericArityEndIndex])) {
+                genericArityEndIndex++;
+            }
+
+            value = value.Remove(genericArityIndex, genericArityEndIndex - genericArityIndex);
+            genericArityIndex = value.IndexOf('`');
+        }
+
+        return value.Replace('#', '.');
     }
 
     private static string NormalizeWhitespace(string value) {
@@ -1224,6 +1333,7 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
             string accessibility,
             string typeDisplayName,
             string typeFullName,
+            string defaultValueExpression,
             string summary,
             string xmlDocumentation,
             string declaringTypeFullName,
@@ -1237,6 +1347,7 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
             Accessibility = accessibility;
             TypeDisplayName = typeDisplayName;
             TypeFullName = typeFullName;
+            DefaultValueExpression = defaultValueExpression;
             Summary = summary;
             XmlDocumentation = xmlDocumentation;
             DeclaringTypeFullName = declaringTypeFullName;
@@ -1256,6 +1367,8 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         public string TypeDisplayName { get; }
 
         public string TypeFullName { get; }
+
+        public string DefaultValueExpression { get; }
 
         public string Summary { get; }
 

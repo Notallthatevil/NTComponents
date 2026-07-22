@@ -16,6 +16,8 @@ updates:
       - "/Tests/AotCompatibility.TestApp"
       - "/Tests/NTComponents.Analyzers.Tests"
       - "/Tests/NTComponents.IntegrationTests"
+      - "/Tests/NTComponents.MCP.IntegrationTests"
+      - "/Tests/NTComponents.MCP.Tests"
       - "/Tests/NTComponents.Tests"
     schedule:
       interval: "weekly"

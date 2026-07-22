@@ -157,8 +157,7 @@ Restart=always
 RestartSec=5
 Environment=ASPNETCORE_ENVIRONMENT=Production
 Environment=ASPNETCORE_URLS=http://127.0.0.1:$port
-Environment=ASPNETCORE_FORWARDEDHEADERS_ENABLED=true
-Environment=AllowedHosts=*
+Environment="AllowedHosts=mcp.ntcomponents.nttechnologies.dev;localhost;127.0.0.1;[::1]"
 NoNewPrivileges=true
 PrivateTmp=true
 

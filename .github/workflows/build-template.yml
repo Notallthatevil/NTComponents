@@ -44,6 +44,9 @@ jobs:
       - name: Install node dependencies
         run: npm ci
 
+      - name: Build TypeScript modules
+        run: npm run build:ts
+
       - name: Build
         run: dotnet build NTComponents.slnx --no-restore --configuration ${{ inputs.configuration }}
 
@@ -80,6 +83,14 @@ jobs:
             install-playwright: true
           - name: analyzers-net10
             project: Tests/NTComponents.Analyzers.Tests/NTComponents.Analyzers.Tests.csproj
+            framework: net10.0
+            install-playwright: false
+          - name: mcp-net10
+            project: Tests/NTComponents.MCP.Tests/NTComponents.MCP.Tests.csproj
+            framework: net10.0
+            install-playwright: false
+          - name: mcp-integration-net10
+            project: Tests/NTComponents.MCP.IntegrationTests/NTComponents.MCP.IntegrationTests.csproj
             framework: net10.0
             install-playwright: false
     steps:

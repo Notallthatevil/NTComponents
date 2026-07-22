@@ -10,6 +10,7 @@
   },
   "scripts": {
     "build:ts": "tsc -p tsconfig.json",
+    "build:ts:release": "npm run build:ts && node scripts/minify-typescript.mjs",
     "build:rich-text-editor": "tsc -p tsconfig.json --pretty false",
     "build:rich-text-editor:release": "tsc -p tsconfig.json --pretty false && terser NTComponents/Editors/NTRichTextEditor.razor.js --module --compress --comments false --output NTComponents/Editors/NTRichTextEditor.razor.js && terser NTComponents/Shapes/NTShape.razor.js --module --compress --comments false --output NTComponents/Shapes/NTShape.razor.js",
     "pretest": "npm run build:ts",

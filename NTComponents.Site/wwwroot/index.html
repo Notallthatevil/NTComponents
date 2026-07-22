@@ -7,9 +7,8 @@
     <title>NTComponents.Site</title>
     <base href="/" />
     <link rel="preload" id="webassembly" />
-    <link rel="stylesheet" href="_content/NTComponents/NTComponents.bundle.scp.css" />
     <link rel="stylesheet" href="css/app.css" />
-    <link rel="icon" type="image/png" href="favicon.png" />
+    <link rel="icon" type="image/png" sizes="64x64" href="favicon.png" />
     <link href="NTComponents.Site.styles.css" rel="stylesheet" />
     <link href="manifest.webmanifest" rel="manifest" />
     <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png" />
@@ -19,6 +18,14 @@
 
 <body>
     <div id="app">
+        <div class="docs-loading" role="status" aria-live="polite">
+            <div class="docs-loading-content">
+                <span class="docs-loading-mark" aria-hidden="true">NT</span>
+                <strong>NTComponents</strong>
+                <span class="docs-loading-message">Loading Material 3 Blazor documentation...</span>
+                <span class="docs-loading-progress" aria-hidden="true"><span></span></span>
+            </div>
+        </div>
     </div>
     <script src="js/docs#[.{fingerprint}].js"></script>
     <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>

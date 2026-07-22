@@ -86,6 +86,28 @@ public class GeneratedCodeDocumentation_Tests {
     }
 
     [Fact]
+    public void Model_Contains_Declared_Parameter_Default_Expressions() {
+        // Arrange
+        var model = GeneratedCodeDocumentation.Model;
+
+        // Act
+        var buttonType = model.Types.First(x => x.FullName == "NTComponents.NTButton");
+        var shapeParameter = buttonType.Parameters.First(x => x.Name == "Shape");
+        var elevationParameter = buttonType.Parameters.First(x => x.Name == "Elevation");
+
+        // Assert
+        shapeParameter.DefaultValueExpression.Should().Be("ButtonShape.Round");
+        elevationParameter.DefaultValueExpression.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void PropertyDocumentation_LegacyConstructor_DefaultsDeclaredExpressionToEmpty() {
+        var property = new PropertyDocumentation("Name", "Signature", "Public", "string", "string", "Summary", string.Empty, "DeclaringType", false, true, false, false, false, string.Empty, false);
+
+        property.DefaultValueExpression.Should().BeEmpty();
+    }
+
+    [Fact]
     public void Model_Groups_Cascading_Parameters() {
         // Arrange
         var model = GeneratedCodeDocumentation.Model;
@@ -129,6 +151,32 @@ public class GeneratedCodeDocumentation_Tests {
         buttonType!.Remarks.Should().Contain("Use the lowest-emphasis variant");
         buttonType.SourceFolder.Should().Be("Buttons");
         buttonType.SourceFileName.Should().Be("NTButton.razor.cs");
+    }
+
+    [Fact]
+    public void Model_Preserves_Inline_Xml_Documentation_References() {
+        // Arrange
+        var model = GeneratedCodeDocumentation.Model;
+
+        // Act
+        var buttonType = model.Types.First(x => x.FullName == "NTComponents.NTButton");
+        var requestType = model.Types.First(x => x.FullName == "NTComponents.NTDataGridItemsProviderRequest<TItem>");
+        var gridSortType = model.Types.First(x => x.FullName == "NTComponents.Grid.TnTGridSort<TGridItem>");
+        var propertyColumnType = model.Types.First(x => x.FullName == "NTComponents.TnTPropertyColumn<TGridItem, TProp>");
+        var applyMethod = gridSortType.Methods.First(x => x.Name == "Apply" && x.Signature.Contains("bool ascending", StringComparison.Ordinal));
+        var countProperty = requestType.Properties.First(x => x.Name == "Count");
+        var colorType = model.Types.First(x => x.FullName == "NTComponents.TnTColor");
+        var richTextEditorType = model.Types.First(x => x.FullName == "NTComponents.NTRichTextEditor");
+        var errorMessageProperty = richTextEditorType.Properties.First(x => x.Name == "ErrorMessage");
+
+        // Assert
+        buttonType.Remarks.Should().Contain("NTButtonVariant.Filled for the primary action");
+        requestType.Summary.Should().Be("Represents a data request issued by NTDataGrid.");
+        propertyColumnType.Summary.Should().Contain("property of TGridItem. Supports formatting");
+        applyMethod.Summary.Should().Contain("supplied IQueryable. The ascending parameter is ignored");
+        countProperty.Summary.Should().Contain("or null when the provider may return all items");
+        colorType.Remarks.Should().Contain("areas of the UI. Primary, Secondary");
+        errorMessageProperty.Summary.Should().Contain("Prefer NTFormControlBaseCore.ErrorText for new code");
     }
 
     [Fact]

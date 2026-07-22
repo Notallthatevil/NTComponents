@@ -449,9 +449,10 @@ function Invoke-BrowserSmoke {
                 '--disable-gpu',
                 '--disable-gpu-compositing',
                 '--disable-gpu-rasterization',
+                '--disable-gpu-shader-disk-cache',
                 '--disable-accelerated-2d-canvas',
                 '--disable-accelerated-video-decode',
-                '--disable-features=CalculateNativeWinOcclusion,UseSkiaRenderer,DawnGraphite,WebGPU,Vulkan',
+                '--disable-features=CalculateNativeWinOcclusion,UseSkiaRenderer,SkiaGraphite,SkiaGraphiteUsePersistentCache,GpuPersistentCache,WebGPU,Vulkan',
                 '--disable-dev-shm-usage',
                 '--no-first-run',
                 '--disable-background-networking',
@@ -470,6 +471,10 @@ function Invoke-BrowserSmoke {
                     '--disable-crashpad',
                     '--disable-breakpad'
                 ) + $browserArgs
+            }
+
+            if ([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::Windows)) {
+                $browserArgs = @('--disable-gpu-sandbox') + $browserArgs
             }
 
             $browserRun = Start-BrowserProcess -Browser $browser -Arguments $browserArgs

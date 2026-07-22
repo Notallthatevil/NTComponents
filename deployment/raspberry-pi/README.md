@@ -10,7 +10,7 @@ Install the host packages and Tailscale on the Pi, then connect it to your tailn
 
 ```bash
 sudo apt-get update
-sudo apt-get install -y curl nginx openssh-server
+sudo apt-get install -y certbot curl nginx openssh-server python3-certbot-nginx
 sudo systemctl enable --now nginx ssh
 ```
 
@@ -64,15 +64,54 @@ sudo chmod 0600 /home/ntdeploy/.config/ntcomponents/deploy.env
 
 ## 2. Configure nginx and TLS
 
-Copy [nginx.conf.example](nginx.conf.example) to `/etc/nginx/sites-available/ntcomponents`. It is configured for `ntcomponents.nttechnologies.dev`, `mcp.ntcomponents.nttechnologies.dev`, `/srv/ntcomponents`, and MCP port `5080`.
+Point `ntcomponents.nttechnologies.dev` and `mcp.ntcomponents.nttechnologies.dev` to the Pi and make TCP ports 80 and 443 reachable by nginx. Kestrel port `5080` must remain private.
+
+Create a temporary HTTP-only server so Certbot can prove control of both names without the final nginx configuration referring to certificates that do not exist yet:
 
 ```bash
+sudo tee /etc/nginx/sites-available/ntcomponents-bootstrap >/dev/null <<'EOF'
+server {
+    listen 80;
+    listen [::]:80;
+    server_name ntcomponents.nttechnologies.dev mcp.ntcomponents.nttechnologies.dev;
+
+    location / {
+        return 204;
+    }
+}
+EOF
+sudo rm -f /etc/nginx/sites-enabled/default
+sudo ln -s /etc/nginx/sites-available/ntcomponents-bootstrap /etc/nginx/sites-enabled/ntcomponents-bootstrap
+sudo systemctl reload nginx
+sudo certbot certonly --nginx --cert-name ntcomponents -d ntcomponents.nttechnologies.dev -d mcp.ntcomponents.nttechnologies.dev
+```
+
+After Certbot creates `/etc/letsencrypt/live/ntcomponents/fullchain.pem` and `privkey.pem`, copy [nginx.conf.example](nginx.conf.example) to `/etc/nginx/sites-available/ntcomponents`, replace the bootstrap site, and only then validate the certificate-backed configuration:
+
+```bash
+sudo cp nginx.conf.example /etc/nginx/sites-available/ntcomponents
+sudo rm /etc/nginx/sites-enabled/ntcomponents-bootstrap
 sudo ln -s /etc/nginx/sites-available/ntcomponents /etc/nginx/sites-enabled/ntcomponents
+sudo nginx -t
+sudo systemctl reload nginx
+sudo systemctl enable --now certbot.timer
+sudo certbot renew --dry-run
+```
+
+The final configuration redirects both known HTTP names to HTTPS, rejects unknown hosts, permits only TLS 1.2 and 1.3, and sends a one-year HSTS policy. Certbot retains the nginx authenticator for unattended renewal. nginx terminates HTTPS and forwards MCP traffic to `127.0.0.1:5080`.
+
+The MCP endpoint is intentionally anonymous and read-only. Native clients that omit `Origin` are allowed. Browser-originated requests must be same-origin or match an exact entry in `Mcp:AllowedOrigins`; other origins receive `403 Forbidden`. The production configuration also permits the documentation site origin, `https://ntcomponents.nttechnologies.dev`.
+
+The application permits 60 requests per minute per client IP, while nginx permits an average of two requests per second with a burst of 20 and at most 10 concurrent connections per client IP. Both nginx and Kestrel reject request bodies larger than 64 KiB. nginx returns `429 Too Many Requests` when its request or connection limit is reached; the application also returns `429` and includes `Retry-After` when available. `/health` bypasses the application limiter so deployment rollback checks remain usable, but it is still protected by nginx's limits.
+
+The MCP proxy buffers bounded request bodies to protect Kestrel from slow uploads. Response buffering remains disabled because MCP responses may stream. After changing these controls, validate and reload nginx:
+
+```bash
 sudo nginx -t
 sudo systemctl reload nginx
 ```
 
-Point both DNS names to the Pi, make TCP ports 80 and 443 reachable by nginx, and configure TLS before the first deployment. nginx terminates HTTPS and forwards MCP traffic to `127.0.0.1:5080`; that Kestrel port must remain private.
+These local controls reduce application-level abuse but do not absorb a volumetric denial-of-service attack. Put the public names behind a CDN or other upstream DDoS protection if that becomes a realistic threat.
 
 ## 3. Configure Tailscale access
 
@@ -121,6 +160,8 @@ Store the single output line as `NTCOMPONENTS_PI_KNOWN_HOSTS`. Pinning this key 
 - In GitHub, open **Actions → Deploy Production → Run workflow**, select `main`, and run it.
 - The workflow cross-publishes MCP for 32-bit `linux-arm`, publishes the static Site, opens an ephemeral Tailscale connection, uploads both archives, deploys them, and verifies both public URLs from GitHub's runner.
 - Inspect MCP logs on the Pi with `sudo -iu ntdeploy journalctl --user -u ntcomponents-mcp.service`.
+- MCP application logs include only the endpoint name, HTTP method, status, duration, and trace ID. They intentionally omit query strings, request bodies, headers, and client IP addresses.
+- nginx access logs contain client IP addresses. Restrict access to those logs and configure bounded retention appropriate for operational troubleshooting.
 - Confirm MCP locally with `curl http://127.0.0.1:5080/health`.
 - Connect MCP clients to `https://mcp.ntcomponents.nttechnologies.dev/mcp`.
 - Active revisions are `/srv/ntcomponents/<mcp|site>/current`; retained revisions are under each application's `releases/` directory.

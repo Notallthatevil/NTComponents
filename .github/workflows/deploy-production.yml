@@ -30,11 +30,27 @@ jobs:
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: |
+            8.0.x
+            9.0.x
             10.0.x
             11.0.100-preview.6.26359.118
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
       - name: Restore WebAssembly workloads
         run: dotnet workload restore ./NTComponents.Site/NTComponents.Site.csproj
+
+      - name: Install node dependencies
+        run: npm ci
+
+      - name: Build TypeScript modules
+        run: npm run build:ts:release
+
+      - name: Build
+        run: dotnet build NTComponents.slnx --configuration Release
 
       - name: Publish MCP for 32-bit Raspberry Pi OS
         run: |
@@ -51,9 +67,10 @@ jobs:
           set -euo pipefail
           output="$RUNNER_TEMP/ntcomponents-site"
           rm -rf -- "$output"
-          dotnet publish ./NTComponents.Site/NTComponents.Site.csproj --configuration Release --output "$output"
+          dotnet publish ./NTComponents.Site/NTComponents.Site.csproj --configuration Release --framework net10.0 --output "$output"
           test -f "$output/wwwroot/index.html"
           test -d "$output/wwwroot/_framework"
+          test -f "$output/wwwroot/_content/NTComponents/NavRail/NTNavigationRail.razor.js"
           tar -C "$output/wwwroot" -czf "$RUNNER_TEMP/ntcomponents-site.tar.gz" .
 
       - name: Connect to the production tailnet
@@ -124,3 +141,5 @@ jobs:
           set -euo pipefail
           curl --fail --silent --show-error --retry 12 --retry-delay 5 --retry-all-errors --max-time 10 https://mcp.ntcomponents.nttechnologies.dev/health >/dev/null
           curl --fail --silent --show-error --retry 12 --retry-delay 5 --retry-all-errors --max-time 10 https://ntcomponents.nttechnologies.dev/ >/dev/null
+          content_type="$(curl --fail --silent --show-error --retry 12 --retry-delay 5 --retry-all-errors --max-time 10 --output /dev/null --write-out '%{content_type}' https://ntcomponents.nttechnologies.dev/_content/NTComponents/NavRail/NTNavigationRail.razor.js)"
+          [[ "$content_type" == *javascript* ]]
