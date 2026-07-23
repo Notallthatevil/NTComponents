@@ -67,8 +67,84 @@ public class NTListDetailView_IntegrationTests : IAsyncLifetime {
         panesOverlap.Should().BeFalse("list and detail panes must occupy separate grid columns at expanded widths");
     }
 
+    // Behavior source: NTListDetailViewMode.Auto documentation says the component adapts to available width,
+    // using one pane at compact/medium widths and two panes only at expanded widths.
     [Fact]
-    public async Task Views_ListDetail_Constrains_Pane_Content_To_Grid_Bounds() {
+    public async Task Views_ListDetail_Auto_Uses_One_Pane_When_Host_Is_Narrow_At_Desktop_Viewport() {
+        ArgumentNullException.ThrowIfNull(_page);
+
+        await _page.SetViewportSizeAsync(1280, 900);
+        await NavigateToViewsAsync();
+        await ConstrainViewHostAsync(".nt-list-detail-view", 380);
+
+        var usesOnePane = await _page.EvaluateAsync<bool>(
+            """
+            () => {
+                const view = document.querySelector('.nt-list-detail-view');
+                const list = view?.querySelector('.nt-list-detail-view-list');
+                const detail = view?.querySelector('.nt-list-detail-view-detail');
+                if (!(view instanceof HTMLElement) || !(list instanceof HTMLElement) || !(detail instanceof HTMLElement)) {
+                    return false;
+                }
+
+                const visiblePaneCount = [list, detail]
+                    .filter(pane => getComputedStyle(pane).display !== 'none')
+                    .length;
+
+                return view.getBoundingClientRect().width < 400 && visiblePaneCount === 1;
+            }
+            """);
+
+        usesOnePane.Should().BeTrue(
+            "Auto mode must use the width actually available to the view, even when the browser viewport is expanded");
+    }
+
+    // Behavior source: the user-requested regression contract requires overflowing pane content to remain
+    // scroll-reachable rather than being discarded by overflow clipping.
+    [Fact]
+    public async Task Views_ListDetail_Overflowing_Detail_Content_Remains_Scroll_Reachable() {
+        ArgumentNullException.ThrowIfNull(_page);
+
+        await _page.SetViewportSizeAsync(1280, 900);
+        await NavigateToViewsAsync();
+
+        var contentIsReachable = await _page.EvaluateAsync<bool>(
+            """
+            () => {
+                const view = document.querySelector('.nt-list-detail-view');
+                const detail = view?.querySelector('.nt-list-detail-view-detail');
+                const panel = detail?.querySelector('[data-nt-list-detail-panel]:not([hidden])');
+                if (!(view instanceof HTMLElement) || !(detail instanceof HTMLElement) || !(panel instanceof HTMLElement)) {
+                    return false;
+                }
+
+                view.style.blockSize = '240px';
+
+                const probe = document.createElement('div');
+                probe.setAttribute('data-nt-scroll-reachability-probe', 'true');
+                probe.style.blockSize = '1px';
+                probe.style.marginBlockStart = '700px';
+                panel.append(probe);
+
+                detail.scrollTop = detail.scrollHeight;
+
+                const detailRect = detail.getBoundingClientRect();
+                const probeRect = probe.getBoundingClientRect();
+                return getComputedStyle(detail).overflowY === 'auto'
+                    && detail.scrollHeight > detail.clientHeight
+                    && detail.scrollTop > 0
+                    && probeRect.bottom <= detailRect.bottom + 1;
+            }
+            """);
+
+        contentIsReachable.Should().BeTrue(
+            "users must be able to scroll to all detail content when the view is height-constrained");
+    }
+
+    // Behavior source: NTListDetailViewMode.TwoPane documentation requires both panes to have bounded content
+    // that can shrink without horizontal overflow.
+    [Fact]
+    public async Task Views_ListDetail_Keeps_List_Items_Inside_Pane_Bounds() {
         ArgumentNullException.ThrowIfNull(_page);
 
         await _page.SetViewportSizeAsync(1280, 900);
@@ -76,17 +152,6 @@ public class NTListDetailView_IntegrationTests : IAsyncLifetime {
 
         await _page.GetByRole(AriaRole.Link, new PageGetByRoleOptions { Name = "Release notes Design systems Draft" }).ClickAsync();
         await _page.GetByRole(AriaRole.Link, new PageGetByRoleOptions { Name = "Migration plan Platform Ready for review" }).ClickAsync();
-
-        var overflowModes = await _page.EvaluateAsync<string[]>(
-            """
-            () => [
-                getComputedStyle(document.querySelector('.nt-list-detail-view-list')).overflowX,
-                getComputedStyle(document.querySelector('.nt-list-detail-view-detail')).overflowX
-            ]
-            """);
-
-        overflowModes.Should().OnlyContain(mode => mode == "clip" || mode == "hidden",
-            "pane content should not be able to paint outside the owning grid cell");
 
         var listItemIsInsetWithinPane = await _page.EvaluateAsync<bool>(
             """
@@ -107,7 +172,25 @@ public class NTListDetailView_IntegrationTests : IAsyncLifetime {
             """);
 
         listItemIsInsetWithinPane.Should().BeTrue(
-            "interactive list content should have enough internal inset to avoid being clipped by pane containment");
+            "interactive list content should remain within the owning grid cell");
+    }
+
+    private async Task ConstrainViewHostAsync(string viewSelector, int inlineSize) {
+        ArgumentNullException.ThrowIfNull(_page);
+
+        await _page.EvaluateAsync(
+            """
+            ([selector, width]) => {
+                const view = document.querySelector(selector);
+                const host = view?.closest('.demo-section');
+                if (!(host instanceof HTMLElement)) {
+                    throw new Error(`Unable to find a demo host for ${selector}.`);
+                }
+
+                host.style.inlineSize = `${width}px`;
+            }
+            """,
+            new object[] { viewSelector, inlineSize });
     }
 
     private async Task NavigateToViewsAsync() {

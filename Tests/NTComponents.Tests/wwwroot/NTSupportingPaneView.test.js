@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import { onDispose, onUpdate } from '../../../NTComponents/Layout/Views/NTSupportingPaneView.razor.js';
+import { onDispose, onLoad, onUpdate } from '../../../NTComponents/Layout/Views/NTSupportingPaneView.razor.js';
 
 function renderSupportingPaneView() {
   document.body.innerHTML = `
@@ -22,6 +22,7 @@ function renderSupportingPaneView() {
            data-nt-supporting-pane-mode="Auto">
         <section class="nt-supporting-pane-view-primary">Primary</section>
         <aside class="nt-supporting-pane-view-supporting">Supporting</aside>
+        <tnt-page-script src="./_content/NTComponents/Layout/Views/NTSupportingPaneView.razor.js"></tnt-page-script>
       </div>
     </section>`;
 
@@ -44,9 +45,20 @@ describe('NTSupportingPaneView page script', () => {
     onDispose();
   });
 
-  test('updates mode controls without navigation', async () => {
+  test('onLoad discovers and enhances the owning view from its page-script marker', () => {
     const view = renderSupportingPaneView();
-    await updatePageScript();
+
+    onLoad(view.querySelector('tnt-page-script'));
+
+    const activeControl = document.querySelector('[data-nt-supporting-pane-mode-control="Auto"]');
+    expect(activeControl.dataset.ntSupportingPaneActive).toBe('true');
+    expect(activeControl.getAttribute('aria-pressed')).toBe('true');
+    expect(view.dataset.ntSupportingPaneMode).toBe('Auto');
+  });
+
+  test('onUpdate discovers the owning view from its page-script marker and updates mode controls', async () => {
+    const view = renderSupportingPaneView();
+    await updatePageScript(view.querySelector('tnt-page-script'));
 
     const control = document.querySelector('[data-nt-supporting-pane-mode-control="HideOnSmallScreens"]');
     const event = new MouseEvent('click', { bubbles: true, cancelable: true });

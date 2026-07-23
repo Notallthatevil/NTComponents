@@ -2,20 +2,22 @@
 @inherits NTPageScriptViewBase<NTListDetailView>
 
 <div @attributes="ElementAttributes" data-detail-visible="@DetailVisible.ToString().ToLowerInvariant()" @ref="Element">
-    <section class="nt-view-pane nt-list-detail-view-list" aria-label="@ListPaneLabel">
-        @List
-    </section>
+    <div class="nt-list-detail-view-layout">
+        <section class="nt-view-pane nt-list-detail-view-list" aria-label="@ListPaneLabel">
+            @List
+        </section>
 
-    <section class="nt-view-pane nt-list-detail-view-detail" aria-label="@DetailPaneLabel">
-        @DetailHeader
+        <section class="nt-view-pane nt-list-detail-view-detail" aria-label="@DetailPaneLabel">
+            @DetailHeader
 
-        @if (Detail is not null) {
-            @Detail
-        }
-        else {
-            @EmptyDetail
-        }
-    </section>
+            @if (Detail is not null) {
+                @Detail
+            }
+            else {
+                @EmptyDetail
+            }
+        </section>
+    </div>
+
+    @PageScript
 </div>
-
-@PageScript

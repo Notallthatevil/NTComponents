@@ -4,7 +4,9 @@ $text-color: var(--tnt-layout-text-color);
 
 .tnt-layout > .tnt-body {
     grid-area: body;
-    overflow-y: auto;
+    min-height: 0;
+    min-width: 0;
+    overflow: auto;
     background-color: $background-color;
     color: $text-color;
 }

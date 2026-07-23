@@ -2,8 +2,12 @@
 
 .tnt-layout {
     display: grid;
-    height: 100vh;
-    width: 100vw;
+    height: 100dvh;
+    max-width: 100%;
+    min-height: 0;
+    min-width: 0;
+    overflow: clip;
+    width: 100%;
     grid-template-columns: 1fr;
     grid-template-rows: 100%;
 
@@ -41,7 +45,7 @@
     }
 
     &:has(> .tnt-side-nav) {
-        grid-template-columns: measurements.$tnt-side-nav-width 1fr;
+        grid-template-columns: measurements.$tnt-side-nav-width minmax(0, 1fr);
     }
 
     &:has(> .tnt-header):not(:has(> .tnt-footer)) {
@@ -83,7 +87,7 @@
     @media #{measurements.$medium-and-up} {
         &:not(:has(> .tnt-side-nav.tnt-side-nav-hide-on-large)) {
             &:has(> .tnt-side-nav-toggle-indicator .tnt-toggle-indicator.tnt-toggle) {
-                grid-template-columns: 0 1fr;
+                grid-template-columns: 0 minmax(0, 1fr);
 
                 ::deep .tnt-side-nav {
                     transform: translate(-105%);
@@ -92,14 +96,14 @@
         }
 
         &:has(> .tnt-side-nav.tnt-side-nav-hide-on-large) {
-            grid-template-columns: 0 1fr;
+            grid-template-columns: 0 minmax(0, 1fr);
 
             ::deep > .tnt-side-nav {
                 transform: translate(-105%);
             }
 
             &:has(> .tnt-side-nav-toggle-indicator .tnt-toggle-indicator.tnt-toggle) {
-                grid-template-columns: measurements.$tnt-side-nav-width 1fr;
+                grid-template-columns: measurements.$tnt-side-nav-width minmax(0, 1fr);
 
                 ::deep > .tnt-side-nav {
                     transform: translate(0);
@@ -110,7 +114,7 @@
 
     @media #{measurements.$small-and-down} {
         &:has(> .tnt-side-nav) {
-            grid-template-columns: 0 1fr !important;
+            grid-template-columns: 0 minmax(0, 1fr) !important;
 
             ::deep > .tnt-side-nav {
                 transform: translateX(-105%);

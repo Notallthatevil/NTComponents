@@ -62,6 +62,11 @@
         min-block-size: 0;
         overflow: clip;
 
+        &.nt-layout-nested {
+            block-size: 100%;
+            max-block-size: 100%;
+        }
+
         ::deep > .nt-body {
             @include region.body-scroll-container(auto, none);
         }

@@ -1,4 +1,5 @@
 @use '../../Styles/_Variables/_measurements.scss' as measurements;
+@use '../../Styles/_Variables/_scrollbar.scss' as scrollbar;
 @use '../../Styles/_Variables/_screen-width.scss' as screen-width;
 
 $gap: 16px !default;
@@ -35,11 +36,15 @@ $supporting-pane-expanded-inline-size: $list-detail-list-expanded-inline-size !d
     .nt-view-full-height {
         block-size: 100%;
         min-block-size: 0;
+        overflow: auto;
+        @include scrollbar.nt-scrollbar;
     }
 
     .nt-view-pane {
         box-sizing: border-box;
         min-block-size: 0;
         min-inline-size: 0;
+        overflow: auto;
+        @include scrollbar.nt-scrollbar;
     }
 }

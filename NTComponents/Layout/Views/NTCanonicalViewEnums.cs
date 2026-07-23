@@ -58,7 +58,7 @@ public enum NTListDetailViewMode {
 public enum NTSupportingPaneViewMode {
 
     /// <summary>
-    ///     Stack panes on compact and medium widths, then place the supporting pane beside the primary pane on expanded and larger widths.
+    ///     Stack panes on compact widths, split them evenly on medium widths, then give the primary pane approximately 70% of the available pane space on expanded and larger widths.
     /// </summary>
     /// <remarks>
     ///     <para>Best practice: prefer this mode when supporting content remains useful at all sizes.</para>

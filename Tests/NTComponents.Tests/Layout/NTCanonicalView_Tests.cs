@@ -36,6 +36,19 @@ public class NTCanonicalView_Tests : BunitContext {
     }
 
     [Fact]
+    public void ListDetail_Renders_PageScript_Inside_View_For_Static_Enhancement() {
+        var cut = Render<NTListDetailView>(p => p
+            .Add(c => c.List, Fragment("List content"))
+            .Add(c => c.Detail, Fragment("Detail content")));
+
+        var view = cut.Find("div.nt-list-detail-view");
+        var pageScript = view.QuerySelector("tnt-page-script");
+
+        pageScript.Should().NotBeNull();
+        pageScript!.GetAttribute("src").Should().Be("./_content/NTComponents/Layout/Views/NTListDetailView.razor.js");
+    }
+
+    [Fact]
     public void ListDetail_Renders_EmptyDetail_When_Detail_Is_Not_Set() {
         var cut = Render<NTListDetailView>(p => p
             .Add(c => c.List, Fragment("List content"))
@@ -76,6 +89,19 @@ public class NTCanonicalView_Tests : BunitContext {
         cut.Find(".nt-supporting-pane-view-primary").TextContent.Should().Contain("Primary content");
         cut.Find(".nt-supporting-pane-view-supporting").TextContent.Should().Contain("Supporting content");
         cut.Find("tnt-page-script").GetAttribute("src").Should().Be("./_content/NTComponents/Layout/Views/NTSupportingPaneView.razor.js");
+    }
+
+    [Fact]
+    public void SupportingPane_Renders_PageScript_Inside_View_For_Static_Enhancement() {
+        var cut = Render<NTSupportingPaneView>(p => p
+            .Add(c => c.Primary, Fragment("Primary content"))
+            .Add(c => c.Supporting, Fragment("Supporting content")));
+
+        var view = cut.Find("div.nt-supporting-pane-view");
+        var pageScript = view.QuerySelector("tnt-page-script");
+
+        pageScript.Should().NotBeNull();
+        pageScript!.GetAttribute("src").Should().Be("./_content/NTComponents/Layout/Views/NTSupportingPaneView.razor.js");
     }
 
     [Fact]

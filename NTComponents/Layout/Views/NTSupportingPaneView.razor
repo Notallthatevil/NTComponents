@@ -5,13 +5,15 @@
      data-nt-supporting-pane-view
      data-nt-supporting-pane-mode="@Mode"
      @ref="Element">
-    <section class="nt-view-pane nt-supporting-pane-view-primary" aria-label="@PrimaryPaneLabel">
-        @Primary
-    </section>
+    <div class="nt-supporting-pane-view-layout">
+        <section class="nt-view-pane nt-supporting-pane-view-primary" aria-label="@PrimaryPaneLabel">
+            @Primary
+        </section>
 
-    <aside class="nt-view-pane nt-supporting-pane-view-supporting" aria-label="@SupportingPaneLabel">
-        @Supporting
-    </aside>
+        <aside class="nt-view-pane nt-supporting-pane-view-supporting" aria-label="@SupportingPaneLabel">
+            @Supporting
+        </aside>
+    </div>
+
+    @PageScript
 </div>
-
-@PageScript

@@ -4,26 +4,34 @@
 @include view.root;
 
 .nt-list-detail-view {
-    display: grid;
-    grid-template-areas: 'list';
-    grid-template-columns: minmax(0, 1fr);
+    container-type: inline-size;
 
-    .nt-list-detail-view-list {
-        grid-area: list;
-        overflow: clip;
+    .nt-list-detail-view-layout {
+        block-size: 100%;
+        display: grid;
+        gap: view.$gap;
+        grid-template-areas: 'list';
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: minmax(0, 1fr);
+        inline-size: 100%;
+        min-block-size: 0;
+        min-inline-size: 0;
+
+        .nt-list-detail-view-list {
+            grid-area: list;
+        }
+
+        .nt-list-detail-view-detail {
+            display: none;
+            grid-area: detail;
+        }
+
+        ::deep [data-nt-list-detail-panel][hidden] {
+            display: none;
+        }
     }
 
-    .nt-list-detail-view-detail {
-        display: none;
-        grid-area: detail;
-        overflow: clip;
-    }
-
-    ::deep [data-nt-list-detail-panel][hidden] {
-        display: none;
-    }
-
-    &.nt-list-detail-view-detail-visible {
+    &.nt-list-detail-view-detail-visible > .nt-list-detail-view-layout {
         grid-template-areas: 'detail';
 
         .nt-list-detail-view-list {
@@ -34,24 +42,24 @@
             display: block;
         }
     }
-}
 
-@media #{screen-width.$medium-and-up} {
-    .nt-list-detail-view:not(.nt-list-detail-view-single-pane),
-    .nt-list-detail-view-two-pane {
-        grid-template-areas: 'list detail';
-        grid-template-columns: minmax(#{view.$list-detail-list-min-inline-size}, #{view.$list-detail-list-inline-size}) minmax(0, 1fr);
+    @container (min-width: #{screen-width.$medium}) {
+        &:not(.nt-list-detail-view-single-pane) .nt-list-detail-view-layout,
+        &.nt-list-detail-view-two-pane .nt-list-detail-view-layout {
+            grid-template-areas: 'list detail';
+            grid-template-columns: minmax(#{view.$list-detail-list-min-inline-size}, #{view.$list-detail-list-inline-size}) minmax(0, 1fr);
 
-        .nt-list-detail-view-list,
-        .nt-list-detail-view-detail {
-            display: block;
+            .nt-list-detail-view-list,
+            .nt-list-detail-view-detail {
+                display: block;
+            }
         }
     }
-}
 
-@media #{screen-width.$large-and-up} {
-    .nt-list-detail-view:not(.nt-list-detail-view-single-pane),
-    .nt-list-detail-view-two-pane {
-        grid-template-columns: minmax(#{view.$list-detail-list-min-inline-size}, #{view.$list-detail-list-expanded-inline-size}) minmax(0, 1fr);
+    @container (min-width: #{screen-width.$large}) {
+        &:not(.nt-list-detail-view-single-pane) .nt-list-detail-view-layout,
+        &.nt-list-detail-view-two-pane .nt-list-detail-view-layout {
+            grid-template-columns: minmax(#{view.$list-detail-list-min-inline-size}, #{view.$list-detail-list-expanded-inline-size}) minmax(0, 1fr);
+        }
     }
 }

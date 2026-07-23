@@ -2,18 +2,20 @@
 @inherits NTPageScriptViewBase<NTContainerView>
 
 <div @attributes="ElementAttributes" data-nt-container-view data-nt-container-view-quick-nav-enabled="@OnThisPageNavigationEnabledAttribute" @ref="Element">
-    @if (EnableOnThisPageNavigation) {
-        <nav class="nt-container-view-quick-nav" aria-label="@OnThisPageNavigationAriaLabel" data-nt-container-view-quick-nav hidden>
-            <div class="nt-container-view-quick-nav-title">@OnThisPageLabel</div>
-            @if (HasOnThisPageTitle) {
-                <div class="nt-container-view-quick-nav-heading">@OnThisPageTitle</div>
-            }
-            <ol class="nt-container-view-quick-nav-list" data-nt-container-view-quick-nav-list></ol>
-        </nav>
-    }
+    <div class="nt-container-view-layout">
+        @if (EnableOnThisPageNavigation) {
+            <nav class="nt-container-view-quick-nav" aria-label="@OnThisPageNavigationAriaLabel" data-nt-container-view-quick-nav hidden>
+                <div class="nt-container-view-quick-nav-title">@OnThisPageLabel</div>
+                @if (HasOnThisPageTitle) {
+                    <div class="nt-container-view-quick-nav-heading">@OnThisPageTitle</div>
+                }
+                <ol class="nt-container-view-quick-nav-list" data-nt-container-view-quick-nav-list></ol>
+            </nav>
+        }
 
-    <div class="nt-container-view-content">
-        @ChildContent
+        <div class="nt-container-view-content">
+            @ChildContent
+        </div>
     </div>
 
     @if (EnableOnThisPageNavigation) {

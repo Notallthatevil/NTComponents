@@ -16,6 +16,8 @@ $fg-color: var(--tnt-footer-fg-color);
     box-sizing: border-box;
     background-color: $bg-color;
     color: $fg-color;
+    min-width: 0;
+    overflow: auto;
     @include typescale.tnt-title-large;
     @include elevation.tnt-elevations;
 }

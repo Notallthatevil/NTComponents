@@ -4,48 +4,58 @@
 @include view.root;
 
 .nt-supporting-pane-view {
-    display: grid;
-    grid-template-areas:
-        'primary'
-        'supporting';
-    grid-template-columns: minmax(0, 1fr);
+    container-type: inline-size;
 
-    .nt-supporting-pane-view-primary {
-        grid-area: primary;
+    .nt-supporting-pane-view-layout {
+        block-size: 100%;
+        display: grid;
+        gap: view.$gap;
+        grid-template-areas:
+            'primary'
+            'supporting';
+        grid-template-columns: minmax(0, 1fr);
+        inline-size: 100%;
+        min-block-size: 0;
+        min-inline-size: 0;
+
+        .nt-supporting-pane-view-primary {
+            grid-area: primary;
+        }
+
+        .nt-supporting-pane-view-supporting {
+            grid-area: supporting;
+        }
     }
 
-    .nt-supporting-pane-view-supporting {
-        grid-area: supporting;
-    }
-
-    &.nt-supporting-pane-view-hide-on-small-screens {
+    &.nt-supporting-pane-view-hide-on-small-screens > .nt-supporting-pane-view-layout {
         grid-template-areas: 'primary';
 
         .nt-supporting-pane-view-supporting {
             display: none;
         }
     }
-}
 
-@media #{screen-width.$medium-and-up} {
-    .nt-supporting-pane-view:not(.nt-supporting-pane-view-stacked) {
-        grid-template-areas: 'primary supporting';
-        grid-template-columns: minmax(0, 1fr) view.$supporting-pane-inline-size;
+    @container (min-width: #{screen-width.$small}) {
+        &:not(.nt-supporting-pane-view-stacked, .nt-supporting-pane-view-hide-on-small-screens) .nt-supporting-pane-view-layout {
+            grid-template-areas: 'primary supporting';
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            grid-template-rows: minmax(0, 1fr);
 
-        .nt-supporting-pane-view-supporting {
-            display: block;
-        }
-
-        &.nt-supporting-pane-view-hide-on-small-screens {
             .nt-supporting-pane-view-supporting {
                 display: block;
             }
         }
     }
-}
 
-@media #{screen-width.$large-and-up} {
-    .nt-supporting-pane-view:not(.nt-supporting-pane-view-stacked) {
-        grid-template-columns: minmax(0, 1fr) view.$supporting-pane-expanded-inline-size;
+    @container (min-width: #{screen-width.$medium}) {
+        &:not(.nt-supporting-pane-view-stacked) .nt-supporting-pane-view-layout {
+            grid-template-areas: 'primary supporting';
+            grid-template-columns: minmax(0, 7fr) minmax(0, 3fr);
+            grid-template-rows: minmax(0, 1fr);
+
+            .nt-supporting-pane-view-supporting {
+                display: block;
+            }
+        }
     }
 }

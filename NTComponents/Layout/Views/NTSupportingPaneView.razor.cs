@@ -28,8 +28,9 @@ public partial class NTSupportingPaneView {
     ///     Presentation mode for the supporting pane.
     /// </summary>
     /// <remarks>
-    ///     Prefer <see cref="NTSupportingPaneViewMode.Auto" /> when supporting content is useful at every width. Use <see cref="NTSupportingPaneViewMode.Stacked" /> when the secondary content should
-    ///     read as continuation content. Use <see cref="NTSupportingPaneViewMode.HideOnSmallScreens" /> only when the primary pane remains fully usable before the supporting pane appears at 840px and wider.
+    ///     Prefer <see cref="NTSupportingPaneViewMode.Auto" /> when supporting content is useful at every width. Auto stacks below 600px, splits the panes evenly from 600px, and gives the primary pane
+    ///     approximately 70% of the available pane space from 840px. Use <see cref="NTSupportingPaneViewMode.Stacked" /> when the secondary content should read as continuation content. Use <see
+    ///     cref="NTSupportingPaneViewMode.HideOnSmallScreens" /> only when the primary pane remains fully usable before the supporting pane appears at 840px and wider.
     /// </remarks>
     [Parameter]
     public NTSupportingPaneViewMode Mode { get; set; }

@@ -1,4 +1,4 @@
-import { onDispose, onUpdate } from '../../../NTComponents/Layout/Views/NTListDetailView.razor.js';
+import { onDispose, onLoad, onUpdate } from '../../../NTComponents/Layout/Views/NTListDetailView.razor.js';
 
 function renderListDetailView() {
   document.body.innerHTML = `
@@ -14,13 +14,14 @@ function renderListDetailView() {
         <article data-nt-list-detail-panel="one">One detail</article>
         <article data-nt-list-detail-panel="two" hidden>Two detail</article>
       </section>
+      <tnt-page-script src="./_content/NTComponents/Layout/Views/NTListDetailView.razor.js"></tnt-page-script>
     </div>`;
 
   return document.querySelector('.nt-list-detail-view');
 }
 
-async function updatePageScript() {
-  onUpdate();
+async function updatePageScript(element) {
+  onUpdate(element);
   await Promise.resolve();
 }
 
@@ -29,9 +30,19 @@ describe('NTListDetailView page script', () => {
     document.body.innerHTML = '';
   });
 
-  test('selects matching detail panel without navigation', async () => {
+  test('onLoad discovers and enhances the owning view from its page-script marker', () => {
     const view = renderListDetailView();
-    await updatePageScript();
+
+    onLoad(view.querySelector('tnt-page-script'));
+
+    expect(view.dataset.ntListDetailSelectedValue).toBe('one');
+    expect(view.querySelector('[data-nt-list-detail-trigger="one"]').dataset.ntListDetailSelected).toBe('true');
+    expect(view.querySelector('[data-nt-list-detail-panel="one"]').hidden).toBe(false);
+  });
+
+  test('onUpdate discovers the owning view from its page-script marker and selects matching detail', async () => {
+    const view = renderListDetailView();
+    await updatePageScript(view.querySelector('tnt-page-script'));
 
     const trigger = view.querySelector('[data-nt-list-detail-trigger="two"]');
     const event = new MouseEvent('click', { bubbles: true, cancelable: true });
