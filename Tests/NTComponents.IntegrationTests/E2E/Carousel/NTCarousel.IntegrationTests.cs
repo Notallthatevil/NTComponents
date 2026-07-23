@@ -28,7 +28,7 @@ public sealed class NTCarousel_IntegrationTests : IAsyncLifetime {
     public async Task AutoPlay_EachIntervalAdvancesToTheNextDistinctPosition() {
         await NavigateToCarouselAsync();
         await AutoPlaySection.Locator("[data-autoplay-control]").ClickAsync();
-        await MovePointerOutsideAsync(AutoPlaySection);
+        await MovePointerOutsideAsync();
 
         var trace = await CaptureSettlementsAsync(2, 11_000);
 
@@ -92,7 +92,7 @@ public sealed class NTCarousel_IntegrationTests : IAsyncLifetime {
 
         await section.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Exact = true, Name = "Start rotation" }).ClickAsync();
         await section.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Exact = true, Name = "Pause rotation" }).WaitForAsync();
-        await MovePointerOutsideAsync(section);
+        await MovePointerOutsideAsync();
         await WaitForStatusChangeAsync(SettledItemOne, 6_000);
         var resumedStatus = (await section.Locator("output.status").TextContentAsync())?.Trim();
 
@@ -103,7 +103,7 @@ public sealed class NTCarousel_IntegrationTests : IAsyncLifetime {
         (await viewport.EvaluateAsync<double>("element => element.scrollLeft")).Should().BeApproximately(hoveredPosition, 1, "hover must pause the active timer");
         (await section.Locator("output.status").TextContentAsync())?.Trim().Should().Be(resumedStatus);
 
-        await MovePointerOutsideAsync(section);
+        await MovePointerOutsideAsync();
         await WaitForStatusChangeAsync(resumedStatus!, 6_000);
     }
 
@@ -132,7 +132,7 @@ public sealed class NTCarousel_IntegrationTests : IAsyncLifetime {
             null,
             new PageWaitForFunctionOptions { Timeout = 10_000 });
         await AutoPlaySection.EvaluateAsync("section => section.scrollIntoView({ block: 'center' })");
-        await MovePointerOutsideAsync(AutoPlaySection);
+        await MovePointerOutsideAsync();
     }
 
     private async Task MoveToFinalItemAndResumeAsync(ILocator section) {
@@ -142,12 +142,11 @@ public sealed class NTCarousel_IntegrationTests : IAsyncLifetime {
         await WaitForStatusAsync("Settled item: 6", 5_000);
         await section.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Exact = true, Name = "Start rotation" }).ClickAsync();
         await section.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Exact = true, Name = "Pause rotation" }).WaitForAsync();
-        await MovePointerOutsideAsync(section);
+        await MovePointerOutsideAsync();
     }
 
-    private async Task MovePointerOutsideAsync(ILocator section) {
+    private async Task MovePointerOutsideAsync() {
         ArgumentNullException.ThrowIfNull(_page);
-        _ = section;
         await _page.Mouse.MoveAsync(1, 1);
     }
 
@@ -171,8 +170,8 @@ public sealed class NTCarousel_IntegrationTests : IAsyncLifetime {
             new PageWaitForFunctionOptions { Timeout = timeout });
     }
 
-    private async Task<SettlementTrace> CaptureSettlementsAsync(int expectedCount, int timeout) {
-        return await AutoPlaySection.EvaluateAsync<SettlementTrace>(
+    private Task<SettlementTrace> CaptureSettlementsAsync(int expectedCount, int timeout) =>
+        AutoPlaySection.EvaluateAsync<SettlementTrace>(
             """
             (section, args) => new Promise(resolve => {
                 const viewport = section.querySelector('[data-carousel-viewport]');
@@ -205,7 +204,6 @@ public sealed class NTCarousel_IntegrationTests : IAsyncLifetime {
             })
             """,
             new { expectedCount, timeout });
-    }
 
     private static Task<MotionTrace> CaptureMotionUntilStatusAsync(ILocator section, string expectedStatus, int timeout) =>
         section.EvaluateAsync<MotionTrace>(

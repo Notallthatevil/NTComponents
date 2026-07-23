@@ -1,12 +1,12 @@
-# NTCarousel2 Material 3 implementation specification
+# NTCarousel Material 3 implementation specification
 
-Status: Approved for implementation after repository, Material documentation, rendered-media, and LiveTest review.
+Status: Implemented as the hard replacement for the legacy carousel and validated against the repository, Material documentation, rendered media, and LiveTest.
 
 Last reviewed: 2026-07-23
 
 ## Purpose
 
-Add `NTCarousel2` and `NTCarousel2Item` beside the existing `NTCarousel` implementation. The existing component remains unchanged while the new component provides a web adaptation of the current Material 3 carousel. The implementation must cover all six Material layouts, responsive item sizing, native scrolling, Material motion and interaction states, reduced motion, and an accessible keyboard and assistive-technology model.
+Replace the legacy `NTCarousel` and `NTCarouselItem` with a web adaptation of the current Material 3 carousel. The replacement must cover all six Material layouts, responsive item sizing, native scrolling, Material motion and interaction states, reduced motion, and an accessible keyboard and assistive-technology model. This is a hard replacement with no compatibility wrappers or parallel component identity.
 
 Material does not publish a web implementation for this component. This specification therefore separates direct Material requirements from web-platform adaptations needed to express those requirements with valid HTML and ARIA.
 
@@ -26,7 +26,7 @@ Downloaded figures were inspected for interaction states, dynamic size examples,
 ## Repository alignment
 
 - Keep the implementation direct and defensive. Do not add a generic carousel framework, layout-provider abstraction, or duplicate state model.
-- Keep the new `NTCarousel2*` component files co-located in `NTComponents/Carousel/` and do not modify the existing `NTCarousel*` implementation.
+- Keep the replacement `NTCarousel*` component files co-located in `NTComponents/Carousel/` and remove the legacy registered-child implementation without compatibility wrappers.
 - Make `.razor.ts` the authored browser source and generate the served `.razor.js`; do not continue hand-authoring JavaScript only.
 - Use existing color, shape, motion, elevation, and interaction tokens from `NTComponents/Styles/_Variables`.
 - Use logical CSS properties and normal nested SCSS classes under the component root. Do not introduce BEM `__` names.
@@ -34,9 +34,9 @@ Downloaded figures were inspected for interaction states, dynamic size examples,
 - Add bUnit, Jest, and LiveTest/Playwright coverage for every new observable contract. Use `[EditorRequired]` plus defensive runtime validation for invalid component parameters.
 - Keep the root carousel free of overlaid or side-mounted previous/next controls. Material explicitly places alternate controls and “Show all” affordances above or below the carousel.
 
-## Current implementation assessment
+## Legacy implementation assessment
 
-The current implementation has useful foundations that should remain:
+The replaced implementation had useful foundations that informed the replacement:
 
 - `NTCarousel` owns child registration and stable `Order` sorting.
 - The root renders a dedicated `.tnt-carousel-viewport` native scroll surface.
@@ -102,7 +102,7 @@ The public default remains `true` for backward compatibility. Documentation reco
 - `MaxLargeItemWidth` controls the maximum dominant-item width. It must be optional; the layout engine chooses a readable default when omitted.
 - Medium width consumes remaining layout space after large items, small items, gaps, and padding are accounted for.
 - Small width is clamped to 40–56px. A configuration that would make content less than 40px must reduce the number of visible keylines rather than produce a thinner item.
-- `NTCarousel2Item.AspectRatio` supplies the SSR-safe ratio for `UncontainedMultiAspectRatio`. When omitted, the browser uses `1`.
+- `NTCarouselItem.AspectRatio` supplies the SSR-safe ratio for `UncontainedMultiAspectRatio`. When omitted, the browser uses `1`.
 - Resizing must preserve the active item and recompute keylines without jumping to a different logical item.
 
 ### Motion and parallax
@@ -121,7 +121,7 @@ The public default remains `true` for backward compatibility. Documentation reco
 
 ## Public component contract
 
-### `NTCarousel2`
+### `NTCarousel`
 
 Provide:
 
@@ -149,7 +149,7 @@ When `AutoPlayInterval` is set, the required control is always rendered before t
 
 Do not add previous/next buttons or indicator dots in this phase. Native panning, scrollbars hidden only visually, keyboard focus, and the external “Show all” affordance are the Material-aligned navigation model.
 
-### `NTCarousel2Item`
+### `NTCarouselItem`
 
 Provide:
 
@@ -163,29 +163,29 @@ Add:
 - `string AriaLabel`: a required content-specific item name. The browser appends “{position} of {count}” after enhancement.
 - `double? AspectRatio`: width divided by height for the multi-aspect-ratio layout; valid range is 9/16 through 16/9.
 
-Items remain in authored DOM order. `NTCarousel2` deliberately does not borrow child render fragments or register/re-render descendants; direct child rendering is required for reliable static SSR and avoids renderer recursion with several carousels on one page.
+Items remain in authored DOM order. `NTCarousel` deliberately does not borrow child render fragments or register/re-render descendants; direct child rendering is required for reliable static SSR and avoids renderer recursion with several carousels on one page.
 
 Clickable items keep the current callback but gain focus, button semantics, and Space/Enter activation. Non-clickable items remain focusable slide groups so their name and position can be announced and arrow navigation can reach them.
 
 ### Configuration validation
 
-`AriaLabel` and child content use Blazor's `[EditorRequired]` compile-time assistance. Runtime validation rejects missing or whitespace carousel/item labels, a non-positive autoplay interval, maximum large width or item height, an aspect ratio outside 9:16 through 16:9, an item outside `NTCarousel2`, and `FullScreen` with snapping disabled. This keeps dynamic values safe without introducing a separate analyzer surface for this new component.
+`AriaLabel` and child content use Blazor's `[EditorRequired]` compile-time assistance. Runtime validation rejects missing or whitespace carousel/item labels, a non-positive autoplay interval, maximum large width or item height, an aspect ratio outside 9:16 through 16:9, an item outside `NTCarousel`, and `FullScreen` with snapping disabled. This keeps dynamic values safe without introducing a separate analyzer surface for the replacement component.
 
 ## Rendered DOM and accessibility
 
 Target structure:
 
 ```html
-<nt-carousel-2 role="group" aria-roledescription="carousel" aria-label="Featured destinations" data-layout="multi-browse">
-  <button type="button" class="nt-carousel2-autoplay-control">Pause rotation</button>
-  <div class="nt-carousel2-viewport">
-    <div class="nt-carousel2-track">
-      <nt-carousel-2-item role="group" aria-roledescription="slide" aria-label="Desert retreat, 1 of 8" tabindex="0">
-        <div class="nt-carousel2-item-mask">...</div>
-      </nt-carousel-2-item>
+<nt-carousel role="group" aria-roledescription="carousel" aria-label="Featured destinations" data-layout="multi-browse">
+  <button type="button" class="nt-carousel-autoplay-control">Pause rotation</button>
+  <div class="nt-carousel-viewport">
+    <div class="nt-carousel-track">
+      <nt-carousel-item role="group" aria-roledescription="slide" aria-label="Desert retreat, 1 of 8" tabindex="0">
+        <div class="nt-carousel-item-mask">...</div>
+      </nt-carousel-item>
     </div>
   </div>
-</nt-carousel-2>
+</nt-carousel>
 ```
 
 - Default to `role="group"`. `IsLandmark="true"` uses `role="region"` only when the carousel is important enough to appear among page landmarks.
@@ -195,19 +195,19 @@ Target structure:
 - Space or Enter activates a clickable focused item. They do not synthesize activation for non-clickable items.
 - Item labels include the logical position and total count. Consumer `AriaLabel` text is combined with position, not substituted for it.
 - Focus movement scrolls the target to the appropriate layout keyline and does not focus the viewport or root.
-- If autoplay is enabled, it stops when keyboard focus enters and does not restart until explicitly requested. It pauses while hovered or dragged. Reduced-motion mode starts with autoplay paused.
+- If autoplay is enabled, it stops when keyboard focus enters and does not restart until explicitly requested. It pauses while hovered, dragged, touched, natively scrolled, or hidden. Boundary input that produces no scroll restarts one fresh interval instead of disabling rotation. Reduced-motion mode starts with autoplay paused, and both visibility loss and enabling reduced motion cancel an in-flight settlement.
 - Every autoplay instance provides a visible pause/start control. The control stays outside the scroll viewport and precedes rotating content in the tab order.
 - On vertically scrolling pages, the consumer must provide a “Show all” button or a header-adjacent 48px arrow that opens a vertically scrolling view of all items. This requires application routing/content knowledge and therefore remains outside the reusable carousel API. Documentation and LiveTest must demonstrate it.
 
 ## Browser implementation
 
-- Author `NTCarousel2.razor.ts` as the single browser source and generate `NTCarousel2.razor.js` with the existing TypeScript release pipeline. `NTCarousel2Item` has no independent layout controller.
+- Author `NTCarousel.razor.ts` as the single browser source and generate `NTCarousel.razor.js` with the existing TypeScript release pipeline. `NTCarouselItem` has no independent layout controller.
 - Keep one owning carousel controller. Item elements expose only the minimal measured/media state the controller needs; do not maintain a second independent layout loop per item.
 - Read the direct authored child item list during the page-script update lifecycle; do not register descendants or re-render their fragments from the parent.
 - Use one `ResizeObserver` for the viewport and one animation-frame scroll scheduler. Batch geometry reads before style writes.
 - Preserve authored DOM order and the active logical index across resize-driven keyline recalculation.
 - Use logical scroll calculations that normalize RTL browser behavior.
-- Use pointer capture for mouse/pen dragging. Preserve native touch scrolling and vertical page escape with appropriate `touch-action` values. Any pointer or wheel input cancels an in-flight programmatic settlement.
+- Use pointer capture for mouse/pen dragging. Preserve native touch scrolling and vertical page escape with appropriate `touch-action` values. Any pointer or wheel input cancels an in-flight programmatic settlement; native scroll events defer the next autoplay interval until settlement, while pointer release provides recovery when a boundary touch produces no scroll event.
 - Retain CSS snap points only as the pre-enhancement fallback. Once enhanced, disable CSS snap so it cannot compete with the controller's velocity-aware settlement.
 - Clean up observers, timers, animation frames, media-query listeners, pointer handlers, keyboard handlers, and autoplay handlers on disconnect/update.
 - Use the existing page-script lifecycle and asynchronous JS interop. Do not require a Blazor interactive render mode for native scrolling, semantic labels, or CSS snapping.
@@ -217,14 +217,14 @@ Target structure:
 - Replace the fixed 700px root height with a compact default block size and allow consumer `style` to override it. Full-screen uses the available content viewport block size.
 - Apply shared 28px corner-radius, 8px gap, and 8px/16px padding tokens. Full-screen removes the radius only where edge-to-edge visuals require it.
 - Select layout styles from the component's `data-layout` attribute instead of broad hero-only classes.
-- Keep overflow scrolling and scrollbar suppression on `.nt-carousel2-viewport` only.
+- Keep overflow scrolling and scrollbar suppression on `.nt-carousel-viewport` only.
 - Keep clipping on the item visual/content layer, separate from any layer that may render focus indication or elevation.
 - Use the shared interactable mixin for hover, focus, pressed, disabled, and ripple behavior. Preserve a visible focus indicator outside the clipped visual.
 - Use CSS variables only for runtime layout values calculated by the controller or documented public overrides. Compile constant measurements from shared SCSS variables.
 
 ## LiveTest and documentation
 
-Add a dedicated `/carousel2` LiveTest page with labeled sections for:
+Add a dedicated `/carousel` LiveTest page with labeled sections for:
 
 1. Multi-browse
 2. Uncontained
@@ -327,7 +327,7 @@ These are regression constraints. The Material keyline engine may change exact w
 
 ## Implementation conformance review
 
-The implemented component was reviewed in the rebuilt `/carousel2` LiveTest page at 1280×720 and 390×844:
+The implemented component was reviewed in the rebuilt `/carousel` LiveTest page at 1280×720 and 390×844:
 
 - All seven examples enhanced successfully with no browser console errors or warnings, and the document never acquired horizontal overflow.
 - Desktop multi-browse measured four 186px focal items, one 150px medium item, one 56px small item, 8px gaps, and 16px insets. Compact measured 186px, 116px, and 40px keylines.
@@ -356,7 +356,7 @@ The first direct-child implementation attempt also received a static SSR stress 
 
 The implemented contract intentionally makes these choices:
 
-1. Require a non-empty `AriaLabel` on every `NTCarousel2` and `NTCarousel2Item`, default the root role to `group`, and enforce labels with `[EditorRequired]` plus runtime validation.
+1. Require a non-empty `AriaLabel` on every `NTCarousel` and `NTCarouselItem`, default the root role to `group`, and enforce labels with `[EditorRequired]` plus runtime validation.
 2. Preserve `AutoPlayInterval` as seconds to match current runtime behavior, then make autoplay accessible instead of silently changing its unit.
 3. Add `ItemHeight`, `PreferredItemWidth`, `MaxLargeItemWidth`, and item `AspectRatio` as layout inputs; keep exact medium/small sizing internal so the component maintains a valid Material layout.
 4. Keep the original `NTCarousel` untouched and give the new implementation its own component, item, styles, TypeScript controller, generated JavaScript, tests, and LiveTest route.

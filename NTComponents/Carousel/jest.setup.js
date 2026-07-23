@@ -1,9 +1,3 @@
-// Jest setup for TnT Carousel components
-// Mock NTComponents global
-global.NTComponents = {
-  customAttribute: 'tntid'
-};
-
 // Mock PointerEvent if not available in test environment
 if (!global.PointerEvent) {
   global.PointerEvent = class PointerEvent extends Event {

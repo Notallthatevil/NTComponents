@@ -1,6 +1,5 @@
 @use '../Styles/_Variables/_colors.scss' as colors;
 @use '../Styles/_Variables/_corner-radius.scss' as corners;
-@use '../Styles/_Variables/_motion.scss' as motion;
 @use '../Styles/_Variables/_typescale.scss' as typescale;
 
 .nt-carousel {
@@ -73,7 +72,6 @@
 
         .nt-carousel-viewport.nt-carousel-dragging {
             cursor: grabbing;
-            scroll-snap-type: none;
             user-select: none;
         }
 
@@ -125,15 +123,6 @@
         scroll-snap-align: center;
     }
 
-    &[data-reduced-motion='true'] {
-        .nt-carousel-viewport {
-            scroll-behavior: auto;
-        }
-
-        ::deep nt-carousel-item {
-            transition: none;
-        }
-    }
 }
 
 @media (prefers-reduced-motion: reduce) {

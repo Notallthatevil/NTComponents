@@ -55,7 +55,6 @@ public partial class NTCarouselItem {
     /// <inheritdoc />
     public override string? ElementStyle => CssStyleBuilder.Create()
         .AddFromAdditionalAttributes(AdditionalAttributes)
-        .AddVariable("nt-carousel-item-aspect-ratio", AspectRatio?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "1")
         .Build();
 
     /// <summary>

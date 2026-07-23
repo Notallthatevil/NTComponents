@@ -54,7 +54,6 @@ describe('NTCarousel', () => {
     for (let index = 0; index < count; index++) {
       const item = document.createElement('nt-carousel-item');
       item.dataset.carouselItem = '';
-      item.dataset.index = String(index);
       item.dataset.clickable = index === 0 ? 'true' : 'false';
       item.dataset.disabled = 'false';
       if (aspectRatios[index] != null) item.dataset.aspectRatio = String(aspectRatios[index]);
@@ -111,7 +110,6 @@ describe('NTCarousel', () => {
     expect(widths[1]).toBeGreaterThan(widths[2]);
     expect(widths[2]).toBeGreaterThanOrEqual(40);
     expect(widths[2]).toBeLessThanOrEqual(56);
-    expect(items[2].dataset.visualSize).toBe('small');
   });
 
   test('interpolates masks continuously while native scroll changes', () => {
@@ -136,7 +134,10 @@ describe('NTCarousel', () => {
 
     viewport.scrollLeft = carousel.snapPositions.at(-2);
     carousel.renderItems();
-    expect(items.slice(-3).map(item => item.dataset.visualSize)).toEqual(['small', 'large', 'medium']);
+    const penultimateWidths = items.slice(-3).map(maskWidth);
+    expect(penultimateWidths[0]).toBeCloseTo(small);
+    expect(penultimateWidths[1]).toBeCloseTo(large);
+    expect(penultimateWidths[2]).toBeCloseTo(medium);
 
     viewport.scrollLeft = carousel.maxScroll;
     carousel.renderItems();
@@ -185,14 +186,20 @@ describe('NTCarousel', () => {
 
   test('expanded multi-browse shifts one trailing keyline at a time around multiple focal items', () => {
     const { carousel, items, viewport } = createCarousel({ width: 1022 });
+    const classifyWidths = () => {
+      const widths = items.map(maskWidth);
+      const smallest = Math.min(...widths);
+      const largest = Math.max(...widths);
+      return widths.map(width => width <= smallest + 2 ? 'small' : width >= largest - 2 ? 'large' : 'medium');
+    };
 
-    expect(items.map(item => item.dataset.visualSize)).toEqual(['large', 'large', 'large', 'large', 'medium', 'small']);
+    expect(classifyWidths()).toEqual(['large', 'large', 'large', 'large', 'medium', 'small']);
     viewport.scrollLeft = carousel.snapPositions.at(-2);
     carousel.renderItems();
-    expect(items.map(item => item.dataset.visualSize)).toEqual(['small', 'large', 'large', 'large', 'large', 'medium']);
+    expect(classifyWidths()).toEqual(['small', 'large', 'large', 'large', 'large', 'medium']);
     viewport.scrollLeft = carousel.snapPositions.at(-1);
     carousel.renderItems();
-    expect(items.map(item => item.dataset.visualSize)).toEqual(['small', 'medium', 'large', 'large', 'large', 'large']);
+    expect(classifyWidths()).toEqual(['small', 'medium', 'large', 'large', 'large', 'large']);
   });
 
   test('programmatic snapping animates unless reduced motion is requested and touch input cancels it', () => {
@@ -204,7 +211,7 @@ describe('NTCarousel', () => {
     const { carousel, viewport } = createCarousel();
     const framesBeforeSnap = frames.length;
 
-    carousel.goToIndex(1, false);
+    carousel.animateToIndex(1, false);
     expect(viewport.scrollLeft).toBe(0);
     expect(frames).toHaveLength(framesBeforeSnap + 1);
     viewport.dispatchEvent(new PointerEvent('pointerdown', { pointerId: 12, pointerType: 'touch' }));
@@ -213,7 +220,7 @@ describe('NTCarousel', () => {
 
     mediaQuery.matches = true;
     const reduced = createCarousel();
-    reduced.carousel.goToIndex(1, false);
+    reduced.carousel.animateToIndex(1, false);
     expect(reduced.viewport.scrollLeft).toBe(reduced.carousel.snapPositions[1]);
   });
 
@@ -268,7 +275,6 @@ describe('NTCarousel', () => {
     mediaQuery.matches = true;
     const { carousel, items } = createCarousel();
 
-    expect(carousel.dataset.reducedMotion).toBe('true');
     expect(maskWidth(items[0])).toBeCloseTo(maskWidth(items[1]));
     expect(items[0].style.getPropertyValue('--nt-carousel-parallax-x')).toBe('0px');
     expect(Number.parseFloat(items[0].style.transform.match(/translate3d\(([-\d.]+)/)[1])).toBe(0);
@@ -338,7 +344,6 @@ describe('NTCarousel', () => {
     const widths = items.slice(0, 3).map(item => Number.parseFloat(item.style.inlineSize));
     expect(widths[0]).toBeLessThan(widths[1]);
     expect(widths[1]).toBeLessThan(widths[2]);
-    expect(items[0].dataset.visualSize).toBe('large');
   });
 
   test('full-screen layout scrolls vertically with edge-to-edge items', () => {

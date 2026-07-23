@@ -14,8 +14,6 @@ namespace NTComponents;
     CompatibilityDetails = "Static SSR emits ordered slides, labels, and a usable overflow surface. Dynamic keyline sizing, parallax, momentum, autoplay, and index synchronization require the browser module.")]
 public partial class NTCarousel {
 
-    private bool _autoPlayPaused;
-
     /// <summary>
     ///     Gets or sets whether mouse and pen dragging can scroll the carousel. Touch scrolling remains native.
     /// </summary>
@@ -105,7 +103,6 @@ public partial class NTCarousel {
     [Parameter]
     public int PreferredItemWidth { get; set; } = 186;
 
-    private string AutoPlayControlText => _autoPlayPaused ? "Start rotation" : "Pause rotation";
     private string LayoutName => Appearance switch {
         CarouselAppearance.MultiBrowse => "multi-browse",
         CarouselAppearance.Uncontained => "uncontained",
@@ -122,19 +119,6 @@ public partial class NTCarousel {
     /// </summary>
     [JSInvokable]
     public Task NotifyIndexChangedAsync(int index) => OnIndexChanged.InvokeAsync(index);
-
-    /// <summary>
-    ///     Synchronizes the visible autoplay control with browser pause state.
-    /// </summary>
-    [JSInvokable]
-    public Task NotifyAutoPlayPausedChangedAsync(bool paused) {
-        if (_autoPlayPaused == paused) {
-            return Task.CompletedTask;
-        }
-
-        _autoPlayPaused = paused;
-        return InvokeAsync(StateHasChanged);
-    }
 
     /// <inheritdoc />
     protected override void OnParametersSet() {

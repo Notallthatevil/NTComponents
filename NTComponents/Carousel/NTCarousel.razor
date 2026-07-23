@@ -1,5 +1,4 @@
 @using System.Globalization
-@using Microsoft.AspNetCore.Components.Rendering
 @using NTComponents.Core
 @namespace NTComponents
 @inherits NTPageScriptComponent<NTCarousel>
@@ -19,8 +18,8 @@
                    data-preferred-item-width="@PreferredItemWidth.ToString(CultureInfo.InvariantCulture)"
                    @ref="Element">
         @if (AutoPlayInterval.HasValue) {
-            <button type="button" class="nt-carousel-autoplay-control" data-autoplay-control aria-label="@AutoPlayControlText">
-                @AutoPlayControlText
+            <button type="button" class="nt-carousel-autoplay-control" data-autoplay-control aria-label="Pause rotation">
+                Pause rotation
             </button>
         }
         <div class="nt-carousel-viewport" data-carousel-viewport aria-live="off">

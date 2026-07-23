@@ -15,7 +15,7 @@ public class NTCarousel_Tests : BunitContext {
 
     [Fact, Trait("Component", "Carousel")]
     public void Renders_Accessible_Carousel_And_Slide_Semantics() {
-        var cut = RenderCarousel(BuildItems((2, "Second", null), (1, "First", null)));
+        var cut = RenderCarousel(BuildItems(("Second", null), ("First", null)));
 
         var root = cut.Find("nt-carousel");
         root.GetAttribute("role").Should().Be("group");
@@ -37,7 +37,7 @@ public class NTCarousel_Tests : BunitContext {
     [InlineData(CarouselAppearance.CenterAlignedHero, "center-aligned-hero")]
     [InlineData(CarouselAppearance.FullScreen, "full-screen")]
     public void Renders_Every_Material_Layout(CarouselAppearance appearance, string expectedLayout) {
-        var cut = RenderCarousel(BuildItems((0, "One", null)), appearance);
+        var cut = RenderCarousel(BuildItems(("One", null)), appearance);
 
         cut.Find("nt-carousel").GetAttribute("data-layout").Should().Be(expectedLayout);
     }
@@ -47,7 +47,7 @@ public class NTCarousel_Tests : BunitContext {
         var cut = Render<NTCarousel>(parameters => parameters
             .Add(component => component.AriaLabel, "Highlights")
             .Add(component => component.IsLandmark, true)
-            .AddChildContent(BuildItems((0, "One", null))));
+            .AddChildContent(BuildItems(("One", null))));
 
         cut.Find("nt-carousel").GetAttribute("role").Should().Be("region");
     }
@@ -57,7 +57,7 @@ public class NTCarousel_Tests : BunitContext {
         var cut = Render<NTCarousel>(parameters => parameters
             .Add(component => component.AriaLabel, "Highlights")
             .Add(component => component.AutoPlayInterval, 4.5)
-            .AddChildContent(BuildItems((0, "One", null), (1, "Two", null))));
+            .AddChildContent(BuildItems(("One", null), ("Two", null))));
 
         var root = cut.Find("nt-carousel");
         root.GetAttribute("data-auto-play-interval").Should().Be("4.5");
@@ -108,7 +108,7 @@ public class NTCarousel_Tests : BunitContext {
 
     [Fact, Trait("Component", "Carousel")]
     public void Does_Not_Render_Embedded_Navigation_Controls() {
-        var cut = RenderCarousel(BuildItems((0, "One", null), (1, "Two", null)));
+        var cut = RenderCarousel(BuildItems(("One", null), ("Two", null)));
 
         cut.FindAll("[data-previous], [data-next], .nt-carousel-indicator").Should().BeEmpty();
     }
@@ -118,7 +118,7 @@ public class NTCarousel_Tests : BunitContext {
         var cut = Render<NTCarousel>(parameters => parameters
             .Add(component => component.AriaLabel, "Highlights")
             .Add(component => component.PreferredItemWidth, 224)
-            .AddChildContent(BuildItems((0, "One", null))));
+            .AddChildContent(BuildItems(("One", null))));
 
         cut.Find("nt-carousel").GetAttribute("data-preferred-item-width").Should().Be("224");
     }
@@ -128,7 +128,7 @@ public class NTCarousel_Tests : BunitContext {
         Action render = () => Render<NTCarousel>(parameters => parameters
             .Add(component => component.AriaLabel, "Invalid")
             .Add(component => component.PreferredItemWidth, 0)
-            .AddChildContent(BuildItems((0, "One", null))));
+            .AddChildContent(BuildItems(("One", null))));
 
         render.Should().Throw<ArgumentOutOfRangeException>();
     }
@@ -143,7 +143,7 @@ public class NTCarousel_Tests : BunitContext {
             .Add(component => component.AutoPlayInterval, autoPlayInterval)
             .Add(component => component.MaxLargeItemWidth, maxLargeItemWidth)
             .Add(component => component.ItemHeight, itemHeight)
-            .AddChildContent(BuildItems((0, "One", null))));
+            .AddChildContent(BuildItems(("One", null))));
 
         render.Should().Throw<ArgumentOutOfRangeException>();
     }
@@ -154,13 +154,13 @@ public class NTCarousel_Tests : BunitContext {
             .Add(component => component.AriaLabel, "Full screen")
             .Add(component => component.Appearance, CarouselAppearance.FullScreen)
             .Add(component => component.EnableSnapping, false)
-            .AddChildContent(BuildItems((0, "One", null))));
+            .AddChildContent(BuildItems(("One", null))));
 
         render.Should().Throw<InvalidOperationException>().WithMessage("*requires snapping*");
     }
 
-    private RenderFragment BuildItems(params (int order, string text, double? aspectRatio)[] items) => builder => {
-        foreach (var (order, text, aspectRatio) in items) {
+    private RenderFragment BuildItems(params (string text, double? aspectRatio)[] items) => builder => {
+        foreach (var (text, aspectRatio) in items) {
             builder.OpenComponent<NTCarouselItem>(0);
             builder.AddAttribute(1, nameof(NTCarouselItem.AriaLabel), text);
             builder.AddAttribute(2, nameof(NTCarouselItem.AspectRatio), aspectRatio);

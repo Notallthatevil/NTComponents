@@ -3,7 +3,6 @@ type LayoutName = 'multi-browse' | 'uncontained' | 'uncontained-multi-aspect-rat
 
 interface DotNetCarouselRef {
     invokeMethodAsync(methodName: 'NotifyIndexChangedAsync', index: number): Promise<unknown> | void
-    invokeMethodAsync(methodName: 'NotifyAutoPlayPausedChangedAsync', paused: boolean): Promise<unknown> | void
 }
 
 interface ItemGeometry {
@@ -42,7 +41,7 @@ interface DragState {
 
 interface TransferredInteractionState {
     readonly activeIndex: number
-    readonly dragState: DragState | null
+    readonly dragState: DragState
     readonly expiresAt: number
     readonly itemCount: number
     readonly logicalScroll: number
@@ -127,17 +126,12 @@ export class NTCarouselElement extends HTMLElement {
     private restoreInteractionFrame: number | null = null
     private scrollEndTimer: number | null = null
     private scrollFrame: number | null = null
-    private showAutoPlayControl: HTMLButtonElement | null = null
+    private autoPlayControl: HTMLButtonElement | null = null
     private snapEnabled = true
-    private snapMarkers: HTMLElement[] = []
     private snapPositions: number[] = []
     private suppressNextClick = false
     private track: HTMLElement | null = null
     private viewport: HTMLElement | null = null
-
-    private readonly onAutoPlayControlClick = (): void => {
-        this.setAutoPlayPaused(!this.autoPlayUserPaused)
-    }
 
     private readonly onClickCapture = (event: MouseEvent): void => {
         if (this.suppressNextClick) {
@@ -147,6 +141,10 @@ export class NTCarouselElement extends HTMLElement {
             return
         }
 
+        const control = (event.target as Element | null)?.closest('[data-autoplay-control]')
+        if (control && control === this.autoPlayControl) {
+            this.setAutoPlayPaused(!this.autoPlayUserPaused)
+        }
     }
 
     private readonly onFocusIn = (event: FocusEvent): void => {
@@ -206,7 +204,8 @@ export class NTCarouselElement extends HTMLElement {
         }
 
         event.preventDefault()
-        this.goToIndex(clamp(targetIndex, 0, this.items.length - 1), true)
+        this.clearAutoPlayTimer()
+        this.animateToIndex(clamp(targetIndex, 0, this.items.length - 1), true)
     }
 
     private readonly onPointerDown = (event: PointerEvent): void => {
@@ -306,13 +305,18 @@ export class NTCarouselElement extends HTMLElement {
         if (this.reducedMotion) {
             this.setAutoPlayPaused(true)
         }
-        this.layoutCarousel(true)
+        this.layoutCarousel()
     }
 
     private readonly onScroll = (): void => {
         this.getLogicalScroll()
         this.clearAutoPlayTimer()
-        this.scheduleRender()
+        if (this.animationFrame == null) {
+            this.scheduleRender()
+        }
+        if (!this.viewport || 'onscrollend' in this.viewport) {
+            return
+        }
         if (this.scrollEndTimer != null) {
             window.clearTimeout(this.scrollEndTimer)
         }
@@ -379,7 +383,6 @@ export class NTCarouselElement extends HTMLElement {
         this.removeEventListener('keydown', this.onKeyDown)
         this.removeEventListener('pointerenter', this.onPointerEnter)
         this.removeEventListener('pointerleave', this.onPointerLeave)
-        this.showAutoPlayControl?.removeEventListener('click', this.onAutoPlayControlClick)
         this.viewport?.removeEventListener('pointerdown', this.onPointerDown)
         this.viewport?.removeEventListener('pointermove', this.onPointerMove)
         this.viewport?.removeEventListener('pointerup', this.onPointerUp)
@@ -432,7 +435,7 @@ export class NTCarouselElement extends HTMLElement {
 
         this.activeIndex = clamp(this.activeIndex, 0, Math.max(0, this.items.length - 1))
         this.lastNotifiedIndex = clamp(this.lastNotifiedIndex, 0, Math.max(0, this.items.length - 1))
-        this.layoutCarousel(true)
+        this.layoutCarousel()
         if (replacedInteraction) {
             this.applyTransferredInteraction(replacedInteraction)
         }
@@ -471,10 +474,9 @@ export class NTCarouselElement extends HTMLElement {
         this.viewport.addEventListener('scroll', this.onScroll, { passive: true })
         this.viewport.addEventListener('scrollend', this.onScrollEnd)
         this.viewport.addEventListener('wheel', this.onWheel, { passive: true })
-        this.showAutoPlayControl?.addEventListener('click', this.onAutoPlayControlClick)
         this.reducedMotionQuery.addEventListener('change', this.onReducedMotionChange)
         document.addEventListener('visibilitychange', this.onVisibilityChange)
-        this.resizeObserver = new ResizeObserver(() => this.layoutCarousel(true))
+        this.resizeObserver = new ResizeObserver(() => this.layoutCarousel())
         this.resizeObserver.observe(this.viewport)
     }
 
@@ -653,42 +655,6 @@ export class NTCarouselElement extends HTMLElement {
         return best ?? { large: available - 96, largeCount: 1, medium: 48, small: 40 }
     }
 
-    private createSnapMarkers(vertical: boolean): void {
-        if (!this.track) {
-            return
-        }
-
-        for (const marker of this.snapMarkers) {
-            marker.remove()
-        }
-        this.snapMarkers = []
-        if (!this.snapEnabled) {
-            return
-        }
-
-        for (const logicalPosition of this.snapPositions) {
-            const marker = document.createElement('span')
-            marker.className = 'nt-carousel-snap-point'
-            marker.ariaHidden = 'true'
-            marker.style.position = 'absolute'
-            marker.style.pointerEvents = 'none'
-            marker.style.scrollSnapAlign = 'start'
-            marker.style.inlineSize = '1px'
-            marker.style.blockSize = '1px'
-            if (vertical) {
-                marker.style.insetBlockStart = `${logicalPosition}px`
-                marker.style.insetInlineStart = '0'
-            }
-            else {
-                const physicalPosition = this.isRtl ? this.maxScroll - logicalPosition : logicalPosition
-                marker.style.insetInlineStart = `${physicalPosition}px`
-                marker.style.insetBlockStart = '0'
-            }
-            this.track.appendChild(marker)
-            this.snapMarkers.push(marker)
-        }
-    }
-
     private findNearestIndex(scroll: number): number {
         if (this.snapPositions.length === 0) {
             return 0
@@ -772,11 +738,6 @@ export class NTCarouselElement extends HTMLElement {
         return logical
     }
 
-    private goToIndex(index: number, focus: boolean): void {
-        this.clearAutoPlayTimer()
-        this.animateToIndex(index, focus)
-    }
-
     private handleScrollEnd(): void {
         if (this.scrollEndTimer != null) {
             window.clearTimeout(this.scrollEndTimer)
@@ -795,16 +756,15 @@ export class NTCarouselElement extends HTMLElement {
         }
     }
 
-    private layoutCarousel(preserveActive: boolean): void {
+    private layoutCarousel(): void {
         if (!this.viewport || !this.track || this.items.length === 0) {
             return
         }
 
-        const active = preserveActive ? this.activeIndex : 0
+        const active = this.activeIndex
         const dragScroll = this.dragState ? this.lastLogicalScroll : null
         this.isRtl = getComputedStyle(this).direction === 'rtl'
         this.setAttribute('data-enhanced', 'true')
-        this.setAttribute('data-reduced-motion', this.reducedMotion ? 'true' : 'false')
         if (this.layout === 'full-screen') {
             this.layoutFullScreen()
         }
@@ -815,7 +775,6 @@ export class NTCarouselElement extends HTMLElement {
             this.layoutContained()
         }
 
-        this.createSnapMarkers(this.layout === 'full-screen')
         this.setLogicalScroll(dragScroll ?? this.snapPositions[clamp(active, 0, this.snapPositions.length - 1)] ?? 0)
         this.updateTabStops(active)
         this.renderItems()
@@ -827,6 +786,7 @@ export class NTCarouselElement extends HTMLElement {
         }
 
         const width = this.viewport.clientWidth
+        const height = Math.max(40, this.viewport.clientHeight - (verticalPadding * 2))
         this.containedLayout = this.createContainedLayout(width)
         const visibleKeylines = this.containedLayout.maximumKeyline - this.containedLayout.minimumKeyline + 1
         if (!this.reducedMotion && this.layout === 'multi-browse') {
@@ -852,6 +812,12 @@ export class NTCarouselElement extends HTMLElement {
         this.track.style.minBlockSize = '0'
         this.itemPositions = []
         this.itemSizes = []
+        for (const item of this.items) {
+            item.style.inlineSize = `${this.containedLayout.largestSize}px`
+            item.style.blockSize = `${height}px`
+            item.style.setProperty('--nt-carousel-item-width', `${this.containedLayout.largestSize}px`)
+            item.style.setProperty('--nt-carousel-media-width', `${this.containedLayout.largestSize + (parallaxDistance * 2)}px`)
+        }
     }
 
     private layoutFullScreen(): void {
@@ -869,6 +835,17 @@ export class NTCarouselElement extends HTMLElement {
         this.track.style.inlineSize = `${width}px`
         this.track.style.blockSize = `${this.maxScroll + height}px`
         this.track.style.minBlockSize = '0'
+        for (let index = 0; index < this.items.length; index++) {
+            const item = this.items[index]
+            item.style.inlineSize = `${width}px`
+            item.style.blockSize = `${height}px`
+            item.style.transform = `translate3d(0, ${this.itemPositions[index]}px, 0)`
+            item.style.removeProperty('--nt-carousel-item-width')
+            item.style.removeProperty('--nt-carousel-mask-offset')
+            item.style.removeProperty('--nt-carousel-mask-width')
+            item.style.removeProperty('--nt-carousel-media-width')
+            item.style.setProperty('--nt-carousel-parallax-x', '0px')
+        }
     }
 
     private layoutUncontained(): void {
@@ -900,6 +877,21 @@ export class NTCarouselElement extends HTMLElement {
         this.track.style.inlineSize = `${trackWidth}px`
         this.track.style.blockSize = '100%'
         this.track.style.minBlockSize = '0'
+        for (let index = 0; index < this.items.length; index++) {
+            const item = this.items[index]
+            const size = this.itemSizes[index]
+            const physicalStart = this.isRtl ? trackWidth - this.itemPositions[index] - size : this.itemPositions[index]
+            item.style.visibility = 'visible'
+            item.removeAttribute('aria-hidden')
+            item.style.inlineSize = `${size}px`
+            item.style.blockSize = `${height}px`
+            item.style.transform = `translate3d(${physicalStart}px, 0, 0)`
+            item.style.removeProperty('--nt-carousel-item-width')
+            item.style.removeProperty('--nt-carousel-mask-offset')
+            item.style.removeProperty('--nt-carousel-mask-width')
+            item.style.setProperty('--nt-carousel-media-width', `${size + (parallaxDistance * 2)}px`)
+            item.style.setProperty('--nt-carousel-parallax-y', '0px')
+        }
     }
 
     private readLayout(): LayoutName {
@@ -974,7 +966,7 @@ export class NTCarouselElement extends HTMLElement {
 
         return {
             activeIndex: this.activeIndex,
-            dragState: this.dragState ? { ...this.dragState } : null,
+            dragState: { ...this.dragState },
             expiresAt: performance.now() + interactionTransferLifetime,
             itemCount: this.items.length,
             logicalScroll: this.lastLogicalScroll
@@ -991,15 +983,13 @@ export class NTCarouselElement extends HTMLElement {
         this.setLogicalScroll(state.logicalScroll)
         this.dragState = state.dragState
         this.updateTabStops(this.activeIndex)
-        if (this.dragState) {
-            this.viewport.classList.add('nt-carousel-dragging')
-            this.clearAutoPlayTimer()
-            try {
-                this.viewport.setPointerCapture(this.dragState.pointerId)
-            }
-            catch {
-                // The next pointer move can continue without capture while the pointer remains over the replacement viewport.
-            }
+        this.viewport.classList.add('nt-carousel-dragging')
+        this.clearAutoPlayTimer()
+        try {
+            this.viewport.setPointerCapture(this.dragState.pointerId)
+        }
+        catch {
+            // The next pointer move can continue without capture while the pointer remains over the replacement viewport.
         }
         this.renderItems()
     }
@@ -1010,8 +1000,8 @@ export class NTCarouselElement extends HTMLElement {
         }
 
         const width = this.viewport.clientWidth
-        const height = Math.max(40, this.viewport.clientHeight - (verticalPadding * 2))
         const scroll = this.getLogicalScroll()
+        const physicalScroll = this.isRtl ? this.maxScroll - scroll : scroll
         let lowerState = this.reducedMotion ? this.findNearestIndex(scroll) : 0
         if (!this.reducedMotion) {
             for (let index = 1; index < this.snapPositions.length && this.snapPositions[index] <= scroll; index++) {
@@ -1043,14 +1033,10 @@ export class NTCarouselElement extends HTMLElement {
             else {
                 item.setAttribute('aria-hidden', 'true')
             }
-            item.style.inlineSize = `${this.containedLayout.largestSize}px`
-            item.style.blockSize = `${height}px`
-            item.style.transform = visible ? `translate3d(${this.getPhysicalScroll() + physicalHostStart}px, 0, 0)` : 'translate3d(0, 0, 0)'
-            item.style.setProperty('--nt-carousel-item-width', `${this.containedLayout.largestSize}px`)
+            item.style.transform = visible ? `translate3d(${physicalScroll + physicalHostStart}px, 0, 0)` : 'translate3d(0, 0, 0)'
             item.style.setProperty('--nt-carousel-mask-offset', `${maskOffset}px`)
             item.style.setProperty('--nt-carousel-mask-width', `${geometry.size}px`)
-            item.style.setProperty('--nt-carousel-media-width', `${this.containedLayout.largestSize + (parallaxDistance * 2)}px`)
-            this.updateVisualState(item, physicalStart, geometry.size, width, this.containedLayout)
+            this.updateParallax(item, physicalStart, geometry.size, width)
         }
     }
 
@@ -1137,7 +1123,6 @@ export class NTCarouselElement extends HTMLElement {
             return
         }
 
-        const width = this.viewport.clientWidth
         const height = this.viewport.clientHeight
         const scroll = this.getLogicalScroll()
         for (let index = 0; index < this.items.length; index++) {
@@ -1152,16 +1137,7 @@ export class NTCarouselElement extends HTMLElement {
             else {
                 item.setAttribute('aria-hidden', 'true')
             }
-            item.style.inlineSize = `${width}px`
-            item.style.blockSize = `${height}px`
-            item.style.transform = visible ? `translate3d(0, ${start}px, 0)` : 'translate3d(0, 0, 0)'
-            item.style.removeProperty('--nt-carousel-item-width')
-            item.style.removeProperty('--nt-carousel-mask-offset')
-            item.style.removeProperty('--nt-carousel-mask-width')
-            item.style.removeProperty('--nt-carousel-media-width')
-            item.dataset.visualSize = 'large'
             const normalized = clamp(((screenStart + (height / 2)) / height - 0.5) * 2, -1, 1)
-            item.style.setProperty('--nt-carousel-parallax-x', '0px')
             item.style.setProperty('--nt-carousel-parallax-y', this.reducedMotion ? '0px' : `${-normalized * parallaxDistance}px`)
         }
     }
@@ -1184,29 +1160,15 @@ export class NTCarouselElement extends HTMLElement {
         }
 
         const width = this.viewport.clientWidth
-        const height = Math.max(40, this.viewport.clientHeight - (verticalPadding * 2))
-        const trackWidth = Number.parseFloat(this.track.style.inlineSize) || width
         const scroll = this.getLogicalScroll()
         for (let index = 0; index < this.items.length; index++) {
             const item = this.items[index]
             const logicalStart = this.itemPositions[index]
             const size = this.itemSizes[index]
-            const physicalStart = this.isRtl ? trackWidth - logicalStart - size : logicalStart
             const screenStart = logicalStart - scroll
             const physicalScreenStart = this.isRtl ? width - screenStart - size : screenStart
-            item.style.visibility = 'visible'
-            item.removeAttribute('aria-hidden')
-            item.style.inlineSize = `${size}px`
-            item.style.blockSize = `${height}px`
-            item.style.transform = `translate3d(${physicalStart}px, 0, 0)`
-            item.style.removeProperty('--nt-carousel-item-width')
-            item.style.removeProperty('--nt-carousel-mask-offset')
-            item.style.removeProperty('--nt-carousel-mask-width')
-            item.style.setProperty('--nt-carousel-media-width', `${size + (parallaxDistance * 2)}px`)
-            item.dataset.visualSize = size <= 56 ? 'small' : 'large'
             const normalized = clamp(((physicalScreenStart + (size / 2)) / width - 0.5) * 2, -1, 1)
             item.style.setProperty('--nt-carousel-parallax-x', this.reducedMotion ? '0px' : `${-normalized * parallaxDistance}px`)
-            item.style.setProperty('--nt-carousel-parallax-y', '0px')
         }
     }
 
@@ -1260,11 +1222,6 @@ export class NTCarouselElement extends HTMLElement {
             this.scheduleAutoPlay()
         }
 
-        if (isDotNetReference(this.dotNetRef)) {
-            Promise.resolve(this.dotNetRef.invokeMethodAsync('NotifyAutoPlayPausedChangedAsync', paused)).catch(() => {
-                // Ignore late interop failures after a circuit or page disconnects.
-            })
-        }
     }
 
     private setLogicalScroll(value: number): void {
@@ -1282,22 +1239,9 @@ export class NTCarouselElement extends HTMLElement {
         }
     }
 
-    private getPhysicalScroll(): number {
-        if (!this.viewport || this.layout === 'full-screen') {
-            return 0
-        }
-        return this.viewport.scrollLeft
-    }
-
     private updateAutoPlayControl(): void {
         const control = this.querySelector<HTMLButtonElement>(':scope > [data-autoplay-control]')
-        if (control !== this.showAutoPlayControl) {
-            this.showAutoPlayControl?.removeEventListener('click', this.onAutoPlayControlClick)
-            this.showAutoPlayControl = control
-            if (this.initialized) {
-                this.showAutoPlayControl?.addEventListener('click', this.onAutoPlayControlClick)
-            }
-        }
+        this.autoPlayControl = control
         if (this.reducedMotion && !this.autoPlayUserPaused) {
             this.autoPlayUserPaused = true
         }
@@ -1305,12 +1249,12 @@ export class NTCarouselElement extends HTMLElement {
     }
 
     private updateAutoPlayControlText(): void {
-        if (!this.showAutoPlayControl) {
+        if (!this.autoPlayControl) {
             return
         }
         const text = this.autoPlayUserPaused ? 'Start rotation' : 'Pause rotation'
-        this.showAutoPlayControl.textContent = text
-        this.showAutoPlayControl.setAttribute('aria-label', text)
+        this.autoPlayControl.textContent = text
+        this.autoPlayControl.setAttribute('aria-label', text)
     }
 
     private updateTabStops(activeIndex: number): void {
@@ -1324,14 +1268,11 @@ export class NTCarouselElement extends HTMLElement {
         for (let index = 0; index < count; index++) {
             const item = this.items[index]
             const baseLabel = item.dataset.carouselAriaLabel ?? item.getAttribute('aria-label') ?? 'Item'
-            item.dataset.carouselAriaLabel = baseLabel
-            item.dataset.index = String(index)
             item.setAttribute('aria-label', `${baseLabel}, ${index + 1} of ${count}`)
         }
     }
 
-    private updateVisualState(item: HTMLElement, physicalStart: number, size: number, width: number, layout: ContainedLayout): void {
-        item.dataset.visualSize = size <= layout.smallSize + 2 ? 'small' : size >= layout.largestSize - 2 ? 'large' : 'medium'
+    private updateParallax(item: HTMLElement, physicalStart: number, size: number, width: number): void {
         const normalized = clamp(((physicalStart + (size / 2)) / width - 0.5) * 2, -1, 1)
         item.style.setProperty('--nt-carousel-parallax-x', this.reducedMotion ? '0px' : `${-normalized * parallaxDistance}px`)
         item.style.setProperty('--nt-carousel-parallax-y', '0px')

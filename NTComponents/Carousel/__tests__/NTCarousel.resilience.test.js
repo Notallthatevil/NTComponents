@@ -85,7 +85,6 @@ describe('NTCarousel autoplay resilience', () => {
     for (let index = 0; index < count; index++) {
       const item = document.createElement('nt-carousel-item');
       item.dataset.carouselItem = '';
-      item.dataset.index = String(index);
       item.dataset.clickable = 'false';
       item.dataset.disabled = 'false';
       item.tabIndex = index === 0 ? 0 : -1;
@@ -109,6 +108,17 @@ describe('NTCarousel autoplay resilience', () => {
     for (const listener of [...reducedMotionListeners]) listener({ matches, media: mediaQuery });
   }
 
+  test('nested autoplay controls toggle only their owning carousel', () => {
+    const outer = createCarousel();
+    const inner = createCarousel();
+    outer.items[0].appendChild(inner.carousel);
+
+    inner.control.click();
+
+    expect(inner.control.textContent).toBe('Start rotation');
+    expect(outer.control.textContent).toBe('Pause rotation');
+  });
+
   test('hover pauses the pending interval and pointer leave resumes with one fresh interval', () => {
     installAnimationFrameQueue();
     const { carousel } = createCarousel();
@@ -130,7 +140,7 @@ describe('NTCarousel autoplay resilience', () => {
 
   test('focus pause survives hover and visibility recovery until the user explicitly restarts rotation', async () => {
     installAnimationFrameQueue();
-    const { carousel, control, dotNetRef, items } = createCarousel();
+    const { carousel, control, items } = createCarousel();
     const animateToIndex = jest.spyOn(carousel, 'animateToIndex').mockImplementation(() => {});
 
     items[0].focus();
@@ -143,14 +153,12 @@ describe('NTCarousel autoplay resilience', () => {
 
     expect(animateToIndex).not.toHaveBeenCalled();
     expect(control.textContent).toBe('Start rotation');
-    expect(dotNetRef.invokeMethodAsync).toHaveBeenCalledWith('NotifyAutoPlayPausedChangedAsync', true);
 
     control.click();
     await Promise.resolve();
     expect(control.textContent).toBe('Pause rotation');
     jest.advanceTimersByTime(1000);
     expect(animateToIndex).toHaveBeenCalledTimes(1);
-    expect(dotNetRef.invokeMethodAsync).toHaveBeenCalledWith('NotifyAutoPlayPausedChangedAsync', false);
   });
 
   test('mouse drag suppresses autoplay until pointer release settles, then schedules the next interval', () => {
