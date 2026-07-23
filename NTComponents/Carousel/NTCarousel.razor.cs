@@ -128,8 +128,8 @@ public partial class NTCarousel {
             throw new InvalidOperationException($"{nameof(AriaLabel)} is required for {nameof(NTCarousel)}.");
         }
 
-        if (AutoPlayInterval is <= 0) {
-            throw new ArgumentOutOfRangeException(nameof(AutoPlayInterval), AutoPlayInterval, "Autoplay must be greater than zero seconds.");
+        if (AutoPlayInterval is { } autoPlayInterval && (!double.IsFinite(autoPlayInterval) || autoPlayInterval <= 0)) {
+            throw new ArgumentOutOfRangeException(nameof(AutoPlayInterval), AutoPlayInterval, "Autoplay must be a finite value greater than zero seconds.");
         }
 
         if (MaxLargeItemWidth is <= 0) {
@@ -142,6 +142,10 @@ public partial class NTCarousel {
 
         if (ItemHeight <= 0) {
             throw new ArgumentOutOfRangeException(nameof(ItemHeight), ItemHeight, "The item height must be greater than zero.");
+        }
+
+        if (!Enum.IsDefined(Appearance)) {
+            throw new ArgumentOutOfRangeException(nameof(Appearance), Appearance, "The carousel appearance must be a defined value.");
         }
 
         if (Appearance == CarouselAppearance.FullScreen && !EnableSnapping) {

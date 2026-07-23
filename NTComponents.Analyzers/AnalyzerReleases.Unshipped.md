@@ -71,3 +71,9 @@ NTC1065 | Usage | Warning | NTDataGrid requires either Items or ItemsProvider, n
 NTC1066 | Usage | Warning | NTDataGrid requires Items or ItemsProvider.
 NTC1067 | Usage | Warning | NTDataGrid does not support using Virtualize and ShowPagination together.
 NTC1068 | Usage | Warning | NTPropertyColumn computed aggregate properties may fail when sorting a database-backed IQueryable.
+NTC1069 | Usage | Warning | NTCarousel AriaLabel cannot be empty because it provides the carousel accessible name.
+NTC1070 | Usage | Warning | NTCarousel numeric sizing and autoplay values must be finite and positive.
+NTC1071 | Usage | Warning | Full-screen NTCarousel requires snapping.
+NTC1072 | Usage | Warning | NTCarouselItem AriaLabel cannot be empty because it provides the slide accessible name.
+NTC1073 | Usage | Warning | NTCarouselItem AspectRatio must be finite and remain within the Material 3 range.
+NTC1074 | Usage | Warning | NTCarousel Appearance must be a defined CarouselAppearance value.

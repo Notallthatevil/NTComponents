@@ -148,6 +148,60 @@ public class NTCarousel_Tests : BunitContext {
         render.Should().Throw<ArgumentOutOfRangeException>();
     }
 
+    [Theory, Trait("Component", "Carousel")]
+    [InlineData(double.NaN)]
+    [InlineData(double.PositiveInfinity)]
+    [InlineData(double.NegativeInfinity)]
+    public void Rejects_NonFinite_Autoplay_Interval(double autoPlayInterval) {
+        Action render = () => Render<NTCarousel>(parameters => parameters
+            .Add(component => component.AriaLabel, "Invalid")
+            .Add(component => component.AutoPlayInterval, autoPlayInterval)
+            .AddChildContent(BuildItems(("One", null))));
+
+        render.Should().Throw<ArgumentOutOfRangeException>().WithMessage("*finite value greater than zero*");
+    }
+
+    [Fact, Trait("Component", "Carousel")]
+    public void Rejects_Missing_Carousel_Aria_Label() {
+        Action render = () => Render<NTCarousel>(parameters => parameters
+            .AddChildContent(BuildItems(("One", null))));
+
+        render.Should().Throw<InvalidOperationException>().WithMessage("*AriaLabel is required for NTCarousel*");
+    }
+
+    [Fact, Trait("Component", "Carousel")]
+    public void Rejects_Missing_Item_Aria_Label() {
+        RenderFragment items = builder => {
+#pragma warning disable NTC1072 // Intentionally omit the label to verify the runtime guard.
+            builder.OpenComponent<NTCarouselItem>(0);
+#pragma warning restore NTC1072
+            builder.AddAttribute(1, nameof(NTCarouselItem.ChildContent), (RenderFragment)(content => content.AddContent(0, "Missing label")));
+            builder.CloseComponent();
+        };
+        Action render = () => RenderCarousel(items);
+
+        render.Should().Throw<InvalidOperationException>().WithMessage("*AriaLabel is required for NTCarouselItem*");
+    }
+
+    [Theory, Trait("Component", "Carousel")]
+    [InlineData(0.5d)]
+    [InlineData(2d)]
+    [InlineData(double.NaN)]
+    [InlineData(double.PositiveInfinity)]
+    [InlineData(double.NegativeInfinity)]
+    public void Rejects_Invalid_Item_Aspect_Ratio(double aspectRatio) {
+        Action render = () => RenderCarousel(BuildItems(("Invalid", aspectRatio)), CarouselAppearance.UncontainedMultiAspectRatio);
+
+        render.Should().Throw<ArgumentOutOfRangeException>().WithMessage("*finite and between 9:16 and 16:9*");
+    }
+
+    [Fact, Trait("Component", "Carousel")]
+    public void Rejects_Undefined_Appearance() {
+        Action render = () => RenderCarousel(BuildItems(("One", null)), (CarouselAppearance)99);
+
+        render.Should().Throw<ArgumentOutOfRangeException>().WithMessage("*appearance must be a defined value*");
+    }
+
     [Fact, Trait("Component", "Carousel")]
     public void FullScreen_Requires_Snapping() {
         Action render = () => Render<NTCarousel>(parameters => parameters

@@ -85,8 +85,8 @@ public partial class NTCarouselItem {
     /// <inheritdoc />
     protected override void OnParametersSet() {
         base.OnParametersSet();
-        if (AspectRatio is < (9d / 16d) or > (16d / 9d)) {
-            throw new ArgumentOutOfRangeException(nameof(AspectRatio), AspectRatio, "The Material 3 multi-aspect ratio must be between 9:16 and 16:9.");
+        if (AspectRatio is { } aspectRatio && (!double.IsFinite(aspectRatio) || aspectRatio is < (9d / 16d) or > (16d / 9d))) {
+            throw new ArgumentOutOfRangeException(nameof(AspectRatio), AspectRatio, "The Material 3 multi-aspect ratio must be finite and between 9:16 and 16:9.");
         }
 
         if (string.IsNullOrWhiteSpace(AriaLabel)) {
