@@ -1,434 +1,132 @@
 @page "/carousel"
 @rendermode InteractiveAuto
 
-<NTComponents.NTCarousel>
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png" OnClickCallback="@(() => Console.WriteLine("clicked"))">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 1</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">First carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
+<PageTitle>Material 3 Carousel</PageTitle>
 
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 2</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Second carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
+<main class="carousel-demo">
+    <header>
+        <p class="eyebrow">NTCarousel</p>
+        <h1>Material 3 carousel layouts</h1>
+        <p>Drag with a mouse or pen, swipe on touch, focus an item and use arrow keys, or emulate reduced motion to inspect the stable-size fallback.</p>
+    </header>
 
-    <NTComponents.NTCarouselItem>
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 3</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Third carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
+    @foreach (var example in _examples) {
+        <section data-layout-example="@example.Id">
+            <div class="section-heading">
+                <div>
+                    <h2>@example.Title</h2>
+                    <p>@example.Description</p>
+                </div>
+                @if (example.Appearance != NTComponents.CarouselAppearance.FullScreen) {
+                    <button type="button"
+                            class="show-all"
+                            aria-expanded="@(_expandedExamples.Contains(example.Id) ? "true" : "false")"
+                            aria-controls="show-all-@example.Id"
+                            @onclick="() => ToggleShowAll(example.Id)">
+                        @(_expandedExamples.Contains(example.Id) ? "Hide all" : "Show all")
+                    </button>
+                }
+            </div>
 
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 4</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Fourth carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
+            <NTComponents.NTCarousel AriaLabel="@example.Title"
+                                      Appearance="@example.Appearance"
+                                      ItemHeight="@example.Height"
+                                      AutoPlayInterval="@example.AutoPlayInterval"
+                                      style="@example.Style"
+                                      OnIndexChanged="@(index => SetStatus(example.Id, index))">
+                @foreach (var item in ItemsFor(example)) {
+                    <NTComponents.NTCarouselItem @key="@(example.Id + item.Title)"
+                                                  AriaLabel="@item.Title"
+                                                  AspectRatio="@(example.Appearance == NTComponents.CarouselAppearance.UncontainedMultiAspectRatio ? item.AspectRatio : null)"
+                                                  OnClickCallback="@(() => SetActivation(example.Id, item.Title))">
+                        <MediaContent>
+                            <img src="@item.ImageUrl" alt="" loading="lazy" />
+                        </MediaContent>
+                        <ChildContent>
+                            <div class="item-label">
+                                <strong>@item.Title</strong>
+                                <span>@item.SupportingText</span>
+                            </div>
+                        </ChildContent>
+                    </NTComponents.NTCarouselItem>
+                }
+            </NTComponents.NTCarousel>
+            <output class="status">@GetStatus(example.Id)</output>
+            @if (_expandedExamples.Contains(example.Id)) {
+                <ul id="show-all-@example.Id" class="show-all-list" aria-label="All @example.Title items">
+                    @foreach (var item in ItemsFor(example)) {
+                        <li>
+                            <img src="@item.ImageUrl" alt="" loading="lazy" />
+                            <div>
+                                <strong>@item.Title</strong>
+                                <span>@item.SupportingText</span>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            }
+        </section>
+    }
+</main>
 
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 5</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Fifth carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
+@code {
+    private readonly Dictionary<string, string> _statuses = [];
+    private readonly HashSet<string> _expandedExamples = [];
 
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 6</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Sixth carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
+    private readonly CarouselDemoItem[] _items = [
+        new("Recent highlights", "A bright summer afternoon", "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=85", 16d / 9d),
+        new("La Familia", "A day shared outdoors", "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1200&q=85", 4d / 3d),
+        new("Festivals", "Music after sunset", "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=1200&q=85", 9d / 16d),
+        new("Plantas", "Green spaces at home", "https://images.unsplash.com/photo-1459156212016-c812468e2115?auto=format&fit=crop&w=1200&q=85", 1d),
+        new("Last month", "Color carried by the wind", "https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=1200&q=85", 3d / 2d),
+        new("Weekend", "Room to explore", "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=85", 2d / 3d)
+    ];
 
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 7</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Seventh carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
+    private readonly CarouselDemoItem[] _multiBrowseItems = [
+        new("Recent highlights", "A bright summer afternoon", "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=85", 16d / 9d),
+        new("La Familia", "A day shared outdoors", "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1200&q=85", 4d / 3d),
+        new("Festivals", "Music after sunset", "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=1200&q=85", 9d / 16d),
+        new("Plantas", "Green spaces at home", "https://images.unsplash.com/photo-1459156212016-c812468e2115?auto=format&fit=crop&w=1200&q=85", 1d),
+        new("Last month", "Color carried by the wind", "https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=1200&q=85", 3d / 2d),
+        new("Weekend", "Room to explore", "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=85", 2d / 3d),
+        new("Coastline", "A quiet road beside the sea", "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=85", 16d / 9d),
+        new("City lights", "Evening across the skyline", "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&w=1200&q=85", 3d / 2d),
+        new("Forest trail", "A path beneath the canopy", "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1200&q=85", 4d / 3d),
+        new("Winter air", "Fresh snow above the valley", "https://images.unsplash.com/photo-1483664852095-d6cc6870702d?auto=format&fit=crop&w=1200&q=85", 3d / 2d),
+        new("Desert road", "Open miles under a clear sky", "https://images.unsplash.com/photo-1509316785289-025f5b846b35?auto=format&fit=crop&w=1200&q=85", 16d / 9d),
+        new("Lakeside", "Still water at first light", "https://images.unsplash.com/photo-1439853949127-fa647821eba0?auto=format&fit=crop&w=1200&q=85", 4d / 3d),
+        new("Old streets", "A walk through the historic quarter", "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1200&q=85", 1d),
+        new("Night camp", "Stars beyond the firelight", "https://images.unsplash.com/photo-1504851149312-7a075b496cc7?auto=format&fit=crop&w=1200&q=85", 3d / 2d)
+    ];
 
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 8</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Eighth carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
+    private readonly CarouselExample[] _examples = [
+        new("multi-browse", "Multi-browse", "Large, medium, and 40–56px small keylines morph continuously while scrolling.", NTComponents.CarouselAppearance.MultiBrowse, 240),
+        new("uncontained", "Uncontained", "Equal-size items continue beyond the container and may settle freely between starts.", NTComponents.CarouselAppearance.Uncontained, 240),
+        new("multi-aspect", "Uncontained multi-aspect ratio", "Items retain declared image ratios from 9:16 through 16:9.", NTComponents.CarouselAppearance.UncontainedMultiAspectRatio, 260),
+        new("hero", "Hero", "One dominant item and a small trailing preview advance one item at a time.", NTComponents.CarouselAppearance.Hero, 300),
+        new("center-hero", "Center-aligned hero", "The active item is centered between leading and trailing preview keylines.", NTComponents.CarouselAppearance.CenterAlignedHero, 300),
+        new("autoplay", "Accessible autoplay", "Focus pauses rotation permanently until the visible Start rotation control is used.", NTComponents.CarouselAppearance.MultiBrowse, 240, 4),
+        new("full-screen", "Full-screen", "Edge-to-edge portrait items scroll vertically with a 16px gap.", NTComponents.CarouselAppearance.FullScreen, 640, null, "--nt-carousel-fullscreen-height:640px")
+    ];
 
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 9</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Ninth carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
+    private string GetStatus(string id) => _statuses.GetValueOrDefault(id, "Settled item: 1");
 
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 10</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Tenth carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
+    private IReadOnlyList<CarouselDemoItem> ItemsFor(CarouselExample example) => example.Id == "multi-browse" ? _multiBrowseItems : _items;
 
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 11</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Eleventh carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
+    private void SetActivation(string id, string title) {
+        _statuses[id] = $"Activated: {title}";
+    }
 
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 12</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Twelfth carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-</NTComponents.NTCarousel>
+    private void SetStatus(string id, int index) {
+        _statuses[id] = $"Settled item: {index + 1}";
+    }
 
+    private void ToggleShowAll(string id) {
+        if (!_expandedExamples.Remove(id)) {
+            _expandedExamples.Add(id);
+        }
+    }
 
-
-<NTComponents.NTCarousel AutoPlayInterval="1">
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png" OnClickCallback="@(() => Console.WriteLine("clicked"))">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 1</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">First carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 2</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Second carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-
-    <NTComponents.NTCarouselItem>
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 3</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Third carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 4</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Fourth carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 5</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Fifth carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 6</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Sixth carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 7</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Seventh carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 8</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Eighth carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 9</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Ninth carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 10</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Tenth carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 11</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Eleventh carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 12</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Twelfth carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-</NTComponents.NTCarousel>
-
-<NTComponents.NTCarousel Appearance="NTComponents.CarouselAppearance.Hero">
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png" OnClickCallback="@(() => Console.WriteLine("clicked"))">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 1</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">First carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 2</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Second carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-
-    <NTComponents.NTCarouselItem>
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 3</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Third carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 4</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Fourth carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 5</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Fifth carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 6</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Sixth carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 7</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Seventh carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 8</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Eighth carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 9</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Ninth carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 10</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Tenth carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 11</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Eleventh carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 12</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Twelfth carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-</NTComponents.NTCarousel>
-
-<NTComponents.NTCarousel Appearance="NTComponents.CarouselAppearance.CenterAlignedHero">
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png" OnClickCallback="@(() => Console.WriteLine("clicked"))">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 1</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">First carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 2</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Second carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-
-    <NTComponents.NTCarouselItem>
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 3</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Third carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 4</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Fourth carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 5</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Fifth carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 6</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Sixth carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 7</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Seventh carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 8</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Eighth carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 9</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Ninth carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 10</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Tenth carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 11</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Eleventh carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 12</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Twelfth carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-</NTComponents.NTCarousel>
-
-<NTComponents.NTCarousel Appearance="NTComponents.CarouselAppearance.CenterAlignedHero">
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png" OnClickCallback="@(() => Console.WriteLine("clicked"))">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 1</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">First carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 2</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Second carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-
-    <NTComponents.NTCarouselItem>
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 3</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Third carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 4</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Fourth carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 5</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Fifth carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 6</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Sixth carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 7</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Seventh carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 8</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Eighth carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 9</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Ninth carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 10</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Tenth carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 11</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Eleventh carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-
-    <NTComponents.NTCarouselItem BackgroundImageSrc="Logo.png">
-        <div style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 16px; border-radius: 0 0 28px 28px; margin: -16px;">
-            <h4 style="margin: 0; color: white;">Item 12</h4>
-            <p style="margin: 8px 0 0 0; color: white; opacity: 0.9;">Twelfth carousel item</p>
-        </div>
-    </NTComponents.NTCarouselItem>
-</NTComponents.NTCarousel>
+    private sealed record CarouselDemoItem(string Title, string SupportingText, string ImageUrl, double AspectRatio);
+    private sealed record CarouselExample(string Id, string Title, string Description, NTComponents.CarouselAppearance Appearance, int Height, double? AutoPlayInterval = null, string? Style = null);
+}

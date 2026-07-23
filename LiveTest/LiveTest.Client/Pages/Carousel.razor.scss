@@ -1,0 +1,120 @@
+.carousel-demo {
+    display: grid;
+    gap: 64px;
+    max-inline-size: 1200px;
+    margin-inline: auto;
+    padding: 32px 0 96px;
+
+    > header,
+    section {
+        display: grid;
+        gap: 16px;
+    }
+
+    h1,
+    h2,
+    p {
+        margin: 0;
+    }
+
+    .eyebrow {
+        color: var(--tnt-color-primary);
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .section-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+
+        > div {
+            display: grid;
+            gap: 4px;
+        }
+    }
+
+    .show-all {
+        min-inline-size: 48px;
+        min-block-size: 48px;
+        padding-inline: 16px;
+        border: 0;
+        border-radius: 24px;
+        color: var(--tnt-color-on-primary-container);
+        background: var(--tnt-color-primary-container);
+        cursor: pointer;
+
+        &:focus-visible {
+            outline: 3px solid var(--tnt-color-primary);
+            outline-offset: 2px;
+        }
+    }
+
+    .show-all-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+        gap: 16px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+
+        li {
+            display: grid;
+            grid-template-columns: 88px 1fr;
+            align-items: center;
+            gap: 16px;
+            min-inline-size: 0;
+            padding: 8px;
+            border-radius: 20px;
+            background: var(--tnt-color-surface-container);
+        }
+
+        img {
+            inline-size: 88px;
+            block-size: 88px;
+            border-radius: 16px;
+            object-fit: cover;
+        }
+
+        div {
+            display: grid;
+            gap: 4px;
+            min-inline-size: 0;
+        }
+
+        span {
+            color: var(--tnt-color-on-surface-variant);
+        }
+    }
+
+    ::deep .item-label {
+        display: grid;
+        gap: 4px;
+        padding: 48px 16px 16px;
+        color: white;
+        background: linear-gradient(to top, rgb(0 0 0 / 0.72), transparent);
+        text-shadow: 0 1px 2px rgb(0 0 0 / 0.6);
+
+        span {
+            font-size: 0.875rem;
+        }
+    }
+
+    .status {
+        min-block-size: 24px;
+        color: var(--tnt-color-on-surface-variant);
+    }
+}
+
+@media (max-width: 600px) {
+    .carousel-demo {
+        gap: 48px;
+        padding-block-start: 16px;
+
+        .section-heading {
+            align-items: flex-start;
+        }
+    }
+}

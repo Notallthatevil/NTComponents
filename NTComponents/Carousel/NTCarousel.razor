@@ -1,23 +1,33 @@
-@using Microsoft.AspNetCore.Components
+@using System.Globalization
 @using Microsoft.AspNetCore.Components.Rendering
-@using Microsoft.AspNetCore.Components.Web
 @using NTComponents.Core
 @namespace NTComponents
 @inherits NTPageScriptComponent<NTCarousel>
 
 <CascadingValue Value="this" IsFixed="true">
-    @ChildContent
-
-    <tnt-carousel @attributes="AdditionalAttributes" class="@ElementClass" style="@ElementStyle" tnt-layout="@Appearance" tnt-auto-play-interval="@AutoPlayInterval" tnt-allow-dragging="@AllowDragging" @ref="Element">
-        <div class="tnt-carousel-viewport">
-            @foreach (var item in _carouselItems) {
-                @item.RenderItem
-            }
-        </div>
-        @if (_items?.Any() == true && _items.First().Value is not null) {
-            @_items.First().Value.RenderPageScript
+    <nt-carousel @attributes="AdditionalAttributes"
+                   class="@ElementClass"
+                   style="@ElementStyle"
+                   role="@Role"
+                   aria-roledescription="carousel"
+                   aria-label="@AriaLabel"
+                   data-layout="@LayoutName"
+                   data-allow-dragging="@AllowDragging.ToString().ToLowerInvariant()"
+                   data-snap="@EnableSnapping.ToString().ToLowerInvariant()"
+                   data-auto-play-interval="@(AutoPlayInterval?.ToString(CultureInfo.InvariantCulture))"
+                   data-max-large-width="@(MaxLargeItemWidth?.ToString(CultureInfo.InvariantCulture))"
+                   data-preferred-item-width="@PreferredItemWidth.ToString(CultureInfo.InvariantCulture)"
+                   @ref="Element">
+        @if (AutoPlayInterval.HasValue) {
+            <button type="button" class="nt-carousel-autoplay-control" data-autoplay-control aria-label="@AutoPlayControlText">
+                @AutoPlayControlText
+            </button>
         }
-
-    </tnt-carousel>
+        <div class="nt-carousel-viewport" data-carousel-viewport aria-live="off">
+            <div class="nt-carousel-track" data-carousel-track>
+                @ChildContent
+            </div>
+        </div>
+    </nt-carousel>
 </CascadingValue>
 @PageScript

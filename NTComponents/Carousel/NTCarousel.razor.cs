@@ -1,135 +1,178 @@
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
-using System.Threading.Tasks;
+using NTComponents.CodeDocumentation;
 using NTComponents.Core;
 
-using NTComponents.CodeDocumentation;
 namespace NTComponents;
 
 /// <summary>
-///     A Material 3 compliant carousel component for displaying a sequence of items with navigation and indicators.
+///     A progressively enhanced Material 3 carousel with responsive keyline layouts, native scrolling, pointer dragging, parallax media, and accessible keyboard navigation.
 /// </summary>
-/// <remarks>
-///     The component expects child content consisting of <see cref="NTCarouselItem" /> elements. It exposes appearance and behavior options such as snapping, autoplay, background color, and
-///     dragging. JavaScript interop is used for lifecycle hooks via the module path returned by <see cref="JsModulePath" />.
-/// </remarks>
 [NTDocumentation(
     RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
-    CompatibilitySummary = "Renders carousel content statically and enhances scrolling with JavaScript.",
-    CompatibilityDetails = "Static SSR emits the carousel items and initial layout. Dragging, snapping, automatic scrolling, and index synchronization depend on the browser module.")]
+    CompatibilitySummary = "Renders an accessible native-scrolling carousel and enhances it with Material 3 keyline motion.",
+    CompatibilityDetails = "Static SSR emits ordered slides, labels, and a usable overflow surface. Dynamic keyline sizing, parallax, momentum, autoplay, and index synchronization require the browser module.")]
 public partial class NTCarousel {
 
+    private bool _autoPlayPaused;
+
     /// <summary>
-    ///     Controls whether pointer dragging is allowed to navigate the carousel.
+    ///     Gets or sets whether mouse and pen dragging can scroll the carousel. Touch scrolling remains native.
     /// </summary>
     [Parameter]
     public bool AllowDragging { get; set; } = true;
 
     /// <summary>
-    ///     Material 3 carousel appearance variant.
+    ///     Gets or sets the accessible content name for the carousel.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public string AriaLabel { get; set; } = default!;
+
+    /// <summary>
+    ///     Gets or sets the Material 3 carousel layout.
     /// </summary>
     [Parameter]
     public CarouselAppearance Appearance { get; set; } = CarouselAppearance.MultiBrowse;
 
     /// <summary>
-    ///     Optional interval in milliseconds for autoplay. When null, autoplay is disabled.
+    ///     Gets or sets the optional autoplay interval in seconds. A null value disables autoplay.
     /// </summary>
     [Parameter]
-    public int? AutoPlayInterval { get; set; }
+    public double? AutoPlayInterval { get; set; }
 
     /// <summary>
-    ///     Optional background color for the carousel expressed as a <see cref="TnTColor" />. When not specified, no inline background variable will be emitted.
+    ///     Gets or sets the optional carousel background color.
     /// </summary>
     [Parameter]
     public TnTColor? BackgroundColor { get; set; }
 
     /// <summary>
-    ///     The content (child items) to render inside the carousel.
+    ///     Gets or sets the carousel items.
     /// </summary>
     [Parameter, EditorRequired]
-    public RenderFragment ChildContent { get; set; }
+    public RenderFragment ChildContent { get; set; } = default!;
 
     /// <summary>
-    ///     Computed CSS class string for the carousel element. Includes classes controlled by parameters and merges additional attributes that provide classes.
-    /// </summary>
-    public override string? ElementClass => CssClassBuilder.Create()
-        .AddFromAdditionalAttributes(AdditionalAttributes)
-        .AddClass("tnt-carousel")
-        .AddClass("tnt-carousel-hero", Appearance is CarouselAppearance.Hero or CarouselAppearance.CenterAlignedHero)
-        .AddClass("tnt-carousel-centered", Appearance == CarouselAppearance.CenterAlignedHero && EnableSnapping)
-        .AddClass("tnt-carousel-snapping", EnableSnapping)
-        .Build();
-
-    /// <summary>
-    ///     Computed inline style string for the carousel element. Exposes CSS variables (for example background color) when appropriate parameters are provided.
-    /// </summary>
-    public override string? ElementStyle => CssStyleBuilder.Create()
-        .AddFromAdditionalAttributes(AdditionalAttributes)
-        .AddVariable("tnt-carousel-bg-color", BackgroundColor.GetValueOrDefault(), BackgroundColor.HasValue)
-        .Build();
-
-    /// <summary>
-    ///     Enables CSS snapping behavior for carousel items when true. When enabled, additional classes are applied to support centered and snapping layouts.
+    ///     Gets or sets whether scrolling settles on item keylines.
     /// </summary>
     [Parameter]
     public bool EnableSnapping { get; set; } = true;
 
+    /// <inheritdoc />
+    public override string? ElementClass => CssClassBuilder.Create()
+        .AddFromAdditionalAttributes(AdditionalAttributes)
+        .AddClass("nt-carousel")
+        .AddClass("nt-carousel-snapping", EnableSnapping)
+        .Build();
+
+    /// <inheritdoc />
+    public override string? ElementStyle => CssStyleBuilder.Create()
+        .AddFromAdditionalAttributes(AdditionalAttributes)
+        .AddVariable("nt-carousel-background-color", BackgroundColor.GetValueOrDefault(), BackgroundColor.HasValue)
+        .AddVariable("nt-carousel-height", $"{ItemHeight}px")
+        .Build();
+
     /// <summary>
-    ///     Path to the JavaScript module that implements lifecycle interop for the carousel. The module is expected to export <c>onLoad</c>, <c>onUpdate</c>, and <c>onDispose</c>.
+    ///     Gets or sets whether the carousel uses a named region landmark instead of a group.
     /// </summary>
+    [Parameter]
+    public bool IsLandmark { get; set; }
+
+    /// <summary>
+    ///     Gets or sets the horizontal item height in CSS pixels.
+    /// </summary>
+    [Parameter]
+    public int ItemHeight { get; set; } = 240;
+
+    /// <inheritdoc />
     public override string? JsModulePath => "./_content/NTComponents/Carousel/NTCarousel.razor.js";
 
     /// <summary>
-    ///     Invoked when the currently displayed index changes. The callback receives the new index (zero-based).
+    ///     Gets or sets the optional maximum width of a large item in CSS pixels.
+    /// </summary>
+    [Parameter]
+    public int? MaxLargeItemWidth { get; set; }
+
+    /// <summary>
+    ///     Gets or sets the callback raised when scrolling settles on a different logical item.
     /// </summary>
     [Parameter]
     public EventCallback<int> OnIndexChanged { get; set; }
 
     /// <summary>
-    ///     Enumerates the currently registered carousel items in display order (first by <see cref="NTCarouselItem.Order" />, then by internal id to provide a stable ordering).
+    ///     Gets or sets the target width of large multi-browse items in CSS pixels. The layout may adjust it to fit complete keyline arrangements.
     /// </summary>
-    private IEnumerable<NTCarouselItem> _carouselItems => _items.Values.OrderBy(item => item.Order).ThenBy(item => item.InternalId);
+    [Parameter]
+    public int PreferredItemWidth { get; set; } = 186;
+
+    private string AutoPlayControlText => _autoPlayPaused ? "Start rotation" : "Pause rotation";
+    private string LayoutName => Appearance switch {
+        CarouselAppearance.MultiBrowse => "multi-browse",
+        CarouselAppearance.Uncontained => "uncontained",
+        CarouselAppearance.UncontainedMultiAspectRatio => "uncontained-multi-aspect-ratio",
+        CarouselAppearance.Hero => "hero",
+        CarouselAppearance.CenterAlignedHero => "center-aligned-hero",
+        CarouselAppearance.FullScreen => "full-screen",
+        _ => throw new ArgumentOutOfRangeException(nameof(Appearance), Appearance, null)
+    };
+    private string Role => IsLandmark ? "region" : "group";
 
     /// <summary>
-    ///     Internal storage of child items keyed by their internal id.
+    ///     Receives the settled logical index from the browser controller.
     /// </summary>
-    private Dictionary<int, NTCarouselItem> _items = new();
+    [JSInvokable]
+    public Task NotifyIndexChangedAsync(int index) => OnIndexChanged.InvokeAsync(index);
 
     /// <summary>
-    ///     Monotonic counter used to assign internal ids to child items when they are added.
+    ///     Synchronizes the visible autoplay control with browser pause state.
     /// </summary>
-    private int _nextId;
-
-    /// <summary>
-    ///     Registers a child <see cref="NTCarouselItem" /> with this carousel. Assigns an internal id if one isn't present.
-    /// </summary>
-    /// <param name="item">The carousel item being added.</param>
-    internal void AddChild(NTCarouselItem item) {
-        item.InternalId ??= System.Threading.Interlocked.Increment(ref _nextId);
-        if (_items.TryAdd(item.InternalId.Value, item)) {
-            StateHasChanged();
+    [JSInvokable]
+    public Task NotifyAutoPlayPausedChangedAsync(bool paused) {
+        if (_autoPlayPaused == paused) {
+            return Task.CompletedTask;
         }
+
+        _autoPlayPaused = paused;
+        return InvokeAsync(StateHasChanged);
     }
 
-    /// <summary>
-    ///     Removes a previously registered <see cref="NTCarouselItem" /> from this carousel. If the item was present it will trigger a re-render.
-    /// </summary>
-    /// <param name="item">The carousel item to remove.</param>
-    internal void RemoveChild(NTCarouselItem item) {
-        if (item.InternalId is not null && _items.Remove(item.InternalId.Value)) {
-            StateHasChanged();
+    /// <inheritdoc />
+    protected override void OnParametersSet() {
+        base.OnParametersSet();
+
+        if (string.IsNullOrWhiteSpace(AriaLabel)) {
+            throw new InvalidOperationException($"{nameof(AriaLabel)} is required for {nameof(NTCarousel)}.");
+        }
+
+        if (AutoPlayInterval is <= 0) {
+            throw new ArgumentOutOfRangeException(nameof(AutoPlayInterval), AutoPlayInterval, "Autoplay must be greater than zero seconds.");
+        }
+
+        if (MaxLargeItemWidth is <= 0) {
+            throw new ArgumentOutOfRangeException(nameof(MaxLargeItemWidth), MaxLargeItemWidth, "The maximum large item width must be greater than zero.");
+        }
+
+        if (PreferredItemWidth <= 0) {
+            throw new ArgumentOutOfRangeException(nameof(PreferredItemWidth), PreferredItemWidth, "The preferred item width must be greater than zero.");
+        }
+
+        if (ItemHeight <= 0) {
+            throw new ArgumentOutOfRangeException(nameof(ItemHeight), ItemHeight, "The item height must be greater than zero.");
+        }
+
+        if (Appearance == CarouselAppearance.FullScreen && !EnableSnapping) {
+            throw new InvalidOperationException("The full-screen Material 3 layout requires snapping.");
         }
     }
 }
 
 /// <summary>
-///     Material 3 carousel appearance variants for the <see cref="NTCarousel" />.
+///     Material 3 carousel appearance variants for <see cref="NTCarousel" />.
 /// </summary>
 public enum CarouselAppearance {
 
     /// <summary>
-    ///     Horizontal contained layout showing a large item with medium and small trailing items when space allows.
+    ///     Horizontal contained layout showing large, medium, and small items.
     /// </summary>
     MultiBrowse = 0,
 
@@ -139,22 +182,22 @@ public enum CarouselAppearance {
     Uncontained = 1,
 
     /// <summary>
-    ///     Horizontal uncontained row where item widths vary by content aspect ratio.
+    ///     Horizontal uncontained row where item widths vary by aspect ratio.
     /// </summary>
     UncontainedMultiAspectRatio = 2,
 
     /// <summary>
-    ///     Horizontal contained layout with one dominant large item and a trailing preview.
+    ///     Horizontal contained layout with one dominant item and a trailing preview.
     /// </summary>
     Hero = 3,
 
     /// <summary>
-    ///     Horizontal contained hero layout with the dominant item centered between previews.
+    ///     Horizontal contained hero layout centered between previews.
     /// </summary>
     CenterAlignedHero = 4,
 
     /// <summary>
-    ///     Vertical edge-to-edge layout showing one item per carousel viewport.
+    ///     Vertical edge-to-edge layout showing one item per viewport.
     /// </summary>
     FullScreen = 5
 }

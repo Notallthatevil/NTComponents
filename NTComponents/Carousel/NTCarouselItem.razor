@@ -1,21 +1,32 @@
-@namespace NTComponents
-@using Microsoft.AspNetCore.Components.Rendering
 @using NTComponents.Core
-@inherits NTPageScriptComponent<NTCarouselItem>
+@namespace NTComponents
+@inherits TnTComponentBase
 
-@code {
-    internal void RenderItem(RenderTreeBuilder __builder) {
-        <tnt-carousel-item @attributes="@AdditionalAttributes" class="@($"tnt-carousel-item {(_hero ? " tnt-carousel-hero" : null)}")">
-            <div class="@ElementClass" style="@ElementStyle" id="@ElementId" title="@ElementTitle" @ref="Element" lang="@ElementLang" @onclick="@OnClickCallback">
-                @ChildContent
-                @if (OnClickCallback.HasDelegate && EnableRipple) {
-                    <TnTRippleEffect />
-                }
-            </div>
-        </tnt-carousel-item>
-    }
-
-    internal void RenderPageScript(RenderTreeBuilder __builder) {
-        @PageScript
-    }
-}
+<nt-carousel-item @attributes="AdditionalAttributes"
+                    class="@ElementClass"
+                    style="@ElementStyle"
+                    id="@ElementId"
+                    title="@ElementTitle"
+                    lang="@ElementLang"
+                    role="group"
+                    aria-roledescription="slide"
+                    aria-label="@AriaLabel"
+                    aria-disabled="@(Disabled ? "true" : null)"
+                    tabindex="0"
+                    data-carousel-item
+                    data-aspect-ratio="@(AspectRatio?.ToString(System.Globalization.CultureInfo.InvariantCulture))"
+                    data-clickable="@OnClickCallback.HasDelegate.ToString().ToLowerInvariant()"
+                    data-disabled="@Disabled.ToString().ToLowerInvariant()"
+                    @ref="Element">
+    <div class="nt-carousel-item-mask">
+        <div class="nt-carousel-item-media" style="@MediaStyle" aria-hidden="true">
+            @MediaContent
+        </div>
+        <div class="nt-carousel-item-content" @onclick="@OnClickCallback">
+            @ChildContent
+        </div>
+        @if (OnClickCallback.HasDelegate && EnableRipple && !Disabled) {
+            @NTRipple.Render("nt-button-ripple-host nt-carousel-ripple-host")
+        }
+    </div>
+</nt-carousel-item>

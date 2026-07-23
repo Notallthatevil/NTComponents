@@ -323,6 +323,10 @@
             parameters.TryAdd("SelectedKey", "one");
         }
 
+        if (Component.Type.Name == "NTCarousel") {
+            parameters.TryAdd(nameof(NTCarousel.AriaLabel), "Example carousel");
+        }
+
         if (Component.Type.Name == "NTForm") {
             parameters.TryAdd("Model", _form);
             parameters.TryAdd("ChildContent", (RenderFragment<EditContext>)(_ => content => content.AddContent(0, "Example form content")));
@@ -625,11 +629,13 @@
 
     private static RenderFragment BuildCarouselItems() => builder => {
         builder.OpenComponent<NTCarouselItem>(0);
-        builder.AddAttribute(1, nameof(NTCarouselItem.ChildContent), (RenderFragment)(content => content.AddContent(0, "First slide")));
+        builder.AddAttribute(1, nameof(NTCarouselItem.AriaLabel), "First slide");
+        builder.AddAttribute(2, nameof(NTCarouselItem.ChildContent), (RenderFragment)(content => content.AddContent(0, "First slide")));
         builder.CloseComponent();
-        AddDemoMarker(builder, 2, nameof(NTCarouselItem));
+        AddDemoMarker(builder, 3, nameof(NTCarouselItem));
         builder.OpenComponent<NTCarouselItem>(10);
         builder.AddAttribute(11, nameof(NTCarouselItem.ChildContent), (RenderFragment)(content => content.AddContent(0, "Second slide")));
+        builder.AddAttribute(12, nameof(NTCarouselItem.AriaLabel), "Second slide");
         builder.CloseComponent();
     };
 
@@ -820,7 +826,7 @@
             "NTAccordion" => "<NTAccordionItem\r\n    Label=\"Getting started\"\r\n    SupportingText=\"Native disclosure item\"\r\n    Open=\"true\">\r\n    Accordion content is generated from the source documentation model.\r\n</NTAccordionItem>\r\n<NTAccordionItem\r\n    Label=\"Details\">\r\n    Use accordion items for related sections that can expand and collapse.\r\n</NTAccordionItem>",
             "NTAutocomplete" => "<NTAutocompleteOptionGroup Label=\"Examples\" />\r\n<NTAutocompleteOption Value=\"First option\" />\r\n<NTAutocompleteOption Value=\"Second option\" />",
             "NTButtonGroup" => "<NTButtonGroupItem Key=\"one\" Label=\"One\" />\r\n<NTButtonGroupItem Key=\"two\" Label=\"Two\" />",
-            "NTCarousel" => "<NTCarouselItem>First slide</NTCarouselItem>\r\n<NTCarouselItem>Second slide</NTCarouselItem>",
+            "NTCarousel" => "<NTCarouselItem AriaLabel=\"First slide\">First slide</NTCarouselItem>\r\n<NTCarouselItem AriaLabel=\"Second slide\">Second slide</NTCarouselItem>",
             "NTDataGrid" => "<NTPropertyColumn Property=\"@(item => item.Name)\" Title=\"Name\" />\r\n<NTPropertyColumn Property=\"@(item => item.Value)\" Title=\"Value\" />\r\n<NTTemplateColumn Title=\"Summary\">\r\n    @context.Name: @context.Value\r\n</NTTemplateColumn>",
             "NTFabMenu" => "<NTFabMenuButtonItem Label=\"Create item\" />\r\n<NTFabMenuAnchorItem Label=\"View details\" Href=\"#example\" />",
             "NTInputRadioGroup" => "<NTInputRadio Value=\"one\" Label=\"One\" />\r\n<NTInputRadio Value=\"two\" Label=\"Two\" />",

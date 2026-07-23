@@ -1,46 +1,139 @@
-@use 'sass:map';
 @use '../Styles/_Variables/_colors.scss' as colors;
 @use '../Styles/_Variables/_corner-radius.scss' as corners;
-@use '../Styles/_Variables/_elevation.scss' as elevation;
-@use '../Styles/_Variables/_interactable.scss' as interactable;
 @use '../Styles/_Variables/_motion.scss' as motion;
-@use '../Styles/_Variables/_typescale.scss' as typescale;
 
-$bg-width: var(--tnt-carousel-item-bg-width, 100%);
-$tnt-carousel-item-state-transition: motion.$nt-motion-duration-short_3 motion.$nt-motion-easing-standard;
-
-tnt-carousel-item {
-    flex-grow: 0;
-    flex-shrink: 0;
+nt-carousel-item {
+    position: relative;
+    display: block;
     box-sizing: border-box;
-    display: flex;
-    max-width: 80%;
+    flex: 0 0 min(80cqi, 320px);
+    min-inline-size: 40px;
+    block-size: 100%;
+    scroll-snap-align: start;
+    outline: none;
+    direction: inherit;
 
-    .tnt-carousel-item-content {
+    .nt-carousel-item-mask {
+        position: absolute;
         box-sizing: border-box;
-        background-color: colors.$tnt-color-surface-container-low;
-        background-size: cover;
-        background-position: center;
-        border: 1px solid colors.$tnt-color-outline;
-        box-shadow: map.get(elevation.$elevation-shadows, 0);
-        color: colors.$tnt-color-on-surface;
-        height: 100%;
-        max-width: $bg-width;
-        min-width: 56px;
-        border-radius: corners.$nt-corner-radius-extra-large;
+        inset-block: 0;
+        inset-inline-start: var(--nt-carousel-mask-offset, 0);
+        inline-size: var(--nt-carousel-mask-width, 100%);
+        block-size: 100%;
         overflow: clip;
-        transition: background-color $tnt-carousel-item-state-transition, border-color $tnt-carousel-item-state-transition, box-shadow $tnt-carousel-item-state-transition, color $tnt-carousel-item-state-transition;
+        border-radius: corners.$nt-corner-radius-extra-large;
+        color: colors.$tnt-color-on-surface;
+        background: colors.$tnt-color-surface-container-low;
+        transform: scale(1);
+        transform-origin: center;
+        transition: border-radius motion.$nt-motion-duration-short_3 motion.$nt-motion-easing-standard,
+            transform motion.$nt-motion-duration-short_3 motion.$nt-motion-easing-standard;
 
-        @include typescale.nt-body-large;
+        &::after {
+            content: '';
+            position: absolute;
+            z-index: 2;
+            inset: 0;
+            border-radius: inherit;
+            background: colors.$tnt-color-on-surface;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity motion.$nt-motion-duration-short_3 motion.$nt-motion-easing-standard;
+        }
+    }
 
-        @include interactable.tnt-interactable(colors.$tnt-color-surface-tint, null, true);
+    .nt-carousel-item-media {
+        position: absolute;
+        z-index: 0;
+        inset-block: 0;
+        inset-inline-start: calc((100% - var(--nt-carousel-media-width, calc(100% + 48px))) / 2);
+        inline-size: var(--nt-carousel-media-width, calc(100% + 48px));
+        background-position: center;
+        background-size: cover;
+        transform: translate3d(var(--nt-carousel-parallax-x, 0), var(--nt-carousel-parallax-y, 0), 0);
+        will-change: transform;
+        pointer-events: none;
 
-        &.tnt-interactable:not(.tnt-disabled)::before {
-            transition: opacity $tnt-carousel-item-state-transition, background-color $tnt-carousel-item-state-transition;
+        ::deep img,
+        ::deep video,
+        ::deep picture {
+            display: block;
+            inline-size: 100%;
+            block-size: 100%;
+            object-fit: cover;
+        }
+    }
+
+    .nt-carousel-item-content {
+        position: absolute;
+        z-index: 3;
+        display: flex;
+        box-sizing: border-box;
+        flex-direction: column;
+        justify-content: flex-end;
+        inset-block: 0;
+        inset-inline-start: calc((var(--nt-carousel-mask-width, 100%) - var(--nt-carousel-item-width, 100%)) / 2);
+        inline-size: var(--nt-carousel-item-width, 100%);
+        block-size: 100%;
+        min-inline-size: 0;
+        overflow: hidden;
+    }
+
+    ::deep .nt-carousel-ripple-host {
+        position: absolute;
+        z-index: 4;
+        inset: 0;
+        overflow: clip;
+        border-radius: inherit;
+        pointer-events: none;
+    }
+
+    &.nt-carousel-item-clickable {
+        cursor: pointer;
+
+        &:hover .nt-carousel-item-mask::after {
+            opacity: 0.08;
         }
 
-        &.tnt-carousel-hero {
-            max-width: 100%;
+        &:active .nt-carousel-item-mask {
+            border-radius: 24px;
+            transform: scale(0.98);
+
+            &::after {
+                opacity: 0.12;
+            }
         }
+    }
+
+    &.nt-carousel-item-disabled {
+        cursor: not-allowed;
+        opacity: 0.38;
+
+        .nt-carousel-item-content {
+            pointer-events: none;
+        }
+    }
+
+    &:focus-visible .nt-carousel-item-mask {
+        outline: 3px solid colors.$tnt-color-primary;
+        outline-offset: 4px;
+    }
+}
+
+nt-carousel[data-layout='full-screen'] nt-carousel-item {
+    .nt-carousel-item-mask {
+        border-radius: 0;
+    }
+
+    .nt-carousel-item-media {
+        inset-block-start: -24px;
+        inset-block-end: auto;
+        inset-inline: 0;
+        inline-size: 100%;
+        block-size: calc(100% + 48px);
+    }
+
+    &:focus-visible .nt-carousel-item-mask {
+        outline-offset: -6px;
     }
 }

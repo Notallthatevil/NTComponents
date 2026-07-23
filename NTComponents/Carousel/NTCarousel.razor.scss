@@ -1,65 +1,148 @@
-@use 'sass:map';
 @use '../Styles/_Variables/_colors.scss' as colors;
 @use '../Styles/_Variables/_corner-radius.scss' as corners;
-@use '../Styles/_Variables/_elevation.scss' as elevation;
 @use '../Styles/_Variables/_motion.scss' as motion;
 @use '../Styles/_Variables/_typescale.scss' as typescale;
 
-$tnt-carousel-state-transition: motion.$nt-motion-duration-short_3 motion.$nt-motion-easing-standard;
-
-.tnt-carousel {
-    position: relative;
-    overflow: hidden;
+.nt-carousel {
     display: block;
-    padding: 8px 16px;
-    box-sizing: border-box;
-    height: 700px;
-    width: 100%;
-    background-color: colors.$tnt-color-transparent;
-    box-shadow: map.get(elevation.$elevation-shadows, 0);
+    inline-size: 100%;
+    min-inline-size: 0;
     color: colors.$tnt-color-on-surface;
-    transition: background-color $tnt-carousel-state-transition, box-shadow $tnt-carousel-state-transition, color $tnt-carousel-state-transition;
+    background: var(--nt-carousel-background-color, transparent);
 
     @include typescale.nt-body-large;
 
-    &.tnt-carousel-snapping {
-        &:not(.tnt-carousel-centered) {
-            ::deep tnt-carousel-item {
-                scroll-snap-align: start;
-            }
+    .nt-carousel-autoplay-control {
+        min-block-size: 48px;
+        padding-inline: 16px;
+        border: 0;
+        border-radius: corners.$nt-corner-radius-extra-large;
+        color: colors.$tnt-color-primary;
+        background: transparent;
+        font: inherit;
+        cursor: pointer;
+
+        &:hover {
+            background: color-mix(in srgb, colors.$tnt-color-primary 8%, transparent);
         }
 
-        &.tnt-carousel-centered {
-            ::deep tnt-carousel-item {
-                scroll-snap-align: center;
-            }
-        }
-
-        .tnt-carousel-viewport:not(.tnt-carousel-dragging) {
-            scroll-snap-type: x mandatory;
-            scroll-behavior: smooth;
+        &:focus-visible {
+            outline: 3px solid colors.$tnt-color-primary;
+            outline-offset: 2px;
         }
     }
 
-    .tnt-carousel-viewport {
-        height: 100%;
-        width: 100%;
+    .nt-carousel-viewport {
+        position: relative;
+        box-sizing: border-box;
+        inline-size: 100%;
+        block-size: var(--nt-carousel-height, 240px);
         overflow-x: auto;
         overflow-y: hidden;
-        display: flex;
-        flex-flow: row nowrap;
-        gap: 8px;
-        border-radius: corners.$nt-corner-radius-extra-large;
-        -ms-overflow-style: none;
+        overscroll-behavior-inline: contain;
         scrollbar-width: none;
-        cursor: grab;
-        user-select: none;
+        -ms-overflow-style: none;
+        touch-action: pan-x pan-y pinch-zoom;
 
-        &.tnt-carousel-dragging {
-            cursor: grabbing;
-        }
         &::-webkit-scrollbar {
             display: none;
         }
+    }
+
+    .nt-carousel-track {
+        box-sizing: border-box;
+        display: flex;
+        flex-flow: row nowrap;
+        gap: 8px;
+        min-inline-size: max-content;
+        block-size: 100%;
+        padding: 8px 16px;
+    }
+
+    &.nt-carousel-snapping:not([data-enhanced='true']) {
+        .nt-carousel-viewport:not(.nt-carousel-dragging) {
+            scroll-snap-type: x mandatory;
+        }
+    }
+
+    &[data-enhanced='true'] {
+        .nt-carousel-viewport {
+            cursor: grab;
+            scroll-snap-type: none;
+        }
+
+        .nt-carousel-viewport.nt-carousel-dragging {
+            cursor: grabbing;
+            scroll-snap-type: none;
+            user-select: none;
+        }
+
+        .nt-carousel-track {
+            position: relative;
+            display: block;
+            min-inline-size: 0;
+            padding: 0;
+        }
+
+        ::deep nt-carousel-item {
+            position: absolute;
+            inset-block-start: 8px;
+            transform-origin: center;
+            will-change: transform;
+        }
+    }
+
+    &[data-layout='full-screen'] {
+        .nt-carousel-viewport {
+            block-size: var(--nt-carousel-fullscreen-height, 100dvb);
+            overflow-x: hidden;
+            overflow-y: auto;
+            overscroll-behavior-block: contain;
+            touch-action: pan-y pinch-zoom;
+        }
+
+        .nt-carousel-track {
+            flex-direction: column;
+            gap: 16px;
+            min-inline-size: 100%;
+            min-block-size: max-content;
+            padding: 0;
+        }
+
+        &.nt-carousel-snapping:not([data-enhanced='true']) {
+            .nt-carousel-viewport:not(.nt-carousel-dragging) {
+                scroll-snap-type: y mandatory;
+            }
+        }
+
+        &[data-enhanced='true'] ::deep nt-carousel-item {
+            inset-block-start: 0;
+            inset-inline-start: 0;
+        }
+    }
+
+    &[data-layout='center-aligned-hero']:not([data-enhanced='true']) ::deep nt-carousel-item {
+        scroll-snap-align: center;
+    }
+
+    &[data-reduced-motion='true'] {
+        .nt-carousel-viewport {
+            scroll-behavior: auto;
+        }
+
+        ::deep nt-carousel-item {
+            transition: none;
+        }
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nt-carousel *,
+    .nt-carousel *::before,
+    .nt-carousel *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
     }
 }
