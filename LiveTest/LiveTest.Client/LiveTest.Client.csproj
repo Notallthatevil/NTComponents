@@ -21,7 +21,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AspNetCore.SassCompiler" Version="1.100.0" PrivateAssets="all" />
+    <PackageReference Include="AspNetCore.SassCompiler" Version="1.101.0" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.10" />
+    <PackageReference Include="System.Text.Encodings.Web" Version="10.0.10" />
     <ProjectReference Include="..\..\NTComponents.Analyzers\NTComponents.Analyzers.csproj"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
