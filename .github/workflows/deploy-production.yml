@@ -41,7 +41,7 @@ jobs:
           node-version: lts/*
 
       - name: Restore WebAssembly workloads
-        run: dotnet workload restore ./NTComponents.Site/NTComponents.Site.csproj
+        run: dotnet workload restore ./NTComponents.slnx
 
       - name: Install node dependencies
         run: npm ci
