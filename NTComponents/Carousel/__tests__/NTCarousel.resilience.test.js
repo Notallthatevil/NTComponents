@@ -233,8 +233,10 @@ describe('NTCarousel autoplay resilience', () => {
     viewport.dispatchEvent(new PointerEvent('pointerup', { pointerId: 12, pointerType: 'touch' }));
     jest.advanceTimersByTime(500);
     viewport.dispatchEvent(new Event('scroll'));
-    jest.advanceTimersByTime(140);
-    expect(carousel.autoPlayTimer).not.toBeNull();
+    jest.advanceTimersByTime(1000);
+    expect(animateToIndex).not.toHaveBeenCalled();
+
+    viewport.dispatchEvent(new Event('scrollend'));
     jest.advanceTimersByTime(999);
     expect(animateToIndex).not.toHaveBeenCalled();
 
