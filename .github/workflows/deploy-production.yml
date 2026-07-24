@@ -36,7 +36,7 @@ jobs:
             11.0.100-preview.6.26359.118
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: lts/*
 
