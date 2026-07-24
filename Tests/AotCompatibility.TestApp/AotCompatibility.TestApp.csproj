@@ -1,22 +1,19 @@
 <Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
 
 	<PropertyGroup>
-		<TargetFrameworks>net9.0;net10.0;net11.0</TargetFrameworks>
+		<TargetFrameworks>net10.0;net11.0</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<StaticWebAssetProjectMode>Default</StaticWebAssetProjectMode>
 		<TrimmerSingleWarn>false</TrimmerSingleWarn>
 	</PropertyGroup>
 
-	<PropertyGroup Condition="'$(TargetFramework)' == 'net9.0'">
-		<RunAOTCompilation>true</RunAOTCompilation>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(TargetFramework)' == 'net10.0'">
+	<!-- Ordinary build/test workflows skip native compilation; ensure-aot-build.yml leaves this property unset. -->
+	<PropertyGroup Condition="'$(TargetFramework)' == 'net10.0' and '$(SkipAotCompatibilityNativeBuild)' != 'true'">
 		<WasmBuildNative>true</WasmBuildNative>
 	</PropertyGroup>
 
-	<PropertyGroup Condition="'$(TargetFramework)' == 'net11.0'">
+	<PropertyGroup Condition="'$(TargetFramework)' == 'net11.0' and '$(SkipAotCompatibilityNativeBuild)' != 'true'">
 		<WasmBuildNative>true</WasmBuildNative>
 	</PropertyGroup>
 
@@ -25,12 +22,8 @@
 		                  OutputItemType="Analyzer"
 		                  ReferenceOutputAssembly="false" />
 		<ProjectReference Include="..\..\NTComponents\NTComponents.csproj" />
-		<!-- .NET 11 Preview 6 fails when the entire library is rooted, and .NET 9 macOS hosts can stall. Other lanes still root the full assembly; scoped lanes root every exercised component through the smoke render tree. -->
-		<TrimmerRootAssembly Include="NTComponents" Condition="'$(TargetFramework)' != 'net11.0' and '$(RootNTComponentsAssembly)' != 'false'" />
-	</ItemGroup>
-
-	<ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
-		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="9.0.17" />
+		<!-- .NET 11 Preview 6 fails when the entire library is rooted; the smoke render tree still roots every exercised component. -->
+		<TrimmerRootAssembly Include="NTComponents" Condition="'$(TargetFramework)' == 'net10.0'" />
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">

@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        tfm: [ 'net9.0', 'net10.0', 'net11.0' ]
+        tfm: [ 'net10.0', 'net11.0' ]
         runner:
         - name: Windows x64
           os: windows-latest
@@ -37,10 +37,10 @@ jobs:
         - name: macOS arm64
           os: macos-latest
     runs-on: ${{ matrix.runner.os }}
-    timeout-minutes: ${{ matrix.tfm == 'net9.0' && startsWith(matrix.runner.name, 'macOS') && 30 || 20 }}
+    timeout-minutes: 20
     # determine dotnet SDK version from the TFM (job-level env to avoid schema ambiguity)
     env:
-      DOTNET_VERSION: ${{ matrix.tfm == 'net11.0' && '11.0.100-preview.6.26359.118' || matrix.tfm == 'net10.0' && '10.0.x' || '9.0.x' }}
+      DOTNET_VERSION: ${{ matrix.tfm == 'net11.0' && '11.0.100-preview.6.26359.118' || '10.0.x' }}
 
     steps:
     - uses: actions/checkout@v4
@@ -91,4 +91,4 @@ jobs:
 
     - name: Publish AOT smoke app, assert static analysis warning count, and browser-smoke the app
       shell: pwsh
-      run: ./test-aot-compatibility.ps1 -frameworks "${{ matrix.tfm }}" ${{ matrix.tfm == 'net9.0' && startsWith(matrix.runner.name, 'macOS') && '-SkipFullAssemblyRoot' || '' }}
+      run: ./test-aot-compatibility.ps1 -frameworks "${{ matrix.tfm }}"

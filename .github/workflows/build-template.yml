@@ -36,10 +36,10 @@ jobs:
           node-version: lts/*
 
       - name: Restore WebAssembly workloads
-        run: dotnet workload restore NTComponents.slnx
+        run: dotnet workload restore NTComponents.slnx --skip-manifest-update
 
       - name: Restore dependencies
-        run: dotnet restore NTComponents.slnx
+        run: dotnet restore NTComponents.slnx -p:SkipAotCompatibilityNativeBuild=true
 
       - name: Install node dependencies
         run: npm ci
@@ -48,7 +48,7 @@ jobs:
         run: npm run build:ts
 
       - name: Build
-        run: dotnet build NTComponents.slnx --no-restore --configuration ${{ inputs.configuration }}
+        run: dotnet build NTComponents.slnx --no-restore --configuration ${{ inputs.configuration }} -p:SkipAotCompatibilityNativeBuild=true
 
   dotnet-test:
     needs: build
@@ -114,10 +114,11 @@ jobs:
           node-version: lts/*
 
       - name: Restore WebAssembly workloads
-        run: dotnet workload restore NTComponents.slnx
+        if: matrix.install-playwright
+        run: dotnet workload restore NTComponents.slnx --skip-manifest-update
 
       - name: Restore dependencies
-        run: dotnet restore NTComponents.slnx
+        run: dotnet restore ${{ matrix.project }} -p:SkipAotCompatibilityNativeBuild=true
 
       - name: Install node dependencies
         run: npm ci
@@ -126,11 +127,11 @@ jobs:
         run: npm run build:ts
 
       - name: Build test project
-        run: dotnet build ${{ matrix.project }} --no-restore --configuration ${{ inputs.configuration }} --framework ${{ matrix.framework }}
+        run: dotnet build ${{ matrix.project }} --no-restore --configuration ${{ inputs.configuration }} --framework ${{ matrix.framework }} -p:SkipAotCompatibilityNativeBuild=true
 
       - name: Ensure browsers are installed
         if: matrix.install-playwright
-        run: pwsh Tests/NTComponents.IntegrationTests/bin/${{ inputs.configuration }}/${{ matrix.framework }}/playwright.ps1 install --with-deps
+        run: pwsh Tests/NTComponents.IntegrationTests/bin/${{ inputs.configuration }}/${{ matrix.framework }}/playwright.ps1 install --with-deps chromium
 
       - name: Install dotnet-coverage
         run: dotnet tool install --global dotnet-coverage

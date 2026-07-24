@@ -12,72 +12,13 @@ env:
   TESTINGPLATFORM_EXITCODE_IGNORE: 8
 
 jobs:
-  dotnet-test:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Setup .NET SDKs
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: |
-            8.0.x
-            9.0.x
-            10.0.x
-            11.0.100-preview.6.26359.118
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
-
-      - name: Restore WebAssembly workloads
-        run: dotnet workload restore NTComponents.slnx
-
-      - name: Restore dependencies
-        run: dotnet restore NTComponents.slnx
-
-      - name: Install node dependencies
-        run: npm ci
-
-      - name: Build TypeScript modules
-        run: npm run build:ts:release
-
-      - name: Build
-        run: dotnet build NTComponents.slnx --no-restore --configuration Release
-
-      - name: Ensure browsers are installed
-        run: pwsh Tests/NTComponents.IntegrationTests/bin/Release/net10.0/playwright.ps1 install --with-deps
-
-      - name: Run .NET tests
-        run: dotnet test NTComponents.slnx --no-restore --configuration Release --results-directory ./TestResults -v minimal
-
-  node-test:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
-
-      - name: Install node dependencies
-        run: npm ci
-
-      - name: Run node tests
-        run: npm test
+  tests:
+    uses: ./.github/workflows/build-template.yml
+    with:
+      configuration: Release
 
   publish-prerelease:
-    needs:
-      - dotnet-test
-      - node-test
+    needs: tests
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -119,11 +60,11 @@ jobs:
 
       - name: Restore WebAssembly workloads
         if: steps.check-tags.outputs.is_tagged == 'false'
-        run: dotnet workload restore NTComponents.slnx
+        run: dotnet workload restore NTComponents.slnx --skip-manifest-update
 
       - name: Restore dependencies
         if: steps.check-tags.outputs.is_tagged == 'false'
-        run: dotnet restore NTComponents.slnx
+        run: dotnet restore NTComponents.slnx -p:SkipAotCompatibilityNativeBuild=true
 
       - name: Install node dependencies
         if: steps.check-tags.outputs.is_tagged == 'false'
@@ -135,7 +76,7 @@ jobs:
 
       - name: Build
         if: steps.check-tags.outputs.is_tagged == 'false'
-        run: dotnet build NTComponents.slnx --no-restore --configuration Release
+        run: dotnet build NTComponents.slnx --no-restore --configuration Release -p:SkipAotCompatibilityNativeBuild=true
 
       - name: Install semantic-release
         if: steps.check-tags.outputs.is_tagged == 'false'

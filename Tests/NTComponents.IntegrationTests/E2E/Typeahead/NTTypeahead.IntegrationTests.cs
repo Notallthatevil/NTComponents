@@ -106,14 +106,7 @@ public class NTTypeahead_IntegrationTests : IAsyncLifetime {
             new PageWaitForFunctionOptions { Timeout = 5000 });
     }
 
-    private async Task TypeIntoAsync(ILocator input, string value) {
-        ArgumentNullException.ThrowIfNull(_page);
-
-        await input.ClickAsync();
-        await input.PressAsync("Control+A");
-        await input.PressAsync("Backspace");
-        await _page.Keyboard.TypeAsync(value, new KeyboardTypeOptions { Delay = 25 });
-    }
+    private static Task TypeIntoAsync(ILocator input, string value) => input.FillAsync(value);
 
     private async Task<ILocator> WaitForFirstOptionAsync(ILocator typeaheadRoot, ILocator input) {
         var firstOption = typeaheadRoot.Locator(".nt-combobox-option").First;

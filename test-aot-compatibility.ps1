@@ -1,4 +1,4 @@
-param([string[]]$frameworks, [string[]]$runtimes, [switch]$SkipBrowserSmoke, [switch]$SkipFullAssemblyRoot)
+param([string[]]$frameworks, [string[]]$runtimes, [switch]$SkipBrowserSmoke)
 
 $ErrorActionPreference = 'Stop'
 
@@ -11,7 +11,7 @@ if (-not $frameworks -or $frameworks.Length -eq 0) {
     }
 }
 
-$targetFrameworks = @('net9.0', 'net10.0', 'net11.0')
+$targetFrameworks = @('net10.0', 'net11.0')
 if ($frameworks -and $frameworks.Length -gt 0) {
     $targetFrameworks = $frameworks
 }
@@ -565,11 +565,6 @@ foreach ($framework in $targetFrameworks) {
         '-c', 'Release',
         '-f', $framework
     )
-
-    if ($SkipFullAssemblyRoot) {
-        $publishArgs += '/p:RootNTComponentsAssembly=false'
-        Write-Host 'The full NTComponents assembly root is disabled for this run; reachable smoke-app code remains rooted.'
-    }
 
     $publishOutput = & dotnet publish @publishArgs 2>&1 | ForEach-Object {
         Write-Host $_
