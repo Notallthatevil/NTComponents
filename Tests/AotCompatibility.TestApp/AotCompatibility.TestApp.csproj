@@ -25,8 +25,8 @@
 		                  OutputItemType="Analyzer"
 		                  ReferenceOutputAssembly="false" />
 		<ProjectReference Include="..\..\NTComponents\NTComponents.csproj" />
-		<!-- .NET 11 Preview 6 ILLink stack-overflows when the entire library is rooted. The smoke app still roots every exercised component through its render tree. -->
-		<TrimmerRootAssembly Include="NTComponents" Condition="'$(TargetFramework)' != 'net11.0'" />
+		<!-- .NET 11 Preview 6 fails when the entire library is rooted, and .NET 9 macOS hosts can stall. Other lanes still root the full assembly; scoped lanes root every exercised component through the smoke render tree. -->
+		<TrimmerRootAssembly Include="NTComponents" Condition="'$(TargetFramework)' != 'net11.0' and '$(RootNTComponentsAssembly)' != 'false'" />
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">

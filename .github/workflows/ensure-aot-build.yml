@@ -91,4 +91,4 @@ jobs:
 
     - name: Publish AOT smoke app, assert static analysis warning count, and browser-smoke the app
       shell: pwsh
-      run: ./test-aot-compatibility.ps1 -frameworks "${{ matrix.tfm }}" ${{ matrix.tfm == 'net9.0' && startsWith(matrix.runner.name, 'macOS') && '-DisableParallelAot' || '' }}
+      run: ./test-aot-compatibility.ps1 -frameworks "${{ matrix.tfm }}" ${{ matrix.tfm == 'net9.0' && startsWith(matrix.runner.name, 'macOS') && '-SkipFullAssemblyRoot' || '' }}
