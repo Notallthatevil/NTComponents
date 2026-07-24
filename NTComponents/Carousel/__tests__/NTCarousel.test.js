@@ -379,6 +379,33 @@ describe('NTCarousel', () => {
     expect(observer.disconnect).toHaveBeenCalled();
   });
 
+  test('focus-paused autoplay survives interactive hydration replacement', () => {
+    jest.useFakeTimers();
+    const original = createCarousel();
+    original.carousel.dataset.autoPlayInterval = '1';
+    const originalControl = document.createElement('button');
+    originalControl.dataset.autoplayControl = '';
+    original.carousel.prepend(originalControl);
+    original.carousel.update();
+    original.items[0].focus();
+    expect(originalControl.textContent).toBe('Start rotation');
+
+    original.carousel.remove();
+    const replacement = createCarousel();
+    replacement.carousel.dataset.autoPlayInterval = '1';
+    const replacementControl = document.createElement('button');
+    replacementControl.dataset.autoplayControl = '';
+    replacement.carousel.prepend(replacementControl);
+    replacement.carousel.update();
+    replacement.carousel.restoreTransferredInteraction();
+
+    expect(replacementControl.textContent).toBe('Start rotation');
+    jest.advanceTimersByTime(1_000);
+    expect(replacement.carousel.activeIndex).toBe(0);
+    expect(replacement.viewport.scrollLeft).toBe(0);
+    replacementControl.click();
+  });
+
   test('autoplay smoothly returns to item one, notifies settlement, and schedules the next interval', () => {
     jest.useFakeTimers();
     const clock = installAnimationFrameClock();

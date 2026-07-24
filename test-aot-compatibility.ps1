@@ -1,8 +1,4 @@
-param(
-    [string[]]$frameworks,
-    [string[]]$runtimes,
-    [switch]$SkipBrowserSmoke
-)
+param([string[]]$frameworks, [string[]]$runtimes, [switch]$SkipBrowserSmoke, [switch]$DisableParallelAot)
 
 $ErrorActionPreference = 'Stop'
 
@@ -570,11 +566,18 @@ foreach ($framework in $targetFrameworks) {
         '-f', $framework
     )
 
-    $publishOutput = & dotnet publish @publishArgs 2>&1 | Out-String
-    $publishExitCode = $LASTEXITCODE
-    Write-Host $publishOutput
+    if ($DisableParallelAot) {
+        $publishArgs += '/p:DisableParallelAot=true'
+        Write-Host 'Parallel WebAssembly AOT compilation is disabled for this run.'
+    }
 
-    $warningLines = $publishOutput -split "\r?\n" | Where-Object { $_ -match '\bIL(2|3)\d{3}\b' -and $_ -match 'warning' }
+    $publishOutput = & dotnet publish @publishArgs 2>&1 | ForEach-Object {
+        Write-Host $_
+        $_
+    }
+    $publishExitCode = $LASTEXITCODE
+
+    $warningLines = $publishOutput | Where-Object { $_ -match '\bIL(2|3)\d{3}\b' -and $_ -match 'warning' }
     foreach ($line in $warningLines) {
         Write-Host "AOT/trim analysis warning: $line"
         $analysisWarningCount += 1

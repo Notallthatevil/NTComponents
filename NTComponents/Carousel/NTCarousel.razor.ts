@@ -41,7 +41,8 @@ interface DragState {
 
 interface TransferredInteractionState {
     readonly activeIndex: number
-    readonly dragState: DragState
+    readonly autoPlayUserPaused: boolean
+    readonly dragState: DragState | null
     readonly expiresAt: number
     readonly itemCount: number
     readonly logicalScroll: number
@@ -927,6 +928,10 @@ export class NTCarouselElement extends HTMLElement {
     }
 
     private preserveInteractionForReplacement(): void {
+        if (!this.initialized) {
+            return
+        }
+
         const key = this.getInteractionTransferKey()
         const state = this.captureInteractionState()
         if (!key || !state) {
@@ -960,13 +965,15 @@ export class NTCarouselElement extends HTMLElement {
     }
 
     private captureInteractionState(): TransferredInteractionState | null {
-        if (this.dragState == null) {
+        const preserveAutoPlayPause = this.autoPlayIntervalMs != null && this.autoPlayUserPaused
+        if (this.dragState == null && !preserveAutoPlayPause) {
             return null
         }
 
         return {
             activeIndex: this.activeIndex,
-            dragState: { ...this.dragState },
+            autoPlayUserPaused: preserveAutoPlayPause,
+            dragState: this.dragState ? { ...this.dragState } : null,
             expiresAt: performance.now() + interactionTransferLifetime,
             itemCount: this.items.length,
             logicalScroll: this.lastLogicalScroll
@@ -980,11 +987,19 @@ export class NTCarouselElement extends HTMLElement {
 
         this.activeIndex = clamp(state.activeIndex, 0, this.items.length - 1)
         this.lastNotifiedIndex = this.activeIndex
+        this.autoPlayUserPaused = state.autoPlayUserPaused
+        this.updateAutoPlayControlText()
         this.setLogicalScroll(state.logicalScroll)
         this.dragState = state.dragState
         this.updateTabStops(this.activeIndex)
-        this.viewport.classList.add('nt-carousel-dragging')
         this.clearAutoPlayTimer()
+        if (!this.dragState) {
+            this.viewport.classList.remove('nt-carousel-dragging')
+            this.renderItems()
+            return
+        }
+
+        this.viewport.classList.add('nt-carousel-dragging')
         try {
             this.viewport.setPointerCapture(this.dragState.pointerId)
         }

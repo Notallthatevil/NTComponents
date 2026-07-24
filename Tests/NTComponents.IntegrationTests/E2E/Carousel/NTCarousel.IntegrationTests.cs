@@ -126,6 +126,7 @@ public sealed class NTCarousel_IntegrationTests : IAsyncLifetime {
                 const viewport = carousel?.querySelector('[data-carousel-viewport]');
                 return customElements.get('nt-carousel') != null
                     && carousel?.dataset.enhanced === 'true'
+                    && typeof carousel?.dotNetRef?.invokeMethodAsync === 'function'
                     && viewport?.scrollWidth > viewport?.clientWidth;
             }
             """,
