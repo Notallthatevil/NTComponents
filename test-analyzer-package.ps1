@@ -63,7 +63,7 @@ try {
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <RestoreSources>$escapedFeedDirectory</RestoreSources>
+    <RestoreSources>$escapedFeedDirectory;https://api.nuget.org/v3/index.json</RestoreSources>
     <RestorePackagesPath>$escapedPackagesDirectory</RestorePackagesPath>
     <NuGetAudit>false</NuGetAudit>
   </PropertyGroup>
@@ -101,7 +101,7 @@ public static class ButtonFactory {
     [System.IO.File]::WriteAllText($projectPath, $project, [System.Text.UTF8Encoding]::new($false))
     [System.IO.File]::WriteAllText((Join-Path $projectDirectory 'ButtonFactory.cs'), $source, [System.Text.UTF8Encoding]::new($false))
 
-    $restoreOutput = & dotnet restore $projectPath --source $feedDirectory --ignore-failed-sources --verbosity minimal 2>&1
+    $restoreOutput = & dotnet restore $projectPath --ignore-failed-sources --verbosity minimal 2>&1
     if ($LASTEXITCODE -ne 0) {
         throw "Analyzer package consumer restore failed:`n$($restoreOutput -join [Environment]::NewLine)"
     }
