@@ -120,6 +120,40 @@ public class Search_Tests {
 
         var actual = _catalog.Search("  DIALOG, dialog; elevation  ", 200);
 
-        actual.Should().Equal(expected);
+        actual.Select(result => (result.Name, result.Score)).Should().Equal(expected.Select(result => (result.Name, result.Score)));
+    }
+
+    [Fact]
+    public void WithNaturalLanguageComponentQuery_ReturnsOnlyCompleteMatchesWhenAvailable() {
+        var page = _catalog.SearchPage("accordion one open", 200);
+
+        page.Items.Should().NotBeEmpty();
+        page.Items[0].Name.Should().Be("NTAccordion");
+        page.Items.Should().OnlyContain(result => result.MatchedTerms.Count == 3);
+        page.Items[0].MatchedFields.Any(field => field is "Name" or "Summary" or "Remarks" or "Parameter.Name").Should().BeTrue();
+    }
+
+    [Fact]
+    public void WithShortTerm_DoesNotMatchInsideUnrelatedWords() {
+        var page = _catalog.SearchPage("one", 200);
+
+        page.Items.Should().NotContain(result => result.Name == "NTComponentRenderCompatibility");
+    }
+
+    [Fact]
+    public void WithMisspelledComponentName_SuggestsTheComponent() {
+        var page = _catalog.SearchPage("accoridon");
+
+        page.Items.Should().BeEmpty();
+        page.DidYouMean.Should().Be("NTAccordion");
+    }
+
+    [Fact]
+    public void ListComponents_WithNaturalLanguageQuery_ReturnsOnlyCompleteMatchesWhenAvailable() {
+        var page = _catalog.ListComponentPage("accordion one open", limit: 200);
+
+        page.Items.Should().NotBeEmpty();
+        page.Items[0].Name.Should().Be("NTAccordion");
+        page.Items.Should().NotContain(component => component.Name == "NTComponentRenderCompatibility");
     }
 }

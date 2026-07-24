@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.HttpOverrides;
 using NTComponents.MCP.Catalog;
 using NTComponents.MCP.Endpoints;
+using NTComponents.MCP.Resources;
 using NTComponents.MCP.Tools;
 using System.Diagnostics;
 using System.Globalization;
@@ -66,7 +67,8 @@ builder.Services.AddRateLimiter(options => {
 builder.Services.AddSingleton<NTComponentsCatalog>();
 builder.Services.AddMcpServer()
     .WithHttpTransport(options => options.Stateless = true)
-    .WithTools<NTComponentsTools>();
+    .WithTools<NTComponentsTools>()
+    .WithResources<NTComponentsResources>();
 
 var app = builder.Build();
 

@@ -13,13 +13,25 @@ namespace NTComponents;
 ///         in static server-side rendering without JavaScript, JS interop, hydration, or an interactive Blazor circuit.
 ///     </para>
 ///     <para>
-///         Use <see cref="LimitToOneExpanded" /> when the accordion should behave as a single-expanded group. The component emits a shared native <c>name</c> value for its child
+///         Use <see cref="LimitToOneExpanded" /> when the accordion should keep only one item open (expanded). The component emits a shared native <c>name</c> value for its child
 ///         <see cref="NTAccordionItem" /> elements so browsers can enforce the group without script.
 ///     </para>
 ///     <para>
 ///         Native <c>details name</c> grouping is a modern browser feature. Browsers without support still render all items and allow independent expand/collapse behavior.
 ///     </para>
 /// </remarks>
+/// <example>
+/// <code><![CDATA[
+/// <NTAccordion LimitToOneExpanded="true">
+///     <NTAccordionItem Label="Account details">
+///         Account content
+///     </NTAccordionItem>
+///     <NTAccordionItem Label="Preferences">
+///         Preference content
+///     </NTAccordionItem>
+/// </NTAccordion>
+/// ]]></code>
+/// </example>
 [NTDocumentation(
     RenderCompatibility = NTComponentRenderCompatibility.SsrCompatible,
     CompatibilitySummary = "Renders native disclosure markup that works in static SSR.",

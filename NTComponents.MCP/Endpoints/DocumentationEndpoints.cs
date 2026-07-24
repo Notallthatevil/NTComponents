@@ -44,11 +44,12 @@ public static class DocumentationEndpoints {
             [Description("Optional text matched against component names and generated documentation."), MaxLength(CatalogInputValidator.MaximumQueryLength)] string? query,
             [Description("Optional source folder such as Buttons, Form, Grid, Dialog, or Layout.")] string? folder,
             [Description("Include obsolete components when true.")] bool includeObsolete = false,
-            [Description("Maximum number of results from 1 through 200."), Range(CatalogInputValidator.MinimumLimit, CatalogInputValidator.MaximumLimit)] int limit = 100) => TypedResults.Ok(catalog.ListComponents(query, folder, includeObsolete, limit)))
+            [Description("Maximum number of results from 1 through 200."), Range(CatalogInputValidator.MinimumLimit, CatalogInputValidator.MaximumLimit)] int limit = 100,
+            [Description("Zero-based result offset."), Range(0, int.MaxValue)] int offset = 0) => TypedResults.Ok(catalog.ListComponentPage(query, folder, includeObsolete, limit, offset)))
             .WithName("ListNTComponents")
             .WithSummary("List NT-prefixed components")
             .WithDescription("Lists public NT-prefixed Blazor components with generated summaries, render compatibility, source folders, and required parameters.")
-            .Produces<IReadOnlyList<ComponentSummary>>()
+            .Produces<CatalogPage<ComponentSummary>>()
             .ProducesValidationProblem();
 
         api.MapGet("/components/{name}", (NTComponentsCatalog catalog,
@@ -65,17 +66,24 @@ public static class DocumentationEndpoints {
         api.MapGet("/references", (NTComponentsCatalog catalog,
             [Description("Optional text matched against reference-type names and generated documentation."), MaxLength(CatalogInputValidator.MaximumQueryLength)] string? query,
             [Description("Optional reference kind: Enum or Helper."), AllowedValues(CatalogInputValidator.EnumReferenceKind, CatalogInputValidator.HelperReferenceKind)] string? kind,
+            [Description("Optional API scope: ComponentApi or LibraryApi."), AllowedValues(CatalogInputValidator.ComponentApiReferenceScope, CatalogInputValidator.LibraryApiReferenceScope)] string? scope,
             [Description("Include obsolete reference types when true.")] bool includeObsolete = false,
-            [Description("Maximum number of results from 1 through 200."), Range(CatalogInputValidator.MinimumLimit, CatalogInputValidator.MaximumLimit)] int limit = 100) => TypedResults.Ok(catalog.ListReferences(query, kind, includeObsolete, limit)))
+            [Description("Maximum number of results from 1 through 200."), Range(CatalogInputValidator.MinimumLimit, CatalogInputValidator.MaximumLimit)] int limit = 100,
+            [Description("Zero-based result offset."), Range(0, int.MaxValue)] int offset = 0) => TypedResults.Ok(catalog.ListReferencePage(query, kind, scope, includeObsolete, limit, offset)))
             .WithName("ListNTReferenceTypes")
             .WithSummary("List NTComponents enums and helpers")
             .WithDescription("Lists public enums and helper types that are part of or referenced by the NTComponents component API.")
-            .Produces<IReadOnlyList<ReferenceSummary>>()
+            .Produces<CatalogPage<ReferenceSummary>>()
             .ProducesValidationProblem()
             .AddOpenApiOperationTransformer((operation, _, _) => {
                 var kindSchema = operation.Parameters?.SingleOrDefault(parameter => parameter.Name == "kind")?.Schema;
                 if (kindSchema is OpenApiSchema schema) {
                     schema.Enum = [JsonValue.Create(CatalogInputValidator.EnumReferenceKind), JsonValue.Create(CatalogInputValidator.HelperReferenceKind)];
+                }
+
+                var scopeSchema = operation.Parameters?.SingleOrDefault(parameter => parameter.Name == "scope")?.Schema;
+                if (scopeSchema is OpenApiSchema scope) {
+                    scope.Enum = [JsonValue.Create(CatalogInputValidator.ComponentApiReferenceScope), JsonValue.Create(CatalogInputValidator.LibraryApiReferenceScope)];
                 }
 
                 return Task.CompletedTask;
@@ -93,11 +101,12 @@ public static class DocumentationEndpoints {
 
         api.MapGet("/search", (NTComponentsCatalog catalog,
             [Description("Required text matched against component, enum, and helper documentation."), Required, MinLength(1), MaxLength(CatalogInputValidator.MaximumQueryLength)] string query,
-            [Description("Maximum number of results from 1 through 200."), Range(CatalogInputValidator.MinimumLimit, CatalogInputValidator.MaximumLimit)] int limit = 25) => TypedResults.Ok(catalog.Search(query, limit)))
+            [Description("Maximum number of results from 1 through 200."), Range(CatalogInputValidator.MinimumLimit, CatalogInputValidator.MaximumLimit)] int limit = 25,
+            [Description("Zero-based result offset."), Range(0, int.MaxValue)] int offset = 0) => TypedResults.Ok(catalog.SearchPage(query, limit, offset)))
             .WithName("SearchNTComponents")
             .WithSummary("Search NTComponents documentation")
             .WithDescription("Returns relevance-ranked component, enum, and helper matches from the generated documentation catalog.")
-            .Produces<IReadOnlyList<DocumentationSearchResult>>()
+            .Produces<DocumentationSearchPage>()
             .ProducesValidationProblem();
 
         return endpoints;

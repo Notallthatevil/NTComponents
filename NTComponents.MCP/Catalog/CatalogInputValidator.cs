@@ -7,10 +7,18 @@ internal static class CatalogInputValidator {
     public const int MaximumSearchTerms = 16;
     public const string EnumReferenceKind = "Enum";
     public const string HelperReferenceKind = "Helper";
+    public const string ComponentApiReferenceScope = "ComponentApi";
+    public const string LibraryApiReferenceScope = "LibraryApi";
 
     public static void ValidateLimit(int limit) {
         if (limit is < MinimumLimit or > MaximumLimit) {
             throw new CatalogValidationException(nameof(limit), $"limit must be between {MinimumLimit} and {MaximumLimit}.");
+        }
+    }
+
+    public static void ValidateOffset(int offset) {
+        if (offset < 0) {
+            throw new CatalogValidationException(nameof(offset), "offset must be zero or greater.");
         }
     }
 
@@ -23,6 +31,18 @@ internal static class CatalogInputValidator {
             || (!string.Equals(kind, EnumReferenceKind, StringComparison.OrdinalIgnoreCase)
                 && !string.Equals(kind, HelperReferenceKind, StringComparison.OrdinalIgnoreCase))) {
             throw new CatalogValidationException(nameof(kind), $"kind must be {EnumReferenceKind} or {HelperReferenceKind}.");
+        }
+    }
+
+    public static void ValidateReferenceScope(string? scope) {
+        if (scope is null) {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(scope)
+            || (!string.Equals(scope, ComponentApiReferenceScope, StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(scope, LibraryApiReferenceScope, StringComparison.OrdinalIgnoreCase))) {
+            throw new CatalogValidationException(nameof(scope), $"scope must be {ComponentApiReferenceScope} or {LibraryApiReferenceScope}.");
         }
     }
 
