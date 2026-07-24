@@ -200,7 +200,7 @@ jobs:
 
       - name: Post coverage summary to PR
         if: github.event_name == 'pull_request'
-        uses: 5monkeys/cobertura-action@v13
+        uses: 5monkeys/cobertura-action@v14
         with:
           path: ./TestResults/coverage.cobertura.xml
           minimum_coverage: ${{ env.COVERAGE_THRESHOLD }}
