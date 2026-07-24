@@ -51,10 +51,10 @@ public partial class NTTag {
     ///     Gets or sets the tag elevation level.
     /// </summary>
     /// <remarks>
-    ///     The default elevation is <c>1</c>. Keep elevation low for inline metadata and use <c>0</c> when the tag sits inside an already elevated or strongly bounded surface.
+    ///     The default elevation is <see cref="NTElevation.Lowest" />. Keep elevation low for inline metadata and use <see cref="NTElevation.None" /> when the tag sits inside an already elevated or strongly bounded surface.
     /// </remarks>
     [Parameter]
-    public int Elevation { get; set; } = 1;
+    public NTElevation Elevation { get; set; } = NTElevation.Lowest;
 
     /// <summary>
     ///     Gets or sets the tag label.

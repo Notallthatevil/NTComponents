@@ -12,6 +12,11 @@
         <NTTab Label="Accessibility" Value="accessibility" Icon="@MaterialIcon.CheckCircle">
             <p>Primary default accessibility content.</p>
         </NTTab>
+        @for (var tabNumber = 4; tabNumber <= 10; tabNumber++) {
+            <NTTab @key="tabNumber" Label="@($"Section {tabNumber}")" Value="@($"section-{tabNumber}")">
+                <p>Primary default section @tabNumber content.</p>
+            </NTTab>
+        }
     </NTTabView>
 
     <NTTabView Name="nt-secondary-default-demo" Variant="NTTabViewVariant.Secondary" AriaLabel="NTTabView secondary default demo">
@@ -24,6 +29,11 @@
         <NTTab Label="Disabled" Value="disabled" Disabled="true">
             Secondary default disabled content.
         </NTTab>
+        @for (var tabNumber = 4; tabNumber <= 10; tabNumber++) {
+            <NTTab @key="tabNumber" Label="@($"Section {tabNumber}")" Value="@($"section-{tabNumber}")">
+                Secondary default section @tabNumber content.
+            </NTTab>
+        }
     </NTTabView>
 
     <NTTabView Name="nt-primary-compact-demo" Compact="true" TabGap="8px" AriaLabel="NTTabView primary compact demo">
@@ -36,6 +46,11 @@
         <NTTab Label="Accessibility" Value="accessibility" Icon="@MaterialIcon.CheckCircle">
             <p>Primary compact accessibility content.</p>
         </NTTab>
+        @for (var tabNumber = 4; tabNumber <= 10; tabNumber++) {
+            <NTTab @key="tabNumber" Label="@($"Section {tabNumber}")" Value="@($"section-{tabNumber}")">
+                <p>Primary compact section @tabNumber content.</p>
+            </NTTab>
+        }
     </NTTabView>
 
     <NTTabView Name="nt-secondary-compact-demo" Variant="NTTabViewVariant.Secondary" Compact="true" TabGap="8px" AriaLabel="NTTabView secondary compact demo">
@@ -48,5 +63,10 @@
         <NTTab Label="Disabled" Value="disabled" Disabled="true">
             Secondary compact disabled content.
         </NTTab>
+        @for (var tabNumber = 4; tabNumber <= 10; tabNumber++) {
+            <NTTab @key="tabNumber" Label="@($"Section {tabNumber}")" Value="@($"section-{tabNumber}")">
+                Secondary compact section @tabNumber content.
+            </NTTab>
+        }
     </NTTabView>
 </section>

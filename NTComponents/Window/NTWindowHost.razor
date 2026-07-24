@@ -1,0 +1,28 @@
+@namespace NTComponents
+@using NTComponents.Core
+@inherits NTComponentBase
+@implements IDisposable
+@inject INTWindowService WindowService
+
+<div @attributes="AdditionalAttributes"
+     class="@ElementClass"
+     style="@ElementStyle"
+     id="@ElementId"
+     lang="@ElementLang"
+     title="@ElementTitle"
+     role="region"
+     aria-label="@AriaLabel"
+     data-nt-window-host="true"
+     data-permanent
+     @ref="Element">
+    @foreach (var window in WindowService.Windows) {
+        <NTWindow @key="window.Id"
+                  DockPosition="@window.DockPosition"
+                  Title="@window.Title"
+                  State="@window.State"
+                  StateChanged="state => SetState(window, state)"
+                  OpenChanged="open => SetOpen(window, open)">
+            @window.Content
+        </NTWindow>
+    }
+</div>

@@ -5,6 +5,7 @@ using NTComponents.Dialog;
 using NTComponents.Snackbar;
 using NTComponents.Storage;
 using NTComponents.Toast;
+using NTComponents.Windowing;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -29,6 +30,7 @@ public static class TnTServicesExt {
         return services.AddScoped<ITnTDialogService, TnTDialogService>()
              .AddScoped<INTSnackbarService, NTSnackbarService>()
              .AddScoped<INTToastService, NTToastService>()
+             .AddScoped<INTWindowService, NTWindowService>()
              .AddScoped<ITnTToastService, TnTToastService>()
              .AddScoped<ISessionStorageService, SessionStorageService>()
              .AddScoped<ILocalStorageService, LocalStorageService>()

@@ -29,7 +29,7 @@
             <div class="docs-sandbox-preview">
                 <div class="docs-generated-example">
                     @if (DocumentationCuratedDemo.Supports(Component.Type.Name)) {
-                        <DocumentationCuratedDemo Component="Component" />
+                        <DocumentationCuratedDemo Component="Component" ValueProvider="GetRuntimeValue" />
                     }
                     else if (Component.Type.Name == "NTHeadDependencies") {
                         <div class="docs-callout">Place <code>NTHeadDependencies</code> in the document head. It supplies the shared NTComponents styles and browser loader and is intentionally not duplicated inside this page preview.</div>
@@ -61,72 +61,77 @@
                 @if (DocumentationCuratedDemo.Supports(Component.Type.Name)) {
                     <p class="docs-muted">This example uses a curated composition so its trigger, host, service, or viewport behavior can be exercised as a complete working scenario.</p>
                 }
-                else @foreach (var parameter in Sandbox.Parameters.Where(parameter => parameter.IsControlVisible)) {
-                    <div class="docs-control-row">
-                        @if (!parameter.IsSupported) {
-                            <div>
-                                <strong>@parameter.Property.Name</strong>
-                                <p class="docs-muted">@parameter.UnsupportedReason</p>
-                                <code>@parameter.Property.TypeDisplayName</code>
+                @foreach (var group in Sandbox.Parameters.Where(parameter => parameter.IsControlVisible).GroupBy(parameter => parameter.ControlGroup)) {
+                    <section class="docs-control-group" data-docs-control-group="@group.Key">
+                        <h3>@GetControlGroupLabel(group.Key)</h3>
+                        @foreach (var parameter in group) {
+                            <div class="docs-control-row" data-docs-control-name="@parameter.Property.Name">
+                                @if (!parameter.IsSupported) {
+                                    <div>
+                                        <strong>@parameter.Property.Name</strong>
+                                        <p class="docs-muted">@parameter.UnsupportedReason</p>
+                                        <code>@parameter.Property.TypeDisplayName</code>
+                                    </div>
+                                }
+                                else {
+                                    @switch (parameter.Kind) {
+                                        case SandboxParameterKind.Boolean:
+                                            <NTInputSwitch Label="@parameter.Property.Name"
+                                                           ElementId="@BuildControlElementId(parameter)"
+                                                           Value="@GetBool(parameter)"
+                                                           ValueChanged="value => SetValue(parameter, value)"
+                                                           ValueExpression="@(() => _form.BooleanValue)"
+                                                           SubmitValue="false" />
+                                            break;
+                                        case SandboxParameterKind.Number:
+                                            <NTInputNumeric TNumber="decimal"
+                                                            Label="@parameter.Property.Name"
+                                                            ElementId="@BuildControlElementId(parameter)"
+                                                            Value="@GetNumber(parameter)"
+                                                            ValueChanged="value => SetValue(parameter, value ?? 0m)"
+                                                            ValueExpression="@(() => _form.NumberValue)"
+                                                            SubmitValue="false" />
+                                            break;
+                                        case SandboxParameterKind.Enum:
+                                            <NTSelect TValue="string"
+                                                      Label="@parameter.Property.Name"
+                                                      ElementId="@BuildControlElementId(parameter)"
+                                                      Value="@GetEnumString(parameter)"
+                                                      ValueChanged="value => SetEnumValue(parameter, value)"
+                                                      ValueExpression="@(() => _form.EnumValue)"
+                                                      SubmitValue="false">
+                                                @foreach (var option in parameter.Options.OfType<SandboxEnumOption>()) {
+                                                    <option value="@option.Label">@option.Label</option>
+                                                }
+                                            </NTSelect>
+                                            break;
+                                        case SandboxParameterKind.Icon:
+                                            <NTSelect TValue="string"
+                                                      Label="@parameter.Property.Name"
+                                                      ElementId="@BuildControlElementId(parameter)"
+                                                      Value="@GetIconString(parameter)"
+                                                      ValueChanged="value => SetIconValue(parameter, value)"
+                                                      ValueExpression="@(() => _form.IconValue)"
+                                                      SubmitValue="false">
+                                                @foreach (var option in parameter.Options.OfType<SandboxIconOption>()) {
+                                                    <option value="@option.Label">@option.Label</option>
+                                                }
+                                            </NTSelect>
+                                            break;
+                                        case SandboxParameterKind.ChildContent:
+                                        case SandboxParameterKind.Text:
+                                            <NTInputText Label="@parameter.Property.Name"
+                                                         ElementId="@BuildControlElementId(parameter)"
+                                                         Value="@GetString(parameter)"
+                                                         ValueChanged="value => SetValue(parameter, value ?? string.Empty)"
+                                                         ValueExpression="@(() => _form.TextValue)"
+                                                         SubmitValue="false" />
+                                            break;
+                                    }
+                                }
                             </div>
                         }
-                        else {
-                            @switch (parameter.Kind) {
-                                case SandboxParameterKind.Boolean:
-                                    <NTInputSwitch Label="@parameter.Property.Name"
-                                                   ElementId="@BuildControlElementId(parameter)"
-                                                   Value="@GetBool(parameter)"
-                                                   ValueChanged="value => SetValue(parameter, value)"
-                                                   ValueExpression="@(() => _form.BooleanValue)"
-                                                   SubmitValue="false" />
-                                    break;
-                                case SandboxParameterKind.Number:
-                                    <NTInputNumeric TNumber="decimal"
-                                                    Label="@parameter.Property.Name"
-                                                    ElementId="@BuildControlElementId(parameter)"
-                                                    Value="@GetNumber(parameter)"
-                                                    ValueChanged="value => SetValue(parameter, value ?? 0m)"
-                                                    ValueExpression="@(() => _form.NumberValue)"
-                                                    SubmitValue="false" />
-                                    break;
-                                case SandboxParameterKind.Enum:
-                                    <NTSelect TValue="string"
-                                              Label="@parameter.Property.Name"
-                                              ElementId="@BuildControlElementId(parameter)"
-                                              Value="@GetEnumString(parameter)"
-                                              ValueChanged="value => SetEnumValue(parameter, value)"
-                                              ValueExpression="@(() => _form.EnumValue)"
-                                              SubmitValue="false">
-                                        @foreach (var option in parameter.Options.OfType<SandboxEnumOption>()) {
-                                            <option value="@option.Label">@option.Label</option>
-                                        }
-                                    </NTSelect>
-                                    break;
-                                case SandboxParameterKind.Icon:
-                                    <NTSelect TValue="string"
-                                              Label="@parameter.Property.Name"
-                                              ElementId="@BuildControlElementId(parameter)"
-                                              Value="@GetIconString(parameter)"
-                                              ValueChanged="value => SetIconValue(parameter, value)"
-                                              ValueExpression="@(() => _form.IconValue)"
-                                              SubmitValue="false">
-                                        @foreach (var option in parameter.Options.OfType<SandboxIconOption>()) {
-                                            <option value="@option.Label">@option.Label</option>
-                                        }
-                                    </NTSelect>
-                                    break;
-                                case SandboxParameterKind.ChildContent:
-                                case SandboxParameterKind.Text:
-                                    <NTInputText Label="@parameter.Property.Name"
-                                                 ElementId="@BuildControlElementId(parameter)"
-                                                 Value="@GetString(parameter)"
-                                                 ValueChanged="value => SetValue(parameter, value ?? string.Empty)"
-                                                 ValueExpression="@(() => _form.TextValue)"
-                                                 SubmitValue="false" />
-                                    break;
-                            }
-                        }
-                    </div>
+                    </section>
                 }
             </div>
         </div>
@@ -284,7 +289,7 @@
 
     private object? BuildInputValue(Type valueType) {
         if (valueType == typeof(string)) {
-            return Component.Type.Name is "NTInputRadioGroup" or "NTInputSelect" or "NTSelect" ? "one" : "Example";
+            return Component.Type.Name is "NTInputRadioGroup" or "NTInputSelect" or "NTSelect" ? "one" : DocumentationDemoProfiles.BuildInputValue(Component.Type.Name);
         }
 
         if (valueType == typeof(bool)) {
@@ -316,7 +321,8 @@
         }
 
         if (Sandbox.ComponentType.GetProperty("Label") is not null) {
-            parameters.TryAdd("Label", "Example");
+            var label = Component.Type.Parameters.FirstOrDefault(parameter => string.Equals(parameter.Name, "Label", StringComparison.Ordinal));
+            parameters.TryAdd("Label", label is null ? $"{Component.DisplayName} example" : DocumentationDemoProfiles.BuildStringDefault(Component.Type.Name, label, null));
         }
 
         if (Component.Type.Name == "NTButtonGroup") {
@@ -363,7 +369,7 @@
 
     private string BuildMarkup() {
         if (DocumentationCuratedDemo.Supports(Component.Type.Name)) {
-            return DocumentationCuratedDemo.GetGeneratedRazorMarkup(Component.Type.Name);
+            return DocumentationCuratedDemo.GetGeneratedRazorMarkup(Component.Type.Name, FormatCuratedParameter);
         }
 
         if (Sandbox.ComponentType is null) {
@@ -398,7 +404,7 @@
         if (childContentBlocks.Count == 0 && Sandbox.ComponentType.GetProperty("ChildContent")?.PropertyType == typeof(RenderFragment)) {
             childContentBlocks.Add(Component.Type.Name == "NTLayout"
                 ? "<NTHeader>Example header</NTHeader>\r\n<NTBody>Example body content</NTBody>\r\n<NTFooter>Example footer</NTFooter>"
-                : "Example content");
+                : DocumentationDemoProfiles.BuildChildContent(Component.Type.Name));
         }
 
         var markup = FormatElementMarkup(tagName, attributes, string.Join("\r\n", childContentBlocks));
@@ -414,7 +420,9 @@
 
     private void AddPresentationMarkupDefaults(ICollection<string> attributes) {
         if (Sandbox.ComponentType?.GetProperty("Label") is not null && !attributes.Any(attribute => attribute.StartsWith("Label=", StringComparison.Ordinal))) {
-            attributes.Add("Label=\"Example\"");
+            var label = Component.Type.Parameters.FirstOrDefault(parameter => string.Equals(parameter.Name, "Label", StringComparison.Ordinal));
+            var labelValue = label is null ? $"{Component.DisplayName} example" : DocumentationDemoProfiles.BuildStringDefault(Component.Type.Name, label, null);
+            attributes.Add($"Label=\"{labelValue}\"");
         }
 
         if (_valueHolder is not null) {
@@ -462,9 +470,9 @@
         return string.Join("\r\n", declarations);
     }
 
-    private static string BuildInputInitializer(Type valueType) {
+    private string BuildInputInitializer(Type valueType) {
         if (valueType == typeof(string)) {
-            return "\"Example\"";
+            return $"\"{DocumentationDemoProfiles.BuildInputValue(Component.Type.Name)}\"";
         }
 
         if (valueType == typeof(bool)) {
@@ -840,7 +848,35 @@
             _ => FormatElementMarkup(parameter.Property.Name, [], BuildRenderFragmentText(parameter))
         };
 
-    private static string BuildRenderFragmentText(SandboxParameterDocumentation parameter) => "Example";
+    private string BuildRenderFragmentText(SandboxParameterDocumentation parameter) => DocumentationDemoProfiles.BuildChildContent(Component.Type.Name);
+
+    private object? GetRuntimeValue(string parameterName) {
+        var parameter = Sandbox.Parameters.FirstOrDefault(candidate => string.Equals(candidate.Property.Name, parameterName, StringComparison.Ordinal));
+        if (parameter is null) {
+            return null;
+        }
+
+        return GetValue(parameter) switch {
+            SandboxEnumOption enumOption => enumOption.Value,
+            SandboxIconOption iconOption => iconOption.Icon,
+            var value => value
+        };
+    }
+
+    private string? FormatCuratedParameter(string parameterName) {
+        var parameter = Sandbox.Parameters.FirstOrDefault(candidate => string.Equals(candidate.Property.Name, parameterName, StringComparison.Ordinal));
+        return parameter is null || !parameter.IsSupported || parameter.Kind == SandboxParameterKind.Text && string.IsNullOrWhiteSpace(GetString(parameter)) && !parameter.Property.IsEditorRequired
+            ? null
+            : FormatMarkupAttribute(parameter, FormatMarkupValue(parameter));
+    }
+
+    private static string GetControlGroupLabel(SandboxControlGroup group) => group switch {
+        SandboxControlGroup.Content => "Content",
+        SandboxControlGroup.Appearance => "Appearance",
+        SandboxControlGroup.Behavior => "Behavior",
+        SandboxControlGroup.Accessibility => "Accessibility",
+        _ => "Advanced"
+    };
 
     private string FormatMarkupAttribute(SandboxParameterDocumentation parameter, string formattedValue) =>
         parameter.Kind switch {

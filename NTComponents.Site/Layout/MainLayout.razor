@@ -2,7 +2,7 @@
 @inject DocumentationCatalog Catalog
 
 <NTLayout>
-    <NTNavigationRail AriaLabel="Documentation navigation" OpenByDefault="true" Header="@HeaderContent">
+    <NTNavigationRail AriaLabel="Documentation navigation" OpenByDefault="true" >
         <NTNavigationRailItem Label="Home" Href="/" Match="NavLinkMatch.All" Icon="MaterialIcon.Home" />
         <NTNavigationRailGroup Label="Components" Icon="MaterialIcon.Category" Expanded="true">
             <NTNavigationRailItem Label="All components" Href="/components" Match="NavLinkMatch.All" Icon="MaterialIcon.Category" />
@@ -78,11 +78,3 @@
     </NTBody>
 </NTLayout>
 
-@code {
-    private static RenderFragment HeaderContent => builder => {
-        builder.OpenElement(0, "div");
-        builder.AddAttribute(1, "class", "docs-rail-brand");
-        builder.AddContent(2, "NT");
-        builder.CloseElement();
-    };
-}

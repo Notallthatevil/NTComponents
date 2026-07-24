@@ -281,6 +281,8 @@ public sealed partial class DocumentationCatalog {
         documentation.Accessibility == "Public" &&
         documentation.Name.StartsWith("NT", StringComparison.Ordinal) &&
         !documentation.Name.StartsWith("TnT", StringComparison.Ordinal) &&
+        !documentation.IsObsolete &&
+        !runtimeType.IsDefined(typeof(ObsoleteAttribute), inherit: false) &&
         !runtimeType.IsAbstract &&
         typeof(IComponent).IsAssignableFrom(runtimeType);
 
@@ -327,8 +329,11 @@ public sealed partial class DocumentationCatalog {
         var defaultComponent = componentType.GetConstructor(Type.EmptyTypes) is null ? null : Activator.CreateInstance(componentType);
         var parameters = documentation.Parameters
             .Where(parameter => !parameter.IsFromBaseType && IsPublicOrProtected(parameter.Accessibility))
-            .OrderBy(parameter => parameter.Name, StringComparer.Ordinal)
             .Select(parameter => CreateSandboxParameter(documentation.Name, componentType, defaultComponent, parameter))
+            .Select(parameter => DocumentationDemoProfiles.Apply(documentation.Name, parameter))
+            .OrderBy(parameter => parameter.ControlGroup)
+            .ThenBy(parameter => parameter.ControlOrder)
+            .ThenBy(parameter => parameter.Property.Name, StringComparer.Ordinal)
             .ToArray();
 
         var unsupportedRequiredParameters = parameters
@@ -361,12 +366,11 @@ public sealed partial class DocumentationCatalog {
         }
 
         if (valueType == typeof(string)) {
-            var sampleText = (string)BuildStringDefault(parameter);
-            return SandboxParameterDocumentation.Supported(parameter, SandboxParameterKind.Text, string.IsNullOrEmpty(sampleText) ? componentDefault ?? string.Empty : sampleText);
+            return SandboxParameterDocumentation.Supported(parameter, SandboxParameterKind.Text, DocumentationDemoProfiles.BuildStringDefault(componentName, parameter, componentDefault as string));
         }
 
         if (IsNumericType(valueType.FullName ?? valueType.Name)) {
-            return SandboxParameterDocumentation.Supported(parameter, SandboxParameterKind.Number, componentDefault ?? Activator.CreateInstance(valueType));
+            return SandboxParameterDocumentation.Supported(parameter, SandboxParameterKind.Number, DocumentationDemoProfiles.BuildNumericDefault(componentName, parameter.Name, valueType, componentDefault));
         }
 
         if (valueType == typeof(DateTime) || valueType == typeof(DateOnly) || valueType == typeof(TimeOnly) || valueType == typeof(DateTimeOffset)) {
@@ -401,7 +405,7 @@ public sealed partial class DocumentationCatalog {
         }
 
         if (propertyType == typeof(RenderFragment)) {
-            return SandboxParameterDocumentation.Supported(parameter, SandboxParameterKind.ChildContent, BuildRenderFragment(parameter.Name), isControlVisible: false);
+            return SandboxParameterDocumentation.Supported(parameter, SandboxParameterKind.ChildContent, BuildRenderFragment(componentName), isControlVisible: false);
         }
 
         if (propertyType.IsGenericType && propertyType.GetGenericTypeDefinition() == typeof(RenderFragment<>)) {
@@ -411,20 +415,7 @@ public sealed partial class DocumentationCatalog {
         return SandboxParameterDocumentation.Unsupported(parameter, "Complex parameter type is documented but not auto-controlled.");
     }
 
-    private static object BuildStringDefault(PropertyDocumentation parameter) =>
-        parameter.Name switch {
-            "AriaLabel" => "Example action",
-            "Label" => "Example",
-            "Title" => "Example title",
-            "Href" when parameter.IsEditorRequired => "#example",
-            "Src" => "./_content/NTComponents/NTComponents.lib.module.js",
-            "ElementTitle" => "Example title",
-            "SupportingText" => "Supporting text",
-            "Placeholder" => "Placeholder",
-            _ => string.Empty
-        };
-
-    private static RenderFragment BuildRenderFragment(string parameterName) => builder => builder.AddContent(0, "Example");
+    private static RenderFragment BuildRenderFragment(string componentName) => builder => builder.AddContent(0, DocumentationDemoProfiles.BuildChildContent(componentName));
 
     private static object BuildTemporalDefault(Type type) =>
         type == typeof(DateTime) ? DateTime.Today :
@@ -685,10 +676,22 @@ public sealed record SandboxDocumentation(Type? ComponentType, IReadOnlyList<San
 public sealed record SandboxParameterDocumentation(PropertyDocumentation Property, SandboxParameterKind Kind, object? DefaultValue, Type? RuntimeType, IReadOnlyList<object> Options, string? UnsupportedReason, bool IsControlVisible = true, bool IsNullable = false, string? SampleMarkup = null) {
     public bool IsSupported => UnsupportedReason is null;
 
+    public SandboxControlGroup ControlGroup { get; init; }
+
+    public int ControlOrder { get; init; } = int.MaxValue;
+
     public static SandboxParameterDocumentation Supported(PropertyDocumentation property, SandboxParameterKind kind, object? defaultValue, Type? runtimeType = null, IReadOnlyList<object>? options = null, bool isControlVisible = true, bool isNullable = false, string? sampleMarkup = null) =>
         new(property, kind, defaultValue, runtimeType, options ?? [], null, isControlVisible, isNullable, sampleMarkup);
 
     public static SandboxParameterDocumentation Unsupported(PropertyDocumentation property, string reason, bool isControlVisible = true) => new(property, SandboxParameterKind.Unsupported, null, null, [], reason, isControlVisible);
+}
+
+public enum SandboxControlGroup {
+    Content,
+    Appearance,
+    Behavior,
+    Accessibility,
+    Advanced
 }
 
 public enum SandboxParameterKind {

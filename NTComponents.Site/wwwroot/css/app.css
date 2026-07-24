@@ -379,7 +379,7 @@ code {
 
 .docs-sandbox-preview {
   align-items: center;
-  background: var(--tnt-color-surface-container-low);
+  background: var(--tnt-color-surface-container-lowest);
   border-radius: var(--tnt-corner-radius-medium);
   display: grid;
   min-height: 14rem;
@@ -465,6 +465,28 @@ code {
 
 .docs-sandbox-controls {
   align-content: start;
+  max-block-size: min(36rem, 65vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-inline-end: 0.5rem;
+  scrollbar-gutter: stable;
+}
+
+.docs-control-group {
+  display: grid;
+  gap: 0.75rem;
+}
+.docs-control-group + .docs-control-group {
+  border-block-start: 1px solid var(--tnt-color-outline-variant);
+  padding-block-start: 1rem;
+}
+.docs-control-group h3 {
+  color: var(--tnt-color-on-surface-variant);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  margin: 0;
+  text-transform: uppercase;
 }
 
 .docs-code,

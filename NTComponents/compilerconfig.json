@@ -138,5 +138,13 @@
   {
     "outputFile": "Layout/Views/NTContainerView.razor.css",
     "inputFile": "Layout/Views/NTContainerView.razor.scss"
+  },
+  {
+    "outputFile": "Window/NTWindow.razor.css",
+    "inputFile": "Window/NTWindow.razor.scss"
+  },
+  {
+    "outputFile": "Window/NTWindowHost.razor.css",
+    "inputFile": "Window/NTWindowHost.razor.scss"
   }
 ]

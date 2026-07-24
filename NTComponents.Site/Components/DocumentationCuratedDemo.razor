@@ -1,4 +1,6 @@
 @using NTComponents.Virtualization
+@using NTComponents.Snackbar
+@using NTComponents.Toast
 @inject INTSnackbarService SnackbarService
 @inject INTToastService ToastService
 
@@ -8,16 +10,22 @@
         <div class="stack">
             <NTButton Label="Open example dialog" OnClickCallback="OpenDialogAsync" />
             <NTDialog @ref="_dialog"
-                      Id="docs-example-dialog"
-                      Title="Review changes"
-                      SupportingText="Confirm the documentation example."
-                      ShowCloseButton="true">
+                      Id="@TextValue("Id", "docs-example-dialog")"
+                      Title="@TextValue("Title", "Review changes")"
+                      SupportingText="@TextValue("SupportingText", "Confirm the changes before continuing.")"
+                      CloseButtonAriaLabel="@TextValue("CloseButtonAriaLabel", "Close dialog")"
+                      ButtonSpacing="@Value("ButtonSpacing", NTDialogButtonSpacing.End)"
+                      CloseOnBackdrop="@Value("CloseOnBackdrop", false)"
+                      CloseOnEscape="@Value("CloseOnEscape", true)"
+                      Elevation="@Value("Elevation", NTElevation.Medium)"
+                      Open="@Value("Open", false)"
+                      ShowCloseButton="@Value("ShowCloseButton", true)">
                 <ChildContent>
                     <p>Dialogs keep focused content and actions together.</p>
                 </ChildContent>
                 <Buttons>
-                    <button type="button" class="nt-dialog-button" command="request-close" commandfor="docs-example-dialog" value="cancel">Cancel</button>
-                    <button type="button" class="nt-dialog-button" command="request-close" commandfor="docs-example-dialog" value="confirm">Confirm</button>
+                    <button type="button" class="nt-dialog-button" command="request-close" commandfor="@TextValue("Id", "docs-example-dialog")" value="cancel">Cancel</button>
+                    <button type="button" class="nt-dialog-button" command="request-close" commandfor="@TextValue("Id", "docs-example-dialog")" value="confirm">Confirm</button>
                 </Buttons>
             </NTDialog>
         </div>
@@ -27,13 +35,24 @@
             <NTButton ElementId="docs-menu-trigger"
                       Label="Open example menu"
                       LeadingIcon="MaterialIcon.Menu"
-                      style="anchor-name: --docs-menu-anchor;"
+                      style="@MenuAnchorStyle"
                       popovertarget="docs-example-menu"
                       popovertargetaction="toggle" />
             <NTMenu ElementId="docs-example-menu"
-                    AnchorName="--docs-menu-anchor"
-                    AnchorSelector="#docs-menu-trigger"
-                    AriaLabel="Example actions">
+                    AnchorName="@TextValue("AnchorName", "--docs-menu-anchor")"
+                    AnchorSelector="@TextValue("AnchorSelector", "#docs-menu-trigger")"
+                    Appearance="@Value("Appearance", NTMenuAppearance.Standard)"
+                    AriaLabel="@TextValue("AriaLabel", "Menu example")"
+                    CloseOnContentClick="@Value("CloseOnContentClick", true)"
+                    ContainerColor="@(ColorValue("ContainerColor"))"
+                    Disabled="@Value("Disabled", false)"
+                    Elevation="@Value("Elevation", NTElevation.Medium)"
+                    IsSubMenu="@Value("IsSubMenu", false)"
+                    Popover="@TextValue("Popover", "auto")"
+                    Role="@TextValue("Role", "menu")"
+                    SelectedContainerColor="@(ColorValue("SelectedContainerColor"))"
+                    SelectedTextColor="@(ColorValue("SelectedTextColor"))"
+                    TextColor="@(ColorValue("TextColor"))">
                 <NTMenuLabelItem Label="Actions" />
                 <NTMenuButtonItem Label="Edit" Icon="MaterialIcon.Edit" />
                 <NTMenuDividerItem />
@@ -44,24 +63,40 @@
         case "NTSnackbar":
         <div class="stack">
             <NTButton Label="Show example snackbar" OnClickCallback="ShowSnackbarAsync" />
-            <NTSnackbar />
+            <NTSnackbar Position="@Value("Position", NTSnackbarPosition.BottomCenter)" />
         </div>
             break;
         case "NTToast":
         <div class="stack">
             <NTButton Label="Show example toast" OnClickCallback="ShowToastAsync" />
-            <NTToast />
+            <NTToast Position="@Value("Position", NTToastPosition.BottomRightCorner)" />
         </div>
             break;
         case "NTTooltip":
         <button type="button" class="tooltip-target">
             Hover or focus for help
-            <NTTooltip ShowDelay="100" HideDelay="100">This is a live tooltip.</NTTooltip>
+            <NTTooltip BackgroundColor="@(ColorValue("BackgroundColor"))"
+                       BorderColor="@(ColorValue("BorderColor"))"
+                       ShowDelay="@Value("ShowDelay", 500)"
+                       HideDelay="@Value("HideDelay", 200)"
+                       TextColor="@(ColorValue("TextColor"))"
+                       Variant="@Value("Variant", NTTooltipVariant.Plain)">This is a live tooltip.</NTTooltip>
         </button>
             break;
         case "NTVirtualize":
         <div class="virtualize">
-            <NTVirtualize TItem="string" ItemsProvider="LoadItemsAsync" ItemSize="48" ScrollRestorationKey="docs-virtualize-example">
+            <NTVirtualize TItem="string"
+                          @key='Value("ItemSize", 50f)'
+                          ItemsProvider="LoadItemsAsync"
+                          ItemSize="@Value("ItemSize", 50f)"
+                          MaxItemCount="@Value("MaxItemCount", 100)"
+                          OverscanCount="@Value("OverscanCount", 3)"
+                          PlaceholderPreloadWindowCount="@Value("PlaceholderPreloadWindowCount", 1)"
+                          BackgroundPreloadWindowCount="@Value("BackgroundPreloadWindowCount", 0)"
+                          RevalidateCachedItems="@Value("RevalidateCachedItems", false)"
+                          ScrollRestorationKey="@(ValueProvider("ScrollRestorationKey") as string)"
+                          MaxCachedItemCount="@Value("MaxCachedItemCount", 1_000)"
+                          SpacerElement="@TextValue("SpacerElement", "div")">
                 <ItemTemplate Context="item">
                     <div class="virtualize-item">@item</div>
                 </ItemTemplate>

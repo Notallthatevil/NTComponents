@@ -1,0 +1,69 @@
+@use '../../../NTComponents/Styles/_Variables/_colors.scss' as colors;
+@use '../../../NTComponents/Styles/_Variables/_corner-radius.scss' as corners;
+
+.window-demo {
+    display: grid;
+    gap: 24px;
+    padding: 24px;
+}
+
+.window-demo-header,
+.window-demo-section,
+.window-demo-section-header,
+.window-demo-content {
+    display: grid;
+    gap: 8px;
+
+    h1,
+    h2,
+    h3,
+    p {
+        margin: 0;
+    }
+}
+
+.window-demo-header p,
+.window-demo-section-header p,
+.window-demo-note {
+    color: colors.$tnt-color-on-surface-variant;
+}
+
+.window-demo-section {
+    background: colors.$tnt-color-surface-container-low;
+    border: 1px solid colors.$tnt-color-outline-variant;
+    border-radius: corners.$nt-corner-radius-large;
+    gap: 16px;
+    padding: 24px;
+}
+
+.window-demo-section-header {
+    align-items: center;
+    grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.window-demo-content {
+    gap: 12px;
+
+    ul {
+        margin-block: 0;
+        padding-inline-start: 24px;
+    }
+}
+
+.window-demo-note {
+    margin: 0;
+}
+
+@media (max-width: 600px) {
+    .window-demo {
+        padding: 12px;
+    }
+
+    .window-demo-section {
+        padding: 16px;
+    }
+
+    .window-demo-section-header {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}

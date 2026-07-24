@@ -1,0 +1,50 @@
+@using NTComponents
+@inject INTWindowService WindowService
+
+<div class="window-service-demo-dock">
+    <NTSelect TValue="NTWindowDockPosition" Label="Minimized dock" @bind-Value="_dockPosition">
+        @foreach (var position in Enum.GetValues<NTWindowDockPosition>()) {
+            <option value="@position">@GetDockPositionLabel(position)</option>
+        }
+    </NTSelect>
+</div>
+
+<div class="window-service-demo-actions">
+    <NTButton Label="Open window" LeadingIcon="@MaterialIcon.Window" OnClickCallback="@(_ => OpenWindow(NTWindowState.Normal))" />
+    <NTButton Label="Open minimized" Variant="NTButtonVariant.Tonal" LeadingIcon="@MaterialIcon.Minimize" OnClickCallback="@(_ => OpenWindow(NTWindowState.Minimized))" />
+    <NTButton Label="Open fullscreen" Variant="NTButtonVariant.Outlined" LeadingIcon="@MaterialIcon.Fullscreen" OnClickCallback="@(_ => OpenWindow(NTWindowState.Fullscreen))" />
+    <NTButton Label="Close all windows" Variant="NTButtonVariant.Text" LeadingIcon="@MaterialIcon.Close" OnClickCallback="@(_ => CloseAllWindows())" />
+</div>
+
+<NTWindowHost />
+
+@code {
+    private NTWindowDockPosition _dockPosition = NTWindowDockPosition.BottomRight;
+    private int _windowNumber;
+
+    private void CloseAllWindows() {
+        foreach (var window in WindowService.Windows) {
+            WindowService.Close(window);
+        }
+    }
+
+    private void OpenWindow(NTWindowState initialState) {
+        var windowNumber = ++_windowNumber;
+        WindowService.Open($"Service window {windowNumber}", Content(windowNumber), initialState, _dockPosition);
+    }
+
+    private static string GetDockPositionLabel(NTWindowDockPosition position) => position switch {
+        NTWindowDockPosition.TopLeft => "Top left",
+        NTWindowDockPosition.TopCenter => "Top center",
+        NTWindowDockPosition.TopRight => "Top right",
+        NTWindowDockPosition.BottomLeft => "Bottom left",
+        NTWindowDockPosition.BottomCenter => "Bottom center",
+        NTWindowDockPosition.BottomRight => "Bottom right",
+        _ => position.ToString()
+    };
+
+    private static RenderFragment Content(int windowNumber) => @<div>
+        <h3>Managed window @windowNumber</h3>
+        <p>This arbitrary Razor fragment was supplied through <code>INTWindowService</code>.</p>
+    </div>;
+}

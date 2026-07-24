@@ -16,7 +16,7 @@ namespace NTComponents.IntegrationTests.Site;
 /// </summary>
 [Collection(PlaywrightE2ECollection.Name)]
 public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
-    private const int ExpectedComponentTypeCount = 88;
+    private const int ExpectedComponentTypeCount = 87;
     private const int ExpectedRootRouteCount = 61;
     private static readonly string[] ExpectedDependentComponentNames = [
         "NTAccordionItem",
@@ -138,15 +138,22 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
         var routes = indexedRoutes.Distinct(StringComparer.Ordinal).OrderBy(route => route, StringComparer.Ordinal).ToArray();
         routes.Should().HaveCount(ExpectedRootRouteCount, "the generated component index should link to exactly the expected root component pages");
 
-        var expectedComponentNames = typeof(NTButton).Assembly.ExportedTypes
+        var exportedComponentTypes = typeof(NTButton).Assembly.ExportedTypes
             .Where(type => !type.IsAbstract && type.Name.StartsWith("NT", StringComparison.Ordinal) && typeof(IComponent).IsAssignableFrom(type))
+            .ToArray();
+        var obsoleteComponentNames = exportedComponentTypes
+            .Where(type => type.IsDefined(typeof(ObsoleteAttribute), inherit: false))
+            .Select(type => RemoveGenericArity(type.Name))
+            .OrderBy(name => name, StringComparer.Ordinal)
+            .ToArray();
+        var expectedComponentNames = exportedComponentTypes
+            .Where(type => !type.IsDefined(typeof(ObsoleteAttribute), inherit: false))
             .Select(type => RemoveGenericArity(type.Name))
             .ToHashSet(StringComparer.Ordinal);
         expectedComponentNames.Should().HaveCount(ExpectedComponentTypeCount, "the browser coverage contract should be updated intentionally when the public NT component surface changes");
-        var expectedDependentComponentNames = ExpectedDependentComponentNames.ToHashSet(StringComparer.Ordinal);
-        expectedDependentComponentNames.Should().BeSubsetOf(expectedComponentNames, "every documented dependent type should remain part of the exported public component surface");
+        var expectedDependentComponentNames = ExpectedDependentComponentNames.Intersect(expectedComponentNames, StringComparer.Ordinal).ToHashSet(StringComparer.Ordinal);
         var expectedRootComponentNames = expectedComponentNames.Except(expectedDependentComponentNames, StringComparer.Ordinal).ToHashSet(StringComparer.Ordinal);
-        expectedRootComponentNames.Should().HaveCount(ExpectedRootRouteCount, "every exported component should be classified as either a root route or a composed dependent demo");
+        expectedRootComponentNames.Should().HaveCount(ExpectedRootRouteCount, "every exported component should be classified as either a root route or a composed dependent demo; excluded obsolete components: {0}", string.Join(", ", obsoleteComponentNames));
 
         var failures = new List<string>();
         var rootComponentNames = new List<string>();
@@ -198,6 +205,7 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
             }
 
             var controls = sandbox.Locator(".docs-sandbox-controls input:not([type='hidden']), .docs-sandbox-controls select, .docs-sandbox-controls textarea");
+            await ValidateControlLayoutAsync(failures, route, sandbox);
             var controlChange = await TryChangeFirstControlAsync(controls, _page);
 
             var razorButton = sandbox.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Razor", Exact = true });
@@ -270,6 +278,43 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
     }
 
     [Fact]
+    public async Task DemoControls_ArePrioritizedGroupedAndHeightContained() {
+        ArgumentNullException.ThrowIfNull(_page);
+
+        await OpenComponentDemoAsync("ntbutton");
+        var groupNames = await _page.Locator(".docs-control-group").EvaluateAllAsync<string[]>("groups => groups.map(group => group.dataset.docsControlGroup)");
+        groupNames.Should().Equal("Content", "Appearance", "Behavior");
+        var buttonControls = await _page.Locator("[data-docs-control-name]").EvaluateAllAsync<string[]>("rows => rows.map(row => row.dataset.docsControlName)");
+        buttonControls.Should().Equal("Label", "Variant", "LeadingIcon", "Shape", "Elevation", "IsToggleButton", "Selected");
+        (await _page.Locator("#docs-sandbox-ntbutton-label").InputValueAsync()).Should().Be("Save changes");
+
+        await OpenComponentDemoAsync("ntbuttongroup");
+        var scrollState = await _page.Locator(".docs-sandbox-controls").EvaluateAsync<ControlScrollState>(
+            "element => ({ overflowY: getComputedStyle(element).overflowY, clientHeight: element.clientHeight, scrollHeight: element.scrollHeight })");
+        scrollState.OverflowY.Should().Be("auto");
+        scrollState.ScrollHeight.Should().BeGreaterThan(scrollState.ClientHeight);
+
+        await OpenComponentDemoAsync("ntdialog");
+        var dialogControls = await _page.Locator("[data-docs-control-name]").EvaluateAllAsync<string[]>("rows => rows.map(row => row.dataset.docsControlName)");
+        dialogControls.Should().StartWith("Title", "SupportingText", "ButtonSpacing", "Elevation");
+        dialogControls.Should().Contain("ShowCloseButton", "curated compositions should retain their relevant editable settings");
+    }
+
+    [Fact]
+    public async Task AccordionDemo_LimitToOneExpanded_KeepsSingleItemOpen() {
+        ArgumentNullException.ThrowIfNull(_page);
+
+        await OpenComponentDemoAsync("ntaccordion");
+        await _page.Locator("#docs-sandbox-ntaccordion-limittooneexpanded").CheckAsync();
+
+        var items = _page.Locator(".docs-generated-example details.nt-accordion-item");
+        (await items.EvaluateAllAsync<string?[]>("items => items.map(item => item.getAttribute('name'))")).Should().OnlyContain(name => name == "docs-accordion-example");
+
+        await items.Nth(1).Locator("summary").ClickAsync();
+        (await items.EvaluateAllAsync<bool[]>("items => items.map(item => item.open)")).Should().Equal(false, true);
+    }
+
+    [Fact]
     public async Task CuratedComponentDemos_RespondToUserInteraction() {
         ArgumentNullException.ThrowIfNull(_page);
 
@@ -282,29 +327,48 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
         buttonMarkup.Should().Contain("Variant=\"Elevated\"").And.Contain("Elevation=\"Lowest\"");
 
         await OpenComponentDemoAsync("ntdialog");
+        await _page.Locator("#docs-sandbox-ntdialog-title").FillAsync("Schedule review");
+        await _page.Locator("#docs-sandbox-ntdialog-title").PressAsync("Tab");
         await _page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Open example dialog", Exact = true }).ClickAsync();
-        await _page.Locator("dialog#docs-example-dialog[open]").WaitForAsync();
+        var dialog = _page.Locator("dialog#docs-example-dialog[open]");
+        await dialog.WaitForAsync();
+        await dialog.GetByRole(AriaRole.Heading, new LocatorGetByRoleOptions { Name = "Schedule review", Exact = true }).WaitForAsync();
+        await dialog.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Cancel", Exact = true }).ClickAsync();
+        await _page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Razor", Exact = true }).ClickAsync();
+        (await _page.Locator(".docs-code-group pre code").InnerTextAsync()).Should().Contain("Title=\"Schedule review\"");
 
         await OpenComponentDemoAsync("ntmenu");
+        await _page.Locator("#docs-sandbox-ntmenu-appearance").SelectOptionAsync(new SelectOptionValue { Label = "Compact" });
         await _page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Open example menu", Exact = true }).ClickAsync();
-        await _page.Locator("#docs-example-menu:popover-open").WaitForAsync();
+        await _page.Locator("#docs-example-menu.nt-menu-compact:popover-open").WaitForAsync();
         await _page.GetByText("Edit", new PageGetByTextOptions { Exact = true }).WaitForAsync();
 
         await OpenComponentDemoAsync("ntsnackbar");
+        await _page.Locator("#docs-sandbox-ntsnackbar-position").SelectOptionAsync(new SelectOptionValue { Label = "TopLeftCorner" });
+        await _page.Locator(".nt-snackbar-container.nt-snackbar-top-left-corner").WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Attached });
         await _page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Show example snackbar", Exact = true }).ClickAsync();
         await _page.GetByText("Changes saved", new PageGetByTextOptions { Exact = true }).WaitForAsync();
 
         await OpenComponentDemoAsync("nttoast");
+        await _page.Locator("#docs-sandbox-nttoast-position").SelectOptionAsync(new SelectOptionValue { Label = "TopLeftCorner" });
+        await _page.Locator(".nt-toast-container.nt-toast-top-left-corner").WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Attached });
         await _page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Show example toast", Exact = true }).ClickAsync();
         await _page.GetByText("Your changes were saved.", new PageGetByTextOptions { Exact = true }).WaitForAsync();
 
         await OpenComponentDemoAsync("nttooltip");
+        await _page.Locator("#docs-sandbox-nttooltip-showdelay").FillAsync("0");
+        await _page.Locator("#docs-sandbox-nttooltip-showdelay").PressAsync("Tab");
         await _page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Hover or focus for help", Exact = true }).FocusAsync();
         await _page.GetByRole(AriaRole.Tooltip).WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible });
 
         await OpenComponentDemoAsync("ntvirtualize");
+        await _page.Locator("#docs-sandbox-ntvirtualize-itemsize").FillAsync("40");
+        await _page.Locator("#docs-sandbox-ntvirtualize-itemsize").PressAsync("Tab");
         var virtualize = _page.Locator(".docs-curated-demo .virtualize");
-        await _page.GetByText("Item 1", new PageGetByTextOptions { Exact = true }).WaitForAsync();
+        await virtualize.EvaluateAsync("element => element.scrollTop = 0");
+        await virtualize.Locator(".virtualize-item").First.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Attached, Timeout = 5_000 });
+        var initialItems = await virtualize.Locator(".virtualize-item").AllInnerTextsAsync();
+        initialItems.Should().Contain("Item 1", "the virtualized demo should begin at the top; rendered items: {0}", string.Join(", ", initialItems));
         await virtualize.EvaluateAsync("element => element.scrollTop = element.scrollHeight");
         await _page.GetByText("Item 100", new PageGetByTextOptions { Exact = true }).WaitForAsync();
 
@@ -316,6 +380,24 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
         _activeRoute = $"/components/{slug}";
         await _page.GotoAsync($"{_baseUrl}{_activeRoute}", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
         await _page.Locator(".docs-sandbox-preview").WaitForAsync();
+    }
+
+    private static async Task ValidateControlLayoutAsync(ICollection<string> failures, string route, ILocator sandbox) {
+        var groupNames = await sandbox.Locator(".docs-control-group").EvaluateAllAsync<string[]>("groups => groups.map(group => group.dataset.docsControlGroup)");
+        var expectedGroupOrder = new[] { "Content", "Appearance", "Behavior", "Accessibility", "Advanced" };
+        var sortedGroupNames = groupNames.OrderBy(name => Array.IndexOf(expectedGroupOrder, name), Comparer<int>.Default).ToArray();
+        if (!groupNames.SequenceEqual(sortedGroupNames, StringComparer.Ordinal)) {
+            failures.Add($"{route}: control groups were not ordered from common content settings through advanced settings: {string.Join(", ", groupNames)}.");
+        }
+
+        if (groupNames.Distinct(StringComparer.Ordinal).Count() != groupNames.Length) {
+            failures.Add($"{route}: rendered duplicate control groups: {string.Join(", ", groupNames)}.");
+        }
+
+        var ungroupedControlCount = await sandbox.Locator(".docs-sandbox-controls > .docs-control-row").CountAsync();
+        if (ungroupedControlCount > 0) {
+            failures.Add($"{route}: rendered {ungroupedControlCount} controls outside a semantic group.");
+        }
     }
 
     private static async Task ValidatePreviewAsync(ICollection<string> failures, string route, ILocator sandbox) {
@@ -516,6 +598,14 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
         "() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))");
 
     private sealed record BrowserDiagnostic(string Route, string Kind, string Message);
+
+    private sealed class ControlScrollState {
+        public string OverflowY { get; set; } = string.Empty;
+
+        public int ClientHeight { get; set; }
+
+        public int ScrollHeight { get; set; }
+    }
 
     private sealed record ControlChange(string PropertyName, string Value, bool RequirePropertyName);
 

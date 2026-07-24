@@ -142,7 +142,7 @@
             <label>
                 Elevation
                 <select @bind="SelectedElevation">
-                    @foreach (var elevation in ElevationOptions) {
+                    @foreach (var elevation in Enum.GetValues<NTElevation>()) {
                         <option value="@elevation">@elevation</option>
                     }
                 </select>
@@ -193,37 +193,35 @@
         new("Assert", TnTColor.AssertContainer, TnTColor.OnAssertContainer)
     ];
 
-    private static readonly int[] ElevationOptions = [0, 1, 2, 3];
-
     private static readonly TagSample[] StatusTags = [
-        new("Draft", TnTColor.SecondaryContainer, TnTColor.OnSecondaryContainer, 1),
-        new("Approved", TnTColor.SuccessContainer, TnTColor.OnSuccessContainer, 1),
-        new("Blocked", TnTColor.ErrorContainer, TnTColor.OnErrorContainer, 1),
-        new("In review", TnTColor.InfoContainer, TnTColor.OnInfoContainer, 1),
-        new("External", TnTColor.AssertContainer, TnTColor.OnAssertContainer, 1),
-        new("SLA risk", TnTColor.WarningContainer, TnTColor.OnWarningContainer, 1)
+        new("Draft", TnTColor.SecondaryContainer, TnTColor.OnSecondaryContainer, NTElevation.Lowest),
+        new("Approved", TnTColor.SuccessContainer, TnTColor.OnSuccessContainer, NTElevation.Lowest),
+        new("Blocked", TnTColor.ErrorContainer, TnTColor.OnErrorContainer, NTElevation.Lowest),
+        new("In review", TnTColor.InfoContainer, TnTColor.OnInfoContainer, NTElevation.Lowest),
+        new("External", TnTColor.AssertContainer, TnTColor.OnAssertContainer, NTElevation.Lowest),
+        new("SLA risk", TnTColor.WarningContainer, TnTColor.OnWarningContainer, NTElevation.Lowest)
     ];
 
     private static readonly MetadataRecord[] Records = [
         new("Release candidate", "Build 2026.06.02 is waiting on final checks.", [
-            new("RC", TnTColor.InfoContainer, TnTColor.OnInfoContainer, 0),
-            new("QA", TnTColor.SecondaryContainer, TnTColor.OnSecondaryContainer, 0),
-            new("Risk low", TnTColor.SuccessContainer, TnTColor.OnSuccessContainer, 0)
+            new("RC", TnTColor.InfoContainer, TnTColor.OnInfoContainer, NTElevation.None),
+            new("QA", TnTColor.SecondaryContainer, TnTColor.OnSecondaryContainer, NTElevation.None),
+            new("Risk low", TnTColor.SuccessContainer, TnTColor.OnSuccessContainer, NTElevation.None)
         ]),
         new("Customer escalation", "Open support case with ownership assigned.", [
-            new("P1", TnTColor.ErrorContainer, TnTColor.OnErrorContainer, 0),
-            new("Support", TnTColor.AssertContainer, TnTColor.OnAssertContainer, 0),
-            new("SLA risk", TnTColor.WarningContainer, TnTColor.OnWarningContainer, 0)
+            new("P1", TnTColor.ErrorContainer, TnTColor.OnErrorContainer, NTElevation.None),
+            new("Support", TnTColor.AssertContainer, TnTColor.OnAssertContainer, NTElevation.None),
+            new("SLA risk", TnTColor.WarningContainer, TnTColor.OnWarningContainer, NTElevation.None)
         ]),
         new("Content review", "Documentation update queued for publishing.", [
-            new("Docs", TnTColor.SecondaryContainer, TnTColor.OnSecondaryContainer, 0),
-            new("Review", TnTColor.InfoContainer, TnTColor.OnInfoContainer, 0)
+            new("Docs", TnTColor.SecondaryContainer, TnTColor.OnSecondaryContainer, NTElevation.None),
+            new("Review", TnTColor.InfoContainer, TnTColor.OnInfoContainer, NTElevation.None)
         ])
     ];
 
     private string PlaygroundLabel { get; set; } = "Ready";
 
-    private int SelectedElevation { get; set; } = 1;
+    private NTElevation SelectedElevation { get; set; } = NTElevation.Lowest;
 
     private string SelectedColorName { get; set; } = ColorOptions[0].Name;
 
@@ -235,7 +233,7 @@
 
     private sealed record TagColorOption(string Name, TnTColor BackgroundColor, TnTColor TextColor);
 
-    private sealed record TagSample(string Label, TnTColor BackgroundColor, TnTColor TextColor, int Elevation);
+    private sealed record TagSample(string Label, TnTColor BackgroundColor, TnTColor TextColor, NTElevation Elevation);
 
     private sealed record MetadataRecord(string Title, string Description, TagSample[] Tags);
 }

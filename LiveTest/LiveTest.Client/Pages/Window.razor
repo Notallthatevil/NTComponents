@@ -1,0 +1,50 @@
+@page "/window"
+@using NTComponents
+
+<PageTitle>NTWindow</PageTitle>
+
+<main class="window-demo">
+    <header class="window-demo-header">
+        <h1>NTWindow</h1>
+        <p>Free-standing Material 3 windows with arbitrary Razor content, dragging, minimize, fullscreen, close, and scoped navigation persistence.</p>
+    </header>
+
+    <section class="window-demo-section" aria-labelledby="declarative-window-title">
+        <div class="window-demo-section-header">
+            <div>
+                <h2 id="declarative-window-title">Static SSR window</h2>
+                <p>This route has no interactive render mode. The window and its child content are rendered on the server, then progressively enhanced in the browser.</p>
+            </div>
+            <NTButton Label="Reopen static window" Variant="NTButtonVariant.Tonal" data-nt-window-open="static-window-demo" />
+        </div>
+
+        <p class="window-demo-note">Drag the title bar, or use the minimize, fullscreen, and close controls. This window docks at the bottom left when minimized. None of those actions require Blazor interactivity.</p>
+
+        <NTWindow ElementId="static-window-demo" Title="Project activity" DockPosition="NTWindowDockPosition.BottomLeft">
+            <div class="window-demo-content">
+                <h3>Latest changes</h3>
+                <p>This is ordinary Razor markup supplied through <code>ChildContent</code>.</p>
+                <ul>
+                    <li>Rendered during static SSR</li>
+                    <li>Drag behavior supplied by the page-script module</li>
+                    <li>Window controls remain browser-native after navigation</li>
+                </ul>
+            </div>
+        </NTWindow>
+    </section>
+
+    <section class="window-demo-section" aria-labelledby="persistent-window-title">
+        <div class="window-demo-section-header">
+            <div>
+                <h2 id="persistent-window-title">Service-managed windows</h2>
+                <p>These render through <code>NTWindowHost</code> and are coordinated by the scoped window service.</p>
+            </div>
+        </div>
+
+        <p class="window-demo-note">
+            The service example is an isolated interactive island because LiveTest intentionally mixes render modes. In a globally interactive app, place <code>NTWindowHost</code> in the persistent layout so its scoped windows remain across client-side routes.
+        </p>
+
+        <LiveTest.Client.Components.WindowServiceDemo @rendermode="InteractiveAuto" />
+    </section>
+</main>

@@ -36,7 +36,7 @@ public class NTTag_Tests : BunitContext {
         var cut = Render<NTTag>(p => p.Add(tag => tag.Label, "Docs"));
 
         // Assert
-        cut.Find("span.nt-tag").GetAttribute("class")!.Should().Contain("tnt-elevation-1");
+        cut.Find("span.nt-tag").GetAttribute("class")!.Should().Contain("nt-elevation-lowest");
     }
 
     [Fact]
@@ -44,12 +44,12 @@ public class NTTag_Tests : BunitContext {
         // Act
         var cut = Render<NTTag>(p => p
             .Add(tag => tag.Label, "Docs")
-            .Add(tag => tag.Elevation, 3));
+            .Add(tag => tag.Elevation, NTElevation.High));
 
         // Assert
         var cls = cut.Find("span.nt-tag").GetAttribute("class")!;
-        cls.Should().Contain("tnt-elevation-3");
-        cls.Should().NotContain("tnt-elevation-1");
+        cls.Should().Contain("nt-elevation-high");
+        cls.Should().NotContain("nt-elevation-lowest");
     }
 
     [Fact]

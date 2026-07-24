@@ -1,0 +1,63 @@
+@namespace NTComponents
+@using NTComponents.Core
+@inherits NTComponentBase
+
+@if (Open) {
+    <section @attributes="AdditionalAttributes"
+             class="@ElementClass"
+             style="@ElementStyle"
+             id="@ElementId"
+             lang="@ElementLang"
+             title="@ElementTitle"
+             autofocus="@AutoFocus"
+             role="dialog"
+             aria-labelledby="@TitleId"
+             aria-modal="false"
+             tabindex="-1"
+             data-nt-window="true"
+             data-nt-window-dock-position="@DockPositionValue"
+             data-nt-window-draggable="@DraggableValue"
+             data-nt-window-state="@StateValue"
+             @ref="Element">
+        <header class="nt-window-header" data-nt-window-drag-handle="true">
+            <h2 class="nt-window-title" id="@TitleId">@Title</h2>
+
+            <div class="nt-window-controls">
+                <button class="nt-window-control"
+                        type="button"
+                        data-nt-window-action="minimize"
+                        data-nt-window-aria-label="@MinimizeButtonAriaLabel"
+                        aria-label="@MinimizeAriaLabel"
+                        aria-controls="@ContentId"
+                        aria-expanded="@ContentExpanded"
+                        @onclick="ToggleMinimizedAsync">
+                    <span aria-hidden="true">@MinimizeIcon.Render()</span>
+                </button>
+                <button class="nt-window-control"
+                        type="button"
+                        data-nt-window-action="fullscreen"
+                        data-nt-window-aria-label="@FullscreenButtonAriaLabel"
+                        aria-label="@FullscreenAriaLabel"
+                        aria-pressed="@FullscreenPressed"
+                        @onclick="ToggleFullscreenAsync">
+                    <span aria-hidden="true">@FullscreenIcon.Render()</span>
+                </button>
+                <button class="nt-window-control"
+                        type="button"
+                        data-nt-window-action="close"
+                        aria-label="@CloseAriaLabel"
+                        @onclick="CloseAsync">
+                    <span aria-hidden="true">@MaterialIcon.Close.Render()</span>
+                </button>
+            </div>
+        </header>
+
+        <div class="nt-window-content-frame" id="@ContentId" aria-hidden="@ContentHidden">
+            <div class="nt-window-content">
+                @ChildContent
+            </div>
+        </div>
+    </section>
+}
+
+<NTPageScript Src="@JsModulePathValue" />

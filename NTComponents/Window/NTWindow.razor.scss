@@ -1,0 +1,273 @@
+@use 'sass:map';
+@use '../Buttons/buttonFocusRing' as focus;
+@use '../Styles/_Variables/_colors.scss' as colors;
+@use '../Styles/_Variables/_corner-radius.scss' as corners;
+@use '../Styles/_Variables/_elevation.scss' as elevation;
+@use '../Styles/_Variables/_motion.scss' as motion;
+@use '../Styles/_Variables/_typescale.scss' as typescale;
+
+$nt-window-state-transition: motion.$nt-motion-duration-short_3 motion.$nt-motion-easing-standard;
+$nt-window-collapse-transition: motion.$nt-motion-duration-short_4 motion.$nt-motion-easing-emphasized-accelerate;
+$nt-window-expand-transition: motion.$nt-motion-duration-medium_3 motion.$nt-motion-easing-emphasized-decelerate;
+$nt-window-dock-margin: 16px;
+$nt-window-minimized-block-size: 48px;
+$nt-window-minimized-inline-size: 360px;
+
+.nt-window {
+    animation: nt-window-enter motion.$nt-motion-duration-medium_3 motion.$nt-motion-easing-emphasized-decelerate;
+    background: var(--nt-window-background-color, #{colors.$tnt-color-surface-container-high});
+    border: 1px solid var(--nt-window-outline-color, #{colors.$tnt-color-outline-variant});
+    border-radius: var(--nt-window-corner-radius, #{corners.$nt-corner-radius-large});
+    box-shadow: map.get(elevation.$elevation-shadows, 3);
+    box-sizing: border-box;
+    color: var(--nt-window-text-color, #{colors.$tnt-color-on-surface});
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    inline-size: min(var(--nt-window-inline-size, 480px), calc(100dvw - 48px));
+    inset-block-start: 50%;
+    inset-inline-start: 50%;
+    max-block-size: min(calc(100dvh - 48px), var(--nt-window-max-block-size, 720px));
+    max-inline-size: calc(100dvw - 48px);
+    min-block-size: 160px;
+    min-inline-size: min(280px, calc(100dvw - 48px));
+    overflow: hidden;
+    pointer-events: auto;
+    position: fixed;
+    resize: both;
+    transition: border-radius $nt-window-expand-transition, box-shadow $nt-window-state-transition;
+    translate: -50% -50%;
+    z-index: 1001;
+
+    &[hidden] {
+        display: none;
+    }
+
+    &[data-nt-window-dragging='true'] {
+        transition: none;
+        user-select: none;
+    }
+
+    &.nt-window-closing {
+        animation: nt-window-exit motion.$nt-motion-duration-short_4 motion.$nt-motion-easing-emphasized-accelerate forwards;
+        pointer-events: none;
+    }
+
+    .nt-window-header {
+        align-items: center;
+        background: var(--nt-window-header-background-color, #{colors.$tnt-color-surface-container-highest});
+        display: flex;
+        gap: 8px;
+        min-block-size: 64px;
+        padding-inline: 16px 8px;
+        touch-action: none;
+        user-select: none;
+    }
+
+    &[data-nt-window-draggable='true'] .nt-window-header {
+        cursor: grab;
+
+        &:active {
+            cursor: grabbing;
+        }
+    }
+
+    .nt-window-title {
+        @include typescale.nt-title-medium;
+
+        color: var(--nt-window-title-color, #{colors.$tnt-color-on-surface});
+        flex: 1 1 auto;
+        margin: 0;
+        min-inline-size: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .nt-window-controls {
+        align-items: center;
+        display: flex;
+        flex: 0 0 auto;
+    }
+
+    .nt-window-control {
+        align-items: center;
+        appearance: none;
+        background: transparent;
+        border: 0;
+        border-radius: corners.$nt-corner-radius-full;
+        color: var(--nt-window-control-color, #{colors.$tnt-color-on-surface-variant});
+        cursor: pointer;
+        display: inline-flex;
+        inline-size: 48px;
+        justify-content: center;
+        min-block-size: 48px;
+        outline: none;
+        padding: 0;
+        position: relative;
+        touch-action: manipulation;
+        transition: border-radius $nt-window-state-transition, color $nt-window-state-transition;
+
+        &::before {
+            background: currentColor;
+            border-radius: inherit;
+            content: '';
+            inset: 4px;
+            opacity: 0;
+            pointer-events: none;
+            position: absolute;
+            transition: opacity $nt-window-state-transition;
+        }
+
+        &:hover::before {
+            opacity: 0.08;
+        }
+
+        &:focus-visible {
+            @include focus.nt-button-focus-ring;
+        }
+
+        &:focus-visible::before,
+        &:active::before {
+            opacity: 0.1;
+        }
+
+        > span {
+            align-items: center;
+            display: inline-flex;
+            justify-content: center;
+            position: relative;
+        }
+
+        ::deep .tnt-icon {
+            color: inherit;
+            font-size: 24px;
+            pointer-events: none;
+        }
+    }
+
+    .nt-window-content-frame {
+        display: grid;
+        grid-template-rows: minmax(0, 1fr);
+        min-block-size: 0;
+        opacity: 1;
+        transition: grid-template-rows $nt-window-expand-transition, opacity $nt-window-expand-transition, visibility 0ms;
+        visibility: visible;
+    }
+
+    .nt-window-content {
+        min-block-size: 0;
+        overflow: auto;
+        padding: var(--nt-window-content-padding, 24px);
+    }
+
+    &.nt-window-minimized {
+        block-size: $nt-window-minimized-block-size !important;
+        grid-template-rows: auto 0fr;
+        inline-size: min($nt-window-minimized-inline-size, calc(100dvw - #{2 * $nt-window-dock-margin})) !important;
+        inset: auto !important;
+        max-block-size: $nt-window-minimized-block-size;
+        max-inline-size: calc(100dvw - #{2 * $nt-window-dock-margin});
+        min-block-size: $nt-window-minimized-block-size;
+        min-inline-size: min(280px, calc(100dvw - #{2 * $nt-window-dock-margin}));
+        resize: none;
+        translate: none !important;
+
+        .nt-window-header {
+            block-size: $nt-window-minimized-block-size;
+            min-block-size: $nt-window-minimized-block-size;
+        }
+
+        .nt-window-content-frame {
+            grid-template-rows: 0fr;
+            opacity: 0;
+            pointer-events: none;
+            transition: grid-template-rows $nt-window-collapse-transition, opacity $nt-window-collapse-transition, visibility 0ms motion.$nt-motion-duration-short_4;
+            visibility: hidden;
+        }
+
+        .nt-window-content {
+            overflow: hidden;
+        }
+    }
+
+    &.nt-window-minimized[data-nt-window-dock-position^='top-'] {
+        inset-block-start: calc(#{$nt-window-dock-margin} + var(--nt-window-dock-offset, 0px)) !important;
+    }
+
+    &.nt-window-minimized[data-nt-window-dock-position^='bottom-'] {
+        inset-block-end: calc(#{$nt-window-dock-margin} + var(--nt-window-dock-offset, 0px)) !important;
+    }
+
+    &.nt-window-minimized[data-nt-window-dock-position$='left'] {
+        inset-inline-start: $nt-window-dock-margin !important;
+    }
+
+    &.nt-window-minimized[data-nt-window-dock-position$='center'] {
+        inset-inline-start: 50% !important;
+        translate: -50% 0 !important;
+    }
+
+    &.nt-window-minimized[data-nt-window-dock-position$='right'] {
+        inset-inline-end: $nt-window-dock-margin !important;
+    }
+
+    &.nt-window-fullscreen {
+        animation: nt-window-fullscreen-enter motion.$nt-motion-duration-medium_4 motion.$nt-motion-easing-emphasized-decelerate;
+        block-size: 100dvh !important;
+        border-radius: corners.$nt-corner-radius-none;
+        inset: 0 !important;
+        inline-size: 100dvw !important;
+        max-block-size: none;
+        max-inline-size: none;
+        min-block-size: 0;
+        min-inline-size: 0;
+        resize: none;
+        translate: none !important;
+        z-index: 1100;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        animation-duration: motion.$nt-motion-duration-short_2;
+        transition-duration: motion.$nt-motion-duration-short_2;
+
+        .nt-window-content-frame {
+            transition-duration: motion.$nt-motion-duration-short_2;
+        }
+    }
+}
+
+@keyframes nt-window-exit {
+    from {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    to {
+        opacity: 0;
+        transform: scale(0.94);
+    }
+}
+
+@keyframes nt-window-enter {
+    from {
+        opacity: 0;
+        transform: translateY(16px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@keyframes nt-window-fullscreen-enter {
+    from {
+        opacity: 0.8;
+        transform: scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
