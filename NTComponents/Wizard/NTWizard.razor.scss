@@ -23,21 +23,13 @@ $wizard-medium-screen-up-plus: measurements.$medium-screen-up + 1px;
 }
 
 @mixin stacked-layout {
-    grid-template-areas: "steps" "content" "buttons";
+    grid-template-areas: "steps" "body";
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: min-content min-content auto;
-
-    &.nt-wizard-buttons-on-bottom {
-        grid-template-rows: auto 1fr auto;
-    }
+    grid-template-rows: min-content minmax(0, 1fr);
 
     &:has(.nt-wizard-title) {
-        grid-template-areas: "title" "steps" "content" "buttons";
-        grid-template-rows: min-content min-content min-content auto;
-
-        &.nt-wizard-buttons-on-bottom {
-            grid-template-rows: auto auto 1fr auto;
-        }
+        grid-template-areas: "title" "steps" "body";
+        grid-template-rows: min-content min-content minmax(0, 1fr);
     }
 
     .nt-wizard-steps {
@@ -204,28 +196,21 @@ $wizard-medium-screen-up-plus: measurements.$medium-screen-up + 1px;
     box-sizing: border-box;
     color: colors.$tnt-color-on-surface;
     display: grid;
-    grid-template-areas: "steps content" "steps buttons";
+    grid-template-areas: "steps body";
     grid-template-columns: minmax(0, $wizard-step-rail-width) minmax(0, 1fr);
-    grid-template-rows: min-content auto;
+    grid-template-rows: minmax(0, 1fr);
     height: 100%;
     max-inline-size: 100%;
+    min-block-size: 0;
     min-inline-size: 0;
     overflow-x: hidden;
     overflow-x: clip;
     position: relative;
     width: 100%;
 
-    &.nt-wizard-buttons-on-bottom {
-        grid-template-rows: 1fr auto;
-    }
-
     &:has(.nt-wizard-title) {
-        grid-template-areas: "title title" "steps content" "steps buttons";
-        grid-template-rows: min-content min-content auto;
-
-        &.nt-wizard-buttons-on-bottom {
-            grid-template-rows: auto 1fr auto;
-        }
+        grid-template-areas: "title title" "steps body";
+        grid-template-rows: min-content minmax(0, 1fr);
     }
 
     .nt-wizard-title {
@@ -426,14 +411,32 @@ $wizard-medium-screen-up-plus: measurements.$medium-screen-up + 1px;
         }
     }
 
+    .nt-wizard-body {
+        @include contain-inline;
+
+        display: flex;
+        flex-direction: column;
+        grid-area: body;
+        min-block-size: 0;
+        overflow: hidden;
+    }
+
     .nt-wizard-content,
     .nt-wizard-current-step {
         @include contain-inline;
 
-        grid-area: content;
+        flex: 0 1 auto;
+        min-block-size: 0;
         overflow-wrap: anywhere;
         overflow-y: auto;
         padding: 8px;
+    }
+
+    &.nt-wizard-buttons-on-bottom {
+        .nt-wizard-content,
+        .nt-wizard-current-step {
+            flex-grow: 1;
+        }
     }
 
     .nt-wizard-form {
@@ -446,13 +449,11 @@ $wizard-medium-screen-up-plus: measurements.$medium-screen-up + 1px;
     .nt-wizard-buttons {
         @include contain-inline;
 
-        align-self: start;
         display: flex;
+        flex: 0 0 auto;
         flex-wrap: wrap;
         gap: 8px;
-        grid-area: buttons;
         justify-content: end;
-        justify-self: stretch;
         padding: 8px;
     }
 
