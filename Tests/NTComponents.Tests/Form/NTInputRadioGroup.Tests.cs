@@ -176,6 +176,226 @@ public class NTInputRadioGroup_Tests : BunitContext {
         model.Priority.Should().Be(DemoPriority.High);
     }
 
+    // Behavior source: The generic radio-group contract supports mutually exclusive native values, including bool and nullable bool.
+    [Fact]
+    public void Boolean_And_Nullable_Boolean_Values_Parse_From_Native_Changes() {
+        var booleanValue = false;
+        bool? nullableValue = true;
+        var booleanCut = Render<NTInputRadioGroup<bool>>(parameters => parameters
+            .Add(p => p.Value, booleanValue)
+            .Add(p => p.ValueChanged, EventCallback.Factory.Create<bool>(this, value => booleanValue = value))
+            .Add(p => p.ValueExpression, () => booleanValue)
+            .Add(p => p.ChildContent, builder => {
+                builder.OpenComponent<NTInputRadio<bool>>(0);
+                builder.AddAttribute(1, nameof(NTInputRadio<bool>.Value), true);
+                builder.AddAttribute(2, nameof(NTInputRadio<bool>.Label), "Yes");
+                builder.CloseComponent();
+            }));
+        var nullableCut = Render<NTInputRadioGroup<bool?>>(parameters => parameters
+            .Add(p => p.Value, nullableValue)
+            .Add(p => p.ValueChanged, EventCallback.Factory.Create<bool?>(this, value => nullableValue = value))
+            .Add(p => p.ValueExpression, () => nullableValue)
+            .Add(p => p.ChildContent, builder => {
+                builder.OpenComponent<NTInputRadio<bool?>>(0);
+                builder.AddAttribute(1, nameof(NTInputRadio<bool?>.Value), (bool?)null);
+                builder.AddAttribute(2, nameof(NTInputRadio<bool?>.Label), "Unspecified");
+                builder.CloseComponent();
+            }));
+
+        booleanCut.Find("input").Change("True");
+        nullableCut.Find("input").Change(string.Empty);
+
+        booleanValue.Should().BeTrue();
+        nullableValue.Should().BeNull();
+    }
+
+    // Behavior source: Native bool radio values accept only Boolean text; malformed values cannot replace the bound selection.
+    [Fact]
+    public void Invalid_Boolean_Value_Does_Not_Replace_Bound_Selection() {
+        var value = true;
+        var cut = Render<NTInputRadioGroup<bool>>(parameters => parameters
+            .Add(p => p.Value, value)
+            .Add(p => p.ValueChanged, EventCallback.Factory.Create<bool>(this, selected => value = selected))
+            .Add(p => p.ValueExpression, () => value)
+            .Add(p => p.ChildContent, builder => {
+                builder.OpenComponent<NTInputRadio<bool>>(0);
+                builder.AddAttribute(1, nameof(NTInputRadio<bool>.Value), true);
+                builder.CloseComponent();
+            }));
+
+        cut.Find("input").Change("not-a-boolean");
+
+        value.Should().BeTrue();
+    }
+
+    // Behavior source: Nullable Boolean values accept both explicit Boolean text and the empty value used for an unspecified selection.
+    [Fact]
+    public void Nullable_Boolean_Parses_Explicit_False_And_Rejects_Malformed_Text() {
+        bool? value = true;
+        var cut = Render<NTInputRadioGroup<bool?>>(parameters => parameters
+            .Add(p => p.Value, value)
+            .Add(p => p.ValueChanged, EventCallback.Factory.Create<bool?>(this, selected => value = selected))
+            .Add(p => p.ValueExpression, () => value)
+            .Add(p => p.ChildContent, builder => {
+                builder.OpenComponent<NTInputRadio<bool?>>(0);
+                builder.AddAttribute(1, nameof(NTInputRadio<bool?>.Value), false);
+                builder.CloseComponent();
+            }));
+
+        cut.Find("input").Change("False");
+        value.Should().BeFalse();
+
+        cut.Find("input").Change("not-a-boolean");
+        value.Should().BeFalse();
+    }
+
+    // Behavior source: Unsupported native enum text is a validation failure and DisplayName supplies the public field name in that error.
+    [Fact]
+    public void Invalid_Enum_Value_Uses_DisplayName_And_Does_Not_Replace_Value() {
+        var model = new TestModel { Priority = DemoPriority.Low };
+        var cut = Render<NTForm>(parameters => parameters
+            .Add(p => p.Model, model)
+            .Add(p => p.ChildContent, (EditContext _) => builder => {
+                builder.OpenComponent<NTInputRadioGroup<DemoPriority?>>(0);
+                builder.AddAttribute(1, nameof(NTInputRadioGroup<DemoPriority?>.Value), model.Priority);
+                builder.AddAttribute(2, nameof(NTInputRadioGroup<DemoPriority?>.ValueChanged), EventCallback.Factory.Create<DemoPriority?>(this, selected => model.Priority = selected));
+                builder.AddAttribute(3, nameof(NTInputRadioGroup<DemoPriority?>.ValueExpression), (Expression<Func<DemoPriority?>>)(() => model.Priority));
+                builder.AddAttribute(4, nameof(NTInputRadioGroup<DemoPriority?>.DisplayName), "Priority level");
+                builder.AddAttribute(5, nameof(NTInputRadioGroup<DemoPriority?>.ChildContent), (RenderFragment)(optionBuilder => {
+                    optionBuilder.OpenComponent<NTInputRadio<DemoPriority?>>(0);
+                    optionBuilder.AddAttribute(1, nameof(NTInputRadio<DemoPriority?>.Value), DemoPriority.Low);
+                    optionBuilder.CloseComponent();
+                }));
+                builder.CloseComponent();
+            }));
+
+        cut.Find("input").Change("Unknown");
+
+        model.Priority.Should().Be(DemoPriority.Low);
+        cut.Find(".nt-radio-error-text").TextContent.Should().Be("The Priority level field is not valid.");
+    }
+
+    // Behavior source: NTInputRadio explicitly requires an NTInputRadioGroup ancestor.
+    [Fact]
+    public void Radio_Outside_Group_Throws_Contract_Error() {
+        var act = () => Render<NTInputRadio<string>>(parameters => parameters
+            .Add(p => p.Value, "email")
+            .Add(p => p.Label, "Email"));
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*must be rendered inside NTInputRadioGroup*");
+    }
+
+    // Behavior source: Radio option parameters document disabled, read-only, icon, label, element-id, and additional native input states.
+    [Fact]
+    public void Option_Parameters_Render_Their_Classes_And_Filter_Owned_Input_Attributes() {
+        string? value = null;
+        var cut = Render<NTInputRadioGroup<string?>>(parameters => parameters
+            .Add(p => p.Value, value)
+            .Add(p => p.ValueChanged, EventCallback.Factory.Create<string?>(this, selected => value = selected))
+            .Add(p => p.ValueExpression, () => value)
+            .Add(p => p.ChildContent, builder => {
+                builder.OpenComponent<NTInputRadio<string?>>(0);
+                builder.AddAttribute(1, nameof(NTInputRadio<string?>.Value), "email");
+                builder.AddAttribute(2, nameof(NTInputRadio<string?>.Disabled), true);
+                builder.AddAttribute(3, nameof(NTInputRadio<string?>.ReadOnly), true);
+                builder.AddAttribute(4, nameof(NTInputRadio<string?>.LeadingIcon), (object)MaterialIcon.Mail);
+                builder.AddAttribute(5, nameof(NTInputRadio<string?>.TrailingIcon), (object)MaterialIcon.Info);
+                builder.AddAttribute(6, nameof(NTInputRadio<string?>.ElementId), "email-option");
+                builder.AddAttribute(7, nameof(NTInputRadio<string?>.AdditionalAttributes), new Dictionary<string, object?> {
+                    ["class"] = "custom-option",
+                    ["id"] = "ignored-id",
+                    ["type"] = "text",
+                    ["data-option"] = "email"
+                });
+                builder.CloseComponent();
+            }));
+
+        var option = cut.Find(".nt-radio-option");
+        option.GetAttribute("class").Should().Contain("nt-radio-option-disabled").And.Contain("nt-radio-option-readonly")
+            .And.Contain("nt-radio-option-no-label").And.Contain("nt-radio-option-has-leading-icon")
+            .And.Contain("nt-radio-option-has-trailing-icon").And.Contain("custom-option");
+        var input = cut.Find("input");
+        input.GetAttribute("id").Should().Be("email-option");
+        input.GetAttribute("type").Should().Be("radio");
+        input.GetAttribute("data-option").Should().Be("email");
+    }
+
+    // Behavior source: Additional native required metadata is propagated to every radio for static SSR validation.
+    [Fact]
+    public void Required_Group_Renders_Required_Native_Radios() {
+        var cut = RenderStringRadioGroup(configure: parameters => parameters.AddUnmatched("required", true));
+
+        cut.FindAll("input[type=radio]").Should().OnlyContain(input => input.HasAttribute("required"));
+    }
+
+    // Behavior source: ReadOnly is a documented group state and renders its corresponding state class.
+    [Fact]
+    public void ReadOnly_Group_Renders_ReadOnly_State() {
+        var cut = RenderStringRadioGroup(configure: parameters => parameters.Add(p => p.ReadOnly, true));
+
+        cut.Find(".nt-radio").GetAttribute("class").Should().Contain("nt-radio-readonly");
+    }
+
+    // Behavior source: Option additional attributes forward non-owned native attributes and omit the filtered dictionary when only owned attributes remain.
+    [Fact]
+    public void Option_Additional_Attributes_Handle_Missing_Class_And_Owned_Only_Sets() {
+        var value = "first";
+        var cut = Render<NTInputRadioGroup<string>>(parameters => parameters
+            .Add(p => p.Value, value)
+            .Add(p => p.ValueChanged, EventCallback.Factory.Create<string>(this, selected => value = selected))
+            .Add(p => p.ValueExpression, () => value)
+            .Add(p => p.ChildContent, builder => {
+                builder.OpenComponent<NTInputRadio<string>>(0);
+                builder.AddAttribute(1, nameof(NTInputRadio<string>.Value), "first");
+                builder.AddAttribute(2, nameof(NTInputRadio<string>.AdditionalAttributes), new Dictionary<string, object?> {
+                    ["data-first"] = "forwarded"
+                });
+                builder.CloseComponent();
+                builder.OpenComponent<NTInputRadio<string>>(3);
+                builder.AddAttribute(4, nameof(NTInputRadio<string>.Value), "second");
+                builder.AddAttribute(5, nameof(NTInputRadio<string>.AdditionalAttributes), new Dictionary<string, object?> {
+                    ["class"] = "second-option",
+                    ["type"] = "text",
+                    ["name"] = "ignored"
+                });
+                builder.CloseComponent();
+            }));
+
+        var inputs = cut.FindAll("input");
+        inputs[0].GetAttribute("data-first").Should().Be("forwarded");
+        inputs[1].GetAttribute("type").Should().Be("radio");
+        inputs[1].GetAttribute("name").Should().NotBe("ignored");
+        cut.FindAll(".nt-radio-option")[1].GetAttribute("class").Should().Contain("second-option");
+    }
+
+    // Behavior source: Nullable radio-group values accept a null native change value as an unspecified selection.
+    [Fact]
+    public void Null_Native_Radio_Change_Clears_Nullable_Selection() {
+        var model = new TestModel { Choice = "email" };
+        var cut = RenderStringRadioGroup(model);
+
+        cut.Find("input[value=email]").TriggerEvent("onchange", new ChangeEventArgs { Value = null });
+
+        model.Choice.Should().BeNull();
+    }
+
+    // Behavior source: SetFocusAsync focuses the selected radio, or the group itself when it has no options.
+    [Fact]
+    public async Task SetFocusAsync_Uses_Selected_Radio_And_Empty_Group_Fallback() {
+        var selectedCut = RenderStringRadioGroup();
+        string? emptyValue = null;
+        var emptyCut = Render<NTInputRadioGroup<string?>>(parameters => parameters
+            .Add(p => p.Value, emptyValue)
+            .Add(p => p.ValueChanged, EventCallback.Factory.Create<string?>(this, value => emptyValue = value))
+            .Add(p => p.ValueExpression, () => emptyValue));
+
+        await selectedCut.InvokeAsync(() => selectedCut.Instance.SetFocusAsync().AsTask());
+        await emptyCut.InvokeAsync(() => emptyCut.Instance.SetFocusAsync().AsTask());
+
+        JSInterop.Invocations.Count(invocation => invocation.Identifier.Contains("focus", StringComparison.OrdinalIgnoreCase)).Should().BeGreaterThanOrEqualTo(2);
+    }
+
     [Fact]
     public void Validation_Error_Uses_Group_Error_Accessibility() {
         var model = new RequiredModel();

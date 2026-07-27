@@ -229,6 +229,162 @@ public class NTFabMenu_Tests : BunitContext {
         cut.Find(".nt-fab-menu-item-label").TextContent.Should().Be("Draft saved");
     }
 
+    [Theory]
+    [InlineData(NTFabButtonPlacement.Inline, "nt-fab-menu-placement-inline")]
+    [InlineData(NTFabButtonPlacement.LowerRight, "nt-fab-menu-placement-lower-right")]
+    [InlineData(NTFabButtonPlacement.LowerLeft, "nt-fab-menu-placement-lower-left")]
+    [InlineData(NTFabButtonPlacement.UpperRight, "nt-fab-menu-placement-upper-right")]
+    [InlineData(NTFabButtonPlacement.UpperLeft, "nt-fab-menu-placement-upper-left")]
+    public void Placement_Renders_The_Public_Positioning_Class(NTFabButtonPlacement placement, string expectedClass) {
+        var cut = Render<NTFabMenu>(parameters => parameters
+            .Add(x => x.Icon, SampleIcon)
+            .Add(x => x.AriaLabel, "Create options")
+            .Add(x => x.Placement, placement)
+            .AddChildContent<NTFabMenuButtonItem>(item => item.Add(x => x.Label, "Draft"))
+            .AddChildContent<NTFabMenuButtonItem>(item => item.Add(x => x.Label, "Import")));
+
+        cut.Find("nt-fab-menu").ClassList.Should().Contain(expectedClass);
+    }
+
+    [Fact]
+    public void Unknown_Placement_Throws_Instead_Of_Rendering_An_Undefined_Position() {
+        var render = () => Render<NTFabMenu>(parameters => parameters
+            .Add(x => x.Icon, SampleIcon)
+            .Add(x => x.AriaLabel, "Create options")
+            .Add(x => x.Placement, (NTFabButtonPlacement)999)
+            .AddChildContent<NTFabMenuButtonItem>(item => item.Add(x => x.Label, "Draft"))
+            .AddChildContent<NTFabMenuButtonItem>(item => item.Add(x => x.Label, "Import")));
+
+        render.Should().Throw<ArgumentOutOfRangeException>()
+            .WithParameterName("Placement");
+    }
+
+    [Fact]
+    public void Expanded_Disabled_Menu_With_Custom_Id_Renders_Its_State_Contract() {
+        var cut = Render<NTFabMenu>(parameters => parameters
+            .Add(x => x.ElementId, "create-menu")
+            .Add(x => x.Icon, SampleIcon)
+            .Add(x => x.AriaLabel, "  Create options  ")
+            .Add(x => x.Expanded, true)
+            .Add(x => x.Disabled, true)
+            .Add(x => x.CloseOnMenuContentClick, false)
+            .AddChildContent<NTFabMenuButtonItem>(item => item.Add(x => x.Label, "Draft"))
+            .AddChildContent<NTFabMenuButtonItem>(item => item.Add(x => x.Label, "Import")));
+
+        var button = cut.Find(".nt-fab-menu-button");
+        var panel = cut.Find(".nt-fab-menu-panel");
+
+        cut.Find("nt-fab-menu").ClassList.Should().Contain("nt-fab-menu-expanded");
+        button.GetAttribute("aria-label").Should().Be("Create options");
+        button.GetAttribute("aria-expanded").Should().Be("true");
+        button.HasAttribute("popovertarget").Should().BeFalse();
+        panel.Id.Should().Be("create-menu-menu");
+        panel.GetAttribute("data-close-on-item-click").Should().Be("false");
+    }
+
+    [Theory]
+    [InlineData("BackgroundColor", TnTColor.None)]
+    [InlineData("BackgroundColor", TnTColor.Transparent)]
+    [InlineData("TextColor", TnTColor.None)]
+    [InlineData("TextColor", TnTColor.Transparent)]
+    [InlineData("SelectedFabBackgroundColor", TnTColor.None)]
+    [InlineData("SelectedFabBackgroundColor", TnTColor.Transparent)]
+    [InlineData("SelectedFabTextColor", TnTColor.None)]
+    [InlineData("SelectedFabTextColor", TnTColor.Transparent)]
+    [InlineData("MenuItemBackgroundColor", TnTColor.None)]
+    [InlineData("MenuItemBackgroundColor", TnTColor.Transparent)]
+    [InlineData("MenuItemTextColor", TnTColor.None)]
+    [InlineData("MenuItemTextColor", TnTColor.Transparent)]
+    public void Invisible_Color_Overrides_Are_Rejected(string parameterName, TnTColor color) {
+        var render = () => Render<NTFabMenu>(parameters => {
+            parameters
+                .Add(x => x.Icon, SampleIcon)
+                .Add(x => x.AriaLabel, "Create options")
+                .AddChildContent<NTFabMenuButtonItem>(item => item.Add(x => x.Label, "Draft"))
+                .AddChildContent<NTFabMenuButtonItem>(item => item.Add(x => x.Label, "Import"));
+
+            switch (parameterName) {
+                case nameof(NTFabMenu.BackgroundColor):
+                    parameters.Add(x => x.BackgroundColor, color);
+                    break;
+                case nameof(NTFabMenu.TextColor):
+                    parameters.Add(x => x.TextColor, color);
+                    break;
+                case nameof(NTFabMenu.SelectedFabBackgroundColor):
+                    parameters.Add(x => x.SelectedFabBackgroundColor, color);
+                    break;
+                case nameof(NTFabMenu.SelectedFabTextColor):
+                    parameters.Add(x => x.SelectedFabTextColor, color);
+                    break;
+                case nameof(NTFabMenu.MenuItemBackgroundColor):
+                    parameters.Add(x => x.MenuItemBackgroundColor, color);
+                    break;
+                case nameof(NTFabMenu.MenuItemTextColor):
+                    parameters.Add(x => x.MenuItemTextColor, color);
+                    break;
+            }
+        });
+
+        render.Should().Throw<InvalidOperationException>()
+            .WithMessage($"*{parameterName} must be a visible color*");
+    }
+
+    [Fact]
+    public void Item_Accessibility_Disabled_And_Additional_Attribute_Contracts_Are_Rendered() {
+        var cut = Render<NTFabMenu>(parameters => parameters
+            .Add(x => x.Icon, SampleIcon)
+            .Add(x => x.AriaLabel, "Create options")
+            .AddChildContent<NTFabMenuButtonItem>(item => item
+                .Add(x => x.Label, "Draft")
+                .Add(x => x.AriaLabel, "Create draft")
+                .Add(x => x.Disabled, true)
+                .Add(x => x.AdditionalAttributes, new Dictionary<string, object?> {
+                    ["class"] = "consumer-item",
+                    ["data-origin"] = "toolbar"
+                }))
+            .AddChildContent<NTFabMenuButtonItem>(item => item
+                .Add(x => x.Icon, MaterialIcon.Upload)
+                .Add(x => x.Label, "Import")));
+
+        var item = cut.Find(".consumer-item");
+
+        item.ClassList.Should().Contain("nt-fab-menu-item-disabled");
+        item.ClassList.Should().Contain("nt-fab-menu-item-without-icon");
+        item.GetAttribute("aria-label").Should().Be("Create draft");
+        item.GetAttribute("data-origin").Should().Be("toolbar");
+        item.HasAttribute("disabled").Should().BeTrue();
+        item.HasAttribute("popovertarget").Should().BeFalse();
+    }
+
+    [Fact]
+    public void Unsupported_Enum_ButtonSize_Falls_Back_To_Small_Rendering() {
+        var cut = Render<NTFabMenu>(parameters => parameters
+            .Add(x => x.Icon, SampleIcon)
+            .Add(x => x.AriaLabel, "Create options")
+            .Add(x => x.ButtonSize, (Size)999)
+            .AddChildContent<NTFabMenuButtonItem>(item => item.Add(x => x.Label, "Draft"))
+            .AddChildContent<NTFabMenuButtonItem>(item => item.Add(x => x.Label, "Import")));
+
+        cut.Find("nt-fab-menu").ClassList.Should().Contain("tnt-size-s");
+    }
+
+    [Fact]
+    public async Task NotifyFabMenuExpandedChanged_Only_Notifies_When_State_Changes() {
+        var changes = new List<bool>();
+        var cut = Render<NTFabMenu>(parameters => parameters
+            .Add(x => x.Icon, SampleIcon)
+            .Add(x => x.AriaLabel, "Create options")
+            .Add(x => x.ExpandedChanged, EventCallback.Factory.Create<bool>(this, changes.Add))
+            .AddChildContent<NTFabMenuButtonItem>(item => item.Add(x => x.Label, "Draft"))
+            .AddChildContent<NTFabMenuButtonItem>(item => item.Add(x => x.Label, "Import")));
+
+        await cut.InvokeAsync(() => cut.Instance.NotifyFabMenuExpandedChanged(false));
+        await cut.InvokeAsync(() => cut.Instance.NotifyFabMenuExpandedChanged(true));
+
+        changes.Should().Equal(true);
+        cut.Instance.Expanded.Should().BeTrue();
+    }
+
     private sealed class RefreshableFabMenu : ComponentBase {
         private NTFabMenu? _menu;
         private string _draftLabel = "Draft";

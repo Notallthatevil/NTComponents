@@ -50,4 +50,24 @@ public class Paging_Tests {
         overview.ComponentCount.Should().BeGreaterThan(0);
         overview.ReferenceTypeCount.Should().BeGreaterThan(100);
     }
+
+    /// <summary>Behavior source: REST and MCP paging contracts accept a zero-based offset through int.MaxValue and expose terminal HasMore and NextOffset metadata.</summary>
+    [Fact]
+    public void WithMaximumOffset_AllPagedOperationsReturnEmptyTerminalPageWithoutOverflow() {
+        var components = _catalog.ListComponentPage(limit: 200, offset: int.MaxValue);
+        var references = _catalog.ListReferencePage(limit: 200, offset: int.MaxValue);
+        var search = _catalog.SearchPage("button", limit: 200, offset: int.MaxValue);
+
+        AssertTerminalPage(components.Items, components.TotalCount, components.Offset, components.HasMore, components.NextOffset);
+        AssertTerminalPage(references.Items, references.TotalCount, references.Offset, references.HasMore, references.NextOffset);
+        AssertTerminalPage(search.Items, search.TotalCount, search.Offset, search.HasMore, search.NextOffset);
+    }
+
+    private static void AssertTerminalPage<T>(IReadOnlyList<T> items, int totalCount, int offset, bool hasMore, int? nextOffset) {
+        items.Should().BeEmpty();
+        totalCount.Should().BeGreaterThan(0);
+        offset.Should().Be(int.MaxValue);
+        hasMore.Should().BeFalse();
+        nextOffset.Should().BeNull();
+    }
 }

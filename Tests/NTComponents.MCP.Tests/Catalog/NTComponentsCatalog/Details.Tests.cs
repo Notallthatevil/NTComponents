@@ -101,4 +101,84 @@ public class Details_Tests {
         component.Parameters.Should().Contain(parameter => parameter.Name.StartsWith("On", StringComparison.Ordinal) && parameter.Category == "Events");
         component.Parameters.Where(parameter => parameter.IsInherited).Should().OnlyContain(parameter => parameter.Category == "Inherited");
     }
+
+    /// <summary>Behavior source: component details expose obsolescence information and usage guidance so consumers can avoid obsolete components.</summary>
+    [Fact]
+    public void GetObsoleteComponent_ReturnsMigrationGuidance() {
+        var catalog = new NTComponentsCatalog();
+
+        var component = catalog.GetComponent("NTInputSelectOption");
+
+        component.Should().NotBeNull();
+        component!.IsObsolete.Should().BeTrue();
+        component.ObsoleteMessage.Should().Contain("Use NTAutocompleteOption");
+        component.UsageGuidelines.Should().Contain(guideline => guideline.StartsWith("Do not use this obsolete component.", StringComparison.Ordinal));
+    }
+
+    /// <summary>Behavior source: generated basic usage promises composition-aware required inputs, including Razor expressions for non-text content parameters.</summary>
+    [Fact]
+    public void GetComponent_WithRequiredContent_GeneratesRazorExpressionPlaceholder() {
+        var catalog = new NTComponentsCatalog();
+
+        var component = catalog.GetComponent("NTMenu");
+
+        component.Should().NotBeNull();
+        component!.RazorUsage.Should().Contain("AriaLabel=\"TODO\"");
+        component.RazorUsage.Should().Contain("ChildContent=\"@childContent\"");
+    }
+
+    /// <summary>Behavior source: reference details promise enum values and the components that consume the reference type.</summary>
+    [Fact]
+    public void GetEnumReference_ReturnsPublicValuesAndComponentUsage() {
+        var catalog = new NTComponentsCatalog();
+
+        var reference = catalog.GetReference("NTButtonVariant");
+
+        reference.Should().NotBeNull();
+        reference!.Kind.Should().Be("Enum");
+        reference.Fields.Should().Contain(field => field.Name == "Filled" && field.Value == "1");
+        reference.Properties.Should().BeEmpty();
+        reference.Methods.Should().BeEmpty();
+        reference.UsedByComponents.Should().Contain("NTButton");
+    }
+
+    /// <summary>Behavior source: reference details promise public helper members, including callable methods, without presenting them as enum values.</summary>
+    [Fact]
+    public void GetHelperReference_ReturnsPublicMethods() {
+        var catalog = new NTComponentsCatalog();
+
+        var reference = catalog.GetReference("NTElevationExt");
+
+        reference.Should().NotBeNull();
+        reference!.Kind.Should().Be("Helper");
+        reference.Fields.Should().BeEmpty();
+        reference.Properties.Should().BeEmpty();
+        reference.Methods.Should().Contain(method => method.Name == "ToCssClass" && method.Accessibility == "Public");
+    }
+
+    /// <summary>Behavior source: reference details promise public properties for broader library helper types and identify their LibraryApi scope.</summary>
+    [Fact]
+    public void GetClassReference_ReturnsPublicPropertiesAndLibraryScope() {
+        var catalog = new NTComponentsCatalog();
+
+        var reference = catalog.GetReference("NTComponentsDefaultOptions");
+
+        reference.Should().NotBeNull();
+        reference!.Kind.Should().Be("Helper");
+        reference.Scope.Should().Be("LibraryApi");
+        reference.Properties.Should().Contain(property => property.Name == "DefaultFormAppearance" && property.Accessibility == "Public");
+    }
+
+    /// <summary>Behavior source: get_nt_reference_type promises public enum/helper members, so catalog projection must never expose non-consumer accessibility from generated metadata.</summary>
+    [Fact]
+    public void GetAllReferenceDetails_ExposeOnlyConsumerAccessibleMembers() {
+        var catalog = new NTComponentsCatalog();
+        var references = catalog.ListReferencePage(includeObsolete: true, limit: 200).Items;
+
+        var details = references.Select(reference => catalog.GetReference(reference.FullName)).ToArray();
+
+        details.Should().NotContainNulls();
+        details.SelectMany(reference => reference!.Properties).Should().OnlyContain(property => property.Accessibility == "Public" || property.Accessibility == "Protected" || property.Accessibility == "ProtectedOrInternal");
+        details.SelectMany(reference => reference!.Methods).Should().OnlyContain(method => method.Accessibility == "Public" || method.Accessibility == "Protected" || method.Accessibility == "ProtectedOrInternal");
+    }
 }

@@ -1,0 +1,107 @@
+@use '../../../NTComponents/Styles/_Variables/_colors.scss' as colors;
+@use '../../../NTComponents/Styles/_Variables/_corner-radius.scss' as corners;
+
+.wizard-scroll-demo {
+    display: grid;
+    gap: 24px;
+    margin-inline: auto;
+    max-inline-size: 1200px;
+    padding: 24px;
+
+    > header {
+        display: grid;
+        gap: 8px;
+
+        h1,
+        p {
+            margin: 0;
+        }
+    }
+
+    .eyebrow {
+        color: colors.$tnt-color-primary;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .expected-behavior {
+        background: colors.$tnt-color-secondary-container;
+        border-radius: corners.$nt-corner-radius-medium;
+        color: colors.$tnt-color-on-secondary-container;
+        display: grid;
+        gap: 4px;
+        padding: 16px;
+    }
+
+    .wizard-frame {
+        background: colors.$tnt-color-surface;
+        block-size: clamp(28rem, 65vh, 40rem);
+        border: 1px solid colors.$tnt-color-outline-variant;
+        border-radius: corners.$nt-corner-radius-large;
+        box-shadow: 0 2px 8px colors.$tnt-color-shadow;
+        min-inline-size: 0;
+        overflow: hidden;
+    }
+
+    .wizard-form-content {
+        display: grid;
+        gap: 32px;
+
+        section {
+            display: grid;
+            gap: 12px;
+        }
+
+        h2,
+        p {
+            margin: 0;
+        }
+
+        p {
+            color: colors.$tnt-color-on-surface-variant;
+        }
+    }
+
+    .field-grid {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .step-summary {
+        display: grid;
+        gap: 16px;
+
+        h2,
+        p,
+        dl,
+        dd {
+            margin: 0;
+        }
+
+        dl {
+            display: grid;
+            gap: 8px 16px;
+            grid-template-columns: max-content minmax(0, 1fr);
+        }
+
+        dt {
+            font-weight: 700;
+        }
+    }
+}
+
+@media (max-width: 750px) {
+    .wizard-scroll-demo {
+        padding: 12px;
+
+        .wizard-frame {
+            block-size: clamp(32rem, 72vh, 42rem);
+        }
+
+        .field-grid {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+}

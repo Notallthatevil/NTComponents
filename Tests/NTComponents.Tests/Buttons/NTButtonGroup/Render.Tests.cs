@@ -294,6 +294,63 @@ public sealed class Render_Tests : NTButtonGroupTestContext {
         cut.FindAll("span.nt-button-icon").Should().BeEmpty();
     }
 
+    // Behavior source: NTButtonGroup.Variant XML remarks define Elevated, Filled, Tonal, and Outlined as supported group treatments.
+    [Theory]
+    [InlineData(NTButtonVariant.Elevated, "nt-button-group-elevated")]
+    [InlineData(NTButtonVariant.Filled, "nt-button-group-filled")]
+    [InlineData(NTButtonVariant.Tonal, "nt-button-group-tonal")]
+    [InlineData(NTButtonVariant.Outlined, "nt-button-group-outlined")]
+    public void WithSupportedVariant_RendersItsGroupTreatment(NTButtonVariant variant, string expectedClass) {
+        // Arrange
+        var items = CreateItems();
+
+        // Act
+        var cut = Render<NTButtonGroup<string>>(parameters => parameters
+            .AddChildContent(RenderItems(items))
+            .Add(p => p.Variant, variant));
+
+        // Assert
+        cut.Find("div.nt-button-group").ClassList.Should().Contain(expectedClass);
+        cut.FindAll("button.nt-btn-grp-btn").Should().HaveCount(items.Count);
+    }
+
+    // Behavior source: NTButtonGroup.Variant XML remarks explicitly state that Text buttons are not supported for selectable groups.
+    [Fact]
+    public void WithSelectableTextVariant_ThrowsContractError() {
+        // Arrange
+        var items = CreateItems();
+
+        // Act
+        Action render = () => Render<NTButtonGroup<string>>(parameters => parameters
+            .AddChildContent(RenderItems(items))
+            .Add(p => p.Variant, NTButtonVariant.Text));
+
+        // Assert
+        render.Should().Throw<InvalidOperationException>().WithMessage("*Text button groups do not support selectable behavior*");
+    }
+
+    // Behavior source: NTButtonGroup color parameter XML documentation defines explicit resting and selected color overrides.
+    [Fact]
+    public void WithExplicitColorOverrides_RendersAllGroupColorVariables() {
+        // Arrange
+        var items = CreateItems();
+
+        // Act
+        var cut = Render<NTButtonGroup<string>>(parameters => parameters
+            .AddChildContent(RenderItems(items))
+            .Add(p => p.BackgroundColor, TnTColor.SecondaryContainer)
+            .Add(p => p.TextColor, TnTColor.OnSecondaryContainer)
+            .Add(p => p.SelectedBackgroundColor, TnTColor.Secondary)
+            .Add(p => p.SelectedTextColor, TnTColor.OnSecondary));
+
+        // Assert
+        var style = cut.Find("div.nt-button-group").GetAttribute("style")!;
+        style.Should().Contain("--nt-button-group-bg:var(--tnt-color-secondary-container)");
+        style.Should().Contain("--nt-button-group-fg:var(--tnt-color-on-secondary-container)");
+        style.Should().Contain("--nt-button-group-selected-bg:var(--tnt-color-secondary)");
+        style.Should().Contain("--nt-button-group-selected-fg:var(--tnt-color-on-secondary)");
+    }
+
     private sealed class RequiredSelectionModel {
         [Required(ErrorMessage = "Choose an option")]
         public string? SelectedKey { get; set; }

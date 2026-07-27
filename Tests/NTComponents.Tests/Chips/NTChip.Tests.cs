@@ -179,6 +179,125 @@ public class NTChip_Tests : BunitContext {
         cut.Find("span.nt-chip").GetAttribute("class")!.Should().Contain("nt-chip-two-action");
     }
 
+    // Behavior source: NTChip Href, OnRemoveCallback, and NTDocumentation contracts require link navigation and removal to remain distinct native actions.
+    [Fact]
+    public void Removable_Input_Link_Renders_Separate_Anchor_And_Remove_Button() {
+        var cut = Render<NTChip>(parameters => parameters
+            .Add(chip => chip.Label, "nate@example.com")
+            .Add(chip => chip.Variant, NTChipVariant.Input)
+            .Add(chip => chip.Href, "/contacts/nate")
+            .Add(chip => chip.OnRemoveCallback, EventCallback.Factory.Create<MouseEventArgs>(this, () => { })));
+
+        var primaryAction = cut.Find("a.nt-chip-primary-action");
+        var removeButton = cut.Find("button.nt-chip-remove");
+
+        primaryAction.GetAttribute("href").Should().Be("/contacts/nate");
+        removeButton.GetAttribute("aria-label").Should().Be("Remove nate@example.com");
+        cut.Find("span.nt-chip").ClassList.Should().Contain("nt-chip-two-action");
+    }
+
+    // Behavior source: NTChip MenuContent and OnRemoveCallback XML documentation define dropdown choice and removal as separate affordances.
+    [Fact]
+    public void Removable_Input_Menu_Renders_Separate_Popover_Trigger_And_Remove_Button() {
+        var cut = Render<NTChip>(parameters => parameters
+            .Add(chip => chip.Label, "Category")
+            .Add(chip => chip.Variant, NTChipVariant.Input)
+            .Add(chip => chip.MenuContent, builder => {
+                builder.OpenComponent<NTMenuButtonItem>(0);
+                builder.AddAttribute(1, nameof(NTMenuButtonItem.Label), "Restaurants");
+                builder.CloseComponent();
+            })
+            .Add(chip => chip.OnRemoveCallback, EventCallback.Factory.Create<MouseEventArgs>(this, () => { })));
+
+        var primaryAction = cut.Find("button.nt-chip-primary-action");
+        var menu = cut.Find("nt-menu");
+
+        primaryAction.GetAttribute("aria-haspopup").Should().Be("menu");
+        primaryAction.GetAttribute("popovertarget").Should().Be(menu.Id);
+        cut.Find("button.nt-chip-remove").Should().NotBeNull();
+        cut.Find("span.nt-chip").ClassList.Should().Contain("nt-chip-two-action");
+    }
+
+    // Behavior source: NTChip.Disabled XML documentation plus the native disabled-control contract prohibit activating chip callbacks.
+    [Fact]
+    public void Disabled_Action_And_Remove_Controls_Do_Not_Invoke_Callbacks() {
+        var clickCount = 0;
+        var removeCount = 0;
+        var cut = Render<NTChip>(parameters => parameters
+            .Add(chip => chip.Label, "Disabled input")
+            .Add(chip => chip.Variant, NTChipVariant.Input)
+            .Add(chip => chip.Disabled, true)
+            .Add(chip => chip.OnClickCallback, EventCallback.Factory.Create<MouseEventArgs>(this, () => clickCount++))
+            .Add(chip => chip.OnRemoveCallback, EventCallback.Factory.Create<MouseEventArgs>(this, () => removeCount++)));
+
+        cut.Find("button.nt-chip-primary-action").Click();
+        cut.Find("button.nt-chip-remove").Click();
+        cut.Find("button.nt-chip-remove").KeyDown("Delete");
+
+        clickCount.Should().Be(0);
+        removeCount.Should().Be(0);
+        cut.FindAll("button").Should().AllSatisfy(button => button.HasAttribute("disabled").Should().BeTrue());
+    }
+
+    // Behavior source: Existing Remove_Key_Removes_Input_Chip contract test establishes Delete activation; standard keyboard semantics reserve other keys for their normal behavior.
+    [Fact]
+    public void NonRemoval_Key_Does_Not_Remove_Input_Chip() {
+        var removeCount = 0;
+        var cut = Render<NTChip>(parameters => parameters
+            .Add(chip => chip.Label, "nate@example.com")
+            .Add(chip => chip.Variant, NTChipVariant.Input)
+            .Add(chip => chip.OnRemoveCallback, EventCallback.Factory.Create<MouseEventArgs>(this, () => removeCount++)));
+
+        cut.Find("button.nt-chip-remove").KeyDown("Enter");
+
+        removeCount.Should().Be(0);
+    }
+
+    // Behavior source: NTChip MenuAriaLabel, RemoveAriaLabel, Elevation, ElementId, and Selected XML documentation define these explicit render overrides.
+    [Fact]
+    public void Removable_Selected_Menu_Uses_Explicit_Accessibility_And_Elevation_Overrides() {
+        var cut = Render<NTChip>(parameters => parameters
+            .Add(chip => chip.ElementId, "category-chip")
+            .Add(chip => chip.Label, "Category")
+            .Add(chip => chip.Variant, NTChipVariant.Input)
+            .Add(chip => chip.Selected, true)
+            .Add(chip => chip.Elevation, NTElevation.High)
+            .Add(chip => chip.MenuAriaLabel, "Choose category")
+            .Add(chip => chip.RemoveAriaLabel, "Clear category")
+            .Add(chip => chip.MenuContent, builder => {
+                builder.OpenComponent<NTMenuButtonItem>(0);
+                builder.AddAttribute(1, nameof(NTMenuButtonItem.Label), "Restaurants");
+                builder.CloseComponent();
+            })
+            .Add(chip => chip.OnRemoveCallback, EventCallback.Factory.Create<MouseEventArgs>(this, () => { })));
+
+        var trigger = cut.Find("button.nt-chip-primary-action");
+        var menu = cut.Find("nt-menu");
+
+        trigger.Id.Should().Be("category-chip-menu-button");
+        trigger.GetAttribute("aria-pressed").Should().Be("true");
+        menu.GetAttribute("aria-label").Should().Be("Choose category");
+        cut.Find("button.nt-chip-remove").GetAttribute("aria-label").Should().Be("Clear category");
+        cut.Find(".nt-chip-container").ClassList.Should().Contain("nt-elevation-high");
+    }
+
+    // Behavior source: NTChip.Disabled and SelectedChanged XML documentation require disabled selectable chips to preserve selection and suppress change callbacks.
+    [Fact]
+    public void Disabled_Filter_Change_Does_Not_Update_Selection_Or_Invoke_Callback() {
+        var changedCount = 0;
+        var cut = Render<NTChip>(parameters => parameters
+            .Add(chip => chip.Label, "Favorites")
+            .Add(chip => chip.Variant, NTChipVariant.Filter)
+            .Add(chip => chip.Disabled, true)
+            .Add(chip => chip.SelectedChanged, EventCallback.Factory.Create<bool>(this, _ => changedCount++)));
+
+        cut.Find("input.nt-chip-selection-input").Change(true);
+
+        changedCount.Should().Be(0);
+        cut.Find("span.nt-chip").ClassList.Should().NotContain("nt-chip-selected");
+        cut.Find("input.nt-chip-selection-input").HasAttribute("checked").Should().BeFalse();
+    }
+
     [Fact]
     public void Leading_And_Trailing_Icons_Render_As_Decorative_Content() {
         var cut = Render<NTChip>(parameters => parameters

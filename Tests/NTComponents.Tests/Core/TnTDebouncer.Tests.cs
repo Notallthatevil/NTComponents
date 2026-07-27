@@ -152,5 +152,44 @@ namespace NTComponents.Tests.Core {
             // Assert
             executed.Should().BeTrue();
         }
+
+        [Fact]
+        public async Task DebounceAsync_AfterDispose_DoesNotInvokeAction() {
+            var debouncer = new TnTDebouncer(millisecondsDelay: 0);
+            var invocationCount = 0;
+            debouncer.Dispose();
+
+            await debouncer.DebounceAsync(_ => {
+                invocationCount++;
+                return Task.CompletedTask;
+            });
+
+            invocationCount.Should().Be(0);
+        }
+
+        [Fact]
+        public async Task DebounceForResultAsync_AfterDispose_ReturnsDefaultWithoutInvokingFunction() {
+            var debouncer = new TnTDebouncer(millisecondsDelay: 0);
+            var invocationCount = 0;
+            debouncer.Dispose();
+
+            var result = await debouncer.DebounceForResultAsync<string>(_ => {
+                invocationCount++;
+                return Task.FromResult("result");
+            });
+
+            result.Should().BeNull();
+            invocationCount.Should().Be(0);
+        }
+
+        [Fact]
+        public async Task DebounceAsync_WhenActionFails_PreservesOriginalException() {
+            using var debouncer = new TnTDebouncer(millisecondsDelay: 0);
+            var expected = new InvalidOperationException("Dependency failed");
+
+            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => debouncer.DebounceAsync(_ => Task.FromException(expected)));
+
+            exception.Should().BeSameAs(expected);
+        }
     }
 }
