@@ -270,6 +270,213 @@ namespace NTComponents {
         Assert.Equal(NTButtonConfigurationAnalyzer.TransparentBackgroundDiagnosticId, diagnostic.Id);
     }
 
+    [Fact]
+    public async Task Reports_Invalid_NonGeneric_Component_With_Generated_Parameters() {
+        const string source = """
+using Microsoft.AspNetCore.Components.Rendering;
+
+public static class ButtonFactory {
+    public static void Build(RenderTreeBuilder builder) {
+        builder.OpenComponent(0, typeof(global::NTComponents.NTButton));
+        builder.AddComponentParameter(1, "Label", global::Microsoft.AspNetCore.Components.CompilerServices.RuntimeHelpers.TypeCheck<string>(((" "))));
+        builder.AddComponentParameter(2, "Variant", (global::NTComponents.NTButtonVariant)4);
+        builder.AddComponentParameter(3, "BackgroundColor", (global::NTComponents.TnTColor)2);
+        builder.AddComponentParameter(4, "TextColor", (global::NTComponents.TnTColor)0);
+        builder.AddComponentParameter(5, "Elevation", (global::NTComponents.NTElevation)1);
+        builder.AddAttribute(6, "IsToggleButton", true);
+        builder.CloseComponent();
+    }
+}
+
+namespace Microsoft.AspNetCore.Components.Rendering {
+    public class RenderTreeBuilder {
+        public void OpenComponent<TComponent>(int sequence) { }
+        public void OpenComponent(int sequence, global::System.Type componentType) { }
+        public void AddAttribute(int sequence, string name, object? value) { }
+        public void AddComponentParameter(int sequence, string name, object? value) { }
+        public void CloseComponent() { }
+    }
+}
+
+namespace Microsoft.AspNetCore.Components.CompilerServices {
+    public static class RuntimeHelpers {
+        public static T TypeCheck<T>(T value) => value;
+    }
+}
+
+namespace NTComponents {
+    public class NTButton { }
+    public enum NTButtonVariant { Elevated, Filled, Tonal, Outlined, Text }
+    public enum TnTColor { None, Transparent, Primary, OnPrimary, SecondaryContainer, OnSecondaryContainer, SurfaceContainerLow, InverseSurface }
+    public enum NTElevation { None, Lowest, Low, Medium, High, Highest }
+}
+""";
+
+        var diagnostics = await GetDiagnosticsAsync(("ButtonFactory.cs", source));
+
+        Assert.Equal(
+            [
+                NTButtonConfigurationAnalyzer.OpaqueBackgroundDiagnosticId,
+                NTButtonConfigurationAnalyzer.InvisibleTextColorDiagnosticId,
+                NTButtonConfigurationAnalyzer.InvalidElevationDiagnosticId,
+                NTButtonConfigurationAnalyzer.TextToggleDiagnosticId,
+                NTButtonConfigurationAnalyzer.EmptyLabelDiagnosticId
+            ],
+            diagnostics.OrderBy(static diagnostic => diagnostic.Id).Select(static diagnostic => diagnostic.Id));
+    }
+
+    [Fact]
+    public async Task Reports_Missing_Label_In_Each_Supported_Executable_Body() {
+        const string source = """
+using System;
+using Microsoft.AspNetCore.Components.Rendering;
+
+public sealed class ButtonFactory {
+    public ButtonFactory(RenderTreeBuilder builder) {
+        builder.OpenComponent<global::NTComponents.NTButton>(0);
+        builder.CloseComponent();
+    }
+
+    public static void Build(RenderTreeBuilder builder) {
+        void Local(RenderTreeBuilder localBuilder) {
+            localBuilder.OpenComponent<global::NTComponents.NTButton>(0);
+            localBuilder.CloseComponent();
+        }
+
+        Action<RenderTreeBuilder> parenthesized = (lambdaBuilder) => {
+            lambdaBuilder.OpenComponent<global::NTComponents.NTButton>(0);
+            lambdaBuilder.CloseComponent();
+        };
+        Action<RenderTreeBuilder> simple = lambdaBuilder => {
+            lambdaBuilder.OpenComponent<global::NTComponents.NTButton>(0);
+            lambdaBuilder.CloseComponent();
+        };
+        Action<RenderTreeBuilder> anonymous = delegate(RenderTreeBuilder anonymousBuilder) {
+            anonymousBuilder.OpenComponent<global::NTComponents.NTButton>(0);
+            anonymousBuilder.CloseComponent();
+        };
+    }
+
+    public static void ExpressionBodied(RenderTreeBuilder builder) => builder.Noop();
+}
+
+namespace Microsoft.AspNetCore.Components.Rendering {
+    public class RenderTreeBuilder {
+        public void OpenComponent<TComponent>(int sequence) { }
+        public void AddAttribute(int sequence, string name, object? value) { }
+        public void CloseComponent() { }
+        public void Noop() { }
+    }
+}
+
+namespace NTComponents {
+    public class NTButton { }
+    public enum NTButtonVariant { Elevated, Filled, Tonal, Outlined, Text }
+    public enum TnTColor { None, Transparent, Primary }
+    public enum NTElevation { None, Lowest }
+}
+""";
+
+        var diagnostics = await GetDiagnosticsAsync(("ButtonFactory.cs", source));
+
+        Assert.Equal(
+            Enumerable.Repeat(NTButtonConfigurationAnalyzer.EmptyLabelDiagnosticId, 5),
+            diagnostics.Select(static diagnostic => diagnostic.Id));
+    }
+
+    [Fact]
+    public async Task Reports_Missing_Label_When_Attribute_Name_Is_Dynamic() {
+        const string source = """
+using Microsoft.AspNetCore.Components.Rendering;
+
+public static class ButtonFactory {
+    public static void Build(RenderTreeBuilder builder, string attributeName) {
+        builder.CloseComponent();
+        builder.OpenComponent<global::NTComponents.OtherComponent>(0);
+        builder.AddAttribute(1, "Label", "Ignored");
+        builder.CloseComponent();
+
+        var componentType = typeof(global::NTComponents.NTButton);
+        builder.OpenComponent(2, componentType);
+        builder.CloseComponent();
+
+        builder.OpenComponent<global::NTComponents.NTButton>(3);
+        builder.AddAttribute(4, attributeName, "Open");
+        builder.Noop();
+        builder.CloseComponent();
+    }
+}
+
+namespace Microsoft.AspNetCore.Components.Rendering {
+    public class RenderTreeBuilder {
+        public void OpenComponent<TComponent>(int sequence) { }
+        public void OpenComponent(int sequence, global::System.Type componentType) { }
+        public void AddAttribute(int sequence, string name, object? value) { }
+        public void CloseComponent() { }
+        public void Noop() { }
+    }
+}
+
+namespace NTComponents {
+    public class NTButton { }
+    public class OtherComponent { }
+    public enum NTButtonVariant { Elevated, Filled, Tonal, Outlined, Text }
+    public enum TnTColor { None, Transparent, Primary }
+    public enum NTElevation { None, Lowest }
+}
+""";
+
+        var diagnostic = Assert.Single(await GetDiagnosticsAsync(("ButtonFactory.cs", source)));
+
+        Assert.Equal(NTButtonConfigurationAnalyzer.EmptyLabelDiagnosticId, diagnostic.Id);
+    }
+
+    [Fact]
+    public async Task DoesNotReport_When_Component_Values_Are_Runtime_Dependent() {
+        const string source = """
+using Microsoft.AspNetCore.Components.Rendering;
+
+public static class ButtonFactory {
+    public static void Build(RenderTreeBuilder builder) {
+        builder.OpenComponent<global::NTComponents.NTButton>(0);
+        builder.AddAttribute(1, "Label", GetLabel());
+        builder.AddAttribute(2, "Variant", GetVariant());
+        builder.AddAttribute(3, "BackgroundColor", GetColor());
+        builder.AddAttribute(4, "TextColor", GetColor());
+        builder.AddAttribute(5, "Elevation", GetElevation());
+        builder.AddAttribute(6, "IsToggleButton", GetBoolean());
+        builder.AddAttribute(7, "Selected", false);
+        builder.CloseComponent();
+    }
+
+    private static string GetLabel() => "Open";
+    private static global::NTComponents.NTButtonVariant GetVariant() => global::NTComponents.NTButtonVariant.Filled;
+    private static global::NTComponents.TnTColor GetColor() => global::NTComponents.TnTColor.Primary;
+    private static global::NTComponents.NTElevation GetElevation() => global::NTComponents.NTElevation.None;
+    private static bool GetBoolean() => false;
+}
+
+namespace Microsoft.AspNetCore.Components.Rendering {
+    public class RenderTreeBuilder {
+        public void OpenComponent<TComponent>(int sequence) { }
+        public void AddAttribute(int sequence, string name, object? value) { }
+        public void CloseComponent() { }
+    }
+}
+
+namespace NTComponents {
+    public class NTButton { }
+    public enum NTButtonVariant { Elevated, Filled, Tonal, Outlined, Text }
+    public enum TnTColor { None, Transparent, Primary }
+    public enum NTElevation { None, Lowest }
+}
+""";
+
+        var diagnostics = await GetDiagnosticsAsync(("ButtonFactory.cs", source));
+
+        Assert.Empty(diagnostics);
+    }
+
     private static async Task<ImmutableArray<Diagnostic>> GetDiagnosticsAsync(params (string Path, string Source)[] sources) {
         var syntaxTrees = sources
             .Select(source => CSharpSyntaxTree.ParseText(

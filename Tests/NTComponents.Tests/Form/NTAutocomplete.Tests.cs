@@ -92,6 +92,98 @@ public class NTAutocomplete_Tests : BunitContext {
         metadata.Should().Contain("\"group\":\"Texas\"");
     }
 
+    // Behavior source: Option metadata exposes optional icons, supporting text, fallback labels, disabled state, and group metadata to the enhancement module.
+    [Fact]
+    public void Option_Metadata_Renders_All_Documented_Optional_States() {
+        var icon = new MaterialIcon("location_on") {
+            Appearance = IconAppearance.Filled,
+            ElementTitle = "Location"
+        };
+        var options = new[] {
+            new AutocompleteOption("Austin", null!, "Texas capital", Disabled: true, LeadingIcon: icon)
+        };
+
+        var cut = RenderAutocomplete(options: options);
+        var metadata = RenderedOptionMetadata(cut);
+
+        metadata.Should().Contain("\"label\":\"Austin\"");
+        metadata.Should().Contain("\"supportingText\":\"Texas capital\"");
+        metadata.Should().Contain("\"disabled\":true");
+        metadata.Should().Contain("\"leadingIcon\"");
+        metadata.Should().Contain("font-variation-settings");
+        metadata.Should().Contain("\"title\":\"Location\"");
+    }
+
+    // Behavior source: NTAutocompleteOption explicitly requires an NTAutocomplete ancestor.
+    [Fact]
+    public void Option_Outside_Autocomplete_Throws_Contract_Error() {
+        var act = () => Render<NTAutocompleteOption>(parameters => parameters
+            .Add(p => p.Value, "Austin")
+            .Add(p => p.Label, "Austin"));
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*must be a child of NTAutocomplete*");
+    }
+
+    // Behavior source: Blazor parameter rerenders must refresh the inert option metadata consumed by progressive enhancement.
+    [Fact]
+    public void Option_Metadata_Refreshes_After_Each_Documented_Parameter_Changes() {
+        var groupDisabled = false;
+        var groupLabel = "Texas";
+        var disabled = false;
+        var label = "Austin";
+        var supportingText = "Capital";
+        var value = "AUS";
+        TnTIcon? leadingIcon = null;
+        var model = new TestModel();
+        RenderFragment options = builder => {
+            builder.OpenComponent<NTAutocompleteOptionGroup>(0);
+            builder.AddAttribute(1, nameof(NTAutocompleteOptionGroup.Disabled), groupDisabled);
+            builder.AddAttribute(2, nameof(NTAutocompleteOptionGroup.Label), groupLabel);
+            builder.AddAttribute(3, nameof(NTAutocompleteOptionGroup.ChildContent), (RenderFragment)(optionBuilder => {
+                optionBuilder.OpenComponent<NTAutocompleteOption>(0);
+                optionBuilder.AddAttribute(1, nameof(NTAutocompleteOption.Disabled), disabled);
+                optionBuilder.AddAttribute(2, nameof(NTAutocompleteOption.Label), label);
+                optionBuilder.AddAttribute(3, nameof(NTAutocompleteOption.SupportingText), supportingText);
+                optionBuilder.AddAttribute(4, nameof(NTAutocompleteOption.Value), value);
+                if (leadingIcon is not null) {
+                    optionBuilder.AddAttribute(5, nameof(NTAutocompleteOption.LeadingIcon), (object)leadingIcon);
+                }
+                optionBuilder.CloseComponent();
+            }));
+            builder.CloseComponent();
+        };
+        var cut = Render<NTAutocomplete>(parameters => parameters
+            .Add(p => p.Value, model.City)
+            .Add(p => p.ValueChanged, EventCallback.Factory.Create<string?>(this, selected => model.City = selected))
+            .Add(p => p.ValueExpression, () => model.City)
+            .Add(p => p.ChildContent, options));
+
+        label = "Austin City";
+        cut.Render();
+        RenderedOptionMetadata(cut).Should().Contain("Austin City");
+        supportingText = "State capital";
+        cut.Render();
+        RenderedOptionMetadata(cut).Should().Contain("State capital");
+        leadingIcon = MaterialIcon.Place;
+        cut.Render();
+        RenderedOptionMetadata(cut).Should().Contain("place");
+        value = "ATX";
+        cut.Render();
+        RenderedOptionMetadata(cut).Should().Contain("ATX");
+        disabled = true;
+        cut.Render();
+        RenderedOptionMetadata(cut).Should().Contain("\"disabled\":true");
+        disabled = false;
+        cut.Render();
+        groupDisabled = true;
+        cut.Render();
+        RenderedOptionMetadata(cut).Should().Contain("\"disabled\":true");
+        groupLabel = "Central Texas";
+        cut.Render();
+        RenderedOptionMetadata(cut).Should().Contain("Central Texas");
+    }
+
     [Fact]
     public void Native_Change_Updates_Bound_Value_Without_Js_Selection() {
         var model = new TestModel();
@@ -105,6 +197,24 @@ public class NTAutocomplete_Tests : BunitContext {
         model.City.Should().Be("Austin");
         bindAfterValue.Should().Be("Austin");
         cut.Find("input[role='combobox']").GetAttribute("value").Should().Be("Austin");
+    }
+
+    // Behavior source: Disabled and ReadOnly field contracts prevent native input events from changing the bound value.
+    [Theory]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    public void Native_Change_Does_Not_Update_A_Disabled_Or_ReadOnly_Field(bool disabled, bool readOnly) {
+        var model = new TestModel { City = "Austin" };
+        var bindAfterCalls = 0;
+        var cut = RenderAutocomplete(model, parameters => parameters
+            .Add(p => p.Disabled, disabled)
+            .Add(p => p.ReadOnly, readOnly)
+            .Add(p => p.BindAfter, EventCallback.Factory.Create<string?>(this, _ => bindAfterCalls++)));
+
+        cut.Find("input[role='combobox']").Change("Boston");
+
+        model.City.Should().Be("Austin");
+        bindAfterCalls.Should().Be(0);
     }
 
     [Fact]
@@ -183,14 +293,43 @@ public class NTAutocomplete_Tests : BunitContext {
         };
 
         var cut = RenderAutocomplete(model, parameters => parameters
-            .Add(p => p.ChildContent, RenderOptions(options))
             .Add(p => p.AllowCustomValue, false)
-            .AddUnmatched("name", "Input.City"));
+            .AddUnmatched("name", "Input.City"), options);
+        cut.Render();
 
         var input = cut.Find("input[role='combobox']");
 
         input.GetAttribute("name").Should().Be("Input.City");
+        input.GetAttribute("pattern").Should().Be(@"(?:Austin|A\/B \(North\))");
         RenderedOptionMetadata(cut).Should().Contain("A/B (North)");
+    }
+
+    [Fact]
+    public void Disallow_Custom_Value_With_Only_Disabled_Options_Renders_Reject_All_Pattern() {
+        var model = new TestModel();
+        var options = new[] {
+            new AutocompleteOption("Austin", "Austin", Disabled: true),
+            new AutocompleteOption("Boston", "Boston", Disabled: true)
+        };
+
+        var cut = RenderAutocomplete(model, parameters => parameters
+            .Add(p => p.AllowCustomValue, false), options);
+        cut.Render();
+
+        cut.Find("input[role='combobox']").GetAttribute("pattern").Should().Be("a^");
+    }
+
+    [Fact]
+    public void Disallow_Custom_Value_Without_Options_Does_Not_Constrain_Native_Input() {
+        var model = new TestModel();
+
+        var cut = Render<NTAutocomplete>(parameters => parameters
+            .Add(p => p.Value, model.City)
+            .Add(p => p.ValueChanged, EventCallback.Factory.Create<string?>(this, value => model.City = value))
+            .Add(p => p.ValueExpression, (Expression<Func<string?>>)(() => model.City))
+            .Add(p => p.AllowCustomValue, false));
+
+        cut.Find("input[role='combobox']").HasAttribute("pattern").Should().BeFalse();
     }
 
     [Fact]
@@ -229,6 +368,18 @@ public class NTAutocomplete_Tests : BunitContext {
         cut.Find(".nt-input").GetAttribute("class").Should().NotContain("nt-invalid");
     }
 
+    // Behavior source: The Value contract is nullable, and the exact-match restriction applies only to non-empty typed values.
+    [Fact]
+    public void Disallow_Custom_Value_Accepts_Empty_Value() {
+        var model = new TestModel { City = "Austin" };
+        var cut = RenderAutocomplete(model, parameters => parameters.Add(p => p.AllowCustomValue, false));
+
+        cut.Find("input[role='combobox']").Change(string.Empty);
+
+        model.City.Should().BeEmpty();
+        cut.Find(".nt-input").GetAttribute("class").Should().NotContain("nt-invalid");
+    }
+
     [Fact]
     public void Enhancement_JsException_Keeps_Native_Input_Usable() {
         using var context = new BunitContext();
@@ -263,6 +414,44 @@ public class NTAutocomplete_Tests : BunitContext {
         model.City.Should().Be("Boston");
         bindAfterValue.Should().Be("Boston");
         cut.Find("input[role='combobox']").GetAttribute("value").Should().Be("Boston");
+    }
+
+    // Behavior source: Disabled and ReadOnly field contracts also apply to browser-module value notifications.
+    [Theory]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    public async Task NotifyValueChanged_Does_Not_Update_A_Disabled_Or_ReadOnly_Field(bool disabled, bool readOnly) {
+        var model = new TestModel { City = "Austin" };
+        var bindAfterCalls = 0;
+        var cut = RenderAutocomplete(model, parameters => parameters
+            .Add(p => p.Disabled, disabled)
+            .Add(p => p.ReadOnly, readOnly)
+            .Add(p => p.BindAfter, EventCallback.Factory.Create<string?>(this, _ => bindAfterCalls++)));
+
+        await cut.InvokeAsync(() => cut.Instance.NotifyAutocompleteValueChanged("Boston", closeMenu: false));
+
+        model.City.Should().Be("Austin");
+        bindAfterCalls.Should().Be(0);
+    }
+
+    // Behavior source: Component disposal must tolerate a disconnected browser circuit so teardown remains safe.
+    [Fact]
+    public async Task DisposeAsync_Ignores_JsDisconnectedException() {
+        using var context = new BunitContext();
+        var module = context.JSInterop.SetupModule(JsModulePath);
+        module.SetupVoid("onLoad", _ => true).SetVoidResult();
+        module.SetupVoid("onUpdate", _ => true).SetVoidResult();
+        module.SetupVoid("onDispose", _ => true).SetException(new JSDisconnectedException("Disconnected"));
+        var model = new TestModel();
+        var cut = context.Render<NTAutocomplete>(parameters => parameters
+            .Add(p => p.Value, model.City)
+            .Add(p => p.ValueChanged, EventCallback.Factory.Create<string?>(this, value => model.City = value))
+            .Add(p => p.ValueExpression, () => model.City)
+            .Add(p => p.ChildContent, RenderOptions(Options)));
+
+        var act = () => cut.Instance.DisposeAsync().AsTask();
+
+        await act.Should().NotThrowAsync();
     }
 
     [Fact]
@@ -314,14 +503,14 @@ public class NTAutocomplete_Tests : BunitContext {
         cut.Find("input[role='combobox']").GetAttribute("aria-invalid").Should().Be("true");
     }
 
-    private IRenderedComponent<NTAutocomplete> RenderAutocomplete(TestModel? model = null, Action<ComponentParameterCollectionBuilder<NTAutocomplete>>? configure = null) {
+    private IRenderedComponent<NTAutocomplete> RenderAutocomplete(TestModel? model = null, Action<ComponentParameterCollectionBuilder<NTAutocomplete>>? configure = null, IEnumerable<AutocompleteOption>? options = null) {
         model ??= new TestModel();
         return Render<NTAutocomplete>(parameters => {
             parameters
                 .Add(p => p.Value, model.City)
                 .Add(p => p.ValueChanged, EventCallback.Factory.Create<string?>(this, value => model.City = value))
                 .Add(p => p.ValueExpression, (Expression<Func<string?>>)(() => model.City))
-                .Add(p => p.ChildContent, RenderOptions(Options));
+                .Add(p => p.ChildContent, RenderOptions(options ?? Options));
             configure?.Invoke(parameters);
         });
     }
@@ -333,8 +522,8 @@ public class NTAutocomplete_Tests : BunitContext {
             builder.AddAttribute(2, nameof(NTAutocompleteOption.Label), option.Label);
             builder.AddAttribute(3, nameof(NTAutocompleteOption.SupportingText), option.SupportingText);
             builder.AddAttribute(4, nameof(NTAutocompleteOption.Disabled), option.Disabled);
-            if (option.LeadingIcon is not null) {
-                builder.AddAttribute(5, nameof(NTAutocompleteOption.LeadingIcon), option.LeadingIcon);
+            if (option.LeadingIcon is { } leadingIcon) {
+                builder.AddAttribute(5, nameof(NTAutocompleteOption.LeadingIcon), (object)leadingIcon);
             }
 
             builder.CloseComponent();

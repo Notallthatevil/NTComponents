@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using NTComponents.Core;
 
 namespace NTComponents.Tests.Core;
@@ -75,6 +76,48 @@ public class NTPageScriptComponentTests : BunitContext {
 
         rendered.Instance.IsolatedJsModule.Should().NotBeNull();
         rendered.Instance.DotNetObjectRef.Should().NotBeNull();
+    }
+
+    [Fact]
+    public void FirstRender_WhenOnLoadDisconnects_DoesNotFailComponentRendering() {
+        var module = JSInterop.SetupModule("./test.js");
+        module.SetupVoid("onLoad", _ => true).SetException(new JSDisconnectedException("Disconnected"));
+
+        var rendered = Render<TestPageScriptComponent>();
+
+        rendered.Instance.IsolatedJsModule.Should().NotBeNull();
+        rendered.Instance.DotNetObjectRef.Should().NotBeNull();
+        JSInterop.VerifyInvoke("onLoad", 1);
+        JSInterop.VerifyNotInvoke("onUpdate");
+    }
+
+    [Fact]
+    public void FirstRender_WhenOnUpdateDisconnects_DoesNotFailComponentRendering() {
+        var module = JSInterop.SetupModule("./test.js");
+        module.SetupVoid("onLoad", _ => true).SetVoidResult();
+        module.SetupVoid("onUpdate", _ => true).SetException(new JSDisconnectedException("Disconnected"));
+
+        var rendered = Render<TestPageScriptComponent>();
+
+        rendered.Instance.IsolatedJsModule.Should().NotBeNull();
+        rendered.Instance.DotNetObjectRef.Should().NotBeNull();
+        JSInterop.VerifyInvoke("onLoad", 1);
+        JSInterop.VerifyInvoke("onUpdate", 1);
+    }
+
+    [Fact]
+    public async Task DisposeAsync_WhenOnDisposeDisconnects_StillClearsManagedReferences() {
+        var module = JSInterop.SetupModule("./test.js");
+        module.SetupVoid("onLoad", _ => true).SetVoidResult();
+        module.SetupVoid("onUpdate", _ => true).SetVoidResult();
+        module.SetupVoid("onDispose", _ => true).SetException(new JSDisconnectedException("Disconnected"));
+        var rendered = Render<TestPageScriptComponent>();
+
+        await rendered.Instance.DisposeAsync();
+
+        rendered.Instance.IsolatedJsModule.Should().BeNull();
+        rendered.Instance.DotNetObjectRef.Should().BeNull();
+        JSInterop.VerifyInvoke("onDispose", 1);
     }
 
     private class InvalidDerived : NTPageScriptComponent<TestPageScriptComponent> {

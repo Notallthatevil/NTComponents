@@ -672,6 +672,105 @@ public class NTWizard_Tests : BunitContext {
         cut.Find("div.nt-wizard-content").TextContent.Should().Contain("Step 1 content");
     }
 
+    // Behavior source: legacy parity with TnTWizard_Tests.Enter_Key_Advances_To_Next_Step_When_Not_Last_Step and NTWizard's interactive navigation contract.
+    [Fact]
+    public async Task Enter_Key_Advances_To_Next_Enabled_Step() {
+        var nextIndex = -1;
+        var cut = RenderWizardWithThreeSteps(p => p.Add(w => w.OnNextButtonClicked, EventCallback.Factory.Create<int>(this, index => nextIndex = index)), step2Disabled: true);
+
+        await cut.Find("div.nt-wizard").KeyPressAsync(new KeyboardEventArgs { Key = "Enter" });
+
+        nextIndex.Should().Be(2);
+        cut.Find("div.nt-wizard-content").TextContent.Should().Contain("Step 3 content");
+    }
+
+    // Behavior source: legacy parity with TnTWizard_Tests.Non_Enter_Key_Does_Not_Advance_Step.
+    [Fact]
+    public async Task NonEnter_Key_Does_Not_Advance_Or_Invoke_Next_Callback() {
+        var nextCallbackCount = 0;
+        var cut = RenderWizardWithThreeSteps(p => p.Add(w => w.OnNextButtonClicked, EventCallback.Factory.Create<int>(this, _ => nextCallbackCount++)));
+
+        await cut.Find("div.nt-wizard").KeyPressAsync(new KeyboardEventArgs { Key = "Space" });
+
+        nextCallbackCount.Should().Be(0);
+        cut.Find("div.nt-wizard-content").TextContent.Should().Contain("Step 1 content");
+    }
+
+    // Behavior source: legacy parity with TnTWizard_Tests.Enter_Key_Submits_Form_When_On_Last_Step and NTWizard.OnSubmitCallback XML documentation.
+    [Fact]
+    public async Task Enter_Key_On_Last_Step_Invokes_Submit_Callback() {
+        var submitCount = 0;
+        var cut = RenderWizardWithThreeSteps(p => p
+            .Add(w => w.ActiveStepIndex, 2)
+            .Add(w => w.OnSubmitCallback, EventCallback.Factory.Create(this, () => submitCount++)));
+
+        await cut.Find("div.nt-wizard").KeyPressAsync(new KeyboardEventArgs { Key = "Enter" });
+
+        submitCount.Should().Be(1);
+        cut.Find("div.nt-wizard-content").TextContent.Should().Contain("Step 3 content");
+    }
+
+    // Behavior source: legacy parity with TnTWizard_Tests.Enter_Key_Does_Not_Submit_When_SubmitButtonDisabled and NTWizard.SubmitButtonDisabled XML documentation.
+    [Fact]
+    public async Task Enter_Key_On_Last_Step_Does_Not_Submit_When_Disabled() {
+        var submitCount = 0;
+        var cut = RenderWizardWithThreeSteps(p => p
+            .Add(w => w.ActiveStepIndex, 2)
+            .Add(w => w.SubmitButtonDisabled, true)
+            .Add(w => w.OnSubmitCallback, EventCallback.Factory.Create(this, () => submitCount++)));
+
+        await cut.Find("div.nt-wizard").KeyPressAsync(new KeyboardEventArgs { Key = "Enter" });
+
+        submitCount.Should().Be(0);
+        FindButton(cut, "Submit").HasAttribute("disabled").Should().BeTrue();
+    }
+
+    // Behavior source: NTWizard.OnStepChanging XML documentation states that returning false cancels navigation.
+    [Fact]
+    public async Task OnStepChanging_False_Cancels_Next_Navigation_And_PostChange_Callback() {
+        NTWizardStepChangeContext? requestedChange = null;
+        var changedCount = 0;
+        var cut = RenderWizardWithThreeSteps(p => p
+            .Add(w => w.OnStepChanging, context => {
+                requestedChange = context;
+                return Task.FromResult(false);
+            })
+            .Add(w => w.OnStepChanged, EventCallback.Factory.Create<NTWizardStepChangedEventArgs>(this, _ => changedCount++)));
+
+        await FindNextButton(cut).ClickAsync(new MouseEventArgs());
+
+        requestedChange.Should().NotBeNull();
+        requestedChange!.FromStepIndex.Should().Be(0);
+        requestedChange.ToStepIndex.Should().Be(1);
+        changedCount.Should().Be(0);
+        cut.Find("div.nt-wizard-content").TextContent.Should().Contain("Step 1 content");
+    }
+
+    // Behavior source: NTWizard navigation methods document bounded next, previous, and optional-skip progression; a single-step wizard has no valid destination.
+    [Fact]
+    public async Task SingleStep_Navigation_Boundaries_Are_Idempotent() {
+        var nextCount = 0;
+        var previousCount = 0;
+        var skippedCount = 0;
+        var cut = Render<NTWizard>(p => p
+            .Add(w => w.OnNextButtonClicked, EventCallback.Factory.Create<int>(this, _ => nextCount++))
+            .Add(w => w.OnPreviousButtonClicked, EventCallback.Factory.Create<int>(this, _ => previousCount++))
+            .Add(w => w.OnStepSkipped, EventCallback.Factory.Create<int>(this, _ => skippedCount++))
+            .AddChildContent<NTWizardStep>(step => {
+                step.Add(s => s.Title, "Only step");
+                step.Add(s => s.ChildContent, builder => builder.AddContent(0, "Only content"));
+            }));
+
+        await cut.Instance.NextStepAsync();
+        await cut.Instance.PreviousStepAsync();
+        await cut.Instance.SkipStepAsync();
+
+        nextCount.Should().Be(0);
+        previousCount.Should().Be(0);
+        skippedCount.Should().Be(0);
+        cut.Find("div.nt-wizard-content").TextContent.Should().Contain("Only content");
+    }
+
     private IRenderedComponent<NTWizard> RenderWizardWithThreeSteps(Action<ComponentParameterCollectionBuilder<NTWizard>>? configureWizard = null, bool step1Optional = false, bool step2Disabled = false, Func<Task<bool>>? step1ValidateAsync = null) {
         return Render<NTWizard>(p => {
             configureWizard?.Invoke(p);

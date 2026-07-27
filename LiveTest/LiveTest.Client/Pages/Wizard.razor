@@ -1,0 +1,105 @@
+@page "/nt-wizard"
+@rendermode InteractiveAuto
+@using System.ComponentModel.DataAnnotations
+@using NTComponents
+
+<PageTitle>NTWizard scrolling</PageTitle>
+
+<main class="wizard-scroll-demo">
+    <header>
+        <p class="eyebrow">NTWizard</p>
+        <h1>Fixed step rail with scrolling content</h1>
+        <p>This fixed-height example intentionally contains more form fields than the wizard can display. The step rail and navigation stay in place while only the active step content scrolls.</p>
+    </header>
+
+    <aside class="expected-behavior" aria-label="Expected scroll behavior">
+        <strong>Expected behavior</strong>
+        <span>Scroll inside the Project details panel. The numbered step rail must remain the same height, and the Next Step button must remain outside the scrolling area.</span>
+    </aside>
+
+    <section class="wizard-frame" data-testid="nt-wizard-scroll-demo" aria-label="Scrollable wizard demonstration">
+        <NTWizard Title="Project intake"
+                  NavigationMode="NTWizardNavigationMode.Free"
+                  PushNavigationToBottom="false">
+            <NTWizardFormStep Model="@_model" Title="Project details" SubTitle="Scrollable form">
+                <div class="wizard-form-content">
+                    <section>
+                        <h2>Project basics</h2>
+                        <p>Define the work and the team responsible for it.</p>
+                        <div class="field-grid">
+                            <NTInputText @bind-Value="_model.ProjectName" Label="Project name" SupportingText="A recognizable internal name" />
+                            <NTInputText @bind-Value="_model.ProjectCode" Label="Project code" SupportingText="Used in reports and notifications" />
+                            <NTInputText @bind-Value="_model.Owner" Label="Project owner" SupportingText="Accountable for delivery" />
+                            <NTInputText @bind-Value="_model.Department" Label="Department" SupportingText="Primary sponsoring group" />
+                        </div>
+                    </section>
+
+                    <section>
+                        <h2>Audience and stakeholders</h2>
+                        <p>Capture the people who will use, approve, and support the result.</p>
+                        <div class="field-grid">
+                            <NTInputText @bind-Value="_model.Audience" Label="Primary audience" SupportingText="Who benefits from this work" />
+                            <NTInputText @bind-Value="_model.Sponsor" Label="Executive sponsor" SupportingText="Final decision maker" />
+                            <NTInputText @bind-Value="_model.Region" Label="Launch region" SupportingText="Initial availability" />
+                            <NTInputText @bind-Value="_model.SupportTeam" Label="Support team" SupportingText="Operational owner after launch" />
+                        </div>
+                    </section>
+
+                    <section>
+                        <h2>Delivery</h2>
+                        <p>Document the outcomes and constraints that shape implementation.</p>
+                        <div class="field-grid">
+                            <NTInputText @bind-Value="_model.SuccessMeasure" Label="Success measure" SupportingText="How the result will be evaluated" />
+                            <NTInputText @bind-Value="_model.TargetDate" Label="Target date" SupportingText="Requested delivery window" />
+                            <NTInputText @bind-Value="_model.Dependency" Label="Primary dependency" SupportingText="External work required first" />
+                            <NTInputText @bind-Value="_model.RolloutPlan" Label="Rollout plan" SupportingText="How access will expand" />
+                        </div>
+                    </section>
+                </div>
+            </NTWizardFormStep>
+
+            <NTWizardStep Title="Review" SubTitle="Confirm details">
+                <div class="step-summary">
+                    <h2>Review the intake</h2>
+                    <p>Use Previous Step to return to the long form and confirm that its content remains the only scrolling region.</p>
+                    <dl>
+                        <dt>Project</dt>
+                        <dd>@_model.ProjectName</dd>
+                        <dt>Owner</dt>
+                        <dd>@_model.Owner</dd>
+                        <dt>Target</dt>
+                        <dd>@_model.TargetDate</dd>
+                    </dl>
+                </div>
+            </NTWizardStep>
+
+            <NTWizardStep Title="Complete" SubTitle="Ready to submit">
+                <div class="step-summary">
+                    <h2>Ready for submission</h2>
+                    <p>The compact final step also demonstrates that the navigation returns directly beneath short content when <code>PushNavigationToBottom</code> is disabled.</p>
+                </div>
+            </NTWizardStep>
+        </NTWizard>
+    </section>
+</main>
+
+@code {
+    private readonly ProjectIntakeModel _model = new();
+
+    private sealed class ProjectIntakeModel {
+        [Required]
+        public string ProjectName { get; set; } = "Customer portal refresh";
+
+        public string ProjectCode { get; set; } = "PORTAL-27";
+        public string Owner { get; set; } = "Alex Morgan";
+        public string Department { get; set; } = "Customer Experience";
+        public string Audience { get; set; } = "Existing customers";
+        public string Sponsor { get; set; } = "Jordan Lee";
+        public string Region { get; set; } = "North America";
+        public string SupportTeam { get; set; } = "Digital Operations";
+        public string SuccessMeasure { get; set; } = "25% fewer support requests";
+        public string TargetDate { get; set; } = "Q4 2026";
+        public string Dependency { get; set; } = "Identity platform upgrade";
+        public string RolloutPlan { get; set; } = "Pilot, staged release, general availability";
+    }
+}
