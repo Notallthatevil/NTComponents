@@ -9,7 +9,7 @@ on:
         default: Release
 
 env:
-  COVERAGE_THRESHOLD: 0
+  COVERAGE_THRESHOLD: 75
   TESTINGPLATFORM_EXITCODE_IGNORE: 8
 
 jobs:
@@ -208,6 +208,7 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           fail_below_threshold: true
           show_line: true
+          show_branch: true
           show_class_names: true
           only_changed_files: true
 
