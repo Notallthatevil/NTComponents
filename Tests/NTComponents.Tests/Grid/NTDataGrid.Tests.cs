@@ -560,6 +560,63 @@ public class NTDataGrid_Tests : BunitContext {
     }
 
     [Fact]
+    public void Blank_Query_Prefix_Parses_Unprefixed_State_And_Preserves_Valueless_Query_Entries() {
+        Services.GetRequiredService<NavigationManager>().NavigateTo("https://example.test/orders?flag&search=hello+world&page=2&sort=Unknown%3Adesc");
+        var captured = new List<NTDataGridItemsProviderRequest<TestGridItem>>();
+        var cut = Render<NTDataGrid<TestGridItem>>(parameters => parameters
+            .Add(grid => grid.ItemsProvider, request => {
+                captured.Add(request);
+                return ValueTask.FromResult(new NTItemsProviderResult<TestGridItem>(_items.Skip(request.StartIndex).Take(request.Count ?? 2).ToArray(), _items.Count()));
+            })
+            .Add(grid => grid.QueryParameterPrefix, " ")
+            .Add(grid => grid.ShowPagination, true)
+            .Add(grid => grid.PageSize, 2)
+            .Add(grid => grid.ChildContent, DefaultColumns));
+
+        cut.WaitForAssertion(() => {
+            captured.Last().StartIndex.Should().Be(2);
+            captured.Last().Sorts.Should().Equal(new NTSortDescriptor("Unknown", SortDirection.Descending));
+            var href = cut.Find(".pagination-previous-page").GetAttribute("href");
+            href.Should().Contain("flag=").And.Contain("search=hello%20world").And.Contain("page=1");
+            href.Should().NotContain("ntdg-");
+        });
+    }
+
+    [Fact]
+    public void Root_Attributes_And_Pagination_Label_Are_Forwarded_Without_Duplicating_Class_Or_Style() {
+        var cut = Render<NTDataGrid<TestGridItem>>(parameters => parameters
+            .Add(grid => grid.Items, _items)
+            .Add(grid => grid.ShowPagination, true)
+            .Add(grid => grid.PageSize, 2)
+            .Add(grid => grid.PaginationAriaLabel, "Invoice pages")
+            .Add(grid => grid.ChildContent, DefaultColumns)
+            .AddUnmatched("class", "consumer-grid")
+            .AddUnmatched("style", "border: 1px solid red")
+            .AddUnmatched("data-grid", "invoices"));
+
+        var root = cut.Find(".nt-data-grid");
+        root.ClassList.Should().Contain("nt-data-grid").And.Contain("consumer-grid");
+        root.GetAttribute("style").Should().Contain("border: 1px solid red");
+        root.GetAttribute("data-grid").Should().Be("invoices");
+        root.Attributes.Count(attribute => attribute.Name.Equals("class", StringComparison.OrdinalIgnoreCase)).Should().Be(1);
+        root.Attributes.Count(attribute => attribute.Name.Equals("style", StringComparison.OrdinalIgnoreCase)).Should().Be(1);
+        cut.Find("nav.nt-data-grid-pagination").GetAttribute("aria-label").Should().Be("Invoice pages");
+    }
+
+    [Fact]
+    public void NonStyle_Root_Attributes_Do_Not_Create_Empty_Class_Or_Style_Values() {
+        var cut = Render<NTDataGrid<TestGridItem>>(parameters => parameters
+            .Add(grid => grid.Items, _items)
+            .Add(grid => grid.ChildContent, DefaultColumns)
+            .AddUnmatched("data-grid", "invoices"));
+
+        var root = cut.Find(".nt-data-grid");
+        root.GetAttribute("data-grid").Should().Be("invoices");
+        root.GetAttribute("class").Should().Be("nt-data-grid");
+        root.HasAttribute("style").Should().BeFalse();
+    }
+
+    [Fact]
     public void Href_Generation_Reuses_The_Parsed_Uri_State() {
         Services.GetRequiredService<NavigationManager>().NavigateTo("https://example.test/orders?filter=hello%20world&ntdg-pageSize=99");
         var cut = Render<NTDataGrid<TestGridItem>>(parameters => parameters
@@ -675,6 +732,21 @@ public class NTDataGrid_Tests : BunitContext {
         await cut.Find("tbody tr").KeyDownAsync(new KeyboardEventArgs { Key = "Enter" });
 
         clicked.Should().Be(_items.First());
+    }
+
+    [Fact]
+    public async Task Row_Keyboard_Activation_Accepts_Space_Forms_And_Ignores_Unrelated_Keys() {
+        var clickCount = 0;
+        var cut = RenderGrid(parameters => parameters.Add(grid => grid.OnRowClicked, EventCallback.Factory.Create<TestGridItem>(this, _ => clickCount++)));
+        var row = cut.Find("tbody tr");
+
+        await row.KeyDownAsync(new KeyboardEventArgs { Key = "Escape" });
+        clickCount.Should().Be(0);
+
+        await row.KeyDownAsync(new KeyboardEventArgs { Key = " " });
+        await row.KeyDownAsync(new KeyboardEventArgs { Key = "Spacebar" });
+
+        clickCount.Should().Be(2);
     }
 
     [Fact]
@@ -841,6 +913,82 @@ public class NTDataGrid_Tests : BunitContext {
     }
 
     [Fact]
+    public void Pagination_Disabled_States_Track_First_And_Last_Page_Boundaries() {
+        var items = Enumerable.Range(1, 6).Select(index => new TestGridItem(index, $"Item {index}", new DateOnly(2026, 1, index), index)).ToArray();
+        var cut = Render<NTDataGrid<TestGridItem>>(parameters => parameters
+            .Add(grid => grid.ItemsProvider, request => ValueTask.FromResult(new NTItemsProviderResult<TestGridItem>(items.Skip(request.StartIndex).Take(request.Count ?? 2).ToArray(), items.Length)))
+            .Add(grid => grid.ShowPagination, true)
+            .Add(grid => grid.PageSize, 2)
+            .Add(grid => grid.ChildContent, DefaultColumns));
+
+        cut.WaitForAssertion(() => {
+            cut.Find(".pagination-first-page").ClassList.Should().Contain("tnt-disabled");
+            cut.Find(".pagination-previous-page").ClassList.Should().Contain("tnt-disabled");
+            cut.Find(".pagination-next-page").ClassList.Should().NotContain("tnt-disabled");
+        });
+
+        cut.Find(".pagination-last-page").Click();
+
+        cut.WaitForAssertion(() => {
+            cut.Find(".pagination-first-page").ClassList.Should().NotContain("tnt-disabled");
+            cut.Find(".pagination-previous-page").ClassList.Should().NotContain("tnt-disabled");
+            cut.Find(".pagination-next-page").ClassList.Should().Contain("tnt-disabled");
+            cut.Find(".pagination-last-page").ClassList.Should().Contain("tnt-disabled");
+            cut.Markup.Should().Contain("Item 5").And.Contain("Item 6");
+        });
+    }
+
+    [Fact]
+    public void Pagination_Ignores_Invalid_Page_Size_Events() {
+        var providerCalls = 0;
+        var cut = Render<NTDataGrid<TestGridItem>>(parameters => parameters
+            .Add(grid => grid.ItemsProvider, request => {
+                providerCalls++;
+                return ValueTask.FromResult(new NTItemsProviderResult<TestGridItem>(_items.Skip(request.StartIndex).Take(request.Count ?? 2).ToArray(), _items.Count()));
+            })
+            .Add(grid => grid.ShowPagination, true)
+            .Add(grid => grid.PageSize, 2)
+            .Add(grid => grid.ChildContent, DefaultColumns));
+        cut.WaitForAssertion(() => cut.FindAll("tbody tr").Should().HaveCount(2));
+        var callsBeforeInvalidInput = providerCalls;
+        var selector = cut.Find(".nt-data-grid-page-size select");
+
+        selector.Change("invalid");
+        selector.Change("0");
+
+        providerCalls.Should().Be(callsBeforeInvalidInput);
+        cut.FindAll("tbody tr").Should().HaveCount(2);
+        selector.GetAttribute("value").Should().Be("2");
+    }
+
+    [Fact]
+    public void Striped_Clickable_Rows_Combine_Interaction_And_Alternating_Classes() {
+        var cut = RenderGrid(parameters => parameters
+            .Add(grid => grid.Appearance, NTDataGridAppearance.Striped)
+            .Add(grid => grid.OnRowClicked, EventCallback.Factory.Create<TestGridItem>(this, _ => { })));
+
+        cut.WaitForAssertion(() => {
+            var rows = cut.FindAll("tbody tr");
+            rows[0].ClassList.Should().Contain("nt-data-grid-row-clickable").And.Contain("nt-data-grid-row-striped-odd");
+            rows[1].ClassList.Should().Contain("nt-data-grid-row-clickable").And.Contain("nt-data-grid-row-striped-even");
+        });
+    }
+
+    [Fact]
+    public void Column_Width_Constraints_Are_Emitted_As_A_Single_Style_Contract() {
+        var cut = RenderGrid(columns: builder => {
+            builder.OpenComponent<NTPropertyColumn<TestGridItem, string>>(0);
+            builder.AddAttribute(1, nameof(NTPropertyColumn<TestGridItem, string>.Property), (System.Linq.Expressions.Expression<Func<TestGridItem, string>>)(item => item.Name));
+            builder.AddAttribute(2, nameof(NTPropertyColumn<TestGridItem, string>.Width), "12rem");
+            builder.AddAttribute(3, nameof(NTPropertyColumn<TestGridItem, string>.MinWidth), "8rem");
+            builder.AddAttribute(4, nameof(NTPropertyColumn<TestGridItem, string>.MaxWidth), "20rem");
+            builder.CloseComponent();
+        });
+
+        cut.Find("col").GetAttribute("style").Should().Be("width: 12rem; min-width: 8rem; max-width: 20rem;");
+    }
+
+    [Fact]
     public async Task NonVirtual_Refresh_Cancels_Superseded_Provider_And_Ignores_Its_Result() {
         var pending = new List<(NTDataGridItemsProviderRequest<TestGridItem> Request, TaskCompletionSource<NTItemsProviderResult<TestGridItem>> Completion)>();
         var holdRequests = false;
@@ -907,6 +1055,24 @@ public class NTDataGrid_Tests : BunitContext {
         pending.SetResult(new NTItemsProviderResult<TestGridItem>(initialItems, initialItems.Length));
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => refresh);
         Record.Exception(cut.Instance.Dispose).Should().BeNull();
+    }
+
+    [Fact]
+    public async Task Refresh_After_Disposal_Is_A_Completed_NoOp() {
+        var providerCalls = 0;
+        var cut = Render<NTDataGrid<TestGridItem>>(parameters => parameters
+            .Add(grid => grid.ItemsProvider, _ => {
+                providerCalls++;
+                return ValueTask.FromResult(new NTItemsProviderResult<TestGridItem>(_items.ToArray(), _items.Count()));
+            })
+            .Add(grid => grid.ChildContent, DefaultColumns));
+        cut.WaitForAssertion(() => providerCalls.Should().BeGreaterThan(0));
+        cut.Instance.Dispose();
+        var callsBeforeRefresh = providerCalls;
+
+        await cut.Instance.RefreshDataGridAsync(Xunit.TestContext.Current.CancellationToken);
+
+        providerCalls.Should().Be(callsBeforeRefresh);
     }
 
     [Fact]
@@ -1014,6 +1180,23 @@ public class NTDataGrid_Tests : BunitContext {
         var virtualize = cut.FindComponent<NTVirtualize<TestGridItem>>();
 
         virtualize.Instance.ScrollRestorationKey.Should().Be("jobs-scroll");
+    }
+
+    [Fact]
+    public async Task Virtualized_Grid_Forwards_Overscan_And_Uses_The_Consumer_Row_Key() {
+        var cut = Render<NTDataGrid<TestGridItem>>(parameters => parameters
+            .Add(grid => grid.ItemsProvider, _ => ValueTask.FromResult(new NTItemsProviderResult<TestGridItem>(_items.ToArray(), _items.Count())))
+            .Add(grid => grid.Virtualize, true)
+            .Add(grid => grid.VirtualizationOverscanCount, 9)
+            .Add(grid => grid.RowKey, item => item.Id)
+            .Add(grid => grid.ChildContent, DefaultColumns));
+        var virtualize = cut.FindComponent<NTVirtualize<TestGridItem>>();
+
+        await cut.InvokeAsync(() => virtualize.Instance.LoadItems(0, 0, 0, 3));
+
+        virtualize.Instance.OverscanCount.Should().Be(9);
+        cut.Instance.RowKey!(_items.First()).Should().Be(_items.First().Id);
+        cut.WaitForAssertion(() => cut.FindAll("tbody tr:not([aria-hidden='true'])").Should().HaveCount(3));
     }
 
     [Fact]

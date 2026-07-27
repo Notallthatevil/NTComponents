@@ -24,7 +24,9 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Approve and enable auto-merge for minor and patch updates
+        id: auto_merge
         if: steps.metadata.outputs.update-type == 'version-update:semver-minor' || steps.metadata.outputs.update-type == 'version-update:semver-patch'
+        continue-on-error: true
         run: |
           gh pr review --approve "$PR_URL"
           gh pr merge --auto --squash --match-head-commit "$PR_HEAD_SHA" "$PR_URL"
@@ -32,3 +34,11 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           PR_URL: ${{ github.event.pull_request.html_url }}
+
+      - name: Request manual review when auto-merge is unavailable
+        if: always() && steps.auto_merge.outcome != 'success'
+        run: gh pr edit --add-reviewer "$REVIEWER" "$PR_URL"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          REVIEWER: ${{ github.repository_owner }}
