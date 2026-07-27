@@ -4,6 +4,13 @@ namespace NTComponents.Tests.Form;
 
 public class NTInputDateTime_Tests : BunitContext {
 
+    private sealed class TestIcon : TnTIcon {
+        public TestIcon(string icon) => Icon = icon;
+
+        public override string? ElementClass => $"test-picker-icon {AdditionalClass}";
+        public override string? ElementStyle => null;
+    }
+
     private sealed class DateOnlyModel {
         public DateOnly? Value { get; set; }
     }
@@ -120,6 +127,118 @@ public class NTInputDateTime_Tests : BunitContext {
         cut.Find("input").Change("2026-05-19T10:30:00");
 
         model.Value.Should().Be(new DateTime(2026, 5, 19, 10, 30, 0));
+    }
+
+    // Behavior source: NTInputDateTime's public generic contract supports DateTime, DateTimeOffset, DateOnly, and TimeOnly values, including their non-nullable forms.
+    [Fact]
+    public void NonNullable_Supported_Types_Parse_Their_Native_Values() {
+        var dateTime = default(DateTime);
+        var dateTimeOffset = default(DateTimeOffset);
+        var dateOnly = default(DateOnly);
+        var timeOnly = default(TimeOnly);
+        var dateTimeCut = Render<NTInputDateTime<DateTime>>(parameters => parameters
+            .Add(p => p.Value, dateTime)
+            .Add(p => p.ValueChanged, EventCallback.Factory.Create<DateTime>(this, value => dateTime = value))
+            .Add(p => p.ValueExpression, () => dateTime));
+        var dateTimeOffsetCut = Render<NTInputDateTime<DateTimeOffset>>(parameters => parameters
+            .Add(p => p.Value, dateTimeOffset)
+            .Add(p => p.ValueChanged, EventCallback.Factory.Create<DateTimeOffset>(this, value => dateTimeOffset = value))
+            .Add(p => p.ValueExpression, () => dateTimeOffset));
+        var dateOnlyCut = Render<NTInputDateTime<DateOnly>>(parameters => parameters
+            .Add(p => p.Value, dateOnly)
+            .Add(p => p.ValueChanged, EventCallback.Factory.Create<DateOnly>(this, value => dateOnly = value))
+            .Add(p => p.ValueExpression, () => dateOnly));
+        var timeOnlyCut = Render<NTInputDateTime<TimeOnly>>(parameters => parameters
+            .Add(p => p.Value, timeOnly)
+            .Add(p => p.ValueChanged, EventCallback.Factory.Create<TimeOnly>(this, value => timeOnly = value))
+            .Add(p => p.ValueExpression, () => timeOnly));
+
+        dateTimeCut.Find("input").Change("2026-05-19T10:30:00");
+        dateTimeOffsetCut.Find("input").Change("2026-05-19T10:30:00");
+        dateOnlyCut.Find("input").Change("2026-05-19");
+        timeOnlyCut.Find("input").Change("10:30:00");
+
+        dateTime.Should().Be(new DateTime(2026, 5, 19, 10, 30, 0));
+        dateTimeOffset.DateTime.Should().Be(new DateTime(2026, 5, 19, 10, 30, 0));
+        dateOnly.Should().Be(new DateOnly(2026, 5, 19));
+        timeOnly.Should().Be(new TimeOnly(10, 30));
+    }
+
+    // Behavior source: NTInputDateTime supports nullable DateTimeOffset, DateOnly, and TimeOnly values and updates them from their native formats.
+    [Fact]
+    public void Nullable_Supported_Types_Parse_Their_Native_Values() {
+        var dateTimeOffsetModel = new DateTimeOffsetModel();
+        var dateOnlyModel = new DateOnlyModel();
+        var timeOnlyModel = new TimeOnlyModel();
+        var dateTimeOffsetCut = RenderDateTimeOffset(dateTimeOffsetModel);
+        var dateOnlyCut = RenderDateOnly(dateOnlyModel);
+        var timeOnlyCut = RenderTimeOnly(timeOnlyModel);
+
+        dateTimeOffsetCut.Find("input").Change("2026-05-19T10:30:00");
+        dateOnlyCut.Find("input").Change("2026-05-19");
+        timeOnlyCut.Find("input").Change("10:30:00");
+
+        dateTimeOffsetModel.Value!.Value.DateTime.Should().Be(new DateTime(2026, 5, 19, 10, 30, 0));
+        dateOnlyModel.Value.Should().Be(new DateOnly(2026, 5, 19));
+        timeOnlyModel.Value.Should().Be(new TimeOnly(10, 30));
+    }
+
+    // Behavior source: The progressive-enhancement contract says invalid live input is reported as validation failure and must not replace the bound value.
+    [Fact]
+    public void Invalid_Native_Value_Does_Not_Replace_Bound_Value() {
+        var model = new DateTimeModel {
+            Value = new DateTime(2026, 5, 19, 10, 30, 0)
+        };
+        var cut = RenderDateTime(model);
+
+        cut.Find("input").Change("not-a-date");
+
+        model.Value.Should().Be(new DateTime(2026, 5, 19, 10, 30, 0));
+    }
+
+    // Behavior source: NTFormDensity documents Comfortable, Standard, and Dense as supported field-density modes.
+    [Theory]
+    [InlineData(NTFormDensity.Comfortable, "nt-input-date-time-comfortable")]
+    [InlineData(NTFormDensity.Standard, "nt-input-date-time-standard")]
+    [InlineData(NTFormDensity.Dense, "nt-input-date-time-dense")]
+    public void Density_Renders_Its_Documented_Root_Class(NTFormDensity density, string expectedClass) {
+        var cut = RenderDateOnly(configure: parameters => parameters.Add(p => p.Density, density));
+
+        cut.Find(".nt-input-date-time").GetAttribute("class").Should().Contain(expectedClass);
+    }
+
+    // Behavior source: Component parameters are stable across equivalent rerenders; native attributes and the filled Material trigger icon remain equivalent.
+    [Fact]
+    public void Equivalent_Rerender_Preserves_Custom_Picker_Contract() {
+        var cut = RenderDateTime(configure: parameters => parameters.Add(p => p.EnableCustomPicker, true));
+        var originalTarget = cut.Find("input").GetAttribute("data-tnt-dtp-target");
+
+        cut.Render();
+
+        cut.Find("input").GetAttribute("data-tnt-dtp-target").Should().Be(originalTarget);
+        cut.Find(".tnt-dtp-trigger-icon").GetAttribute("style").Should().Contain("'FILL' 1");
+    }
+
+    // Behavior source: PickerTriggerIcon accepts any TnTIcon and is rendered as the custom picker's trigger icon.
+    [Fact]
+    public void Custom_NonMaterial_Picker_Icon_Is_Rendered() {
+        var cut = RenderDateTime(configure: parameters => parameters
+            .Add(p => p.EnableCustomPicker, true)
+            .Add(p => p.PickerTriggerIcon, new TestIcon("custom-clock")));
+
+        var icon = cut.Find(".test-picker-icon");
+        icon.TextContent.Should().Be("custom-clock");
+        icon.GetAttribute("class").Should().Contain("tnt-dtp-trigger-icon");
+    }
+
+    // Behavior source: Disabled prevents interaction with both the native field and its custom picker trigger.
+    [Fact]
+    public void Disabled_Custom_Picker_Disables_Trigger() {
+        var cut = RenderDateTime(configure: parameters => parameters
+            .Add(p => p.EnableCustomPicker, true)
+            .Add(p => p.Disabled, true));
+
+        cut.Find("button[data-tnt-dtp-trigger='true']").HasAttribute("disabled").Should().BeTrue();
     }
 
     [Fact]

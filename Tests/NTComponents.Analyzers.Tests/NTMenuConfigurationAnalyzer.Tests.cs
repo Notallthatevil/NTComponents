@@ -205,6 +205,164 @@ public static class ContextMenuFactory {
         Assert.Empty(diagnostics);
     }
 
+    [Fact]
+    public async Task Reports_Invalid_NonGeneric_Menu_With_Generated_Parameters() {
+        const string source = """
+using Microsoft.AspNetCore.Components.Rendering;
+
+public static class MenuFactory {
+    public static void Build(RenderTreeBuilder builder) {
+        builder.OpenComponent(0, typeof(global::NTComponents.NTMenu));
+        builder.AddComponentParameter(1, "AriaLabel", global::Microsoft.AspNetCore.Components.CompilerServices.RuntimeHelpers.TypeCheck<string>(((" "))));
+        builder.AddComponentParameter(2, "ContainerColor", (global::NTComponents.TnTColor)0);
+        builder.AddComponentParameter(3, "TextColor", (global::NTComponents.TnTColor)1);
+        builder.AddComponentParameter(4, "SelectedContainerColor", (global::NTComponents.TnTColor)0);
+        builder.AddComponentParameter(5, "SelectedTextColor", (global::NTComponents.TnTColor)1);
+        builder.AddComponentParameter(6, "ChildContent", (global::Microsoft.AspNetCore.Components.RenderFragment)(itemBuilder => {
+            itemBuilder.OpenComponent<global::NTComponents.NTMenuButtonItem>(7);
+            itemBuilder.AddAttribute(8, "Label", "Save");
+            itemBuilder.CloseComponent();
+        }));
+        builder.CloseComponent();
+    }
+}
+""" + SupportTypes;
+
+        var diagnostics = await GetDiagnosticsAsync(("MenuFactory.cs", source));
+
+        Assert.Equal(
+            [
+                NTMenuConfigurationAnalyzer.MissingAriaLabelDiagnosticId,
+                NTMenuConfigurationAnalyzer.InvisibleColorDiagnosticId,
+                NTMenuConfigurationAnalyzer.InvisibleColorDiagnosticId,
+                NTMenuConfigurationAnalyzer.InvisibleColorDiagnosticId,
+                NTMenuConfigurationAnalyzer.InvisibleColorDiagnosticId
+            ],
+            diagnostics.OrderBy(static diagnostic => diagnostic.Id).Select(static diagnostic => diagnostic.Id));
+    }
+
+    [Fact]
+    public async Task Reports_Missing_Menu_Requirements_In_Each_Supported_Executable_Body() {
+        const string source = """
+using System;
+using Microsoft.AspNetCore.Components.Rendering;
+
+public sealed class MenuFactory {
+    public MenuFactory(RenderTreeBuilder builder) {
+        builder.OpenComponent<global::NTComponents.NTMenu>(0);
+        builder.CloseComponent();
+    }
+
+    public static void Build(RenderTreeBuilder builder) {
+        void Local(RenderTreeBuilder localBuilder) {
+            localBuilder.OpenComponent<global::NTComponents.NTMenu>(0);
+            localBuilder.CloseComponent();
+        }
+
+        Action<RenderTreeBuilder> parenthesized = (lambdaBuilder) => {
+            lambdaBuilder.OpenComponent<global::NTComponents.NTMenu>(0);
+            lambdaBuilder.CloseComponent();
+        };
+        Action<RenderTreeBuilder> simple = lambdaBuilder => {
+            lambdaBuilder.OpenComponent<global::NTComponents.NTMenu>(0);
+            lambdaBuilder.CloseComponent();
+        };
+        Action<RenderTreeBuilder> anonymous = delegate(RenderTreeBuilder anonymousBuilder) {
+            anonymousBuilder.OpenComponent<global::NTComponents.NTMenu>(0);
+            anonymousBuilder.CloseComponent();
+        };
+    }
+
+    public static void ExpressionBodied(RenderTreeBuilder builder) => builder.Noop();
+}
+""" + SupportTypes;
+
+        var diagnostics = await GetDiagnosticsAsync(("MenuFactory.cs", source));
+
+        Assert.Equal(5, diagnostics.Count(static diagnostic => diagnostic.Id == NTMenuConfigurationAnalyzer.MissingAriaLabelDiagnosticId));
+        Assert.Equal(5, diagnostics.Count(static diagnostic => diagnostic.Id == NTMenuConfigurationAnalyzer.MissingMenuItemDiagnosticId));
+    }
+
+    [Fact]
+    public async Task Reports_Missing_Menu_Requirements_When_Attribute_Names_Are_Dynamic() {
+        const string source = """
+using Microsoft.AspNetCore.Components.Rendering;
+
+public static class MenuFactory {
+    public static void Build(RenderTreeBuilder builder, string attributeName) {
+        builder.CloseComponent();
+        builder.OpenComponent<global::NTComponents.OtherComponent>(0);
+        builder.AddAttribute(1, "AriaLabel", "Ignored");
+        builder.CloseComponent();
+
+        var componentType = typeof(global::NTComponents.NTMenu);
+        builder.OpenComponent(2, componentType);
+        builder.CloseComponent();
+
+        builder.OpenComponent<global::NTComponents.NTMenu>(3);
+        builder.AddAttribute(4, attributeName, "Actions");
+        builder.Noop();
+        builder.CloseComponent();
+    }
+}
+""" + SupportTypes;
+
+        var diagnostics = await GetDiagnosticsAsync(("MenuFactory.cs", source));
+
+        Assert.Equal(
+            [
+                NTMenuConfigurationAnalyzer.MissingAriaLabelDiagnosticId,
+                NTMenuConfigurationAnalyzer.MissingMenuItemDiagnosticId
+            ],
+            diagnostics.OrderBy(static diagnostic => diagnostic.Id).Select(static diagnostic => diagnostic.Id));
+    }
+
+    [Fact]
+    public async Task DoesNotReport_When_Menu_Content_Or_Values_Are_Runtime_Dependent() {
+        const string source = """
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Rendering;
+
+public static class MenuFactory {
+    public static void Build(RenderTreeBuilder builder) {
+        builder.OpenComponent<global::NTComponents.NTMenu>(0);
+        builder.AddAttribute(1, "AriaLabel", GetText());
+        builder.AddAttribute(2, "ContainerColor", GetColor());
+        builder.AddAttribute(3, "ChildContent", GetContent());
+        builder.CloseComponent();
+
+        builder.OpenComponent<global::NTComponents.NTMenu>(4);
+        builder.AddAttribute(5, "AriaLabel", "Dynamic actions");
+        builder.AddAttribute(6, "ChildContent", (RenderFragment)(itemBuilder => {
+            itemBuilder.AddContent(7, GetContent());
+        }));
+        builder.CloseComponent();
+
+        builder.OpenComponent<global::NTComponents.NTMenu>(8);
+        builder.AddAttribute(9, "AriaLabel", "Custom content");
+        builder.AddAttribute(10, "ChildContent", (RenderFragment)(itemBuilder => {
+            itemBuilder.OpenComponent<global::NTComponents.OtherComponent>(11);
+            itemBuilder.CloseComponent();
+        }));
+        builder.CloseComponent();
+
+        builder.OpenComponent<global::NTComponents.NTMenuAnchorItem>(12);
+        builder.AddAttribute(13, "Label", GetText());
+        builder.AddAttribute(14, "Href", GetText());
+        builder.CloseComponent();
+    }
+
+    private static string GetText() => "Actions";
+    private static global::NTComponents.TnTColor GetColor() => global::NTComponents.TnTColor.OnSurface;
+    private static RenderFragment GetContent() => itemBuilder => { };
+}
+""" + SupportTypes;
+
+        var diagnostics = await GetDiagnosticsAsync(("MenuFactory.cs", source));
+
+        Assert.Empty(diagnostics);
+    }
+
     private static async Task<ImmutableArray<Diagnostic>> GetDiagnosticsAsync(params (string Path, string Source)[] sources) {
         var syntaxTrees = sources
             .Select(source => CSharpSyntaxTree.ParseText(
@@ -240,9 +398,18 @@ namespace Microsoft.AspNetCore.Components {
 namespace Microsoft.AspNetCore.Components.Rendering {
     public class RenderTreeBuilder {
         public void OpenComponent<TComponent>(int sequence) { }
+        public void OpenComponent(int sequence, global::System.Type componentType) { }
         public void AddAttribute(int sequence, string name, object? value) { }
         public void AddComponentParameter(int sequence, string name, object? value) { }
+        public void AddContent(int sequence, global::Microsoft.AspNetCore.Components.RenderFragment content) { }
         public void CloseComponent() { }
+        public void Noop() { }
+    }
+}
+
+namespace Microsoft.AspNetCore.Components.CompilerServices {
+    public static class RuntimeHelpers {
+        public static T TypeCheck<T>(T value) => value;
     }
 }
 
@@ -254,6 +421,7 @@ namespace NTComponents {
     public class NTMenuDividerItem { }
     public class NTMenuLabelItem { }
     public class NTMenuSubMenuItem { }
+    public class OtherComponent { }
     public enum TnTColor { None, Transparent, SurfaceContainerLow, OnSurface, TertiaryContainer, OnTertiaryContainer }
 }
 """;

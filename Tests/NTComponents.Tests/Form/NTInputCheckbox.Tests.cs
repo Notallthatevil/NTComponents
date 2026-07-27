@@ -6,6 +6,10 @@ using System.Linq.Expressions;
 namespace NTComponents.Tests.Form;
 
 public class NTInputCheckbox_Tests : BunitContext {
+    private sealed class TestableCheckbox : NTInputCheckbox {
+        public Task DispatchNativeChangeAsync(object? value) => OnChangeAsync(new ChangeEventArgs { Value = value });
+    }
+
     private sealed class RequiredModel {
         [Range(typeof(bool), "true", "true", ErrorMessage = "You must agree")]
         public bool Agreed { get; set; }
@@ -13,6 +17,7 @@ public class NTInputCheckbox_Tests : BunitContext {
 
     private sealed class TestModel {
         public bool Enabled { get; set; }
+        public bool Other { get; set; }
     }
 
     [Fact]
@@ -89,6 +94,88 @@ public class NTInputCheckbox_Tests : BunitContext {
 
         model.Enabled.Should().BeTrue();
         callbackValue.Should().BeTrue();
+    }
+
+    // Behavior source: Disabled and ReadOnly parameter contracts state that the field cannot be changed by the user.
+    [Theory]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    public void Change_Does_Not_Update_A_Disabled_Or_ReadOnly_Field(bool disabled, bool readOnly) {
+        var model = new TestModel();
+        var bindAfterCalls = 0;
+        var cut = RenderCheckbox(model, parameters => parameters
+            .Add(p => p.Disabled, disabled)
+            .Add(p => p.ReadOnly, readOnly)
+            .Add(p => p.BindAfter, EventCallback.Factory.Create<bool>(this, _ => bindAfterCalls++)));
+
+        cut.Find("input[type=checkbox]").TriggerEvent("onchange", new ChangeEventArgs { Value = true });
+
+        model.Enabled.Should().BeFalse();
+        bindAfterCalls.Should().Be(0);
+    }
+
+    // Behavior source: The native checkbox contract maps a missing Boolean event value to the unchecked false state.
+    [Fact]
+    public void Null_Change_Value_Updates_Field_To_False() {
+        var model = new TestModel { Enabled = true };
+        var bindAfterValue = true;
+        var cut = RenderCheckbox(model, parameters => parameters
+            .Add(p => p.BindAfter, EventCallback.Factory.Create<bool>(this, value => bindAfterValue = value)));
+
+        cut.Find("input[type=checkbox]").TriggerEvent("onchange", new ChangeEventArgs { Value = null });
+
+        model.Enabled.Should().BeFalse();
+        bindAfterValue.Should().BeFalse();
+    }
+
+    // Behavior source: IDisposable teardown is idempotent even when no EditContext was attached.
+    [Fact]
+    public void Dispose_Is_Idempotent_Before_Render() {
+        var component = new NTInputCheckbox();
+
+        var act = () => {
+            component.Dispose();
+            component.Dispose();
+        };
+
+        act.Should().NotThrow();
+    }
+
+    // Behavior source: Disabled and ReadOnly prohibit updates even when a native change callback is dispatched programmatically.
+    [Theory]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    public async Task Native_Change_Handler_Guards_Disabled_And_ReadOnly_States(bool disabled, bool readOnly) {
+        var model = new TestModel();
+        var bindAfterCalls = 0;
+        var cut = Render<TestableCheckbox>(parameters => parameters
+            .Add(p => p.Value, model.Enabled)
+            .Add(p => p.ValueChanged, EventCallback.Factory.Create<bool>(this, value => model.Enabled = value))
+            .Add(p => p.ValueExpression, () => model.Enabled)
+            .Add(p => p.Disabled, disabled)
+            .Add(p => p.ReadOnly, readOnly)
+            .Add(p => p.BindAfter, EventCallback.Factory.Create<bool>(this, _ => bindAfterCalls++)));
+
+        await cut.InvokeAsync(() => cut.Instance.DispatchNativeChangeAsync(true));
+
+        model.Enabled.Should().BeFalse();
+        bindAfterCalls.Should().Be(0);
+    }
+
+    // Behavior source: Native checkbox callbacks map only Boolean true to checked; null maps to false and Boolean true maps back to true.
+    [Fact]
+    public async Task Native_Change_Handler_Maps_Null_And_True_Values() {
+        var model = new TestModel { Enabled = true };
+        var cut = Render<TestableCheckbox>(parameters => parameters
+            .Add(p => p.Value, model.Enabled)
+            .Add(p => p.ValueChanged, EventCallback.Factory.Create<bool>(this, value => model.Enabled = value))
+            .Add(p => p.ValueExpression, () => model.Enabled));
+
+        await cut.InvokeAsync(() => cut.Instance.DispatchNativeChangeAsync(null));
+        model.Enabled.Should().BeFalse();
+
+        await cut.InvokeAsync(() => cut.Instance.DispatchNativeChangeAsync(true));
+        model.Enabled.Should().BeTrue();
     }
 
     [Fact]
@@ -367,6 +454,58 @@ public class NTInputCheckbox_Tests : BunitContext {
         cut.Render();
 
         editContext.GetValidationMessages().Should().BeEmpty();
+    }
+
+    // Behavior source: Required is an opt-in component validation contract, so removing it removes that component-owned error.
+    [Fact]
+    public void Removing_Required_Parameter_Clears_Component_Validation() {
+        var model = new TestModel();
+        var editContext = new EditContext(model);
+        var required = true;
+        var cut = Render<EditForm>(parameters => parameters
+            .Add(p => p.EditContext, editContext)
+            .Add(p => p.ChildContent, (EditContext _) => builder => {
+                builder.OpenComponent<NTInputCheckbox>(0);
+                builder.AddAttribute(1, nameof(NTInputCheckbox.Value), model.Enabled);
+                builder.AddAttribute(2, nameof(NTInputCheckbox.ValueChanged), EventCallback.Factory.Create<bool>(this, value => model.Enabled = value));
+                builder.AddAttribute(3, nameof(NTInputCheckbox.ValueExpression), (Expression<Func<bool>>)(() => model.Enabled));
+                builder.AddAttribute(4, nameof(NTInputCheckbox.Required), required);
+                builder.AddAttribute(5, nameof(NTInputCheckbox.RequiredErrorText), "Accept terms before submitting");
+                builder.CloseComponent();
+            }));
+
+        cut.Find("form").Submit();
+        editContext.GetValidationMessages().Should().Contain("Accept terms before submitting");
+
+        required = false;
+        cut.Render();
+
+        editContext.GetValidationMessages().Should().BeEmpty();
+    }
+
+    // Behavior source: EditContext field validation is isolated by FieldIdentifier; another field must not validate this checkbox.
+    [Fact]
+    public async Task Required_Validation_Ignores_Unrelated_Field_Changes() {
+        var model = new TestModel();
+        var editContext = new EditContext(model);
+        var cut = Render<EditForm>(parameters => parameters
+            .Add(p => p.EditContext, editContext)
+            .Add(p => p.ChildContent, (EditContext _) => builder => {
+                builder.OpenComponent<NTInputCheckbox>(0);
+                builder.AddAttribute(1, nameof(NTInputCheckbox.Value), model.Enabled);
+                builder.AddAttribute(2, nameof(NTInputCheckbox.ValueChanged), EventCallback.Factory.Create<bool>(this, value => model.Enabled = value));
+                builder.AddAttribute(3, nameof(NTInputCheckbox.ValueExpression), (Expression<Func<bool>>)(() => model.Enabled));
+                builder.AddAttribute(4, nameof(NTInputCheckbox.Required), true);
+                builder.AddAttribute(5, nameof(NTInputCheckbox.RequiredErrorText), "Accept terms before submitting");
+                builder.CloseComponent();
+            }));
+
+        await cut.InvokeAsync(() => editContext.NotifyFieldChanged(new FieldIdentifier(model, nameof(TestModel.Other))));
+        editContext.GetValidationMessages().Should().BeEmpty();
+
+        await cut.InvokeAsync(() => editContext.NotifyFieldChanged(new FieldIdentifier(model, nameof(TestModel.Enabled))));
+        editContext.GetValidationMessages().Should().Contain("Accept terms before submitting");
+        cut.Find(".nt-checkbox-error-text").TextContent.Should().Be("Accept terms before submitting");
     }
 
     [Fact]

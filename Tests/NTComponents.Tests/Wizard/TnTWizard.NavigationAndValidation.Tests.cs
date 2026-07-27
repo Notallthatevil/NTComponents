@@ -43,6 +43,23 @@ public class TnTWizard_NavigationAndValidation_Tests : BunitContext {
         indicators[2].GetAttribute("class")!.Should().NotContain("current-step");
     }
 
+    // Behavior source: TnTWizard.NavigateToStepAsync XML documentation permits only visited or immediate-next destinations; invalid indices satisfy neither contract.
+    [Fact]
+    public async Task NavigateToStep_Invalid_Boundaries_And_Current_Index_Are_Idempotent() {
+        var nextCallbackCount = 0;
+        var cut = RenderWizardWithThreeSteps(wizard => wizard.Add(w => w.OnNextButtonClicked, EventCallback.Factory.Create<int>(this, _ => nextCallbackCount++)));
+
+        await cut.Instance.NavigateToStepAsync(-1);
+        await cut.Instance.NavigateToStepAsync(3);
+        await cut.Instance.NavigateToStepAsync(0);
+
+        nextCallbackCount.Should().Be(0);
+        var indicators = cut.FindAll("li.tnt-wizard-step-indicator");
+        indicators[0].ClassList.Should().Contain("current-step");
+        indicators[1].ClassList.Should().NotContain("current-step");
+        cut.Find(".tnt-wizard-content").TextContent.Should().Contain("Step 1 content");
+    }
+
     [Fact]
     public async Task Step_Click_Allows_Navigation_To_Visited_Step() {
         // Arrange

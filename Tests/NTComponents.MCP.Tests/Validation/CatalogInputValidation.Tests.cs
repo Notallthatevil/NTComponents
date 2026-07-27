@@ -131,4 +131,64 @@ public class CatalogInputValidation_Tests {
         component.Should().BeNull();
         reference.Should().BeNull();
     }
+
+    /// <summary>Behavior source: public REST and MCP paging descriptions define offset as zero-based, making zero and int.MaxValue valid boundary values.</summary>
+    [Theory]
+    [InlineData(0)]
+    [InlineData(int.MaxValue)]
+    public void WithValidOffset_AllPagedOperationsAcceptInput(int offset) {
+        var catalog = new NTComponentsCatalog();
+
+        var componentAction = () => catalog.ListComponentPage(offset: offset);
+        var referenceAction = () => catalog.ListReferencePage(offset: offset);
+        var searchAction = () => catalog.SearchPage("button", offset: offset);
+
+        componentAction.Should().NotThrow();
+        referenceAction.Should().NotThrow();
+        searchAction.Should().NotThrow();
+    }
+
+    /// <summary>Behavior source: public REST and MCP paging descriptions define offset as zero-based and therefore reject every negative value rather than normalizing it.</summary>
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(int.MinValue)]
+    public void WithNegativeOffset_AllPagedOperationsRejectInput(int offset) {
+        var catalog = new NTComponentsCatalog();
+
+        var componentAction = () => catalog.ListComponentPage(offset: offset);
+        var referenceAction = () => catalog.ListReferencePage(offset: offset);
+        var searchAction = () => catalog.SearchPage("button", offset: offset);
+
+        componentAction.Should().Throw<CatalogValidationException>().Which.ParameterName.Should().Be("offset");
+        referenceAction.Should().Throw<CatalogValidationException>().Which.ParameterName.Should().Be("offset");
+        searchAction.Should().Throw<CatalogValidationException>().Which.ParameterName.Should().Be("offset");
+    }
+
+    /// <summary>Behavior source: list_nt_reference_types defines ComponentApi and LibraryApi as the complete supported scope set.</summary>
+    [Theory]
+    [InlineData("ComponentApi")]
+    [InlineData("componentapi")]
+    [InlineData("LibraryApi")]
+    [InlineData("libraryapi")]
+    public void WithDocumentedReferenceScope_ReturnsOnlyThatScope(string scope) {
+        var catalog = new NTComponentsCatalog();
+
+        var references = catalog.ListReferencePage(scope: scope, limit: 200).Items;
+
+        references.Should().NotBeEmpty();
+        references.Should().OnlyContain(reference => string.Equals(reference.Scope, scope, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>Behavior source: list_nt_reference_types defines only ComponentApi and LibraryApi scopes, so blank or other supplied values are invalid.</summary>
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("PrivateApi")]
+    public void WithInvalidReferenceScope_RejectsInput(string scope) {
+        var catalog = new NTComponentsCatalog();
+
+        var action = () => catalog.ListReferencePage(scope: scope);
+
+        action.Should().Throw<CatalogValidationException>().Which.ParameterName.Should().Be("scope");
+    }
 }
