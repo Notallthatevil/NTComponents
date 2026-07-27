@@ -9,7 +9,7 @@ on:
         default: Release
 
 env:
-  COVERAGE_THRESHOLD: 75
+  COVERAGE_THRESHOLD: 90
   TESTINGPLATFORM_EXITCODE_IGNORE: 8
 
 jobs:
@@ -137,7 +137,7 @@ jobs:
         run: dotnet tool install --global dotnet-coverage
 
       - name: Run .NET tests with coverage
-        run: dotnet-coverage collect --output ./TestResults/${{ matrix.name }}.cobertura.xml --output-format cobertura dotnet test ${{ matrix.project }} --no-build --configuration ${{ inputs.configuration }} --framework ${{ matrix.framework }} --results-directory ./TestResults -v minimal
+        run: dotnet-coverage collect --settings ./.github/code-coverage.config --output ./TestResults/${{ matrix.name }}.cobertura.xml --output-format cobertura dotnet test ${{ matrix.project }} --no-build --configuration ${{ inputs.configuration }} --framework ${{ matrix.framework }} --results-directory ./TestResults -v minimal
 
       - name: Upload coverage shard
         uses: actions/upload-artifact@v4
@@ -192,6 +192,16 @@ jobs:
         run: |
           $coverageFiles = Get-ChildItem ./TestResults -Filter *.cobertura.xml | ForEach-Object { $_.FullName }
           dotnet-coverage merge @coverageFiles --output ./TestResults/coverage.cobertura.xml --output-format cobertura
+
+      - name: Enforce branch coverage
+        shell: pwsh
+        run: |
+          [xml]$coverage = Get-Content ./TestResults/coverage.cobertura.xml
+          $branchCoverage = [double]$coverage.coverage.'branch-rate' * 100
+          if ($branchCoverage -lt [double]$env:COVERAGE_THRESHOLD) {
+            throw "Branch coverage $($branchCoverage.ToString('F2'))% is below the $env:COVERAGE_THRESHOLD% target."
+          }
+          Write-Host "Branch coverage: $($branchCoverage.ToString('F2'))%"
 
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v4

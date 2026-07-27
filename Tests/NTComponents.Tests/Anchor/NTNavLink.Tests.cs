@@ -305,4 +305,165 @@ public class NTNavLink_Tests : BunitContext {
 
         render.Should().Throw<ArgumentException>();
     }
+
+    [Fact]
+    public void Square_Button_Chrome_Renders_Only_The_Square_Shape_Class() {
+        var cut = Render<NTNavLink>(parameters => parameters
+            .Add(x => x.Shape, ButtonShape.Square)
+            .Add(x => x.Label, "Home"));
+
+        var link = cut.Find("a");
+
+        link.ClassList.Should().Contain("nt-nav-link-shape-square");
+        link.ClassList.Should().NotContain("nt-nav-link-shape-round");
+    }
+
+    [Fact]
+    public void Exact_Route_Matching_Ignores_Query_And_Fragment() {
+        var navigationManager = Services.GetRequiredService<NavigationManager>();
+        navigationManager.NavigateTo("/home?tab=recent#summary");
+
+        var cut = Render<NTNavLink>(parameters => parameters
+            .Add(x => x.Match, Microsoft.AspNetCore.Components.Routing.NavLinkMatch.All)
+            .Add(x => x.AdditionalAttributes, new Dictionary<string, object> { ["href"] = "/home#top" })
+            .Add(x => x.Label, "Home"));
+
+        cut.Find("a").GetAttribute("aria-current").Should().Be("page");
+    }
+
+    [Theory]
+    [InlineData("/home/settings", true)]
+    [InlineData("/home-office", false)]
+    public void Prefix_Route_Matching_Requires_A_Path_Segment_Boundary(string currentPath, bool expectedActive) {
+        var navigationManager = Services.GetRequiredService<NavigationManager>();
+        navigationManager.NavigateTo(currentPath);
+
+        var cut = Render<NTNavLink>(parameters => parameters
+            .Add(x => x.AdditionalAttributes, new Dictionary<string, object> { ["href"] = "/home" })
+            .Add(x => x.Label, "Home"));
+
+        cut.Find("a").HasAttribute("aria-current").Should().Be(expectedActive);
+    }
+
+    [Fact]
+    public void External_Route_Is_Never_Marked_Active() {
+        var cut = Render<NTNavLink>(parameters => parameters
+            .Add(x => x.AdditionalAttributes, new Dictionary<string, object> { ["href"] = "https://example.test/home" })
+            .Add(x => x.Label, "External home"));
+
+        cut.Find("a").HasAttribute("aria-current").Should().BeFalse();
+    }
+
+    [Fact]
+    public void Explicit_Null_Overrides_Use_The_Variant_Defaults() {
+        var cut = Render<NTNavLink>(parameters => parameters
+            .Add(x => x.BackgroundColor, (TnTColor?)null)
+            .Add(x => x.Elevation, (NTElevation?)null)
+            .Add(x => x.TextColor, (TnTColor?)null)
+            .Add(x => x.Label, "Home"));
+
+        var style = cut.Find("a").GetAttribute("style");
+
+        style.Should().Contain("--nt-nav-link-bg:var(--tnt-color-primary)");
+        style.Should().Contain("--nt-nav-link-fg:var(--tnt-color-on-primary)");
+    }
+
+    [Theory]
+    [InlineData(NTNavLinkVariant.Outlined)]
+    [InlineData(NTNavLinkVariant.Text)]
+    public void Transparent_Button_Variants_Reject_Visible_Backgrounds(NTNavLinkVariant variant) {
+        var render = () => Render<NTNavLink>(parameters => parameters
+            .Add(x => x.Variant, variant)
+            .Add(x => x.BackgroundColor, TnTColor.Primary)
+            .Add(x => x.Label, "Invalid"));
+
+        render.Should().Throw<InvalidOperationException>()
+            .WithMessage($"*{variant} navigation links must use a transparent BackgroundColor*");
+    }
+
+    [Theory]
+    [InlineData(NTNavLinkVariant.Elevated, TnTColor.None)]
+    [InlineData(NTNavLinkVariant.Filled, TnTColor.Transparent)]
+    [InlineData(NTNavLinkVariant.Tonal, TnTColor.None)]
+    public void Contained_Button_Variants_Reject_Invisible_Backgrounds(NTNavLinkVariant variant, TnTColor backgroundColor) {
+        var render = () => Render<NTNavLink>(parameters => parameters
+            .Add(x => x.Variant, variant)
+            .Add(x => x.BackgroundColor, backgroundColor)
+            .Add(x => x.Label, "Invalid"));
+
+        render.Should().Throw<InvalidOperationException>()
+            .WithMessage($"*{variant} navigation links must use a visible container BackgroundColor*");
+    }
+
+    [Theory]
+    [InlineData("TextColor", TnTColor.None, NTNavLinkVariant.Filled)]
+    [InlineData("TextColor", TnTColor.Transparent, NTNavLinkVariant.Filled)]
+    [InlineData("HoverTextColor", TnTColor.None, NTNavLinkVariant.Filled)]
+    [InlineData("HoverTextColor", TnTColor.Transparent, NTNavLinkVariant.Filled)]
+    [InlineData("VisitedTextColor", TnTColor.None, NTNavLinkVariant.DefaultAnchor)]
+    [InlineData("VisitedTextColor", TnTColor.Transparent, NTNavLinkVariant.InlineText)]
+    [InlineData("ActiveTextColor", TnTColor.None, NTNavLinkVariant.Filled)]
+    [InlineData("ActiveTextColor", TnTColor.Transparent, NTNavLinkVariant.Filled)]
+    public void Invisible_Content_Color_Overrides_Are_Rejected(string parameterName, TnTColor color, NTNavLinkVariant variant) {
+        var render = () => Render<NTNavLink>(parameters => {
+            parameters
+                .Add(x => x.Variant, variant)
+                .Add(x => x.Label, "Invalid");
+
+            switch (parameterName) {
+                case nameof(NTNavLink.TextColor):
+                    parameters.Add(x => x.TextColor, color);
+                    break;
+                case nameof(NTNavLink.HoverTextColor):
+                    parameters.Add(x => x.HoverTextColor, color);
+                    break;
+                case nameof(NTNavLink.VisitedTextColor):
+                    parameters.Add(x => x.VisitedTextColor, color);
+                    break;
+                case nameof(NTNavLink.ActiveTextColor):
+                    parameters.Add(x => x.ActiveTextColor, color);
+                    break;
+            }
+        });
+
+        render.Should().Throw<InvalidOperationException>()
+            .WithMessage($"*{parameterName} must be a visible content color*");
+    }
+
+    [Fact]
+    public void Text_Link_Chrome_Allows_A_Consumer_Background_Without_Button_Validation() {
+        var cut = Render<NTNavLink>(parameters => parameters
+            .Add(x => x.Variant, NTNavLinkVariant.DefaultAnchor)
+            .Add(x => x.BackgroundColor, TnTColor.Primary)
+            .Add(x => x.Elevation, NTElevation.Low)
+            .Add(x => x.Label, "Docs"));
+
+        var link = cut.Find("a");
+
+        link.ClassList.Should().NotContain("nt-nav-link-button-chrome");
+        link.GetAttribute("style").Should().Contain("--nt-nav-link-bg:var(--tnt-color-primary)");
+    }
+
+    [Theory]
+    [InlineData(NTNavLinkVariant.Elevated, NTElevation.None, "Elevated navigation links must use a non-zero Elevation")]
+    [InlineData(NTNavLinkVariant.Filled, NTElevation.Lowest, "Filled navigation links must use None Elevation")]
+    public void Invalid_Elevation_For_Button_Chrome_Throws(NTNavLinkVariant variant, NTElevation elevation, string message) {
+        var render = () => Render<NTNavLink>(parameters => parameters
+            .Add(x => x.Variant, variant)
+            .Add(x => x.Elevation, elevation)
+            .Add(x => x.Label, "Invalid"));
+
+        render.Should().Throw<InvalidOperationException>()
+            .WithMessage($"*{message}*");
+    }
+
+    [Fact]
+    public void Unknown_Variant_Throws_Instead_Of_Rendering_An_Undefined_Style() {
+        var render = () => Render<NTNavLink>(parameters => parameters
+            .Add(x => x.Variant, (NTNavLinkVariant)999)
+            .Add(x => x.Label, "Invalid"));
+
+        render.Should().Throw<ArgumentOutOfRangeException>()
+            .WithParameterName("Variant");
+    }
 }

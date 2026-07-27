@@ -130,6 +130,187 @@ namespace NTComponents {
         Assert.Empty(diagnostics);
     }
 
+    [Fact]
+    public async Task Reports_Exact_Diagnostics_From_Razor_Executable_Shapes() {
+        const string source = """
+using System;
+using Microsoft.AspNetCore.Components.Rendering;
+
+public sealed class CardFactory {
+    public CardFactory(RenderTreeBuilder builder) {
+        builder.OpenComponent<global::NTComponents.NTCard>(0);
+        builder.AddAttribute(1, "BackgroundColor", global::NTComponents.TnTColor.Transparent);
+        builder.CloseComponent();
+    }
+
+    public static void Build(RenderTreeBuilder builder) {
+        void Local() {
+            builder.OpenComponent<global::NTComponents.NTCard>(2);
+            builder.AddAttribute(3, "Elevation", global::NTComponents.NTElevation.High);
+            builder.CloseComponent();
+        }
+
+        Action<RenderTreeBuilder> parenthesized = (nestedBuilder) => {
+            nestedBuilder.OpenComponent<global::NTComponents.NTCard>(4);
+            nestedBuilder.AddAttribute(5, "BackgroundColor", global::NTComponents.TnTColor.Transparent);
+            nestedBuilder.CloseComponent();
+        };
+        Action<RenderTreeBuilder> simple = nestedBuilder => {
+            nestedBuilder.OpenComponent<global::NTComponents.NTCard>(6);
+            nestedBuilder.AddAttribute(7, "Elevation", global::NTComponents.NTElevation.High);
+            nestedBuilder.CloseComponent();
+        };
+        Action<RenderTreeBuilder> anonymous = delegate(RenderTreeBuilder nestedBuilder) {
+            nestedBuilder.OpenComponent<global::NTComponents.NTCard>(8);
+            nestedBuilder.AddAttribute(9, "BackgroundColor", global::NTComponents.TnTColor.Transparent);
+            nestedBuilder.CloseComponent();
+        };
+    }
+}
+
+namespace Microsoft.AspNetCore.Components.Rendering {
+    public class RenderTreeBuilder {
+        public void OpenComponent<TComponent>(int sequence) { }
+        public void AddAttribute(int sequence, string name, object? value) { }
+        public void CloseComponent() { }
+    }
+}
+
+namespace NTComponents {
+    public class NTCard { }
+    public enum NTCardVariant { Filled, Outlined, Elevated }
+    public enum TnTColor { None, Transparent, SurfaceContainerHighest, SurfaceContainerLow, OnSurface }
+    public enum NTElevation { None, Lowest, Low, Medium, High, Highest }
+}
+""";
+
+        var diagnostics = await GetDiagnosticsAsync(("CardFactory.cs", source));
+
+        Assert.Equal(
+            [
+                NTCardConfigurationAnalyzer.TransparentBackgroundDiagnosticId,
+                NTCardConfigurationAnalyzer.IgnoredElevationDiagnosticId,
+                NTCardConfigurationAnalyzer.TransparentBackgroundDiagnosticId,
+                NTCardConfigurationAnalyzer.IgnoredElevationDiagnosticId,
+                NTCardConfigurationAnalyzer.TransparentBackgroundDiagnosticId
+            ],
+            diagnostics.OrderBy(static diagnostic => diagnostic.Location.SourceSpan.Start).Select(static diagnostic => diagnostic.Id));
+    }
+
+    [Fact]
+    public async Task Reports_NonGeneric_Razor_Component_With_Constant_Casts() {
+        const string source = """
+using System;
+using Microsoft.AspNetCore.Components.CompilerServices;
+using Microsoft.AspNetCore.Components.Rendering;
+
+public static class CardFactory {
+    public static void Build(RenderTreeBuilder builder) {
+        builder.OpenComponent(0, typeof(global::NTComponents.NTCard));
+        builder.AddComponentParameter(1, "Variant", RuntimeHelpers.TypeCheck<global::NTComponents.NTCardVariant>((global::NTComponents.NTCardVariant)0));
+        builder.AddComponentParameter(2, "BackgroundColor", RuntimeHelpers.TypeCheck<global::NTComponents.TnTColor?>((global::NTComponents.TnTColor)1));
+        builder.AddComponentParameter(3, "Elevation", global::NTComponents.NTElevation.High);
+        builder.CloseComponent();
+    }
+}
+
+namespace Microsoft.AspNetCore.Components.CompilerServices {
+    public static class RuntimeHelpers {
+        public static T TypeCheck<T>(T value) => value;
+    }
+}
+
+namespace Microsoft.AspNetCore.Components.Rendering {
+    public class RenderTreeBuilder {
+        public void OpenComponent(int sequence, Type componentType) { }
+        public void AddComponentParameter(int sequence, string name, object? value) { }
+        public void CloseComponent() { }
+    }
+}
+
+namespace NTComponents {
+    public class NTCard { }
+    public enum NTCardVariant { Filled, Outlined, Elevated }
+    public enum TnTColor { None, Transparent, SurfaceContainerHighest, SurfaceContainerLow, OnSurface }
+    public enum NTElevation { None, Lowest, Low, Medium, High, Highest }
+}
+""";
+
+        var diagnostics = await GetDiagnosticsAsync(("CardFactory.razor.g.cs", source));
+
+        Assert.Equal(
+            [
+                NTCardConfigurationAnalyzer.TransparentBackgroundDiagnosticId,
+                NTCardConfigurationAnalyzer.IgnoredElevationDiagnosticId
+            ],
+            diagnostics.Select(static diagnostic => diagnostic.Id));
+        Assert.All(diagnostics, static diagnostic => Assert.Equal("CardFactory.razor.g.cs", diagnostic.Location.GetLineSpan().Path));
+    }
+
+    [Fact]
+    public async Task DoesNotReport_Dynamic_Undefined_Or_Incomplete_Component_Input() {
+        const string source = """
+using Microsoft.AspNetCore.Components.Rendering;
+
+public static class CardFactory {
+    public static void Build(RenderTreeBuilder builder, global::NTComponents.NTCardVariant variant, string attributeName) {
+        builder.CloseComponent();
+
+        builder.OpenComponent<global::NTComponents.NTCard>(0);
+        builder.AddAttribute(1, "Variant", variant);
+        builder.AddAttribute(2, "BackgroundColor", global::NTComponents.TnTColor.Transparent);
+        builder.AddAttribute(3, "Elevation", global::NTComponents.NTElevation.High);
+        builder.CloseComponent();
+
+        builder.OpenComponent<global::NTComponents.NTCard>(4);
+        builder.AddAttribute(5, "BackgroundColor", (global::NTComponents.TnTColor)99);
+        builder.AddAttribute(6, attributeName, global::NTComponents.TnTColor.Transparent);
+        builder.CloseComponent();
+
+        builder.OpenComponent<global::NTComponents.OtherComponent>(7);
+        builder.AddAttribute(8, "BackgroundColor", global::NTComponents.TnTColor.Transparent);
+        builder.CloseComponent();
+
+        builder.OpenComponent<global::NTComponents.NTCard>(9);
+        builder.AddAttribute(10, "BackgroundColor", global::NTComponents.TnTColor.Transparent);
+    }
+}
+
+namespace Microsoft.AspNetCore.Components.Rendering {
+    public class RenderTreeBuilder {
+        public void OpenComponent<TComponent>(int sequence) { }
+        public void AddAttribute(int sequence, string name, object? value) { }
+        public void CloseComponent() { }
+    }
+}
+
+namespace NTComponents {
+    public class NTCard { }
+    public class OtherComponent { }
+    public enum NTCardVariant { Filled, Outlined, Elevated }
+    public enum TnTColor { None, Transparent, SurfaceContainerHighest, SurfaceContainerLow, OnSurface }
+    public enum NTElevation { None, High }
+}
+""";
+
+        var diagnostics = await GetDiagnosticsAsync(("CardFactory.cs", source));
+
+        Assert.Empty(diagnostics);
+    }
+
+    [Fact]
+    public async Task DoesNotReport_When_Card_Contracts_Are_Unavailable() {
+        const string source = """
+public static class ApplicationCode {
+    public static void Run() { }
+}
+""";
+
+        var diagnostics = await GetDiagnosticsAsync(("ApplicationCode.cs", source));
+
+        Assert.Empty(diagnostics);
+    }
+
     private static async Task<ImmutableArray<Diagnostic>> GetDiagnosticsAsync(params (string Path, string Source)[] sources) {
         var syntaxTrees = sources
             .Select(source => CSharpSyntaxTree.ParseText(
@@ -149,6 +330,8 @@ namespace NTComponents {
             syntaxTrees,
             references,
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+
+        Assert.DoesNotContain(compilation.GetDiagnostics(TestContext.Current.CancellationToken), static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
 
         var analyzer = new NTCardConfigurationAnalyzer();
         return await compilation

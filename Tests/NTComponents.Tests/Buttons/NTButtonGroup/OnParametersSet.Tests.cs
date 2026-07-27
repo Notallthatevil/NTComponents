@@ -62,4 +62,45 @@ public sealed class OnParametersSet_Tests : NTButtonGroupTestContext {
         selectedButtons.Count.Should().Be(1);
         selectedButtons.Single().TextContent.Should().Contain(items.First().Label!);
     }
+
+    // Behavior source: NTButtonGroup.SelectionRequired and NTButtonGroupItem.Disabled XML documentation require an active, usable option.
+    [Fact]
+    public void WithSelectionRequired_WhenFirstItemDisabled_SelectsFirstEnabledItem() {
+        // Arrange
+        var items = new[] {
+            new NTButtonGroupTestItem { Key = "disabled", Label = "Disabled", Disabled = true },
+            new NTButtonGroupTestItem { Key = "enabled", Label = "Enabled" }
+        };
+
+        // Act
+        var cut = Render<NTButtonGroup<string>>(parameters => parameters
+            .AddChildContent(RenderItems(items))
+            .Add(p => p.SelectionRequired, true));
+
+        // Assert
+        var buttons = cut.FindAll("button.nt-btn-grp-btn");
+        buttons[0].HasAttribute("disabled").Should().BeTrue();
+        buttons[0].GetAttribute("aria-pressed").Should().Be("false");
+        buttons[1].GetAttribute("aria-pressed").Should().Be("true");
+    }
+
+    // Behavior source: NTButtonGroup.SelectionMode and SelectionRequired XML documentation applies the same required-choice invariant to Multiple mode.
+    [Fact]
+    public void WithRequiredMultipleSelection_WhenNoKeysProvided_SelectsFirstEnabledItem() {
+        // Arrange
+        var items = new[] {
+            new NTButtonGroupTestItem { Key = "disabled", Label = "Disabled", Disabled = true },
+            new NTButtonGroupTestItem { Key = "enabled", Label = "Enabled" }
+        };
+
+        // Act
+        var cut = Render<NTButtonGroup<string>>(parameters => parameters
+            .AddChildContent(RenderItems(items))
+            .Add(p => p.SelectionMode, NTButtonGroupSelectionMode.Multiple)
+            .Add(p => p.SelectionRequired, true));
+
+        // Assert
+        cut.FindAll("button[aria-pressed='true']").Should().ContainSingle().Which.TextContent.Should().Contain("Enabled");
+    }
+
 }

@@ -75,6 +75,32 @@ public class TnTCancellationTokenComponentBase_Tests : BunitContext {
         exception.Should().BeNull();
     }
 
+    [Fact]
+    public void Dispose_WhenCancellationTokenSourceWasAlreadyDisposed_StillCompletesCleanup() {
+        var component = new TestCancellationTokenComponent();
+        var disposedSource = new CancellationTokenSource();
+        disposedSource.Dispose();
+        component.ReplaceCancellationTokenSource(disposedSource);
+
+        component.Dispose();
+
+        component.IsDisposed.Should().BeTrue();
+        component.ExposedToken.Should().Be(CancellationToken.None);
+    }
+
+    [Fact]
+    public async Task DisposeAsync_WhenCancellationTokenSourceWasAlreadyDisposed_StillCompletesCleanup() {
+        var component = new TestCancellationTokenComponent();
+        var disposedSource = new CancellationTokenSource();
+        disposedSource.Dispose();
+        component.ReplaceCancellationTokenSource(disposedSource);
+
+        await component.DisposeAsync();
+
+        component.IsDisposed.Should().BeTrue();
+        component.ExposedToken.Should().Be(CancellationToken.None);
+    }
+
     private class TestCancellationTokenComponent : TnTCancellationTokenComponentBase {
         public override string? ElementClass => null;
         public override string? ElementStyle => null;
@@ -83,5 +109,12 @@ public class TnTCancellationTokenComponentBase_Tests : BunitContext {
         public bool IsDisposed => typeof(TnTCancellationTokenComponentBase)
             .GetField("_disposed", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
             ?.GetValue(this) as bool? ?? false;
+
+        public void ReplaceCancellationTokenSource(CancellationTokenSource cancellationTokenSource) {
+            var field = typeof(TnTCancellationTokenComponentBase)
+                .GetField("_cancellationTokenSource", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
+            ((CancellationTokenSource?)field.GetValue(this))?.Dispose();
+            field.SetValue(this, cancellationTokenSource);
+        }
     }
 }

@@ -270,6 +270,117 @@ public class NTSplitButton_Tests : BunitContext {
         nestedMenu.TextContent.Should().Contain("Schedule send");
     }
 
+    [Theory]
+    [InlineData(NTButtonVariant.Elevated, "nt-split-button-elevated", "surface-container-low", "primary")]
+    [InlineData(NTButtonVariant.Filled, "nt-split-button-filled", "primary", "on-primary")]
+    [InlineData(NTButtonVariant.Tonal, "nt-split-button-tonal", "secondary-container", "on-secondary-container")]
+    [InlineData(NTButtonVariant.Outlined, "nt-split-button-outlined", "transparent", "primary")]
+    [InlineData(NTButtonVariant.Text, "nt-split-button-text", "transparent", "primary")]
+    public void Variants_Render_Their_Default_Color_Contracts(NTButtonVariant variant, string expectedClass, string expectedBackground, string expectedText) {
+        var cut = Render<NTSplitButton>(parameters => parameters
+            .Add(x => x.Label, "Save")
+            .Add(x => x.Variant, variant)
+            .AddChildContent<NTMenuButtonItem>(item => item.Add(x => x.Label, "Save draft")));
+
+        var host = cut.Find("nt-split-button");
+
+        host.ClassList.Should().Contain(expectedClass);
+        host.GetAttribute("style").Should().Contain($"--nt-split-button-bg:var(--tnt-color-{expectedBackground})");
+        host.GetAttribute("style").Should().Contain($"--nt-split-button-fg:var(--tnt-color-{expectedText})");
+    }
+
+    [Fact]
+    public void Explicit_Null_Overrides_Fall_Back_To_Default_Colors() {
+        var cut = Render<NTSplitButton>(parameters => parameters
+            .Add(x => x.Label, "Save")
+            .Add(x => x.BackgroundColor, (TnTColor?)null)
+            .Add(x => x.Elevation, (NTElevation?)null)
+            .Add(x => x.TextColor, (TnTColor?)null)
+            .Add(x => x.MenuBackgroundColor, (TnTColor?)null)
+            .Add(x => x.MenuSelectedBackgroundColor, (TnTColor?)null)
+            .Add(x => x.MenuSelectedTextColor, (TnTColor?)null)
+            .Add(x => x.MenuTextColor, (TnTColor?)null)
+            .AddChildContent<NTMenuButtonItem>(item => item.Add(x => x.Label, "Save draft")));
+
+        var hostStyle = cut.Find("nt-split-button").GetAttribute("style");
+        var menuStyle = cut.Find(".nt-split-button-menu-panel").GetAttribute("style");
+
+        hostStyle.Should().Contain("--nt-split-button-bg:var(--tnt-color-primary)");
+        hostStyle.Should().Contain("--nt-split-button-fg:var(--tnt-color-on-primary)");
+        menuStyle.Should().Contain("--nt-menu-container-color:var(--tnt-color-surface-container-low)");
+    }
+
+    [Fact]
+    public void Custom_Labels_And_ElementId_Drive_Menu_Accessibility_And_Anchoring() {
+        var cut = Render<NTSplitButton>(parameters => parameters
+            .Add(x => x.ElementId, "save-options")
+            .Add(x => x.Label, "Save")
+            .Add(x => x.MenuButtonLabel, "Choose save format")
+            .AddChildContent<NTMenuButtonItem>(item => item.Add(x => x.Label, "Save draft")));
+
+        var menuButton = cut.Find(".nt-split-button-trailing");
+        var menu = cut.Find(".nt-split-button-menu-panel");
+
+        menuButton.GetAttribute("aria-label").Should().Be("Choose save format");
+        menuButton.GetAttribute("popovertarget").Should().Be("save-options-menu");
+        menu.Id.Should().Be("save-options-menu");
+    }
+
+    [Theory]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    public void Disabled_State_Removes_The_Menu_Popover_Target(bool disabled, bool menuButtonDisabled) {
+        var cut = Render<NTSplitButton>(parameters => parameters
+            .Add(x => x.Label, "Save")
+            .Add(x => x.Disabled, disabled)
+            .Add(x => x.MenuButtonDisabled, menuButtonDisabled)
+            .AddChildContent<NTMenuButtonItem>(item => item.Add(x => x.Label, "Save draft")));
+
+        var menuButton = cut.Find(".nt-split-button-trailing");
+
+        menuButton.HasAttribute("disabled").Should().BeTrue();
+        menuButton.HasAttribute("popovertarget").Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task NotifySplitButtonExpandedChanged_Updates_State_And_Only_Notifies_On_Change() {
+        var changes = new List<bool>();
+        var cut = Render<NTSplitButton>(parameters => parameters
+            .Add(x => x.Label, "Save")
+            .Add(x => x.ExpandedChanged, EventCallback.Factory.Create<bool>(this, changes.Add))
+            .AddChildContent<NTMenuButtonItem>(item => item.Add(x => x.Label, "Save draft")));
+
+        await cut.InvokeAsync(() => cut.Instance.NotifySplitButtonExpandedChanged(false));
+        await cut.InvokeAsync(() => cut.Instance.NotifySplitButtonExpandedChanged(true));
+
+        changes.Should().Equal(true);
+        cut.Instance.Expanded.Should().BeTrue();
+    }
+
+    [Theory]
+    [InlineData(TnTColor.None)]
+    [InlineData(TnTColor.Transparent)]
+    public void Invisible_TextColor_Throws(TnTColor textColor) {
+        var render = () => Render<NTSplitButton>(parameters => parameters
+            .Add(x => x.Label, "Save")
+            .Add(x => x.TextColor, textColor)
+            .AddChildContent<NTMenuButtonItem>(item => item.Add(x => x.Label, "Save draft")));
+
+        render.Should().Throw<InvalidOperationException>()
+            .WithMessage("*TextColor must be a visible split button content color*");
+    }
+
+    [Fact]
+    public void Unknown_Variant_Throws_Instead_Of_Rendering_An_Undefined_Style() {
+        var render = () => Render<NTSplitButton>(parameters => parameters
+            .Add(x => x.Label, "Save")
+            .Add(x => x.Variant, (NTButtonVariant)999)
+            .AddChildContent<NTMenuButtonItem>(item => item.Add(x => x.Label, "Save draft")));
+
+        render.Should().Throw<ArgumentOutOfRangeException>()
+            .WithParameterName("Variant");
+    }
+
     private sealed class ValidSplitButton : ComponentBase {
 
         protected override void BuildRenderTree(RenderTreeBuilder builder) {

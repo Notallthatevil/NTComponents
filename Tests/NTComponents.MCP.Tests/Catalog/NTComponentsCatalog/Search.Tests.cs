@@ -156,4 +156,35 @@ public class Search_Tests {
         page.Items[0].Name.Should().Be("NTAccordion");
         page.Items.Should().NotContain(component => component.Name == "NTComponentRenderCompatibility");
     }
+
+    /// <summary>Behavior source: reference-list query narrows generated documentation, and natural-language search prefers results matching every supplied term when available.</summary>
+    [Fact]
+    public void ListReferences_WithNaturalLanguageQuery_ReturnsOnlyCompleteMatchesWhenAvailable() {
+        var page = _catalog.ListReferencePage("ToCssClass elevation", limit: 200);
+
+        page.Items.Select(reference => reference.Name).Should().Equal("NTElevationExt");
+    }
+
+    /// <summary>Behavior source: search requires text containing searchable terms and must not turn delimiter-only input into an unbounded match-all query.</summary>
+    [Fact]
+    public void WithDelimiterOnlyQuery_AllQueryOperationsReturnNoMatchesOrSuggestion() {
+        var components = _catalog.ListComponentPage("---", limit: 200);
+        var references = _catalog.ListReferencePage("---", limit: 200);
+        var search = _catalog.SearchPage("---", limit: 200);
+
+        components.Items.Should().BeEmpty();
+        references.Items.Should().BeEmpty();
+        search.Items.Should().BeEmpty();
+        search.DidYouMean.Should().BeNull();
+    }
+
+    /// <summary>Behavior source: includeObsolete is an opt-in inclusion flag, so enabling it cannot remove reference types available from the default list.</summary>
+    [Fact]
+    public void ListReferences_WhenIncludingObsolete_PreservesDefaultResults() {
+        var expected = _catalog.ListReferencePage(limit: 200).Items;
+
+        var actual = _catalog.ListReferencePage(includeObsolete: true, limit: 200).Items;
+
+        actual.Select(reference => reference.FullName).Should().Contain(expected.Select(reference => reference.FullName));
+    }
 }
