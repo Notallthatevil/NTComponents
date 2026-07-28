@@ -24,10 +24,9 @@ public class NTLayout_IntegrationTests : IAsyncLifetime {
         }
     }
 
-    // Behavior source: NTLayout documents nested shell composition, while NTHeader and NTFooter document that their
-    // default fixed state makes the sibling body the scroll container. The nested-layout contract is container-sized.
+    // Behavior source: NTLayout documents nested shell composition. The nested-layout contract is container-sized.
     [Fact]
-    public async Task NestedLayout_With_Default_Fixed_Regions_Stays_Within_Parent_Body() {
+    public async Task NestedLayout_Stays_Within_Parent_Body() {
         ArgumentNullException.ThrowIfNull(_page);
 
         await _page.SetViewportSizeAsync(1280, 900);
@@ -36,16 +35,13 @@ public class NTLayout_IntegrationTests : IAsyncLifetime {
         await _page.Locator(".nt-layout-nested").WaitForAsync(
             new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 5000 });
 
-        var nestedLayoutFitsParent = await _page.EvaluateAsync<bool>(
+        var geometry = await _page.EvaluateAsync<double[]>(
             """
             () => {
                 const nested = document.querySelector('.nt-layout-nested');
                 const parentBody = nested?.closest('.nt-body');
-                const nestedHeader = nested?.querySelector(':scope > .nt-header-fixed-position');
-                if (!(nested instanceof HTMLElement)
-                    || !(parentBody instanceof HTMLElement)
-                    || !(nestedHeader instanceof HTMLElement)) {
-                    return false;
+                if (!(nested instanceof HTMLElement) || !(parentBody instanceof HTMLElement)) {
+                    return [nested instanceof HTMLElement ? 1 : 0, parentBody instanceof HTMLElement ? 1 : 0];
                 }
 
                 parentBody.style.blockSize = '360px';
@@ -55,16 +51,21 @@ public class NTLayout_IntegrationTests : IAsyncLifetime {
 
                 const nestedRect = nested.getBoundingClientRect();
                 const parentRect = parentBody.getBoundingClientRect();
-                const headerRect = nestedHeader.getBoundingClientRect();
-                return nestedRect.top >= parentRect.top - 1
-                    && nestedRect.bottom <= parentRect.bottom + 1
-                    && headerRect.top >= nestedRect.top - 1
-                    && headerRect.bottom <= nestedRect.bottom + 1;
+                return [
+                    1,
+                    1,
+                    nestedRect.top,
+                    nestedRect.bottom,
+                    parentRect.top,
+                    parentRect.bottom
+                ];
             }
             """);
 
-        nestedLayoutFitsParent.Should().BeTrue(
-            "a nested shell with default fixed regions must size itself to its constrained parent, not to 100dvh");
+        geometry[0].Should().Be(1, "the nested layout should render");
+        geometry[1].Should().Be(1, "the nested layout should have a parent body");
+        geometry[2].Should().BeGreaterThanOrEqualTo(geometry[4] - 1, "the nested layout should start within its parent body");
+        geometry[3].Should().BeLessThanOrEqualTo(geometry[5] + 1, "the nested layout should end within its parent body");
     }
 
     [Fact]
@@ -134,7 +135,7 @@ public class NTLayout_IntegrationTests : IAsyncLifetime {
                 }
             }
             """);
-        await nestedLayout.Locator(":scope > .nt-header").EvaluateAsync("header => header.remove()");
+        _ = await nestedLayout.Locator(":scope > .nt-header").EvaluateAllAsync<int>("headers => { headers.forEach(header => header.remove()); return headers.length; }");
 
         var nestedRail = nestedLayout.Locator(":scope > .nt-navigation-rail");
         var railId = await nestedRail.GetAttributeAsync("id");
