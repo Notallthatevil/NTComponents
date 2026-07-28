@@ -43,7 +43,7 @@ jobs:
       DOTNET_VERSION: ${{ matrix.tfm == 'net11.0' && '11.0.100-preview.6.26359.118' || '10.0.x' }}
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Setup dotnet
       uses: actions/setup-dotnet@v4
@@ -54,7 +54,7 @@ jobs:
           11.0.100-preview.6.26359.118
 
     - name: Cache NuGet packages
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       with:
         path: ~/.nuget/packages
         key: ${{ runner.os }}-${{ runner.arch }}-${{ matrix.tfm }}-nuget-${{ hashFiles('global.json', 'Directory.Build.props', 'Tests/AotCompatibility.TestApp/AotCompatibility.TestApp.csproj', 'NTComponents/NTComponents.csproj', 'NTComponents.Analyzers/NTComponents.Analyzers.csproj') }}
