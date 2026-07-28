@@ -3,16 +3,25 @@ namespace NTComponents.MCP.Catalog;
 internal static class CatalogInputValidator {
     public const int MinimumLimit = 1;
     public const int MaximumLimit = 200;
+    public const int MaximumMcpLimit = 50;
     public const int MaximumQueryLength = 512;
     public const int MaximumSearchTerms = 16;
     public const string EnumReferenceKind = "Enum";
     public const string HelperReferenceKind = "Helper";
     public const string ComponentApiReferenceScope = "ComponentApi";
     public const string LibraryApiReferenceScope = "LibraryApi";
+    public const string ParameterMemberKind = "Parameter";
+    public const string MethodMemberKind = "Method";
 
     public static void ValidateLimit(int limit) {
         if (limit is < MinimumLimit or > MaximumLimit) {
             throw new CatalogValidationException(nameof(limit), $"limit must be between {MinimumLimit} and {MaximumLimit}.");
+        }
+    }
+
+    public static void ValidateMcpLimit(int limit) {
+        if (limit is < MinimumLimit or > MaximumMcpLimit) {
+            throw new CatalogValidationException(nameof(limit), $"limit must be between {MinimumLimit} and {MaximumMcpLimit}.");
         }
     }
 
@@ -43,6 +52,18 @@ internal static class CatalogInputValidator {
             || (!string.Equals(scope, ComponentApiReferenceScope, StringComparison.OrdinalIgnoreCase)
                 && !string.Equals(scope, LibraryApiReferenceScope, StringComparison.OrdinalIgnoreCase))) {
             throw new CatalogValidationException(nameof(scope), $"scope must be {ComponentApiReferenceScope} or {LibraryApiReferenceScope}.");
+        }
+    }
+
+    public static void ValidateMemberKind(string? kind) {
+        if (kind is null) {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(kind)
+            || (!string.Equals(kind, ParameterMemberKind, StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(kind, MethodMemberKind, StringComparison.OrdinalIgnoreCase))) {
+            throw new CatalogValidationException(nameof(kind), $"kind must be {ParameterMemberKind} or {MethodMemberKind}.");
         }
     }
 

@@ -179,7 +179,7 @@ public class PublicServiceHardening_Tests {
 
         var errorText = string.Join("\n", result.Content.OfType<TextContentBlock>().Select(content => content.Text));
         result.IsError.Should().BeTrue();
-        errorText.Should().Contain("limit must be between 1 and 200.");
+        errorText.Should().Contain("limit must be between 1 and 50.");
     }
 
     private static HttpRequestMessage CreateForwardedRequest(string clientIpAddress, string path) {

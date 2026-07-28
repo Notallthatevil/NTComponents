@@ -150,21 +150,30 @@ public class CatalogValidation_Tests {
         var componentListSchema = tools.Single(tool => tool.Name == "list_nt_components").JsonSchema;
         var referenceListSchema = tools.Single(tool => tool.Name == "list_nt_reference_types").JsonSchema;
         var componentLookupSchema = tools.Single(tool => tool.Name == "get_nt_component").JsonSchema;
+        var componentMembersSchema = tools.Single(tool => tool.Name == "get_nt_component_members").JsonSchema;
         var referenceLookupSchema = tools.Single(tool => tool.Name == "get_nt_reference_type").JsonSchema;
         var searchSchema = tools.Single(tool => tool.Name == "search_ntcomponents").JsonSchema;
 
-        AssertLimitSchema(componentListSchema);
-        AssertLimitSchema(referenceListSchema);
-        AssertLimitSchema(searchSchema);
+        AssertLimitSchema(componentListSchema, 10);
+        AssertLimitSchema(referenceListSchema, 10);
+        AssertLimitSchema(searchSchema, 5);
+        AssertLimitSchema(componentMembersSchema, 10);
+        AssertLimitSchema(referenceLookupSchema, 10);
         AssertQueryLengthSchema(componentListSchema);
         AssertQueryLengthSchema(referenceListSchema);
         AssertQueryLengthSchema(searchSchema);
+        AssertQueryLengthSchema(componentMembersSchema);
+        AssertQueryLengthSchema(referenceLookupSchema);
         AssertOffsetSchema(componentListSchema);
         AssertOffsetSchema(referenceListSchema);
         AssertOffsetSchema(searchSchema);
+        AssertOffsetSchema(componentMembersSchema);
+        AssertOffsetSchema(referenceLookupSchema);
         referenceListSchema.GetProperty("properties").GetProperty("kind").GetProperty("enum").EnumerateArray().Select(value => value.GetString()).Should().Equal("Enum", "Helper");
         referenceListSchema.GetProperty("properties").GetProperty("scope").GetProperty("enum").EnumerateArray().Select(value => value.GetString()).Should().Equal("ComponentApi", "LibraryApi");
         componentLookupSchema.GetProperty("required").EnumerateArray().Select(value => value.GetString()).Should().Contain("name");
+        componentMembersSchema.GetProperty("required").EnumerateArray().Select(value => value.GetString()).Should().Contain("name");
+        componentMembersSchema.GetProperty("properties").GetProperty("kind").GetProperty("enum").EnumerateArray().Select(value => value.GetString()).Should().Equal("Parameter", "Method");
         referenceLookupSchema.GetProperty("required").EnumerateArray().Select(value => value.GetString()).Should().Contain("name");
         searchSchema.GetProperty("required").EnumerateArray().Select(value => value.GetString()).Should().Contain("query");
         componentLookupSchema.GetProperty("properties").GetProperty("name").GetProperty("minLength").GetInt32().Should().Be(1);
@@ -188,7 +197,7 @@ public class CatalogValidation_Tests {
             cancellationToken: TestContext.Current.CancellationToken);
 
         invalidResult.IsError.Should().BeTrue();
-        GetErrorText(invalidResult).Should().Contain("limit must be between 1 and 200.");
+        GetErrorText(invalidResult).Should().Contain("limit must be between 1 and 50.");
         validResult.IsError.Should().NotBeTrue();
         validResult.Content.Should().NotBeEmpty();
     }
@@ -200,6 +209,8 @@ public class CatalogValidation_Tests {
         await using var client = await CreateMcpClientAsync(factory);
         var invalidCalls = new[] {
             (Tool: "get_nt_component", Arguments: new Dictionary<string, object?> { ["name"] = " " }, ExpectedMessage: "name is required and cannot be blank."),
+            (Tool: "get_nt_component_members", Arguments: new Dictionary<string, object?> { ["name"] = " " }, ExpectedMessage: "name is required and cannot be blank."),
+            (Tool: "get_nt_component_members", Arguments: new Dictionary<string, object?> { ["name"] = "NTButton", ["kind"] = "Field" }, ExpectedMessage: "kind must be Parameter or Method."),
             (Tool: "get_nt_reference_type", Arguments: new Dictionary<string, object?> { ["name"] = " " }, ExpectedMessage: "name is required and cannot be blank."),
             (Tool: "search_ntcomponents", Arguments: new Dictionary<string, object?> { ["query"] = " " }, ExpectedMessage: "query is required and cannot be blank."),
             (Tool: "list_nt_reference_types", Arguments: new Dictionary<string, object?> { ["kind"] = "Widget" }, ExpectedMessage: "kind must be Enum or Helper."),
@@ -224,9 +235,17 @@ public class CatalogValidation_Tests {
         var maximumQuery = new string('a', 512);
         var excessiveQuery = new string('a', 513);
 
-        foreach (var tool in new[] { "list_nt_components", "list_nt_reference_types", "search_ntcomponents" }) {
-            var accepted = await client.CallToolAsync(tool, new Dictionary<string, object?> { ["query"] = maximumQuery }, cancellationToken: TestContext.Current.CancellationToken);
-            var rejected = await client.CallToolAsync(tool, new Dictionary<string, object?> { ["query"] = excessiveQuery }, cancellationToken: TestContext.Current.CancellationToken);
+        foreach (var tool in new[] { "list_nt_components", "list_nt_reference_types", "search_ntcomponents", "get_nt_component_members", "get_nt_reference_type" }) {
+            var arguments = new Dictionary<string, object?> { ["query"] = maximumQuery };
+            var rejectedArguments = new Dictionary<string, object?> { ["query"] = excessiveQuery };
+            if (tool is "get_nt_component_members" or "get_nt_reference_type") {
+                var name = tool == "get_nt_component_members" ? "NTButton" : "NTButtonVariant";
+                arguments["name"] = name;
+                rejectedArguments["name"] = name;
+            }
+
+            var accepted = await client.CallToolAsync(tool, arguments, cancellationToken: TestContext.Current.CancellationToken);
+            var rejected = await client.CallToolAsync(tool, rejectedArguments, cancellationToken: TestContext.Current.CancellationToken);
 
             accepted.IsError.Should().NotBeTrue();
             rejected.IsError.Should().BeTrue();
@@ -242,7 +261,7 @@ public class CatalogValidation_Tests {
 
         var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
 
-        tools.Select(tool => tool.Name).Should().BeEquivalentTo("get_nt_catalog_overview", "list_nt_components", "get_nt_component", "list_nt_reference_types", "get_nt_reference_type", "search_ntcomponents");
+        tools.Select(tool => tool.Name).Should().BeEquivalentTo("get_nt_catalog_overview", "list_nt_components", "get_nt_component", "get_nt_component_members", "list_nt_reference_types", "get_nt_reference_type", "search_ntcomponents");
         foreach (var tool in tools) {
             tool.ProtocolTool.Annotations.Should().NotBeNull();
             tool.ProtocolTool.Annotations!.ReadOnlyHint.Should().BeTrue();
@@ -251,9 +270,11 @@ public class CatalogValidation_Tests {
             tool.ProtocolTool.Annotations.OpenWorldHint.Should().BeFalse();
             tool.ProtocolTool.OutputSchema.Should().NotBeNull();
         }
+
+        tools.Sum(tool => tool.JsonSchema.GetRawText().Length + (tool.ProtocolTool.OutputSchema?.GetRawText().Length ?? 0)).Should().BeLessThan(25_000);
     }
 
-    /// <summary>Behavior source: paged MCP calls expose machine-readable totals and continuation metadata instead of silently truncating text-only arrays.</summary>
+    /// <summary>Behavior source: paged MCP calls expose only the machine-readable total and continuation metadata needed to retrieve another page.</summary>
     [Fact]
     public async Task McpListReferenceTypes_ReturnsStructuredPagingMetadata() {
         await using var factory = new McpWebAppFactory();
@@ -264,10 +285,12 @@ public class CatalogValidation_Tests {
         result.IsError.Should().NotBeTrue();
         result.StructuredContent.Should().NotBeNull();
         var page = result.StructuredContent!.Value;
-        page.GetProperty("items").GetArrayLength().Should().Be(100);
-        page.GetProperty("totalCount").GetInt32().Should().BeGreaterThan(100);
-        page.GetProperty("hasMore").GetBoolean().Should().BeTrue();
-        page.GetProperty("nextOffset").GetInt32().Should().Be(100);
+        page.GetProperty("items").GetArrayLength().Should().Be(10);
+        page.GetProperty("totalCount").GetInt32().Should().BeGreaterThan(10);
+        page.TryGetProperty("offset", out _).Should().BeFalse();
+        page.TryGetProperty("limit", out _).Should().BeFalse();
+        page.TryGetProperty("hasMore", out _).Should().BeFalse();
+        page.GetProperty("nextOffset").GetInt32().Should().Be(10);
     }
 
     /// <summary>Behavior source: MCP resources make the catalog and individual component/reference documentation directly addressable.</summary>
@@ -306,10 +329,11 @@ public class CatalogValidation_Tests {
         return await McpClient.CreateAsync(transport, cancellationToken: TestContext.Current.CancellationToken);
     }
 
-    private static void AssertLimitSchema(JsonElement schema) {
+    private static void AssertLimitSchema(JsonElement schema, int expectedDefault) {
         var limit = schema.GetProperty("properties").GetProperty("limit");
         limit.GetProperty("minimum").GetInt32().Should().Be(1);
-        limit.GetProperty("maximum").GetInt32().Should().Be(200);
+        limit.GetProperty("maximum").GetInt32().Should().Be(50);
+        limit.GetProperty("default").GetInt32().Should().Be(expectedDefault);
     }
 
     private static void AssertQueryLengthSchema(JsonElement schema) =>

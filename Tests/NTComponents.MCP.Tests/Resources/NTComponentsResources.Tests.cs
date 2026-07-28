@@ -6,7 +6,12 @@ using NTComponents.MCP.Resources;
 namespace NTComponents.MCP.Tests.Resources;
 
 public class NTComponentsResources_Tests {
-    private readonly NTComponentsResources _resources = new(new NTComponentsCatalog());
+    private readonly NTComponentsCatalog _catalog = new();
+    private readonly NTComponentsResources _resources;
+
+    public NTComponentsResources_Tests() {
+        _resources = new(_catalog);
+    }
 
     /// <summary>Behavior source: the ntcomponents_catalog resource description promises current versions, documentation location, catalog counts, and supported filters.</summary>
     [Fact]
@@ -23,12 +28,15 @@ public class NTComponentsResources_Tests {
 
     /// <summary>Behavior source: the component resource description accepts a simple type name and promises structured documentation for that component.</summary>
     [Fact]
-    public void Component_WithSimpleName_ReturnsExpandedStructuredDocumentation() {
-        using var document = JsonDocument.Parse(_resources.GetComponent("NTButton"));
+    public void Component_WithSimpleName_ReturnsStructuredDocumentationWithoutExpandedEnums() {
+        var json = _resources.GetComponent("NTButton");
+        using var document = JsonDocument.Parse(json);
 
+        json.Should().NotContain("\r\n");
         document.RootElement.GetProperty("name").GetString().Should().Be("NTButton");
         document.RootElement.GetProperty("parameters").GetArrayLength().Should().BeGreaterThan(0);
-        document.RootElement.GetProperty("relatedEnums").EnumerateArray().Select(item => item.GetProperty("name").GetString()).Should().Contain("NTButtonVariant");
+        document.RootElement.GetProperty("relatedTypes").EnumerateArray().Select(item => item.GetProperty("name").GetString()).Should().Contain("NTButtonVariant");
+        document.RootElement.GetProperty("relatedEnums").GetArrayLength().Should().Be(0);
         document.RootElement.GetProperty("documentationUrl").GetString().Should().Be("https://ntcomponents.nttechnologies.dev/components/ntbutton");
     }
 
@@ -48,7 +56,7 @@ public class NTComponentsResources_Tests {
 
         document.RootElement.GetProperty("name").GetString().Should().Be("NTButtonVariant");
         document.RootElement.GetProperty("kind").GetString().Should().Be("Enum");
-        document.RootElement.GetProperty("fields").EnumerateArray().Select(item => item.GetProperty("name").GetString()).Should().Contain("Filled");
+        document.RootElement.GetProperty("members").GetProperty("items").EnumerateArray().Select(item => item.GetProperty("name").GetString()).Should().Contain("Filled");
         document.RootElement.GetProperty("usedByComponents").EnumerateArray().Select(item => item.GetString()).Should().Contain("NTButton");
     }
 
@@ -69,5 +77,22 @@ public class NTComponentsResources_Tests {
         var second = _resources.GetCatalogOverview();
 
         second.Should().Be(first);
+    }
+
+    /// <summary>Behavior source: exhaustive resources are an on-demand escape hatch, but each individual document remains bounded for model context.</summary>
+    [Fact]
+    public void EveryDocumentationResource_StaysWithinSerializedBudget() {
+        var components = _catalog.ListComponentPage(limit: 200).Items;
+        var references = _catalog.ListReferencePage(limit: 200).Items;
+
+        components.Should().NotBeEmpty();
+        references.Should().NotBeEmpty();
+        foreach (var component in components) {
+            _resources.GetComponent(component.Name).Length.Should().BeLessThan(30_000, $"{component.Name} should defer enum values to its reference resource");
+        }
+
+        foreach (var reference in references) {
+            _resources.GetReference(reference.Name).Length.Should().BeLessThan(20_000, $"{reference.Name} should remain suitable for targeted retrieval");
+        }
     }
 }
