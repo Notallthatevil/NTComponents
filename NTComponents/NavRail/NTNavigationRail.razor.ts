@@ -22,10 +22,12 @@ interface NavigationRailState {
     onOutsidePointerDown?: (event: PointerEvent) => void;
     onRailScroll?: () => void;
     onResponsiveModalChange?: () => void;
+    onSmallScreenChange?: () => void;
     popoverPositionFrame?: number;
     responsiveModalQuery?: MediaQueryList;
     restoreFocusAfterModalClose?: boolean;
     scrollContainer?: HTMLElement | null;
+    smallScreenMediaQuery?: MediaQueryList;
     transitionTimeout?: number;
 }
 
@@ -56,7 +58,9 @@ interface RouteSelectionContext {
     path: string;
 }
 
+const smallScreenMinWidth = 600;
 const mediumScreenMinWidth = 840;
+const smallScreenQuery = `(min-width: ${smallScreenMinWidth}px)`;
 const mediumScreenQuery = `(min-width: ${mediumScreenMinWidth}px)`;
 const navigationRailTransitionDuration = 550;
 const responsiveModalClass = 'nt-navigation-rail-responsive-modal';
@@ -400,6 +404,25 @@ function isModalRail(rail: NavigationRailElement): boolean {
         || rail.classList.contains('nt-navigation-rail-hide-when-collapsed');
 }
 
+function getNestedLayout(rail: NavigationRailElement): HTMLElement | null {
+    const originalParent = rail.__ntNavigationRailState?.modalOriginalParent;
+    if (rail.parentElement?.classList.contains('nt-layout-nested')) {
+        return rail.parentElement;
+    }
+
+    return originalParent instanceof HTMLElement && originalParent.classList.contains('nt-layout-nested')
+        ? originalParent
+        : null;
+}
+
+function isNestedRail(rail: NavigationRailElement): boolean {
+    return getNestedLayout(rail) !== null;
+}
+
+function isSmallScreenAndUp(): boolean {
+    return window.matchMedia?.(smallScreenQuery).matches ?? window.innerWidth >= smallScreenMinWidth;
+}
+
 function usesHiddenCollapsedModal(rail: NavigationRailElement): boolean {
     return rail.classList.contains('nt-navigation-rail-hide-on-xs')
         || rail.classList.contains('nt-navigation-rail-hide-when-collapsed');
@@ -411,7 +434,10 @@ function usesAlwaysHiddenCollapsedModal(rail: NavigationRailElement): boolean {
 
 function usesExpandedItemLayout(rail: NavigationRailElement, expanded: boolean): boolean {
     return expanded
-        || isModalRail(rail);
+        || rail.classList.contains('nt-navigation-rail-modal')
+        || rail.classList.contains('nt-navigation-rail-hide-when-collapsed')
+        || (rail.classList.contains('nt-navigation-rail-hide-on-xs')
+            && !isSmallScreenAndUp());
 }
 
 function focusFirstDestination(rail: NavigationRailElement): void {
@@ -506,6 +532,25 @@ function watchResponsiveModal(rail: NavigationRailElement, state: NavigationRail
     addMediaQueryChangeListener(query, state.onResponsiveModalChange);
 }
 
+function watchSmallScreen(rail: NavigationRailElement, state: NavigationRailState): void {
+    if (state.smallScreenMediaQuery) {
+        return;
+    }
+
+    const query = window.matchMedia?.(smallScreenQuery);
+    if (!query) {
+        return;
+    }
+
+    state.smallScreenMediaQuery = query;
+    state.onSmallScreenChange = () => {
+        applyExpandedState(rail, getExpanded(rail));
+        syncModalState(rail, getExpanded(rail));
+    };
+
+    addMediaQueryChangeListener(query, state.onSmallScreenChange);
+}
+
 function getOrCreateModalDialog(rail: NavigationRailElement, state: NavigationRailState): HTMLDialogElement {
     const existing = getModalDialog(rail);
 
@@ -527,14 +572,26 @@ function getOrCreateModalDialog(rail: NavigationRailElement, state: NavigationRa
 function syncModalDialogStyle(rail: NavigationRailElement, dialog: HTMLDialogElement): void {
     const scrimColor = window.getComputedStyle(rail).getPropertyValue('--nt-navigation-rail-scrim-color').trim();
     const alwaysHiddenCollapsedModal = usesAlwaysHiddenCollapsedModal(rail);
+    const nestedLayout = getNestedLayout(rail);
+    const usesNestedBounds = nestedLayout !== null && !isSmallScreenAndUp();
 
     dialog.classList.toggle('nt-navigation-rail-modal-dialog-hide-on-xs', rail.classList.contains('nt-navigation-rail-hide-on-xs'));
     dialog.classList.toggle('nt-navigation-rail-modal-dialog-hide-when-collapsed', alwaysHiddenCollapsedModal);
+    dialog.classList.toggle('nt-navigation-rail-modal-dialog-nested', usesNestedBounds);
 
     if (scrimColor) {
         dialog.style.setProperty('--nt-navigation-rail-scrim-color', scrimColor);
     } else {
         dialog.style.removeProperty('--nt-navigation-rail-scrim-color');
+    }
+
+    if (usesNestedBounds) {
+        const nestedBounds = nestedLayout.getBoundingClientRect();
+        dialog.style.setProperty('--nt-navigation-rail-modal-block-start', `${nestedBounds.top}px`);
+        dialog.style.setProperty('--nt-navigation-rail-modal-block-size', `${nestedBounds.height}px`);
+    } else {
+        dialog.style.removeProperty('--nt-navigation-rail-modal-block-start');
+        dialog.style.removeProperty('--nt-navigation-rail-modal-block-size');
     }
 }
 
@@ -777,6 +834,17 @@ function syncModalState(rail: NavigationRailElement, expanded: boolean, focusOnO
     if (!expanded) {
         hideModalDialog(rail, state, rail.classList.contains('nt-navigation-rail-collapsing'));
         removeOutsidePointerListener(state);
+
+        return;
+    }
+
+    if (isNestedRail(rail) && isSmallScreenAndUp()) {
+        hideModalDialog(rail, state);
+        syncOutsidePointerListener(rail, state, expanded);
+
+        if (focusOnOpen) {
+            focusFirstDestination(rail);
+        }
 
         return;
     }
@@ -1413,6 +1481,7 @@ function updateRail(rail: NavigationRailElement): void {
 
         bindExternalButton(rail, existingState, externalButton);
         watchResponsiveModal(rail, existingState);
+        watchSmallScreen(rail, existingState);
         registerRailScrollHandler(rail, existingState);
         setExpanded(rail, getStoredExpanded(rail) ?? getExpanded(rail));
         registerInteractions(rail);
@@ -1431,6 +1500,7 @@ function updateRail(rail: NavigationRailElement): void {
     hideModalDialog(rail, existingState);
     removeModalDialogHandlers(existingState);
     removeMediaQueryChangeListener(existingState?.responsiveModalQuery, existingState?.onResponsiveModalChange);
+    removeMediaQueryChangeListener(existingState?.smallScreenMediaQuery, existingState?.onSmallScreenChange);
     removeGroupHandlers(existingState);
 
     const state: NavigationRailState = { button, externalButton: null, groupHandlers: [] };
@@ -1449,6 +1519,7 @@ function updateRail(rail: NavigationRailElement): void {
     bindExternalButton(rail, state, externalButton);
     rail.__ntNavigationRailState = state;
     watchResponsiveModal(rail, state);
+    watchSmallScreen(rail, state);
     registerRailScrollHandler(rail, state);
     registerInteractions(rail);
     registerGroups(rail, state);
@@ -1478,6 +1549,7 @@ function disposeRail(rail: Maybe<NavigationRailElement>): void {
     removeModalDialogHandlers(state);
     restoreBackgroundForModal(state);
     removeMediaQueryChangeListener(state?.responsiveModalQuery, state?.onResponsiveModalChange);
+    removeMediaQueryChangeListener(state?.smallScreenMediaQuery, state?.onSmallScreenChange);
     removeGroupHandlers(state);
     if (state?.transitionTimeout !== undefined) {
         window.clearTimeout(state.transitionTimeout);

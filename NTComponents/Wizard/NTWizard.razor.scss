@@ -121,7 +121,7 @@ $wizard-medium-screen-up-plus: measurements.$medium-screen-up + 1px;
 
     @media only screen and (max-width: measurements.$medium-screen-up) {
         .nt-wizard-steps {
-            &:has(.current-step:not(:first-child):not(:last-child)) {
+            &:has(.current-step) {
                 align-items: center;
                 display: grid;
                 grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
@@ -139,7 +139,9 @@ $wizard-medium-screen-up-plus: measurements.$medium-screen-up + 1px;
 
                 .nt-wizard-step-indicator:has(+ .current-step),
                 .nt-wizard-step-indicator.current-step,
-                .nt-wizard-step-indicator.current-step + .nt-wizard-step-indicator {
+                .nt-wizard-step-indicator.current-step + .nt-wizard-step-indicator,
+                .nt-wizard-step-indicator.current-step:first-child + .nt-wizard-step-indicator + .nt-wizard-step-indicator,
+                .nt-wizard-step-indicator:has(+ .nt-wizard-step-indicator + .current-step:last-child) {
                     display: grid;
                 }
 
@@ -156,6 +158,41 @@ $wizard-medium-screen-up-plus: measurements.$medium-screen-up + 1px;
                 .nt-wizard-step-indicator.current-step + .nt-wizard-step-indicator {
                     grid-column: 3;
                     justify-self: start;
+                }
+
+                .nt-wizard-step-indicator.current-step:first-child {
+                    grid-column: 1;
+                    justify-self: end;
+                }
+
+                .nt-wizard-step-indicator.current-step:first-child + .nt-wizard-step-indicator {
+                    grid-column: 2;
+                    justify-self: center;
+                }
+
+                .nt-wizard-step-indicator.current-step:first-child + .nt-wizard-step-indicator + .nt-wizard-step-indicator {
+                    grid-column: 3;
+                    justify-self: start;
+                }
+
+                .nt-wizard-step-indicator:has(+ .nt-wizard-step-indicator + .current-step:last-child) {
+                    grid-column: 1;
+                    justify-self: end;
+                }
+
+                .nt-wizard-step-indicator:has(+ .current-step:last-child) {
+                    grid-column: 2;
+                    justify-self: center;
+                }
+
+                .nt-wizard-step-indicator.current-step:last-child {
+                    grid-column: 3;
+                    justify-self: start;
+                }
+
+                .nt-wizard-step-indicator.current-step:first-child:last-child {
+                    grid-column: 2;
+                    justify-self: center;
                 }
             }
 

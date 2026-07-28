@@ -128,6 +128,10 @@ $nt-checkbox-exit-easing: motion.$nt-motion-easing-emphasized-accelerate;
         box-shadow: 0 0 0 $nt-checkbox-focus-indicator-width var(--nt-checkbox-focus-indicator-color);
     }
 
+    input:checked ~ .nt-checkbox-state-layer {
+        background-color: var(--nt-checkbox-selected-state-layer-color);
+    }
+
     .nt-checkbox-container {
         position: relative;
         display: flex;
@@ -246,7 +250,11 @@ $nt-checkbox-exit-easing: motion.$nt-motion-easing-emphasized-accelerate;
     &.nt-checkbox-selected,
     &.nt-checkbox-indeterminate {
         --nt-checkbox-state-layer-color: var(--nt-checkbox-selected-state-layer-color);
+    }
 
+    &.nt-checkbox-selected .nt-checkbox-container,
+    &.nt-checkbox-indeterminate .nt-checkbox-container,
+    input:checked ~ .nt-checkbox-container {
         .nt-checkbox-outline {
             opacity: 0;
         }
@@ -261,7 +269,8 @@ $nt-checkbox-exit-easing: motion.$nt-motion-easing-emphasized-accelerate;
         }
     }
 
-    &.nt-checkbox-selected {
+    &.nt-checkbox-selected .nt-checkbox-container,
+    input:checked ~ .nt-checkbox-container {
         .nt-checkbox-checkmark .nt-checkbox-mark {
             stroke-dashoffset: 0;
         }
@@ -271,7 +280,7 @@ $nt-checkbox-exit-easing: motion.$nt-motion-easing-emphasized-accelerate;
         }
     }
 
-    &.nt-checkbox-indeterminate {
+    &.nt-checkbox-indeterminate .nt-checkbox-container {
         .nt-checkbox-checkmark {
             opacity: 0;
         }

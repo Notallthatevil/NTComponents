@@ -242,7 +242,7 @@ describe('NTNavigationRail module', () => {
     expect(window.matchMedia).toHaveBeenCalledWith('(min-width: 840px)');
     expect(rail.classList.contains('nt-navigation-rail-expanded')).toBe(false);
     expect(rail.classList.contains('nt-navigation-rail-collapsed')).toBe(true);
-    expect(item.classList.contains('nt-navigation-rail-item-expanded')).toBe(true);
+    expect(item.classList.contains('nt-navigation-rail-item-expanded')).toBe(false);
     expect(button.getAttribute('aria-expanded')).toBe('false');
   });
 
@@ -276,7 +276,7 @@ describe('NTNavigationRail module', () => {
     expect(window.matchMedia).toHaveBeenCalledWith('(min-width: 840px)');
     expect(rail.classList.contains('nt-navigation-rail-expanded')).toBe(false);
     expect(rail.classList.contains('nt-navigation-rail-collapsed')).toBe(true);
-    expect(item.classList.contains('nt-navigation-rail-item-expanded')).toBe(true);
+    expect(item.classList.contains('nt-navigation-rail-item-expanded')).toBe(false);
     expect(button.getAttribute('aria-expanded')).toBe('false');
   });
 
@@ -1055,7 +1055,7 @@ describe('NTNavigationRail module', () => {
     expect(rail.classList.contains('nt-navigation-rail-collapsed')).toBe(true);
     expect(rail.classList.contains('nt-navigation-rail-collapsing')).toBe(true);
     expect(rail.classList.contains('nt-navigation-rail-responsive-modal')).toBe(true);
-    expect(firstItem.classList.contains('nt-navigation-rail-item-expanded')).toBe(true);
+    expect(firstItem.classList.contains('nt-navigation-rail-item-expanded')).toBe(false);
     expect(dialog.classList.contains('nt-navigation-rail-modal-dialog-exiting')).toBe(true);
     expect(document.querySelector('.nt-navigation-rail-modal-dialog')).not.toBeNull();
     expect(main.inert).toBe(true);
@@ -1069,7 +1069,100 @@ describe('NTNavigationRail module', () => {
     expect(main.hasAttribute('aria-hidden')).toBe(false);
     expect(document.activeElement).toBe(menuButton);
     expect(rail.classList.contains('nt-navigation-rail-collapsing')).toBe(false);
-    expect(firstItem.classList.contains('nt-navigation-rail-item-expanded')).toBe(true);
+    expect(firstItem.classList.contains('nt-navigation-rail-item-expanded')).toBe(false);
+  });
+
+  test('nested rail expansion stays within its layout from small screens upward', () => {
+    window.matchMedia = jest.fn(query => ({
+      matches: query === '(min-width: 600px)',
+      media: query,
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn()
+    }));
+    document.body.innerHTML = `
+      <section class="nt-layout nt-layout-nested">
+        <nav class="nt-navigation-rail nt-navigation-rail-collapsed">
+          <button class="nt-navigation-rail-menu-button"
+                  type="button"
+                  aria-label="Expand nested navigation rail"
+                  aria-expanded="false"
+                  data-nt-navigation-rail-expanded-label="Collapse nested navigation rail"
+                  data-nt-navigation-rail-collapsed-label="Expand nested navigation rail">
+            Menu
+          </button>
+          <a class="nt-navigation-rail-item" href="/home">Home</a>
+        </nav>
+        <section class="nt-body"><button id="nested-content">Nested content</button></section>
+      </section>`;
+
+    module.onLoad();
+
+    const layout = document.querySelector('.nt-layout-nested');
+    const rail = document.querySelector('.nt-navigation-rail');
+    const menuButton = document.querySelector('.nt-navigation-rail-menu-button');
+    const nestedContent = document.querySelector('#nested-content');
+
+    menuButton.click();
+
+    expect(rail.classList.contains('nt-navigation-rail-responsive-modal')).toBe(true);
+    expect(rail.classList.contains('nt-navigation-rail-expanded')).toBe(true);
+    expect(rail.parentElement).toBe(layout);
+    expect(document.querySelector('.nt-navigation-rail-modal-dialog')).toBeNull();
+    expect(nestedContent.inert).not.toBe(true);
+
+    nestedContent.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+
+    expect(rail.classList.contains('nt-navigation-rail-collapsed')).toBe(true);
+    expect(document.activeElement).toBe(menuButton);
+  });
+
+  test('nested rail expansion becomes modal on extra-small screens', async () => {
+    window.matchMedia = jest.fn(query => ({
+      matches: false,
+      media: query,
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn()
+    }));
+    document.body.innerHTML = `
+      <section class="nt-layout nt-layout-nested">
+        <nav class="nt-navigation-rail nt-navigation-rail-hide-on-xs nt-navigation-rail-collapsed">
+          <button class="nt-navigation-rail-menu-button"
+                  type="button"
+                  aria-label="Expand nested navigation rail"
+                  aria-expanded="false"
+                  data-nt-navigation-rail-expanded-label="Collapse nested navigation rail"
+                  data-nt-navigation-rail-collapsed-label="Expand nested navigation rail">
+            Menu
+          </button>
+          <a class="nt-navigation-rail-item" href="/home">Home</a>
+        </nav>
+        <section class="nt-body"><button id="nested-content">Nested content</button></section>
+      </section>`;
+
+    module.onLoad();
+
+    const layout = document.querySelector('.nt-layout-nested');
+    const rail = document.querySelector('.nt-navigation-rail');
+    const menuButton = document.querySelector('.nt-navigation-rail-menu-button');
+    const firstItem = document.querySelector('.nt-navigation-rail-item');
+    const nestedContent = document.querySelector('#nested-content');
+    const nestedBody = nestedContent.closest('.nt-body');
+
+    menuButton.click();
+
+    const dialog = document.querySelector('.nt-navigation-rail-modal-dialog');
+    expect(dialog).not.toBeNull();
+    expect(dialog.open).toBe(true);
+    expect(dialog.contains(rail)).toBe(true);
+    expect(nestedBody.inert).toBe(true);
+
+    firstItem.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await waitForAnimationFrame();
+
+    expect(document.querySelector('.nt-navigation-rail-modal-dialog')).toBeNull();
+    expect(rail.parentElement).toBe(layout);
+    expect(nestedBody.inert).not.toBe(true);
+    expect(document.activeElement).toBe(menuButton);
   });
 
   test('expanded modal rail does not restart enter animation on update', () => {

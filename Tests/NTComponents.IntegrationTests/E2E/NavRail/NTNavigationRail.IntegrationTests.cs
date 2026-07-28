@@ -73,7 +73,46 @@ public class NTNavigationRail_IntegrationTests : IAsyncLifetime {
     }
 
     [Fact]
-    public async Task Rail_SmallScreen_Collapsed_VisibleRail_Uses_Modal_Item_Layout() {
+    public async Task Rail_Collapsed_Item_Label_Is_Limited_To_Two_Lines() {
+        ArgumentNullException.ThrowIfNull(_page);
+
+        await NavigateToRailTestPageAsync();
+
+        var labelIsClamped = await GetComponentsLink().Locator(".nt-navigation-rail-item-label").EvaluateAsync<bool>(
+            """
+            label => {
+                label.textContent = 'Components with an intentionally long navigation label';
+
+                const style = getComputedStyle(label);
+                const lineHeight = Number.parseFloat(style.lineHeight);
+
+                return style.overflow === 'hidden'
+                    && style.webkitLineClamp === '2'
+                    && label.getBoundingClientRect().height <= (lineHeight * 2) + 0.5
+                    && label.scrollHeight > label.clientHeight;
+            }
+            """);
+
+        labelIsClamped.Should().BeTrue("collapsed navigation rail labels should never occupy more than two lines");
+    }
+
+    [Fact]
+    public async Task Rail_Collapsed_Selected_Item_Changes_Icon_But_Not_Label_Color() {
+        ArgumentNullException.ThrowIfNull(_page);
+
+        await NavigateToRailTestPageAsync();
+
+        var selectedLabelColor = await GetHomeLink().Locator(".nt-navigation-rail-item-label").EvaluateAsync<string>("label => getComputedStyle(label).color");
+        var unselectedLabelColor = await GetComponentsLink().Locator(".nt-navigation-rail-item-label").EvaluateAsync<string>("label => getComputedStyle(label).color");
+        var selectedIconColor = await GetHomeLink().Locator(".nt-navigation-rail-item-icon").EvaluateAsync<string>("icon => getComputedStyle(icon).color");
+        var unselectedIconColor = await GetComponentsLink().Locator(".nt-navigation-rail-item-icon").EvaluateAsync<string>("icon => getComputedStyle(icon).color");
+
+        selectedLabelColor.Should().Be(unselectedLabelColor);
+        selectedIconColor.Should().NotBe(unselectedIconColor);
+    }
+
+    [Fact]
+    public async Task Rail_MediumScreen_Collapsed_VisibleRail_Uses_Full_Collapsed_Item_Layout() {
         ArgumentNullException.ThrowIfNull(_page);
 
         await _page.SetViewportSizeAsync(700, 900);
@@ -93,32 +132,36 @@ public class NTNavigationRail_IntegrationTests : IAsyncLifetime {
             null,
             new PageWaitForFunctionOptions { Timeout = 5000 });
 
-        var usesModalItemLayout = await _page.EvaluateAsync<bool>(
+        var usesFullCollapsedItemLayout = await _page.EvaluateAsync<bool>(
             """
             () => {
+                const rail = document.querySelector('[data-testid="nav-rail-under-test"]');
                 const item = document.querySelector('[data-testid="nav-rail-home-item"]');
                 const icon = item?.querySelector('.nt-navigation-rail-item-icon');
                 const label = item?.querySelector('.nt-navigation-rail-item-label');
 
-                if (!(item instanceof HTMLElement)
+                if (!(rail instanceof HTMLElement)
+                    || !(item instanceof HTMLElement)
                     || !(icon instanceof HTMLElement)
                     || !(label instanceof HTMLElement)
-                    || !item.classList.contains('nt-navigation-rail-item-expanded')) {
+                    || item.classList.contains('nt-navigation-rail-item-expanded')) {
                     return false;
                 }
 
+                const railRect = rail.getBoundingClientRect();
                 const iconRect = icon.getBoundingClientRect();
                 const labelRect = label.getBoundingClientRect();
-                const iconCenter = iconRect.top + (iconRect.height / 2);
-                const labelCenter = labelRect.top + (labelRect.height / 2);
+                const iconCenter = iconRect.left + (iconRect.width / 2);
+                const labelCenter = labelRect.left + (labelRect.width / 2);
 
-                return labelRect.left > iconRect.right
+                return Math.abs(railRect.width - 96) < 1
+                    && labelRect.top >= iconRect.bottom
                     && Math.abs(labelCenter - iconCenter) < 2;
             }
             """);
 
-        usesModalItemLayout.Should().BeTrue(
-            "a visible collapsed rail below the medium breakpoint should use the modal item layout");
+        usesFullCollapsedItemLayout.Should().BeTrue(
+            "a visible collapsed rail in the medium range should retain the full collapsed label geometry");
     }
 
     [Fact]

@@ -444,6 +444,13 @@ $nt-navigation-rail-modal-width: min($nt-navigation-rail-expanded-width, 88vw);
         animation-name: nt-navigation-rail-modal-dialog-exit-to-zero;
     }
 
+    &.nt-navigation-rail-modal-dialog-nested {
+        block-size: var(--nt-navigation-rail-modal-block-size);
+        inset-block-end: auto;
+        inset-block-start: var(--nt-navigation-rail-modal-block-start);
+        max-block-size: var(--nt-navigation-rail-modal-block-size);
+    }
+
     > .nt-navigation-rail {
         block-size: 100dvh;
         flex: 0 0 $nt-navigation-rail-modal-width;
@@ -467,6 +474,12 @@ $nt-navigation-rail-modal-width: min($nt-navigation-rail-expanded-width, 88vw);
             position: relative;
             z-index: auto;
         }
+
+    &.nt-navigation-rail-modal-dialog-nested > .nt-navigation-rail {
+        block-size: 100%;
+        max-block-size: 100%;
+        min-block-size: 0;
+    }
 }
 
 [dir='rtl'] .nt-navigation-rail-modal-dialog,

@@ -93,7 +93,10 @@ $nt-navigation-rail-group-shape-transition: motion.$nt-motion-duration-short_4 m
     }
 
     &.nt-navigation-rail-item-selected {
-        color: var(--nt-navigation-rail-active-color, #{colors.$tnt-color-on-secondary-container});
+        .nt-navigation-rail-item-icon,
+        .nt-navigation-rail-group-chevron {
+            color: var(--nt-navigation-rail-active-color, #{colors.$tnt-color-on-secondary-container});
+        }
 
         .nt-navigation-rail-item-indicator {
             opacity: 1;
@@ -228,6 +231,14 @@ $nt-navigation-rail-group-shape-transition: motion.$nt-motion-duration-short_4 m
     transition: color $nt-navigation-rail-group-state-transition, max-inline-size $nt-navigation-rail-group-shape-transition, transform $nt-navigation-rail-group-shape-transition;
     white-space: normal;
     z-index: 2;
+}
+
+.nt-navigation-rail-group-trigger:not(.nt-navigation-rail-item-expanded) .nt-navigation-rail-item-label {
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    display: -webkit-box;
+    max-block-size: calc(typescale.$tnt-typescale-label-medium-line-height * 2);
+    overflow: hidden;
 }
 
 .nt-navigation-rail-group-chevron {
