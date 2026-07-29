@@ -3,7 +3,7 @@
  */
 import { jest } from '@jest/globals';
 
-const runtimeUrl = new URL('../../wwwroot/NTTheme.runtime.js', import.meta.url);
+const runtimeUrl = new URL('../.generated/NTTheme.runtime.js', import.meta.url);
 
 const loadRuntime = async () => {
     delete window.NTComponents?.NTThemeRuntime;
@@ -27,7 +27,7 @@ describe('NTTheme runtime', () => {
 
         expect(link).not.toBeNull();
         expect(link.rel).toBe('stylesheet');
-        expect(link.hasAttribute('data-permanent')).toBe(true);
+        expect(link.getAttribute('data-permanent')).toBe(link.id);
 
         link.dispatchEvent(new Event('load'));
         await updatePromise;
@@ -36,20 +36,20 @@ describe('NTTheme runtime', () => {
         expect(link.getAttribute('data-tnt-theme-loaded')).toBe('true');
     });
 
-    test('applyStylesheet removes first-paint default links after active theme loads', async () => {
+    test('applyStylesheet deactivates first-paint default links after active theme loads', async () => {
         const runtime = await loadRuntime();
         const lightDefault = document.createElement('link');
         lightDefault.id = 'nt-theme-default-light';
         lightDefault.rel = 'stylesheet';
         lightDefault.href = '/Themes/light.css';
         lightDefault.setAttribute('data-nt-theme-default', 'true');
-        lightDefault.setAttribute('data-permanent', '');
+        lightDefault.setAttribute('data-permanent', lightDefault.id);
         const darkDefault = document.createElement('link');
         darkDefault.id = 'nt-theme-default-dark';
         darkDefault.rel = 'stylesheet';
         darkDefault.href = '/Themes/dark.css';
         darkDefault.setAttribute('data-nt-theme-default', 'true');
-        darkDefault.setAttribute('data-permanent', '');
+        darkDefault.setAttribute('data-permanent', darkDefault.id);
         document.head.append(lightDefault, darkDefault);
 
         const updatePromise = runtime.applyStylesheet(new URL('/Themes/dark.css', window.location.href).href, { waitForLoad: true });
@@ -62,9 +62,11 @@ describe('NTTheme runtime', () => {
         await updatePromise;
 
         expect(link.isConnected).toBe(true);
+        expect(link.getAttribute('data-permanent')).toBe(link.id);
         expect(lightDefault.isConnected).toBe(true);
-        expect(lightDefault.hasAttribute('href')).toBe(false);
-        expect(lightDefault.hasAttribute('rel')).toBe(false);
+        expect(lightDefault.href).toContain('/Themes/light.css');
+        expect(lightDefault.rel).toBe('stylesheet');
+        expect(lightDefault.media).toBe('not all');
         expect(document.head.querySelectorAll('link[data-nt-theme-default]')).toHaveLength(0);
     });
 
@@ -74,14 +76,14 @@ describe('NTTheme runtime', () => {
         critical.id = 'nt-theme-critical';
         critical.setAttribute('data-nt-theme-critical', 'true');
         critical.setAttribute('data-tnt-theme-critical', 'true');
-        critical.setAttribute('data-permanent', '');
+        critical.setAttribute('data-permanent', critical.id);
         critical.textContent = 'html, body { background: Canvas; }';
         const lightDefault = document.createElement('link');
         lightDefault.id = 'nt-theme-default-light';
         lightDefault.rel = 'stylesheet';
         lightDefault.href = '/Themes/light.css';
         lightDefault.setAttribute('data-nt-theme-default', 'true');
-        lightDefault.setAttribute('data-permanent', '');
+        lightDefault.setAttribute('data-permanent', lightDefault.id);
         document.head.append(critical, lightDefault);
 
         const updatePromise = runtime.applyStylesheet(new URL('/Themes/dark.css', window.location.href).href, { waitForLoad: true });
@@ -94,7 +96,8 @@ describe('NTTheme runtime', () => {
         expect(critical.hasAttribute('data-nt-theme-critical')).toBe(false);
         expect(critical.hasAttribute('data-tnt-theme-critical')).toBe(false);
         expect(lightDefault.isConnected).toBe(true);
-        expect(lightDefault.hasAttribute('href')).toBe(false);
+        expect(lightDefault.href).toContain('/Themes/light.css');
+        expect(lightDefault.media).toBe('not all');
         expect(lightDefault.hasAttribute('data-nt-theme-default')).toBe(false);
         expect(document.head.querySelectorAll('link[data-nt-theme]')).toHaveLength(1);
     });
@@ -114,7 +117,7 @@ describe('NTTheme runtime', () => {
         expect(pending).not.toBeNull();
         expect(pending.rel).toBe('preload');
         expect(pending.as).toBe('style');
-        expect(pending.hasAttribute('data-permanent')).toBe(true);
+        expect(pending.getAttribute('data-permanent')).toBe(pending.id);
         expect(document.head.querySelector('link[data-nt-theme]')).toBe(current);
 
         pending.dispatchEvent(new Event('load'));
@@ -183,7 +186,7 @@ describe('NTTheme runtime', () => {
         const state = JSON.parse(stateElement.textContent);
 
         expect(stateElement.type).toBe('application/json');
-        expect(stateElement.hasAttribute('data-permanent')).toBe(true);
+        expect(stateElement.getAttribute('data-permanent')).toBe(stateElement.id);
         expect(state.themePreference).toBe('DARK');
         expect(state.theme).toBe('DARK');
         expect(state.contrast).toBe('HIGH');
@@ -195,7 +198,7 @@ describe('NTTheme runtime', () => {
         const stateElement = document.createElement('script');
         stateElement.type = 'application/json';
         stateElement.id = 'nt-theme-state';
-        stateElement.setAttribute('data-permanent', '');
+        stateElement.setAttribute('data-permanent', stateElement.id);
         stateElement.textContent = JSON.stringify({ href: new URL('/Themes/dark.css', window.location.href).href });
         document.head.appendChild(stateElement);
 
@@ -204,7 +207,7 @@ describe('NTTheme runtime', () => {
 
         expect(result).toBe(link);
         expect(link.href).toBe(new URL('/Themes/dark.css', window.location.href).href);
-        expect(link.hasAttribute('data-permanent')).toBe(true);
+        expect(link.getAttribute('data-permanent')).toBe(link.id);
     });
 
     test('restoreThemeState ignores external state hrefs', async () => {

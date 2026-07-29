@@ -3,7 +3,7 @@
  */
 import { jest } from '@jest/globals';
 
-const runtimeUrl = new URL('../../wwwroot/NTTheme.runtime.js', import.meta.url);
+const runtimeUrl = new URL('../.generated/NTTheme.runtime.js', import.meta.url);
 const toggleUrl = new URL('../NTThemeToggle.razor.js', import.meta.url);
 
 const loadModules = async () => {

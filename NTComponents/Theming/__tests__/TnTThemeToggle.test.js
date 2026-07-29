@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import { jest } from '@jest/globals';
-import '../../wwwroot/NTTheme.runtime.js';
+import '../.generated/NTTheme.runtime.js';
 import { onLoad, onUpdate, onDispose } from '../TnTThemeToggle.razor.js';
 
 // Mock global dependencies

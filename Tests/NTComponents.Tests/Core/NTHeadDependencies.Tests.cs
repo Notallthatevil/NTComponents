@@ -1,16 +1,26 @@
+using Microsoft.AspNetCore.Components;
+
 namespace NTComponents.Tests.Core;
 
 public class NTHeadDependencies_Tests : BunitContext {
 
     [Fact]
-    public void Render_Includes_MaterialSymbolsSharp_With_Fill_Axis() {
+    public void Render_ConsolidatesDefaultFontFamiliesIntoOneStylesheet() {
         var cut = Render<NTHeadDependencies>();
+        var fontStylesheet = cut.FindAll("link#nt-fonts-stylesheet").Should().ContainSingle().Subject;
+        var href = fontStylesheet.GetAttribute("href");
 
-        cut.Markup.Should().Contain("https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200");
+        href.Should().StartWith("https://fonts.googleapis.com/css2?");
+        href.Should().Contain("family=Roboto:wght@400;500;600;700");
+        href.Should().Contain("family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200");
+        href.Should().Contain("family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200");
+        href.Should().Contain("family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200");
+        href.Should().EndWith("&display=swap");
+        cut.FindAll("link[href^='https://fonts.googleapis.com/css2']").Should().ContainSingle();
     }
 
     [Fact]
-    public void Render_EmitsThemeRuntimeConfigBeforeBootstrap() {
+    public void Render_EmitsThemeRuntimeConfigBeforeBundle() {
         var cut = Render<NTHeadDependencies>();
         var markup = cut.Markup;
 
@@ -20,18 +30,30 @@ public class NTHeadDependencies_Tests : BunitContext {
         markup.Should().Contain("data-nt-theme-default");
         markup.Should().Contain("id=\"nt-theme-config\"");
         markup.Should().Contain("id=\"nt-theme-state\"");
-        markup.Should().Contain("_content/NTComponents/NTTheme.runtime.js");
-        markup.Should().Contain("_content/NTComponents/theme-bootstrap.js");
-        markup.Should().Contain("<style class=\"tnt-measurements\">:root{--tnt-header-height:64px;--tnt-footer-height:64px;--tnt-side-nav-width:256px;}</style>");
+        markup.Should().Contain("_content/NTComponents/NTTheme.js");
+        cut.Find("#nt-measurement-tokens").TextContent.Should().Be(":root{--tnt-header-height:64px;--tnt-footer-height:64px;--tnt-side-nav-width:256px;}");
         markup.Should().Contain("_content/NTComponents/nt-measurements.css");
 
         markup.IndexOf("data-nt-theme-default", StringComparison.Ordinal).Should().BeLessThan(markup.IndexOf("id=\"nt-theme-config\"", StringComparison.Ordinal));
-        markup.IndexOf("id=\"nt-theme-config\"", StringComparison.Ordinal).Should().BeLessThan(markup.IndexOf("_content/NTComponents/NTTheme.runtime.js", StringComparison.Ordinal));
-        markup.IndexOf("id=\"nt-theme-state\"", StringComparison.Ordinal).Should().BeLessThan(markup.IndexOf("_content/NTComponents/NTTheme.runtime.js", StringComparison.Ordinal));
-        markup.IndexOf("_content/NTComponents/NTTheme.runtime.js", StringComparison.Ordinal).Should().BeLessThan(markup.IndexOf("_content/NTComponents/theme-bootstrap.js", StringComparison.Ordinal));
-        markup.IndexOf("_content/NTComponents/theme-bootstrap.js", StringComparison.Ordinal).Should().BeLessThan(markup.IndexOf("class=\"tnt-measurements\"", StringComparison.Ordinal));
-        markup.IndexOf("class=\"tnt-measurements\"", StringComparison.Ordinal).Should().BeLessThan(markup.IndexOf("_content/NTComponents/nt-measurements.css", StringComparison.Ordinal));
-        markup.IndexOf("_content/NTComponents/nt-measurements.css", StringComparison.Ordinal).Should().BeLessThan(markup.IndexOf("_content/NTComponents/nt-ripple.css", StringComparison.Ordinal));
+        markup.IndexOf("id=\"nt-theme-config\"", StringComparison.Ordinal).Should().BeLessThan(markup.IndexOf("_content/NTComponents/NTTheme.js", StringComparison.Ordinal));
+        markup.IndexOf("id=\"nt-theme-state\"", StringComparison.Ordinal).Should().BeLessThan(markup.IndexOf("_content/NTComponents/NTTheme.js", StringComparison.Ordinal));
+        markup.IndexOf("_content/NTComponents/NTTheme.js", StringComparison.Ordinal).Should().BeLessThan(markup.IndexOf("class=\"tnt-measurements\"", StringComparison.Ordinal));
+        markup.IndexOf("class=\"tnt-measurements\"", StringComparison.Ordinal).Should().BeLessThan(markup.IndexOf("id=\"nt-measurements-stylesheet\"", StringComparison.Ordinal));
+        markup.IndexOf("id=\"nt-measurements-stylesheet\"", StringComparison.Ordinal).Should().BeLessThan(markup.IndexOf("id=\"nt-ripple-stylesheet\"", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Render_PreloadsMeasurementStylesheetBeforeThemeBundle() {
+        var cut = Render<NTHeadDependencies>();
+        var markup = cut.Markup;
+        var preload = cut.FindAll("link#nt-measurements-preload").Should().ContainSingle().Subject;
+        var stylesheet = cut.Find("link#nt-measurements-stylesheet");
+
+        preload.GetAttribute("rel").Should().Be("preload");
+        preload.GetAttribute("as").Should().Be("style");
+        preload.GetAttribute("href").Should().Be(stylesheet.GetAttribute("href"));
+        preload.HasAttribute("data-permanent").Should().BeTrue();
+        markup.IndexOf("id=\"nt-measurements-preload\"", StringComparison.Ordinal).Should().BeLessThan(markup.IndexOf("id=\"nt-theme-script\"", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -41,13 +63,68 @@ public class NTHeadDependencies_Tests : BunitContext {
 
         permanentElements.Should().OnlyContain(element => !string.IsNullOrWhiteSpace(element.Id));
         permanentElements.Select(element => element.Id).Should().OnlyHaveUniqueItems();
+        permanentElements.Should().OnlyContain(element => element.GetAttribute("data-permanent") == element.Id);
         cut.Find("#nt-theme-critical").HasAttribute("data-nt-theme-critical").Should().BeTrue();
         cut.FindAll("link[data-nt-theme-default]").Should().OnlyContain(link => link.HasAttribute("data-permanent"));
         cut.Find("#nt-theme-active-slot").HasAttribute("href").Should().BeFalse();
         cut.Find("#nt-theme-pending-slot").HasAttribute("href").Should().BeFalse();
-        cut.Find("#nt-theme-runtime-script").GetAttribute("src").Should().Be("_content/NTComponents/NTTheme.runtime.js");
-        cut.Find("#nt-theme-bootstrap-script").GetAttribute("src").Should().Be("_content/NTComponents/theme-bootstrap.js");
+        cut.Find("#nt-theme-script").GetAttribute("src").Should().Be("_content/NTComponents/NTTheme.js");
         cut.Find("#nt-measurements-stylesheet").GetAttribute("href").Should().Be("_content/NTComponents/nt-measurements.css");
+        cut.Find("#nt-measurement-tokens").HasAttribute("data-permanent").Should().BeTrue();
+        cut.Find("#nt-ripple-stylesheet").HasAttribute("data-permanent").Should().BeTrue();
+        cut.Find("#nt-fonts-api-preconnect").HasAttribute("data-permanent").Should().BeTrue();
+        cut.Find("#nt-fonts-static-preconnect").HasAttribute("data-permanent").Should().BeTrue();
+        cut.Find("#nt-fonts-stylesheet").HasAttribute("data-permanent").Should().BeTrue();
+        cut.Find("#nt-anchor-positioning-loader").HasAttribute("data-permanent").Should().BeTrue();
+    }
+
+    [Fact]
+    public void Render_UsesLocalAnchorPositioningPolyfill() {
+        var cut = Render<NTHeadDependencies>();
+        var loader = cut.Find("#nt-anchor-positioning-loader");
+
+        loader.TextContent.Should().Contain("_content/NTComponents/css-anchor-positioning.js");
+        loader.TextContent.Should().NotContain("unpkg.com");
+    }
+
+    [Fact]
+    public void CreateGoogleFontsStylesheetHref_NoFamilies_ReturnsNull() {
+        NTHeadDependencies.CreateGoogleFontsStylesheetHref(NTFontFamily.None).Should().BeNull();
+    }
+
+    [Fact]
+    public void Render_SelectedFontFamilies_OnlyIncludesRequestedFamilies() {
+        var cut = Render<NTHeadDependencies>(parameters => parameters.Add(p => p.FontFamilies, NTFontFamily.Roboto | NTFontFamily.MaterialSymbolsOutlined));
+        var href = cut.Find("#nt-fonts-stylesheet").GetAttribute("href");
+
+        href.Should().Contain("family=Roboto:wght@400;500;600;700");
+        href.Should().Contain("family=Material+Symbols+Outlined");
+        href.Should().NotContain("Material+Symbols+Rounded");
+        href.Should().NotContain("Material+Symbols+Sharp");
+    }
+
+    [Fact]
+    public void Render_CustomFontStylesheet_ReplacesGoogleFontsDependencies() {
+        var cut = Render<NTHeadDependencies>(parameters => parameters.Add(p => p.FontStylesheetHref, "fonts/app-fonts.css"));
+
+        cut.Find("#nt-fonts-stylesheet").GetAttribute("href").Should().Be("fonts/app-fonts.css");
+        cut.FindAll("link[href*='fonts.googleapis.com'],link[href*='fonts.gstatic.com']").Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Render_NoFontFamilies_OmitsFontDependencies() {
+        var cut = Render<NTHeadDependencies>(parameters => parameters.Add(p => p.FontFamilies, NTFontFamily.None));
+
+        cut.FindAll("#nt-fonts-stylesheet,#nt-fonts-api-preconnect,#nt-fonts-static-preconnect").Should().BeEmpty();
+    }
+
+    [Fact]
+    public void ResolveAssetPath_UsesContentSpecificUrl() {
+        var assets = new ResourceAssetCollection([
+            new ResourceAsset("_content/NTComponents/NTTheme.fingerprint.js", [new ResourceAssetProperty("label", "_content/NTComponents/NTTheme.js")])
+        ]);
+
+        NTHeadDependencies.ResolveAssetPath(assets, "_content/NTComponents/NTTheme.js").Should().Be("_content/NTComponents/NTTheme.fingerprint.js");
     }
 
     [Fact]
@@ -119,7 +196,7 @@ public class NTHeadDependencies_Tests : BunitContext {
             .Add(p => p.FooterHeight, 48)
             .Add(p => p.SideNavWidth, 300));
 
-        cut.Markup.Should().Contain("<style class=\"tnt-measurements\">.app-shell{--tnt-header-height:72.5px;--tnt-footer-height:48px;--tnt-side-nav-width:300px;}</style>");
+        cut.Find("#nt-measurement-tokens").TextContent.Should().Be(".app-shell{--tnt-header-height:72.5px;--tnt-footer-height:48px;--tnt-side-nav-width:300px;}");
     }
 
     [Fact]
@@ -129,6 +206,6 @@ public class NTHeadDependencies_Tests : BunitContext {
 #pragma warning restore CS0618
 
         cut.Markup.Should().Contain("id=\"nt-theme-config\"");
-        cut.Markup.Should().Contain("<style class=\"tnt-measurements\">:root{--tnt-header-height:64px;--tnt-footer-height:64px;--tnt-side-nav-width:256px;}</style>");
+        cut.Find("#nt-measurement-tokens").TextContent.Should().Be(":root{--tnt-header-height:64px;--tnt-footer-height:64px;--tnt-side-nav-width:256px;}");
     }
 }

@@ -3,14 +3,17 @@
   "private": true,
   "type": "module",
   "devDependencies": {
+    "@oddbird/css-anchor-positioning": "0.9.0",
     "jest": "^30.4.2",
     "jest-environment-jsdom": "^30.4.1",
     "terser": "^5.49.0",
     "typescript": "^6.0.2"
   },
   "scripts": {
-    "build:ts": "tsc -p tsconfig.json",
-    "build:ts:release": "npm run build:ts && node scripts/minify-typescript.mjs",
+    "build:head": "tsc -p tsconfig.head.json && node scripts/build-head-assets.mjs",
+    "compile:ts": "tsc -p tsconfig.json && tsc -p tsconfig.legacy.json",
+    "build:ts": "npm run compile:ts && npm run build:head",
+    "build:ts:release": "npm run compile:ts && node scripts/minify-typescript.mjs && npm run build:head",
     "build:rich-text-editor": "tsc -p tsconfig.json --pretty false",
     "build:rich-text-editor:release": "tsc -p tsconfig.json --pretty false && terser NTComponents/Editors/NTRichTextEditor.razor.js --module --compress --comments false --output NTComponents/Editors/NTRichTextEditor.razor.js && terser NTComponents/Shapes/NTShape.razor.js --module --compress --comments false --output NTComponents/Shapes/NTShape.razor.js",
     "pretest": "npm run build:ts",

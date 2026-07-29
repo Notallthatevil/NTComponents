@@ -1,5 +1,5 @@
 {
-	"Arguments": "--error-css --style=expanded --no-source-map",
+	"Arguments": "--error-css --style=compressed --no-source-map",
 	"GenerateScopedCss": true,
 	"ScopedCssFolders": [
 		"Accordion",

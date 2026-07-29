@@ -3,7 +3,12 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { minify } from "terser";
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../NTComponents");
+const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const roots = [path.join(repositoryRoot, "NTComponents"), path.join(repositoryRoot, "NTComponents.Site", "wwwroot")];
+const headSources = new Set([
+  path.join(repositoryRoot, "NTComponents", "Theming", "NTTheme.runtime.ts"),
+  path.join(repositoryRoot, "NTComponents", "Theming", "theme-bootstrap.ts"),
+]);
 
 async function getTypeScriptFiles(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
@@ -14,10 +19,12 @@ async function getTypeScriptFiles(directory) {
     }),
   );
 
-  return files.flat().filter((file) => file.endsWith(".ts") && !file.endsWith(".d.ts"));
+  return files.flat().filter((file) => file.endsWith(".ts") && !file.endsWith(".d.ts") && !headSources.has(file));
 }
 
-for (const typeScriptFile of await getTypeScriptFiles(root)) {
+const typeScriptFiles = (await Promise.all(roots.map(getTypeScriptFiles))).flat();
+
+for (const typeScriptFile of typeScriptFiles) {
   const javaScriptFile = typeScriptFile.slice(0, -3) + ".js";
   const result = await minify(await readFile(javaScriptFile, "utf8"), {
     compress: true,

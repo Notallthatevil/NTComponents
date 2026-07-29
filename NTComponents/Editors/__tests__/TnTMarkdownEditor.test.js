@@ -1,4 +1,4 @@
-// Test the TnTMarkdownEditor JavaScript module exports
+// Test the TnTMarkdownEditor TypeScript module source
 // Note: This module uses dynamic CDN imports that cannot be easily tested in Jest
 // This test verifies the module structure and basic functionality without the CDN dependencies
 
@@ -9,14 +9,14 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-describe('TnTMarkdownEditor JavaScript Module Structure', () => {
+const moduleFile = join(__dirname, '..', 'TnTMarkdownEditor.razor.ts');
+
+describe('TnTMarkdownEditor TypeScript Module Structure', () => {
   test('module file exists and can be accessed', () => {
     // This test verifies the file exists and has the expected structure
     // The actual CDN imports (EasyMDE, highlight.js) prevent full module testing in Jest
     
     // We can at least verify the structure by checking the file exists
-    const moduleFile = join(__dirname, '..', 'TnTMarkdownEditor.razor.js');
-    
     expect(existsSync(moduleFile)).toBe(true);
     
     const fileContent = readFileSync(moduleFile, 'utf8');
@@ -47,7 +47,6 @@ describe('TnTMarkdownEditor JavaScript Module Structure', () => {
   });
 
   test('module contains expected CSS loading logic', () => {
-    const moduleFile = join(__dirname, '..', 'TnTMarkdownEditor.razor.js');
     const fileContent = readFileSync(moduleFile, 'utf8');
     
     // Verify CSS loading logic
@@ -58,7 +57,6 @@ describe('TnTMarkdownEditor JavaScript Module Structure', () => {
   });
 
   test('module contains expected EasyMDE configuration', () => {
-    const moduleFile = join(__dirname, '..', 'TnTMarkdownEditor.razor.js');
     const fileContent = readFileSync(moduleFile, 'utf8');
     
     // Verify EasyMDE configuration options
@@ -80,7 +78,6 @@ describe('TnTMarkdownEditor JavaScript Module Structure', () => {
   });
 
   test('module handles dotNetRef mapping', () => {
-    const moduleFile = join(__dirname, '..', 'TnTMarkdownEditor.razor.js');
     const fileContent = readFileSync(moduleFile, 'utf8');
     
     // Verify dotNetRef mapping functionality

@@ -1,32 +1,11 @@
 {
+  "extends": "./tsconfig.json",
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "ES2022",
-    "moduleResolution": "bundler",
-    "lib": [
-      "DOM",
-      "DOM.Iterable",
-      "ES2022"
-    ],
-    "strict": true,
-    "noEmitOnError": true,
-    "allowJs": false,
-    "checkJs": false,
-    "isolatedModules": true,
-    "verbatimModuleSyntax": true,
-    "skipLibCheck": true,
-    "removeComments": true,
-    "sourceMap": false,
-    "newLine": "lf"
+    "noCheck": true,
+    "noEmitOnError": false
   },
   "include": [
-    "NTComponents/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "NTComponents/Theming/NTTheme.types.d.ts",
-    "NTComponents/Theming/NTTheme.runtime.ts",
-    "NTComponents/Theming/theme-bootstrap.ts",
+    "NTComponents.Site/wwwroot/js/docs.ts",
     "NTComponents/Accordion/TnTAccordion.razor.ts",
     "NTComponents/Animation/TnTAnimation.razor.ts",
     "NTComponents/Core/TnTExternalClickHandler.razor.ts",
@@ -44,5 +23,8 @@
     "NTComponents/Typeahead/TnTTypeahead.razor.ts",
     "NTComponents/Virtualization/TnTVirtualize.razor.ts",
     "NTComponents/wwwroot/NTComponents.lib.module.ts"
+  ],
+  "exclude": [
+    "node_modules"
   ]
 }

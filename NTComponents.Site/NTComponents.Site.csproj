@@ -6,10 +6,7 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<OverrideHtmlAssetPlaceholders>true</OverrideHtmlAssetPlaceholders>
 		<ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(TargetFramework)' == 'net11.0'">
-    <WasmBuildNative>false</WasmBuildNative>
+		<WasmBuildNative>false</WasmBuildNative>
   </PropertyGroup>
 
 	<ItemGroup>

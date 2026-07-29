@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.Text.Encodings.Web;
 
 using NTComponents.CodeDocumentation;
 namespace NTComponents;
@@ -20,6 +21,8 @@ public class NTHeadDependencies : IComponent {
     private const string LightThemeMedia = "(prefers-color-scheme: light)";
     private const string ActiveThemeElementId = "nt-theme-active-slot";
     private const string PendingThemeElementId = "nt-theme-pending-slot";
+    private const string GoogleFontsStylesheetRoot = "https://fonts.googleapis.com/css2";
+    private const string MaterialSymbolsAxes = "opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200";
     private RenderHandle _renderHandle;
 
     /// <summary>
@@ -57,6 +60,18 @@ public class NTHeadDependencies : IComponent {
     /// </summary>
     [Parameter]
     public double FooterHeight { get; set; } = 64;
+
+    /// <summary>
+    ///     Gets or sets a custom font stylesheet URL. When set, it replaces the generated Google Fonts stylesheet and its connection hints.
+    /// </summary>
+    [Parameter]
+    public string? FontStylesheetHref { get; set; }
+
+    /// <summary>
+    ///     Gets or sets the default font families to request when <see cref="FontStylesheetHref" /> is not set.
+    /// </summary>
+    [Parameter]
+    public NTFontFamily FontFamilies { get; set; } = NTFontFamily.All;
 
     /// <summary>
     ///     Gets or sets the header height.
@@ -120,8 +135,10 @@ public class NTHeadDependencies : IComponent {
 
     internal static void RenderMeasurementTokens(RenderTreeBuilder builder, double headerHeight, double footerHeight, double sideNavWidth, string? tokenScopeSelector) {
         builder.OpenElement(0, "style");
-        builder.AddAttribute(1, "class", "tnt-measurements");
-        builder.AddContent(2, CreateMeasurementTokens(headerHeight, footerHeight, sideNavWidth, tokenScopeSelector));
+        builder.AddAttribute(1, "id", "nt-measurement-tokens");
+        builder.AddAttribute(2, "class", "tnt-measurements");
+        builder.AddAttribute(3, "data-permanent", "nt-measurement-tokens");
+        builder.AddContent(4, CreateMeasurementTokens(headerHeight, footerHeight, sideNavWidth, tokenScopeSelector));
         builder.CloseElement();
     }
 
@@ -131,18 +148,45 @@ public class NTHeadDependencies : IComponent {
         return $"{root.TrimEnd('/')}/{file.TrimStart('/')}";
     }
 
+    internal static string? CreateGoogleFontsStylesheetHref(NTFontFamily fontFamilies) {
+        var families = new List<string>(4);
+
+        if (fontFamilies.HasFlag(NTFontFamily.Roboto)) {
+            families.Add("Roboto:wght@400;500;600;700");
+        }
+        if (fontFamilies.HasFlag(NTFontFamily.MaterialSymbolsOutlined)) {
+            families.Add($"Material+Symbols+Outlined:{MaterialSymbolsAxes}");
+        }
+        if (fontFamilies.HasFlag(NTFontFamily.MaterialSymbolsRounded)) {
+            families.Add($"Material+Symbols+Rounded:{MaterialSymbolsAxes}");
+        }
+        if (fontFamilies.HasFlag(NTFontFamily.MaterialSymbolsSharp)) {
+            families.Add($"Material+Symbols+Sharp:{MaterialSymbolsAxes}");
+        }
+
+        return families.Count == 0 ? null : $"{GoogleFontsStylesheetRoot}?family={string.Join("&family=", families)}&display=swap";
+    }
+
+    internal static string ResolveAssetPath(ResourceAssetCollection assets, string path) => assets[path];
+
     private void Render(RenderTreeBuilder builder) {
+        var measurementStylesheetHref = ResolveAssetPath(_renderHandle.Assets, "_content/NTComponents/nt-measurements.css");
+
         // <style data-tnt-theme-critical="true">html, body, #app { background-color: Canvas; color: CanvasText; }</style>
         builder.OpenElement(0, "style");
         builder.AddAttribute(1, "data-tnt-theme-critical", "true");
         builder.AddAttribute(2, "data-nt-theme-critical", "true");
         builder.AddAttribute(3, "id", "nt-theme-critical");
-        builder.AddAttribute(4, "data-permanent", string.Empty);
+        builder.AddAttribute(4, "data-permanent", "nt-theme-critical");
         builder.AddContent(5, "html, body, #app { background-color: Canvas; color: CanvasText; }");
         builder.CloseElement();
 
         builder.OpenRegion(6);
         RenderFirstPaintThemeLinks(builder);
+        builder.CloseRegion();
+
+        builder.OpenRegion(9);
+        RenderFontPreconnects(builder);
         builder.CloseRegion();
 
         // Stable empty slots are preserved across enhanced navigation and activated by NTThemeRuntime as needed.
@@ -157,7 +201,7 @@ public class NTHeadDependencies : IComponent {
         builder.OpenElement(26, "script");
         builder.AddAttribute(27, "type", "application/json");
         builder.AddAttribute(28, "id", "nt-theme-config");
-        builder.AddAttribute(29, "data-permanent", string.Empty);
+        builder.AddAttribute(29, "data-permanent", "nt-theme-config");
         builder.AddMarkupContent(30, CreateThemeConfiguration().ToJson());
         builder.CloseElement();
 
@@ -165,88 +209,106 @@ public class NTHeadDependencies : IComponent {
         builder.OpenElement(31, "script");
         builder.AddAttribute(32, "type", "application/json");
         builder.AddAttribute(33, "id", "nt-theme-state");
-        builder.AddAttribute(34, "data-permanent", string.Empty);
+        builder.AddAttribute(34, "data-permanent", "nt-theme-state");
         builder.AddMarkupContent(35, "{}");
         builder.CloseElement();
 
-        // <script src="_content/NTComponents/NTTheme.runtime.js"></script>
-        builder.OpenElement(36, "script");
-        builder.AddAttribute(37, "id", "nt-theme-runtime-script");
-        builder.AddAttribute(38, "src", "_content/NTComponents/NTTheme.runtime.js");
-        builder.AddAttribute(39, "data-permanent", string.Empty);
-        builder.CloseElement();
+        // <link rel="preload" as="style" href="_content/NTComponents/nt-measurements.css">
+        builder.OpenRegion(36);
+        RenderMeasurementStylesheetPreload(builder, measurementStylesheetHref);
+        builder.CloseRegion();
 
-        // <script src="_content/NTComponents/theme-bootstrap.js"></script>
-        builder.OpenElement(40, "script");
-        builder.AddAttribute(41, "id", "nt-theme-bootstrap-script");
-        builder.AddAttribute(42, "src", "_content/NTComponents/theme-bootstrap.js");
-        builder.AddAttribute(43, "data-permanent", string.Empty);
+        // <script src="_content/NTComponents/NTTheme.js"></script>
+        builder.OpenElement(37, "script");
+        builder.AddAttribute(38, "id", "nt-theme-script");
+        builder.AddAttribute(39, "src", ResolveAssetPath(_renderHandle.Assets, "_content/NTComponents/NTTheme.js"));
+        builder.AddAttribute(40, "data-permanent", "nt-theme-script");
         builder.CloseElement();
 
         // <style class="tnt-measurements">...</style>
-        builder.OpenRegion(44);
+        builder.OpenRegion(41);
         RenderMeasurementTokens(builder, HeaderHeight, FooterHeight, SideNavWidth, TokenScopeSelector);
         builder.CloseRegion();
 
         // <link rel="stylesheet" href="_content/NTComponents/nt-measurements.css">
-        builder.OpenElement(48, "link");
-        builder.AddAttribute(49, "id", "nt-measurements-stylesheet");
-        builder.AddAttribute(50, "rel", "stylesheet");
-        builder.AddAttribute(51, "href", "_content/NTComponents/nt-measurements.css");
-        builder.AddAttribute(52, "data-permanent", string.Empty);
+        builder.OpenElement(45, "link");
+        builder.AddAttribute(46, "id", "nt-measurements-stylesheet");
+        builder.AddAttribute(47, "rel", "stylesheet");
+        builder.AddAttribute(48, "href", measurementStylesheetHref);
+        builder.AddAttribute(49, "data-permanent", "nt-measurements-stylesheet");
         builder.CloseElement();
 
         // <link rel="stylesheet" href="_content/NTComponents/nt-ripple.css">
-        builder.OpenElement(53, "link");
-        builder.AddAttribute(54, "rel", "stylesheet");
-        builder.AddAttribute(55, "href", "_content/NTComponents/nt-ripple.css");
+        builder.OpenElement(50, "link");
+        builder.AddAttribute(51, "id", "nt-ripple-stylesheet");
+        builder.AddAttribute(52, "rel", "stylesheet");
+        builder.AddAttribute(53, "href", ResolveAssetPath(_renderHandle.Assets, "_content/NTComponents/nt-ripple.css"));
+        builder.AddAttribute(54, "data-permanent", "nt-ripple-stylesheet");
         builder.CloseElement();
 
-        // <link rel="preconnect" href="https://fonts.googleapis.com">
-        builder.OpenElement(56, "link");
-        builder.AddAttribute(57, "rel", "preconnect");
-        builder.AddAttribute(58, "href", "https://fonts.googleapis.com");
-        builder.CloseElement();
-
-        // <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        builder.OpenElement(59, "link");
-        builder.AddAttribute(60, "rel", "preconnect");
-        builder.AddAttribute(61, "href", "https://fonts.gstatic.com");
-        builder.AddAttribute(62, "crossorigin", string.Empty);
-        builder.CloseElement();
-
-        // <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
-        builder.OpenElement(63, "link");
-        builder.AddAttribute(64, "href", "https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap");
-        builder.AddAttribute(65, "rel", "stylesheet");
-        builder.CloseElement();
-
-        // <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-        builder.OpenElement(66, "link");
-        builder.AddAttribute(67, "rel", "stylesheet");
-        builder.AddAttribute(68, "href", "https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200");
-        builder.CloseElement();
-
-        // <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-        builder.OpenElement(69, "link");
-        builder.AddAttribute(70, "rel", "stylesheet");
-        builder.AddAttribute(71, "href", "https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200");
-        builder.CloseElement();
-
-        // <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-        builder.OpenElement(72, "link");
-        builder.AddAttribute(73, "rel", "stylesheet");
-        builder.AddAttribute(74, "href", "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200");
-        builder.CloseElement();
+        builder.OpenRegion(55);
+        RenderFontStylesheet(builder);
+        builder.CloseRegion();
 
         // <script type="module">...</script>
-        builder.OpenElement(75, "script");
-        builder.AddAttribute(76, "type", "module");
-        builder.AddMarkupContent(77, """
+        builder.OpenElement(56, "script");
+        builder.AddAttribute(57, "id", "nt-anchor-positioning-loader");
+        builder.AddAttribute(58, "type", "module");
+        builder.AddAttribute(59, "data-permanent", "nt-anchor-positioning-loader");
+        var anchorPositioningHref = JavaScriptEncoder.Default.Encode(ResolveAssetPath(_renderHandle.Assets, "_content/NTComponents/css-anchor-positioning.js"));
+        builder.AddMarkupContent(60, $$"""
             if (!("anchorName" in document.documentElement.style)) {
-                import("https://unpkg.com/@oddbird/css-anchor-positioning");
+                import("{{anchorPositioningHref}}");
             }
             """);
+        builder.CloseElement();
+    }
+
+    private static void RenderMeasurementStylesheetPreload(RenderTreeBuilder builder, string href) {
+        builder.OpenElement(0, "link");
+        builder.AddAttribute(1, "id", "nt-measurements-preload");
+        builder.AddAttribute(2, "rel", "preload");
+        builder.AddAttribute(3, "as", "style");
+        builder.AddAttribute(4, "href", href);
+        builder.AddAttribute(5, "data-permanent", "nt-measurements-preload");
+        builder.CloseElement();
+    }
+
+    private void RenderFontPreconnects(RenderTreeBuilder builder) {
+        if (!string.IsNullOrWhiteSpace(FontStylesheetHref) || CreateGoogleFontsStylesheetHref(FontFamilies) is null) {
+            return;
+        }
+
+        builder.OpenElement(0, "link");
+        builder.AddAttribute(1, "id", "nt-fonts-api-preconnect");
+        builder.AddAttribute(2, "rel", "preconnect");
+        builder.AddAttribute(3, "href", "https://fonts.googleapis.com");
+        builder.AddAttribute(4, "data-permanent", "nt-fonts-api-preconnect");
+        builder.CloseElement();
+
+        builder.OpenElement(5, "link");
+        builder.AddAttribute(6, "id", "nt-fonts-static-preconnect");
+        builder.AddAttribute(7, "rel", "preconnect");
+        builder.AddAttribute(8, "href", "https://fonts.gstatic.com");
+        builder.AddAttribute(9, "crossorigin", string.Empty);
+        builder.AddAttribute(10, "data-permanent", "nt-fonts-static-preconnect");
+        builder.CloseElement();
+    }
+
+    private void RenderFontStylesheet(RenderTreeBuilder builder) {
+        var href = string.IsNullOrWhiteSpace(FontStylesheetHref)
+            ? CreateGoogleFontsStylesheetHref(FontFamilies)
+            : ResolveAssetPath(_renderHandle.Assets, FontStylesheetHref.Trim());
+
+        if (href is null) {
+            return;
+        }
+
+        builder.OpenElement(0, "link");
+        builder.AddAttribute(1, "id", "nt-fonts-stylesheet");
+        builder.AddAttribute(2, "rel", "stylesheet");
+        builder.AddAttribute(3, "href", href);
+        builder.AddAttribute(4, "data-permanent", "nt-fonts-stylesheet");
         builder.CloseElement();
     }
 
@@ -280,14 +342,14 @@ public class NTHeadDependencies : IComponent {
         builder.AddAttribute(3, "href", CreateThemeStylesheetHref(ThemesRoot, cssFile));
         builder.AddAttribute(4, "media", media);
         builder.AddAttribute(5, "data-nt-theme-default", "true");
-        builder.AddAttribute(6, "data-permanent", string.Empty);
+        builder.AddAttribute(6, "data-permanent", theme is NTTheme.Dark ? "nt-theme-default-dark" : "nt-theme-default-light");
         builder.CloseElement();
     }
 
     private static void RenderThemeSlot(RenderTreeBuilder builder, string id) {
         builder.OpenElement(0, "link");
         builder.AddAttribute(1, "id", id);
-        builder.AddAttribute(2, "data-permanent", string.Empty);
+        builder.AddAttribute(2, "data-permanent", id);
         builder.CloseElement();
     }
 

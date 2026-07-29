@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": [
+    "NTComponents/Theming/NTTheme.types.d.ts",
+    "NTComponents/Theming/NTTheme.runtime.ts",
+    "NTComponents/Theming/theme-bootstrap.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

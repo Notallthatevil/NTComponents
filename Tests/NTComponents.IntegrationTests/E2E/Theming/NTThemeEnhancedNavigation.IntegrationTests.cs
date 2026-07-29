@@ -41,14 +41,15 @@ public sealed class NTThemeEnhancedNavigation_IntegrationTests : IAsyncLifetime 
             """);
         await DisableBrowserCacheAsync();
         await _page.EmulateMediaAsync(new PageEmulateMediaOptions { ColorScheme = Enum.Parse<ColorScheme>(systemColorScheme) });
-        await _page.GotoAsync($"{_appBaseUrl}/buttons", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await _page.GotoAsync($"{_appBaseUrl}/carousel", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
         await WaitForActiveThemeAsync(expectedThemeFile);
+        await AssertOptimizedHeadDependenciesAsync();
 
         var realm = await _page.EvaluateAsync<string>("window.__ntThemeTestRealm = crypto.randomUUID()");
         var navigationEntryCount = await _page.EvaluateAsync<int>("performance.getEntriesByType('navigation').length");
 
         await AssertEnhancedNavigationAsync("Accordion", "**/accordion", expectedThemeFile, realm, navigationEntryCount);
-        await AssertEnhancedNavigationAsync("Buttons", "**/buttons", expectedThemeFile, realm, navigationEntryCount);
+        await AssertEnhancedNavigationAsync("Carousel", "**/carousel", expectedThemeFile, realm, navigationEntryCount);
     }
 
     [Fact]
@@ -84,16 +85,65 @@ public sealed class NTThemeEnhancedNavigation_IntegrationTests : IAsyncLifetime 
 
         var probe = await StopNavigationProbeAsync();
         var themeRequests = _requests.Where(url => url.Contains("/Themes/", StringComparison.OrdinalIgnoreCase)).ToArray();
+        var repeatedHeadDependencyRequests = _requests.Where(IsHeadDependencyRequest).ToArray();
 
         (await _page.EvaluateAsync<string>("window.__ntThemeTestRealm")).Should().Be(realm, "enhanced navigation must retain the current JavaScript realm");
         (await _page.EvaluateAsync<int>("performance.getEntriesByType('navigation').length")).Should().Be(navigationEntryCount);
-        themeRequests.Should().BeEmpty("the permanent active theme must survive without starting any theme stylesheet request");
+        probe.ActiveThemeRetained.Should().BeTrue("the active theme link should remain the same DOM node; mutations: {0}", string.Join(", ", probe.ThemeMutations));
+        themeRequests.Should().BeEmpty("the permanent active theme must survive without starting any theme stylesheet request; mutations: {0}", string.Join(", ", probe.ThemeMutations));
+        repeatedHeadDependencyRequests.Should().BeEmpty("permanent head dependencies must not be requested again during enhanced navigation");
         probe.ActiveThemeCount.Should().Be(1);
         probe.ActiveThemeHref.Should().EndWith($"/Themes/{expectedThemeFile}");
         probe.DefaultThemeCount.Should().Be(0);
         probe.CriticalThemeCount.Should().Be(0);
         probe.InsertedFallbackElements.Should().BeEmpty();
+        probe.InsertedHeadDependencies.Should().BeEmpty();
         probe.Backgrounds.Should().NotContain(color => color == "rgb(255, 255, 255)" || color == "rgb(251, 248, 255)");
+    }
+
+    private static bool IsHeadDependencyRequest(string url) => url.Contains("/_content/NTComponents/NTTheme.", StringComparison.OrdinalIgnoreCase)
+        || url.Contains("/_content/NTComponents/nt-measurements.", StringComparison.OrdinalIgnoreCase)
+        || url.Contains("/_content/NTComponents/nt-ripple.", StringComparison.OrdinalIgnoreCase)
+        || url.Contains("/_content/NTComponents/css-anchor-positioning.", StringComparison.OrdinalIgnoreCase)
+        || url.Contains("fonts.googleapis.com/css2", StringComparison.OrdinalIgnoreCase);
+
+    private async Task AssertOptimizedHeadDependenciesAsync() {
+        ArgumentNullException.ThrowIfNull(_page);
+
+        var permanentIds = new[] {
+            "nt-theme-script",
+            "nt-measurement-tokens",
+            "nt-measurements-preload",
+            "nt-measurements-stylesheet",
+            "nt-ripple-stylesheet",
+            "nt-fonts-api-preconnect",
+            "nt-fonts-static-preconnect",
+            "nt-fonts-stylesheet",
+            "nt-anchor-positioning-loader"
+        };
+
+        foreach (var id in permanentIds) {
+            (await _page.Locator($"#{id}[data-permanent]").CountAsync()).Should().Be(1);
+            (await _page.Locator($"#{id}").GetAttributeAsync("data-permanent")).Should().Be(id);
+        }
+
+        var themeScript = await _page.Locator("#nt-theme-script").GetAttributeAsync("src");
+        var measurementsPreload = await _page.Locator("#nt-measurements-preload").GetAttributeAsync("href");
+        var measurementsStylesheet = await _page.Locator("#nt-measurements-stylesheet").GetAttributeAsync("href");
+        var rippleStylesheet = await _page.Locator("#nt-ripple-stylesheet").GetAttributeAsync("href");
+        var anchorLoader = await _page.Locator("#nt-anchor-positioning-loader").TextContentAsync();
+        var fontStylesheet = await _page.Locator("#nt-fonts-stylesheet").GetAttributeAsync("href");
+
+        themeScript.Should().Contain("_content/NTComponents/NTTheme.").And.NotEndWith("/NTTheme.js");
+        measurementsPreload.Should().Be(measurementsStylesheet);
+        (await _page.Locator("#nt-measurements-preload").GetAttributeAsync("rel")).Should().Be("preload");
+        (await _page.Locator("#nt-measurements-preload").GetAttributeAsync("as")).Should().Be("style");
+        measurementsStylesheet.Should().Contain("_content/NTComponents/nt-measurements.").And.NotEndWith("/nt-measurements.css");
+        _requests.Where(url => url.Contains("/_content/NTComponents/nt-measurements.", StringComparison.OrdinalIgnoreCase)).Should().ContainSingle();
+        rippleStylesheet.Should().Contain("_content/NTComponents/nt-ripple.").And.NotEndWith("/nt-ripple.css");
+        anchorLoader.Should().Contain("_content/NTComponents/css-anchor-positioning.").And.NotContain("unpkg.com");
+        fontStylesheet.Should().Contain("family=Roboto:wght@400;500;600;700");
+        (await _page.Locator("link[href^='https://fonts.googleapis.com/css2']").CountAsync()).Should().Be(1);
     }
 
     private void ClearRequests() {
@@ -118,8 +168,22 @@ public sealed class NTThemeEnhancedNavigation_IntegrationTests : IAsyncLifetime 
             () => {
                 const probe = {
                     backgrounds: [],
-                    insertedFallbackElements: []
+                    insertedFallbackElements: [],
+                    insertedHeadDependencies: [],
+                    themeMutations: [],
+                    activeTheme: document.head.querySelector('link[data-nt-theme],link[data-tnt-theme]')
                 };
+                const permanentHeadDependencyIds = new Set([
+                    'nt-theme-script',
+                    'nt-measurement-tokens',
+                    'nt-measurements-preload',
+                    'nt-measurements-stylesheet',
+                    'nt-ripple-stylesheet',
+                    'nt-fonts-api-preconnect',
+                    'nt-fonts-static-preconnect',
+                    'nt-fonts-stylesheet',
+                    'nt-anchor-positioning-loader'
+                ]);
                 const sampleBackgrounds = () => {
                     probe.backgrounds.push(getComputedStyle(document.documentElement).backgroundColor);
                     probe.backgrounds.push(getComputedStyle(document.body).backgroundColor);
@@ -137,18 +201,29 @@ public sealed class NTThemeEnhancedNavigation_IntegrationTests : IAsyncLifetime 
                         if (candidate.matches('style[data-nt-theme-critical],style[data-tnt-theme-critical]')) {
                             probe.insertedFallbackElements.push('critical');
                         }
+                        if (permanentHeadDependencyIds.has(candidate.id)) {
+                            probe.insertedHeadDependencies.push(candidate.id);
+                        }
                     }
                 };
 
                 probe.observer = new MutationObserver(records => {
                     sampleBackgrounds();
                     for (const record of records) {
+                        if (record.type === 'attributes' && record.target.id?.startsWith('nt-theme')) {
+                            probe.themeMutations.push(`${record.target.id}:${record.attributeName}:${record.oldValue}->${record.target.getAttribute(record.attributeName)}`);
+                        }
                         for (const node of record.addedNodes) {
                             inspectElement(node);
                         }
+                        for (const node of record.removedNodes) {
+                            if (node instanceof Element && (node.id?.startsWith('nt-theme') || node.querySelector?.('[id^="nt-theme"]'))) {
+                                probe.themeMutations.push(`removed:${node.id || node.nodeName}`);
+                            }
+                        }
                     }
                 });
-                probe.observer.observe(document.head, { childList: true, subtree: true });
+                probe.observer.observe(document.head, { attributes: true, attributeOldValue: true, childList: true, subtree: true });
                 const sampleFrame = () => {
                     sampleBackgrounds();
                     probe.frame = requestAnimationFrame(sampleFrame);
@@ -173,10 +248,13 @@ public sealed class NTThemeEnhancedNavigation_IntegrationTests : IAsyncLifetime 
                 return {
                     activeThemeCount: activeThemes.length,
                     activeThemeHref: activeThemes[0]?.href ?? '',
+                    activeThemeRetained: activeThemes[0] === probe.activeTheme,
                     defaultThemeCount: document.head.querySelectorAll('link[data-nt-theme-default],link[data-tnt-theme-default]').length,
                     criticalThemeCount: document.head.querySelectorAll('style[data-nt-theme-critical],style[data-tnt-theme-critical]').length,
                     insertedFallbackElements: probe.insertedFallbackElements,
-                    backgrounds: probe.backgrounds
+                    insertedHeadDependencies: probe.insertedHeadDependencies,
+                    backgrounds: probe.backgrounds,
+                    themeMutations: probe.themeMutations
                 };
             }
             """);
@@ -184,10 +262,13 @@ public sealed class NTThemeEnhancedNavigation_IntegrationTests : IAsyncLifetime 
         return new(
             result.GetProperty("activeThemeCount").GetInt32(),
             result.GetProperty("activeThemeHref").GetString()!,
+            result.GetProperty("activeThemeRetained").GetBoolean(),
             result.GetProperty("defaultThemeCount").GetInt32(),
             result.GetProperty("criticalThemeCount").GetInt32(),
             result.GetProperty("insertedFallbackElements").EnumerateArray().Select(value => value.GetString()!).ToArray(),
-            result.GetProperty("backgrounds").EnumerateArray().Select(value => value.GetString()!).ToArray());
+            result.GetProperty("insertedHeadDependencies").EnumerateArray().Select(value => value.GetString()!).ToArray(),
+            result.GetProperty("backgrounds").EnumerateArray().Select(value => value.GetString()!).ToArray(),
+            result.GetProperty("themeMutations").EnumerateArray().Select(value => value.GetString()!).ToArray());
     }
 
     private async Task WaitForActiveThemeAsync(string expectedThemeFile) {
@@ -199,6 +280,8 @@ public sealed class NTThemeEnhancedNavigation_IntegrationTests : IAsyncLifetime 
                 const activeThemes = [...document.head.querySelectorAll('link[data-nt-theme],link[data-tnt-theme]')];
                 return activeThemes.length === 1
                     && new URL(activeThemes[0].href).pathname.endsWith(`/Themes/${expectedThemeFile}`)
+                    && activeThemes[0].getAttribute('data-nt-theme-loaded') === 'true'
+                    && activeThemes[0].sheet
                     && document.head.querySelectorAll('link[data-nt-theme-default],link[data-tnt-theme-default]').length === 0
                     && document.head.querySelectorAll('style[data-nt-theme-critical],style[data-tnt-theme-critical]').length === 0;
             }
@@ -207,5 +290,5 @@ public sealed class NTThemeEnhancedNavigation_IntegrationTests : IAsyncLifetime 
             new PageWaitForFunctionOptions { Timeout = 5000 });
     }
 
-    private sealed record NavigationProbeResult(int ActiveThemeCount, string ActiveThemeHref, int DefaultThemeCount, int CriticalThemeCount, string[] InsertedFallbackElements, string[] Backgrounds);
+    private sealed record NavigationProbeResult(int ActiveThemeCount, string ActiveThemeHref, bool ActiveThemeRetained, int DefaultThemeCount, int CriticalThemeCount, string[] InsertedFallbackElements, string[] InsertedHeadDependencies, string[] Backgrounds, string[] ThemeMutations);
 }
