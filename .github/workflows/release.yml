@@ -24,7 +24,7 @@ jobs:
           submodules: recursive
 
       - name: Setup .NET SDKs
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: |
             8.0.x
@@ -210,7 +210,7 @@ jobs:
           persist-credentials: true
 
       - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 11.0.100-preview.6.26359.118
 
