@@ -7,7 +7,7 @@
     "jest": "^30.4.2",
     "jest-environment-jsdom": "^30.4.1",
     "terser": "^5.49.0",
-    "typescript": "^6.0.2"
+    "typescript": "^7.0.2"
   },
   "scripts": {
     "build:head": "tsc -p tsconfig.head.json && node scripts/build-head-assets.mjs",
