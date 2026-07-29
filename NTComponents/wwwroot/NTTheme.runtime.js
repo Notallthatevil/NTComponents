@@ -22,6 +22,8 @@
         darkHighCss: 'dark-hc.css',
     };
     const themeStateElementId = 'nt-theme-state';
+    const activeThemeSlotId = 'nt-theme-active-slot';
+    const pendingThemeSlotId = 'nt-theme-pending-slot';
 
     const fallbackCss = ':root{--tnt-color-primary:rgb(84 90 146);--tnt-color-surface-tint:rgb(84 90 146);--tnt-color-on-primary:rgb(255 255 255);--tnt-color-primary-container:rgb(224 224 255);--tnt-color-on-primary-container:rgb(60 66 121);--tnt-color-secondary:rgb(92 93 114);--tnt-color-on-secondary:rgb(255 255 255);--tnt-color-secondary-container:rgb(225 224 249);--tnt-color-on-secondary-container:rgb(68 69 89);--tnt-color-tertiary:rgb(120 83 107);--tnt-color-on-tertiary:rgb(255 255 255);--tnt-color-tertiary-container:rgb(255 215 239);--tnt-color-on-tertiary-container:rgb(94 60 83);--tnt-color-error:rgb(186 26 26);--tnt-color-on-error:rgb(255 255 255);--tnt-color-error-container:rgb(255 218 214);--tnt-color-on-error-container:rgb(147 0 10);--tnt-color-background:rgb(251 248 255);--tnt-color-on-background:rgb(27 27 33);--tnt-color-surface:rgb(251 248 255);--tnt-color-on-surface:rgb(27 27 33);--tnt-color-surface-variant:rgb(227 225 236);--tnt-color-on-surface-variant:rgb(70 70 79);--tnt-color-outline:rgb(119 118 128);--tnt-color-outline-variant:rgb(199 197 208);--tnt-color-shadow:rgb(0 0 0);--tnt-color-scrim:rgb(0 0 0);--tnt-color-inverse-surface:rgb(48 48 54);--tnt-color-inverse-on-surface:rgb(242 239 247);--tnt-color-inverse-primary:rgb(189 194 255);--tnt-color-primary-fixed:rgb(224 224 255);--tnt-color-on-primary-fixed:rgb(15 21 75);--tnt-color-primary-fixed-dim:rgb(189 194 255);--tnt-color-on-primary-fixed-variant:rgb(60 66 121);--tnt-color-secondary-fixed:rgb(225 224 249);--tnt-color-on-secondary-fixed:rgb(24 26 44);--tnt-color-secondary-fixed-dim:rgb(196 196 221);--tnt-color-on-secondary-fixed-variant:rgb(68 69 89);--tnt-color-tertiary-fixed:rgb(255 215 239);--tnt-color-on-tertiary-fixed:rgb(46 17 38);--tnt-color-tertiary-fixed-dim:rgb(231 185 213);--tnt-color-on-tertiary-fixed-variant:rgb(94 60 83);--tnt-color-surface-dim:rgb(219 217 224);--tnt-color-surface-bright:rgb(251 248 255);--tnt-color-surface-container-lowest:rgb(255 255 255);--tnt-color-surface-container-low:rgb(245 242 250);--tnt-color-surface-container:rgb(239 237 244);--tnt-color-surface-container-high:rgb(234 231 239);--tnt-color-surface-container-highest:rgb(228 225 233);--tnt-color-info:rgb(67 94 145);--tnt-color-on-info:rgb(255 255 255);--tnt-color-info-container:rgb(215 226 255);--tnt-color-on-info-container:rgb(42 70 119);--tnt-color-success:rgb(49 106 66);--tnt-color-on-success:rgb(255 255 255);--tnt-color-success-container:rgb(179 241 190);--tnt-color-on-success-container:rgb(22 81 44);--tnt-color-warning:rgb(111 93 13);--tnt-color-on-warning:rgb(255 255 255);--tnt-color-warning-container:rgb(251 225 134);--tnt-color-on-warning-container:rgb(85 69 0);--tnt-color-assert:rgb(124 78 126);--tnt-color-on-assert:rgb(255 255 255);--tnt-color-assert-container:rgb(255 214 252);--tnt-color-on-assert-container:rgb(98 55 101);}';
 
@@ -210,9 +212,40 @@
         return cssUrl.origin === rootWindow.location.origin ? cssUrl.href : new URL(defaultConfig.lightDefaultCss, safeThemesRoot(defaultConfig.themesRoot)).href;
     };
 
-    const removeCriticalThemeStyles = () => document.querySelector('style[data-tnt-theme-critical],style[data-nt-theme-critical]')?.remove();
+    const resetThemeLink = link => {
+        link.removeAttribute('rel');
+        link.removeAttribute('href');
+        link.removeAttribute('media');
+        link.removeAttribute('as');
+        link.removeAttribute('data-nt-theme');
+        link.removeAttribute('data-tnt-theme');
+        link.removeAttribute('data-nt-theme-default');
+        link.removeAttribute('data-tnt-theme-default');
+        link.removeAttribute('data-nt-theme-pending');
+        link.removeAttribute('data-nt-theme-loaded');
+        link.removeAttribute('data-tnt-theme-loaded');
+        link.setAttribute('data-permanent', '');
+    };
+    const releaseThemeLink = link => {
+        if (link?.id === activeThemeSlotId || link?.id === pendingThemeSlotId || link?.id === 'nt-theme-default-light' || link?.id === 'nt-theme-default-dark') {
+            resetThemeLink(link);
+        } else {
+            link?.remove();
+        }
+    };
+    const removeCriticalThemeStyles = () => {
+        document.querySelectorAll('style[data-tnt-theme-critical],style[data-nt-theme-critical]').forEach(style => {
+            if (style.id === 'nt-theme-critical') {
+                style.removeAttribute('data-tnt-theme-critical');
+                style.removeAttribute('data-nt-theme-critical');
+                style.textContent = '';
+            } else {
+                style.remove();
+            }
+        });
+    };
     const removeFallbackStyles = () => document.querySelector('style[data-tnt-theme],style[data-nt-theme-fallback]')?.remove();
-    const removeDefaultThemeStylesheets = () => document.querySelectorAll('link[data-nt-theme-default],link[data-tnt-theme-default]').forEach(link => link.remove());
+    const removeDefaultThemeStylesheets = () => document.querySelectorAll('link[data-nt-theme-default],link[data-tnt-theme-default]').forEach(releaseThemeLink);
     const injectFallbackStyles = () => {
         let style = document.head.querySelector('style[data-nt-theme-fallback]');
         if (!style) {
@@ -250,6 +283,12 @@
     };
 
     const markThemeLink = link => {
+        link.rel = 'stylesheet';
+        link.removeAttribute('as');
+        link.removeAttribute('media');
+        link.removeAttribute('data-nt-theme-default');
+        link.removeAttribute('data-tnt-theme-default');
+        link.removeAttribute('data-nt-theme-pending');
         link.setAttribute('data-nt-theme', 'true');
         link.setAttribute('data-tnt-theme', 'true');
         link.setAttribute('data-nt-theme-loaded', 'false');
@@ -258,6 +297,29 @@
     };
 
     const findCurrentThemeLink = () => document.head.querySelector('link[data-nt-theme],link[data-tnt-theme]');
+    const ensureThemeSlot = id => {
+        let link = document.getElementById(id);
+        if (!(link instanceof HTMLLinkElement)) {
+            link?.remove();
+            link = document.createElement('link');
+            link.id = id;
+            link.setAttribute('data-permanent', '');
+            document.head.appendChild(link);
+        }
+
+        return link;
+    };
+    const findMatchingDefaultThemeLink = href => Array.from(document.head.querySelectorAll('link[data-nt-theme-default],link[data-tnt-theme-default]'))
+        .find(link => new URL(link.href, rootWindow.location.href).href === href);
+    const findAvailableThemeSlot = current => {
+        const activeSlot = ensureThemeSlot(activeThemeSlotId);
+        return activeSlot === current ? ensureThemeSlot(pendingThemeSlotId) : activeSlot;
+    };
+    const releaseOtherActiveThemeLinks = active => document.head.querySelectorAll('link[data-nt-theme],link[data-tnt-theme]').forEach(link => {
+        if (link !== active) {
+            releaseThemeLink(link);
+        }
+    });
     const applyStylesheet = async (href, options = {}) => {
         const waitForLoad = options.waitForLoad !== false;
         const current = findCurrentThemeLink();
@@ -279,6 +341,7 @@
         };
 
         if (current && currentHref === href) {
+            releaseOtherActiveThemeLinks(current);
             if (waitForLoad) {
                 await finishLinkLoad(current);
             } else {
@@ -289,11 +352,10 @@
         }
 
         if (!current) {
-            const link = document.createElement('link');
-            link.rel = 'stylesheet';
+            const link = findMatchingDefaultThemeLink(href) || ensureThemeSlot(activeThemeSlotId);
             markThemeLink(link);
             link.href = href;
-            document.head.appendChild(link);
+            releaseOtherActiveThemeLinks(link);
 
             if (waitForLoad) {
                 await finishLinkLoad(link);
@@ -304,7 +366,8 @@
             return link;
         }
 
-        const pending = document.createElement('link');
+        const pending = findAvailableThemeSlot(current);
+        resetThemeLink(pending);
         pending.rel = 'preload';
         pending.as = 'style';
         pending.setAttribute('data-nt-theme-pending', 'true');
@@ -316,21 +379,23 @@
 
         const promotePending = status => {
             if (status === 'true') {
-                current.remove();
+                releaseThemeLink(current);
                 pending.rel = 'stylesheet';
                 pending.removeAttribute('as');
                 pending.removeAttribute('data-nt-theme-pending');
                 markThemeLink(pending);
                 pending.setAttribute('data-nt-theme-loaded', 'true');
                 pending.setAttribute('data-tnt-theme-loaded', 'true');
+                releaseOtherActiveThemeLinks(pending);
                 removeCriticalThemeStyles();
                 removeFallbackStyles();
                 removeDefaultThemeStylesheets();
                 return pending;
             }
 
-            pending.remove();
-            dispatchThemeFailed({ href: pending.href, reason: 'stylesheet-error' });
+            const pendingHref = pending.href;
+            releaseThemeLink(pending);
+            dispatchThemeFailed({ href: pendingHref, reason: 'stylesheet-error' });
             return current;
         };
 
@@ -367,6 +432,15 @@
         }
 
         return applyStylesheet(href, { waitForLoad: options.waitForLoad });
+    };
+    const hasCurrentThemeState = () => {
+        const href = normalizeStateHref(readThemeState().href);
+        const activeThemes = document.head.querySelectorAll('link[data-nt-theme],link[data-tnt-theme]');
+        if (!href || activeThemes.length !== 1) {
+            return false;
+        }
+
+        return new URL(activeThemes[0].href, rootWindow.location.href).href === href;
     };
 
     const syncControls = result => {
@@ -447,6 +521,7 @@
         getFallbackCss: () => fallbackCss,
         getStoredContrast,
         getStoredTheme,
+        hasCurrentThemeState,
         readThemeState,
         injectFallbackStyles,
         normalizeContrast,

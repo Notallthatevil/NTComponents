@@ -37,15 +37,17 @@ public class NTHeadDependencies_Tests : BunitContext {
     [Fact]
     public void Render_MarksThemeHeadItemsAsPermanent() {
         var cut = Render<NTHeadDependencies>();
-        var markup = cut.Markup;
+        var permanentElements = cut.FindAll("[data-permanent]");
 
-        markup.Should().Contain("data-tnt-theme-critical=\"true\" data-nt-theme-critical=\"true\" data-permanent");
+        permanentElements.Should().OnlyContain(element => !string.IsNullOrWhiteSpace(element.Id));
+        permanentElements.Select(element => element.Id).Should().OnlyHaveUniqueItems();
+        cut.Find("#nt-theme-critical").HasAttribute("data-nt-theme-critical").Should().BeTrue();
         cut.FindAll("link[data-nt-theme-default]").Should().OnlyContain(link => link.HasAttribute("data-permanent"));
-        markup.Should().Contain("id=\"nt-theme-config\" data-permanent");
-        markup.Should().Contain("id=\"nt-theme-state\" data-permanent");
-        markup.Should().Contain("_content/NTComponents/NTTheme.runtime.js\" data-permanent");
-        markup.Should().Contain("_content/NTComponents/theme-bootstrap.js\" data-permanent");
-        markup.Should().Contain("_content/NTComponents/nt-measurements.css\" data-permanent");
+        cut.Find("#nt-theme-active-slot").HasAttribute("href").Should().BeFalse();
+        cut.Find("#nt-theme-pending-slot").HasAttribute("href").Should().BeFalse();
+        cut.Find("#nt-theme-runtime-script").GetAttribute("src").Should().Be("_content/NTComponents/NTTheme.runtime.js");
+        cut.Find("#nt-theme-bootstrap-script").GetAttribute("src").Should().Be("_content/NTComponents/theme-bootstrap.js");
+        cut.Find("#nt-measurements-stylesheet").GetAttribute("href").Should().Be("_content/NTComponents/nt-measurements.css");
     }
 
     [Fact]
@@ -94,6 +96,19 @@ public class NTHeadDependencies_Tests : BunitContext {
         defaultLinks.Should().HaveCount(1);
         defaultLinks[0].GetAttribute("href").Should().Be("/brand/themes/brand-dark-hc.css");
         defaultLinks[0].HasAttribute("media").Should().BeFalse();
+    }
+
+    [Fact]
+    public void Render_DefaultThemeChanges_ReconcileIndependentThemeLinkRegions() {
+        var cut = Render<NTHeadDependencies>(parameters => parameters.Add(p => p.DefaultTheme, NTTheme.Light));
+
+        cut.FindAll("link[data-nt-theme-default]").Should().ContainSingle(link => link.Id == "nt-theme-default-light");
+
+        cut.Render(parameters => parameters.Add(p => p.DefaultTheme, NTTheme.System));
+        cut.FindAll("link[data-nt-theme-default]").Select(link => link.Id).Should().BeEquivalentTo("nt-theme-default-light", "nt-theme-default-dark");
+
+        cut.Render(parameters => parameters.Add(p => p.DefaultTheme, NTTheme.Dark));
+        cut.FindAll("link[data-nt-theme-default]").Should().ContainSingle(link => link.Id == "nt-theme-default-dark");
     }
 
     [Fact]

@@ -11,16 +11,17 @@
         return;
     }
 
-    runtime.restoreThemeState?.({ waitForLoad: false });
-    runtime.apply({ waitForLoad: false });
-
-    const applyAfterEnhancedLoad = () => {
+    const restoreOrApplyTheme = () => {
         runtime.restoreThemeState?.({ waitForLoad: false });
-        runtime.apply({ waitForLoad: false });
+        if (!runtime.hasCurrentThemeState?.()) {
+            runtime.apply({ waitForLoad: false });
+        }
     };
+    restoreOrApplyTheme();
+
     if (window.Blazor?.addEventListener) {
-        window.Blazor.addEventListener('enhancedload', applyAfterEnhancedLoad);
+        window.Blazor.addEventListener('enhancedload', restoreOrApplyTheme);
     } else {
-        document.addEventListener('DOMContentLoaded', () => window.Blazor?.addEventListener?.('enhancedload', applyAfterEnhancedLoad), { once: true });
+        document.addEventListener('DOMContentLoaded', () => window.Blazor?.addEventListener?.('enhancedload', restoreOrApplyTheme), { once: true });
     }
 })();

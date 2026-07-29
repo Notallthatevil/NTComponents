@@ -50,6 +50,20 @@ describe('theme bootstrap', () => {
         expect(window.Blazor.addEventListener).toHaveBeenCalledTimes(1);
     });
 
+    test('enhancedload does not reapply an already restored active theme', async () => {
+        window.NTComponents.NTThemeRuntime.hasCurrentThemeState = jest.fn()
+            .mockReturnValueOnce(false)
+            .mockReturnValueOnce(true);
+        window.Blazor = { addEventListener: jest.fn() };
+
+        await importBootstrap();
+        const enhancedLoadHandler = window.Blazor.addEventListener.mock.calls[0][1];
+        enhancedLoadHandler();
+
+        expect(window.NTComponents.NTThemeRuntime.restoreThemeState).toHaveBeenCalledTimes(2);
+        expect(window.NTComponents.NTThemeRuntime.apply).toHaveBeenCalledTimes(1);
+    });
+
     test('defers enhancedload registration until Blazor is available', async () => {
         await importBootstrap();
         window.Blazor = { addEventListener: jest.fn() };

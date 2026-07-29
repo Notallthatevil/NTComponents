@@ -39,25 +39,64 @@ describe('NTTheme runtime', () => {
     test('applyStylesheet removes first-paint default links after active theme loads', async () => {
         const runtime = await loadRuntime();
         const lightDefault = document.createElement('link');
+        lightDefault.id = 'nt-theme-default-light';
         lightDefault.rel = 'stylesheet';
         lightDefault.href = '/Themes/light.css';
         lightDefault.setAttribute('data-nt-theme-default', 'true');
+        lightDefault.setAttribute('data-permanent', '');
         const darkDefault = document.createElement('link');
+        darkDefault.id = 'nt-theme-default-dark';
         darkDefault.rel = 'stylesheet';
         darkDefault.href = '/Themes/dark.css';
         darkDefault.setAttribute('data-nt-theme-default', 'true');
+        darkDefault.setAttribute('data-permanent', '');
         document.head.append(lightDefault, darkDefault);
 
         const updatePromise = runtime.applyStylesheet(new URL('/Themes/dark.css', window.location.href).href, { waitForLoad: true });
         const link = document.head.querySelector('link[data-nt-theme]');
 
-        expect(document.head.querySelectorAll('link[data-nt-theme-default]')).toHaveLength(2);
+        expect(document.head.querySelectorAll('link[data-nt-theme-default]')).toHaveLength(1);
+        expect(link).toBe(darkDefault);
 
         link.dispatchEvent(new Event('load'));
         await updatePromise;
 
         expect(link.isConnected).toBe(true);
+        expect(lightDefault.isConnected).toBe(true);
+        expect(lightDefault.hasAttribute('href')).toBe(false);
+        expect(lightDefault.hasAttribute('rel')).toBe(false);
         expect(document.head.querySelectorAll('link[data-nt-theme-default]')).toHaveLength(0);
+    });
+
+    test('loaded theme leaves stable fallback elements inert for enhanced navigation', async () => {
+        const runtime = await loadRuntime();
+        const critical = document.createElement('style');
+        critical.id = 'nt-theme-critical';
+        critical.setAttribute('data-nt-theme-critical', 'true');
+        critical.setAttribute('data-tnt-theme-critical', 'true');
+        critical.setAttribute('data-permanent', '');
+        critical.textContent = 'html, body { background: Canvas; }';
+        const lightDefault = document.createElement('link');
+        lightDefault.id = 'nt-theme-default-light';
+        lightDefault.rel = 'stylesheet';
+        lightDefault.href = '/Themes/light.css';
+        lightDefault.setAttribute('data-nt-theme-default', 'true');
+        lightDefault.setAttribute('data-permanent', '');
+        document.head.append(critical, lightDefault);
+
+        const updatePromise = runtime.applyStylesheet(new URL('/Themes/dark.css', window.location.href).href, { waitForLoad: true });
+        const active = document.head.querySelector('link[data-nt-theme]');
+        active.dispatchEvent(new Event('load'));
+        await updatePromise;
+
+        expect(critical.isConnected).toBe(true);
+        expect(critical.textContent).toBe('');
+        expect(critical.hasAttribute('data-nt-theme-critical')).toBe(false);
+        expect(critical.hasAttribute('data-tnt-theme-critical')).toBe(false);
+        expect(lightDefault.isConnected).toBe(true);
+        expect(lightDefault.hasAttribute('href')).toBe(false);
+        expect(lightDefault.hasAttribute('data-nt-theme-default')).toBe(false);
+        expect(document.head.querySelectorAll('link[data-nt-theme]')).toHaveLength(1);
     });
 
     test('applyStylesheet preloads next theme before replacing current theme', async () => {
@@ -108,6 +147,30 @@ describe('NTTheme runtime', () => {
         expect(document.head.querySelector('link[data-nt-theme-pending]')).toBeNull();
     });
 
+    test('repeated theme changes reuse stable active and pending slots without duplicates', async () => {
+        const runtime = await loadRuntime();
+        const lightHref = new URL('/Themes/light.css', window.location.href).href;
+        const darkHref = new URL('/Themes/dark.css', window.location.href).href;
+
+        const initialPromise = runtime.applyStylesheet(lightHref, { waitForLoad: true });
+        document.head.querySelector('link[data-nt-theme]').dispatchEvent(new Event('load'));
+        await initialPromise;
+
+        const darkPromise = runtime.applyStylesheet(darkHref, { waitForLoad: true });
+        document.head.querySelector('link[data-nt-theme-pending]').dispatchEvent(new Event('load'));
+        await darkPromise;
+
+        const lightPromise = runtime.applyStylesheet(lightHref, { waitForLoad: true });
+        document.head.querySelector('link[data-nt-theme-pending]').dispatchEvent(new Event('load'));
+        await lightPromise;
+
+        expect(document.head.querySelectorAll('#nt-theme-active-slot')).toHaveLength(1);
+        expect(document.head.querySelectorAll('#nt-theme-pending-slot')).toHaveLength(1);
+        expect(document.head.querySelectorAll('link[data-nt-theme]')).toHaveLength(1);
+        expect(document.head.querySelectorAll('link[data-nt-theme-pending]')).toHaveLength(0);
+        expect(document.head.querySelector('link[data-nt-theme]').href).toBe(lightHref);
+    });
+
     test('apply writes permanent theme state for enhanced navigation restoration', async () => {
         const runtime = await loadRuntime();
         const applyPromise = runtime.apply({ theme: 'DARK', contrast: 'HIGH', waitForLoad: true });
@@ -154,5 +217,24 @@ describe('NTTheme runtime', () => {
 
         expect(runtime.restoreThemeState({ waitForLoad: false })).toBeNull();
         expect(document.head.querySelector('link[data-nt-theme]')).toBeNull();
+    });
+
+    test('hasCurrentThemeState requires one active stylesheet matching permanent state', async () => {
+        const runtime = await loadRuntime();
+        const href = new URL('/Themes/dark.css', window.location.href).href;
+        runtime.writeThemeState({ themePreference: 'DARK', theme: 'DARK', contrast: 'DEFAULT', href });
+        const applyPromise = runtime.applyStylesheet(href, { waitForLoad: true });
+        const active = document.head.querySelector('link[data-nt-theme]');
+        active.dispatchEvent(new Event('load'));
+        await applyPromise;
+
+        expect(runtime.hasCurrentThemeState()).toBe(true);
+
+        const duplicate = document.createElement('link');
+        duplicate.setAttribute('data-nt-theme', 'true');
+        duplicate.href = href;
+        document.head.appendChild(duplicate);
+
+        expect(runtime.hasCurrentThemeState()).toBe(false);
     });
 });
