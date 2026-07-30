@@ -6,7 +6,6 @@ updates:
     directories:
       - "/LiveTest/LiveTest"
       - "/LiveTest/LiveTest.Client"
-      - "/NTComponents"
       - "/NTComponents.Analyzers"
       - "/NTComponents.AspNetCore"
       - "/NTComponents.CodeDocumentation.Generator"
@@ -31,6 +30,19 @@ updates:
         update-types:
           - "minor"
           - "patch"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+
+  - package-ecosystem: "nuget"
+    directory: "/NTComponents"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "America/Denver"
+    # Disable routine version updates while retaining Dependabot security updates.
+    open-pull-requests-limit: 0
     commit-message:
       prefix: "chore"
       include: "scope"
