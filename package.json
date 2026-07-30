@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "devDependencies": {
-    "@oddbird/css-anchor-positioning": "0.9.0",
+    "@oddbird/css-anchor-positioning": "0.10.1",
     "jest": "^30.4.2",
     "jest-environment-jsdom": "^30.4.1",
     "terser": "^5.49.0",
