@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.Web.Virtualization;
 using Microsoft.JSInterop;
+using System.Diagnostics.CodeAnalysis;
 using NTComponents.Core;
 using NTComponents.Ext;
 using NTComponents.Virtualization;
@@ -327,6 +328,7 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
     }
 
     /// <inheritdoc />
+    [SuppressMessage("Reliability", "NTBA0003:Lifecycle method should use meaningful exception handling or owner ErrorBoundary coverage", Justification = "ItemsProvider failures intentionally propagate to the consumer-owned ErrorBoundary.")]
     protected override async Task OnParametersSetAsync() {
         ValidateConfiguration();
         CaptureRootAttributes();

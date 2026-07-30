@@ -67,6 +67,7 @@ public partial class TnTDialog {
     private ITnTDialogService _service { get; set; } = default!;
 
     private readonly HashSet<ITnTDialog> _dialogs = [];
+    private readonly NTDisposalState _disposalState = new();
 
 #if NET9_0_OR_GREATER
     private readonly Lock _lock = new();
@@ -78,20 +79,31 @@ public partial class TnTDialog {
     ///     Disposes the dialog component and unsubscribes from events.
     /// </summary>
     public void Dispose() {
-        _service.OnClose -= OnClose;
-        _service.OnOpen -= OnOpen;
-        GC.SuppressFinalize(this);
+        if (_disposalState.TryBegin()) {
+            _service.OnClose -= OnClose;
+            _service.OnOpen -= OnOpen;
+            GC.SuppressFinalize(this);
+        }
     }
 
     /// <inheritdoc />
     protected override async Task OnAfterRenderAsync(bool firstRender) {
         await base.OnAfterRenderAsync(firstRender);
-        ITnTDialog[] dialogs;
-        lock (_lock) {
-            dialogs = [.. _dialogs];
-        }
-        foreach (var dialog in dialogs) {
-            await _jsRuntime.InvokeVoidAsync("NTComponents.openModalDialog", dialog.ElementId);
+        if (!_disposalState.HasStarted) {
+            ITnTDialog[] dialogs;
+            lock (_lock) {
+                dialogs = [.. _dialogs];
+            }
+            try {
+                foreach (var dialog in dialogs) {
+                    if (!_disposalState.HasStarted) {
+                        await _jsRuntime.InvokeVoidAsync("NTComponents.openModalDialog", dialog.ElementId);
+                    }
+                }
+            }
+            catch (JSDisconnectedException) {
+                // JS runtime was disconnected, safe to ignore during render.
+            }
         }
     }
 

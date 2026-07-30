@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+using NTComponents.Core;
 using NTComponents.Ext;
 using NTComponents.Interfaces;
 using System.Diagnostics.CodeAnalysis;
@@ -16,6 +17,7 @@ namespace NTComponents;
     CompatibilitySummary = "Renders useful static markup and enhances behavior with browser JavaScript.",
     CompatibilityDetails = "Static SSR emits the component shell and accessible markup. The browser module adds richer behavior after the page reaches the browser.")]
 public abstract class NTPageScriptViewBase<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods | DynamicallyAccessedMemberTypes.NonPublicMethods)] TDerived> : NTCanonicalViewBase, INTPageScriptComponent<TDerived> where TDerived : ComponentBase {
+    private readonly NTDisposalState _disposalState = new();
 
     /// <inheritdoc />
     public DotNetObjectReference<TDerived>? DotNetObjectRef { get; private set; }
@@ -59,15 +61,27 @@ public abstract class NTPageScriptViewBase<[DynamicallyAccessedMembers(Dynamical
 
     /// <inheritdoc />
     public void Dispose() {
-        Dispose(disposing: true);
-        GC.SuppressFinalize(this);
+        if (_disposalState.TryBegin()) {
+            try {
+                Dispose(disposing: true);
+            }
+            finally {
+                GC.SuppressFinalize(this);
+            }
+        }
     }
 
     /// <inheritdoc />
     public async ValueTask DisposeAsync() {
-        await DisposeAsyncCore().ConfigureAwait(false);
-        Dispose(disposing: false);
-        GC.SuppressFinalize(this);
+        if (_disposalState.TryBegin()) {
+            try {
+                await DisposeAsyncCore().ConfigureAwait(false);
+                Dispose(disposing: false);
+            }
+            finally {
+                GC.SuppressFinalize(this);
+            }
+        }
     }
 
     /// <summary>
@@ -115,21 +129,41 @@ public abstract class NTPageScriptViewBase<[DynamicallyAccessedMembers(Dynamical
     protected override async Task OnAfterRenderAsync(bool firstRender) {
         await base.OnAfterRenderAsync(firstRender);
 
-        try {
-            if (!ShouldLoadJsModule || string.IsNullOrWhiteSpace(JsModulePath)) {
-                await DisposeJsModuleAsync().ConfigureAwait(false);
-                return;
-            }
+        if (!DisposalStarted) {
+            try {
+                if (ShouldLoadJsModule && !string.IsNullOrWhiteSpace(JsModulePath)) {
+                    if (firstRender || IsolatedJsModule is null) {
+                        var importedModule = await JSRuntime.ImportIsolatedJs(this, JsModulePath);
+                        if (!DisposalStarted) {
+                            IsolatedJsModule = importedModule;
+                            if (TryGetInteropReferences(out var module, out var dotNetRef)) {
+                                await module.InvokeVoidAsync("onLoad", Element, dotNetRef);
+                            }
+                        }
+                        else {
+                            await importedModule.DisposeAsync().ConfigureAwait(false);
+                        }
+                    }
 
-            if (firstRender || IsolatedJsModule is null) {
-                IsolatedJsModule = await JSRuntime.ImportIsolatedJs(this, JsModulePath);
-                await (IsolatedJsModule?.InvokeVoidAsync("onLoad", Element, DotNetObjectRef) ?? ValueTask.CompletedTask);
+                    if (TryGetInteropReferences(out var currentModule, out var currentDotNetRef)) {
+                        await currentModule.InvokeVoidAsync("onUpdate", Element, currentDotNetRef);
+                    }
+                }
+                else {
+                    await DisposeJsModuleAsync().ConfigureAwait(false);
+                }
             }
+            catch (JSDisconnectedException) {
+                // JS runtime was disconnected, safe to ignore during render.
+            }
+        }
+    }
 
-            await (IsolatedJsModule?.InvokeVoidAsync("onUpdate", Element, DotNetObjectRef) ?? ValueTask.CompletedTask);
-        }
-        catch (JSDisconnectedException) {
-            // JS runtime was disconnected, safe to ignore during render.
-        }
+    private bool DisposalStarted => _disposalState.HasStarted;
+
+    private bool TryGetInteropReferences([NotNullWhen(true)] out IJSObjectReference? module, [NotNullWhen(true)] out DotNetObjectReference<TDerived>? dotNetRef) {
+        module = IsolatedJsModule;
+        dotNetRef = DotNetObjectRef;
+        return !DisposalStarted && module is not null && dotNetRef is not null;
     }
 }

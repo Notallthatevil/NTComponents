@@ -81,6 +81,27 @@ public class Lifecycle_Tests : BunitContext {
     }
 
     [Fact]
+    public async Task Disposal_While_OnLoad_Is_Awaiting_Does_Not_Initialize_The_DropZone() {
+        var module = SetupModule();
+        module.SetupModule("initializeFileDropZone", _ => true).SetupVoid("dispose", _ => true).SetVoidResult();
+        var cut = Render<TestableTnTInputFile>();
+        var initialInitializeCount = JSInterop.Invocations.Count(invocation => invocation.Identifier == "initializeFileDropZone");
+        var initialUpdateCount = JSInterop.Invocations.Count(invocation => invocation.Identifier == "onUpdate");
+        var pendingOnLoad = module.SetupVoid("onLoad", _ => true);
+
+        var renderTask = cut.InvokeAsync(() => cut.Instance.InvokeOnAfterRenderAsync(firstRender: true));
+        await Task.Yield();
+        pendingOnLoad.Invocations.Should().ContainSingle();
+        await cut.Instance.DisposeAsync();
+        pendingOnLoad.SetVoidResult();
+        await renderTask;
+
+        JSInterop.Invocations.Count(invocation => invocation.Identifier == "initializeFileDropZone").Should().Be(initialInitializeCount);
+        JSInterop.Invocations.Count(invocation => invocation.Identifier == "onUpdate").Should().Be(initialUpdateCount);
+        JSInterop.Invocations.Where(invocation => invocation.Identifier is "onLoad" or "onUpdate").Should().OnlyContain(invocation => invocation.Arguments.LastOrDefault() != null);
+    }
+
+    [Fact]
     public void Dispose_ReleasesDotNetObjectReference() {
         var input = new global::NTComponents.TnTInputFile();
         input.DotNetObjectRef.Should().NotBeNull();
@@ -96,5 +117,9 @@ public class Lifecycle_Tests : BunitContext {
         module.SetupVoid("onUpdate", _ => true).SetVoidResult();
         module.SetupVoid("onDispose", _ => true).SetVoidResult();
         return module;
+    }
+
+    private sealed class TestableTnTInputFile : global::NTComponents.TnTInputFile {
+        public Task InvokeOnAfterRenderAsync(bool firstRender) => base.OnAfterRenderAsync(firstRender);
     }
 }

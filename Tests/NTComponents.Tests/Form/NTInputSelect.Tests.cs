@@ -41,6 +41,32 @@ public class NTInputSelect_Tests : BunitContext {
     }
 
     [Fact]
+    public async Task Disposal_While_OnLoad_Is_Awaiting_Does_Not_Invoke_OnUpdate_With_A_Disposed_Reference() {
+        using var context = new BunitContext();
+        context.SetRendererInfo(new RendererInfo("WebAssembly", true));
+        var module = context.JSInterop.SetupModule("./_content/NTComponents/Form/NTInputSelect.razor.js");
+        module.SetupVoid("onLoad", _ => true).SetVoidResult();
+        module.SetupVoid("onUpdate", _ => true).SetVoidResult();
+        module.SetupVoid("onDispose", _ => true).SetVoidResult();
+        var model = new StringTestModel();
+        var cut = context.Render<TestInputSelect<string?>>(parameters => parameters.Add(component => component.ValueExpression, () => model.Value));
+        var initialUpdateCount = context.JSInterop.Invocations.Count(invocation => invocation.Identifier == "onUpdate");
+        var pendingOnLoad = module.SetupVoid("onLoad", _ => true);
+
+        var renderTask = cut.InvokeAsync(() => cut.Instance.InvokeOnAfterRenderAsync(firstRender: true));
+        await Task.Yield();
+        pendingOnLoad.Invocations.Should().ContainSingle();
+        ((IDisposable)cut.Instance).Dispose();
+        pendingOnLoad.SetVoidResult();
+        await renderTask;
+
+        context.JSInterop.Invocations.Count(invocation => invocation.Identifier == "onUpdate").Should().Be(initialUpdateCount);
+        context.JSInterop.Invocations
+            .Where(invocation => invocation.Identifier == "onLoad" || invocation.Identifier == "onUpdate")
+            .Should().OnlyContain(invocation => invocation.Arguments[1] != null);
+    }
+
+    [Fact]
     public void Selecting_Option_Updates_Bound_Value_And_Hidden_Input() {
         var model = new TestModel();
         var cut = RenderInputSelect(model);
@@ -263,6 +289,10 @@ public class NTInputSelect_Tests : BunitContext {
 
     private sealed class StringTestModel {
         public string? Value { get; set; }
+    }
+
+    private sealed class TestInputSelect<TInputType> : NTInputSelect<TInputType> {
+        public Task InvokeOnAfterRenderAsync(bool firstRender) => base.OnAfterRenderAsync(firstRender);
     }
 
     private sealed record TestOption(TestSelectEnum? Value, string Label);

@@ -310,6 +310,7 @@ public partial class TnTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessed
     }
 
     /// <inheritdoc />
+    [SuppressMessage("Reliability", "NTBA0003:Lifecycle method should use meaningful exception handling or owner ErrorBoundary coverage", Justification = "ItemsProvider failures intentionally propagate to the consumer-owned ErrorBoundary.")]
     protected override async Task OnParametersSetAsync() {
         await base.OnParametersSetAsync();
         if (Pagination is not null && _lastUsedPaginationState != Pagination) {
@@ -324,13 +325,12 @@ public partial class TnTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessed
     }
 
     /// <inheritdoc />
+    [SuppressMessage("Reliability", "NTBA0003:Lifecycle method should use meaningful exception handling or owner ErrorBoundary coverage", Justification = "ItemsProvider failures intentionally propagate to the consumer-owned ErrorBoundary.")]
     protected override async Task OnAfterRenderAsync(bool firstRender) {
         await base.OnAfterRenderAsync(firstRender);
 
-        if (firstRender) {
-            if (Pagination is not null && ItemsProvider is not null) {
-                await RefreshDataGridAsync();
-            }
+        if (firstRender && !DisposalStarted && Pagination is not null && ItemsProvider is not null) {
+            await RefreshDataGridAsync();
         }
     }
 

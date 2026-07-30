@@ -10,19 +10,38 @@ namespace NTComponents.Core;
 ///     cref="DisposeAsyncCore" /> for asynchronous cleanup. In Blazor, avoid touching UI or JS interop from continuations that used <c>ConfigureAwait(false)</c>; marshal back using <c>InvokeAsync</c>
 ///     if needed.
 /// </remarks>
-public abstract class TnTDisposableComponentBase : TnTComponentBase, IAsyncDisposable, IDisposable {
+public abstract class NTDisposableComponentBase : TnTComponentBase, IAsyncDisposable, IDisposable {
+
+    private readonly NTDisposalState _disposalState = new();
+
+    /// <summary>
+    ///     Gets a value indicating whether disposal has started.
+    /// </summary>
+    protected bool DisposalStarted => _disposalState.HasStarted;
 
     /// <inheritdoc />
     public void Dispose() {
-        Dispose(disposing: true);
-        GC.SuppressFinalize(this);
+        if (_disposalState.TryBegin()) {
+            try {
+                Dispose(disposing: true);
+            }
+            finally {
+                GC.SuppressFinalize(this);
+            }
+        }
     }
 
     /// <inheritdoc />
     public async ValueTask DisposeAsync() {
-        await DisposeAsyncCore().ConfigureAwait(false);
-        Dispose(disposing: false);
-        GC.SuppressFinalize(this);
+        if (_disposalState.TryBegin()) {
+            try {
+                await DisposeAsyncCore().ConfigureAwait(false);
+                Dispose(disposing: false);
+            }
+            finally {
+                GC.SuppressFinalize(this);
+            }
+        }
     }
 
     /// <summary>
@@ -44,3 +63,27 @@ public abstract class TnTDisposableComponentBase : TnTComponentBase, IAsyncDispo
     /// </remarks>
     protected virtual ValueTask DisposeAsyncCore() => ValueTask.CompletedTask;
 }
+
+internal sealed class NTDisposalState {
+    private readonly Lock _syncRoot = new();
+    private bool _started;
+
+    internal bool HasStarted {
+        get {
+            lock (_syncRoot) {
+                return _started;
+            }
+        }
+    }
+
+    internal bool TryBegin() {
+        lock (_syncRoot) {
+            var canBegin = !_started;
+            _started = true;
+            return canBegin;
+        }
+    }
+}
+
+/// <inheritdoc />
+public abstract class TnTDisposableComponentBase : NTDisposableComponentBase;

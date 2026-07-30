@@ -294,6 +294,7 @@ public partial class NTInputFile : IAsyncDisposable {
     private readonly HashSet<FileProgressState> _fileProgressStates = [];
     private readonly List<Stream> _ownedStreams = [];
     private readonly List<IBrowserFile> _pendingFiles = [];
+    private readonly NTDisposalState _disposalState = new();
     private ElementReference _inputElementContainer;
     private bool _isUploading;
     private int _inputFileKey;
@@ -411,15 +412,21 @@ public partial class NTInputFile : IAsyncDisposable {
     protected override async Task OnAfterRenderAsync(bool firstRender) {
         await base.OnAfterRenderAsync(firstRender);
 
-        if (firstRender) {
+        if (firstRender && !_disposalState.HasStarted) {
             try {
-                _jsModule = await JSRuntime.ImportIsolatedJs(this, JsModulePath);
+                var importedModule = await JSRuntime.ImportIsolatedJs(this, JsModulePath);
+                if (!_disposalState.HasStarted) {
+                    _jsModule = importedModule;
+                }
+                else {
+                    await importedModule.DisposeAsync();
+                }
             }
             catch (JSDisconnectedException) {
                 // JS runtime was disconnected, safe to ignore during render.
             }
 
-            if (_needsNativeInputRestore) {
+            if (_needsNativeInputRestore && !_disposalState.HasStarted) {
                 _needsNativeInputRestore = false;
                 await RestoreNativeFileNamesAsync();
             }
@@ -428,17 +435,23 @@ public partial class NTInputFile : IAsyncDisposable {
 
     /// <inheritdoc />
     public async ValueTask DisposeAsync() {
-        await DisposeOwnedStreamsAsync().ConfigureAwait(false);
-        if (_jsModule is not null) {
+        if (_disposalState.TryBegin()) {
             try {
-                await _jsModule.DisposeAsync().ConfigureAwait(false);
+                await DisposeOwnedStreamsAsync().ConfigureAwait(false);
             }
-            catch (JSDisconnectedException) {
-                // JS runtime was disconnected, safe to ignore during disposal.
+            finally {
+                if (_jsModule is not null) {
+                    try {
+                        await _jsModule.DisposeAsync().ConfigureAwait(false);
+                    }
+                    catch (JSDisconnectedException) {
+                        // JS runtime was disconnected, safe to ignore during disposal.
+                    }
+                    _jsModule = null;
+                }
+                GC.SuppressFinalize(this);
             }
-            _jsModule = null;
         }
-        GC.SuppressFinalize(this);
     }
 
     /// <summary>

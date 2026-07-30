@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
+using NTComponents.Core;
 using NTComponents.Ext;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
@@ -82,6 +83,7 @@ public partial class NTAutocomplete : IAsyncDisposable {
     };
 
     private readonly List<NTAutocompleteOption> _optionChildren = [];
+    private readonly NTDisposalState _disposalState = new();
     private DotNetObjectReference<NTAutocomplete>? _dotNetObjectRef;
     private IJSObjectReference? _jsModule;
     private bool _hasRendered;
@@ -165,22 +167,24 @@ public partial class NTAutocomplete : IAsyncDisposable {
 
     /// <inheritdoc />
     public async ValueTask DisposeAsync() {
-        try {
-            if (_jsModule is not null) {
-                try {
-                    await _jsModule.InvokeVoidAsync("onDispose", Element, _dotNetObjectRef).ConfigureAwait(false);
-                    await _jsModule.DisposeAsync().ConfigureAwait(false);
-                }
-                catch (JSDisconnectedException) {
-                    // JS runtime was disconnected, safe to ignore during disposal.
+        if (_disposalState.TryBegin()) {
+            try {
+                if (_jsModule is not null) {
+                    try {
+                        await _jsModule.InvokeVoidAsync("onDispose", Element, _dotNetObjectRef).ConfigureAwait(false);
+                        await _jsModule.DisposeAsync().ConfigureAwait(false);
+                    }
+                    catch (JSDisconnectedException) {
+                        // JS runtime was disconnected, safe to ignore during disposal.
+                    }
                 }
             }
-        }
-        finally {
-            _jsModule = null;
-            _dotNetObjectRef?.Dispose();
-            _dotNetObjectRef = null;
-            GC.SuppressFinalize(this);
+            finally {
+                _jsModule = null;
+                _dotNetObjectRef?.Dispose();
+                _dotNetObjectRef = null;
+                GC.SuppressFinalize(this);
+            }
         }
     }
 
@@ -268,25 +272,42 @@ public partial class NTAutocomplete : IAsyncDisposable {
         var refreshAfterInitialOptionRegistration = !_hasRendered && _optionChildrenChangedBeforeFirstRender;
         _hasRendered = true;
 
-        try {
-            _dotNetObjectRef ??= DotNetObjectReference.Create(this);
-            if (firstRender) {
-                _jsModule = await JSRuntime.ImportIsolatedJs(this, JsModulePath);
-                await _jsModule.InvokeVoidAsync("onLoad", Element, _dotNetObjectRef);
+        if (!_disposalState.HasStarted) {
+            try {
+                _dotNetObjectRef ??= DotNetObjectReference.Create(this);
+                if (firstRender) {
+                    var importedModule = await JSRuntime.ImportIsolatedJs(this, JsModulePath);
+                    if (!_disposalState.HasStarted && _dotNetObjectRef is not null) {
+                        _jsModule = importedModule;
+                        await importedModule.InvokeVoidAsync("onLoad", Element, _dotNetObjectRef);
+                    }
+                    else {
+                        await importedModule.DisposeAsync();
+                    }
+                }
+                else if (!_disposalState.HasStarted && _jsModule is not null && _dotNetObjectRef is not null) {
+                    await _jsModule.InvokeVoidAsync("onUpdate", Element, _dotNetObjectRef);
+                }
             }
-            else if (_jsModule is not null) {
-                await _jsModule.InvokeVoidAsync("onUpdate", Element, _dotNetObjectRef);
+            catch (JSDisconnectedException) {
+                // JS runtime was disconnected, safe to ignore during render.
             }
-        }
-        catch (JSDisconnectedException) {
-            // JS runtime was disconnected, safe to ignore during render.
-        }
-        catch (JSException) {
-            // Enhancement failed. Keep the native input usable instead of failing the interactive circuit.
-            _jsModule = null;
+            catch (JSException) {
+                // Enhancement failed. Keep the native input usable instead of failing the interactive circuit.
+                var module = _jsModule;
+                _jsModule = null;
+                if (module is not null) {
+                    try {
+                        await module.DisposeAsync();
+                    }
+                    catch (JSDisconnectedException) {
+                        // JS runtime was disconnected while releasing the failed enhancement.
+                    }
+                }
+            }
         }
 
-        if (refreshAfterInitialOptionRegistration) {
+        if (refreshAfterInitialOptionRegistration && !_disposalState.HasStarted) {
             _optionChildrenChangedBeforeFirstRender = false;
             await InvokeAsync(StateHasChanged);
         }

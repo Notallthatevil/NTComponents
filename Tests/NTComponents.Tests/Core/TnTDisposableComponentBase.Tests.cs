@@ -21,6 +21,8 @@ public class TnTDisposableComponentBase_Tests : BunitContext {
         // Assert
         component.DisposeCalled.Should().BeTrue();
         component.DisposeAsyncCoreCalled.Should().BeTrue();
+        component.DisposeCallCount.Should().Be(1);
+        component.DisposeAsyncCoreCallCount.Should().Be(1);
     }
 
     [Fact]
@@ -33,7 +35,7 @@ public class TnTDisposableComponentBase_Tests : BunitContext {
         component.Dispose();
 
         // Assert
-        component.DisposeCallCount.Should().Be(2);
+        component.DisposeCallCount.Should().Be(1);
     }
 
     [Fact]
@@ -47,6 +49,7 @@ public class TnTDisposableComponentBase_Tests : BunitContext {
         // Assert
         component.DisposeCalled.Should().BeTrue();
         component.DisposingArg.Should().BeTrue();
+        component.DisposalStartedWhenDisposeCalled.Should().BeTrue();
     }
 
     [Fact]
@@ -60,7 +63,8 @@ public class TnTDisposableComponentBase_Tests : BunitContext {
 
         // Assert
         component.DisposeCalled.Should().BeTrue();
-        component.DisposeAsyncCoreCalled.Should().BeTrue();
+        component.DisposeAsyncCoreCalled.Should().BeFalse();
+        component.DisposeCallCount.Should().Be(1);
     }
 
     [Fact]
@@ -73,7 +77,8 @@ public class TnTDisposableComponentBase_Tests : BunitContext {
         await component.DisposeAsync();
 
         // Assert
-        component.DisposeAsyncCoreCallCount.Should().Be(2);
+        component.DisposeAsyncCoreCallCount.Should().Be(1);
+        component.DisposeCallCount.Should().Be(1);
     }
 
     [Fact]
@@ -88,6 +93,8 @@ public class TnTDisposableComponentBase_Tests : BunitContext {
         component.DisposeAsyncCoreCalled.Should().BeTrue();
         component.DisposeCalled.Should().BeTrue();
         component.DisposingArg.Should().BeFalse();
+        component.DisposalStartedWhenDisposeCalled.Should().BeTrue();
+        component.DisposalStartedWhenDisposeAsyncCoreCalled.Should().BeTrue();
     }
 
     [Fact]
@@ -117,6 +124,8 @@ public class TnTDisposableComponentBase_Tests : BunitContext {
         public int DisposeCallCount { get; private set; }
         public bool DisposeCalled { get; private set; }
         public bool DisposingArg { get; private set; }
+        public bool DisposalStartedWhenDisposeAsyncCoreCalled { get; private set; }
+        public bool DisposalStartedWhenDisposeCalled { get; private set; }
         public override string? ElementClass => null;
         public override string? ElementStyle => null;
 
@@ -127,6 +136,7 @@ public class TnTDisposableComponentBase_Tests : BunitContext {
         }
 
         protected override void Dispose(bool disposing) {
+            DisposalStartedWhenDisposeCalled = DisposalHasStarted;
             DisposeCalled = true;
             DisposingArg = disposing;
             DisposeCallCount++;
@@ -134,9 +144,14 @@ public class TnTDisposableComponentBase_Tests : BunitContext {
         }
 
         protected override async ValueTask DisposeAsyncCore() {
+            DisposalStartedWhenDisposeAsyncCoreCalled = DisposalHasStarted;
             DisposeAsyncCoreCalled = true;
             DisposeAsyncCoreCallCount++;
             await base.DisposeAsyncCore();
         }
+
+        private bool DisposalHasStarted => typeof(TnTDisposableComponentBase)
+            .GetProperty("DisposalStarted", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+            ?.GetValue(this) as bool? ?? false;
     }
 }

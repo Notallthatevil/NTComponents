@@ -53,6 +53,7 @@ public partial class NTRichTextEditor : INTPageScriptComponent<NTRichTextEditor>
     };
 
     private readonly IJSRuntime _jsRuntime;
+    private readonly NTDisposalState _disposalState = new();
     private ElementReference _editorElement;
 
     /// <summary>
@@ -316,8 +317,14 @@ public partial class NTRichTextEditor : INTPageScriptComponent<NTRichTextEditor>
 
     /// <inheritdoc />
     public async ValueTask DisposeAsync() {
-        await DisposeAsyncCore().ConfigureAwait(false);
-        GC.SuppressFinalize(this);
+        if (_disposalState.TryBegin()) {
+            try {
+                await DisposeAsyncCore().ConfigureAwait(false);
+            }
+            finally {
+                GC.SuppressFinalize(this);
+            }
+        }
     }
 
     /// <inheritdoc />
@@ -340,20 +347,28 @@ public partial class NTRichTextEditor : INTPageScriptComponent<NTRichTextEditor>
         await base.OnAfterRenderAsync(firstRender);
 
         // Static SSR enhancement is handled by NTPageScript in the browser. The .NET callback bridge is only available once the renderer becomes interactive.
-        if (!RendererInfo.IsInteractive) {
-            return;
-        }
+        if (RendererInfo.IsInteractive && !DisposalStarted) {
+            try {
+                if (firstRender) {
+                    var importedModule = await _jsRuntime.ImportIsolatedJs(this, JsModulePath);
+                    if (!DisposalStarted) {
+                        IsolatedJsModule = importedModule;
+                        if (TryGetInteropReferences(out var module, out var dotNetRef)) {
+                            await module.InvokeVoidAsync("onLoad", _editorElement, dotNetRef);
+                        }
+                    }
+                    else {
+                        await importedModule.DisposeAsync().ConfigureAwait(false);
+                    }
+                }
 
-        try {
-            if (firstRender) {
-                IsolatedJsModule = await _jsRuntime.ImportIsolatedJs(this, JsModulePath);
-                await (IsolatedJsModule?.InvokeVoidAsync("onLoad", _editorElement, DotNetObjectRef) ?? ValueTask.CompletedTask);
+                if (TryGetInteropReferences(out var currentModule, out var currentDotNetRef)) {
+                    await currentModule.InvokeVoidAsync("onUpdate", _editorElement, currentDotNetRef);
+                }
             }
-
-            await (IsolatedJsModule?.InvokeVoidAsync("onUpdate", _editorElement, DotNetObjectRef) ?? ValueTask.CompletedTask);
-        }
-        catch (JSDisconnectedException) {
-            // JS runtime was disconnected, safe to ignore during render.
+            catch (JSDisconnectedException) {
+                // JS runtime was disconnected, safe to ignore during render.
+            }
         }
     }
 
@@ -410,7 +425,7 @@ public partial class NTRichTextEditor : INTPageScriptComponent<NTRichTextEditor>
 
     /// <inheritdoc />
     protected override void Dispose(bool disposing) {
-        if (disposing) {
+        if (disposing && _disposalState.TryBegin()) {
             DotNetObjectRef?.Dispose();
             DotNetObjectRef = null;
         }
@@ -436,6 +451,14 @@ public partial class NTRichTextEditor : INTPageScriptComponent<NTRichTextEditor>
 
         DotNetObjectRef?.Dispose();
         DotNetObjectRef = null;
+    }
+
+    private bool DisposalStarted => _disposalState.HasStarted;
+
+    private bool TryGetInteropReferences([NotNullWhen(true)] out IJSObjectReference? module, [NotNullWhen(true)] out DotNetObjectReference<NTRichTextEditor>? dotNetRef) {
+        module = IsolatedJsModule;
+        dotNetRef = DotNetObjectRef;
+        return !DisposalStarted && module is not null && dotNetRef is not null;
     }
 
     private async Task SetMarkupValueAsync(string? html) {

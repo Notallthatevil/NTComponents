@@ -10,7 +10,7 @@ namespace NTComponents.Core;
 ///     Represents a base class for components that have an isolated JavaScript module.
 /// </summary>
 /// <typeparam name="TDerived">The type of the component. Must match the derived class type (CRTP pattern).</typeparam>
-public abstract class NTPageScriptComponent<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods | DynamicallyAccessedMemberTypes.NonPublicMethods)] TDerived> : TnTDisposableComponentBase, INTPageScriptComponent<TDerived> where TDerived : ComponentBase {
+public abstract class NTPageScriptComponent<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods | DynamicallyAccessedMemberTypes.NonPublicMethods)] TDerived> : NTDisposableComponentBase, INTPageScriptComponent<TDerived> where TDerived : ComponentBase {
 
     /// <inheritdoc />
     public DotNetObjectReference<TDerived>? DotNetObjectRef { get; set; }
@@ -80,17 +80,42 @@ public abstract class NTPageScriptComponent<[DynamicallyAccessedMembers(Dynamica
     /// <inheritdoc />
     protected override async Task OnAfterRenderAsync(bool firstRender) {
         await base.OnAfterRenderAsync(firstRender);
-        try {
-            if (firstRender) {
-                IsolatedJsModule = await JSRuntime.ImportIsolatedJs(this, JsModulePath);
-                await (IsolatedJsModule?.InvokeVoidAsync("onLoad", Element, DotNetObjectRef) ?? ValueTask.CompletedTask);
-            }
 
-            await (IsolatedJsModule?.InvokeVoidAsync("onUpdate", Element, DotNetObjectRef) ?? ValueTask.CompletedTask);
+        if (!DisposalStarted) {
+            try {
+                if (firstRender) {
+                    var importedModule = await JSRuntime.ImportIsolatedJs(this, JsModulePath);
+                    if (!DisposalStarted) {
+                        IsolatedJsModule = importedModule;
+                        if (TryGetInteropReferences(out var module, out var dotNetRef)) {
+                            await module.InvokeVoidAsync("onLoad", Element, dotNetRef);
+                        }
+                    }
+                    else {
+                        await importedModule.DisposeAsync().ConfigureAwait(false);
+                    }
+                }
+
+                if (TryGetInteropReferences(out var currentModule, out var currentDotNetRef)) {
+                    await currentModule.InvokeVoidAsync("onUpdate", Element, currentDotNetRef);
+                }
+            }
+            catch (JSDisconnectedException) {
+                // JS runtime was disconnected, safe to ignore during render.
+            }
         }
-        catch (JSDisconnectedException) {
-            // JS runtime was disconnected, safe to ignore during render.
-        }
+    }
+
+    /// <summary>
+    ///     Attempts to get the JavaScript module and .NET object reference when the component is still available for interop.
+    /// </summary>
+    /// <param name="module">The loaded JavaScript module.</param>
+    /// <param name="dotNetRef">The .NET object reference passed to JavaScript.</param>
+    /// <returns><see langword="true" /> when both references are available and disposal has not started; otherwise, <see langword="false" />.</returns>
+    protected bool TryGetInteropReferences([NotNullWhen(true)] out IJSObjectReference? module, [NotNullWhen(true)] out DotNetObjectReference<TDerived>? dotNetRef) {
+        module = IsolatedJsModule;
+        dotNetRef = DotNetObjectRef;
+        return !DisposalStarted && module is not null && dotNetRef is not null;
     }
 }
 

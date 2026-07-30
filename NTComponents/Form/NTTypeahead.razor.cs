@@ -48,12 +48,13 @@ public partial class NTTypeahead<TItem> : IAsyncDisposable {
     };
 
     private CancellationTokenSource? _searchCancellationTokenSource;
+    private readonly NTDisposalState _disposalState = new();
     private IReadOnlyList<TItem> _items = [];
     private IJSObjectReference? _jsModule;
     private TItem? _lastSyncedValue;
     private string? _lastSearchTextParameter;
     private int _activeIndex = -1;
-    private bool _disposed;
+    private bool _disposed => _disposalState.HasStarted;
     private bool _isOpen;
     private bool _searching;
     private bool _selectActiveItemOnBlur;
@@ -192,23 +193,32 @@ public partial class NTTypeahead<TItem> : IAsyncDisposable {
     private IJSRuntime JSRuntime { get; set; } = default!;
 
     /// <inheritdoc />
+    [SuppressMessage("Reliability", "NTBA0004:Dispose method should use meaningful exception handling", Justification = "Cancellation callback failures propagate after the finally block releases component resources.")]
     public async ValueTask DisposeAsync() {
-        _disposed = true;
-        await CancelSearchAsync(dispose: true);
-
-        if (_jsModule is not null) {
+        if (_disposalState.TryBegin()) {
             try {
-                await _jsModule.InvokeVoidAsync("onDispose", Element);
-                await _jsModule.DisposeAsync();
+                await CancelSearchAsync(dispose: true);
             }
-            catch (JSDisconnectedException) {
-                // JS runtime was disconnected, safe to ignore during disposal.
+            finally {
+                var module = _jsModule;
+                _jsModule = null;
+                if (module is not null) {
+                    try {
+                        try {
+                            await module.InvokeVoidAsync("onDispose", Element);
+                        }
+                        finally {
+                            await module.DisposeAsync();
+                        }
+                    }
+                    catch (JSDisconnectedException) {
+                        // JS runtime was disconnected, safe to ignore during disposal.
+                    }
+                }
+
+                GC.SuppressFinalize(this);
             }
         }
-
-        _jsModule = null;
-
-        GC.SuppressFinalize(this);
     }
 
     /// <inheritdoc />
@@ -239,21 +249,38 @@ public partial class NTTypeahead<TItem> : IAsyncDisposable {
     protected override async Task OnAfterRenderAsync(bool firstRender) {
         await base.OnAfterRenderAsync(firstRender);
 
-        try {
-            if (firstRender) {
-                _jsModule = await JSRuntime.ImportIsolatedJs(this, JsModulePath);
-                await _jsModule.InvokeVoidAsync("onLoad", Element);
+        if (!_disposalState.HasStarted) {
+            try {
+                if (firstRender) {
+                    var importedModule = await JSRuntime.ImportIsolatedJs(this, JsModulePath);
+                    if (!_disposalState.HasStarted) {
+                        _jsModule = importedModule;
+                        await importedModule.InvokeVoidAsync("onLoad", Element);
+                    }
+                    else {
+                        await importedModule.DisposeAsync();
+                    }
+                }
+                else if (!_disposalState.HasStarted && _jsModule is not null) {
+                    await _jsModule.InvokeVoidAsync("onUpdate", Element);
+                }
             }
-            else if (_jsModule is not null) {
-                await _jsModule.InvokeVoidAsync("onUpdate", Element);
+            catch (JSDisconnectedException) {
+                // JS runtime was disconnected, safe to ignore during render.
             }
-        }
-        catch (JSDisconnectedException) {
-            // JS runtime was disconnected, safe to ignore during render.
-        }
-        catch (JSException) {
-            // Menu positioning is a progressive enhancement. Keep the typeahead usable instead of failing the circuit.
-            _jsModule = null;
+            catch (JSException) {
+                // Menu positioning is a progressive enhancement. Keep the typeahead usable instead of failing the circuit.
+                var module = _jsModule;
+                _jsModule = null;
+                if (module is not null) {
+                    try {
+                        await module.DisposeAsync();
+                    }
+                    catch (JSDisconnectedException) {
+                        // JS runtime was disconnected while releasing the failed enhancement.
+                    }
+                }
+            }
         }
     }
 
@@ -281,6 +308,7 @@ public partial class NTTypeahead<TItem> : IAsyncDisposable {
     }
 
     /// <inheritdoc />
+    [SuppressMessage("Reliability", "NTBA0003:Lifecycle method should use meaningful exception handling or owner ErrorBoundary coverage", Justification = "Cancellation callback failures intentionally propagate to the consumer-owned ErrorBoundary.")]
     protected override async Task OnParametersSetAsync() {
         await base.OnParametersSetAsync();
 

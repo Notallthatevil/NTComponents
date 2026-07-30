@@ -51,10 +51,18 @@ const scrollPersistenceInterval = 100;
  * Initializes the virtualization component by setting up intersection observers and mutation observers
  * for the top and bottom spacers to handle dynamic loading of items in a virtualized list.
  */
-export function init(dotNetRef: DotNetVirtualizeRef, topSpacer: HTMLElement, bottomSpacer: HTMLElement, itemSize: number, overscanCount: number, maxItemCount: number, scrollRestorationKey?: string | null, rootMargin = 50): void {
-    const dotNetRefKey = getDotNetRefKey(dotNetRef);
+export function init(dotNetRef: Maybe<DotNetVirtualizeRef>, topSpacer: HTMLElement, bottomSpacer: HTMLElement, itemSize: number, overscanCount: number, maxItemCount: number, scrollRestorationKey?: string | null, rootMargin = 50): void {
+    if (!dotNetRef) {
+        return;
+    }
+
+    const activeDotNetRef = dotNetRef;
+    const dotNetRefKey = getDotNetRefKey(activeDotNetRef);
     const existingState = observersByDotNetRef.get(dotNetRefKey)?.state;
-    dispose(dotNetRef);
+    dispose(activeDotNetRef);
+    if (!topSpacer.isConnected || !bottomSpacer.isConnected) {
+        return;
+    }
 
     let scrollContainer = findClosestScrollContainer(topSpacer);
     const overflowAnchorElement = scrollContainer ?? document.documentElement;
@@ -297,7 +305,7 @@ export function init(dotNetRef: DotNetVirtualizeRef, topSpacer: HTMLElement, bot
         const itemsAfter = Math.max(0, state.itemCount - visibleItemCapacity - itemsBefore);
         const bottomSpacerSize = (itemsAfter + unusedItemCapacity) * state.itemSize;
 
-        void dotNetRef.invokeMethodAsync(
+        void activeDotNetRef.invokeMethodAsync(
             'LoadItems',
             topSpacerSize,
             bottomSpacerSize,

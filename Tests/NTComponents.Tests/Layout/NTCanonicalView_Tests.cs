@@ -6,10 +6,31 @@ using NTComponents.Interfaces;
 namespace NTComponents.Tests.Layout;
 
 public class NTCanonicalView_Tests : BunitContext {
+    private readonly BunitJSModuleInterop _containerModule;
+
     public NTCanonicalView_Tests() {
-        SetupViewModule("./_content/NTComponents/Layout/Views/NTContainerView.razor.js");
+        _containerModule = SetupViewModule("./_content/NTComponents/Layout/Views/NTContainerView.razor.js");
         SetupViewModule("./_content/NTComponents/Layout/Views/NTListDetailView.razor.js");
         SetupViewModule("./_content/NTComponents/Layout/Views/NTSupportingPaneView.razor.js");
+    }
+
+    [Fact]
+    public async Task Disposal_While_OnLoad_Is_Awaiting_Does_Not_Invoke_OnUpdate_With_A_Disposed_Reference() {
+        var cut = Render<TestContainerView>();
+        var initialUpdateCount = JSInterop.Invocations.Count(invocation => invocation.Identifier == "onUpdate");
+        var pendingOnLoad = _containerModule.SetupVoid("onLoad", _ => true);
+
+        var renderTask = cut.InvokeAsync(() => cut.Instance.InvokeOnAfterRenderAsync(firstRender: true));
+        await Task.Yield();
+        pendingOnLoad.Invocations.Should().ContainSingle();
+        cut.Instance.Dispose();
+        pendingOnLoad.SetVoidResult();
+        await renderTask;
+
+        JSInterop.Invocations.Count(invocation => invocation.Identifier == "onUpdate").Should().Be(initialUpdateCount);
+        JSInterop.Invocations
+            .Where(invocation => invocation.Identifier == "onLoad" || invocation.Identifier == "onUpdate")
+            .Should().OnlyContain(invocation => invocation.Arguments[1] != null);
     }
 
     [Fact]
@@ -426,11 +447,16 @@ public class NTCanonicalView_Tests : BunitContext {
         }
     }
 
-    private void SetupViewModule(string jsModulePath) {
+    private BunitJSModuleInterop SetupViewModule(string jsModulePath) {
         var module = JSInterop.SetupModule(jsModulePath);
         module.SetupVoid("onLoad", _ => true).SetVoidResult();
         module.SetupVoid("onUpdate", _ => true).SetVoidResult();
         module.SetupVoid("onDispose", _ => true).SetVoidResult();
+        return module;
+    }
+
+    private sealed class TestContainerView : NTContainerView {
+        public Task InvokeOnAfterRenderAsync(bool firstRender) => base.OnAfterRenderAsync(firstRender);
     }
 
     private static void ShouldHaveScopedCssAttribute(IElement element) =>

@@ -43,6 +43,7 @@
 	<ItemGroup>
 		<ProjectReference Include="..\NTComponents.CodeDocumentation.Generator\NTComponents.CodeDocumentation.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 		<ProjectReference Include="..\NTComponents.Analyzers\NTComponents.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+		<ProjectReference Include="..\Submodules\NT.BlazorAnalyzer\NT.BlazorAnalyzer\NT.BlazorAnalyzer.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" PrivateAssets="all" />
 	</ItemGroup>
 
 	<ItemGroup>

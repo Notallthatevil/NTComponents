@@ -1,5 +1,7 @@
 using NTComponents;
 using NTComponents.Interfaces;
+using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 
 namespace NTComponents.Tests.Progress;
 
@@ -7,8 +9,36 @@ namespace NTComponents.Tests.Progress;
 ///     Unit tests for <see cref="NTLoader" />.
 /// </summary>
 public class NTLoader_Tests : BunitContext {
+    private const string JsModulePath = "./_content/NTComponents/Progress/NTLoader.razor.js";
+    private readonly BunitJSModuleInterop _module;
+
     public NTLoader_Tests() {
         JSInterop.Mode = JSRuntimeMode.Loose;
+        SetRendererInfo(new RendererInfo("WebAssembly", true));
+        _module = JSInterop.SetupModule(JsModulePath);
+        _module.SetupVoid("onLoad", _ => true).SetVoidResult();
+        _module.SetupVoid("onUpdate", _ => true).SetVoidResult();
+        _module.SetupVoid("onDispose", _ => true).SetVoidResult();
+    }
+
+    [Fact]
+    public async Task Disposal_While_OnLoad_Is_Awaiting_Does_Not_Invoke_OnUpdate_With_A_Disposed_Reference() {
+        var cut = Render<TestLoader>();
+        cut.Instance.ClearIsolatedJsModule();
+        var initialUpdateCount = JSInterop.Invocations.Count(invocation => invocation.Identifier == "onUpdate");
+        var pendingOnLoad = _module.SetupVoid("onLoad", _ => true);
+
+        var renderTask = cut.InvokeAsync(() => cut.Instance.InvokeOnAfterRenderAsync(firstRender: true));
+        await Task.Yield();
+        pendingOnLoad.Invocations.Should().ContainSingle();
+        cut.Instance.Dispose();
+        pendingOnLoad.SetVoidResult();
+        await renderTask;
+
+        JSInterop.Invocations.Count(invocation => invocation.Identifier == "onUpdate").Should().Be(initialUpdateCount);
+        JSInterop.Invocations
+            .Where(invocation => invocation.Identifier == "onLoad" || invocation.Identifier == "onUpdate")
+            .Should().OnlyContain(invocation => invocation.Arguments[1] != null);
     }
 
     [Fact]
@@ -177,5 +207,14 @@ public class NTLoader_Tests : BunitContext {
         var cut = Render<NTLoader>(p => p.Add(c => c.AnimationDuration, TimeSpan.FromMilliseconds(milliseconds)));
 
         cut.Find(".nt-loader").GetAttribute("data-shape-interval-ms")!.Should().Be("400");
+    }
+
+    private sealed class TestLoader : NTLoader {
+        public Task InvokeOnAfterRenderAsync(bool firstRender) => base.OnAfterRenderAsync(firstRender);
+
+        public void ClearIsolatedJsModule() =>
+            typeof(NTLoader)
+                .GetProperty(nameof(IsolatedJsModule))!
+                .SetValue(this, null);
     }
 }

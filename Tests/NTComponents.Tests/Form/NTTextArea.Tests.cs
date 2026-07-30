@@ -6,14 +6,15 @@ using System.Linq.Expressions;
 namespace NTComponents.Tests.Form;
 
 public class NTTextArea_Tests : BunitContext {
+    private readonly BunitJSModuleInterop _module;
 
     public NTTextArea_Tests() {
         SetRendererInfo(new RendererInfo("WebAssembly", true));
 
-        var module = JSInterop.SetupModule("./_content/NTComponents/Form/NTTextArea.razor.js");
-        module.SetupVoid("onLoad", _ => true).SetVoidResult();
-        module.SetupVoid("onUpdate", _ => true).SetVoidResult();
-        module.SetupVoid("onDispose", _ => true).SetVoidResult();
+        _module = JSInterop.SetupModule("./_content/NTComponents/Form/NTTextArea.razor.js");
+        _module.SetupVoid("onLoad", _ => true).SetVoidResult();
+        _module.SetupVoid("onUpdate", _ => true).SetVoidResult();
+        _module.SetupVoid("onDispose", _ => true).SetVoidResult();
     }
 
     private sealed class RequiredModel {
@@ -40,6 +41,29 @@ public class NTTextArea_Tests : BunitContext {
         var cut = RenderTextArea();
 
         cut.Instance.JsModulePath.Should().Be("./_content/NTComponents/Form/NTTextArea.razor.js");
+    }
+
+    [Fact]
+    public async Task Disposal_While_OnLoad_Is_Awaiting_Does_Not_Invoke_OnUpdate_With_A_Disposed_Reference() {
+        var model = new TestModel();
+        var cut = Render<TestTextArea>(parameters => parameters
+            .Add(component => component.ValueExpression, () => model.Notes)
+            .Add(component => component.AutoGrow, true));
+        cut.Instance.ClearIsolatedJsModule();
+        var initialUpdateCount = JSInterop.Invocations.Count(invocation => invocation.Identifier == "onUpdate");
+        var pendingOnLoad = _module.SetupVoid("onLoad", _ => true);
+
+        var renderTask = cut.InvokeAsync(() => cut.Instance.InvokeOnAfterRenderAsync(firstRender: true));
+        await Task.Yield();
+        pendingOnLoad.Invocations.Should().ContainSingle();
+        ((IDisposable)cut.Instance).Dispose();
+        pendingOnLoad.SetVoidResult();
+        await renderTask;
+
+        JSInterop.Invocations.Count(invocation => invocation.Identifier == "onUpdate").Should().Be(initialUpdateCount);
+        JSInterop.Invocations
+            .Where(invocation => invocation.Identifier == "onLoad" || invocation.Identifier == "onUpdate")
+            .Should().OnlyContain(invocation => invocation.Arguments[1] != null);
     }
 
     [Fact]
@@ -369,5 +393,14 @@ public class NTTextArea_Tests : BunitContext {
         textarea.GetAttribute("aria-describedby").Should().Contain(counter.GetAttribute("id"));
         textarea.GetAttribute("maxlength").Should().Be(expectedMaxLength);
         textarea.GetAttribute("oninput").Should().Be("window.NTComponents?.updateInputCounter?.(this)");
+    }
+
+    private sealed class TestTextArea : NTTextArea {
+        public Task InvokeOnAfterRenderAsync(bool firstRender) => base.OnAfterRenderAsync(firstRender);
+
+        public void ClearIsolatedJsModule() =>
+            typeof(NTTextArea)
+                .GetProperty(nameof(IsolatedJsModule))!
+                .SetValue(this, null);
     }
 }

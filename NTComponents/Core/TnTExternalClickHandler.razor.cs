@@ -45,17 +45,31 @@ public partial class TnTExternalClickHandler() : TnTPageScriptComponent<TnTExter
 
     /// <inheritdoc />
     protected override async ValueTask DisposeAsyncCore() {
-        if (IsolatedJsModule is not null) {
-            await IsolatedJsModule.InvokeVoidAsync("externalClickCallbackDeregister", DotNetObjectRef).ConfigureAwait(false);
+        try {
+            if (IsolatedJsModule is not null && DotNetObjectRef is not null) {
+                try {
+                    await IsolatedJsModule.InvokeVoidAsync("externalClickCallbackDeregister", DotNetObjectRef).ConfigureAwait(false);
+                }
+                catch (JSDisconnectedException) {
+                    // JS runtime was disconnected, safe to ignore during disposal.
+                }
+            }
         }
-        await base.DisposeAsyncCore().ConfigureAwait(false);
+        finally {
+            await base.DisposeAsyncCore().ConfigureAwait(false);
+        }
     }
 
     /// <inheritdoc />
     protected override async Task OnAfterRenderAsync(bool firstRender) {
         await base.OnAfterRenderAsync(firstRender);
-        if (firstRender && IsolatedJsModule is not null) {
-            await IsolatedJsModule.InvokeVoidAsync("externalClickCallbackRegister", Element, DotNetObjectRef);
+        if (firstRender && TryGetInteropReferences(out var module, out var dotNetRef)) {
+            try {
+                await module.InvokeVoidAsync("externalClickCallbackRegister", Element, dotNetRef);
+            }
+            catch (JSDisconnectedException) {
+                // JS runtime was disconnected, safe to ignore during render.
+            }
         }
     }
 }

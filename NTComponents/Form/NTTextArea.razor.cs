@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using NTComponents.Ext;
 using NTComponents.Interfaces;
+using NTComponents.Core;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text;
@@ -28,6 +29,7 @@ namespace NTComponents;
     CompatibilityDetails = "Static SSR emits the textarea, labels, supporting text, and named value. Autosize behavior, live binding, and validation updates require browser or Blazor enhancement.")]
 public partial class NTTextArea : INTPageScriptComponent<NTTextArea> {
     private const string TextAreaJsModulePath = "./_content/NTComponents/Form/NTTextArea.razor.js";
+    private readonly NTDisposalState _disposalState = new();
 
     private static readonly HashSet<string> TextAreaExplicitControlAttributeNames = new(StringComparer.OrdinalIgnoreCase) {
         "id",
@@ -176,34 +178,50 @@ public partial class NTTextArea : INTPageScriptComponent<NTTextArea> {
 
     /// <inheritdoc />
     public async ValueTask DisposeAsync() {
-        await DisposeJsModuleAsync();
-        Dispose(disposing: true);
-        GC.SuppressFinalize(this);
+        if (_disposalState.TryBegin()) {
+            try {
+                await DisposeJsModuleAsync();
+                DotNetObjectRef?.Dispose();
+                DotNetObjectRef = null;
+                base.Dispose(disposing: true);
+            }
+            finally {
+                GC.SuppressFinalize(this);
+            }
+        }
     }
 
     /// <inheritdoc />
     protected override async Task OnAfterRenderAsync(bool firstRender) {
         await base.OnAfterRenderAsync(firstRender);
 
-        if (!RendererInfo.IsInteractive) {
-            return;
-        }
+        if (RendererInfo.IsInteractive && !DisposalStarted) {
+            try {
+                if (ShouldAutoGrow) {
+                    if (IsolatedJsModule is null) {
+                        var importedModule = await JSRuntime.ImportIsolatedJs(this, JsModulePath);
+                        if (!DisposalStarted) {
+                            IsolatedJsModule = importedModule;
+                            if (TryGetInteropReferences(out var module, out var dotNetRef)) {
+                                await module.InvokeVoidAsync("onLoad", Element, dotNetRef);
+                            }
+                        }
+                        else {
+                            await importedModule.DisposeAsync().ConfigureAwait(false);
+                        }
+                    }
 
-        try {
-            if (!ShouldAutoGrow) {
-                await DisposeJsModuleAsync();
-                return;
+                    if (TryGetInteropReferences(out var currentModule, out var currentDotNetRef)) {
+                        await currentModule.InvokeVoidAsync("onUpdate", Element, currentDotNetRef);
+                    }
+                }
+                else {
+                    await DisposeJsModuleAsync();
+                }
             }
-
-            if (IsolatedJsModule is null) {
-                IsolatedJsModule = await JSRuntime.ImportIsolatedJs(this, JsModulePath);
-                await IsolatedJsModule.InvokeVoidAsync("onLoad", Element, DotNetObjectRef);
+            catch (JSDisconnectedException) {
+                // JS runtime was disconnected, safe to ignore during render.
             }
-
-            await IsolatedJsModule.InvokeVoidAsync("onUpdate", Element, DotNetObjectRef);
-        }
-        catch (JSDisconnectedException) {
-            // JS runtime was disconnected, safe to ignore during render.
         }
     }
 
@@ -216,7 +234,7 @@ public partial class NTTextArea : INTPageScriptComponent<NTTextArea> {
 
     /// <inheritdoc />
     protected override void Dispose(bool disposing) {
-        if (disposing) {
+        if (disposing && _disposalState.TryBegin()) {
             DotNetObjectRef?.Dispose();
             DotNetObjectRef = null;
         }
@@ -225,6 +243,8 @@ public partial class NTTextArea : INTPageScriptComponent<NTTextArea> {
     }
 
     private bool ShouldAutoGrow => AutoGrow && !SizeByContent;
+
+    private bool DisposalStarted => _disposalState.HasStarted;
 
     private async ValueTask DisposeJsModuleAsync() {
         if (IsolatedJsModule is null) {
@@ -240,6 +260,12 @@ public partial class NTTextArea : INTPageScriptComponent<NTTextArea> {
         }
 
         IsolatedJsModule = null;
+    }
+
+    private bool TryGetInteropReferences([NotNullWhen(true)] out IJSObjectReference? module, [NotNullWhen(true)] out DotNetObjectReference<NTTextArea>? dotNetRef) {
+        module = IsolatedJsModule;
+        dotNetRef = DotNetObjectRef;
+        return !DisposalStarted && module is not null && dotNetRef is not null;
     }
 
     private string? BuildTextAreaStyle() {

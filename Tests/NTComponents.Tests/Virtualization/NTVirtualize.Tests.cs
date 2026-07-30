@@ -9,14 +9,15 @@ namespace NTComponents.Tests.Virtualization;
 
 public class NTVirtualize_Tests : BunitContext {
     private const string JsModulePath = "./_content/NTComponents/Virtualization/NTVirtualize.razor.js";
+    private readonly BunitJSModuleInterop _module;
 
     public NTVirtualize_Tests() {
-        var module = JSInterop.SetupModule(JsModulePath);
-        module.SetupVoid("onLoad", _ => true).SetVoidResult();
-        module.SetupVoid("onUpdate", _ => true).SetVoidResult();
-        module.SetupVoid("onDispose", _ => true).SetVoidResult();
-        module.SetupVoid("init", _ => true).SetVoidResult();
-        module.SetupVoid("updateRenderState", _ => true).SetVoidResult();
+        _module = JSInterop.SetupModule(JsModulePath);
+        _module.SetupVoid("onLoad", _ => true).SetVoidResult();
+        _module.SetupVoid("onUpdate", _ => true).SetVoidResult();
+        _module.SetupVoid("onDispose", _ => true).SetVoidResult();
+        _module.SetupVoid("init", _ => true).SetVoidResult();
+        _module.SetupVoid("updateRenderState", _ => true).SetVoidResult();
     }
 
     [Fact]
@@ -44,7 +45,7 @@ public class NTVirtualize_Tests : BunitContext {
     }
 
     [Fact]
-    public void InitialRender_Shows_Spacers_And_Calls_Init() {
+    public void InitialRender_Shows_Spacers_And_Calls_Init_Exactly_Once_With_A_NonNull_Reference() {
         // Arrange
         var items = new List<string>();
         NTVirtualizeItemsProvider<string> provider = request =>
@@ -64,6 +65,40 @@ public class NTVirtualize_Tests : BunitContext {
         spacers[1].GetAttribute("style").Should().Contain("height: 0px");
         spacers[0].ClassList.Should().Contain("nt-virtualize-spacer");
         spacers[1].ClassList.Should().Contain("nt-virtualize-spacer");
+        var initInvocation = JSInterop.Invocations.Should().ContainSingle(invocation => invocation.Identifier == "init").Subject;
+        initInvocation.Arguments[0].Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task Disposal_While_First_Render_Initialization_Is_Awaiting_Does_Not_Invoke_Virtualizer_Interop() {
+        NTVirtualizeItemsProvider<string> provider = _ => ValueTask.FromResult(new TnTItemsProviderResult<string>([], 0));
+        var cut = Render<TestVirtualize<string>>(parameters => parameters.Add(component => component.ItemsProvider, provider));
+        var initialInitCount = JSInterop.Invocations.Count(invocation => invocation.Identifier == "init");
+        var initialUpdateCount = JSInterop.Invocations.Count(invocation => invocation.Identifier == "updateRenderState");
+        var pendingOnUpdate = _module.SetupVoid("onUpdate", _ => true);
+
+        var renderTask = cut.InvokeAsync(() => cut.Instance.InvokeOnAfterRenderAsync(firstRender: true));
+        await Task.Yield();
+        pendingOnUpdate.Invocations.Should().ContainSingle();
+        cut.Instance.Dispose();
+        pendingOnUpdate.SetVoidResult();
+        await renderTask;
+
+        JSInterop.Invocations.Count(invocation => invocation.Identifier == "init").Should().Be(initialInitCount);
+        JSInterop.Invocations.Count(invocation => invocation.Identifier == "updateRenderState").Should().Be(initialUpdateCount);
+        JSInterop.Invocations
+            .Where(invocation => invocation.Identifier == "init" || invocation.Identifier == "updateRenderState")
+            .Should().OnlyContain(invocation => invocation.Arguments[0] != null);
+    }
+
+    [Fact]
+    public void JavaScript_Disconnection_During_Init_Does_Not_Fail_Rendering() {
+        _module.SetupVoid("init", _ => true).SetException(new JSDisconnectedException("Disconnected"));
+        NTVirtualizeItemsProvider<string> provider = _ => ValueTask.FromResult(new TnTItemsProviderResult<string>([], 0));
+
+        var act = () => Render<NTVirtualize<string>>(parameters => parameters.Add(component => component.ItemsProvider, provider));
+
+        act.Should().NotThrow();
     }
 
     [Fact]
@@ -561,5 +596,9 @@ public class NTVirtualize_Tests : BunitContext {
 
         // Assert - Should adjusted to last possible items
         cut.WaitForState(() => cut.Markup.Contains("Item 4"));
+    }
+
+    private sealed class TestVirtualize<TItem> : NTVirtualize<TItem> {
+        public Task InvokeOnAfterRenderAsync(bool firstRender) => base.OnAfterRenderAsync(firstRender);
     }
 }

@@ -432,10 +432,15 @@ public partial class NTDialog {
     }
 
     /// <inheritdoc />
+    [SuppressMessage("Reliability", "NTBA0003:Lifecycle method should use meaningful exception handling or owner ErrorBoundary coverage", Justification = "Dialog callbacks intentionally propagate to the consumer-owned ErrorBoundary.")]
     protected override async Task OnAfterRenderAsync(bool firstRender) {
         await base.OnAfterRenderAsync(firstRender);
-        await CompletePendingOpenRequestAsync();
-        await OpenFromParameterAsync();
+        if (!DisposalStarted) {
+            await CompletePendingOpenRequestAsync();
+            if (!DisposalStarted) {
+                await OpenFromParameterAsync();
+            }
+        }
     }
 
     private async Task CompletePendingOpenRequestAsync() {

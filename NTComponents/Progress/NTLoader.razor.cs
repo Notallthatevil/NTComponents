@@ -4,6 +4,7 @@ using Microsoft.JSInterop;
 using NTComponents.Core;
 using NTComponents.Ext;
 using NTComponents.Interfaces;
+using System.Diagnostics.CodeAnalysis;
 
 using NTComponents.CodeDocumentation;
 namespace NTComponents;
@@ -29,7 +30,7 @@ namespace NTComponents;
     RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
     CompatibilitySummary = "Renders an accessible static loader and enhances shape motion with JavaScript.",
     CompatibilityDetails = "Static SSR emits the progressbar shell, initial shape, ARIA attributes, and data attributes. The isolated module drives morphing shape animation after the page reaches the browser.")]
-public partial class NTLoader : TnTDisposableComponentBase, INTPageScriptComponent<NTLoader> {
+public partial class NTLoader : NTDisposableComponentBase, INTPageScriptComponent<NTLoader> {
 
     /// <summary>
     ///     Whether the loading indicator motion is active.
@@ -207,23 +208,35 @@ public partial class NTLoader : TnTDisposableComponentBase, INTPageScriptCompone
     protected override async Task OnAfterRenderAsync(bool firstRender) {
         await base.OnAfterRenderAsync(firstRender);
 
-        if (!Show) {
-            await DisposeShapeInteropAsync();
-            return;
-        }
+        if (!DisposalStarted) {
+            if (Show) {
+                try {
+                    DotNetObjectRef ??= DotNetObjectReference.Create(this);
 
-        try {
-            DotNetObjectRef ??= DotNetObjectReference.Create(this);
+                    if (IsolatedJsModule is null) {
+                        var importedModule = await JSRuntime.ImportIsolatedJs(this, JsModulePath);
+                        if (!DisposalStarted) {
+                            IsolatedJsModule = importedModule;
+                            if (TryGetInteropReferences(out var module, out var dotNetRef)) {
+                                await module.InvokeVoidAsync("onLoad", Element, dotNetRef);
+                            }
+                        }
+                        else {
+                            await importedModule.DisposeAsync().ConfigureAwait(false);
+                        }
+                    }
 
-            if (IsolatedJsModule is null) {
-                IsolatedJsModule = await JSRuntime.ImportIsolatedJs(this, JsModulePath);
-                await (IsolatedJsModule?.InvokeVoidAsync("onLoad", Element, DotNetObjectRef) ?? ValueTask.CompletedTask);
+                    if (TryGetInteropReferences(out var currentModule, out var currentDotNetRef)) {
+                        await currentModule.InvokeVoidAsync("onUpdate", Element, currentDotNetRef);
+                    }
+                }
+                catch (JSDisconnectedException) {
+                    // JS runtime was disconnected, safe to ignore during render.
+                }
             }
-
-            await (IsolatedJsModule?.InvokeVoidAsync("onUpdate", Element, DotNetObjectRef) ?? ValueTask.CompletedTask);
-        }
-        catch (JSDisconnectedException) {
-            // JS runtime was disconnected, safe to ignore during render.
+            else {
+                await DisposeShapeInteropAsync();
+            }
         }
     }
 
@@ -258,6 +271,12 @@ public partial class NTLoader : TnTDisposableComponentBase, INTPageScriptCompone
 
         DotNetObjectRef?.Dispose();
         DotNetObjectRef = null;
+    }
+
+    private bool TryGetInteropReferences([NotNullWhen(true)] out IJSObjectReference? module, [NotNullWhen(true)] out DotNetObjectReference<NTLoader>? dotNetRef) {
+        module = IsolatedJsModule;
+        dotNetRef = DotNetObjectRef;
+        return !DisposalStarted && module is not null && dotNetRef is not null;
     }
 
     private string? GetAdditionalAttributeValue(string name)

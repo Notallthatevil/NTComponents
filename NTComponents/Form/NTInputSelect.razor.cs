@@ -92,6 +92,7 @@ public partial class NTInputSelect<[DynamicallyAccessedMembers(DynamicallyAccess
     };
 
     private readonly List<SearchOption> _allOptions = [];
+    private readonly NTDisposalState _disposalState = new();
     private readonly List<SearchOption> _filteredOptions = [];
     private readonly List<NTInputSelectOption<TInputType>> _optionChildren = [];
     private readonly EqualityComparer<TInputType?> _valueComparer = EqualityComparer<TInputType?>.Default;
@@ -128,41 +129,60 @@ public partial class NTInputSelect<[DynamicallyAccessedMembers(DynamicallyAccess
     }
 
     /// <inheritdoc />
+    [SuppressMessage("Reliability", "NTBA0003:Lifecycle method should use meaningful exception handling or owner ErrorBoundary coverage", Justification = "Binding callbacks intentionally propagate to the consumer-owned ErrorBoundary.")]
     protected override async Task OnAfterRenderAsync(bool firstRender) {
         await base.OnAfterRenderAsync(firstRender);
         _hasRendered = true;
 
-        try {
-            if (firstRender) {
-                IsolatedJsModule = await JSRuntime.ImportIsolatedJs(this, JsModulePath);
-                await (IsolatedJsModule?.InvokeVoidAsync("onLoad", Element, DotNetObjectRef) ?? ValueTask.CompletedTask);
-            }
+        if (!DisposalStarted) {
+            try {
+                if (firstRender) {
+                    var importedModule = await JSRuntime.ImportIsolatedJs(this, JsModulePath);
+                    if (!DisposalStarted) {
+                        IsolatedJsModule = importedModule;
+                        if (TryGetInteropReferences(out var module, out var dotNetRef)) {
+                            await module.InvokeVoidAsync("onLoad", Element, dotNetRef);
+                        }
+                    }
+                    else {
+                        await importedModule.DisposeAsync().ConfigureAwait(false);
+                    }
+                }
 
-            await (IsolatedJsModule?.InvokeVoidAsync("onUpdate", Element, DotNetObjectRef) ?? ValueTask.CompletedTask);
+                if (TryGetInteropReferences(out var currentModule, out var currentDotNetRef)) {
+                    await currentModule.InvokeVoidAsync("onUpdate", Element, currentDotNetRef);
+                }
 
-            if (_optionsNeedRefresh) {
-                _optionsNeedRefresh = false;
-                RebuildOptions();
-                SynchronizeSelectedText();
-                RefreshFilteredOptions();
-                await InvokeAsync(StateHasChanged);
-                return;
+                if (!DisposalStarted) {
+                    if (_optionsNeedRefresh) {
+                        _optionsNeedRefresh = false;
+                        RebuildOptions();
+                        SynchronizeSelectedText();
+                        RefreshFilteredOptions();
+                        await InvokeAsync(StateHasChanged);
+                    }
+                    else if (_pendingBindAfter) {
+                        _pendingBindAfter = false;
+                        await BindAfter.InvokeAsync(CurrentValue);
+                    }
+                }
             }
-
-            if (_pendingBindAfter) {
-                _pendingBindAfter = false;
-                await BindAfter.InvokeAsync(CurrentValue);
+            catch (JSDisconnectedException) {
+                // JS runtime was disconnected, safe to ignore during render.
             }
-        }
-        catch (JSDisconnectedException) {
-            // JS runtime was disconnected, safe to ignore during render.
         }
     }
 
     /// <inheritdoc />
     public async ValueTask DisposeAsync() {
-        await DisposeAsyncInternal().ConfigureAwait(false);
-        GC.SuppressFinalize(this);
+        if (_disposalState.TryBegin()) {
+            try {
+                await DisposeAsyncInternal().ConfigureAwait(false);
+            }
+            finally {
+                GC.SuppressFinalize(this);
+            }
+        }
     }
 
     internal void AddOptionChild(NTInputSelectOption<TInputType> optionChild) {
@@ -207,7 +227,7 @@ public partial class NTInputSelect<[DynamicallyAccessedMembers(DynamicallyAccess
 
     /// <inheritdoc />
     protected override void Dispose(bool disposing) {
-        if (disposing) {
+        if (disposing && _disposalState.TryBegin()) {
             DotNetObjectRef?.Dispose();
             DotNetObjectRef = null;
         }
@@ -236,6 +256,14 @@ public partial class NTInputSelect<[DynamicallyAccessedMembers(DynamicallyAccess
         }
 
         DotNetObjectRef = null;
+    }
+
+    private bool DisposalStarted => _disposalState.HasStarted;
+
+    private bool TryGetInteropReferences([NotNullWhen(true)] out IJSObjectReference? module, [NotNullWhen(true)] out DotNetObjectReference<NTInputSelect<TInputType>>? dotNetRef) {
+        module = IsolatedJsModule;
+        dotNetRef = DotNetObjectRef;
+        return !DisposalStarted && module is not null && dotNetRef is not null;
     }
 
     /// <inheritdoc />

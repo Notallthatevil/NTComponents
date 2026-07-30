@@ -338,6 +338,7 @@ public partial class TnTInputFile {
     [CascadingParameter]
     private ITnTForm? _tntForm { get; set; }
 
+    private readonly NTDisposalState _disposalState = new();
     private IJSObjectReference? _containerInstance;
 
     private bool _defaultHandler;
@@ -350,15 +351,23 @@ public partial class TnTInputFile {
 
     /// <inheritdoc />
     public void Dispose() {
-        Dispose(disposing: true);
-        GC.SuppressFinalize(this);
+        if (_disposalState.TryBegin()) {
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
+        }
     }
 
     /// <inheritdoc />
     public async ValueTask DisposeAsync() {
-        await DisposeAsyncCore().ConfigureAwait(false);
-        Dispose(disposing: false);
-        GC.SuppressFinalize(this);
+        if (_disposalState.TryBegin()) {
+            try {
+                await DisposeAsyncCore().ConfigureAwait(false);
+                Dispose(disposing: false);
+            }
+            finally {
+                GC.SuppressFinalize(this);
+            }
+        }
     }
 
     /// <summary>
@@ -386,36 +395,76 @@ public partial class TnTInputFile {
     ///     Releases the unmanaged resources used by the component asynchronously.
     /// </summary>
     protected virtual async ValueTask DisposeAsyncCore() {
-        if (IsolatedJsModule is not null) {
+        var module = IsolatedJsModule;
+        var containerInstance = _containerInstance;
+        var dotNetObjectRef = DotNetObjectRef;
+        IsolatedJsModule = null;
+        _containerInstance = null;
+        DotNetObjectRef = null;
+
+        try {
             try {
-                if (_containerInstance is not null) {
-                    await _containerInstance.InvokeVoidAsync("dispose");
-                    await _containerInstance.DisposeAsync().ConfigureAwait(false);
+                if (containerInstance is not null) {
+                    try {
+                        await containerInstance.InvokeVoidAsync("dispose");
+                    }
+                    finally {
+                        await containerInstance.DisposeAsync().ConfigureAwait(false);
+                    }
                 }
-                await IsolatedJsModule.InvokeVoidAsync("onDispose", Element, DotNetObjectRef);
-                await IsolatedJsModule.DisposeAsync().ConfigureAwait(false);
             }
-            catch (JSDisconnectedException) {
-                // JS runtime was disconnected, safe to ignore during disposal.
+            finally {
+                if (module is not null) {
+                    try {
+                        await module.InvokeVoidAsync("onDispose", Element, dotNetObjectRef);
+                    }
+                    finally {
+                        await module.DisposeAsync().ConfigureAwait(false);
+                    }
+                }
             }
-            IsolatedJsModule = null;
-            _containerInstance = null;
+        }
+        catch (JSDisconnectedException) {
+            // JS runtime was disconnected, safe to ignore during disposal.
+        }
+        finally {
+            dotNetObjectRef?.Dispose();
         }
     }
 
     /// <inheritdoc />
     protected override async Task OnAfterRenderAsync(bool firstRender) {
         await base.OnAfterRenderAsync(firstRender);
-        try {
-            if (firstRender) {
-                IsolatedJsModule ??= await JSRuntime.ImportIsolatedJs(this, JsModulePath);
-                await IsolatedJsModule.InvokeVoidAsync("onLoad", Element, DotNetObjectRef);
-                _containerInstance = await IsolatedJsModule.InvokeAsync<IJSObjectReference>("initializeFileDropZone", _labelElement, Element);
+
+        if (!_disposalState.HasStarted) {
+            try {
+                if (firstRender) {
+                    var importedModule = IsolatedJsModule ?? await JSRuntime.ImportIsolatedJs(this, JsModulePath);
+                    if (!_disposalState.HasStarted && DotNetObjectRef is not null) {
+                        IsolatedJsModule = importedModule;
+                        await importedModule.InvokeVoidAsync("onLoad", Element, DotNetObjectRef);
+                        if (!_disposalState.HasStarted) {
+                            var containerInstance = await importedModule.InvokeAsync<IJSObjectReference>("initializeFileDropZone", _labelElement, Element);
+                            if (!_disposalState.HasStarted) {
+                                _containerInstance = containerInstance;
+                            }
+                            else {
+                                await containerInstance.DisposeAsync();
+                            }
+                        }
+                    }
+                    else {
+                        await importedModule.DisposeAsync();
+                        IsolatedJsModule = null;
+                    }
+                }
+                if (!_disposalState.HasStarted && IsolatedJsModule is not null && DotNetObjectRef is not null) {
+                    await IsolatedJsModule.InvokeVoidAsync("onUpdate", Element, DotNetObjectRef);
+                }
             }
-            await (IsolatedJsModule?.InvokeVoidAsync("onUpdate", Element, DotNetObjectRef) ?? ValueTask.CompletedTask);
-        }
-        catch (JSDisconnectedException) {
-            // JS runtime was disconnected, safe to ignore during render.
+            catch (JSDisconnectedException) {
+                // JS runtime was disconnected, safe to ignore during render.
+            }
         }
     }
 

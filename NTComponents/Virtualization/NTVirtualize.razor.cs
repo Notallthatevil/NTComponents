@@ -221,19 +221,29 @@ public partial class NTVirtualize<TItem>() : NTPageScriptComponent<NTVirtualize<
     /// <inheritdoc />
     protected override async Task OnAfterRenderAsync(bool firstRender) {
         await base.OnAfterRenderAsync(firstRender);
-        if (IsolatedJsModule is not null) {
+        try {
             if (firstRender) {
-                await IsolatedJsModule.InvokeVoidAsync("init", DotNetObjectRef, Element, _afterPlaceholder, _itemSize, OverscanCount, MaxItemCount, ScrollRestorationKey);
+                if (TryGetInteropReferences(out var module, out var dotNetRef)) {
+                    await module.InvokeVoidAsync("init", dotNetRef, Element, _afterPlaceholder, _itemSize, OverscanCount, MaxItemCount, ScrollRestorationKey);
+                }
             }
 
             if (_itemCount != _lastReportedItemCount
                 || _lastRenderedItemCount != _lastReportedRenderedItemCount
                 || _lastRenderedPlaceholderCount != _lastReportedRenderedPlaceholderCount) {
-                _lastReportedItemCount = _itemCount;
-                _lastReportedRenderedItemCount = _lastRenderedItemCount;
-                _lastReportedRenderedPlaceholderCount = _lastRenderedPlaceholderCount;
-                await IsolatedJsModule.InvokeVoidAsync("updateRenderState", DotNetObjectRef, _itemCount, _lastRenderedItemCount, _lastRenderedPlaceholderCount);
+                if (TryGetInteropReferences(out _, out _)) {
+
+                    _lastReportedItemCount = _itemCount;
+                    _lastReportedRenderedItemCount = _lastRenderedItemCount;
+                    _lastReportedRenderedPlaceholderCount = _lastRenderedPlaceholderCount;
+                    if (TryGetInteropReferences(out var module, out var dotNetRef)) {
+                        await module.InvokeVoidAsync("updateRenderState", dotNetRef, _itemCount, _lastRenderedItemCount, _lastRenderedPlaceholderCount);
+                    }
+                }
             }
+        }
+        catch (JSDisconnectedException) {
+            // JS runtime was disconnected, safe to ignore during render.
         }
     }
 

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+using NTComponents.Core;
 using NTComponents.Ext;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
@@ -64,6 +65,7 @@ public partial class NTCombobox<TValue> : IAsyncDisposable {
     };
 
     private const string ComboboxControlBaseClass = "nt-input-control nt-combobox-control";
+    private readonly NTDisposalState _disposalState = new();
     private DotNetObjectReference<NTCombobox<TValue>>? _dotNetObjectRef;
     private readonly Dictionary<string, TValue> _optionsByFormattedValue = new(StringComparer.Ordinal);
     private IReadOnlyList<NTComboboxOption<TValue>> _items = [];
@@ -169,22 +171,24 @@ public partial class NTCombobox<TValue> : IAsyncDisposable {
 
     /// <inheritdoc />
     public async ValueTask DisposeAsync() {
-        try {
-            if (_jsModule is not null) {
-                try {
-                    await _jsModule.InvokeVoidAsync("onDispose", Element, _dotNetObjectRef).ConfigureAwait(false);
-                    await _jsModule.DisposeAsync().ConfigureAwait(false);
-                }
-                catch (JSDisconnectedException) {
-                    // JS runtime was disconnected, safe to ignore during disposal.
+        if (_disposalState.TryBegin()) {
+            try {
+                if (_jsModule is not null) {
+                    try {
+                        await _jsModule.InvokeVoidAsync("onDispose", Element, _dotNetObjectRef).ConfigureAwait(false);
+                        await _jsModule.DisposeAsync().ConfigureAwait(false);
+                    }
+                    catch (JSDisconnectedException) {
+                        // JS runtime was disconnected, safe to ignore during disposal.
+                    }
                 }
             }
-        }
-        finally {
-            _jsModule = null;
-            _dotNetObjectRef?.Dispose();
-            _dotNetObjectRef = null;
-            GC.SuppressFinalize(this);
+            finally {
+                _jsModule = null;
+                _dotNetObjectRef?.Dispose();
+                _dotNetObjectRef = null;
+                GC.SuppressFinalize(this);
+            }
         }
     }
 
@@ -220,18 +224,26 @@ public partial class NTCombobox<TValue> : IAsyncDisposable {
     protected override async Task OnAfterRenderAsync(bool firstRender) {
         await base.OnAfterRenderAsync(firstRender);
 
-        try {
-            _dotNetObjectRef ??= DotNetObjectReference.Create(this);
-            if (firstRender) {
-                _jsModule = await JSRuntime.ImportIsolatedJs(this, JsModulePath);
-                await _jsModule.InvokeVoidAsync("onLoad", Element, _dotNetObjectRef);
+        if (!_disposalState.HasStarted) {
+            try {
+                _dotNetObjectRef ??= DotNetObjectReference.Create(this);
+                if (firstRender) {
+                    var importedModule = await JSRuntime.ImportIsolatedJs(this, JsModulePath);
+                    if (!_disposalState.HasStarted && _dotNetObjectRef is not null) {
+                        _jsModule = importedModule;
+                        await importedModule.InvokeVoidAsync("onLoad", Element, _dotNetObjectRef);
+                    }
+                    else {
+                        await importedModule.DisposeAsync();
+                    }
+                }
+                else if (!_disposalState.HasStarted && _jsModule is not null && _dotNetObjectRef is not null) {
+                    await _jsModule.InvokeVoidAsync("onUpdate", Element, _dotNetObjectRef);
+                }
             }
-            else if (_jsModule is not null) {
-                await _jsModule.InvokeVoidAsync("onUpdate", Element, _dotNetObjectRef);
+            catch (JSDisconnectedException) {
+                // JS runtime was disconnected, safe to ignore during render.
             }
-        }
-        catch (JSDisconnectedException) {
-            // JS runtime was disconnected, safe to ignore during render.
         }
     }
 

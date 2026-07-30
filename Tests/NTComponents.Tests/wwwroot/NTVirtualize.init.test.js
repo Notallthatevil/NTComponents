@@ -64,6 +64,48 @@ describe('NTVirtualize.init', () => {
         delete global.MutationObserver;
     });
 
+    test('does nothing when the dotnet reference is null', () => {
+        const { topSpacer, bottomSpacer } = createVirtualizedElements();
+        const addEventListener = jest.spyOn(EventTarget.prototype, 'addEventListener');
+        const setInterval = jest.spyOn(window, 'setInterval');
+        const setTimeout = jest.spyOn(window, 'setTimeout');
+
+        try {
+            expect(() => init(null, topSpacer, bottomSpacer, 20, 1, 100)).not.toThrow();
+            expect(intersectionObservers).toHaveLength(0);
+            expect(mutationObservers).toHaveLength(0);
+            expect(addEventListener).not.toHaveBeenCalled();
+            expect(setInterval).not.toHaveBeenCalled();
+            expect(setTimeout).not.toHaveBeenCalled();
+        }
+        finally {
+            addEventListener.mockRestore();
+            setInterval.mockRestore();
+            setTimeout.mockRestore();
+        }
+    });
+
+    test('does nothing when the spacer elements are disconnected', () => {
+        const { topSpacer, bottomSpacer, dotNetRef, scrollAncestor } = createVirtualizedElements();
+        scrollAncestor.remove();
+        const addEventListener = jest.spyOn(EventTarget.prototype, 'addEventListener');
+        const setInterval = jest.spyOn(window, 'setInterval');
+
+        try {
+            init(dotNetRef, topSpacer, bottomSpacer, 20, 1, 100);
+
+            expect(intersectionObservers).toHaveLength(0);
+            expect(mutationObservers).toHaveLength(0);
+            expect(addEventListener).not.toHaveBeenCalled();
+            expect(setInterval).not.toHaveBeenCalled();
+            expect(dotNetRef.invokeMethodAsync).not.toHaveBeenCalled();
+        }
+        finally {
+            addEventListener.mockRestore();
+            setInterval.mockRestore();
+        }
+    });
+
     test('uses the viewport when an ancestor is overflow hidden but not scrollable', () => {
         const { topSpacer, bottomSpacer, dotNetRef } = createVirtualizedElements('hidden');
 

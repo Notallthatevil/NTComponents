@@ -303,18 +303,28 @@ public partial class NTScheduler<TEventType> where TEventType : TnTEvent {
     protected override async Task OnAfterRenderAsync(bool firstRender) {
         await base.OnAfterRenderAsync(firstRender);
 
-        try {
-            if (firstRender) {
-                _jsInteropBridge ??= new NTSchedulerJsInteropBridge(NotifyEventDroppedAsync, NotifyEventResizedAsync, NotifySlotSelectedAsync);
-                _dotNetObjectRef ??= DotNetObjectReference.Create(_jsInteropBridge);
-                _isolatedJsModule = await JSRuntime.InvokeAsync<IJSObjectReference>("import", JsModulePathValue);
-                await (_isolatedJsModule?.InvokeVoidAsync("onLoad", Element, _dotNetObjectRef) ?? ValueTask.CompletedTask);
-            }
+        if (!DisposalStarted) {
+            try {
+                if (firstRender) {
+                    _jsInteropBridge ??= new NTSchedulerJsInteropBridge(NotifyEventDroppedAsync, NotifyEventResizedAsync, NotifySlotSelectedAsync);
+                    _dotNetObjectRef ??= DotNetObjectReference.Create(_jsInteropBridge);
+                    var importedModule = await JSRuntime.InvokeAsync<IJSObjectReference>("import", JsModulePathValue);
+                    if (!DisposalStarted && _dotNetObjectRef is not null) {
+                        _isolatedJsModule = importedModule;
+                        await importedModule.InvokeVoidAsync("onLoad", Element, _dotNetObjectRef);
+                    }
+                    else {
+                        await importedModule.DisposeAsync();
+                    }
+                }
 
-            await (_isolatedJsModule?.InvokeVoidAsync("onUpdate", Element, _dotNetObjectRef) ?? ValueTask.CompletedTask);
-        }
-        catch (JSDisconnectedException) {
-            // JS runtime was disconnected, safe to ignore during render.
+                if (!DisposalStarted && _isolatedJsModule is not null && _dotNetObjectRef is not null) {
+                    await _isolatedJsModule.InvokeVoidAsync("onUpdate", Element, _dotNetObjectRef);
+                }
+            }
+            catch (JSDisconnectedException) {
+                // JS runtime was disconnected, safe to ignore during render.
+            }
         }
     }
 

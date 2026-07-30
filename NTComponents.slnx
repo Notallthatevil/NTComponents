@@ -29,6 +29,7 @@
     <File Path="deployment/raspberry-pi/README.md" />
   </Folder>
   <Folder Name="/Tests/">
+    <Project Path="Submodules/NTComponents.Charts/Tests/NTComponents.Charts.Tests/NTComponents.Charts.Tests.csproj" />
     <Project Path="Tests/AotCompatibility.TestApp/AotCompatibility.TestApp.csproj" Id="5fe8afae-706b-4160-a602-2463e8cec5fd" />
     <Project Path="Tests/NTComponents.Analyzers.Tests/NTComponents.Analyzers.Tests.csproj" />
     <Project Path="Tests/NTComponents.IntegrationTests/NTComponents.IntegrationTests.csproj" />
@@ -45,5 +46,7 @@
   <Project Path="NTComponents.MCP/NTComponents.MCP.csproj" />
   <Project Path="NTComponents.Site/NTComponents.Site.csproj" />
   <Project Path="NTComponents/NTComponents.csproj" />
+  <Project Path="Submodules/NT.BlazorAnalyzer/NT.BlazorAnalyzer.CodeFixes/NT.BlazorAnalyzer.CodeFixes.csproj" />
+  <Project Path="Submodules/NT.BlazorAnalyzer/NT.BlazorAnalyzer/NT.BlazorAnalyzer.csproj" />
   <Project Path="Submodules/NTComponents.Charts/NTComponents.Charts/NTComponents.Charts.csproj" />
 </Solution>

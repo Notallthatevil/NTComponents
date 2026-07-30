@@ -10,14 +10,15 @@ namespace NTComponents.Tests.Editors;
 ///     Unit tests for <see cref="NTRichTextEditor" />.
 /// </summary>
 public class NTRichTextEditor_Tests : BunitContext {
+    private readonly BunitJSModuleInterop _module;
 
     public NTRichTextEditor_Tests() {
         SetRendererInfo(new RendererInfo("WebAssembly", true));
-        var module = JSInterop.SetupModule("./_content/NTComponents/Editors/NTRichTextEditor.razor.js");
-        module.SetupVoid("onLoad", _ => true).SetVoidResult();
-        module.SetupVoid("onUpdate", _ => true).SetVoidResult();
-        module.SetupVoid("onDispose", _ => true).SetVoidResult();
-        module.SetupVoid("focusEditor", _ => true).SetVoidResult();
+        _module = JSInterop.SetupModule("./_content/NTComponents/Editors/NTRichTextEditor.razor.js");
+        _module.SetupVoid("onLoad", _ => true).SetVoidResult();
+        _module.SetupVoid("onUpdate", _ => true).SetVoidResult();
+        _module.SetupVoid("onDispose", _ => true).SetVoidResult();
+        _module.SetupVoid("focusEditor", _ => true).SetVoidResult();
         var tooltipModule = JSInterop.SetupModule("./_content/NTComponents/Tooltip/TnTTooltip.razor.js");
         tooltipModule.SetupVoid("onLoad", _ => true).SetVoidResult();
         tooltipModule.SetupVoid("onUpdate", _ => true).SetVoidResult();
@@ -458,6 +459,26 @@ public class NTRichTextEditor_Tests : BunitContext {
         JSInterop.Invocations.Should().Contain(invocation => invocation.Identifier == "onDispose");
         instance.IsolatedJsModule.Should().BeNull();
         instance.DotNetObjectRef.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task Disposal_While_OnLoad_Is_Awaiting_Does_Not_Invoke_OnUpdate_With_A_Disposed_Reference() {
+        var model = new RichTextEditorModel();
+        var cut = Render<TestableRichTextEditor>(parameters => parameters.Add(component => component.ValueExpression, () => model.Value));
+        var initialUpdateCount = JSInterop.Invocations.Count(invocation => invocation.Identifier == "onUpdate");
+        var pendingOnLoad = _module.SetupVoid("onLoad", _ => true);
+
+        var renderTask = cut.InvokeAsync(() => cut.Instance.InvokeOnAfterRenderAsync(firstRender: true));
+        await Task.Yield();
+        pendingOnLoad.Invocations.Should().ContainSingle();
+        ((IDisposable)cut.Instance).Dispose();
+        pendingOnLoad.SetVoidResult();
+        await renderTask;
+
+        JSInterop.Invocations.Count(invocation => invocation.Identifier == "onUpdate").Should().Be(initialUpdateCount);
+        JSInterop.Invocations
+            .Where(invocation => invocation.Identifier == "onLoad" || invocation.Identifier == "onUpdate")
+            .Should().OnlyContain(invocation => invocation.Arguments[1] != null);
     }
 
     [Fact]

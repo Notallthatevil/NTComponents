@@ -1,3 +1,6 @@
 [submodule "Submodules/NTComponents.Charts"]
 	path = Submodules/NTComponents.Charts
 	url = https://github.com/NT-Technologies/NTComponents.Charts.git
+[submodule "Submodules/NT.BlazorAnalyzer"]
+	path = Submodules/NT.BlazorAnalyzer
+	url = https://github.com/NT-Technologies/NT.BlazorAnalyzer.git
