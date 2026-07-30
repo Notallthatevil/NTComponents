@@ -55,11 +55,12 @@ $supporting-text-color: var(--tnt-input-supporting-text-color);
         opacity: 0.8;
     }
 
-    &::-webkit-autofill,
-    &::-webkit-autofill:hover,
-    &::-webkit-autofill:focus,
-    &::-webkit-autofill:active {
+    &:autofill,
+    &:-webkit-autofill {
+        appearance: none;
+        background-clip: text;
         -webkit-background-clip: text;
+        -webkit-text-fill-color: $text-color;
         color: $text-color;
     }
 }

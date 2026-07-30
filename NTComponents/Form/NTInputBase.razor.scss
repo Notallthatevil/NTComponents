@@ -327,10 +327,10 @@ $nt-input-textarea-filled-label-space-dense: 14px;
             color: var(--nt-input-placeholder-color);
         }
 
-        &::-webkit-autofill,
-        &::-webkit-autofill:hover,
-        &::-webkit-autofill:focus,
-        &::-webkit-autofill:active {
+        &:autofill,
+        &:-webkit-autofill {
+            appearance: none;
+            background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: var(--nt-input-text-color);
         }
