@@ -18,7 +18,8 @@
         @{
             ResetRenderSequence();
         }
-        <DeferRendering>
+
+        @if (_initialRegistrationComplete) {
             <div class="nt-tab-view-header" data-nt-tab-view-header>
                 <div class="nt-tab-view-tablist" role="tablist" aria-label="@AriaLabel">
                     @{
@@ -61,11 +62,13 @@
                         <span class="nt-tab-view-active-indicator-shape"></span>
                     </span>
                 </div>
+                <span data-nt-tab-view-header-complete hidden></span>
             </div>
-        </DeferRendering>
+        }
 
         <div class="nt-tab-view-panels">
             @ChildContent
+            <NTTabViewRegistrationGate />
         </div>
     </CascadingValue>
 </nt-tab-view>

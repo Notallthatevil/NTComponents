@@ -1,0 +1,37 @@
+@page "/nt-tab-view-streaming-webassembly-test"
+@attribute [StreamRendering]
+@rendermode InteractiveWebAssembly
+@using NTComponents
+
+<main>
+    <h1>NTTabView streaming WebAssembly test</h1>
+    <NTTabView data-testid="streamed-tab-view"
+               Variant="NTTabViewVariant.Secondary"
+               Compact="true"
+               TabGap="8px"
+               TabAlignment="NTTabViewTabAlignment.Start"
+               SelectedValue="diary-notes">
+        <NTTab Label="Summary" Value="summary">
+            Summary
+        </NTTab>
+        <NTTab Label="Diary Notes" Value="diary-notes">
+            Diary notes
+        </NTTab>
+    </NTTabView>
+
+    @if (_streamingComplete) {
+        <output data-testid="streaming-complete">Streaming complete</output>
+    }
+    @if (RendererInfo.IsInteractive) {
+        <output data-testid="interactive-renderer">@RendererInfo.Name</output>
+    }
+</main>
+
+@code {
+    private bool _streamingComplete;
+
+    protected override async Task OnInitializedAsync() {
+        await Task.Delay(500);
+        _streamingComplete = true;
+    }
+}

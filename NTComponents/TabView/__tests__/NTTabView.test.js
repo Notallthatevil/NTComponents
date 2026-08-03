@@ -172,6 +172,68 @@ describe('NTTabView page-script module', () => {
     expect(tabView.__ntTabViewState.tabList).toBe(replacementTabList);
   });
 
+  test('mutation observation releases a removed tablist and binds one added later', async () => {
+    const tabView = createTabView();
+    const header = tabView.querySelector('.nt-tab-view-header');
+    const originalTabList = tabView.querySelector('.nt-tab-view-tablist');
+    const removeEventListener = jest.spyOn(originalTabList, 'removeEventListener');
+    const replacementTabList = originalTabList.cloneNode(true);
+    onLoad(tabView);
+
+    originalTabList.remove();
+    await new Promise(resolve => queueMicrotask(resolve));
+
+    expect(removeEventListener).toHaveBeenCalledWith('click', expect.any(Function));
+    expect(removeEventListener).toHaveBeenCalledWith('scroll', expect.any(Function));
+
+    header.append(replacementTabList);
+    await new Promise(resolve => queueMicrotask(resolve));
+    const specs = replacementTabList.querySelector('[data-nt-tab-value="specs"]');
+    specs.click();
+
+    expect(specs.getAttribute('aria-selected')).toBe('true');
+    expect(tabView.querySelector('#panel-specs').hidden).toBe(false);
+    expect(new URL(window.location.href).searchParams.get('details')).toBe('specs');
+  });
+
+  test('mutation observation migrates listeners when the tablist is replaced in place', async () => {
+    const tabView = createTabView();
+    const originalTabList = tabView.querySelector('.nt-tab-view-tablist');
+    const removeEventListener = jest.spyOn(originalTabList, 'removeEventListener');
+    const replacementTabList = originalTabList.cloneNode(true);
+    onLoad(tabView);
+    const originalResizeObserver = ResizeObserverMock.instances[0];
+
+    originalTabList.replaceWith(replacementTabList);
+    await new Promise(resolve => queueMicrotask(resolve));
+    const specs = replacementTabList.querySelector('[data-nt-tab-value="specs"]');
+    specs.click();
+
+    expect(specs.getAttribute('aria-selected')).toBe('true');
+    expect(tabView.querySelector('#panel-specs').hidden).toBe(false);
+    expect(removeEventListener).toHaveBeenCalledWith('click', expect.any(Function));
+    expect(removeEventListener).toHaveBeenCalledWith('scroll', expect.any(Function));
+    expect(originalResizeObserver.disconnect).toHaveBeenCalled();
+  });
+
+  test('rebinds tablist listeners when interactive rendering replaces the header', async () => {
+    const tabView = createTabView();
+    const originalTabList = tabView.querySelector('.nt-tab-view-tablist');
+    const removeEventListener = jest.spyOn(originalTabList, 'removeEventListener');
+    onLoad(tabView);
+    const replacementHeader = tabView.querySelector('.nt-tab-view-header').cloneNode(true);
+
+    tabView.querySelector('.nt-tab-view-header').replaceWith(replacementHeader);
+    await new Promise(resolve => queueMicrotask(resolve));
+    const specs = replacementHeader.querySelector('[data-nt-tab-value="specs"]');
+    specs.click();
+
+    expect(specs.getAttribute('aria-selected')).toBe('true');
+    expect(tabView.__ntTabViewState.tabList).toBe(replacementHeader.querySelector('.nt-tab-view-tablist'));
+    expect(removeEventListener).toHaveBeenCalledWith('click', expect.any(Function));
+    expect(removeEventListener).toHaveBeenCalledWith('scroll', expect.any(Function));
+  });
+
   test('indicator uses active target geometry relative to the scroll container', () => {
     const tabView = createTabView();
     const tabList = tabView.querySelector('.nt-tab-view-tablist');
@@ -213,12 +275,51 @@ describe('NTTabView page-script module', () => {
     const tabView = createTabView();
     onLoad(tabView);
     const state = tabView.__ntTabViewState;
+    const overview = tabView.querySelector('[data-nt-tab-value="overview"]');
+    const specs = tabView.querySelector('[data-nt-tab-value="specs"]');
 
     onUpdate(tabView);
     onDispose(tabView);
+    specs.click();
+    overview.focus();
+    overview.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }));
 
     expect(state.resizeObserver.disconnect).toHaveBeenCalled();
     expect(tabView.__ntTabViewState).toBeUndefined();
+    expect(specs.getAttribute('aria-selected')).toBe('false');
+    expect(tabView.querySelector('#panel-specs').hidden).toBe(true);
+    expect(new URL(window.location.href).searchParams.get('details')).toBeNull();
+    expect(document.activeElement).toBe(overview);
+  });
+
+  test('onDispose prevents later header mutations from reactivating tab navigation', async () => {
+    const tabView = createTabView();
+    onLoad(tabView);
+    onDispose(tabView);
+    const replacementHeader = tabView.querySelector('.nt-tab-view-header').cloneNode(true);
+
+    tabView.querySelector('.nt-tab-view-header').replaceWith(replacementHeader);
+    await new Promise(resolve => queueMicrotask(resolve));
+    const specs = replacementHeader.querySelector('[data-nt-tab-value="specs"]');
+    specs.click();
+
+    expect(specs.getAttribute('aria-selected')).toBe('false');
+    expect(tabView.querySelector('#panel-specs').hidden).toBe(true);
+    expect(new URL(window.location.href).searchParams.get('details')).toBeNull();
+  });
+
+  test('onDispose removes the window resize fallback when ResizeObserver is unavailable', () => {
+    const tabView = createTabView();
+    const removeEventListener = jest.spyOn(window, 'removeEventListener');
+    global.ResizeObserver = undefined;
+    onLoad(tabView);
+    const onScroll = tabView.__ntTabViewState.onScroll;
+
+    onDispose(tabView);
+
+    expect(removeEventListener).toHaveBeenCalledWith('resize', onScroll);
+    expect(tabView.__ntTabViewState).toBeUndefined();
+    removeEventListener.mockRestore();
   });
 
   test('dispose can resolve the tab view after page script element is detached', () => {

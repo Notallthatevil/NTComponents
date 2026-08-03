@@ -308,6 +308,32 @@ function registerTabs(tabView: NTTabViewElement, _state: TabViewState): void {
     registerButtonInteractions(tabView);
 }
 
+function observeTabViewMutations(tabView: NTTabViewElement, state: TabViewState): void {
+    state.mutationObserver?.disconnect();
+    if (typeof MutationObserver !== 'function') {
+        return;
+    }
+
+    state.mutationObserver = new MutationObserver(() => {
+        syncTabList(tabView, state);
+        registerTabs(tabView, state);
+        selectInitialTab(tabView, false);
+    });
+    state.mutationObserver.observe(tabView, { childList: true });
+
+    const header = tabView.querySelector<HTMLElement>(':scope > .nt-tab-view-header');
+    if (header) {
+        state.mutationObserver.observe(header, { childList: true });
+    }
+    if (state.tabList) {
+        state.mutationObserver.observe(state.tabList, { childList: true });
+    }
+    const panels = tabView.querySelector<HTMLElement>(':scope > .nt-tab-view-panels');
+    if (panels) {
+        state.mutationObserver.observe(panels, { childList: true });
+    }
+}
+
 function syncTabList(tabView: NTTabViewElement, state: TabViewState): void {
     const tabList = getTabList(tabView);
     if (state.tabList === tabList) {
@@ -332,22 +358,8 @@ function syncTabList(tabView: NTTabViewElement, state: TabViewState): void {
         }
     }
 
-    state.mutationObserver?.disconnect();
-    if (typeof MutationObserver === 'function') {
-        state.mutationObserver = new MutationObserver(() => {
-            registerTabs(tabView, state);
-            selectInitialTab(tabView, false);
-        });
-        if (tabList) {
-            state.mutationObserver.observe(tabList, { childList: true });
-        }
-        const panels = tabView.querySelector<HTMLElement>(':scope > .nt-tab-view-panels');
-        if (panels) {
-            state.mutationObserver.observe(panels, { childList: true });
-        }
-    }
-
     state.tabList = tabList;
+    observeTabViewMutations(tabView, state);
     scheduleIndicatorUpdate(tabView);
 }
 
@@ -394,21 +406,8 @@ function updateTabView(tabView: NTTabViewElement): void {
         window.addEventListener('resize', state.onScroll);
     }
 
-    if (typeof MutationObserver === 'function') {
-        state.mutationObserver = new MutationObserver(() => {
-            registerTabs(tabView, state);
-            selectInitialTab(tabView, false);
-        });
-        if (tabList) {
-            state.mutationObserver.observe(tabList, { childList: true });
-        }
-        const panels = tabView.querySelector<HTMLElement>(':scope > .nt-tab-view-panels');
-        if (panels) {
-            state.mutationObserver.observe(panels, { childList: true });
-        }
-    }
-
     tabView.__ntTabViewState = state;
+    observeTabViewMutations(tabView, state);
     registerTabs(tabView, state);
     selectInitialTab(tabView, true);
 }

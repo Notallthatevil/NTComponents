@@ -25,6 +25,12 @@ $nt-tab-motion-easing: motion.$nt-motion-easing-standard;
         overflow: hidden;
     }
 
+    @supports selector(.nt-tab-view-header:has([data-nt-tab-view-header-complete])) {
+        .nt-tab-view-header:not(:has([data-nt-tab-view-header-complete])) {
+            visibility: hidden;
+        }
+    }
+
     .nt-tab-view-tablist {
         position: relative;
         display: flex;

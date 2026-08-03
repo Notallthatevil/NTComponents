@@ -12,6 +12,7 @@ namespace NTComponents;
     CompatibilitySummary = "Participates in parent component rendering and inherits the parent interaction model.",
     CompatibilityDetails = "The selected panel content is present in the static response. Tab switching, query-string activation after load, and keyboard navigation depend on the parent tab-view script.")]
 public partial class NTTab {
+    private HeaderMetadata? _headerMetadata;
     private int _sequence;
 
     /// <summary>
@@ -118,7 +119,10 @@ public partial class NTTab {
     /// <inheritdoc />
     protected override void OnParametersSet() {
         base.OnParametersSet();
-        _context?.SetTabSequence(this, _context.GetNextRenderSequence());
+        var headerMetadata = new HeaderMetadata(Disabled, AccessibilityLabel, AriaLabel, HeaderTooltip is not null, Icon, Label, Value, ElementName, ElementId);
+        var headerMetadataChanged = _headerMetadata is { } previousHeaderMetadata && previousHeaderMetadata != headerMetadata;
+        _headerMetadata = headerMetadata;
+        _context?.SetTabSequence(this, _context.GetNextRenderSequence(), headerMetadataChanged);
     }
 
     private static string NormalizeValue(string value) {
@@ -129,4 +133,6 @@ public partial class NTTab {
 
         return string.IsNullOrWhiteSpace(normalized) ? "tab" : normalized;
     }
+
+    private readonly record struct HeaderMetadata(bool Disabled, string? AccessibilityLabel, string? AriaLabel, bool HasHeaderTooltip, TnTIcon? Icon, string Label, string? Value, string? ElementName, string? ElementId);
 }

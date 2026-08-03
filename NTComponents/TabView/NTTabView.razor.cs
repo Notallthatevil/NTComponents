@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using Microsoft.AspNetCore.Components;
 using NTComponents.Core;
 
@@ -21,6 +22,7 @@ namespace NTComponents;
     RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
     CompatibilitySummary = "Renders tab markup and enhances selection with TypeScript.",
     CompatibilityDetails = "Static SSR emits the tablist and initially selected panel. The browser module adds tab switching, query-string updates, keyboard behavior, and active-indicator placement.")]
+[StreamRendering(false)]
 public partial class NTTabView {
     /// <summary>
     ///     Gets the isolated JavaScript module path for <see cref="NTTabView" />.
@@ -31,6 +33,8 @@ public partial class NTTabView {
 
     private readonly Dictionary<NTTab, int> _tabIndexes = [];
     private readonly List<NTTab> _orderedTabs = [];
+    private bool _initialRegistrationComplete;
+    private Task? _registrationCompletionTask;
     private int _renderSequence;
 
     private string? ResolvedQueryParameterName => QueryParameterName ?? Name;
@@ -47,14 +51,18 @@ public partial class NTTabView {
 
     internal void ResetRenderSequence() => _renderSequence = 0;
 
-    internal void SetTabSequence(NTTab tab, int sequence) {
-        if (tab.ResolvedSequence == sequence) {
+    internal void SetTabSequence(NTTab tab, int sequence, bool headerMetadataChanged) {
+        var sequenceChanged = tab.ResolvedSequence != sequence;
+        if (!sequenceChanged && !headerMetadataChanged) {
             return;
         }
 
-        tab.ResolvedSequence = sequence;
-        RefreshTabOrder();
-        if (_tabs.Contains(tab)) {
+        if (sequenceChanged) {
+            tab.ResolvedSequence = sequence;
+            RefreshTabOrder();
+        }
+
+        if (_initialRegistrationComplete && _tabs.Contains(tab)) {
             _ = InvokeAsync(StateHasChanged);
         }
     }
@@ -159,20 +167,33 @@ public partial class NTTabView {
 
     internal void AddTab(NTTab tab) {
         if (!_tabs.Contains(tab)) {
+            var restartInitialRegistration = _initialRegistrationComplete;
+            if (restartInitialRegistration) {
+                _initialRegistrationComplete = false;
+            }
+
             _tabs.Add(tab);
             RefreshTabOrder();
-            _ = InvokeAsync(StateHasChanged);
+            if (restartInitialRegistration) {
+                _registrationCompletionTask = null;
+                _ = WaitForInitialRegistrationAsync();
+                _ = InvokeAsync(StateHasChanged);
+            }
         }
     }
 
     internal void RemoveTab(NTTab tab) {
         if (_tabs.Remove(tab)) {
             RefreshTabOrder();
-            _ = InvokeAsync(StateHasChanged);
+            if (_initialRegistrationComplete) {
+                _ = InvokeAsync(StateHasChanged);
+            }
         }
     }
 
     internal bool IsInitiallySelected(NTTab tab) => ReferenceEquals(tab, GetInitiallySelectedTab());
+
+    internal Task WaitForInitialRegistrationAsync() => _registrationCompletionTask ??= InvokeAsync(CompleteInitialRegistrationWhenStableAsync);
 
     internal NTTab? GetInitiallySelectedTab() {
         var firstEnabledTab = OrderedTabs.FirstOrDefault(candidate => !candidate.Disabled);
@@ -224,6 +245,24 @@ public partial class NTTabView {
 
     private static string DecodeQueryValue(string value) => Uri.UnescapeDataString(value.Replace('+', ' '));
 
+    private async Task CompleteInitialRegistrationWhenStableAsync() {
+        var observedCount = -1;
+        var stableTurns = 0;
+        while (stableTurns < 2) {
+            await Task.Yield();
+            if (_tabs.Count == observedCount) {
+                stableTurns++;
+                continue;
+            }
+
+            observedCount = _tabs.Count;
+            stableTurns = 0;
+        }
+
+        _initialRegistrationComplete = true;
+        StateHasChanged();
+    }
+
     internal void RefreshTabOrder() {
         _orderedTabs.Clear();
         _orderedTabs.AddRange(_tabs.OrderBy(tab => tab.ResolvedSequence));
@@ -239,6 +278,25 @@ public partial class NTTabView {
             .AddClass("nt-tab-view-tab-disabled", tab.Disabled)
             .AddClass("nt-tab-view-tab-with-icon", tab.Icon is not null)
             .Build();
+    }
+}
+
+/// <summary>
+///     Coordinates initial child registration for <see cref="NTTabView" />.
+/// </summary>
+[EditorBrowsable(EditorBrowsableState.Never)]
+[NTDocumentation(
+    RenderCompatibility = NTComponentRenderCompatibility.SsrCompatible,
+    CompatibilitySummary = "Coordinates tab registration without rendering markup.",
+    CompatibilityDetails = "Static SSR waits for child registration to stabilize. Interactive renderers schedule the same registration completion without blocking hydration.")]
+public sealed class NTTabViewRegistrationGate : ComponentBase {
+    [CascadingParameter]
+    private NTTabView _tabView { get; set; } = default!;
+
+    /// <inheritdoc />
+    protected override Task OnInitializedAsync() {
+        var registrationTask = _tabView.WaitForInitialRegistrationAsync();
+        return RendererInfo.IsInteractive ? Task.CompletedTask : registrationTask;
     }
 }
 
