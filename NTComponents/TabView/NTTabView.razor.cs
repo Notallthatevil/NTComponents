@@ -29,6 +29,10 @@ public partial class NTTabView {
     /// </summary>
     public const string JsModulePathValue = "./_content/NTComponents/TabView/NTTabView.razor.js";
 
+    private static readonly RenderFragment _registrationGate = builder => {
+        builder.OpenComponent<NTTabViewRegistrationGate>(0);
+        builder.CloseComponent();
+    };
     internal readonly List<NTTab> _tabs = [];
 
     private readonly Dictionary<NTTab, int> _tabIndexes = [];
@@ -289,7 +293,7 @@ public partial class NTTabView {
     RenderCompatibility = NTComponentRenderCompatibility.SsrCompatible,
     CompatibilitySummary = "Coordinates tab registration without rendering markup.",
     CompatibilityDetails = "Static SSR waits for child registration to stabilize. Interactive renderers schedule the same registration completion without blocking hydration.")]
-public sealed class NTTabViewRegistrationGate : ComponentBase {
+internal sealed class NTTabViewRegistrationGate : ComponentBase {
     [CascadingParameter]
     private NTTabView _tabView { get; set; } = default!;
 

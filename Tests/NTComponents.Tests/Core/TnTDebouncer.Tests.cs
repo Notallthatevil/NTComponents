@@ -103,7 +103,10 @@ namespace NTComponents.Tests.Core {
             var debouncer = new TnTDebouncer(millisecondsDelay: 40);
 
             // Act
-            var first = debouncer.DebounceForResultAsync<string>(_ => Task.FromResult("first"));
+            var first = debouncer.DebounceForResultAsync<string>(async token => {
+                await Task.Delay(Timeout.InfiniteTimeSpan, token);
+                return "first";
+            });
             var second = debouncer.DebounceForResultAsync<string>(_ => Task.FromResult("second"));
             var results = await Task.WhenAll(first, second);
 
