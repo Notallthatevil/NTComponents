@@ -32,7 +32,8 @@ $nt-dtp-trigger-top-dense: 14px;
         max-width: 100%;
     }
 
-    &.nt-input-date-time-custom-picker {
+    &.nt-input-date-time-custom-picker,
+    &.nt-input-date-time-native-picker {
         ::deep .nt-input-field {
             padding-inline-end: 48px;
         }
@@ -96,6 +97,25 @@ $nt-dtp-trigger-top-dense: 14px;
         pointer-events: none;
     }
 
+    .tnt-dtp-native-trigger {
+        display: none;
+        color: colors.$tnt-color-on-surface;
+    }
+
+    &[data-tnt-dtp-native-enhanced='true'] {
+        .tnt-dtp-native-trigger {
+            display: inline-grid;
+        }
+
+        ::deep input[data-tnt-dtp-native-input='true'] {
+            &::-webkit-calendar-picker-indicator,
+            &::-webkit-time-picker-indicator {
+                display: none;
+                pointer-events: none;
+            }
+        }
+    }
+
     ::deep input {
         min-width: 0;
         max-width: 100%;
@@ -115,11 +135,6 @@ $nt-dtp-trigger-top-dense: 14px;
 
             &::-webkit-calendar-picker-indicator,
             &::-webkit-time-picker-indicator {
-                display: none;
-                pointer-events: none;
-            }
-
-            &::-webkit-calendar-picker-indicator {
                 display: none;
                 pointer-events: none;
             }

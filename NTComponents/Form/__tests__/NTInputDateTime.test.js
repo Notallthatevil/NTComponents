@@ -206,9 +206,13 @@ describe('NTInputDateTime picker behavior', () => {
         actions.appendChild(cancelButton);
         picker.appendChild(actions);
 
+        const field = document.createElement('div');
+        field.className = 'nt-input';
+        field.appendChild(label);
+
         const root = document.createElement('div');
         root.className = 'nt-input-date-time';
-        root.appendChild(label);
+        root.appendChild(field);
         root.appendChild(trigger);
         root.appendChild(picker);
 
@@ -224,6 +228,7 @@ describe('NTInputDateTime picker behavior', () => {
             cancelButton,
             hourInput,
             input,
+            field,
             label,
             minuteInput,
             monthLabel,
@@ -249,6 +254,27 @@ describe('NTInputDateTime picker behavior', () => {
         return { ...fixture, script };
     }
 
+    function createNativePickerFixture({ disabled = false, readOnly = false, type = 'date' } = {}) {
+        const input = document.createElement('input');
+        input.type = type;
+        input.disabled = disabled;
+        input.readOnly = readOnly;
+        input.dataset.tntDtpNativeInput = 'true';
+        input.showPicker = jest.fn();
+
+        const trigger = document.createElement('button');
+        trigger.type = 'button';
+        trigger.tabIndex = -1;
+        trigger.dataset.tntDtpNativeTrigger = 'true';
+
+        const root = document.createElement('div');
+        root.className = 'nt-input-date-time nt-input-date-time-native-picker';
+        root.append(input, trigger);
+        document.body.appendChild(root);
+
+        return { input, root, trigger };
+    }
+
     beforeEach(() => {
         document.body.innerHTML = '';
         jest.clearAllMocks();
@@ -266,7 +292,7 @@ describe('NTInputDateTime picker behavior', () => {
     });
 
     afterEach(() => {
-        const trackedInputs = document.querySelectorAll('input[data-tnt-dtp-input="true"]');
+        const trackedInputs = document.querySelectorAll('input[data-tnt-dtp-input="true"], input[data-tnt-dtp-native-input="true"]');
         trackedInputs.forEach(input => onDispose(input, null));
         document.body.innerHTML = '';
         jest.useRealTimers();
@@ -525,6 +551,55 @@ describe('NTInputDateTime picker behavior', () => {
         expect(input.value).toBe('2026-03-15T14:05');
     });
 
+    test('enhances native picker trigger without adding it to the tab order', () => {
+        const { input, root, trigger } = createNativePickerFixture();
+
+        onLoad(root, null);
+        const mouseDown = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
+        trigger.dispatchEvent(mouseDown);
+        trigger.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+        expect(root.dataset.tntDtpNativeEnhanced).toBe('true');
+        expect(trigger.tabIndex).toBe(-1);
+        expect(mouseDown.defaultPrevented).toBe(true);
+        expect(input.showPicker).toHaveBeenCalledTimes(1);
+        expect(document.activeElement).toBe(input);
+
+        onDispose(root, null);
+        trigger.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+        expect(root.dataset.tntDtpNativeEnhanced).toBeUndefined();
+        expect(input.showPicker).toHaveBeenCalledTimes(1);
+    });
+
+    test('leaves native input focus available for typing', () => {
+        const { input, root } = createNativePickerFixture();
+
+        onLoad(root, null);
+        input.focus();
+
+        expect(input.showPicker).not.toHaveBeenCalled();
+
+        onDispose(root, null);
+        input.blur();
+        input.focus();
+
+        expect(input.showPicker).not.toHaveBeenCalled();
+    });
+
+    test.each([
+        ['disabled', { disabled: true }],
+        ['read-only', { readOnly: true }],
+    ])('does not open the native picker when the input is %s', (_, options) => {
+        const { input, root, trigger } = createNativePickerFixture(options);
+
+        onLoad(root, null);
+        input.dispatchEvent(new FocusEvent('focus'));
+        trigger.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+        expect(input.showPicker).not.toHaveBeenCalled();
+    });
+
     test('custom datetime format preserves and confirms a 12-hour display value', () => {
         const { confirmButton, input, minuteInput, picker, root, trigger } = createPickerFixture({
             format: 'MM/dd/yyyy hh:mm tt',
@@ -549,6 +624,132 @@ describe('NTInputDateTime picker behavior', () => {
         onDispose(root, null);
         expect(input.type).toBe('text');
         expect(input.value).toBe('03/15/2026 02:45 PM');
+    });
+
+    test.each([
+        ['time', 'HH:mm tt', '1:30 AM', '01:30 AM'],
+        ['time', 'HH:mm tt', '13:30 AM', '01:30 AM'],
+        ['datetime', 'MM/dd/yyyy HH:mm tt', '01/01/2000 13:30 AM', '01/01/2000 01:30 AM'],
+    ])('honors a typed AM value in a custom %s field that uses HH with tt', (mode, format, value, expected) => {
+        const { input, picker, root, trigger } = createPickerFixture({ format, mode, value });
+        input.type = 'text';
+        input.value = value;
+
+        openPicker(trigger);
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new FocusEvent('blur'));
+        jest.runOnlyPendingTimers();
+
+        expect(input.value).toBe(expected);
+        expect(picker.querySelector('[data-tnt-dtp-meridiem="am"]').getAttribute('aria-pressed')).toBe('true');
+    });
+
+    test.each([
+        ['date', 'MM/dd/yyyy', '01012000', '01/01/2000'],
+        ['time', 'HH:mm tt', '1330PM', '13:30 PM'],
+        ['datetime', 'MM/dd/yyyy HH:mm tt', '010120001330PM', '01/01/2000 13:30 PM'],
+        ['datetime', 'MM/dd/yyyy HH:mm tt', '02022020 1:30 AM', '02/02/2020 01:30 AM'],
+        ['datetimeoffset', 'MM/dd/yyyy HH:mm tt', '02022020 1:30 AM', '02/02/2020 01:30 AM'],
+    ])('formats a compact or partially formatted custom %s value on blur', (mode, format, value, expected) => {
+        const { input, root } = createPickerFixture({ format, mode });
+        input.type = 'text';
+        input.value = value;
+        const inputHandler = jest.fn();
+        const changeHandler = jest.fn();
+        input.addEventListener('input', inputHandler);
+        input.addEventListener('change', changeHandler);
+        onLoad(root, null);
+
+        input.dispatchEvent(new FocusEvent('blur'));
+        jest.runOnlyPendingTimers();
+
+        expect(input.value).toBe(expected);
+        expect(inputHandler).toHaveBeenCalledTimes(1);
+        expect(changeHandler).toHaveBeenCalledTimes(1);
+    });
+
+    test.each(['02312000', '0101200'])('reports and preserves an invalid or incomplete custom date value on blur: %s', value => {
+        const { field, input, root } = createPickerFixture({ format: 'MM/dd/yyyy', mode: 'date' });
+        input.type = 'text';
+        input.value = value;
+        const changeHandler = jest.fn();
+        input.addEventListener('change', changeHandler);
+        onLoad(root, null);
+
+        input.dispatchEvent(new FocusEvent('blur'));
+
+        expect(input.value).toBe(value);
+        expect(changeHandler).not.toHaveBeenCalled();
+        expect(input.validity.valid).toBe(false);
+        expect(input.validationMessage).toBe('Enter a value in the format MM/dd/yyyy.');
+        expect(input.getAttribute('aria-invalid')).toBe('true');
+        expect(field.classList.contains('nt-dtp-parse-invalid')).toBe(true);
+    });
+
+    test('clears the custom parse error after a valid value is committed', () => {
+        const { field, input, root } = createPickerFixture({ format: 'MM/dd/yyyy', mode: 'date' });
+        input.type = 'text';
+        input.setAttribute('aria-invalid', 'false');
+        input.value = '02312000';
+        onLoad(root, null);
+        input.dispatchEvent(new FocusEvent('blur'));
+
+        input.value = '02022020';
+        input.dispatchEvent(new FocusEvent('blur'));
+        jest.runOnlyPendingTimers();
+
+        expect(input.value).toBe('02/02/2020');
+        expect(input.validity.valid).toBe(true);
+        expect(input.getAttribute('aria-invalid')).toBe('false');
+        expect(field.classList.contains('nt-dtp-parse-invalid')).toBe(false);
+    });
+
+    test('formats the committed value before the change event bubbles to Blazor', () => {
+        const { input, root } = createPickerFixture({ format: 'MM/dd/yyyy HH:mm tt', mode: 'datetime' });
+        input.type = 'text';
+        input.value = '010120001330PM';
+        const inputHandler = jest.fn();
+        let bubbledValue = null;
+        input.addEventListener('input', inputHandler);
+        root.addEventListener('change', event => bubbledValue = event.target.value);
+        onLoad(root, null);
+
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+
+        expect(input.value).toBe('01/01/2000 13:30 PM');
+        expect(bubbledValue).toBe('01/01/2000 13:30 PM');
+        expect(inputHandler).toHaveBeenCalledTimes(1);
+    });
+
+    test('synchronizes the formatted value to an input replaced during interactive rendering', () => {
+        const { input, root } = createPickerFixture({ format: 'MM/dd/yyyy', mode: 'date' });
+        input.id = 'replaced-date-input';
+        input.type = 'text';
+        input.value = '01012000';
+        let bubbledValue = null;
+        root.addEventListener('change', event => bubbledValue = event.target.value);
+        onLoad(root, null);
+
+        input.dispatchEvent(new FocusEvent('blur'));
+        const replacement = input.cloneNode();
+        replacement.value = '01012000';
+        input.replaceWith(replacement);
+        jest.runOnlyPendingTimers();
+
+        expect(replacement.value).toBe('01/01/2000');
+        expect(bubbledValue).toBe('01/01/2000');
+    });
+
+    test('disposing the custom picker removes blur formatting', () => {
+        const { input, root } = createPickerFixture({ format: 'MM/dd/yyyy', mode: 'date' });
+        input.type = 'text';
+        input.value = '01012000';
+        onLoad(root, null);
+        onDispose(root, null);
+
+        input.dispatchEvent(new FocusEvent('blur'));
+
+        expect(input.value).toBe('01012000');
     });
 
     test('existing hidden seconds are not preserved for datetime confirmation', () => {
@@ -609,10 +810,92 @@ describe('NTInputDateTime picker behavior', () => {
         const { input, picker, trigger } = createPickerFixture({ mode: 'date', value: '' });
 
         openPicker(trigger);
-        input.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'Enter' }));
+        input.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'Enter' }));
 
         expect(input.value).toBe('2026-03-15');
         expect(picker.classList.contains('tnt-dtp-open')).toBe(false);
+    });
+
+    test('typed date updates the open picker selection before Enter confirms it', () => {
+        const { input, picker, trigger } = createPickerFixture({ format: 'MM/dd/yyyy', mode: 'date', value: '03/15/2026' });
+        input.type = 'text';
+        input.value = '03/15/2026';
+        openPicker(trigger);
+
+        input.value = '04/20/2030';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        const selectedDate = picker.querySelector('[data-tnt-dtp-year="2030"][data-tnt-dtp-month="3"][data-tnt-dtp-day="20"]');
+        const enterEvent = new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'Enter' });
+        input.dispatchEvent(enterEvent);
+
+        expect(selectedDate.getAttribute('aria-selected')).toBe('true');
+        expect(input.value).toBe('04/20/2030');
+        expect(enterEvent.defaultPrevented).toBe(true);
+        expect(picker.classList.contains('tnt-dtp-open')).toBe(false);
+    });
+
+    test('typed time updates the open picker controls before Enter confirms it', () => {
+        const { hourInput, input, picker, trigger } = createPickerFixture({ format: 'HH:mm tt', mode: 'time', value: '13:30 PM' });
+        input.type = 'text';
+        input.value = '13:30 PM';
+        openPicker(trigger);
+
+        input.value = '13:30 AM';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'Enter' }));
+
+        expect(hourInput.value).toBe('1');
+        expect(picker.querySelector('[data-tnt-dtp-meridiem="am"]').getAttribute('aria-pressed')).toBe('true');
+        expect(input.value).toBe('01:30 AM');
+        expect(picker.classList.contains('tnt-dtp-open')).toBe(false);
+    });
+
+    test('Enter preserves invalid typed text instead of confirming the stale picker selection', () => {
+        const { input, picker, trigger } = createPickerFixture({ format: 'MM/dd/yyyy', mode: 'date', value: '03/15/2026' });
+        input.type = 'text';
+        input.value = '03/15/2026';
+        openPicker(trigger);
+
+        input.value = '02/31/2026';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        const enterEvent = new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'Enter' });
+        input.dispatchEvent(enterEvent);
+
+        expect(input.value).toBe('02/31/2026');
+        expect(enterEvent.defaultPrevented).toBe(true);
+        expect(picker.classList.contains('tnt-dtp-open')).toBe(true);
+    });
+
+    test('Enter on an open picker input does not propagate to its form', () => {
+        const { input, root, trigger } = createPickerFixture({ mode: 'date', value: '2026-03-15' });
+        const form = document.createElement('form');
+        root.replaceWith(form);
+        form.appendChild(root);
+        const formKeyDownHandler = jest.fn();
+        form.addEventListener('keydown', formKeyDownHandler);
+        openPicker(trigger);
+        const enterEvents = ['keydown', 'keypress', 'keyup'].map(type => new KeyboardEvent(type, { bubbles: true, cancelable: true, key: 'Enter' }));
+
+        enterEvents.forEach(event => input.dispatchEvent(event));
+
+        enterEvents.forEach(event => expect(event.defaultPrevented).toBe(true));
+        expect(formKeyDownHandler).not.toHaveBeenCalled();
+    });
+
+    test('Enter within open picker controls does not propagate to its form', () => {
+        const { hourInput, root, trigger } = createPickerFixture({ mode: 'time', value: '13:30:00' });
+        const form = document.createElement('form');
+        root.replaceWith(form);
+        form.appendChild(root);
+        const formKeyDownHandler = jest.fn();
+        form.addEventListener('keydown', formKeyDownHandler);
+        openPicker(trigger);
+        const enterEvents = ['keydown', 'keypress', 'keyup'].map(type => new KeyboardEvent(type, { bubbles: true, cancelable: true, key: 'Enter' }));
+
+        enterEvents.forEach(event => hourInput.dispatchEvent(event));
+
+        enterEvents.forEach(event => expect(event.defaultPrevented).toBe(true));
+        expect(formKeyDownHandler).not.toHaveBeenCalled();
     });
 
     test('confirm emits input and change events with the selected form value', () => {

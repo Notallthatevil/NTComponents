@@ -735,7 +735,8 @@ $nt-input-textarea-filled-label-space-dense: 14px;
         }
     }
 
-    &.nt-invalid.nt-modified {
+    &.nt-invalid.nt-modified,
+    &.nt-dtp-parse-invalid {
         .nt-input-label,
         .nt-input-supporting,
         .nt-input-counter {

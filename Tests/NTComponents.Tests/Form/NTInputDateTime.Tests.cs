@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Forms;
 
 namespace NTComponents.Tests.Form;
 
@@ -76,6 +77,39 @@ public class NTInputDateTime_Tests : BunitContext {
         var input = cut.Find("input[data-tnt-dtp-input='true']");
         input.GetAttribute("type").Should().Be("text");
         input.GetAttribute("value").Should().Be("05/19/2026 02:30 PM");
+        input.GetAttribute("placeholder").Should().Be("MM/dd/yyyy hh:mm tt");
+        cut.Find(".nt-input").GetAttribute("class").Should().Contain("nt-input-has-placeholder");
+    }
+
+    [Fact]
+    public void Custom_Picker_Explicit_Placeholder_Overrides_Format_Mask() {
+        var cut = RenderDateOnly(configure: parameters => parameters
+            .Add(p => p.EnableCustomPicker, true)
+            .Add(p => p.Format, "MM/dd/yyyy")
+            .Add(p => p.Placeholder, "Choose a date"));
+
+        cut.Find("input").GetAttribute("placeholder").Should().Be("Choose a date");
+    }
+
+    [Fact]
+    public void DateOnly_NonNative_Format_Without_Custom_Picker_Preserves_Native_Input_Contract() {
+        var model = new DateOnlyModel {
+            Value = new DateOnly(2026, 5, 19)
+        };
+
+        var cut = RenderDateOnly(model, parameters => parameters.Add(p => p.Format, "MM/dd/yyyy"));
+
+        var input = cut.Find("input");
+        input.GetAttribute("type").Should().Be("date");
+        input.GetAttribute("format").Should().Be("MM/dd/yyyy");
+        input.GetAttribute("value").Should().Be("2026-05-19");
+        input.GetAttribute("placeholder").Should().Be(" ");
+        cut.Find(".nt-input").GetAttribute("class").Should().NotContain("nt-input-has-placeholder");
+
+        input.Change("2000-01-01");
+
+        model.Value.Should().Be(new DateOnly(2000, 1, 1));
+        cut.Find("input").GetAttribute("value").Should().Be("2000-01-01");
     }
 
     [Fact]
@@ -196,6 +230,26 @@ public class NTInputDateTime_Tests : BunitContext {
         model.Value.Should().Be(new DateTime(2026, 5, 19, 10, 30, 0));
     }
 
+    [Fact]
+    public void Invalid_Custom_Value_Renders_Format_Error_In_EditContext() {
+        var model = new DateOnlyModel();
+        var editContext = new EditContext(model);
+        var cut = Render<CascadingValue<EditContext>>(parameters => parameters
+            .Add(p => p.Value, editContext)
+            .AddChildContent<NTInputDateTime<DateOnly?>>(child => child
+                .Add(p => p.Value, model.Value)
+                .Add(p => p.ValueChanged, EventCallback.Factory.Create<DateOnly?>(this, value => model.Value = value))
+                .Add(p => p.ValueExpression, () => model.Value)
+                .Add(p => p.EnableCustomPicker, true)
+                .Add(p => p.Format, "MM/dd/yyyy")));
+
+        cut.Find("input").Change("not-a-date");
+
+        cut.Find(".nt-input").ClassList.Should().Contain(["nt-modified", "nt-invalid"]);
+        cut.Find("input").GetAttribute("aria-invalid").Should().Be("true");
+        cut.Find(".nt-input-error-text").TextContent.Should().Be("Enter a value in the format MM/dd/yyyy.");
+    }
+
     // Behavior source: NTFormDensity documents Comfortable, Standard, and Dense as supported field-density modes.
     [Theory]
     [InlineData(NTFormDensity.Comfortable, "nt-input-date-time-comfortable")]
@@ -268,6 +322,19 @@ public class NTInputDateTime_Tests : BunitContext {
         cut.Find("input").GetAttribute("type").Should().Be("date");
     }
 
+    // Behavior source: The enhanced native picker icon remains clickable but is excluded from sequential keyboard navigation.
+    [Fact]
+    public void Native_Picker_Renders_NonTabbable_OnSurface_Trigger() {
+        var cut = RenderDateOnly();
+
+        cut.Find("input").GetAttribute("data-tnt-dtp-native-input").Should().Be("true");
+        var trigger = cut.Find("button[data-tnt-dtp-native-trigger='true']");
+        trigger.GetAttribute("tabindex").Should().Be("-1");
+        trigger.GetAttribute("aria-label").Should().Be("Open date picker");
+        trigger.GetAttribute("class").Should().Contain("tnt-dtp-native-trigger");
+        trigger.QuerySelector(".tnt-dtp-trigger-icon").Should().NotBeNull();
+    }
+
     [Fact]
     public void DateTime_Custom_Picker_Renders_DateTime_Mode() {
         var cut = RenderDateTime(configure: parameters => parameters.Add(p => p.EnableCustomPicker, true));
@@ -278,10 +345,9 @@ public class NTInputDateTime_Tests : BunitContext {
         var pickerId = input.GetAttribute("data-tnt-dtp-target");
         pickerId.Should().NotBeNullOrWhiteSpace();
 
-        cut.Find($"button[data-tnt-dtp-trigger='true'][data-tnt-dtp-target='{pickerId}']")
-            .GetAttribute("aria-label")
-            .Should()
-            .Be("Open date and time picker");
+        var trigger = cut.Find($"button[data-tnt-dtp-trigger='true'][data-tnt-dtp-target='{pickerId}']");
+        trigger.GetAttribute("aria-label").Should().Be("Open date and time picker");
+        trigger.GetAttribute("tabindex").Should().Be("-1");
         cut.Find($"div#{pickerId}[data-tnt-dtp-picker='true']").GetAttribute("data-tnt-dtp-mode").Should().Be("datetime");
         cut.Find("[data-tnt-dtp-headline]").TextContent.Should().Be("Date and time");
         cut.Find("[data-tnt-dtp-content]").Children.Should().BeEmpty();

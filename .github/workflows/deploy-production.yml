@@ -62,6 +62,17 @@ jobs:
           test -f "$output/NTComponents.MCP"
           tar -C "$output" -czf "$RUNNER_TEMP/ntcomponents-mcp.tar.gz" .
 
+      - name: Generate static Site JavaScript and styles
+        run: |
+          set -euo pipefail
+          npm run build:ts:release
+          dotnet build ./NTComponents.Site/NTComponents.Site.csproj --no-restore --configuration Release --framework net10.0
+          test -f ./NTComponents.Site/wwwroot/js/theme-creator.js
+          test -f ./NTComponents/NavRail/NTNavigationRail.razor.js
+          test -f ./NTComponents.Site/wwwroot/css/app.css
+          test -f ./NTComponents.Site/Pages/MaterialThemeConverter.razor.css
+          test -f ./NTComponents.Site/Pages/MaterialThemeColorPicker.razor.css
+
       - name: Publish static Site
         run: |
           set -euo pipefail
@@ -71,6 +82,15 @@ jobs:
           test -f "$output/wwwroot/index.html"
           test -d "$output/wwwroot/_framework"
           test -f "$output/wwwroot/_content/NTComponents/NavRail/NTNavigationRail.razor.js"
+          test -f "$output/wwwroot/css/app.css"
+          test -f "$output/wwwroot/NTComponents.Site.styles.css"
+          grep -q '\.theme-converter' "$output/wwwroot/NTComponents.Site.styles.css"
+          grep -q '\.material-color-picker' "$output/wwwroot/NTComponents.Site.styles.css"
+          revision="$(git rev-parse HEAD)"
+          sed -i "s|href=\"css/app.css\"|href=\"css/app.css?v=$revision\"|" "$output/wwwroot/index.html"
+          sed -i "s|href=\"NTComponents.Site.styles.css\"|href=\"NTComponents.Site.styles.css?v=$revision\"|" "$output/wwwroot/index.html"
+          grep -Fq "css/app.css?v=$revision" "$output/wwwroot/index.html"
+          grep -Fq "NTComponents.Site.styles.css?v=$revision" "$output/wwwroot/index.html"
           tar -C "$output/wwwroot" -czf "$RUNNER_TEMP/ntcomponents-site.tar.gz" .
 
       - name: Connect to the production tailnet
@@ -140,6 +160,15 @@ jobs:
         run: |
           set -euo pipefail
           curl --fail --silent --show-error --retry 12 --retry-delay 5 --retry-all-errors --max-time 10 https://mcp.ntcomponents.nttechnologies.dev/health >/dev/null
-          curl --fail --silent --show-error --retry 12 --retry-delay 5 --retry-all-errors --max-time 10 https://ntcomponents.nttechnologies.dev/ >/dev/null
+          revision="$(git rev-parse HEAD)"
+          curl --fail --silent --show-error --retry 12 --retry-delay 5 --retry-all-errors --max-time 10 --output "$RUNNER_TEMP/index.html" https://ntcomponents.nttechnologies.dev/
+          grep -Fq "css/app.css?v=$revision" "$RUNNER_TEMP/index.html"
+          grep -Fq "NTComponents.Site.styles.css?v=$revision" "$RUNNER_TEMP/index.html"
           content_type="$(curl --fail --silent --show-error --retry 12 --retry-delay 5 --retry-all-errors --max-time 10 --output /dev/null --write-out '%{content_type}' https://ntcomponents.nttechnologies.dev/_content/NTComponents/NavRail/NTNavigationRail.razor.js)"
           [[ "$content_type" == *javascript* ]]
+          content_type="$(curl --fail --silent --show-error --retry 12 --retry-delay 5 --retry-all-errors --max-time 10 --output "$RUNNER_TEMP/app.css" --write-out '%{content_type}' "https://ntcomponents.nttechnologies.dev/css/app.css?v=$revision")"
+          [[ "$content_type" == *text/css* ]]
+          content_type="$(curl --fail --silent --show-error --retry 12 --retry-delay 5 --retry-all-errors --max-time 10 --output "$RUNNER_TEMP/NTComponents.Site.styles.css" --write-out '%{content_type}' "https://ntcomponents.nttechnologies.dev/NTComponents.Site.styles.css?v=$revision")"
+          [[ "$content_type" == *text/css* ]]
+          grep -q '\.theme-converter' "$RUNNER_TEMP/NTComponents.Site.styles.css"
+          grep -q '\.material-color-picker' "$RUNNER_TEMP/NTComponents.Site.styles.css"

@@ -48,9 +48,12 @@ interface PickerState {
     minDraft: PickerDraft | null;
     mode: DateTimePickerMode;
     nativeInputType: string;
+    onInputCommit: () => void;
     onInputFocus: () => void;
     onInputInput: () => void;
     onInputKeyDown: (event: KeyboardEvent) => void;
+    onEnterKeyPress: (event: KeyboardEvent) => void;
+    onEnterKeyUp: (event: KeyboardEvent) => void;
     onLabelClick: (event: MouseEvent) => void;
     onLabelMouseDown: (event: MouseEvent) => void;
     onPickerClick: (event: MouseEvent) => void;
@@ -61,6 +64,7 @@ interface PickerState {
     onTriggerMouseDown: (event: MouseEvent) => void;
     openOnFocus: boolean;
     picker: HTMLElement;
+    suppressEnterKeySequence: boolean;
     trigger: HTMLButtonElement | null;
     viewMonth: number;
     viewYear: number;
@@ -71,7 +75,16 @@ interface PickerState {
     yearListSelectedYear: number | null;
 }
 
+interface NativePickerState {
+    input: HTMLInputElement;
+    onTriggerClick: () => void;
+    onTriggerMouseDown: (event: MouseEvent) => void;
+    root: HTMLElement;
+    trigger: HTMLButtonElement;
+}
+
 const pickerStateByInput = new Map<HTMLInputElement, PickerState>();
+const nativePickerStateByInput = new Map<HTMLInputElement, NativePickerState>();
 const DEFAULT_MODAL_VIEWPORT_WIDTH_BREAKPOINT = 750;
 const CALENDAR_DAY_COUNT = 42;
 const MIN_PICKER_YEAR = 1;
@@ -81,6 +94,7 @@ const YEAR_LIST_BATCH_SIZE = 100;
 const YEAR_LIST_MAX_OPTION_COUNT = 300;
 const YEAR_LIST_SCROLL_THRESHOLD = 96;
 const PICKER_INPUT_SELECTOR = 'input[data-tnt-dtp-input="true"][data-tnt-dtp-target]';
+const NATIVE_PICKER_INPUT_SELECTOR = 'input[data-tnt-dtp-native-input="true"]';
 const WEEKDAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const MODE_CONFIG: Record<DateTimePickerMode, { hasDate: boolean; hasTime: boolean; supportsSubSelection: boolean }> = {
     date: { hasDate: true, hasTime: false, supportsSubSelection: true },
@@ -596,24 +610,41 @@ function escapeRegex(value: string): string {
 
 function parseDraftWithPattern(format: string, value: string): PickerDraft | null {
     const tokens: string[] = [];
-    let pattern = '^';
-    let previousIndex = 0;
+    const tokenMatches = Array.from(format.matchAll(FORMAT_TOKEN_PATTERN));
+    const buildLiteralPattern = (literal: string, allowOmittedPunctuation: boolean) => Array.from(literal)
+        .map(character => allowOmittedPunctuation && !/\s/.test(character) ? `${escapeRegex(character)}?` : escapeRegex(character))
+        .join('');
+    const buildPattern = (includeLiterals: boolean, allowOmittedPunctuation = false) => {
+        let pattern = '^';
+        let previousIndex = 0;
 
-    for (const match of format.matchAll(FORMAT_TOKEN_PATTERN)) {
-        pattern += escapeRegex(format.slice(previousIndex, match.index));
+        for (const match of tokenMatches) {
+            if (includeLiterals) {
+                pattern += buildLiteralPattern(format.slice(previousIndex, match.index), allowOmittedPunctuation);
+            }
+            pattern += match[0] === 'yyyy'
+                ? '(\\d{4})'
+                : match[0] === 'tt'
+                    ? '(AM|PM)'
+                    : match[0].length === 2
+                        ? includeLiterals ? '(\\d{1,2})' : '(\\d{2})'
+                        : '(\\d{1,2})';
+            previousIndex = match.index + match[0].length;
+        }
+
+        if (includeLiterals) {
+            pattern += buildLiteralPattern(format.slice(previousIndex), allowOmittedPunctuation);
+        }
+        return `${pattern}$`;
+    };
+
+    for (const match of tokenMatches) {
         tokens.push(match[0]);
-        pattern += match[0] === 'yyyy'
-            ? '(\\d{4})'
-            : match[0] === 'tt'
-                ? '(AM|PM)'
-                : match[0].length === 2
-                    ? '(\\d{2})'
-                    : '(\\d{1,2})';
-        previousIndex = match.index + match[0].length;
     }
 
-    pattern += `${escapeRegex(format.slice(previousIndex))}$`;
-    const match = new RegExp(pattern, 'i').exec(value);
+    const match = new RegExp(buildPattern(true), 'i').exec(value)
+        ?? new RegExp(buildPattern(true, true), 'i').exec(value)
+        ?? (tokens.every(token => token === 'yyyy' || token.length === 2) ? new RegExp(buildPattern(false), 'i').exec(value) : null);
     if (!match) {
         return null;
     }
@@ -622,44 +653,77 @@ function parseDraftWithPattern(format: string, value: string): PickerDraft | nul
     let hour12: number | null = null;
     let meridiem: string | null = null;
 
-    tokens.forEach((token, index) => {
+    for (let index = 0; index < tokens.length; index += 1) {
+        const token = tokens[index];
         const part = match[index + 1];
+        const parsedPart = toInt(part);
         switch (token) {
             case 'yyyy':
-                draft.year = toInt(part, draft.year);
+                if (parsedPart < MIN_PICKER_YEAR || parsedPart > MAX_PICKER_YEAR) {
+                    return null;
+                }
+                draft.year = parsedPart;
                 break;
             case 'MM':
             case 'M':
-                draft.month = toInt(part, draft.month + 1) - 1;
+                if (parsedPart < 1 || parsedPart > MONTH_COUNT) {
+                    return null;
+                }
+                draft.month = parsedPart - 1;
                 break;
             case 'dd':
             case 'd':
-                draft.day = toInt(part, draft.day);
+                if (parsedPart < 1 || parsedPart > 31) {
+                    return null;
+                }
+                draft.day = parsedPart;
                 break;
             case 'HH':
             case 'H':
-                draft.hour = toInt(part, draft.hour);
+                if (parsedPart < 0 || parsedPart > 23) {
+                    return null;
+                }
+                draft.hour = parsedPart;
                 break;
             case 'hh':
             case 'h':
-                hour12 = toInt(part, 12);
+                if (parsedPart < 1 || parsedPart > 12) {
+                    return null;
+                }
+                hour12 = parsedPart;
                 break;
             case 'mm':
             case 'm':
-                draft.minute = toInt(part, draft.minute);
+                if (parsedPart < 0 || parsedPart > 59) {
+                    return null;
+                }
+                draft.minute = parsedPart;
                 break;
             case 'ss':
             case 's':
-                draft.second = toInt(part, draft.second);
+                if (parsedPart < 0 || parsedPart > 59) {
+                    return null;
+                }
+                draft.second = parsedPart;
                 break;
             case 'tt':
                 meridiem = part.toLowerCase();
                 break;
         }
-    });
+    }
 
     if (hour12 !== null) {
         draft.hour = toTwentyFourHour(hour12, meridiem === 'pm' ? 'pm' : 'am');
+    }
+    else if (meridiem !== null) {
+        draft.hour = toTwentyFourHour(toTwelveHour(draft.hour).hour, meridiem === 'pm' ? 'pm' : 'am');
+    }
+
+    const hasYear = tokens.includes('yyyy');
+    const hasMonth = tokens.includes('MM') || tokens.includes('M');
+    const hasDay = tokens.includes('dd') || tokens.includes('d');
+    if (hasYear && hasMonth && hasDay && !isValidDate(draft.year, draft.month, draft.day)) {
+        return null;
     }
 
     return draft;
@@ -894,22 +958,60 @@ function setInputValue(state: PickerState, value: string): void {
     state.input.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
-function syncDraftFromInputValue(state: PickerState): void {
-    updateConstraints(state);
-    const parsed = parseDraft(state.mode, state.input?.value, state.input?.getAttribute('format'));
+function setInputParseError(state: PickerState, message: string | null): void {
+    const field = state.input.closest('.nt-input');
+    if (message) {
+        if (state.input.dataset.tntDtpParseInvalid !== 'true') {
+            state.input.dataset.tntDtpPreviousAriaInvalid = state.input.getAttribute('aria-invalid') ?? '';
+        }
 
-    if (!parsed) {
-        const current = createDefaultDraft();
-        state.draft = clampDraftToConstraints(state, current);
-        state.viewYear = current.year;
-        state.viewMonth = current.month;
-        state.meridiem = toTwelveHour(state.draft.hour).meridiem;
+        state.input.dataset.tntDtpParseInvalid = 'true';
+        state.input.setCustomValidity(message);
+        state.input.setAttribute('aria-invalid', 'true');
+        field?.classList.add('nt-dtp-parse-invalid');
         return;
+    }
+
+    state.input.setCustomValidity('');
+    if (state.input.dataset.tntDtpParseInvalid !== 'true') {
+        return;
+    }
+
+    const previousAriaInvalid = state.input.dataset.tntDtpPreviousAriaInvalid;
+    if (previousAriaInvalid) {
+        state.input.setAttribute('aria-invalid', previousAriaInvalid);
+    }
+    else {
+        state.input.removeAttribute('aria-invalid');
+    }
+    delete state.input.dataset.tntDtpParseInvalid;
+    delete state.input.dataset.tntDtpPreviousAriaInvalid;
+    field?.classList.remove('nt-dtp-parse-invalid');
+}
+
+function trySyncDraftFromInputValue(state: PickerState): boolean {
+    const parsed = parseDraft(state.mode, state.input?.value, state.input?.getAttribute('format'));
+    if (!parsed) {
+        return false;
     }
 
     state.draft = clampDraftToConstraints(state, parsed);
     state.viewYear = state.draft.year;
     state.viewMonth = state.draft.month;
+    state.meridiem = toTwelveHour(state.draft.hour).meridiem;
+    return true;
+}
+
+function syncDraftFromInputValue(state: PickerState): void {
+    updateConstraints(state);
+    if (trySyncDraftFromInputValue(state)) {
+        return;
+    }
+
+    const current = createDefaultDraft();
+    state.draft = clampDraftToConstraints(state, current);
+    state.viewYear = current.year;
+    state.viewMonth = current.month;
     state.meridiem = toTwelveHour(state.draft.hour).meridiem;
 }
 
@@ -1826,9 +1928,12 @@ function createPickerState(input: HTMLInputElement, picker: HTMLElement): Picker
         minDraft: null,
         mode: 'none',
         nativeInputType: input.type,
+        onInputCommit: () => { },
         onInputFocus: () => { },
         onInputInput: () => { },
         onInputKeyDown: () => { },
+        onEnterKeyPress: () => { },
+        onEnterKeyUp: () => { },
         onLabelClick: () => { },
         onLabelMouseDown: () => { },
         onPickerClick: () => { },
@@ -1839,6 +1944,7 @@ function createPickerState(input: HTMLInputElement, picker: HTMLElement): Picker
         onTriggerMouseDown: () => { },
         openOnFocus: true,
         picker,
+        suppressEnterKeySequence: false,
         trigger: null,
         viewMonth: defaultDraft.month,
         viewYear: defaultDraft.year,
@@ -1852,6 +1958,41 @@ function createPickerState(input: HTMLInputElement, picker: HTMLElement): Picker
     state.onInputFocus = () => {
         if (shouldOpenFromInputInteraction(state)) {
             openPicker(state);
+        }
+    };
+
+    state.onInputCommit = () => {
+        const value = state.input.value.trim();
+        const format = state.input.getAttribute('format');
+        const parsed = parseDraft(state.mode, value, format);
+        if (!format) {
+            return;
+        }
+
+        if (!parsed) {
+            setInputParseError(state, value ? `Enter a value in the format ${format}.` : null);
+            return;
+        }
+
+        setInputParseError(state, null);
+
+        const formattedValue = formatDraft(state.mode, parsed, format);
+        if (formattedValue !== state.input.value) {
+            state.input.value = formattedValue;
+            state.input.dispatchEvent(new Event('input', { bubbles: true }));
+            const inputId = state.input.id;
+            setTimeout(() => {
+                const input = state.input.isConnected ? state.input : document.getElementById(inputId);
+                if (!isPickerInput(input)) {
+                    return;
+                }
+                if (input.value !== value && input.value !== formattedValue) {
+                    return;
+                }
+
+                input.value = formattedValue;
+                input.dispatchEvent(new Event('change', { bubbles: true }));
+            });
         }
     };
 
@@ -1886,11 +2027,7 @@ function createPickerState(input: HTMLInputElement, picker: HTMLElement): Picker
     };
 
     state.onInputInput = () => {
-        const parsed = parseDraft(state.mode, state.input?.value, state.input?.getAttribute('format'));
-        if (parsed) {
-            state.draft = clampDraftToConstraints(state, parsed);
-            state.viewYear = state.draft.year;
-            state.viewMonth = state.draft.month;
+        if (trySyncDraftFromInputValue(state)) {
             if (state.isOpen) {
                 renderPicker(state);
             }
@@ -1906,6 +2043,11 @@ function createPickerState(input: HTMLInputElement, picker: HTMLElement): Picker
 
         if (event.key === 'Enter' && state.isOpen) {
             event.preventDefault();
+            event.stopPropagation();
+            state.suppressEnterKeySequence = true;
+            if (state.input.value.trim() && !trySyncDraftFromInputValue(state)) {
+                return;
+            }
             handlePickerAction(state, 'confirm');
             return;
         }
@@ -1980,6 +2122,8 @@ function createPickerState(input: HTMLInputElement, picker: HTMLElement): Picker
 
         if (event.key === 'Enter') {
             event.preventDefault();
+            event.stopPropagation();
+            state.suppressEnterKeySequence = true;
             handlePickerAction(state, 'confirm');
             return;
         }
@@ -1996,15 +2140,36 @@ function createPickerState(input: HTMLInputElement, picker: HTMLElement): Picker
         }
     };
 
+    state.onEnterKeyPress = event => {
+        if (event.key === 'Enter' && state.suppressEnterKeySequence) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+    };
+
+    state.onEnterKeyUp = event => {
+        if (event.key === 'Enter' && state.suppressEnterKeySequence) {
+            event.preventDefault();
+            event.stopPropagation();
+            state.suppressEnterKeySequence = false;
+        }
+    };
+
+    input.addEventListener('blur', state.onInputCommit);
+    input.addEventListener('change', state.onInputCommit);
     input.addEventListener('focus', state.onInputFocus);
     input.addEventListener('input', state.onInputInput);
     input.addEventListener('keydown', state.onInputKeyDown);
+    input.addEventListener('keypress', state.onEnterKeyPress);
+    input.addEventListener('keyup', state.onEnterKeyUp);
     state.label?.addEventListener('mousedown', state.onLabelMouseDown);
     state.label?.addEventListener('click', state.onLabelClick);
     setTrigger(state, findTrigger(input, picker));
     picker.addEventListener('click', state.onPickerClick);
     picker.addEventListener('input', state.onPickerInput);
     picker.addEventListener('keydown', state.onPickerKeyDown);
+    picker.addEventListener('keypress', state.onEnterKeyPress);
+    picker.addEventListener('keyup', state.onEnterKeyUp);
     state.elements.yearList?.addEventListener('scroll', state.onYearListScroll);
 
     configureStateFromAttributes(state);
@@ -2017,16 +2182,23 @@ function cleanupPickerState(state: Maybe<PickerState>): void {
     }
 
     closePicker(state);
+    setInputParseError(state, null);
 
+    state.input?.removeEventListener('blur', state.onInputCommit);
+    state.input?.removeEventListener('change', state.onInputCommit);
     state.input?.removeEventListener('focus', state.onInputFocus);
     state.input?.removeEventListener('input', state.onInputInput);
     state.input?.removeEventListener('keydown', state.onInputKeyDown);
+    state.input?.removeEventListener('keypress', state.onEnterKeyPress);
+    state.input?.removeEventListener('keyup', state.onEnterKeyUp);
     state.label?.removeEventListener('mousedown', state.onLabelMouseDown);
     state.label?.removeEventListener('click', state.onLabelClick);
     setTrigger(state, null);
     state.picker?.removeEventListener('click', state.onPickerClick);
     state.picker?.removeEventListener('input', state.onPickerInput);
     state.picker?.removeEventListener('keydown', state.onPickerKeyDown);
+    state.picker?.removeEventListener('keypress', state.onEnterKeyPress);
+    state.picker?.removeEventListener('keyup', state.onEnterKeyUp);
     state.elements.yearList?.removeEventListener('scroll', state.onYearListScroll);
     restoreNativeInputPicker(state);
 }
@@ -2047,12 +2219,16 @@ function isPickerInput(element: Maybe<Element>): element is HTMLInputElement {
     return element instanceof HTMLInputElement && element.matches(PICKER_INPUT_SELECTOR);
 }
 
+function isNativePickerInput(element: Maybe<Element>): element is HTMLInputElement {
+    return element instanceof HTMLInputElement && element.matches(NATIVE_PICKER_INPUT_SELECTOR);
+}
+
 function getLifecycleScope(element: Maybe<Element>): Element | Document | null {
     if (!element) {
         return null;
     }
 
-    if (isPickerInput(element) || element.matches('.nt-input-date-time, [data-tnt-dtp-picker="true"], [data-tnt-dtp-trigger="true"]')) {
+    if (isPickerInput(element) || isNativePickerInput(element) || element.matches('.nt-input-date-time, [data-tnt-dtp-picker="true"], [data-tnt-dtp-trigger="true"], [data-tnt-dtp-native-trigger="true"]')) {
         return element;
     }
 
@@ -2071,6 +2247,104 @@ function queryPickerInputs(scope: Maybe<Element | Document>): HTMLInputElement[]
 
     const root = scope ?? document;
     return Array.from(root.querySelectorAll<HTMLInputElement>(PICKER_INPUT_SELECTOR));
+}
+
+function queryNativePickerInputs(scope: Maybe<Element | Document>): HTMLInputElement[] {
+    if (isNativePickerInput(scope as Element)) {
+        return [scope as HTMLInputElement];
+    }
+
+    const root = scope ?? document;
+    return Array.from(root.querySelectorAll<HTMLInputElement>(NATIVE_PICKER_INPUT_SELECTOR));
+}
+
+function cleanupNativePickerState(state: Maybe<NativePickerState>): void {
+    if (!state) {
+        return;
+    }
+
+    state.trigger.removeEventListener('mousedown', state.onTriggerMouseDown);
+    state.trigger.removeEventListener('click', state.onTriggerClick);
+    delete state.root.dataset.tntDtpNativeEnhanced;
+}
+
+function showNativePicker(input: HTMLInputElement): void {
+    if (input.disabled || input.readOnly) {
+        return;
+    }
+
+    try {
+        input.showPicker();
+    }
+    catch {
+        // The native field remains usable when showPicker is unavailable or browser policy blocks it.
+    }
+}
+
+function syncNativePickerInput(input: HTMLInputElement): void {
+    const root = input.closest<HTMLElement>('.nt-input-date-time');
+    const trigger = root?.querySelector<HTMLButtonElement>('[data-tnt-dtp-native-trigger="true"]') ?? null;
+    const existing = nativePickerStateByInput.get(input);
+    if (existing?.root === root && existing.trigger === trigger) {
+        return;
+    }
+
+    cleanupNativePickerState(existing);
+    nativePickerStateByInput.delete(input);
+    if (!root || !trigger) {
+        return;
+    }
+
+    const state: NativePickerState = {
+        input,
+        onTriggerClick: () => {
+            if (input.disabled || input.readOnly) {
+                return;
+            }
+
+            if (document.activeElement !== input) {
+                input.focus({ preventScroll: true });
+            }
+
+            showNativePicker(input);
+        },
+        onTriggerMouseDown: event => event.preventDefault(),
+        root,
+        trigger,
+    };
+
+    trigger.addEventListener('mousedown', state.onTriggerMouseDown);
+    trigger.addEventListener('click', state.onTriggerClick);
+    root.dataset.tntDtpNativeEnhanced = 'true';
+    nativePickerStateByInput.set(input, state);
+}
+
+function synchronizeNativePickers(scope: Maybe<Element | Document> = document): void {
+    for (const [input, state] of nativePickerStateByInput) {
+        if (!input.isConnected || !state.root.isConnected || !state.trigger.isConnected) {
+            cleanupNativePickerState(state);
+            nativePickerStateByInput.delete(input);
+        }
+    }
+
+    for (const input of queryNativePickerInputs(scope)) {
+        syncNativePickerInput(input);
+    }
+}
+
+function disposeNativePickerStatesForElement(element: Maybe<Element>): void {
+    if (!element) {
+        for (const state of nativePickerStateByInput.values()) {
+            cleanupNativePickerState(state);
+        }
+        nativePickerStateByInput.clear();
+        return;
+    }
+
+    for (const input of queryNativePickerInputs(element)) {
+        cleanupNativePickerState(nativePickerStateByInput.get(input));
+        nativePickerStateByInput.delete(input);
+    }
 }
 
 function findPickerForInput(input: HTMLInputElement): HTMLElement | null {
@@ -2263,6 +2537,7 @@ function disposeAll(): void {
     }
 
     pickerStateByInput.clear();
+    disposeNativePickerStatesForElement(null);
     cleanupGlobalResourcesIfIdle();
 }
 
@@ -2322,6 +2597,7 @@ export function onLoad(element: Maybe<Element>, dotNetRef: unknown): void {
         }
 
         synchronizePickers(scope);
+        synchronizeNativePickers(scope);
     }
 }
 
@@ -2332,6 +2608,7 @@ export function onUpdate(element: Maybe<Element>, dotNetRef: unknown): void {
     }
 
     synchronizePickerForElement(scope instanceof Element ? scope : null);
+    synchronizeNativePickers(scope instanceof Element ? scope : null);
 }
 
 export function onDispose(element: Maybe<Element>, dotNetRef: unknown): void {
@@ -2342,4 +2619,5 @@ export function onDispose(element: Maybe<Element>, dotNetRef: unknown): void {
 
     const scope = lifecycleScopeByPageScript.get(element) ?? getLifecycleScope(element);
     disposeStateForElement(scope instanceof Element ? scope : element);
+    disposeNativePickerStatesForElement(scope instanceof Element ? scope : element);
 }

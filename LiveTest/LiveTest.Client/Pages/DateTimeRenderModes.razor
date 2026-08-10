@@ -1,0 +1,35 @@
+@page "/date-time-render-modes"
+@using LiveTest.Client.Components
+
+<main class="date-time-render-modes-page">
+    <header class="date-time-render-modes-page-header">
+        <h1>Date and time render modes</h1>
+        <p>Compare NT date and time fields in static SSR, InteractiveServer, and InteractiveWebAssembly render modes.</p>
+    </header>
+
+    <section class="date-time-render-modes-grid" aria-label="Date and time render mode demos">
+        <article class="date-time-render-modes-demo" data-testid="date-time-render-mode-ssr">
+            <header>
+                <h2>Static SSR</h2>
+                <p>Native fields and picker enhancement without a Blazor circuit.</p>
+            </header>
+            <DateTimeRenderModeFields ModeName="SSR" />
+        </article>
+
+        <article class="date-time-render-modes-demo" data-testid="date-time-render-mode-server">
+            <header>
+                <h2>InteractiveServer</h2>
+                <p>Field binding and picker interaction run through the server circuit.</p>
+            </header>
+            <DateTimeRenderModeFields ModeName="Server" @rendermode="InteractiveServer" />
+        </article>
+
+        <article class="date-time-render-modes-demo" data-testid="date-time-render-mode-wasm">
+            <header>
+                <h2>InteractiveWebAssembly</h2>
+                <p>Field binding and picker interaction run in the browser after WebAssembly loads.</p>
+            </header>
+            <DateTimeRenderModeFields ModeName="WASM" @rendermode="InteractiveWebAssembly" />
+        </article>
+    </section>
+</main>

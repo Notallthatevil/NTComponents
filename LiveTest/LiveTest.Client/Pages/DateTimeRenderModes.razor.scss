@@ -1,0 +1,85 @@
+@use '../../../NTComponents/Styles/_Variables/_colors.scss' as colors;
+@use '../../../NTComponents/Styles/_Variables/_corner-radius.scss' as corners;
+@use '../../../NTComponents/Styles/_Variables/_typescale.scss' as typescale;
+
+.date-time-render-modes-page {
+    background: colors.$tnt-color-surface;
+    color: colors.$tnt-color-on-surface;
+    display: grid;
+    gap: 24px;
+    max-inline-size: 1200px;
+    padding: 24px;
+}
+
+.date-time-render-modes-page-header {
+    display: grid;
+    gap: 8px;
+
+    h1,
+    p {
+        margin: 0;
+    }
+
+    h1 {
+        @include typescale.nt-headline-medium;
+    }
+
+    p {
+        @include typescale.nt-body-medium;
+
+        color: colors.$tnt-color-on-surface-variant;
+    }
+}
+
+.date-time-render-modes-grid {
+    display: grid;
+    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+}
+
+.date-time-render-modes-demo {
+    border: 1px solid colors.$tnt-color-outline-variant;
+    border-radius: corners.$nt-corner-radius-small;
+    display: grid;
+    gap: 16px;
+    padding: 16px;
+
+    > header,
+    ::deep .date-time-render-mode-fields {
+        display: grid;
+        gap: 16px;
+    }
+
+    h2,
+    p {
+        margin: 0;
+    }
+
+    h2 {
+        @include typescale.nt-title-medium;
+    }
+
+    p {
+        @include typescale.nt-body-small;
+
+        color: colors.$tnt-color-on-surface-variant;
+    }
+
+    ::deep .date-time-render-mode-runtime {
+        @include typescale.nt-body-medium;
+
+        color: colors.$tnt-color-on-surface-variant;
+        margin: 0;
+    }
+
+    ::deep .date-time-render-mode-field-group {
+        display: grid;
+        gap: 16px;
+
+        h3 {
+            @include typescale.nt-title-small;
+
+            margin: 0;
+        }
+    }
+}

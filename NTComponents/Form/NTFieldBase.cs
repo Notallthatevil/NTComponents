@@ -196,6 +196,11 @@ public abstract class NTFieldBase<TValue> : NTFormControlBase<TValue> {
     protected string EffectivePlaceholder { get; private set; } = " ";
 
     /// <summary>
+    ///     Gets fallback placeholder text used when <see cref="Placeholder" /> is not supplied.
+    /// </summary>
+    protected virtual string? FallbackPlaceholder => null;
+
+    /// <summary>
     ///     Gets a value indicating whether the native required attribute is present.
     /// </summary>
     protected bool IsRequired { get; private set; }
@@ -327,7 +332,8 @@ public abstract class NTFieldBase<TValue> : NTFormControlBase<TValue> {
             _ => $"nt-input-{effectiveDensity.ToString().ToLowerInvariant()}"
         };
 
-        EffectivePlaceholder = string.IsNullOrWhiteSpace(Placeholder) ? " " : Placeholder;
+        var placeholder = string.IsNullOrWhiteSpace(Placeholder) ? FallbackPlaceholder : Placeholder;
+        EffectivePlaceholder = string.IsNullOrWhiteSpace(placeholder) ? " " : placeholder;
         _rootClass = BuildRootClass();
     }
 
@@ -351,7 +357,7 @@ public abstract class NTFieldBase<TValue> : NTFormControlBase<TValue> {
             className.Append(" nt-input-no-label");
         }
 
-        if (!string.IsNullOrWhiteSpace(Placeholder)) {
+        if (!string.IsNullOrWhiteSpace(EffectivePlaceholder)) {
             className.Append(" nt-input-has-placeholder");
         }
 

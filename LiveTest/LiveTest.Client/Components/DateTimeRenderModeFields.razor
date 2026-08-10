@@ -1,0 +1,95 @@
+@using NTComponents
+
+<div class="date-time-render-mode-fields" data-testid="@($"{ModeKey}-fields")">
+    <p class="date-time-render-mode-runtime" data-testid="@($"{ModeKey}-runtime")">
+        @ModeName runtime: @(RendererInfo.IsInteractive ? "interactive" : "static")
+    </p>
+
+    <section class="date-time-render-mode-field-group" aria-labelledby="@($"{ModeKey}-custom-picker-heading")">
+        <h3 id="@($"{ModeKey}-custom-picker-heading")">Custom picker enabled</h3>
+
+        <NTInputDateTime DateTimeType="DateOnly?"
+                         @bind-Value="_date"
+                         ElementId="@($"{ModeKey}-date")"
+                         Label="Date only"
+                         Format="MM/dd/yyyy"
+                         SupportingText="A calendar date without a time or offset."
+                         EnableCustomPicker="true" />
+
+        <NTInputDateTime DateTimeType="TimeOnly?"
+                         @bind-Value="_time"
+                         ElementId="@($"{ModeKey}-time")"
+                         Label="Time only"
+                         Format="HH:mm tt"
+                         SupportingText="A time of day without a date or offset."
+                         EnableCustomPicker="true" />
+
+        <NTInputDateTime DateTimeType="DateTime?"
+                         @bind-Value="_dateTime"
+                         ElementId="@($"{ModeKey}-date-time")"
+                         Label="Date and time"
+                         Format="MM/dd/yyyy HH:mm tt"
+                         SupportingText="A local date and time."
+                         EnableCustomPicker="true" />
+
+        <NTInputDateTime DateTimeType="DateTimeOffset?"
+                         @bind-Value="_dateTimeOffset"
+                         ElementId="@($"{ModeKey}-date-time-offset")"
+                         Label="Date, time, and offset"
+                         Format="MM/dd/yyyy HH:mm tt"
+                         SupportingText="A date and time represented by DateTimeOffset."
+                         EnableCustomPicker="true" />
+    </section>
+
+    <section class="date-time-render-mode-field-group" aria-labelledby="@($"{ModeKey}-native-picker-heading")">
+        <h3 id="@($"{ModeKey}-native-picker-heading")">Custom picker disabled</h3>
+
+        <NTInputDateTime DateTimeType="DateOnly?"
+                         @bind-Value="_nativeDate"
+                         ElementId="@($"{ModeKey}-native-date")"
+                         Label="Date only"
+                         Format="MM/dd/yyyy"
+                         SupportingText="A calendar date without a time or offset."
+                         EnableCustomPicker="false" />
+
+        <NTInputDateTime DateTimeType="TimeOnly?"
+                         @bind-Value="_nativeTime"
+                         ElementId="@($"{ModeKey}-native-time")"
+                         Label="Time only"
+                         Format="HH:mm tt"
+                         SupportingText="A time of day without a date or offset."
+                         EnableCustomPicker="false" />
+
+        <NTInputDateTime DateTimeType="DateTime?"
+                         @bind-Value="_nativeDateTime"
+                         ElementId="@($"{ModeKey}-native-date-time")"
+                         Label="Date and time"
+                         Format="MM/dd/yyyy HH:mm tt"
+                         SupportingText="A local date and time."
+                         EnableCustomPicker="false" />
+
+        <NTInputDateTime DateTimeType="DateTimeOffset?"
+                         @bind-Value="_nativeDateTimeOffset"
+                         ElementId="@($"{ModeKey}-native-date-time-offset")"
+                         Label="Date, time, and offset"
+                         Format="MM/dd/yyyy HH:mm tt"
+                         SupportingText="A date and time represented by DateTimeOffset."
+                         EnableCustomPicker="false" />
+    </section>
+</div>
+
+@code {
+    [Parameter]
+    public string ModeName { get; set; } = "Date and time";
+
+    private DateOnly? _date;
+    private TimeOnly? _time;
+    private DateTime? _dateTime;
+    private DateTimeOffset? _dateTimeOffset;
+    private DateOnly? _nativeDate;
+    private TimeOnly? _nativeTime;
+    private DateTime? _nativeDateTime;
+    private DateTimeOffset? _nativeDateTimeOffset;
+
+    private string ModeKey => ModeName.ToLowerInvariant().Replace(" ", "-", StringComparison.Ordinal);
+}

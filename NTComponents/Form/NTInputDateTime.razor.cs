@@ -78,6 +78,9 @@ public partial class NTInputDateTime<DateTimeType> {
     protected override InputType InputTypeAttribute => EnableCustomPicker && !UsesNativeInputFormat() ? InputType.Text : _metadata.Type;
 
     /// <inheritdoc />
+    protected override string? FallbackPlaceholder => EnableCustomPicker ? _effectiveFormat : null;
+
+    /// <inheritdoc />
     protected override IReadOnlyDictionary<string, object?>? BuildAdditionalInputAttributes() {
         var pickerId = BuildPickerId();
         if (_additionalInputAttributes is not null
@@ -97,6 +100,9 @@ public partial class NTInputDateTime<DateTimeType> {
             attributes["data-tnt-dtp-mode"] = _metadata.PickerMode;
             attributes["data-tnt-dtp-open-on-focus"] = "true";
         }
+        else {
+            attributes["data-tnt-dtp-native-input"] = "true";
+        }
 
         _additionalInputAttributes = attributes;
         _additionalInputAttributesCustomPicker = EnableCustomPicker;
@@ -109,10 +115,10 @@ public partial class NTInputDateTime<DateTimeType> {
     /// <inheritdoc />
     protected override string? FormatValueAsString(DateTimeType? value) {
         return value switch {
-            DateTime dateTimeValue => BindConverter.FormatValue(dateTimeValue, _effectiveFormat, CultureInfo.InvariantCulture),
-            DateTimeOffset dateTimeOffsetValue => BindConverter.FormatValue(dateTimeOffsetValue, _effectiveFormat, CultureInfo.InvariantCulture),
-            DateOnly dateOnlyValue => BindConverter.FormatValue(dateOnlyValue, _effectiveFormat, CultureInfo.InvariantCulture),
-            TimeOnly timeOnlyValue => BindConverter.FormatValue(timeOnlyValue, _effectiveFormat, CultureInfo.InvariantCulture),
+            DateTime dateTimeValue => BindConverter.FormatValue(dateTimeValue, ValueFormat, CultureInfo.InvariantCulture),
+            DateTimeOffset dateTimeOffsetValue => BindConverter.FormatValue(dateTimeOffsetValue, ValueFormat, CultureInfo.InvariantCulture),
+            DateOnly dateOnlyValue => BindConverter.FormatValue(dateOnlyValue, ValueFormat, CultureInfo.InvariantCulture),
+            TimeOnly timeOnlyValue => BindConverter.FormatValue(timeOnlyValue, ValueFormat, CultureInfo.InvariantCulture),
             _ => string.Empty
         };
     }
@@ -132,7 +138,7 @@ public partial class NTInputDateTime<DateTimeType> {
             return true;
         }
 
-        validationErrorMessage = $"Failed to parse {value} into a {typeof(DateTimeType).Name}";
+        validationErrorMessage = $"Enter a value in the format {_effectiveFormat}.";
         return false;
     }
 
@@ -182,6 +188,8 @@ public partial class NTInputDateTime<DateTimeType> {
 
     private bool IsPickerTriggerDisabled => Disabled ?? Form?.Disabled ?? false;
 
+    private string ValueFormat => EnableCustomPicker || UsesNativeInputFormat() ? _effectiveFormat : _metadata.DefaultFormat;
+
     private string BuildPickerId() => $"{EffectiveInputId}-picker";
 
     private bool UsesNativeInputFormat() => _metadata.Type switch {
@@ -207,7 +215,8 @@ public partial class NTInputDateTime<DateTimeType> {
             _ => "nt-input-date-time-standard"
         };
 
-        return EnableCustomPicker ? $"nt-input-date-time nt-input-date-time-custom-picker {densityClass}" : $"nt-input-date-time {densityClass}";
+        var pickerClass = EnableCustomPicker ? "nt-input-date-time-custom-picker" : "nt-input-date-time-native-picker";
+        return $"nt-input-date-time {pickerClass} {densityClass}";
     }
 
     private void ResolveMetadata() {

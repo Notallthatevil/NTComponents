@@ -2,9 +2,7 @@
 @typeparam DateTimeType
 @inherits NTInputBase<DateTimeType>
 
-@if (EnableCustomPicker) {
-    <NTPageScript Src="@JsModulePath" />
-}
+<NTPageScript Src="@JsModulePath" />
 
 <div class="@RootClass">
     @base.BuildRenderTree
@@ -15,6 +13,7 @@
                 aria-label="@_metadata.PickerTriggerAriaLabel"
                 data-tnt-dtp-trigger="true"
                 data-tnt-dtp-target="@_pickerId"
+                tabindex="-1"
                 disabled="@IsPickerTriggerDisabled">
             @(_resolvedPickerTriggerIcon.Render("tnt-dtp-trigger-icon"))
         </button>
@@ -44,5 +43,15 @@
                 </div>
             </div>
         </div>
+    }
+    else {
+        <button type="button"
+                class="tnt-dtp-trigger tnt-dtp-native-trigger"
+                aria-label="@_metadata.PickerTriggerAriaLabel"
+                data-tnt-dtp-native-trigger="true"
+                tabindex="-1"
+                disabled="@IsPickerTriggerDisabled">
+            @(_resolvedPickerTriggerIcon.Render("tnt-dtp-trigger-icon"))
+        </button>
     }
 </div>
