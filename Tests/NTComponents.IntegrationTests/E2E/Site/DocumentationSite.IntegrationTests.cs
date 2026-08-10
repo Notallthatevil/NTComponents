@@ -8,6 +8,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
 using System.Collections.Concurrent;
+using System.IO.Compression;
+using System.Text;
 
 namespace NTComponents.IntegrationTests.Site;
 
@@ -278,6 +280,240 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
     }
 
     [Fact]
+    public async Task MaterialThemeCreator_GeneratesSixSchemes_UpdatesThePreviewLive_WithoutRecoloringTheSite() {
+        ArgumentNullException.ThrowIfNull(_page);
+        await _page.GotoAsync($"{_baseUrl}/", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await _page.Locator(".docs-home").WaitForAsync();
+        var originalPrimary = await RootColorAsync("--tnt-color-primary");
+
+        _activeRoute = "/tools/material-theme";
+        await _page.GotoAsync($"{_baseUrl}{_activeRoute}", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await _page.GetByRole(AriaRole.Heading, new PageGetByRoleOptions { Name = "Material 3 theme creator", Exact = true }).WaitForAsync();
+
+        var generatedOutput = _page.Locator("[aria-label='Generated theme files']");
+        await generatedOutput.WaitForAsync();
+        (await generatedOutput.Locator("details").CountAsync()).Should().Be(6);
+        await generatedOutput.Locator("summary").First.ClickAsync();
+        var lightTheme = await generatedOutput.Locator("details").First.Locator("pre code").InnerTextAsync();
+        lightTheme.Should().StartWith(":root {");
+        lightTheme.Should().Contain("--tnt-color-primary: rgb(101 85 143);");
+        lightTheme.Should().Contain("--tnt-color-on-assert-container:");
+        lightTheme.Split("--tnt-color-", StringSplitOptions.None).Should().HaveCount(66, "the file should contain the 49 Material system roles and four 4-role NTComponents colors");
+        var defaultExtendedColors = new[] {
+            (Id: "success", Color: "#00c853"),
+            (Id: "info", Color: "#0091ea"),
+            (Id: "warning", Color: "#ffab00"),
+            (Id: "assert", Color: "#aa00ff")
+        };
+        foreach (var color in defaultExtendedColors) {
+            await Assertions.Expect(_page.Locator($"#theme-{color.Id}")).ToHaveValueAsync(color.Color);
+        }
+
+        var usageGuide = _page.GetByTestId("theme-usage-guide");
+        await usageGuide.WaitForAsync();
+        (await usageGuide.Locator(".theme-style-card").CountAsync()).Should().Be(9);
+        (await usageGuide.Locator(".theme-role-card").CountAsync()).Should().Be(7);
+        (await usageGuide.InnerTextAsync()).Should().Contain("Custom palette overrides always win");
+
+        var preview = _page.Locator("[data-testid='theme-preview']");
+        var previewButton = preview.Locator(".nt-button-filled");
+        var previewHeading = preview.GetByRole(AriaRole.Heading, new LocatorGetByRoleOptions { Name = "See the theme in NTComponents", Exact = true });
+        await _page.WaitForFunctionAsync("expected => getComputedStyle(document.querySelector('[data-testid=theme-preview] .nt-button-filled'), '::after').backgroundColor === expected", "rgb(101, 85, 143)");
+        (await previewHeading.EvaluateAsync<string>("element => getComputedStyle(element).color")).Should().Be("rgb(101, 85, 143)");
+        (await RootColorAsync("--tnt-color-primary")).Should().Be(originalPrimary, "the generated theme should be scoped to the preview");
+        await _page.Locator("#theme-style").SelectOptionAsync("vibrant");
+        await _page.WaitForFunctionAsync("expected => getComputedStyle(document.querySelector('[data-testid=theme-preview] .nt-button-filled'), '::after').backgroundColor === expected", "rgb(111, 25, 255)");
+        await _page.Locator("#theme-style").SelectOptionAsync("tonal-spot");
+        await _page.WaitForFunctionAsync("expected => getComputedStyle(document.querySelector('[data-testid=theme-preview] .nt-button-filled'), '::after').backgroundColor === expected", "rgb(101, 85, 143)");
+
+        await _page.Locator(".theme-advanced summary").ClickAsync();
+        (await _page.Locator(".theme-advanced input[type='checkbox']").CountAsync()).Should().Be(0);
+        var paletteOverrides = new[] {
+            (Id: "secondary", Color: "#005a80", Token: "--tnt-color-secondary"),
+            (Id: "tertiary", Color: "#805200", Token: "--tnt-color-tertiary"),
+            (Id: "neutral", Color: "#44505a", Token: "--tnt-color-surface"),
+            (Id: "neutral-variant", Color: "#5b5f6a", Token: "--tnt-color-outline"),
+            (Id: "error", Color: "#9f2030", Token: "--tnt-color-error")
+        };
+        var paletteDisplays = paletteOverrides
+            .Select(palette => (palette.Id, palette.Token))
+            .Prepend((Id: "primary", Token: "--tnt-color-primary"))
+            .ToArray();
+        foreach (var palette in paletteDisplays) {
+            await WaitForPalettePickerToMatchPreviewAsync(palette.Id, palette.Token);
+        }
+
+        var overriddenProperties = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var palette in paletteOverrides) {
+            var previousValue = await preview.EvaluateAsync<string>("(element, token) => element.style.getPropertyValue(token)", palette.Token);
+            var picker = _page.Locator($"#theme-palette-{palette.Id}");
+            await Assertions.Expect(picker).ToBeEnabledAsync();
+            await picker.EvaluateAsync(
+                """
+                (element, color) => {
+                    element.value = color;
+                    element.dispatchEvent(new Event('input', { bubbles: true }));
+                    element.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+                """,
+                palette.Color);
+            await _page.WaitForFunctionAsync(
+                "args => document.querySelector('[data-testid=theme-preview]').style.getPropertyValue(args.token) !== args.previousValue",
+                new { token = palette.Token, previousValue });
+            await WaitForPalettePickerToMatchPreviewAsync(palette.Id, palette.Token);
+            overriddenProperties[palette.Token] = await preview.EvaluateAsync<string>("(element, token) => element.style.getPropertyValue(token)", palette.Token);
+        }
+
+        var downloadLink = _page.GetByRole(AriaRole.Link, new PageGetByRoleOptions { Name = "Download generated themes", Exact = true });
+        (await downloadLink.GetAttributeAsync("download")).Should().Be("ntcomponents-theme-6750a4.zip");
+        var primaryPicker = _page.Locator("#theme-primary");
+        await primaryPicker.EvaluateAsync(
+            """
+            element => {
+                for (const color of ['#00515c', '#005f6b', '#006874']) {
+                    element.value = color;
+                    element.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+            }
+            """);
+        await _page.WaitForFunctionAsync("expected => getComputedStyle(document.querySelector('[data-testid=theme-preview] .nt-button-filled'), '::after').backgroundColor === expected", "rgb(0, 104, 116)");
+        await WaitForPalettePickerToMatchPreviewAsync("primary", "--tnt-color-primary");
+        (await previewHeading.EvaluateAsync<string>("element => getComputedStyle(element).color")).Should().Be("rgb(0, 104, 116)", "the preview heading should consume the live primary theme variable");
+        await Assertions.Expect(primaryPicker.Locator("xpath=..").Locator("[data-theme-color-output]")).ToHaveTextAsync("#006874");
+        (await downloadLink.GetAttributeAsync("download")).Should().Be("ntcomponents-theme-6750a4.zip", "live input should not rebuild the ZIP");
+        (await RootColorAsync("--tnt-color-primary")).Should().Be(originalPrimary);
+
+        await primaryPicker.EvaluateAsync("element => element.dispatchEvent(new Event('change', { bubbles: true }))");
+        await Assertions.Expect(downloadLink).ToHaveAttributeAsync("download", "ntcomponents-theme-006874.zip");
+        foreach (var property in overriddenProperties) {
+            (await preview.EvaluateAsync<string>("(element, token) => element.style.getPropertyValue(token)", property.Key)).Should().Be(property.Value, $"the custom {property.Key} palette should survive a source-color change");
+        }
+
+        var previousPrimaryOverride = await preview.EvaluateAsync<string>("element => element.style.getPropertyValue('--tnt-color-primary')");
+        var primaryOverridePicker = _page.Locator("#theme-palette-primary");
+        await primaryOverridePicker.EvaluateAsync(
+            """
+            (element, color) => {
+                element.value = color;
+                element.dispatchEvent(new Event('input', { bubbles: true }));
+                element.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+            """,
+            "#7b2cbf");
+        await _page.WaitForFunctionAsync(
+            "previous => document.querySelector('[data-testid=theme-preview]').style.getPropertyValue('--tnt-color-primary') !== previous",
+            previousPrimaryOverride);
+        await WaitForPalettePickerToMatchPreviewAsync("primary", "--tnt-color-primary");
+        overriddenProperties["--tnt-color-primary"] = await preview.EvaluateAsync<string>("element => element.style.getPropertyValue('--tnt-color-primary')");
+
+        await primaryPicker.EvaluateAsync(
+            """
+            (element, color) => {
+                element.value = color;
+                element.dispatchEvent(new Event('input', { bubbles: true }));
+                element.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+            """,
+            "#b3261e");
+        await Assertions.Expect(downloadLink).ToHaveAttributeAsync("download", "ntcomponents-theme-b3261e.zip");
+        (await preview.EvaluateAsync<string>("element => element.style.getPropertyValue('--tnt-color-primary')")).Should().Be(overriddenProperties["--tnt-color-primary"], "the custom primary palette should survive a source-color change");
+
+        await _page.Locator("#theme-style").SelectOptionAsync("vibrant");
+        await Assertions.Expect(usageGuide.Locator(".theme-style-card.selected h4")).ToHaveTextAsync("Vibrant");
+        foreach (var property in overriddenProperties) {
+            (await preview.EvaluateAsync<string>("(element, token) => element.style.getPropertyValue(token)", property.Key)).Should().Be(property.Value, $"the custom {property.Key} palette should survive a style change");
+        }
+        await _page.Locator("#theme-style").SelectOptionAsync("tonal-spot");
+        await Assertions.Expect(usageGuide.Locator(".theme-style-card.selected h4")).ToHaveTextAsync("Tonal spot");
+
+        var lightSurface = await preview.EvaluateAsync<string>("element => getComputedStyle(element).backgroundColor");
+        var lightPrimary = await previewButton.EvaluateAsync<string>("element => getComputedStyle(element, '::after').backgroundColor");
+        await _page.Locator("#theme-preview-mode").SelectOptionAsync("dark");
+        await _page.WaitForFunctionAsync("previous => getComputedStyle(document.querySelector('[data-testid=theme-preview] .nt-button-filled'), '::after').backgroundColor !== previous", lightPrimary);
+        foreach (var palette in paletteDisplays) {
+            await WaitForPalettePickerToMatchPreviewAsync(palette.Id, palette.Token);
+        }
+        (await preview.EvaluateAsync<string>("element => getComputedStyle(element).backgroundColor")).Should().NotBe(lightSurface);
+        (await previewButton.EvaluateAsync<string>("element => getComputedStyle(element, '::after').backgroundColor"))
+            .Should().NotBe(lightPrimary, "the representative NTButton should consume the selected dark preview token");
+        (await RootColorAsync("--tnt-color-primary")).Should().Be(originalPrimary);
+
+        var downloadUrl = await downloadLink.GetAttributeAsync("href");
+        downloadUrl.Should().StartWith("data:application/zip;base64,");
+        using (var archiveStream = new MemoryStream(Convert.FromBase64String(downloadUrl![(downloadUrl.IndexOf(',') + 1)..])))
+        using (var archive = new ZipArchive(archiveStream, ZipArchiveMode.Read)) {
+            archive.Entries.Should().HaveCount(6);
+            archive.Entries.Should().OnlyContain(entry => entry.FullName.StartsWith("Themes/", StringComparison.Ordinal));
+        }
+
+        await _page.Locator("a[href='/']").First.ClickAsync();
+        await _page.WaitForURLAsync($"{_baseUrl}/");
+        (await RootColorAsync("--tnt-color-primary")).Should().Be(originalPrimary);
+        _browserDiagnostics.Where(diagnostic => string.Equals(diagnostic.Route, _activeRoute, StringComparison.Ordinal)).Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task MaterialThemeConverter_ConvertsSixGeneratedSchemes_AndBuildsReadyToCopyArchive() {
+        ArgumentNullException.ThrowIfNull(_page);
+        _activeRoute = "/tools/material-theme";
+        await _page.GotoAsync($"{_baseUrl}{_activeRoute}", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await _page.GetByRole(AriaRole.Heading, new PageGetByRoleOptions { Name = "Material 3 theme creator", Exact = true }).WaitForAsync();
+
+        var sourceDirectory = Path.Combine(Path.GetTempPath(), $"ntcomponents-theme-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(sourceDirectory);
+        try {
+            var files = new[] {
+                ("light.css", ".light"),
+                ("light-mc.css", ".light-medium-contrast"),
+                ("light-hc.css", ".light-high-contrast"),
+                ("dark.css", ".dark"),
+                ("dark-mc.css", ".dark-medium-contrast"),
+                ("dark-hc.css", ".dark-high-contrast")
+            };
+            foreach (var (name, selector) in files) {
+                await File.WriteAllTextAsync(Path.Combine(sourceDirectory, name), CreateThemeSource(selector), Encoding.UTF8, TestContext.Current.CancellationToken);
+            }
+
+            await _page.Locator("#material-theme-files").SetInputFilesAsync(sourceDirectory);
+            await _page.Locator(".theme-import .theme-message").WaitForAsync();
+        }
+        finally {
+            Directory.Delete(sourceDirectory, recursive: true);
+        }
+
+        var conversionErrors = await _page.Locator(".theme-error").AllInnerTextsAsync();
+        conversionErrors.Should().BeEmpty("the selected Material Theme Builder folder should convert successfully: {0}", string.Join(" | ", conversionErrors));
+        await _page.GetByText("Six converted theme files are ready", new PageGetByTextOptions { Exact = true }).WaitForAsync();
+        var output = _page.Locator("[aria-label='Converted theme files']");
+        (await output.Locator("details").CountAsync()).Should().Be(6);
+        await output.Locator("summary").First.ClickAsync();
+        var preview = await output.Locator("details").First.Locator("pre code").InnerTextAsync();
+        preview.Should().StartWith(":root {");
+        preview.Should().Contain("--tnt-color-primary: rgb(1 2 3);");
+        preview.Should().Contain("--tnt-color-on-success-container: rgb(4 5 6);");
+        preview.Should().NotContain("--md-");
+
+        var downloadLink = _page.GetByRole(AriaRole.Link, new PageGetByRoleOptions { Name = "Download converted themes", Exact = true });
+        (await downloadLink.GetAttributeAsync("download")).Should().Be("ntcomponents-themes.zip");
+        var downloadUrl = await downloadLink.GetAttributeAsync("href");
+        downloadUrl.Should().StartWith("data:application/zip;base64,");
+        var archiveBytes = Convert.FromBase64String(downloadUrl![(downloadUrl.IndexOf(',') + 1)..]);
+        using var archiveStream = new MemoryStream(archiveBytes);
+        using var archive = new ZipArchive(archiveStream, ZipArchiveMode.Read);
+        archive.Entries.Select(entry => entry.FullName).Should().Equal(
+            "Themes/light.css",
+            "Themes/light-mc.css",
+            "Themes/light-hc.css",
+            "Themes/dark.css",
+            "Themes/dark-mc.css",
+            "Themes/dark-hc.css");
+
+        using var lightReader = new StreamReader(archive.GetEntry("Themes/light.css")!.Open());
+        (await lightReader.ReadToEndAsync(TestContext.Current.CancellationToken)).Should().Be(preview.ReplaceLineEndings("\r\n"));
+        _browserDiagnostics.Where(diagnostic => string.Equals(diagnostic.Route, _activeRoute, StringComparison.Ordinal)).Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task DemoControls_ArePrioritizedGroupedAndHeightContained() {
         ArgumentNullException.ThrowIfNull(_page);
 
@@ -487,6 +723,43 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
         return lines.FirstOrDefault(line => line.StartsWith("System.", StringComparison.Ordinal) || line.StartsWith("TypeError", StringComparison.Ordinal))
             ?? lines.FirstOrDefault()
             ?? value;
+    }
+
+    private static string CreateThemeSource(string selector) => $$"""
+        {{selector}} {
+          --md-sys-color-primary: rgb(1 2 3);
+          --md-sys-color-on-primary: rgb(255 255 255);
+          --md-extended-color-success-on-color-container: rgb(4 5 6);
+        }
+        """;
+
+    private async Task<string> RootColorAsync(string propertyName) {
+        ArgumentNullException.ThrowIfNull(_page);
+        return await _page.EvaluateAsync<string>(
+            """
+            name => {
+                const probe = document.createElement('span');
+                probe.style.color = `var(${name})`;
+                document.body.append(probe);
+                const color = getComputedStyle(probe).color;
+                probe.remove();
+                return color;
+            }
+            """,
+            propertyName);
+    }
+
+    private async Task WaitForPalettePickerToMatchPreviewAsync(string paletteId, string token) {
+        ArgumentNullException.ThrowIfNull(_page);
+        await _page.WaitForFunctionAsync(
+            """
+            args => {
+                const input = document.querySelector(`#theme-palette-${args.paletteId}`);
+                const rgb = document.querySelector('[data-testid=theme-preview]').style.getPropertyValue(args.token).match(/\d+/g);
+                return input?.value === `#${rgb?.map(channel => Number(channel).toString(16).padStart(2, '0')).join('')}`;
+            }
+            """,
+            new { paletteId, token });
     }
 
     private static string RemoveGenericArity(string name) {

@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": [
+    "NTComponents.Site/wwwroot/js/theme-creator.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

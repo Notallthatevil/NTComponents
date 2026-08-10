@@ -1,0 +1,39 @@
+<div class="material-color-picker @(Disabled ? "disabled" : null)" style="@($"--theme-picker-color: {Value}")" data-theme-color-picker>
+    <label for="@ElementId">
+        <span class="picker-swatch" aria-hidden="true"></span>
+        <span class="picker-copy">
+            <span class="picker-label">@Label</span>
+            <output class="picker-value" for="@ElementId" data-theme-color-output>@Value.ToUpperInvariant()</output>
+        </span>
+        <span class="picker-action" aria-hidden="true">Edit</span>
+    </label>
+    <input id="@ElementId"
+           type="color"
+           value="@Value"
+           disabled="@Disabled"
+           aria-label="@Label"
+           data-theme-color-key="@ColorKey"
+           @onchange="HandleChangeAsync" />
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public string ColorKey { get; set; } = string.Empty;
+
+    [Parameter]
+    public bool Disabled { get; set; }
+
+    [Parameter, EditorRequired]
+    public string ElementId { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public string Label { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public string Value { get; set; } = "#000000";
+
+    [Parameter]
+    public EventCallback<string> ValueChanged { get; set; }
+
+    private Task HandleChangeAsync(ChangeEventArgs args) => ValueChanged.InvokeAsync(args.Value?.ToString() ?? Value);
+}

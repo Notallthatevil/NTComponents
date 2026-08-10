@@ -3,7 +3,9 @@
   "private": true,
   "type": "module",
   "devDependencies": {
+    "@material/material-color-utilities": "0.4.0",
     "@oddbird/css-anchor-positioning": "0.10.1",
+    "esbuild": "0.28.2",
     "jest": "^30.4.2",
     "jest-environment-jsdom": "^30.4.1",
     "terser": "^5.49.0",
@@ -12,8 +14,10 @@
   "scripts": {
     "build:head": "tsc -p tsconfig.head.json && node scripts/build-head-assets.mjs",
     "compile:ts": "tsc -p tsconfig.json && tsc -p tsconfig.legacy.json",
-    "build:ts": "npm run compile:ts && npm run build:head",
-    "build:ts:release": "npm run compile:ts && node scripts/minify-typescript.mjs && npm run build:head",
+    "build:site": "tsc -p tsconfig.site.json && node scripts/build-site-assets.mjs",
+    "build:site:release": "tsc -p tsconfig.site.json && node scripts/build-site-assets.mjs --minify",
+    "build:ts": "npm run compile:ts && npm run build:site && npm run build:head",
+    "build:ts:release": "npm run compile:ts && node scripts/minify-typescript.mjs && npm run build:site:release && npm run build:head",
     "build:rich-text-editor": "tsc -p tsconfig.json --pretty false",
     "build:rich-text-editor:release": "tsc -p tsconfig.json --pretty false && terser NTComponents/Editors/NTRichTextEditor.razor.js --module --compress --comments false --output NTComponents/Editors/NTRichTextEditor.razor.js && terser NTComponents/Shapes/NTShape.razor.js --module --compress --comments false --output NTComponents/Shapes/NTShape.razor.js",
     "pretest": "npm run build:ts",

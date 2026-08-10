@@ -1,0 +1,296 @@
+@page "/tools/material-theme"
+@implements IAsyncDisposable
+
+<main class="docs-page theme-converter">
+    <DocumentationPageHeader Kicker="Tools"
+                             Title="Material 3 theme creator"
+                             Description="Create complete Material 3 color schemes with Google's Material Color Utilities, preview them live in NTComponents, and download the finished theme files."
+                             Meta="Six light, dark, and contrast schemes ready for wwwroot/Themes" />
+
+    <section class="theme-workflow" aria-labelledby="theme-create-heading">
+        <div class="theme-section-heading">
+            <div>
+                <span class="theme-step">Create</span>
+                <h2 id="theme-create-heading">Choose your colors</h2>
+            </div>
+            <p>Color drags update the focused preview immediately. Finishing a selection regenerates all six downloadable schemes.</p>
+        </div>
+
+        <div id="material-theme-creator" class="theme-creator-grid">
+            <div class="theme-controls">
+                <div class="theme-control-grid">
+                    <MaterialThemeColorPicker ElementId="theme-primary"
+                                              Label="Source color"
+                                              ColorKey="primary"
+                                              Value="@_creator.Primary"
+                                              ValueChanged="UpdatePrimaryAsync" />
+                    <NTSelect TValue="string"
+                              ElementId="theme-style"
+                              Label="Theme style"
+                              @bind-Value="_creator.Variant"
+                              @bind-Value:after="GenerateThemeAsync"
+                              SubmitValue="false">
+                        @foreach (var option in _themeStyles) {
+                            <option value="@option.Value">@option.Label</option>
+                        }
+                    </NTSelect>
+                </div>
+                <div class="theme-style-note" aria-live="polite">
+                    <strong>@SelectedThemeStyle.Label</strong>
+                    <span>@SelectedThemeStyle.Description @SelectedThemeStyle.BestFor</span>
+                </div>
+
+                <details class="theme-advanced">
+                    <summary>Override role palettes</summary>
+                    <p>Each picker reflects the role color currently rendered in the preview. Changing one uses your selection to seed an override, then shows the accessible tone Material renders from it.</p>
+                    <div class="theme-palette-grid">
+                        @foreach (var palette in _corePalettes) {
+                            <MaterialThemeColorPicker ElementId="@($"theme-palette-{palette.Key}")"
+                                                      Label="@palette.Label"
+                                                      ColorKey="@($"palette.{palette.Key}")"
+                                                      Value="@palette.Color"
+                                                      ValueChanged="value => UpdatePaletteAsync(palette, value)" />
+                        }
+                    </div>
+                </details>
+
+                <div class="theme-extended-heading">
+                    <div>
+                        <h3>NTComponents colors</h3>
+                        <p>These app-specific roles are included in every generated scheme.</p>
+                    </div>
+                    <label class="theme-checkbox">
+                        <input type="checkbox" @bind="_creator.HarmonizeExtendedColors" @bind:after="GenerateThemeAsync" />
+                        <span>Harmonize with source</span>
+                    </label>
+                </div>
+                <div class="theme-control-grid theme-extended-grid">
+                    @foreach (var color in _extendedColors) {
+                        <MaterialThemeColorPicker ElementId="@($"theme-{color.Key}")"
+                                                  Label="@color.Label"
+                                                  ColorKey="@($"extended.{color.Key}")"
+                                                  Value="@color.Color"
+                                                  ValueChanged="value => UpdateExtendedColorAsync(color, value)" />
+                    }
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(_creatorErrorMessage)) {
+                    <div class="theme-message theme-error" role="alert">
+                        <strong>Could not generate this theme</strong>
+                        <span>@_creatorErrorMessage</span>
+                    </div>
+                }
+
+                <div class="theme-actions">
+                    <NTNavLink Label="Download generated themes"
+                               LeadingIcon="MaterialIcon.Download"
+                               Variant="NTNavLinkVariant.Filled"
+                               AdditionalAttributes="@GeneratedDownloadAttributes" />
+                    <NTButton Label="Reset colors" Variant="NTButtonVariant.Outlined" OnClickCallback="ResetCreatorAsync" />
+                </div>
+            </div>
+
+            <div id="material-theme-preview" class="theme-preview" data-testid="theme-preview">
+                <div class="theme-preview-toolbar">
+                    <div>
+                        <span class="theme-step">Live preview</span>
+                        <h2>See the theme in NTComponents</h2>
+                    </div>
+                    <div class="theme-preview-selects">
+                        <NTSelect TValue="string"
+                                  ElementId="theme-preview-mode"
+                                  Label="Mode"
+                                  @bind-Value="_previewMode"
+                                  @bind-Value:after="ApplySelectedThemeAsync"
+                                  SubmitValue="false">
+                            <option value="light">Light</option>
+                            <option value="dark">Dark</option>
+                        </NTSelect>
+                        <NTSelect TValue="string"
+                                  ElementId="theme-preview-contrast"
+                                  Label="Contrast"
+                                  @bind-Value="_previewContrast"
+                                  @bind-Value:after="ApplySelectedThemeAsync"
+                                  SubmitValue="false">
+                            <option value="default">Default</option>
+                            <option value="mc">Medium</option>
+                            <option value="hc">High</option>
+                        </NTSelect>
+                    </div>
+                </div>
+
+                <div class="theme-swatches" aria-label="Generated color roles">
+                    @foreach (var swatch in _previewSwatches) {
+                        <div class="theme-swatch" style="@($"--theme-swatch: var({swatch.Token}); --theme-swatch-text: var({swatch.OnToken})")">
+                            <span>@swatch.Label</span>
+                            <code>@swatch.Token.Replace("--tnt-color-", string.Empty)</code>
+                        </div>
+                    }
+                </div>
+
+                <NTCard Variant="NTCardVariant.Filled">
+                    <div class="theme-preview-card">
+                        <div>
+                            <span class="theme-preview-eyebrow">NTComponents preview</span>
+                            <h3>A theme you can judge in context</h3>
+                            <p>Surfaces, text, inputs, actions, outlines, and status colors all use the generated tokens.</p>
+                        </div>
+                        <NTInputText Label="Project name" @bind-Value="_previewProjectName" SubmitValue="false" />
+                        <div class="theme-preview-actions">
+                            <NTButton Label="Create project" Variant="NTButtonVariant.Filled" />
+                            <NTButton Label="Save draft" Variant="NTButtonVariant.Tonal" />
+                            <NTButton Label="Cancel" Variant="NTButtonVariant.Outlined" />
+                        </div>
+                        <div class="theme-preview-statuses">
+                            <span class="theme-status theme-status-success">Success</span>
+                            <span class="theme-status theme-status-info">Information</span>
+                            <span class="theme-status theme-status-warning">Warning</span>
+                            <span class="theme-status theme-status-assert">Accent</span>
+                        </div>
+                    </div>
+                </NTCard>
+            </div>
+        </div>
+
+        @if (_generatedFiles.Count > 0) {
+            <div class="theme-output" aria-label="Generated theme files">
+                @foreach (var file in _generatedFiles) {
+                    <details>
+                        <summary>
+                            <code>@file.Name</code>
+                            <span>@file.TokenCount color tokens</span>
+                        </summary>
+                        <pre><code>@file.Content</code></pre>
+                    </details>
+                }
+            </div>
+        }
+    </section>
+
+    <section class="theme-workflow theme-usage" aria-labelledby="theme-usage-heading" data-testid="theme-usage-guide">
+        <div class="theme-section-heading">
+            <div>
+                <span class="theme-step">Guide</span>
+                <h2 id="theme-usage-heading">How to use a Material theme</h2>
+            </div>
+            <p>Choose a style for the overall character, then use semantic roles consistently instead of selecting colors component by component.</p>
+        </div>
+
+        <ol class="theme-usage-steps">
+            <li><strong>Start with primary.</strong> Use the most recognizable brand or product color as the source.</li>
+            <li><strong>Choose a style.</strong> The style controls how Material derives the supporting palettes.</li>
+            <li><strong>Override intentionally.</strong> Set primary, secondary, tertiary, surfaces, or error only when those colors are part of the product language.</li>
+            <li><strong>Check every scheme.</strong> Review light, dark, medium-contrast, and high-contrast output before shipping.</li>
+        </ol>
+
+        <div class="theme-guide-callout">
+            <strong>Custom palette overrides always win</strong>
+            <p>After you edit a role palette, your selection is reapplied as that palette's seed after any source, style, mode, contrast, harmonization, or extended-color change. The picker then reflects the accessible role tone Material renders from that seed. Surface controls the neutral palette; Surface variant controls outlines and quieter surface content.</p>
+        </div>
+
+        <div class="theme-guide-group">
+            <h3>Theme style guide</h3>
+            <div class="theme-style-grid">
+                @foreach (var style in _themeStyles) {
+                    <article class="theme-style-card @(style == SelectedThemeStyle ? "selected" : null)">
+                        <h4>@style.Label</h4>
+                        <p>@style.Description</p>
+                        <span><strong>Best for:</strong> @style.BestFor</span>
+                    </article>
+                }
+            </div>
+        </div>
+
+        <div class="theme-guide-group">
+            <h3>Color role usage</h3>
+            <div class="theme-role-grid">
+                @foreach (var role in _roleGuides) {
+                    <article class="theme-role-card">
+                        <div>
+                            <h4>@role.Role</h4>
+                            <code>@role.Tokens</code>
+                        </div>
+                        <p>@role.UseFor</p>
+                        <span>@role.Guidance</span>
+                    </article>
+                }
+            </div>
+        </div>
+
+        <div class="theme-guide-callout theme-contrast-guide">
+            <strong>Pair roles; do not pick foreground colors by eye</strong>
+            <p>Use <code>on-primary</code> on <code>primary</code>, <code>on-error-container</code> on <code>error-container</code>, and the equivalent matching pairs. Medium and high contrast strengthen those relationships for accessibility; they are not separate brand themes.</p>
+        </div>
+    </section>
+
+    <section class="theme-workflow theme-import" aria-labelledby="theme-upload-heading">
+        <div class="theme-section-heading">
+            <div>
+                <span class="theme-step">Convert</span>
+                <h2 id="theme-upload-heading">Already have Material Theme Builder CSS?</h2>
+            </div>
+            <p>Select its six generated CSS files to convert them to NTComponents names without uploading them to a server.</p>
+        </div>
+        <div class="theme-file-names" aria-label="Required file names">
+            @foreach (var fileName in _requiredFileNames) {
+                <code>@fileName</code>
+            }
+        </div>
+
+        <NTFileUpload @ref="_upload"
+                      @bind-Value="_selectedFiles"
+                      ElementId="material-theme-files"
+                      Label="Material Theme Builder CSS folder"
+                      SupportingText="Choose the css folder exported by Material Theme Builder. Exactly six CSS files are required."
+                      Accept=".css,text/css"
+                      AutoUpload="true"
+                      ChooseButtonText="Choose folder"
+                      EmptyText="No CSS folder selected"
+                      MaximumFileCount="6"
+                      MaximumFileSize="131072"
+                      Multiple="true"
+                      OnCompleted="OnConversionCompletedAsync"
+                      OnFileError="OnFileErrorAsync"
+                      OnUploadFile="ReadSourceFileAsync"
+                      ProcessingText="Converting..."
+                      ShowUploadButton="false"
+                      UploadingText="Reading"
+                      UploadCompleteText="Ready"
+                      webkitdirectory="webkitdirectory" />
+
+        @if (!string.IsNullOrWhiteSpace(_converterErrorMessage)) {
+            <div class="theme-message theme-error" role="alert">
+                <strong>Could not convert this folder</strong>
+                <span>@_converterErrorMessage</span>
+            </div>
+        }
+
+        @if (_convertedFiles.Count > 0) {
+            <div class="theme-message theme-success" role="status">
+                <div>
+                    <strong>Six converted theme files are ready</strong>
+                    <span>Extract the archive into your app's <code>wwwroot</code> folder.</span>
+                </div>
+                <div class="theme-actions">
+                    <NTNavLink Label="Download converted themes"
+                               LeadingIcon="MaterialIcon.Download"
+                               Variant="NTNavLinkVariant.Filled"
+                               AdditionalAttributes="@ConvertedDownloadAttributes" />
+                    <NTButton Label="Start over" Variant="NTButtonVariant.Outlined" OnClickCallback="ClearConverterAsync" />
+                </div>
+            </div>
+
+            <div class="theme-output" aria-label="Converted theme files">
+                @foreach (var file in _convertedFiles) {
+                    <details>
+                        <summary>
+                            <code>@file.Name</code>
+                            <span>@file.TokenCount color tokens</span>
+                        </summary>
+                        <pre><code>@file.Content</code></pre>
+                    </details>
+                }
+            </div>
+        }
+    </section>
+</main>

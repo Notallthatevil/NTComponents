@@ -1,0 +1,77 @@
+.material-color-picker {
+    border: 1px solid var(--tnt-color-outline);
+    border-radius: var(--tnt-corner-radius-medium);
+    min-height: 64px;
+    overflow: hidden;
+    position: relative;
+    transition: background-color 120ms ease, border-color 120ms ease;
+
+    &:hover {
+        background: color-mix(in srgb, var(--tnt-color-on-surface) 8%, transparent);
+        border-color: var(--tnt-color-on-surface);
+    }
+
+    &:focus-within {
+        border-color: var(--tnt-color-primary);
+        box-shadow: inset 0 0 0 1px var(--tnt-color-primary);
+    }
+
+    label {
+        align-items: center;
+        color: var(--tnt-color-on-surface);
+        display: grid;
+        gap: 12px;
+        grid-template-columns: 40px minmax(0, 1fr) auto;
+        min-height: 64px;
+        padding: 8px 16px;
+    }
+
+    .picker-swatch {
+        background: var(--theme-picker-color);
+        border: 1px solid color-mix(in srgb, var(--tnt-color-on-surface) 24%, transparent);
+        border-radius: var(--tnt-corner-radius-full);
+        height: 40px;
+        width: 40px;
+    }
+
+    .picker-copy {
+        display: grid;
+        gap: 2px;
+        min-width: 0;
+    }
+
+    .picker-label {
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.4px;
+    }
+
+    .picker-value {
+        color: var(--tnt-color-on-surface-variant);
+        font-family: var(--tnt-typography-font-family-code, monospace);
+        font-size: 14px;
+    }
+
+    .picker-action {
+        color: var(--tnt-color-primary);
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    input {
+        cursor: pointer;
+        inset: 0;
+        opacity: 0;
+        position: absolute;
+        width: 100%;
+    }
+
+    &.disabled {
+        opacity: 0.48;
+
+        input {
+            cursor: not-allowed;
+        }
+    }
+}

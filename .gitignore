@@ -414,6 +414,7 @@ coverlet.runsettings
 /NTComponents/Carousel/NTCarousel.razor.js
 /NTComponents/Window/NTWindow.razor.js
 /NTComponents.Site/wwwroot/js/docs.js
+/NTComponents.Site/wwwroot/js/theme-creator.js
 /NTComponents/Accordion/TnTAccordion.razor.js
 /NTComponents/Animation/TnTAnimation.razor.js
 /NTComponents/Core/TnTExternalClickHandler.razor.js

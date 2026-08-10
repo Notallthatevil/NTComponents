@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { minify } from "terser";
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const roots = [path.join(repositoryRoot, "NTComponents"), path.join(repositoryRoot, "NTComponents.Site", "wwwroot")];
+const roots = [path.join(repositoryRoot, "NTComponents")];
 const headSources = new Set([
   path.join(repositoryRoot, "NTComponents", "Theming", "NTTheme.runtime.ts"),
   path.join(repositoryRoot, "NTComponents", "Theming", "theme-bootstrap.ts"),
