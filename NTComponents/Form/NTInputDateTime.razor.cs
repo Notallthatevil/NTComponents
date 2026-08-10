@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.AspNetCore.Components.Web;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 
@@ -37,6 +38,8 @@ public partial class NTInputDateTime<DateTimeType> {
     private string _pickerClass = string.Empty;
     private string _pickerHeadlineId = string.Empty;
     private string _pickerId = string.Empty;
+    private bool _preserveNativeEditingBuffer;
+    private bool _nativeInputFocused;
     private string _rootClass = "nt-input-date-time nt-input-date-time-standard";
 
     private string RootClass => AppendFieldCssClass(_rootClass);
@@ -102,6 +105,7 @@ public partial class NTInputDateTime<DateTimeType> {
         }
         else {
             attributes["data-tnt-dtp-native-input"] = "true";
+            attributes["onfocus"] = EventCallback.Factory.Create<FocusEventArgs>(this, OnNativeInputFocusAsync);
         }
 
         _additionalInputAttributes = attributes;
@@ -130,6 +134,37 @@ public partial class NTInputDateTime<DateTimeType> {
         base.OnParametersSet();
         CachePickerState();
     }
+
+    /// <inheritdoc />
+    protected override async Task OnInputAsync(string? newValue) {
+        if (InputTypeAttribute == InputType.Text || string.IsNullOrEmpty(newValue) || !TryConvertValue(newValue, out var parsedValue)) {
+            await base.OnInputAsync(newValue);
+            return;
+        }
+
+        // Native date/time controls can emit a valid intermediate value while the user is still editing a segment.
+        // Keep the model current, but do not let form or validation renders write into the focused native control and
+        // discard the browser's editing buffer. The blur event releases one final render with the settled value.
+        _preserveNativeEditingBuffer = _nativeInputFocused;
+        Value = parsedValue;
+        await ValueChanged.InvokeAsync(parsedValue);
+        CurrentValueAsString = newValue;
+        EditContext?.NotifyFieldChanged(FieldIdentifier);
+
+        if (EffectiveBindOnInput) {
+            await BindAfter.InvokeAsync(CurrentValue);
+        }
+    }
+
+    /// <inheritdoc />
+    protected override async Task OnBlurAsync(FocusEventArgs args) {
+        _nativeInputFocused = false;
+        _preserveNativeEditingBuffer = false;
+        await base.OnBlurAsync(args);
+    }
+
+    /// <inheritdoc />
+    protected override bool ShouldRender() => !_preserveNativeEditingBuffer;
 
     /// <inheritdoc />
     protected override bool TryParseValueFromString(string? value, [MaybeNullWhen(false)] out DateTimeType result, [NotNullWhen(false)] out string? validationErrorMessage) {
@@ -187,6 +222,11 @@ public partial class NTInputDateTime<DateTimeType> {
     }
 
     private bool IsPickerTriggerDisabled => Disabled ?? Form?.Disabled ?? false;
+
+    private Task OnNativeInputFocusAsync(FocusEventArgs _) {
+        _nativeInputFocused = true;
+        return Task.CompletedTask;
+    }
 
     private string ValueFormat => EnableCustomPicker || UsesNativeInputFormat() ? _effectiveFormat : _metadata.DefaultFormat;
 

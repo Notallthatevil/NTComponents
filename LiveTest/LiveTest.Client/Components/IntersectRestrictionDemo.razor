@@ -1,0 +1,42 @@
+@using NTComponents
+
+<div class="date-time-render-mode-fields" data-testid="intersect-restriction-fields">
+    <p class="date-time-render-mode-runtime" data-testid="intersect-restriction-runtime">
+        Intersect runtime: @(RendererInfo.IsInteractive ? "interactive" : "static")
+    </p>
+
+    <section class="date-time-render-mode-field-group" aria-labelledby="intersect-new-restriction-heading">
+        <h3 id="intersect-new-restriction-heading">New restriction</h3>
+        <p>The parent supplies a null restriction, matching Intersect's create dialog.</p>
+        <IntersectRestrictionFormDemo FormName="intersect-new-restriction-form" Restriction="@null" OnValidSubmitCallback="SaveNewRestriction" />
+        <NTButton Type="ButtonType.Submit" form="intersect-new-restriction-form" Label="Create New Restriction" />
+    </section>
+
+    <section class="date-time-render-mode-field-group" aria-labelledby="intersect-edit-restriction-heading">
+        <h3 id="intersect-edit-restriction-heading">Edit restriction</h3>
+        <p>The parent supplies an existing restriction, matching Intersect's edit dialog.</p>
+        <IntersectRestrictionFormDemo FormName="intersect-edit-restriction-form" Restriction="@_selectedRestriction" OnValidSubmitCallback="SaveEditedRestriction" />
+        <NTButton Type="ButtonType.Submit" form="intersect-edit-restriction-form" Label="Update Restriction" />
+    </section>
+
+    <section class="date-time-render-mode-field-group" aria-labelledby="intersect-parent-refresh-heading">
+        <h3 id="intersect-parent-refresh-heading">Parent lifecycle</h3>
+        <p data-testid="intersect-parent-render-count">Parent refreshes: @_parentRefreshCount</p>
+        <NTButton OnClickCallback="RefreshParent" Label="Simulate parent refresh" />
+        @if (!string.IsNullOrWhiteSpace(_lastSubmission)) {
+            <p role="status" data-testid="intersect-last-submission">@_lastSubmission</p>
+        }
+    </section>
+</div>
+
+@code {
+    private readonly IntersectRestrictionFormDemo.RestrictionDemoDto _selectedRestriction = new(new DateOnly(2026, 8, 10), null, "Return to work restriction", "Existing restriction supplied by the parent.");
+    private int _parentRefreshCount;
+    private string? _lastSubmission;
+
+    private void RefreshParent() => _parentRefreshCount++;
+
+    private void SaveNewRestriction(IntersectRestrictionFormDemo.RestrictionDemoDto restriction) => _lastSubmission = $"Created restriction beginning {restriction.StartDate:MM/dd/yyyy}.";
+
+    private void SaveEditedRestriction(IntersectRestrictionFormDemo.RestrictionDemoDto restriction) => _lastSubmission = $"Updated restriction beginning {restriction.StartDate:MM/dd/yyyy}.";
+}

@@ -163,6 +163,27 @@ public class NTInputDateTime_Tests : BunitContext {
         model.Value.Should().Be(new DateTime(2026, 5, 19, 10, 30, 0));
     }
 
+    [Fact]
+    public async Task Native_Date_Awaits_Value_Callback_Before_Notifying_EditContext() {
+        var model = new DateOnlyModel();
+        var editContext = new EditContext(model);
+        DateOnly? valueAtFieldNotification = null;
+        editContext.OnFieldChanged += (_, _) => valueAtFieldNotification = model.Value;
+        var cut = Render<CascadingValue<EditContext>>(parameters => parameters
+            .Add(p => p.Value, editContext)
+            .AddChildContent<NTInputDateTime<DateOnly?>>(child => child
+                .Add(p => p.Value, model.Value)
+                .Add(p => p.ValueChanged, EventCallback.Factory.Create<DateOnly?>(this, async value => {
+                    await Task.Yield();
+                    model.Value = value;
+                }))
+                .Add(p => p.ValueExpression, () => model.Value)));
+
+        await cut.Find("input").ChangeAsync(new ChangeEventArgs { Value = "0002-01-01" });
+
+        valueAtFieldNotification.Should().Be(new DateOnly(2, 1, 1));
+    }
+
     // Behavior source: NTInputDateTime's public generic contract supports DateTime, DateTimeOffset, DateOnly, and TimeOnly values, including their non-nullable forms.
     [Fact]
     public void NonNullable_Supported_Types_Parse_Their_Native_Values() {

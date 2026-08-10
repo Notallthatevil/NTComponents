@@ -1,0 +1,70 @@
+@using System.ComponentModel.DataAnnotations
+@using NTComponents
+
+<NTForm Model="@_model" FormName="@FormName" OnValidSubmit="@SaveAsync" Disabled="@Disabled" Appearance="NTFormAppearance.Filled" id="@FormName">
+    <DataAnnotationsValidator />
+    <NTFormFieldGridView MaxColumns="2">
+        <NTFormFieldLayoutSpan Span="NTFormFieldSpan.Half">
+            <NTInputDateTime DateTimeType="DateOnly?" @bind-Value="_model.StartDate" Label="Start Date" Format="MM/dd/yyyy" />
+        </NTFormFieldLayoutSpan>
+        <NTFormFieldLayoutSpan Span="NTFormFieldSpan.Half">
+            <NTInputDateTime DateTimeType="DateOnly?" @bind-Value="_model.EndDate" Label="End Date" Format="MM/dd/yyyy" />
+        </NTFormFieldLayoutSpan>
+        <NTFormFieldLayoutSpan Span="NTFormFieldSpan.Full">
+            <NTTextArea @bind-Value="_model.Restriction" Label="Restriction" MinVisibleLines="3" />
+        </NTFormFieldLayoutSpan>
+        <NTFormFieldLayoutSpan Span="NTFormFieldSpan.Full">
+            <NTInputText @bind-Value="_model.Comments" Label="Comments" />
+        </NTFormFieldLayoutSpan>
+    </NTFormFieldGridView>
+</NTForm>
+
+<p data-testid="@($"{FormName}-bound-start-date")">Bound start date: @(_model.StartDate?.ToString("MM/dd/yyyy") ?? "empty")</p>
+<p data-testid="@($"{FormName}-parameter-set-count")">Parameter applications: @_parameterSetCount</p>
+
+@code {
+    [Parameter]
+    public RestrictionDemoDto? Restriction { get; set; }
+
+    [Parameter]
+    public bool Disabled { get; set; }
+
+    [Parameter, EditorRequired]
+    public string FormName { get; set; } = default!;
+
+    [Parameter]
+    public EventCallback<RestrictionDemoDto> OnValidSubmitCallback { get; set; }
+
+    private FormModel _model = new();
+    private int _parameterSetCount;
+
+    protected override void OnParametersSet() {
+        base.OnParametersSet();
+        _parameterSetCount++;
+
+        if (Restriction is not null) {
+            _model = new FormModel {
+                StartDate = Restriction.StartDate,
+                EndDate = Restriction.EndDate,
+                Restriction = Restriction.Restriction,
+                Comments = Restriction.Comments
+            };
+        }
+    }
+
+    private Task SaveAsync() => OnValidSubmitCallback.InvokeAsync(new RestrictionDemoDto(_model.StartDate!.Value, _model.EndDate, _model.Restriction!, _model.Comments));
+
+    public sealed record RestrictionDemoDto(DateOnly StartDate, DateOnly? EndDate, string Restriction, string? Comments);
+
+    private sealed class FormModel {
+        [Required]
+        public DateOnly? StartDate { get; set; }
+
+        public DateOnly? EndDate { get; set; }
+
+        [Required, StringLength(500)]
+        public string? Restriction { get; set; }
+
+        public string? Comments { get; set; }
+    }
+}
