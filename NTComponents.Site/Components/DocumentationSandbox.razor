@@ -333,6 +333,10 @@
             parameters.TryAdd(nameof(NTCarousel.AriaLabel), "Example carousel");
         }
 
+        if (Component.Type.Name == nameof(NTBrowserTimeZone)) {
+            parameters.TryAdd(nameof(NTBrowserTimeZone.AdditionalAttributes), new Dictionary<string, object> { ["data-docs-preview-verified"] = "true" });
+        }
+
         if (Component.Type.Name == "NTForm") {
             parameters.TryAdd("Model", _form);
             parameters.TryAdd("ChildContent", (RenderFragment<EditContext>)(_ => content => content.AddContent(0, "Example form content")));

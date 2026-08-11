@@ -15,6 +15,9 @@
             @ModeName runtime: @(RendererInfo.IsInteractive ? "interactive" : "static")
         </p>
 
+        <NTBrowserTimeZone @bind-Value="Model.BrowserTimeZoneId" ElementName="Model.BrowserTimeZoneId" data-testid="@($"{ModeKey}-browser-time-zone-field")" />
+        <output class="validation-render-mode-status" data-testid="@($"{ModeKey}-browser-time-zone-value")">@Model.BrowserTimeZoneId</output>
+
         <NTInputText @bind-Value="Model.ClaimTitle"
                      Label="Claim title"
                      Placeholder="Leave blank, blur, then submit"

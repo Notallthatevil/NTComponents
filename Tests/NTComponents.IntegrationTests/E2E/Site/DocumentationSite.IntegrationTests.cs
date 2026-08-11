@@ -18,8 +18,8 @@ namespace NTComponents.IntegrationTests.Site;
 /// </summary>
 [Collection(PlaywrightE2ECollection.Name)]
 public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
-    private const int ExpectedComponentTypeCount = 87;
-    private const int ExpectedRootRouteCount = 61;
+    private const int ExpectedComponentTypeCount = 88;
+    private const int ExpectedRootRouteCount = 62;
     private static readonly string[] ExpectedDependentComponentNames = [
         "NTAccordionItem",
         "NTAutocompleteOption",

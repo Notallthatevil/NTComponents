@@ -52,6 +52,8 @@ public partial class ValidationRenderModeForm : ComponentBase {
     }
 
     private sealed class ValidationRenderModeModel {
+        public string? BrowserTimeZoneId { get; set; }
+
         [Required(ErrorMessage = "Enter a claim title.")]
         public string? ClaimTitle { get; set; }
 

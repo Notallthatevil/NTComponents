@@ -1,0 +1,12 @@
+@namespace NTComponents
+@using NTComponents.Core
+@inherits NTPageScriptComponent<NTBrowserTimeZone>
+
+<input @attributes="AdditionalAttributes"
+       type="hidden"
+       name="@ElementName"
+       value="@EffectiveValue"
+       data-nt-browser-time-zone="true"
+       @onchange="OnValueChangedAsync"
+       @ref="Element" />
+<NTPageScript Src="@JsModulePath" />

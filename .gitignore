@@ -394,6 +394,7 @@ coverlet.runsettings
 /NTComponents/Virtualization/NTVirtualize.razor.js
 /NTComponents/TabView/NTTabView.razor.js
 /NTComponents/Form/NTAutocomplete.razor.js
+/NTComponents/Form/NTBrowserTimeZone.razor.js
 /NTComponents/Form/NTCombobox.razor.js
 /NTComponents/Form/NTInputDateTime.razor.js
 /NTComponents/Form/NTInputRangeSlider.razor.js
