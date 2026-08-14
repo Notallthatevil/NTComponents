@@ -151,6 +151,12 @@ public partial class NTTypeahead<TItem> : IAsyncDisposable {
     public bool ResetValueOnEscape { get; set; } = true;
 
     /// <summary>
+    ///     Gets or sets whether a button is shown for clearing the selected value.
+    /// </summary>
+    [Parameter]
+    public bool ShowClearButton { get; set; }
+
+    /// <summary>
     ///     Gets or sets the template used to render a suggestion row.
     /// </summary>
     [Parameter]
@@ -178,6 +184,8 @@ public partial class NTTypeahead<TItem> : IAsyncDisposable {
     protected override string InputIdPrefix => "nt-typeahead";
 
     private string? ActiveDescendantId => _isOpen && _activeIndex >= 0 && _activeIndex < _items.Count ? GetOptionId(_activeIndex) : null;
+    private bool CanClearValue => ShowClearButton && !FieldDisabled && !FieldReadOnly && !_searching && !EqualityComparer<TItem?>.Default.Equals(CurrentValue, default);
+    private string ClearButtonAriaLabel => $"Clear {ListboxLabel}";
     private string FormPostValue => CurrentValue is null ? string.Empty : ItemValueSelector?.Invoke(CurrentValue) ?? FormatValueAsString(CurrentValue) ?? string.Empty;
     private bool HasSearchTextParameter => SearchTextChanged.HasDelegate || SearchText is not null;
     private string ListboxId => $"{InputId}-listbox";
@@ -351,6 +359,16 @@ public partial class NTTypeahead<TItem> : IAsyncDisposable {
             _lastSyncedValue = CurrentValue;
             await BindAfter.InvokeAsync(CurrentValue);
         }
+    }
+
+    private async Task ClearValueAsync() {
+        if (!CanClearValue) {
+            return;
+        }
+
+        await SetSearchTextAsync(null);
+        await ClearSearchAsync(clearValue: true);
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task CancelSearchAsync(bool dispose = false) {

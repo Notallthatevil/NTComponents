@@ -749,6 +749,15 @@ public class NTDataGrid_Tests : BunitContext {
         clickCount.Should().Be(2);
     }
 
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(true, true)]
+    public void ShowCellDividers_Toggles_Cell_Divider_Class(bool showCellDividers, bool expectedClass) {
+        var cut = RenderGrid(parameters => parameters.Add(grid => grid.ShowCellDividers, showCellDividers));
+
+        cut.Find(".nt-data-grid").ClassList.Contains("nt-data-grid-cell-dividers").Should().Be(expectedClass);
+    }
+
     [Fact]
     public void Striped_Appearance_Direct_Items_Adds_Stable_Row_Stripe_Classes() {
         var cut = RenderGrid(parameters => parameters.Add(grid => grid.Appearance, NTDataGridAppearance.Striped));

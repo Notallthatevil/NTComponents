@@ -13,16 +13,15 @@ $nt-data-grid-sort-indicator-size: 18px;
 $nt-data-grid-page-button-font-size: 12px;
 $nt-data-grid-border-size: 1px;
 $nt-data-grid-grid-shape: corners.$nt-corner-radius-small;
-$nt-data-grid-interactive-shape: corners.$nt-corner-radius-small;
 $nt-data-grid-select-shape: corners.$nt-corner-radius-extra-small;
 $nt-data-grid-spacing-xs: 2px;
 $nt-data-grid-spacing-sm: 4px;
 $nt-data-grid-spacing-md: 8px;
 $nt-data-grid-spacing-lg: 12px;
 $nt-data-grid-spacing-xl: 16px;
-$nt-data-grid-sort-title-padding: 2px;
-$nt-data-grid-sort-title-sorted-padding: 30px;
-$nt-data-grid-sort-title-multi-sorted-padding: 50px;
+$nt-data-grid-content-padding: 8px;
+$nt-data-grid-sort-title-sorted-padding: 36px;
+$nt-data-grid-sort-title-multi-sorted-padding: 56px;
 $nt-data-grid-select-trailing-padding: 28px;
 $nt-data-grid-sticky-header-z-index: 2;
 $nt-data-grid-hover-state-opacity: 8%;
@@ -96,6 +95,10 @@ $nt-data-grid-spacer-animation-duration: motion.$nt-motion-duration-extra_long_2
     font-weight: 600;
     white-space: nowrap;
 
+    &[aria-sort] {
+        background: color-mix(in srgb, #{colors.$tnt-color-on-surface} #{$nt-data-grid-hover-state-opacity}, #{colors.$tnt-color-surface-container-low});
+    }
+
     &:not(:last-child) {
         border-inline-end: $nt-data-grid-border-size solid colors.$tnt-color-outline-variant;
     }
@@ -106,6 +109,10 @@ $nt-data-grid-spacer-animation-duration: motion.$nt-motion-duration-extra_long_2
     color: colors.$tnt-color-on-surface;
     background: var(--nt-data-grid-row-background, #{colors.$tnt-color-surface});
     transition: background-color $nt-data-grid-row-background-transition;
+}
+
+.nt-data-grid.nt-data-grid-cell-dividers ::deep .nt-data-grid-cell:not(:last-child) {
+    border-inline-end: $nt-data-grid-border-size solid colors.$tnt-color-outline-variant;
 }
 
 .nt-data-grid ::deep .nt-data-grid-row {
@@ -171,7 +178,7 @@ $nt-data-grid-spacer-animation-duration: motion.$nt-motion-duration-extra_long_2
     box-sizing: border-box;
     padding: $nt-data-grid-zero;
     border: $nt-data-grid-zero;
-    border-radius: $nt-data-grid-interactive-shape;
+    border-radius: corners.$nt-corner-radius-none;
     appearance: none;
     background: transparent;
     font: inherit;
@@ -192,7 +199,7 @@ $nt-data-grid-spacer-animation-duration: motion.$nt-motion-duration-extra_long_2
     flex: 1 1 auto;
     min-inline-size: $nt-data-grid-zero;
     overflow: hidden;
-    padding-inline: $nt-data-grid-sort-title-padding;
+    padding-inline: $nt-data-grid-content-padding;
     text-align: inherit;
     text-overflow: ellipsis;
 }
@@ -209,7 +216,7 @@ $nt-data-grid-spacer-animation-duration: motion.$nt-motion-duration-extra_long_2
 .nt-data-grid ::deep .nt-data-grid-cell-content {
     box-sizing: border-box;
     inline-size: $nt-data-grid-full-size;
-    padding-inline: $nt-data-grid-sort-title-padding;
+    padding-inline: $nt-data-grid-content-padding;
     text-align: inherit;
 }
 

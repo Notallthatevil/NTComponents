@@ -1,10 +1,14 @@
 @page "/nav-rail-e2e-test"
+@page "/nav-rail-e2e-test/{CompactMode:bool}"
 @rendermode InteractiveAuto
 @using NTComponents
 
 <div style="display: flex; min-block-size: 720px;">
     <NTNavigationRail AriaLabel="E2E primary navigation"
+                      Compact="@CompactMode"
+                      LimitToOneExpanded="true"
                       ShowDivider="true"
+                      Variant="NTNavigationRailVariant.Square"
                       data-testid="nav-rail-under-test">
         <NTNavigationRailItem Label="Home"
                               Href="/nav-rail-e2e-test"
@@ -19,9 +23,37 @@
                               Href="/reference"
                               Icon="MaterialIcon.Article"
                               data-testid="nav-rail-reference-item" />
+        <NTNavigationRailSectionHeader Label="Workspace sections"
+                                       data-testid="nav-rail-workspace-section" />
+        <NTNavigationRailGroup Label="Workspace"
+                               Expanded="true"
+                               Icon="MaterialIcon.Workspaces"
+                               data-testid="nav-rail-workspace-group">
+            <NTNavigationRailGroup Label="Workspace tools"
+                                   Expanded="true"
+                                   Icon="MaterialIcon.Build"
+                                   data-testid="nav-rail-workspace-tools-group">
+                <NTNavigationRailItem Label="Projects"
+                                      Href="/projects"
+                                      Icon="MaterialIcon.Folder" />
+            </NTNavigationRailGroup>
+        </NTNavigationRailGroup>
+        <NTNavigationRailGroup Label="Administration"
+                               Expanded="true"
+                               Icon="MaterialIcon.AdminPanelSettings"
+                               data-testid="nav-rail-administration-group">
+            <NTNavigationRailItem Label="Users"
+                                  Href="/users"
+                                  Icon="MaterialIcon.Group" />
+        </NTNavigationRailGroup>
     </NTNavigationRail>
 
     <main style="padding: 32px;">
         <h1>Navigation rail E2E test</h1>
     </main>
 </div>
+
+@code {
+    [Parameter]
+    public bool CompactMode { get; set; }
+}

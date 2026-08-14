@@ -862,6 +862,73 @@ describe('NTNavigationRail module', () => {
     expect(document.activeElement).toBe(trigger);
   });
 
+  test('limit-to-one-expanded closes other top-level groups without closing nested groups', () => {
+    document.body.innerHTML = `
+      <nav class="nt-navigation-rail nt-navigation-rail-expanded"
+           data-nt-navigation-rail-limit-to-one-expanded="true">
+        <div id="workspace-group" class="nt-navigation-rail-group" data-nt-navigation-rail-group-expanded="true">
+          <button class="nt-navigation-rail-group-trigger nt-navigation-rail-item"
+                  type="button"
+                  aria-expanded="true"
+                  aria-controls="workspace-panel"
+                  data-nt-navigation-rail-group-trigger="true">
+            Workspace
+          </button>
+          <div id="workspace-panel" class="nt-navigation-rail-group-panel">
+            <div class="nt-navigation-rail-group-items">
+              <div id="nested-group" class="nt-navigation-rail-group" data-nt-navigation-rail-group-expanded="true">
+                <button class="nt-navigation-rail-group-trigger nt-navigation-rail-item"
+                        type="button"
+                        aria-expanded="true"
+                        aria-controls="nested-panel"
+                        data-nt-navigation-rail-group-trigger="true">
+                  Workspace tools
+                </button>
+                <div id="nested-panel" class="nt-navigation-rail-group-panel">
+                  <div class="nt-navigation-rail-group-items">
+                    <a class="nt-navigation-rail-item" href="/projects">Projects</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="admin-group" class="nt-navigation-rail-group" data-nt-navigation-rail-group-expanded="true">
+          <button class="nt-navigation-rail-group-trigger nt-navigation-rail-item"
+                  type="button"
+                  aria-expanded="true"
+                  aria-controls="admin-panel"
+                  data-nt-navigation-rail-group-trigger="true">
+            Administration
+          </button>
+          <div id="admin-panel" class="nt-navigation-rail-group-panel">
+            <div class="nt-navigation-rail-group-items">
+              <a class="nt-navigation-rail-item" href="/users">Users</a>
+            </div>
+          </div>
+        </div>
+      </nav>`;
+
+    module.onLoad();
+
+    const workspaceGroup = document.querySelector('#workspace-group');
+    const nestedGroup = document.querySelector('#nested-group');
+    const adminGroup = document.querySelector('#admin-group');
+    const workspaceTrigger = workspaceGroup.querySelector(':scope > .nt-navigation-rail-group-trigger');
+    const nestedTrigger = nestedGroup.querySelector(':scope > .nt-navigation-rail-group-trigger');
+    const adminTrigger = adminGroup.querySelector(':scope > .nt-navigation-rail-group-trigger');
+
+    expect(workspaceTrigger.getAttribute('aria-expanded')).toBe('true');
+    expect(nestedTrigger.getAttribute('aria-expanded')).toBe('true');
+    expect(adminTrigger.getAttribute('aria-expanded')).toBe('false');
+
+    adminTrigger.click();
+
+    expect(workspaceTrigger.getAttribute('aria-expanded')).toBe('false');
+    expect(nestedTrigger.getAttribute('aria-expanded')).toBe('true');
+    expect(adminTrigger.getAttribute('aria-expanded')).toBe('true');
+  });
+
   test('escape closes a collapsed group popover and restores trigger focus', () => {
     document.body.innerHTML = `
       <nav class="nt-navigation-rail nt-navigation-rail-collapsed">
@@ -1565,6 +1632,54 @@ describe('NTNavigationRail module', () => {
       expect(home.hasAttribute('aria-current')).toBe(false);
       expect(reports.classList.contains('nt-navigation-rail-item-selected')).toBe(true);
       expect(reports.getAttribute('aria-current')).toBe('page');
+    } finally {
+      base.remove();
+      window.history.pushState({}, '', '/');
+    }
+  });
+
+  test('route changes reverse the previous selection animation while selecting the new destination', async () => {
+    const base = document.createElement('base');
+    base.href = 'http://localhost/app/';
+    document.head.append(base);
+    window.history.pushState({}, '', '/app/home');
+
+    try {
+      document.body.innerHTML = `
+        <nav class="nt-navigation-rail nt-navigation-rail-collapsed">
+          <a class="nt-navigation-rail-item"
+             href="home"
+             data-nt-navigation-rail-match="All">Home</a>
+          <a class="nt-navigation-rail-item"
+             href="reports"
+             data-nt-navigation-rail-match="All">Reports</a>
+        </nav>`;
+
+      module.onLoad();
+
+      const home = document.querySelector('.nt-navigation-rail-item[href="home"]');
+      const reports = document.querySelector('.nt-navigation-rail-item[href="reports"]');
+      let finishExitAnimation;
+      const exitAnimationFinished = new Promise(resolve => {
+        finishExitAnimation = resolve;
+      });
+      home.getAnimations = jest.fn(() => [{
+        animationName: 'nt-navigation-rail-indicator-exit-b-test',
+        finished: exitAnimationFinished
+      }]);
+
+      window.history.pushState({}, '', '/app/reports');
+      module.onUpdate();
+
+      expect(home.classList.contains('nt-navigation-rail-item-selected')).toBe(false);
+      expect(home.classList.contains('nt-navigation-rail-item-deselecting')).toBe(true);
+      expect(home.getAnimations).toHaveBeenCalledWith({ subtree: true });
+      expect(reports.classList.contains('nt-navigation-rail-item-selected')).toBe(true);
+
+      finishExitAnimation();
+      await Promise.resolve();
+
+      expect(home.classList.contains('nt-navigation-rail-item-deselecting')).toBe(false);
     } finally {
       base.remove();
       window.history.pushState({}, '', '/');

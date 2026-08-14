@@ -143,7 +143,7 @@ $nt-navigation-rail-group-shape-transition: motion.$nt-motion-duration-short_4 m
 
 .nt-navigation-rail-item-content {
     align-items: start;
-    border-radius: 999px;
+    border-radius: var(--nt-navigation-rail-indicator-shape, 999px);
     box-sizing: border-box;
     display: inline-grid;
     grid-template-columns: $nt-navigation-rail-indicator-width;
@@ -180,7 +180,7 @@ $nt-navigation-rail-group-shape-transition: motion.$nt-motion-duration-short_4 m
 .nt-navigation-rail-item-indicator {
     background: var(--nt-navigation-rail-indicator-color, #{colors.$tnt-color-secondary-container});
     block-size: $nt-navigation-rail-indicator-height;
-    border-radius: 999px;
+    border-radius: var(--nt-navigation-rail-indicator-shape, 999px);
     inline-size: $nt-navigation-rail-indicator-width;
     opacity: 0;
     inset-inline-start: $nt-navigation-rail-collapsed-indicator-margin-inline;

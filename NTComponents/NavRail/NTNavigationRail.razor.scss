@@ -4,6 +4,7 @@
 @use '../Styles/_Variables/_motion.scss' as motion;
 @use '../Styles/_Variables/_scrollbar.scss' as scrollbar;
 @use '../Styles/_Variables/_screen-width.scss' as screen-width;
+@use '../Styles/_Variables/_typescale.scss' as typescale;
 @use '../Buttons/buttonFocusRing' as focus;
 
 $nt-navigation-rail-collapsed-width: 96px;
@@ -22,7 +23,10 @@ $nt-navigation-rail-transition-easing: motion.$nt-motion-easing-emphasized;
 $nt-navigation-rail-state-transition: motion.$nt-motion-duration-short_3 motion.$nt-motion-easing-standard;
 $nt-navigation-rail-shape-transition: motion.$nt-motion-duration-short_4 motion.$nt-motion-easing-emphasized;
 $nt-navigation-rail-icon-size: 24px;
+$nt-navigation-rail-indicator-width: 56px;
 $nt-navigation-rail-indicator-height: 32px;
+$nt-navigation-rail-compact-indicator-height: 28px;
+$nt-navigation-rail-collapsed-indicator-margin-inline: 20px;
 $nt-navigation-rail-icon-label-gap: 4px;
 $nt-navigation-rail-horizontal-icon-label-gap: 8px;
 $nt-navigation-rail-modal-corner-radius: corners.$nt-corner-radius-extra-large;
@@ -52,6 +56,102 @@ $nt-navigation-rail-modal-width: min($nt-navigation-rail-expanded-width, 88vw);
 
     ::deep .nt-nav-rail-selected-icon {
         font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+
+    &.nt-navigation-rail-square {
+        --nt-navigation-rail-indicator-shape: #{corners.$nt-corner-radius-none};
+    }
+
+    &.nt-navigation-rail-compact {
+        .nt-navigation-rail-menu {
+            margin-block: 0;
+        }
+
+        .nt-navigation-rail-header,
+        .nt-navigation-rail-footer {
+            min-block-size: 40px;
+        }
+
+        .nt-navigation-rail-items {
+            padding-block: 0;
+        }
+
+        ::deep {
+            .nt-navigation-rail-item:not(.nt-navigation-rail-item-expanded),
+            .nt-navigation-rail-group-trigger:not(.nt-navigation-rail-item-expanded) {
+                min-block-size: 48px;
+            }
+
+            .nt-navigation-rail-item:not(.nt-navigation-rail-item-expanded) .nt-navigation-rail-item-body,
+            .nt-navigation-rail-group-trigger:not(.nt-navigation-rail-item-expanded) .nt-navigation-rail-item-body {
+                padding-block: 0;
+            }
+
+            .nt-navigation-rail-item:not(.nt-navigation-rail-item-expanded) .nt-navigation-rail-item-content,
+            .nt-navigation-rail-group-trigger:not(.nt-navigation-rail-item-expanded) .nt-navigation-rail-item-content {
+                grid-template-rows: $nt-navigation-rail-compact-indicator-height $nt-navigation-rail-icon-label-gap auto;
+                min-block-size: 48px;
+            }
+
+            .nt-navigation-rail-item:not(.nt-navigation-rail-item-expanded) .nt-navigation-rail-item-indicator,
+            .nt-navigation-rail-group-trigger:not(.nt-navigation-rail-item-expanded) .nt-navigation-rail-item-indicator {
+                block-size: $nt-navigation-rail-compact-indicator-height;
+                top: 0;
+            }
+
+            .nt-navigation-rail-item:not(.nt-navigation-rail-item-expanded) .nt-navigation-rail-item-content::after,
+            .nt-navigation-rail-item:not(.nt-navigation-rail-item-expanded) .nt-navigation-rail-item-ripple {
+                block-size: $nt-navigation-rail-compact-indicator-height;
+            }
+
+            .nt-navigation-rail-group-trigger:not(.nt-navigation-rail-item-expanded) .nt-navigation-rail-item-body::before,
+            .nt-navigation-rail-group-trigger:not(.nt-navigation-rail-item-expanded) .nt-navigation-rail-item-body::after,
+            .nt-navigation-rail-group-trigger:not(.nt-navigation-rail-item-expanded) .nt-navigation-rail-item-ripple {
+                block-size: $nt-navigation-rail-compact-indicator-height;
+                border-radius: var(--nt-navigation-rail-indicator-shape, 999px);
+                inline-size: $nt-navigation-rail-indicator-width;
+                inset: auto;
+                inset-block-start: 0;
+                inset-inline-start: $nt-navigation-rail-collapsed-indicator-margin-inline;
+            }
+
+            .nt-navigation-rail-item:not(.nt-navigation-rail-item-expanded) .nt-navigation-rail-item-label,
+            .nt-navigation-rail-group-trigger:not(.nt-navigation-rail-item-expanded) .nt-navigation-rail-item-label {
+                @include typescale.nt-label-small;
+
+                -webkit-line-clamp: 1;
+                max-block-size: typescale.$tnt-typescale-label-small-line-height;
+            }
+
+            .nt-navigation-rail-item-expanded,
+            .nt-navigation-rail-group-trigger.nt-navigation-rail-item-expanded,
+            .nt-navigation-rail-item-expanded .nt-navigation-rail-item-body,
+            .nt-navigation-rail-group-trigger.nt-navigation-rail-item-expanded .nt-navigation-rail-item-body,
+            .nt-navigation-rail-item-expanded .nt-navigation-rail-item-content,
+            .nt-navigation-rail-group-trigger.nt-navigation-rail-item-expanded .nt-navigation-rail-item-content {
+                min-block-size: 40px;
+            }
+
+            .nt-navigation-rail-item-expanded .nt-navigation-rail-item-content,
+            .nt-navigation-rail-group-trigger.nt-navigation-rail-item-expanded .nt-navigation-rail-item-content {
+                padding-block: 8px;
+            }
+
+            .nt-navigation-rail-item-expanded .nt-navigation-rail-item-label,
+            .nt-navigation-rail-group-trigger.nt-navigation-rail-item-expanded .nt-navigation-rail-item-label,
+            .nt-navigation-rail-section-header {
+                @include typescale.nt-label-medium;
+            }
+
+            .nt-navigation-rail-section-header {
+                min-block-size: 24px;
+                padding-block: 4px 0;
+            }
+
+            .nt-navigation-rail-group-panel[popover] .nt-navigation-rail-group-items {
+                padding-block: 0;
+            }
+        }
     }
 
     &.nt-navigation-rail-with-divider {

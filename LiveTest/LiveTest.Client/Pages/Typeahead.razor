@@ -165,6 +165,7 @@
                              ItemTextSelector="@(customer => customer.Name)"
                              ItemSupportingTextSelector="@(customer => $"{customer.Email} - {customer.Region}")"
                              ItemSelectedCallback="OnCustomerSelectedAsync"
+                             ShowClearButton="true"
                              Label="Customer"
                              Placeholder="Search customers"
                              SupportingText="Search by name, email, or region"

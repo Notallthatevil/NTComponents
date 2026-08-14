@@ -42,6 +42,12 @@ public partial class NTNavigationRail {
     public RailCollapseBehavior CollapseBehavior { get; set; }
 
     /// <summary>
+    ///     Whether the rail uses reduced vertical spacing and one-stage-smaller destination typography.
+    /// </summary>
+    [Parameter]
+    public bool Compact { get; set; }
+
+    /// <summary>
     ///     Rail container color.
     /// </summary>
     [Parameter]
@@ -99,6 +105,12 @@ public partial class NTNavigationRail {
     /// </summary>
     [Parameter]
     public ActiveLinkIndicatorStyle IndicatorStyle { get; set; }
+
+    /// <summary>
+    ///     Whether expanding a top-level group closes all other expanded top-level groups. Nested groups are unaffected.
+    /// </summary>
+    [Parameter]
+    public bool LimitToOneExpanded { get; set; }
 
     /// <summary>
     ///     Optional override for the selected destination icon and label color.
@@ -172,6 +184,12 @@ public partial class NTNavigationRail {
     [Parameter]
     public bool ShowDivider { get; set; } = true;
 
+    /// <summary>
+    ///     Visual shape treatment for active destination indicators.
+    /// </summary>
+    [Parameter]
+    public NTNavigationRailVariant Variant { get; set; } = NTNavigationRailVariant.Pill;
+
     internal string EffectiveElementId => _effectiveElementId;
     internal string ExternalMenuButtonId => _externalMenuButtonId;
     internal TnTIcon EffectiveCollapsedMenuIcon => MenuIcon ?? MaterialIcon.Menu;
@@ -180,6 +198,7 @@ public partial class NTNavigationRail {
     internal string ExternalMenuButtonClass => _externalMenuButtonClass;
     internal bool IsExpanded => OpenByDefault;
     internal string? IsExpandedText => _isExpandedText;
+    internal string LimitToOneExpandedText => LimitToOneExpanded ? "true" : "false";
     internal string OpenByDefaultText => _openByDefaultText;
     internal bool ShouldRenderExternalMenuButton => HideRailOnXSScreens || CollapseBehavior == RailCollapseBehavior.Hide;
     private string? _elementClass;
@@ -227,6 +246,7 @@ public partial class NTNavigationRail {
     private string? BuildElementClass() => CssClassBuilder.Create()
         .AddFromAdditionalAttributes(AdditionalAttributes)
         .AddClass("nt-navigation-rail")
+        .AddClass("nt-navigation-rail-compact", Compact)
         .AddClass("nt-navigation-rail-collapsed", !IsExpanded)
         .AddClass("nt-navigation-rail-expanded", IsExpanded)
         .AddClass("nt-navigation-rail-hide-on-xs", HideRailOnXSScreens)
@@ -235,6 +255,7 @@ public partial class NTNavigationRail {
         .AddClass("nt-navigation-rail-with-header", Header is not null)
         .AddClass("nt-navigation-rail-with-fab", Fab is not null)
         .AddClass("nt-navigation-rail-indicator-full", IndicatorStyle == ActiveLinkIndicatorStyle.FullWidth)
+        .AddClass("nt-navigation-rail-square", Variant == NTNavigationRailVariant.Square)
         .AddElevation(Elevation)
         .Build();
 

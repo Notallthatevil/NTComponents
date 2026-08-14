@@ -47,7 +47,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="AspNetCore.SassCompiler" Version="1.100.0" />
+		<PackageReference Include="AspNetCore.SassCompiler" Version="1.102.0" PrivateAssets="all" />
 		<PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0" />
 	</ItemGroup>
 

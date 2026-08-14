@@ -1,5 +1,8 @@
-@use 'NTInputBase.razor';
+@use 'NTInputBase.razor' as input;
 @use 'NTMenuField' as menu;
+@use '../Buttons/buttonFocusRing' as focus;
+
+$nt-typeahead-clear-button-size: 24px;
 
 @include menu.nt-menu-field(
     $root-selector: '.nt-input.nt-typeahead',
@@ -37,5 +40,46 @@
             --nt-progress-ring-size: 24px;
             --nt-progress-ring-thickness: 3px;
         }
+    }
+
+    .nt-typeahead-clear-button {
+        align-items: center;
+        appearance: none;
+        background: transparent;
+        border: 0;
+        border-radius: 999px;
+        color: var(--nt-input-icon-color);
+        cursor: pointer;
+        display: inline-flex;
+        height: $nt-typeahead-clear-button-size;
+        inset-block-start: 50%;
+        inset-inline-end: input.$nt-input-horizontal-padding;
+        justify-content: center;
+        line-height: 1;
+        padding: 0;
+        position: absolute;
+        transform: translateY(-50%);
+        width: $nt-typeahead-clear-button-size;
+        z-index: 3;
+
+        &:hover {
+            background: color-mix(in srgb, var(--nt-input-icon-color) 8%, transparent);
+        }
+
+        &:focus-visible {
+            @include focus.nt-button-focus-ring;
+        }
+    }
+
+    &.nt-input-comfortable .nt-typeahead-clear-button {
+        inset-inline-end: input.$nt-input-horizontal-padding-comfortable;
+    }
+
+    &.nt-input-standard .nt-typeahead-clear-button {
+        inset-inline-end: input.$nt-input-horizontal-padding-standard;
+    }
+
+    &.nt-input-dense .nt-typeahead-clear-button {
+        inset-inline-end: input.$nt-input-horizontal-padding-dense;
     }
 }
