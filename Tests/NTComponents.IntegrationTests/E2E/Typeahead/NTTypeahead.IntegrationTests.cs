@@ -22,7 +22,7 @@ public class NTTypeahead_IntegrationTests : IAsyncLifetime {
     }
 
     [Fact]
-    public async Task Live_Demo_Search_Selects_With_Click_And_Updates_Status() {
+    public async Task Live_Demo_Search_Selects_And_Clear_Button_Clears_Value() {
         ArgumentNullException.ThrowIfNull(_page);
 
         await NavigateToTypeaheadDemoAsync();
@@ -40,6 +40,22 @@ public class NTTypeahead_IntegrationTests : IAsyncLifetime {
         await ExpectStatusContainsAsync("Selected Ada Lovelace");
         (await status.InnerTextAsync()).Should().Contain("Selected customer: Ada Lovelace");
         (await customerInput.InputValueAsync()).Should().Be("Ada Lovelace");
+
+        var clearButton = customerRoot.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Clear Customer", Exact = true });
+        var fieldBox = await customerRoot.Locator(".nt-input-container").BoundingBoxAsync();
+        var clearButtonBox = await clearButton.BoundingBoxAsync();
+        fieldBox.Should().NotBeNull();
+        clearButtonBox.Should().NotBeNull();
+        clearButtonBox!.X.Should().BeGreaterThan(fieldBox!.X + fieldBox.Width / 2);
+        (clearButtonBox.X + clearButtonBox.Width).Should().BeLessThanOrEqualTo(fieldBox.X + fieldBox.Width);
+        clearButtonBox.Y.Should().BeGreaterThanOrEqualTo(fieldBox.Y);
+        (clearButtonBox.Y + clearButtonBox.Height).Should().BeLessThanOrEqualTo(fieldBox.Y + fieldBox.Height);
+
+        await clearButton.ClickAsync();
+
+        await ExpectStatusContainsAsync("Selected customer: None");
+        (await customerInput.InputValueAsync()).Should().BeEmpty();
+        (await clearButton.CountAsync()).Should().Be(0);
     }
 
     [Fact]

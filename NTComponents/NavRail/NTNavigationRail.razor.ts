@@ -64,6 +64,9 @@ const smallScreenQuery = `(min-width: ${smallScreenMinWidth}px)`;
 const mediumScreenQuery = `(min-width: ${mediumScreenMinWidth}px)`;
 const navigationRailTransitionDuration = 550;
 const responsiveModalClass = 'nt-navigation-rail-responsive-modal';
+const selectedItemClass = 'nt-navigation-rail-item-selected';
+const deselectingItemClass = 'nt-navigation-rail-item-deselecting';
+const indicatorExitAnimationName = 'nt-navigation-rail-indicator-exit';
 const expandedStateByRailId = new Map<string, boolean>();
 
 declare global {
@@ -173,6 +176,15 @@ function getGroups(rail: NavigationRailElement): HTMLElement[] {
     return Array.from(rail.querySelectorAll<HTMLElement>(':scope .nt-navigation-rail-group'));
 }
 
+function isTopLevelGroup(rail: NavigationRailElement, group: HTMLElement): boolean {
+    const parentGroup = group.parentElement?.closest<HTMLElement>('.nt-navigation-rail-group');
+    return !parentGroup || !rail.contains(parentGroup);
+}
+
+function getTopLevelGroups(rail: NavigationRailElement): HTMLElement[] {
+    return getGroups(rail).filter(group => isTopLevelGroup(rail, group));
+}
+
 function getGroupTrigger(group: HTMLElement): HTMLButtonElement | null {
     return group.querySelector<HTMLButtonElement>(':scope > .nt-navigation-rail-group-trigger');
 }
@@ -237,8 +249,37 @@ function routeMatches(item: HTMLElement, currentLocation: RouteSelectionContext)
         && (currentLocation.path.length === targetPath.length || currentLocation.path[targetPath.length] === '/');
 }
 
+function setItemSelectionClass(item: HTMLElement, selected: boolean): void {
+    const wasSelected = item.classList.contains(selectedItemClass);
+
+    if (selected) {
+        item.classList.remove(deselectingItemClass);
+    }
+
+    item.classList.toggle(selectedItemClass, selected);
+
+    if (!wasSelected || selected) {
+        return;
+    }
+
+    item.classList.add(deselectingItemClass);
+    const animation = item.getAnimations?.({ subtree: true })
+        .find(candidate => {
+            const animationName = (candidate as CSSAnimation).animationName;
+            return typeof animationName === 'string' && animationName.startsWith(indicatorExitAnimationName);
+        });
+
+    if (!animation) {
+        item.classList.remove(deselectingItemClass);
+        return;
+    }
+
+    const finishDeselection = (): void => item.classList.remove(deselectingItemClass);
+    void animation.finished.then(finishDeselection, finishDeselection);
+}
+
 function setItemSelected(item: HTMLElement, selected: boolean): void {
-    item.classList.toggle('nt-navigation-rail-item-selected', selected);
+    setItemSelectionClass(item, selected);
 
     if (selected && !isDisabledNavigationElement(item)) {
         item.setAttribute('aria-current', 'page');
@@ -937,6 +978,10 @@ function applyExpandedState(rail: NavigationRailElement, expanded: boolean): voi
         applyGroupRailState(rail, group, expanded);
     });
 
+    if (expanded) {
+        enforceTopLevelGroupLimit(rail);
+    }
+
     syncGroupSelection(rail);
 }
 
@@ -1052,6 +1097,44 @@ function closeGroupPopover(panel: HTMLElement): void {
     }
 
     syncGroupPanelAvailability(panel);
+}
+
+function closeOtherTopLevelGroups(rail: NavigationRailElement, currentGroup: HTMLElement): void {
+    if (rail.dataset.ntNavigationRailLimitToOneExpanded !== 'true' || !isTopLevelGroup(rail, currentGroup)) {
+        return;
+    }
+
+    getTopLevelGroups(rail).forEach(group => {
+        if (group === currentGroup) {
+            return;
+        }
+
+        const trigger = getGroupTrigger(group);
+        const panel = getGroupPanel(group);
+
+        if (!trigger || !panel) {
+            return;
+        }
+
+        closeGroupPopover(panel);
+
+        if (getExpanded(rail)) {
+            setInlineGroupOpen(group, trigger, false);
+        } else {
+            trigger.setAttribute('aria-expanded', 'false');
+        }
+    });
+}
+
+function enforceTopLevelGroupLimit(rail: NavigationRailElement): void {
+    if (rail.dataset.ntNavigationRailLimitToOneExpanded !== 'true') {
+        return;
+    }
+
+    const openGroups = getTopLevelGroups(rail).filter(group => group.classList.contains('nt-navigation-rail-group-open'));
+    if (openGroups.length > 1) {
+        closeOtherTopLevelGroups(rail, openGroups[0]);
+    }
 }
 
 function closeTopmostGroupPopover(rail: NavigationRailElement): boolean {
@@ -1242,7 +1325,7 @@ function syncGroupSelection(rail: NavigationRailElement): void {
         const icon = getGroupTriggerIcon(trigger);
 
         group.classList.toggle('nt-navigation-rail-group-selected', selected);
-        trigger.classList.toggle('nt-navigation-rail-item-selected', selected);
+        setItemSelectionClass(trigger, selected);
 
         if (icon && isMaterialSymbolIcon(icon)) {
             icon.classList.toggle('nt-nav-rail-selected-icon', selected);
@@ -1435,8 +1518,13 @@ function registerGroups(rail: NavigationRailElement, state: NavigationRailState)
             event.preventDefault();
 
             if (getExpanded(rail)) {
+                const opening = !group.classList.contains('nt-navigation-rail-group-open');
                 closeGroupPopover(panel);
-                setInlineGroupOpen(group, trigger, !group.classList.contains('nt-navigation-rail-group-open'));
+                if (opening) {
+                    closeOtherTopLevelGroups(rail, group);
+                }
+
+                setInlineGroupOpen(group, trigger, opening);
                 setGroupDescendantsExpanded(panel, true);
                 return;
             }
@@ -1445,6 +1533,7 @@ function registerGroups(rail: NavigationRailElement, state: NavigationRailState)
                 closeGroupPopover(panel);
                 trigger.setAttribute('aria-expanded', 'false');
             } else {
+                closeOtherTopLevelGroups(rail, group);
                 openGroupPopover(trigger, panel);
             }
         };

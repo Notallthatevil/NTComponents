@@ -159,7 +159,7 @@ public class NTNavigationRail_Tests : BunitContext {
         menu.HasAttribute("href").Should().BeFalse();
         menu.GetAttribute("aria-expanded").Should().Be("false");
         cut.Find(".nt-navigation-rail-menu-button > .nt-button-ripple-host").Should().NotBeNull();
-        cut.Find(".nt-navigation-rail-item-body > .nt-navigation-rail-item-ripple.nt-button-ripple-host").Should().NotBeNull();
+        cut.Find(".nt-navigation-rail-item-content > .nt-navigation-rail-item-ripple.nt-button-ripple-host").Should().NotBeNull();
         cut.Find("tnt-page-script").GetAttribute("src").Should().Be("./_content/NTComponents/NavRail/NTNavigationRail.razor.js");
         cut.Markup.Should().NotContain("<script");
     }
@@ -201,6 +201,28 @@ public class NTNavigationRail_Tests : BunitContext {
         rail.GetAttribute("style")!.Should().NotContain("--nt-navigation-rail-divider-color");
     }
 
+    [Theory]
+    [InlineData(NTNavigationRailVariant.Pill, false)]
+    [InlineData(NTNavigationRailVariant.Square, true)]
+    public void Rail_Variant_Toggles_Square_Indicator_Class(NTNavigationRailVariant variant, bool expectedSquareClass) {
+        var cut = Render<NTNavigationRail>(parameters => parameters
+            .Add(x => x.AriaLabel, "Primary")
+            .Add(x => x.Variant, variant));
+
+        cut.Find("nav.nt-navigation-rail").ClassList.Contains("nt-navigation-rail-square").Should().Be(expectedSquareClass);
+    }
+
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(true, true)]
+    public void Rail_Compact_Toggles_Compact_Class(bool compact, bool expectedCompactClass) {
+        var cut = Render<NTNavigationRail>(parameters => parameters
+            .Add(x => x.AriaLabel, "Primary")
+            .Add(x => x.Compact, compact));
+
+        cut.Find("nav.nt-navigation-rail").ClassList.Contains("nt-navigation-rail-compact").Should().Be(expectedCompactClass);
+    }
+
     [Fact]
     public void Rail_Elevation_Parameter_Adds_Elevation_Class() {
         var cut = Render<NTNavigationRail>(parameters => parameters
@@ -229,6 +251,17 @@ public class NTNavigationRail_Tests : BunitContext {
         rail.GetAttribute("class")!.Should().Contain("nt-navigation-rail-expanded");
         rail.GetAttribute("class")!.Should().NotContain("nt-navigation-rail-collapsed");
         menuButton.GetAttribute("aria-expanded").Should().Be("true");
+    }
+
+    [Theory]
+    [InlineData(false, "false")]
+    [InlineData(true, "true")]
+    public void Rail_LimitToOneExpanded_Renders_Browser_Contract(bool limitToOneExpanded, string expectedValue) {
+        var cut = Render<NTNavigationRail>(parameters => parameters
+            .Add(x => x.AriaLabel, "Primary")
+            .Add(x => x.LimitToOneExpanded, limitToOneExpanded));
+
+        cut.Find("nav.nt-navigation-rail").GetAttribute("data-nt-navigation-rail-limit-to-one-expanded").Should().Be(expectedValue);
     }
 
     [Fact]

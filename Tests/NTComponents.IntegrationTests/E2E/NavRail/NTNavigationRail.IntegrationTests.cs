@@ -73,6 +73,29 @@ public class NTNavigationRail_IntegrationTests : IAsyncLifetime {
     }
 
     [Fact]
+    public async Task Rail_LimitToOneExpanded_Closes_Other_Top_Level_Group_Without_Closing_Nested_Group() {
+        ArgumentNullException.ThrowIfNull(_page);
+
+        await NavigateToRailTestPageAsync();
+        await GetExpandButton().ClickAsync();
+        await WaitForMenuStateAsync(expanded: true);
+
+        var workspaceTrigger = GetRail().GetByTestId("nav-rail-workspace-group").Locator(":scope > .nt-navigation-rail-group-trigger");
+        var nestedTrigger = GetRail().GetByTestId("nav-rail-workspace-tools-group").Locator(":scope > .nt-navigation-rail-group-trigger");
+        var administrationTrigger = GetRail().GetByTestId("nav-rail-administration-group").Locator(":scope > .nt-navigation-rail-group-trigger");
+
+        (await workspaceTrigger.GetAttributeAsync("aria-expanded")).Should().Be("true");
+        (await nestedTrigger.GetAttributeAsync("aria-expanded")).Should().Be("true");
+        (await administrationTrigger.GetAttributeAsync("aria-expanded")).Should().Be("false");
+
+        await administrationTrigger.ClickAsync();
+
+        (await workspaceTrigger.GetAttributeAsync("aria-expanded")).Should().Be("false");
+        (await nestedTrigger.GetAttributeAsync("aria-expanded")).Should().Be("true");
+        (await administrationTrigger.GetAttributeAsync("aria-expanded")).Should().Be("true");
+    }
+
+    [Fact]
     public async Task Rail_Collapsed_Item_Label_Is_Limited_To_Two_Lines() {
         ArgumentNullException.ThrowIfNull(_page);
 
@@ -109,6 +132,180 @@ public class NTNavigationRail_IntegrationTests : IAsyncLifetime {
 
         selectedLabelColor.Should().Be(unselectedLabelColor);
         selectedIconColor.Should().NotBe(unselectedIconColor);
+    }
+
+    [Fact]
+    public async Task Rail_Square_Variant_Renders_Square_Selected_Indicators_For_Items_And_Groups() {
+        ArgumentNullException.ThrowIfNull(_page);
+
+        await NavigateToRailTestPageAsync();
+
+        var collapsedIndicatorRadius = await GetHomeLink().Locator(".nt-navigation-rail-item-indicator").EvaluateAsync<string>("indicator => getComputedStyle(indicator).borderRadius");
+        var groupTrigger = GetRail().GetByTestId("nav-rail-workspace-group").Locator(":scope > .nt-navigation-rail-group-trigger");
+        var collapsedGroupIndicatorRadius = await groupTrigger.Locator(".nt-navigation-rail-item-indicator").EvaluateAsync<string>("indicator => getComputedStyle(indicator).borderRadius");
+
+        await GetExpandButton().ClickAsync();
+        await WaitForMenuStateAsync(expanded: true);
+
+        var expandedIndicatorRadius = await GetHomeLink().Locator(".nt-navigation-rail-item-content").EvaluateAsync<string>("indicator => getComputedStyle(indicator).borderRadius");
+        var expandedGroupIndicatorRadius = await groupTrigger.Locator(".nt-navigation-rail-item-content").EvaluateAsync<string>("indicator => getComputedStyle(indicator).borderRadius");
+
+        collapsedIndicatorRadius.Should().Be("0px");
+        collapsedGroupIndicatorRadius.Should().Be("0px");
+        expandedIndicatorRadius.Should().Be("0px");
+        expandedGroupIndicatorRadius.Should().Be("0px");
+    }
+
+    [Fact]
+    public async Task Rail_Compact_Mode_Reduces_Vertical_Spacing_And_Typography() {
+        ArgumentNullException.ThrowIfNull(_page);
+
+        await NavigateToRailTestPageAsync(compact: true);
+
+        var rail = GetRail();
+        var item = GetComponentsLink();
+        var groupTrigger = rail.GetByTestId("nav-rail-workspace-group").Locator(":scope > .nt-navigation-rail-group-trigger");
+        var items = rail.Locator(":scope > .nt-navigation-rail-items");
+        var menu = rail.Locator(":scope > .nt-navigation-rail-menu");
+
+        (await rail.GetAttributeAsync("class")).Should().Contain("nt-navigation-rail-compact");
+        (await item.EvaluateAsync<double>("item => item.getBoundingClientRect().height")).Should().Be(48);
+        (await groupTrigger.EvaluateAsync<double>("item => item.getBoundingClientRect().height")).Should().Be(48);
+        (await item.Locator(".nt-navigation-rail-item-indicator").EvaluateAsync<double>("indicator => indicator.getBoundingClientRect().height")).Should().Be(28);
+        (await groupTrigger.Locator(".nt-navigation-rail-item-indicator").EvaluateAsync<double>("indicator => indicator.getBoundingClientRect().height")).Should().Be(28);
+        (await item.EvaluateAsync<double>("item => item.querySelector('.nt-navigation-rail-item-label').getBoundingClientRect().top - item.querySelector('.nt-navigation-rail-item-indicator').getBoundingClientRect().bottom")).Should().Be(4);
+        (await groupTrigger.EvaluateAsync<double>("item => item.querySelector('.nt-navigation-rail-item-label').getBoundingClientRect().top - item.querySelector('.nt-navigation-rail-item-indicator').getBoundingClientRect().bottom")).Should().Be(4);
+        (await item.Locator(".nt-navigation-rail-item-label").EvaluateAsync<string>("label => getComputedStyle(label).fontSize")).Should().Be("11px");
+        (await item.Locator(".nt-navigation-rail-item-label").EvaluateAsync<string>("label => getComputedStyle(label).webkitLineClamp")).Should().Be("1");
+        (await items.EvaluateAsync<string>("items => getComputedStyle(items).paddingBlock")).Should().Be("0px");
+        (await menu.EvaluateAsync<string>("menu => getComputedStyle(menu).marginBlock")).Should().Be("0px");
+
+        await GetExpandButton().ClickAsync();
+        await WaitForMenuStateAsync(expanded: true);
+        await _page.WaitForFunctionAsync("() => document.querySelector('[data-testid=\"nav-rail-under-test\"]')?.getBoundingClientRect().width >= 220");
+
+        (await item.EvaluateAsync<double>("item => item.getBoundingClientRect().height")).Should().Be(40);
+        (await groupTrigger.EvaluateAsync<double>("item => item.getBoundingClientRect().height")).Should().Be(40);
+        (await item.Locator(".nt-navigation-rail-item-label").EvaluateAsync<string>("label => getComputedStyle(label).fontSize")).Should().Be("12px");
+        (await groupTrigger.Locator(".nt-navigation-rail-item-label").EvaluateAsync<string>("label => getComputedStyle(label).fontSize")).Should().Be("12px");
+        (await rail.GetByTestId("nav-rail-workspace-section").EvaluateAsync<double>("header => header.getBoundingClientRect().height")).Should().Be(24);
+        (await rail.GetByTestId("nav-rail-workspace-section").EvaluateAsync<string>("header => getComputedStyle(header).fontSize")).Should().Be("12px");
+        (await rail.GetByTestId("nav-rail-workspace-section").EvaluateAsync<string>("header => getComputedStyle(header).paddingBlock")).Should().Be("4px 0px");
+    }
+
+    [Fact]
+    public async Task Rail_Hover_Focus_And_Pressed_State_Layers_Match_Selected_Indicator_Geometry() {
+        ArgumentNullException.ThrowIfNull(_page);
+
+        await NavigateToRailTestPageAsync();
+
+        var item = GetComponentsLink();
+        await item.EvaluateAsync("item => item.addEventListener('click', event => event.preventDefault())");
+
+        await item.HoverAsync();
+        (await StateLayerMatchesSelectedGeometryAsync(item, expanded: false, expectFocusRing: false)).Should().BeTrue("collapsed hover should use the collapsed selected indicator bounds");
+
+        await _page.Keyboard.PressAsync("Tab");
+        await item.FocusAsync();
+        (await StateLayerMatchesSelectedGeometryAsync(item, expanded: false, expectFocusRing: true)).Should().BeTrue("collapsed focus should use the collapsed selected indicator bounds");
+
+        await item.HoverAsync();
+        await _page.Mouse.DownAsync();
+        (await RippleMatchesSelectedGeometryAsync(item, expanded: false)).Should().BeTrue("collapsed pressed ripple should use the collapsed selected indicator bounds");
+        await _page.Mouse.UpAsync();
+
+        await GetExpandButton().ClickAsync();
+        await WaitForMenuStateAsync(expanded: true);
+
+        await item.HoverAsync();
+        (await StateLayerMatchesSelectedGeometryAsync(item, expanded: true, expectFocusRing: false)).Should().BeTrue("expanded hover should use the expanded selected indicator bounds");
+
+        await _page.Keyboard.PressAsync("Tab");
+        await item.FocusAsync();
+        (await StateLayerMatchesSelectedGeometryAsync(item, expanded: true, expectFocusRing: true)).Should().BeTrue("expanded focus should use the expanded selected indicator bounds");
+
+        await item.HoverAsync();
+        await _page.Mouse.DownAsync();
+        (await RippleMatchesSelectedGeometryAsync(item, expanded: true)).Should().BeTrue("expanded pressed ripple should use the expanded selected indicator bounds");
+        await _page.Mouse.UpAsync();
+    }
+
+    [Fact]
+    public async Task Rail_Selected_Indicator_Animates_From_Centered_Sixty_Percent_Width() {
+        ArgumentNullException.ThrowIfNull(_page);
+
+        await NavigateToRailTestPageAsync();
+
+        var item = GetComponentsLink();
+
+        (await GetIndicatorAnimationResultAsync(item, expanded: false, exiting: false)).Should().Be("passed", "the collapsed indicator should expand from its centered 60% width at full height using the medium motion token");
+
+        await GetExpandButton().ClickAsync();
+        await WaitForMenuStateAsync(expanded: true);
+
+        (await GetIndicatorAnimationResultAsync(item, expanded: true, exiting: false)).Should().Be("passed", "the expanded indicator should expand from its centered 60% width at full height using the medium motion token");
+    }
+
+    [Fact]
+    public async Task Rail_Deselected_Indicator_Reverses_To_Centered_Sixty_Percent_Width() {
+        ArgumentNullException.ThrowIfNull(_page);
+
+        await NavigateToRailTestPageAsync();
+
+        var item = GetComponentsLink();
+
+        (await GetIndicatorAnimationResultAsync(item, expanded: false, exiting: true)).Should().Be("passed", "the collapsed indicator should contract to its centered 60% width while fading out");
+
+        await GetExpandButton().ClickAsync();
+        await WaitForMenuStateAsync(expanded: true);
+
+        (await GetIndicatorAnimationResultAsync(item, expanded: true, exiting: true)).Should().Be("passed", "the expanded indicator should contract to its centered 60% width while fading out");
+    }
+
+    [Fact]
+    public async Task LiveTest_Navigation_Animates_Previous_Selection_Out_While_New_Selection_Enters() {
+        ArgumentNullException.ThrowIfNull(_page);
+
+        await _page.GotoAsync($"{AppBaseUrl}/accordion", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await _page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var rail = GetPrimaryLiveTestRail();
+        var accordion = rail.GetByRole(AriaRole.Link, new LocatorGetByRoleOptions { Name = "Accordion", Exact = true });
+        var chips = rail.GetByRole(AriaRole.Link, new LocatorGetByRoleOptions { Name = "Chips", Exact = true });
+        await accordion.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 5000 });
+        (await accordion.GetAttributeAsync("class")).Should().Contain("nt-navigation-rail-item-selected");
+
+        await _page.EvaluateAsync(
+            """
+            () => {
+                window.__ntNavigationRailSelectionAnimations = [];
+                document.addEventListener('animationstart', event => {
+                    const item = event.target instanceof Element
+                        ? event.target.closest('.nt-navigation-rail-item')
+                        : null;
+                    const label = item?.querySelector('.nt-navigation-rail-item-label')?.textContent?.trim();
+
+                    if (label && event.animationName.startsWith('nt-navigation-rail-indicator-')) {
+                        window.__ntNavigationRailSelectionAnimations.push(`${label}:${event.animationName}`);
+                    }
+                });
+            }
+            """);
+
+        await chips.ClickAsync();
+        await _page.WaitForURLAsync("**/chips");
+        await _page.WaitForFunctionAsync(
+            """
+            () => window.__ntNavigationRailSelectionAnimations?.some(value => value.startsWith('Accordion:nt-navigation-rail-indicator-exit')) === true
+                && window.__ntNavigationRailSelectionAnimations.some(value => value.startsWith('Chips:nt-navigation-rail-indicator-enter'))
+            """,
+            null,
+            new PageWaitForFunctionOptions { Timeout = 5000 });
+
+        var selectionAnimations = await _page.EvaluateAsync<string[]>("() => window.__ntNavigationRailSelectionAnimations");
+
+        selectionAnimations.Should().Contain(value => value.StartsWith("Accordion:nt-navigation-rail-indicator-exit", StringComparison.Ordinal));
+        selectionAnimations.Should().Contain(value => value.StartsWith("Chips:nt-navigation-rail-indicator-enter", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -209,6 +406,30 @@ public class NTNavigationRail_IntegrationTests : IAsyncLifetime {
             new PageWaitForFunctionOptions { Timeout = 5000 });
     }
 
+    [Fact]
+    public async Task LiveTest_Footer_Switch_Toggles_Navigation_Rail_Variant() {
+        ArgumentNullException.ThrowIfNull(_page);
+
+        await NavigateToLiveTestHomeAsync();
+
+        var rail = GetPrimaryLiveTestRail();
+        var variantSwitch = rail.Locator(".nt-navigation-rail-footer").GetByRole(AriaRole.Switch, new LocatorGetByRoleOptions { Name = "Square highlight", Exact = true });
+        var indicator = rail.Locator(".nt-navigation-rail-item-content").First;
+
+        (await variantSwitch.IsCheckedAsync()).Should().BeFalse();
+        (await rail.GetAttributeAsync("class")).Should().NotContain("nt-navigation-rail-square");
+
+        await variantSwitch.CheckAsync();
+
+        (await rail.GetAttributeAsync("class")).Should().Contain("nt-navigation-rail-square");
+        (await indicator.EvaluateAsync<string>("indicator => getComputedStyle(indicator).borderRadius")).Should().Be("0px");
+
+        await variantSwitch.UncheckAsync();
+
+        (await rail.GetAttributeAsync("class")).Should().NotContain("nt-navigation-rail-square");
+        (await indicator.EvaluateAsync<string>("indicator => getComputedStyle(indicator).borderRadius")).Should().NotBe("0px");
+    }
+
     private ILocator GetRail() {
         ArgumentNullException.ThrowIfNull(_page);
         return _page.GetByRole(AriaRole.Navigation, new PageGetByRoleOptions { Name = "E2E primary navigation" });
@@ -247,10 +468,10 @@ public class NTNavigationRail_IntegrationTests : IAsyncLifetime {
         return _page.GetByRole(AriaRole.Link, new PageGetByRoleOptions { Name = "Reference" });
     }
 
-    private async Task NavigateToRailTestPageAsync() {
+    private async Task NavigateToRailTestPageAsync(bool compact = false) {
         ArgumentNullException.ThrowIfNull(_page);
 
-        await _page.GotoAsync($"{AppBaseUrl}/nav-rail-e2e-test", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await _page.GotoAsync($"{AppBaseUrl}/nav-rail-e2e-test{(compact ? "/true" : string.Empty)}", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
         await _page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await GetRail().WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 5000 });
         await GetExpandButton().WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 5000 });
@@ -265,6 +486,117 @@ public class NTNavigationRail_IntegrationTests : IAsyncLifetime {
         await GetPrimaryLiveTestRail().WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 5000 });
         await GetPrimaryLiveTestRail().GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Collapse navigation rail", Exact = true }).WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 5000 });
     }
+
+    private static Task<bool> StateLayerMatchesSelectedGeometryAsync(ILocator item, bool expanded, bool expectFocusRing) => item.EvaluateAsync<bool>(
+        """
+        (item, [expanded, expectFocusRing]) => {
+            const content = item.querySelector('.nt-navigation-rail-item-content');
+            const indicator = item.querySelector('.nt-navigation-rail-item-indicator');
+
+            if (!(content instanceof HTMLElement) || !(indicator instanceof HTMLElement)) {
+                return false;
+            }
+
+            const referenceRect = (expanded ? content : indicator).getBoundingClientRect();
+            const stateStyle = getComputedStyle(content, '::after');
+            const stateWidth = Number.parseFloat(stateStyle.width);
+            const stateHeight = Number.parseFloat(stateStyle.height);
+            const hasBackground = stateStyle.backgroundColor !== 'rgba(0, 0, 0, 0)';
+            const hasExpectedFocusRing = !expectFocusRing || stateStyle.boxShadow !== 'none';
+
+            return Math.abs(stateWidth - referenceRect.width) < 0.5
+                && Math.abs(stateHeight - referenceRect.height) < 0.5
+                && hasBackground
+                && hasExpectedFocusRing;
+        }
+        """,
+        new object[] { expanded, expectFocusRing });
+
+    private static Task<bool> RippleMatchesSelectedGeometryAsync(ILocator item, bool expanded) => item.EvaluateAsync<bool>(
+        """
+        (item, expanded) => {
+            const content = item.querySelector('.nt-navigation-rail-item-content');
+            const indicator = item.querySelector('.nt-navigation-rail-item-indicator');
+            const rippleHost = item.querySelector('.nt-navigation-rail-item-ripple');
+
+            if (!(content instanceof HTMLElement) || !(indicator instanceof HTMLElement) || !(rippleHost instanceof HTMLElement)) {
+                return false;
+            }
+
+            const referenceRect = (expanded ? content : indicator).getBoundingClientRect();
+            const rippleRect = rippleHost.getBoundingClientRect();
+
+            return Math.abs(rippleRect.x - referenceRect.x) < 0.5
+                && Math.abs(rippleRect.y - referenceRect.y) < 0.5
+                && Math.abs(rippleRect.width - referenceRect.width) < 0.5
+                && Math.abs(rippleRect.height - referenceRect.height) < 0.5
+                && getComputedStyle(rippleHost).overflow === 'hidden';
+        }
+        """,
+        expanded);
+
+    private static Task<string> GetIndicatorAnimationResultAsync(ILocator item, bool expanded, bool exiting) => item.EvaluateAsync<string>(
+        """
+        (item, [expanded, exiting]) => {
+            const content = item.querySelector('.nt-navigation-rail-item-content');
+            const indicator = item.querySelector('.nt-navigation-rail-item-indicator');
+
+            if (!(content instanceof HTMLElement) || !(indicator instanceof HTMLElement)) {
+                return 'indicator elements were not found';
+            }
+
+            item.classList.remove('nt-navigation-rail-item-deselecting', 'nt-navigation-rail-item-selected');
+            void item.offsetWidth;
+            item.classList.add(exiting ? 'nt-navigation-rail-item-deselecting' : 'nt-navigation-rail-item-selected');
+
+            const animationName = exiting ? 'nt-navigation-rail-indicator-exit' : 'nt-navigation-rail-indicator-enter';
+            const animation = item.getAnimations({ subtree: true })
+                .find(animation => typeof animation.animationName === 'string' && animation.animationName.startsWith(animationName));
+
+            if (!animation) {
+                return `animation not found; active animations: ${item.getAnimations({ subtree: true }).map(animation => animation.animationName ?? animation.constructor.name).join(', ')}`;
+            }
+
+            animation.pause();
+
+            const styleAt = currentTime => {
+                animation.currentTime = currentTime;
+                const style = expanded ? getComputedStyle(content, '::before') : getComputedStyle(indicator);
+                const matrix = new DOMMatrixReadOnly(style.transform);
+                const [originX, originY] = style.transformOrigin.split(' ').map(Number.parseFloat);
+
+                return {
+                    height: Number.parseFloat(style.height),
+                    opacity: Number.parseFloat(style.opacity),
+                    originX,
+                    originY,
+                    scaleX: matrix.a,
+                    scaleY: matrix.d,
+                    width: Number.parseFloat(style.width)
+                };
+            };
+
+            const timing = animation.effect.getTiming();
+            const easing = animation.effect.getKeyframes()[0].easing;
+            const start = styleAt(0);
+            const end = styleAt(Number(timing.duration));
+            item.classList.remove('nt-navigation-rail-item-deselecting', 'nt-navigation-rail-item-selected');
+
+            const matches = Math.abs(start.scaleX - (exiting ? 1 : 0.6)) < 0.01
+                && Math.abs(start.scaleY - 1) < 0.01
+                && Math.abs(start.opacity - (exiting ? 1 : 0)) < 0.01
+                && Math.abs(start.originX - (start.width / 2)) < 0.5
+                && Math.abs(start.originY - (start.height / 2)) < 0.5
+                && Math.abs(end.scaleX - (exiting ? 0.6 : 1)) < 0.01
+                && Math.abs(end.scaleY - 1) < 0.01
+                && Math.abs(end.opacity - (exiting ? 0 : 1)) < 0.01
+                && timing.duration === 250
+                && easing === (exiting ? 'cubic-bezier(0.3, 0, 0.8, 0.15)' : 'cubic-bezier(0.05, 0.7, 0.1, 1)');
+
+            return matches ? 'passed' : JSON.stringify({ expanded, start, end, duration: timing.duration, easing });
+        }
+        """,
+        new object[] { expanded, exiting });
 
     private async Task WaitForMenuStateAsync(bool expanded) {
         ArgumentNullException.ThrowIfNull(_page);

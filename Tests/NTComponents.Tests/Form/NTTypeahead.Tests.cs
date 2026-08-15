@@ -270,6 +270,47 @@ public class NTTypeahead_Tests : BunitContext {
     }
 
     [Fact]
+    public void Clear_Button_Is_Opt_In() {
+        var model = new TestModel {
+            City = CityOptions[0]
+        };
+
+        var cut = RenderTypeahead(model);
+
+        cut.FindAll(".nt-typeahead-clear-button").Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Clear_Button_Renders_After_Selection_And_Clears_Value() {
+        var model = new TestModel();
+        string? searchText = null;
+        var bindAfterValues = new List<CityOption?>();
+        var cut = RenderTypeahead(model, parameters => parameters
+            .Add(p => p.ShowClearButton, true)
+            .Add(p => p.SearchTextChanged, EventCallback.Factory.Create<string?>(this, value => searchText = value))
+            .Add(p => p.BindAfter, EventCallback.Factory.Create<CityOption?>(this, value => bindAfterValues.Add(value))));
+
+        cut.FindAll(".nt-typeahead-clear-button").Should().BeEmpty();
+        cut.Find("input[role='combobox']").Input("bos");
+        cut.WaitForAssertion(() => cut.FindAll(".nt-combobox-option").Should().ContainSingle());
+        await cut.Find(".nt-combobox-option").TriggerEventAsync("onpointerdown", new PointerEventArgs());
+
+        var clearButton = cut.Find("button.nt-typeahead-clear-button");
+        clearButton.GetAttribute("aria-label").Should().Be("Clear City");
+        clearButton.TextContent.Should().Contain("close");
+        searchText.Should().Be("Boston");
+
+        await clearButton.ClickAsync(new MouseEventArgs());
+
+        model.City.Should().BeNull();
+        searchText.Should().BeNull();
+        bindAfterValues.Should().Equal(CityOptions[1], null);
+        cut.Find("input[role='combobox']").GetAttribute("value").Should().BeNullOrEmpty();
+        cut.Find("input[type='hidden']").GetAttribute("value").Should().BeEmpty();
+        cut.FindAll(".nt-typeahead-clear-button").Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task SearchText_Bind_Updates_When_User_Types_And_Selects_Item() {
         string? searchText = null;
         var cut = RenderTypeahead(configure: parameters => parameters

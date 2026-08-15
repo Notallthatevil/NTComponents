@@ -669,7 +669,6 @@ public class NTInputFile_Tests : BunitContext {
 
         private Task HandleSelectionChangedAsync(IReadOnlyList<IBrowserFile> files) {
             _selectedFiles = files.ToArray();
-            StateHasChanged();
             return Task.CompletedTask;
         }
 

@@ -7,7 +7,10 @@
 					  MenuAriaLabel="Expand navigation rail"
 					  MenuAriaLabelWhenExpanded="Collapse navigation rail"
 					  ShowDivider="true"
-					  OpenByDefault="true">
+					  OpenByDefault="true"
+					  LimitToOneExpanded="true"
+					  Compact="true"
+					  Variant="NTNavigationRailVariant.Pill">
 		<ChildContent>
 
 			<NTNavigationRailSectionHeader Label="LiveTest" />
@@ -70,6 +73,12 @@
 			<NTNavigationRailItem Label="Virtualize" Href="/InfiniteScroll" Icon="MaterialIcon.Info" />
 		</ChildContent>
 		<Footer>
+			<NTInputSwitch @bind-Value="_useSquareNavigationRailHighlight"
+						   Label="Square highlight"
+						   Variant="NTSwitchVariant.Trailing"
+						   SubmitValue="false"
+						   autocomplete="off"
+						   data-livetest-nav-rail-variant-toggle />
 			<NTThemeToggle />
 		</Footer>
 		<Header>
@@ -93,3 +102,7 @@
 
 <NTSnackbar />
 <NTToast />
+
+@code {
+	private bool _useSquareNavigationRailHighlight;
+}

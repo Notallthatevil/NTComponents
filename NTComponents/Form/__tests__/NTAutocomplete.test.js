@@ -155,16 +155,34 @@ describe('NTAutocomplete browser behavior', () => {
         expect(dotNetRef.invokeMethodAsync).not.toHaveBeenCalled();
     });
 
-    test('marks the existing value selected when opening', () => {
-        const { input, root } = createFixture({ allowCustomValue: false, value: 'Austin' });
+    test('shows the existing value selected first followed by every other option', () => {
+        const { input, root } = createFixture({ allowCustomValue: false, value: 'Boston' });
 
         input.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 
-        const selectedOption = root.querySelector('[data-nt-autocomplete-value="Austin"]');
+        const selectedOption = root.querySelector('[data-nt-autocomplete-value="Boston"]');
         expect(selectedOption.classList.contains('nt-combobox-option-selected')).toBe(true);
         expect(selectedOption.getAttribute('aria-selected')).toBe('true');
         expect(selectedOption.querySelector('.nt-combobox-option-trailing')).not.toBeNull();
-        expect(root.querySelector('[data-nt-autocomplete-value="Boston"] .nt-combobox-option-trailing')).toBeNull();
+        expect(root.querySelector('[data-nt-autocomplete-value="Austin"] .nt-combobox-option-trailing')).toBeNull();
+        expect(getVisibleMenuValues(root)).toEqual(['Boston', 'Austin', 'New York', 'North Austin']);
+    });
+
+    test('clears an existing selection when typing begins and filters with the new text', async () => {
+        const { dotNetRef, input, root } = createFixture({ allowCustomValue: false, value: 'Austin' });
+
+        input.dispatchEvent(new InputEvent('beforeinput', { bubbles: true, data: 'New', inputType: 'insertText' }));
+        input.value = 'New';
+        input.dispatchEvent(new InputEvent('input', { bubbles: true, data: 'New', inputType: 'insertText' }));
+        await Promise.resolve();
+
+        input.value = '';
+        onUpdate(input, dotNetRef);
+
+        expect(input.value).toBe('New');
+        expect(dotNetRef.invokeMethodAsync).toHaveBeenCalledWith('NotifyAutocompleteValueChanged', null, false);
+        expect(root.querySelector('.nt-combobox-option-selected')).toBeNull();
+        expect(getVisibleMenuValues(root)).toEqual(['New York']);
     });
 
     test('preserves static metadata when closing and reopening', () => {
@@ -296,20 +314,20 @@ describe('NTAutocomplete browser behavior', () => {
         ]);
     });
 
-    test('renders the checkmark only for the selected option', () => {
+    test('renders the checkmark only for a selected option', () => {
         const { input, root } = createFixture({ allowCustomValue: false });
 
         input.dispatchEvent(new MouseEvent('click', { bubbles: true }));
         expect(root.querySelectorAll('.nt-combobox-option-trailing')).toHaveLength(0);
 
-        input.value = 'Austin';
-        input.dispatchEvent(new Event('input', { bubbles: true }));
+        root.querySelector('[data-nt-autocomplete-value="Austin"]').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        input.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 
         expect(root.querySelector('[data-nt-autocomplete-value="Austin"] .nt-combobox-option-trailing')).not.toBeNull();
         expect(root.querySelector('[data-nt-autocomplete-value="North Austin"] .nt-combobox-option-trailing')).toBeNull();
 
-        input.value = 'North Austin';
-        input.dispatchEvent(new Event('input', { bubbles: true }));
+        root.querySelector('[data-nt-autocomplete-value="North Austin"]').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        input.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 
         expect(root.querySelector('[data-nt-autocomplete-value="Austin"] .nt-combobox-option-trailing')).toBeNull();
         expect(root.querySelector('[data-nt-autocomplete-value="North Austin"] .nt-combobox-option-trailing')).not.toBeNull();
@@ -504,6 +522,9 @@ describe('NTAutocomplete browser behavior', () => {
         expect(input.value).toBe('Boston');
         expect(root.querySelector('.nt-combobox-list [data-nt-autocomplete-value="Boston"]')).toBeNull();
         expect(dotNetRef.invokeMethodAsync).toHaveBeenLastCalledWith('NotifyAutocompleteValueChanged', 'Boston', true);
+
+        input.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        expect(getVisibleMenuValues(root)).toEqual(['Boston', 'Austin', 'New York', 'North Austin']);
     });
 
     test('onUpdate reconnects rerendered menu content', () => {

@@ -233,6 +233,12 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
     public NTDataGridAppearance Appearance { get; set; }
 
     /// <summary>
+    /// Gets or sets whether divider lines are shown between body cells.
+    /// </summary>
+    [Parameter]
+    public bool ShowCellDividers { get; set; }
+
+    /// <summary>
     /// Gets or sets a row key selector.
     /// </summary>
     [Parameter]
@@ -285,6 +291,7 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
     private string RootClass => CssClassBuilder.Create("nt-data-grid")
         .AddClass("nt-data-grid-compact", Density == NTDataGridDensity.Compact)
         .AddClass("nt-data-grid-striped", HasStripedRows)
+        .AddClass("nt-data-grid-cell-dividers", ShowCellDividers)
         .AddClass("nt-data-grid-virtualized", Virtualize)
         .AddClass(_class, !string.IsNullOrWhiteSpace(_class))
         .Build();

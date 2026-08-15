@@ -42,9 +42,9 @@ else {
 
 @code {
     private RenderFragment ItemContent => @<span class="nt-navigation-rail-item-body">
-        @NTRipple.RenderHost("nt-button-ripple-host nt-navigation-rail-item-ripple")
         <span class="nt-navigation-rail-item-indicator" aria-hidden="true"></span>
         <span class="nt-navigation-rail-item-content">
+            @NTRipple.RenderHost("nt-button-ripple-host nt-navigation-rail-item-ripple")
             <span class="nt-navigation-rail-item-icon" aria-hidden="true">
                 @if (EffectiveIcon is not null) {
                     @EffectiveIcon.Render(EffectiveIconClass)

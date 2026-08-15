@@ -1,7 +1,7 @@
 type Maybe<T> = T | null | undefined;
 
 interface DotNetAutocompleteRef {
-    invokeMethodAsync(methodName: 'NotifyAutocompleteValueChanged', value: string, closeMenu: boolean): Promise<unknown> | void;
+    invokeMethodAsync(methodName: 'NotifyAutocompleteValueChanged', value: string | null, closeMenu: boolean): Promise<unknown> | void;
     invokeMethodAsync(methodName: 'NotifyAutocompleteTouched'): Promise<unknown> | void;
 }
 
@@ -50,6 +50,7 @@ interface AutocompleteState {
     onDocumentMouseDown: (event: MouseEvent) => void;
     onDocumentScroll: (event: Event) => void;
     onInputClick: (event: MouseEvent) => void;
+    onInputBeforeInput: (event: InputEvent) => void;
     onInputInput: (event: Event) => void;
     onInputKeyDown: (event: KeyboardEvent) => void;
     onMenuClick: (event: MouseEvent) => void;
@@ -57,7 +58,9 @@ interface AutocompleteState {
     onWindowResize: (event: UIEvent) => void;
     options: AutocompleteOptionState[];
     optionSources: HTMLScriptElement[];
+    query: string | null;
     root: HTMLElement;
+    selectedValue: string | null;
 }
 
 const stateByInput = new Map<HTMLInputElement, AutocompleteState>();
@@ -200,7 +203,7 @@ function invokeDotNetSafely(callback: () => Promise<unknown> | void): Promise<vo
 
 function updateSelectedOptionDom(state: AutocompleteState): void {
     for (const option of state.options) {
-        const selected = !option.isCustom && option.value === state.input.value;
+        const selected = !option.isCustom && option.value === state.selectedValue;
         option.element.classList.toggle('nt-combobox-option-selected', selected);
         option.element.setAttribute('aria-selected', selected ? 'true' : 'false');
         if (selected && !option.trailing) {
@@ -369,12 +372,15 @@ function filterOptions(state: AutocompleteState, updateActive = state.isOpen): v
         return;
     }
 
-    const typedValue = state.input.value.trim();
+    const typedValue = state.query?.trim() ?? '';
     const query = typedValue.toLocaleLowerCase();
     const normalOptions = state.options.filter(option => !option.isCustom);
     const customOption = state.options.find(option => option.isCustom);
-    const showCustomOption = Boolean(customOption && typedValue);
-    const visibleRankedOptions = collectRankedOptions(normalOptions, query);
+    const selectedOption = normalOptions.find(option => option.value === state.selectedValue);
+    const showCustomOption = Boolean(state.query !== null && customOption && typedValue);
+    const visibleRankedOptions = state.query === null
+        ? selectedOption ? [selectedOption, ...normalOptions.filter(option => option !== selectedOption)] : normalOptions
+        : collectRankedOptions(normalOptions, query);
     const visibleOptions = new Set(visibleRankedOptions);
     if (customOption && showCustomOption) {
         visibleOptions.add(customOption);
@@ -556,11 +562,22 @@ function selectOption(state: AutocompleteState, option: AutocompleteOptionState)
     }
 
     state.input.value = option.value;
+    state.query = null;
+    state.selectedValue = option.value;
     setOpen(state, false);
     notifyValueChanged(state, true);
 }
 
 function updateElements(state: AutocompleteState): void {
+    const query = state.query;
+    if (query !== null && state.isOpen) {
+        state.input.value = query;
+    }
+    else {
+        state.query = null;
+        state.selectedValue = state.input.value || null;
+    }
+
     state.root = queryRoot(state.input);
     state.list = state.root.querySelector<HTMLElement>('.nt-combobox-list');
     state.menu = state.root.querySelector<HTMLElement>('[data-nt-autocomplete-menu="true"]');
@@ -760,6 +777,7 @@ function createState(input: HTMLInputElement, dotNetRef: Maybe<unknown>): Autoco
         onDocumentMouseDown: () => { },
         onDocumentScroll: () => { },
         onInputClick: () => { },
+        onInputBeforeInput: () => { },
         onInputInput: () => { },
         onInputKeyDown: () => { },
         onMenuClick: () => { },
@@ -767,14 +785,31 @@ function createState(input: HTMLInputElement, dotNetRef: Maybe<unknown>): Autoco
         onWindowResize: () => { },
         options: [],
         optionSources: [],
+        query: null,
         root: queryRoot(input),
+        selectedValue: input.value || null,
     };
 
     state.onInputClick = () => {
         openAutocomplete(state);
     };
 
+    state.onInputBeforeInput = () => {
+        if (state.selectedValue === null || state.input.value !== state.selectedValue) {
+            return;
+        }
+
+        state.input.value = '';
+        state.query = '';
+        state.selectedValue = null;
+        if (state.dotNetRef) {
+            void invokeDotNetSafely(() => state.dotNetRef?.invokeMethodAsync('NotifyAutocompleteValueChanged', null, false));
+        }
+    };
+
     state.onInputInput = () => {
+        state.query = state.input.value;
+        state.selectedValue = null;
         if (!openAutocomplete(state)) {
             filterOptions(state);
         }
@@ -865,6 +900,7 @@ function createState(input: HTMLInputElement, dotNetRef: Maybe<unknown>): Autoco
     };
 
     input.addEventListener('click', state.onInputClick);
+    input.addEventListener('beforeinput', state.onInputBeforeInput);
     input.addEventListener('input', state.onInputInput);
     input.addEventListener('keydown', state.onInputKeyDown);
     updateElements(state);
@@ -879,6 +915,7 @@ function cleanupState(state: Maybe<AutocompleteState>): void {
     }
 
     state.input.removeEventListener('click', state.onInputClick);
+    state.input.removeEventListener('beforeinput', state.onInputBeforeInput);
     state.input.removeEventListener('input', state.onInputInput);
     state.input.removeEventListener('keydown', state.onInputKeyDown);
     state.menu?.removeEventListener('mousedown', state.onMenuMouseDown);

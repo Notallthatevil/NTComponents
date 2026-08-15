@@ -31,3 +31,19 @@ public enum ActiveLinkIndicatorStyle {
     /// </summary>
     FullWidth
 }
+
+/// <summary>
+///     Visual shape treatment for active navigation rail indicators.
+/// </summary>
+public enum NTNavigationRailVariant {
+
+    /// <summary>
+    ///     Pill-shaped active indicators.
+    /// </summary>
+    Pill,
+
+    /// <summary>
+    ///     Square active indicators.
+    /// </summary>
+    Square
+}

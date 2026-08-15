@@ -6,6 +6,7 @@
 @{
     var errorText = CurrentErrorText;
     var hasErrorText = !string.IsNullOrWhiteSpace(errorText);
+    var showClearButton = CanClearValue && !hasErrorText;
 }
 
 <div class="@GetRootClass()" style="@ElementStyle">
@@ -101,6 +102,9 @@
                                     AriaLabel="@LoadingText" />
                     </span>
                 }
+                else if (showClearButton) {
+                    <span class="nt-input-trailing" aria-hidden="true"></span>
+                }
                 else if (trailingAdornment.Icon is not null) {
                     <span class="@trailingAdornment.Class" aria-label="@trailingAdornment.AriaLabel" aria-hidden="@trailingAdornment.AriaHidden">
                         @trailingAdornment.Icon.Render()
@@ -108,6 +112,17 @@
                 }
             </span>
         </label>
+
+        @if (showClearButton) {
+            <button class="nt-typeahead-clear-button"
+                    type="button"
+                    aria-label="@ClearButtonAriaLabel"
+                    @onpointerdown:preventDefault="true"
+                    @onclick:stopPropagation="true"
+                    @onclick="ClearValueAsync">
+                <span aria-hidden="true">@MaterialIcon.Close.Render()</span>
+            </button>
+        }
 
         <div class="nt-combobox-menu" hidden="@(!_isOpen)" aria-hidden="@(!_isOpen ? "true" : "false")" popover="manual" data-nt-typeahead-menu="true">
             <ul class="nt-combobox-list" id="@listboxId" role="listbox" aria-label="@ListboxLabel">
