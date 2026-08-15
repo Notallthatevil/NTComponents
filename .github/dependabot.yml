@@ -41,8 +41,15 @@ updates:
       day: "monday"
       time: "06:00"
       timezone: "America/Denver"
-    # Disable routine version updates while retaining Dependabot security updates.
-    open-pull-requests-limit: 0
+    groups:
+      nuget-minor-and-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    ignore:
+      - dependency-name: "Microsoft.AspNetCore.Components.WebAssembly"
     commit-message:
       prefix: "chore"
       include: "scope"
