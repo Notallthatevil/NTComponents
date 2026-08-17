@@ -85,7 +85,7 @@
 
             <label>
                 Date type
-                <select @bind="_dateInputKind">
+                <select @bind="SelectedDateInputKind">
                     @foreach (var inputKind in Enum.GetValues<DateInputKind>()) {
                         <option value="@inputKind">@inputKind</option>
                     }
@@ -1043,6 +1043,7 @@
                     case DateInputKind.DateTime:
                         <NTInputDateTime DateTimeType="DateTime?"
                                          @bind-Value="_model.Appointment"
+                                         required
                                          Appearance="@FieldAppearanceOverride"
                                          ActiveIndicatorColor="@ActiveIndicatorColorOverride"
                                          BackgroundColor="@BackgroundColorOverride"
@@ -1080,6 +1081,7 @@
                     case DateInputKind.Date:
                         <NTInputDateTime DateTimeType="DateOnly?"
                                          @bind-Value="_model.StartDate"
+                                         required
                                          Appearance="@FieldAppearanceOverride"
                                          ActiveIndicatorColor="@ActiveIndicatorColorOverride"
                                          BackgroundColor="@BackgroundColorOverride"
@@ -1117,6 +1119,7 @@
                     case DateInputKind.Month:
                         <NTInputDateTime DateTimeType="DateOnly?"
                                          @bind-Value="_model.StartDate"
+                                         required
                                          Appearance="@FieldAppearanceOverride"
                                          ActiveIndicatorColor="@ActiveIndicatorColorOverride"
                                          BackgroundColor="@BackgroundColorOverride"
@@ -1155,6 +1158,7 @@
                     case DateInputKind.Time:
                         <NTInputDateTime DateTimeType="TimeOnly?"
                                          @bind-Value="_model.StartTime"
+                                         required
                                          Appearance="@FieldAppearanceOverride"
                                          ActiveIndicatorColor="@ActiveIndicatorColorOverride"
                                          BackgroundColor="@BackgroundColorOverride"
@@ -1409,6 +1413,14 @@
     private bool CheckboxRequired {
         get => _checkboxRequired;
         set => _checkboxRequired = value;
+    }
+
+    private DateInputKind SelectedDateInputKind {
+        get => _dateInputKind;
+        set {
+            _dateInputKind = value;
+            _model.ActiveDateInputKind = value;
+        }
     }
 
     private string? CheckboxLabel => _showLabel ? "Accept terms" : null;
@@ -1827,7 +1839,7 @@
         }
     }
 
-    private static DemoModel CreateModel() => new();
+    private static DemoModel CreateModel(DateInputKind activeDateInputKind = DateInputKind.Date) => new() { ActiveDateInputKind = activeDateInputKind };
 
     private void HandleCheckboxIndeterminateChanged(bool indeterminate) => _checkboxIndeterminate = indeterminate;
 
@@ -1844,7 +1856,7 @@
     }
 
     private void ResetModel() {
-        _model = CreateModel();
+        _model = CreateModel(_dateInputKind);
         _submitMessage = "Not submitted";
     }
 
@@ -1861,6 +1873,17 @@
         Low,
         Medium,
         High
+    }
+
+    [AttributeUsage(AttributeTargets.Property)]
+    private sealed class RequiredForDateInputKindAttribute(params DateInputKind[] inputKinds) : ValidationAttribute("The {0} field is required.") {
+        protected override ValidationResult? IsValid(object? value, ValidationContext validationContext) {
+            if (value is not null || validationContext.ObjectInstance is not DemoModel model || !inputKinds.Contains(model.ActiveDateInputKind)) {
+                return ValidationResult.Success;
+            }
+
+            return new ValidationResult(FormatErrorMessage(validationContext.DisplayName));
+        }
     }
 
     private sealed class DemoModel {
@@ -1893,10 +1916,13 @@
 
         public NTSliderRange<int> BudgetRange { get; set; } = new(25, 75);
 
+        [Required]
         public string Status { get; set; } = string.Empty;
 
+        [Required]
         public bool? Approved { get; set; }
 
+        [Required]
         public DemoPriority? Priority { get; set; }
 
         public IReadOnlyList<string> Tags { get; set; } = [];
@@ -1909,10 +1935,15 @@
 
         public bool NotificationsEnabled { get; set; }
 
+        [RequiredForDateInputKind(DateInputKind.DateTime)]
         public DateTime? Appointment { get; set; }
 
+        [RequiredForDateInputKind(DateInputKind.Date, DateInputKind.Month)]
         public DateOnly? StartDate { get; set; }
 
+        [RequiredForDateInputKind(DateInputKind.Time)]
         public TimeOnly? StartTime { get; set; }
+
+        public DateInputKind ActiveDateInputKind { get; set; }
     }
 }

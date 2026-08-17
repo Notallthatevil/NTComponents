@@ -58,4 +58,52 @@ public class NTInputDateTime_IntegrationTests : IAsyncLifetime {
         html.Should().Contain("format=\"MM/dd/yyyy\"");
         html.Should().Contain("data-tnt-dtp-native-input=\"true\"");
     }
+
+    [Fact]
+    public async Task Invalid_Empty_Field_Prompts_Use_The_Error_Color() {
+        ArgumentNullException.ThrowIfNull(_fixture);
+        ArgumentNullException.ThrowIfNull(_page);
+
+        await _page.GotoAsync($"{_fixture.ServerAddress}/validation-render-modes", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
+
+        var form = _page.GetByTestId("server-form");
+        await Assertions.Expect(_page.GetByTestId("server-runtime")).ToContainTextAsync("interactive", new LocatorAssertionsToContainTextOptions { Timeout = 15000 });
+        await form.GetByRole(AriaRole.Button, new() { Name = "Submit" }).ClickAsync();
+
+        var placeholderField = _page.GetByTestId("server-placeholder-field");
+        var dateField = _page.GetByTestId("server-date-mask-field");
+        var selectField = _page.GetByTestId("server-select-placeholder-field");
+        await Assertions.Expect(placeholderField).ToHaveAttributeAsync("aria-invalid", "true");
+        await Assertions.Expect(dateField).ToHaveAttributeAsync("aria-invalid", "true");
+        await Assertions.Expect(selectField).ToHaveAttributeAsync("aria-invalid", "true");
+
+        var placeholderColors = await placeholderField.EvaluateAsync<string[]>("""
+            element => {
+                const root = element.closest('.nt-input');
+                const errorText = root?.querySelector('.nt-input-error-text');
+                return [getComputedStyle(element, '::placeholder').color, errorText ? getComputedStyle(errorText).color : ''];
+            }
+            """);
+        var dateMaskColors = await dateField.EvaluateAsync<string[]>("""
+            element => {
+                const root = element.closest('.nt-input');
+                const errorText = root?.querySelector('.nt-input-error-text');
+                return [
+                    getComputedStyle(element, '::-webkit-datetime-edit').webkitTextFillColor,
+                    errorText ? getComputedStyle(errorText).color : ''
+                ];
+            }
+            """);
+        var selectPlaceholderColors = await selectField.EvaluateAsync<string[]>("""
+            element => {
+                const root = element.closest('.nt-input');
+                const errorText = root?.querySelector('.nt-input-error-text');
+                return [getComputedStyle(element).webkitTextFillColor, errorText ? getComputedStyle(errorText).color : ''];
+            }
+            """);
+
+        placeholderColors[0].Should().Be(placeholderColors[1]);
+        dateMaskColors[0].Should().Be(dateMaskColors[1]);
+        selectPlaceholderColors[0].Should().Be(selectPlaceholderColors[1]);
+    }
 }

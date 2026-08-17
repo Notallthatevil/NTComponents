@@ -140,19 +140,6 @@ public partial class NTSelect<[DynamicallyAccessedMembers(DynamicallyAccessedMem
         builder.Append(" nt-select");
     }
 
-    /// <inheritdoc />
-    protected override TrailingAdornmentState CreateTrailingAdornmentState(bool hasErrorText) {
-        if (hasErrorText) {
-            return base.CreateTrailingAdornmentState(hasErrorText);
-        }
-
-        return new TrailingAdornmentState {
-            Icon = TrailingIcon ?? MaterialIcon.ArrowDropDown,
-            Class = "nt-input-trailing nt-select-indicator",
-            AriaHidden = "true"
-        };
-    }
-
     private async Task OnChangeAsync(ChangeEventArgs args) {
         if (FieldReadOnly || FieldDisabled) {
             return;

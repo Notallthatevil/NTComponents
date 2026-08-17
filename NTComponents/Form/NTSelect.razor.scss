@@ -3,7 +3,7 @@
 
 .nt-input.nt-select {
     .nt-select-control {
-        appearance: none;
+        appearance: menulist;
         cursor: pointer;
     }
 
@@ -15,10 +15,6 @@
                 color: colors.$tnt-color-on-surface;
             }
         }
-    }
-
-    .nt-select-indicator {
-        pointer-events: none;
     }
 
     &.nt-input-readonly,

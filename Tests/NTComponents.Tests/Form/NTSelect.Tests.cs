@@ -51,7 +51,7 @@ public class NTSelect_Tests : BunitContext {
         cut.Find("label.nt-input-container").GetAttribute("for").Should().Be("status-select");
         cut.FindAll("optgroup[label='Open']").Should().HaveCount(1);
         cut.FindAll("option").Should().HaveCount(3);
-        cut.Find(".nt-select-indicator").Should().NotBeNull();
+        cut.FindAll(".nt-input-trailing").Should().BeEmpty();
     }
 
     [Fact]
@@ -260,6 +260,7 @@ public class NTSelect_Tests : BunitContext {
 
         cut.Find(".nt-input").GetAttribute("class").Should().Contain("nt-invalid");
         cut.Find(".nt-input-error-text").TextContent.Should().Be("The Status field is required.");
+        cut.Find(".nt-input-error-icon").Should().NotBeNull();
         cut.Find("select").GetAttribute("aria-invalid").Should().Be("true");
         cut.Find("select").GetAttribute("aria-errormessage").Should().EndWith("-error");
     }

@@ -365,7 +365,6 @@ function orderVisibleOptions(state: AutocompleteState, visibleRankedOptions: Aut
 function filterOptions(state: AutocompleteState, updateActive = state.isOpen): void {
     if (state.options.length === 0) {
         updateGroupVisibility(state);
-        synchronizeNativePattern(state);
         if (updateActive) {
             clearActiveOption(state);
         }
@@ -405,7 +404,6 @@ function filterOptions(state: AutocompleteState, updateActive = state.isOpen): v
 
     orderVisibleOptions(state, visibleRankedOptions, showCustomOption && customOption ? customOption : null);
     updateGroupVisibility(state);
-    synchronizeNativePattern(state);
 
     const empty = state.root.querySelector<HTMLElement>('.nt-combobox-empty');
     if (empty) {
@@ -436,33 +434,6 @@ function updateGroupVisibility(state: AutocompleteState): void {
     for (const header of Array.from(state.root.querySelectorAll<HTMLElement>('[data-nt-autocomplete-group-header]'))) {
         const groupId = header.dataset.ntAutocompleteGroupHeader;
         header.hidden = !groupId || !visibleGroupIds.has(groupId);
-    }
-}
-
-function buildAllowedValuesPattern(state: AutocompleteState): string | null {
-    const values = state.options.length > 0
-        ? state.options
-            .filter(option => !option.isCustom && !option.element.disabled)
-            .map(option => option.value)
-        : parseOptionDefinitions(state)
-            .filter(option => !option.isCustom && !option.disabled)
-            .map(option => option.value);
-    if (values.length === 0) {
-        return null;
-    }
-
-    return `(?:${values.map(value => value.replace(/[\^$.|?*+()[\]{}\-/]/g, '\\$&')).join('|')})`;
-}
-
-function synchronizeNativePattern(state: AutocompleteState): void {
-    if (state.input.dataset.ntAutocompleteAllowCustomValue !== 'false') {
-        state.input.removeAttribute('pattern');
-        return;
-    }
-
-    const pattern = buildAllowedValuesPattern(state);
-    if (pattern) {
-        state.input.setAttribute('pattern', pattern);
     }
 }
 

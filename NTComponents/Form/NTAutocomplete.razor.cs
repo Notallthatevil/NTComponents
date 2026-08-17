@@ -56,7 +56,6 @@ namespace NTComponents;
 public partial class NTAutocomplete : IAsyncDisposable {
     private const string AutocompleteControlBaseClass = "nt-input-control nt-autocomplete-control";
     private const string JsModulePath = "./_content/NTComponents/Form/NTAutocomplete.razor.js";
-    private const string PatternSpecialCharacters = @"\^$.|?*+()[]{}-/";
     private static readonly HashSet<string> AutocompleteExplicitControlAttributeNames = new(StringComparer.OrdinalIgnoreCase) {
         "id",
         "name",
@@ -93,7 +92,7 @@ public partial class NTAutocomplete : IAsyncDisposable {
     ///     Gets or sets a value indicating whether users can submit values that are not declared as child <see cref="NTAutocompleteOption" /> entries.
     /// </summary>
     /// <remarks>
-    ///     When this is <see langword="false" />, the component rejects non-empty values that do not match an enabled registered option value exactly after child options have registered. The browser enhancement also hides the explicit custom-value row and applies a native pattern constraint when it parses the rendered option metadata.
+    ///     When this is <see langword="false" />, the component rejects non-empty values that do not match an enabled registered option value exactly after child options have registered. The browser enhancement also hides the explicit custom-value row. Option values are not written to the native <c>pattern</c> attribute.
     /// </remarks>
     [Parameter]
     public bool AllowCustomValue { get; set; } = true;
@@ -240,17 +239,6 @@ public partial class NTAutocomplete : IAsyncDisposable {
     }
 
     /// <inheritdoc />
-    protected override IReadOnlyDictionary<string, object?>? BuildAdditionalControlAttributes() {
-        if (AllowCustomValue || _optionChildren.Count == 0) {
-            return null;
-        }
-
-        return new Dictionary<string, object?> {
-            ["pattern"] = BuildAllowedValuesPattern(_optionChildren)
-        };
-    }
-
-    /// <inheritdoc />
     protected override TrailingAdornmentState CreateTrailingAdornmentState(bool hasErrorText) {
         if (hasErrorText) {
             return base.CreateTrailingAdornmentState(hasErrorText);
@@ -335,49 +323,16 @@ public partial class NTAutocomplete : IAsyncDisposable {
         return string.Concat(format.AsSpan(0, placeholderIndex), value, format.AsSpan(placeholderIndex + 3));
     }
 
-    private static string BuildAllowedValuesPattern(IReadOnlyList<NTAutocompleteOption> items) {
-        var enabledValues = items
-            .Where(option => !option.EffectiveDisabled)
-            .Select(option => option.Value)
-            .ToArray();
-
-        if (enabledValues.Length == 0) {
-            return "a^";
-        }
-
-        var builder = new StringBuilder();
-        builder.Append("(?:");
-        for (var index = 0; index < enabledValues.Length; index++) {
-            if (index > 0) {
-                builder.Append('|');
-            }
-
-            AppendEscapedPatternValue(builder, enabledValues[index]);
-        }
-
-        builder.Append(')');
-        return builder.ToString();
-    }
-
-    private static void AppendEscapedPatternValue(StringBuilder builder, string value) {
-        foreach (var character in value) {
-            if (PatternSpecialCharacters.Contains(character)) {
-                builder.Append('\\');
-            }
-
-            builder.Append(character);
-        }
-    }
-
     private static string BuildCustomOptionJson(string customValueOptionFormat, bool fieldDisabled) {
         var builder = new StringBuilder();
         AppendOptionJson(builder, id: null, "nt-combobox-option", string.Empty, string.Empty, null, fieldDisabled, selected: false, isCustom: true, customValueOptionFormat, leadingIcon: null, group: null);
         return builder.ToString();
     }
 
-    internal static string BuildOptionJson(NTAutocompleteOption option) {
+    internal string BuildOptionJson(NTAutocompleteOption option) {
+        var selected = string.Equals(option.Value, CurrentValueAsString, StringComparison.Ordinal);
         var builder = new StringBuilder();
-        AppendOptionJson(builder, id: null, GetOptionClass(selected: false, option.EffectiveDisabled), option.Value, option.EffectiveLabel, option.SupportingText, option.EffectiveDisabled, selected: false, isCustom: false, customFormat: null, option.LeadingIcon, option.GroupLabel);
+        AppendOptionJson(builder, id: null, GetOptionClass(selected, option.EffectiveDisabled), option.Value, option.EffectiveLabel, option.SupportingText, option.EffectiveDisabled, selected, isCustom: false, customFormat: null, option.LeadingIcon, option.GroupLabel);
         return builder.ToString();
     }
 
@@ -536,8 +491,8 @@ public sealed class NTAutocompleteOption : ComponentBase, IDisposable {
     ///     Gets or sets the value inserted into the text field and submitted with forms.
     /// </summary>
     /// <remarks>
-    ///     Keep values stable and unique. When <see cref="NTAutocomplete.AllowCustomValue" /> is <see langword="false" />, the
-    ///     typed value must match an enabled option value exactly.
+    ///     Keep values stable and unique. An option is selected when this value exactly matches the parent autocomplete's bound value.
+    ///     When <see cref="NTAutocomplete.AllowCustomValue" /> is <see langword="false" />, the typed value must match an enabled option value exactly.
     /// </remarks>
     [Parameter, EditorRequired]
     public string Value { get; set; } = string.Empty;
@@ -569,7 +524,7 @@ public sealed class NTAutocompleteOption : ComponentBase, IDisposable {
         builder.OpenElement(0, "script");
         builder.AddAttribute(1, "type", "application/json");
         builder.AddAttribute(2, "data-nt-autocomplete-option-definition", "true");
-        builder.AddContent(3, (MarkupString)NTAutocomplete.BuildOptionJson(this));
+        builder.AddContent(3, (MarkupString)Context!.BuildOptionJson(this));
         builder.CloseElement();
     }
 

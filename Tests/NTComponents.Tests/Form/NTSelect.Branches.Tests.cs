@@ -172,10 +172,10 @@ public class NTSelect_Branches_Tests : BunitContext {
     }
 
     [Fact]
-    public void CustomTrailingIcon_ReplacesDefaultIndicatorIcon() {
+    public void CustomTrailingIcon_RendersAlongsideNativeSelect() {
         var cut = RenderStringSelect(configure: parameters => parameters.Add(component => component.TrailingIcon, MaterialIcon.Search));
 
-        cut.Find(".nt-select-indicator").TextContent.Should().Contain("search");
+        cut.Find(".nt-input-trailing").TextContent.Should().Contain("search");
         cut.Markup.Should().NotContain("arrow_drop_down");
     }
 
