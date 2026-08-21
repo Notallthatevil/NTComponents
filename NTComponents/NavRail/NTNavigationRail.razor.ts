@@ -16,6 +16,7 @@ interface NavigationRailState {
     onClick?: () => void;
     onExternalClick?: () => void;
     onKeyDown?: (event: KeyboardEvent) => void;
+    onNavigationClick?: (event: MouseEvent) => void;
     onModalDialogCancel?: (event: Event) => void;
     onModalDialogClick?: (event: MouseEvent) => void;
     onModalDialogClose?: () => void;
@@ -98,8 +99,13 @@ function getTargetRailsForDispose(target: Maybe<Element>): NavigationRailElement
     return containingRail ? [containingRail] : [];
 }
 
+function isOwnedByRail(rail: NavigationRailElement, element: Element): boolean {
+    return element.closest('.nt-navigation-rail') === rail;
+}
+
 function getMenuButton(rail: NavigationRailElement): HTMLButtonElement | null {
-    return rail.querySelector<HTMLButtonElement>(':scope .nt-navigation-rail-menu-button');
+    return Array.from(rail.querySelectorAll<HTMLButtonElement>(':scope .nt-navigation-rail-menu-button'))
+        .find(button => isOwnedByRail(rail, button)) ?? null;
 }
 
 function getExternalMenuButton(rail: NavigationRailElement): HTMLButtonElement | null {
@@ -165,15 +171,18 @@ function shouldOpenByDefault(rail: NavigationRailElement, state: NavigationRailS
 }
 
 function getItems(rail: NavigationRailElement): HTMLElement[] {
-    return Array.from(rail.querySelectorAll<HTMLElement>(':scope .nt-navigation-rail-item'));
+    return Array.from(rail.querySelectorAll<HTMLElement>(':scope .nt-navigation-rail-item'))
+        .filter(item => isOwnedByRail(rail, item));
 }
 
 function getSectionHeaders(rail: NavigationRailElement): HTMLElement[] {
-    return Array.from(rail.querySelectorAll<HTMLElement>(':scope .nt-navigation-rail-section-header'));
+    return Array.from(rail.querySelectorAll<HTMLElement>(':scope .nt-navigation-rail-section-header'))
+        .filter(header => isOwnedByRail(rail, header));
 }
 
 function getGroups(rail: NavigationRailElement): HTMLElement[] {
-    return Array.from(rail.querySelectorAll<HTMLElement>(':scope .nt-navigation-rail-group'));
+    return Array.from(rail.querySelectorAll<HTMLElement>(':scope .nt-navigation-rail-group'))
+        .filter(group => isOwnedByRail(rail, group));
 }
 
 function isTopLevelGroup(rail: NavigationRailElement, group: HTMLElement): boolean {
@@ -1099,6 +1108,26 @@ function closeGroupPopover(panel: HTMLElement): void {
     syncGroupPanelAvailability(panel);
 }
 
+function closeNavigationItemPopovers(rail: NavigationRailElement, event: MouseEvent): void {
+    if (!rail.hasAttribute('data-nt-close-on-navigation') || !(event.target instanceof Element)) {
+        return;
+    }
+
+    const item = event.target.closest<HTMLElement>('a.nt-navigation-rail-item[href]');
+    if (!item || !rail.contains(item) || isDisabledNavigationElement(item)) {
+        return;
+    }
+
+    getGroups(rail)
+        .map(group => ({ panel: getGroupPanel(group), trigger: getGroupTrigger(group) }))
+        .filter((entry): entry is { panel: HTMLElement; trigger: HTMLButtonElement | null } => entry.panel !== null && entry.panel.contains(item) && isPopoverOpen(entry.panel))
+        .reverse()
+        .forEach(({ panel, trigger }) => {
+            closeGroupPopover(panel);
+            trigger?.setAttribute('aria-expanded', 'false');
+        });
+}
+
 function closeOtherTopLevelGroups(rail: NavigationRailElement, currentGroup: HTMLElement): void {
     if (rail.dataset.ntNavigationRailLimitToOneExpanded !== 'true' || !isTopLevelGroup(rail, currentGroup)) {
         return;
@@ -1468,6 +1497,24 @@ function bindExternalButton(rail: NavigationRailElement, state: NavigationRailSt
     externalButton.addEventListener('click', state.onExternalClick);
 }
 
+function registerNavigationClickHandler(rail: NavigationRailElement, state: NavigationRailState): void {
+    if (state.onNavigationClick) {
+        return;
+    }
+
+    state.onNavigationClick = event => closeNavigationItemPopovers(rail, event);
+    rail.addEventListener('click', state.onNavigationClick);
+}
+
+function removeNavigationClickHandler(rail: NavigationRailElement, state: NavigationRailState | undefined): void {
+    if (!state?.onNavigationClick) {
+        return;
+    }
+
+    rail.removeEventListener('click', state.onNavigationClick);
+    delete state.onNavigationClick;
+}
+
 function removeGroupHandlers(state: NavigationRailState | undefined): void {
     state?.groupHandlers.forEach(handler => {
         handler.trigger.removeEventListener('click', handler.onClick);
@@ -1569,6 +1616,7 @@ function updateRail(rail: NavigationRailElement): void {
         }
 
         bindExternalButton(rail, existingState, externalButton);
+        registerNavigationClickHandler(rail, existingState);
         watchResponsiveModal(rail, existingState);
         watchSmallScreen(rail, existingState);
         registerRailScrollHandler(rail, existingState);
@@ -1582,6 +1630,7 @@ function updateRail(rail: NavigationRailElement): void {
         existingState.button.removeEventListener('click', existingState.onClick);
     }
     removeExternalButtonHandler(existingState);
+    removeNavigationClickHandler(rail, existingState);
     if (existingState?.onKeyDown) {
         rail.removeEventListener('keydown', existingState.onKeyDown);
     }
@@ -1606,6 +1655,7 @@ function updateRail(rail: NavigationRailElement): void {
     }
 
     bindExternalButton(rail, state, externalButton);
+    registerNavigationClickHandler(rail, state);
     rail.__ntNavigationRailState = state;
     watchResponsiveModal(rail, state);
     watchSmallScreen(rail, state);
@@ -1629,6 +1679,7 @@ function disposeRail(rail: Maybe<NavigationRailElement>): void {
         state.button.removeEventListener('click', state.onClick);
     }
     removeExternalButtonHandler(state);
+    removeNavigationClickHandler(rail, state);
     if (state?.onKeyDown) {
         rail.removeEventListener('keydown', state.onKeyDown);
     }

@@ -36,6 +36,12 @@ public partial class NTNavigationRail {
     public RenderFragment? ChildContent { get; set; }
 
     /// <summary>
+    ///     Whether selecting an enabled destination link closes its collapsed-rail group popover. Defaults to <see langword="true" />.
+    /// </summary>
+    [Parameter]
+    public bool CloseOnNavigation { get; set; } = true;
+
+    /// <summary>
     ///     Behavior represented when the rail is not expanded.
     /// </summary>
     [Parameter]
