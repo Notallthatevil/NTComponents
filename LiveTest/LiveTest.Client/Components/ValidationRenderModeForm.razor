@@ -23,7 +23,23 @@
                      Placeholder="Leave blank, blur, then submit"
                      SupportingText="Required through DataAnnotations. Blur should add nt-modified before invalid styles appear."
                      LeadingIcon="MaterialIcon.Description"
+                     data-testid="@($"{ModeKey}-placeholder-field")"
                      OnBlurCallback="HandleBlurAsync" />
+
+        <NTInputDateTime DateTimeType="DateOnly?"
+                         @bind-Value="Model.LossDate"
+                         Label="Loss date"
+                         data-testid="@($"{ModeKey}-date-mask-field")" />
+
+        <NTSelect TValue="string"
+                  @bind-Value="Model.ClaimType"
+                  Label="Claim type"
+                  Placeholder="Choose a claim type"
+                  data-testid="@($"{ModeKey}-select-placeholder-field")">
+            <option value="">Choose a claim type</option>
+            <option value="property">Property</option>
+            <option value="vehicle">Vehicle</option>
+        </NTSelect>
 
         <div class="validation-render-mode-group">
             <label class="validation-render-mode-group-label">Severity</label>

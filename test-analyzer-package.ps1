@@ -1,4 +1,7 @@
-param([Parameter(Mandatory = $true)][string]$PackagePath)
+param(
+    [Parameter(Mandatory = $true)][string]$PackagePath,
+    [ValidateSet('NTComponents', 'NTComponents.Analyzers')][string]$ExpectedPackageId = 'NTComponents.Analyzers'
+)
 
 $ErrorActionPreference = 'Stop'
 
@@ -19,7 +22,7 @@ try {
         }
     }
 
-    if ($archive.Entries | Where-Object { $_.FullName -like 'lib/*.dll' -or $_.FullName -like 'lib/*/*.dll' }) {
+    if ($ExpectedPackageId -eq 'NTComponents.Analyzers' -and ($archive.Entries | Where-Object { $_.FullName -like 'lib/*.dll' -or $_.FullName -like 'lib/*/*.dll' })) {
         throw 'Analyzer package must not expose its assembly as a compile or runtime library.'
     }
 
@@ -38,7 +41,7 @@ try {
 
     $packageId = [string]$nuspec.package.metadata.id
     $packageVersion = [string]$nuspec.package.metadata.version
-    if ($packageId -ne 'NTComponents.Analyzers' -or [string]::IsNullOrWhiteSpace($packageVersion)) {
+    if ($packageId -ne $ExpectedPackageId -or [string]::IsNullOrWhiteSpace($packageVersion)) {
         throw "Unexpected analyzer package identity '$packageId' version '$packageVersion'."
     }
 }
@@ -73,7 +76,21 @@ try {
 </Project>
 "@
 
-    $source = @'
+    $source = if ($packageId -eq 'NTComponents') {
+        @'
+using Microsoft.AspNetCore.Components.Rendering;
+using NTComponents;
+
+public static class ButtonFactory {
+    public static void Build(RenderTreeBuilder builder) {
+        builder.OpenComponent<NTButton>(0);
+        builder.CloseComponent();
+    }
+}
+'@
+    }
+    else {
+        @'
 namespace Microsoft.AspNetCore.Components.Rendering {
     public sealed class RenderTreeBuilder {
         public void OpenComponent<TComponent>(int sequence) { }
@@ -96,6 +113,7 @@ public static class ButtonFactory {
     }
 }
 '@
+    }
 
     $projectPath = Join-Path $projectDirectory 'AnalyzerPackageConsumer.csproj'
     [System.IO.File]::WriteAllText($projectPath, $project, [System.Text.UTF8Encoding]::new($false))

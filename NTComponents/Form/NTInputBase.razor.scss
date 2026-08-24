@@ -745,6 +745,15 @@ $nt-input-textarea-filled-label-space-dense: 14px;
 
         .nt-input-control {
             caret-color: var(--nt-input-error-caret-color);
+
+            &::placeholder {
+                color: var(--nt-input-error-color);
+            }
+        }
+
+        &.nt-select.nt-input-has-placeholder:not(.nt-input-has-value) .nt-select-control {
+            color: var(--nt-input-error-color);
+            -webkit-text-fill-color: var(--nt-input-error-color);
         }
 
         .nt-input-active-indicator::before,

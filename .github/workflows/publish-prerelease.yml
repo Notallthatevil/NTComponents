@@ -131,9 +131,11 @@ jobs:
           dotnet pack ./NTComponents.Extensions/NTComponents.Extensions.csproj --configuration Release --output ./artifacts/nuget /p:PackageVersion=${{ steps.release-version.outputs.version }}
           dotnet pack ./NTComponents.Analyzers/NTComponents.Analyzers.csproj --configuration Release --output ./artifacts/nuget /p:PackageVersion=${{ steps.release-version.outputs.version }}
 
-      - name: Verify analyzer package
+      - name: Verify analyzer packaging
         if: steps.check-tags.outputs.is_tagged == 'false' && steps.release-version.outputs.version != ''
-        run: pwsh ./test-analyzer-package.ps1 -PackagePath "./artifacts/nuget/NTComponents.Analyzers.${{ steps.release-version.outputs.version }}.nupkg"
+        run: |
+          pwsh ./test-analyzer-package.ps1 -PackagePath "./artifacts/nuget/NTComponents.Analyzers.${{ steps.release-version.outputs.version }}.nupkg"
+          pwsh ./test-analyzer-package.ps1 -PackagePath "./artifacts/nuget/NTComponents.${{ steps.release-version.outputs.version }}.nupkg" -ExpectedPackageId NTComponents
 
       - name: Publish NuGet packages
         if: steps.check-tags.outputs.is_tagged == 'false' && steps.release-version.outputs.version != ''

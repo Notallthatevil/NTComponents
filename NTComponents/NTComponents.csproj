@@ -64,6 +64,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<None Include="..\NTComponents.Analyzers\bin\$(Configuration)\netstandard2.0\NTComponents.Analyzers.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
 		<None Include="..\Logo.png">
 		  <Pack>True</Pack>
 		  <PackagePath>\</PackagePath>

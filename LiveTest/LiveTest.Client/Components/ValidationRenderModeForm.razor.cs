@@ -57,7 +57,13 @@ public partial class ValidationRenderModeForm : ComponentBase {
         [Required(ErrorMessage = "Enter a claim title.")]
         public string? ClaimTitle { get; set; }
 
+        [Required(ErrorMessage = "Choose a claim type.")]
+        public string? ClaimType { get; set; }
+
         public bool Confirmed { get; set; }
+
+        [Required(ErrorMessage = "Enter a loss date.")]
+        public DateOnly? LossDate { get; set; }
 
         [Required(ErrorMessage = "Choose a severity.")]
         public string? Severity { get; set; }

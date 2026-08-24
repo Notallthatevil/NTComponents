@@ -265,6 +265,23 @@ public class NTNavigationRail_Tests : BunitContext {
     }
 
     [Fact]
+    public void Rail_CloseOnNavigation_Defaults_To_Enabled() {
+        var cut = Render<NTNavigationRail>(parameters => parameters
+            .Add(x => x.AriaLabel, "Primary"));
+
+        cut.Find("nav.nt-navigation-rail").GetAttribute("data-nt-close-on-navigation").Should().Be("true");
+    }
+
+    [Fact]
+    public void Rail_CloseOnNavigation_False_Removes_Browser_OptIn() {
+        var cut = Render<NTNavigationRail>(parameters => parameters
+            .Add(x => x.AriaLabel, "Primary")
+            .Add(x => x.CloseOnNavigation, false));
+
+        cut.Find("nav.nt-navigation-rail").HasAttribute("data-nt-close-on-navigation").Should().BeFalse();
+    }
+
+    [Fact]
     public void Rail_HideRailOnXSScreens_Renders_External_Menu_Trigger() {
         var cut = Render<NTNavigationRail>(parameters => parameters
             .Add(x => x.AriaLabel, "Primary")

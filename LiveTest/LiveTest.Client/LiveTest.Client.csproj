@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
 
   <PropertyGroup>
 	  <TargetFrameworks>net9.0;net10.0;net11.0</TargetFrameworks>
@@ -33,7 +33,6 @@
   <ItemGroup>
     <Content Remove="Components\CardTesting.razor" />
     <Content Remove="Components\DialogComponent.razor" />
-    <Content Remove="Components\FormV2Demo.razor" />
     <Content Remove="Components\FormWasmDemo.razor" />
     <Content Remove="Components\ImageButtons.razor" />
     <Content Remove="Components\InputFileServerProgressDemo.razor" />

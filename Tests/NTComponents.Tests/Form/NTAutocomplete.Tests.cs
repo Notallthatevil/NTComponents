@@ -92,6 +92,20 @@ public class NTAutocomplete_Tests : BunitContext {
         metadata.Should().Contain("\"group\":\"Texas\"");
     }
 
+    [Fact]
+    public void Dynamically_Added_Option_Matching_The_Bound_Value_Renders_Selected() {
+        var model = new TestModel { City = "2971" };
+        var options = new[] { new AutocompleteOption("2971", "2971") };
+
+        var cut = RenderAutocomplete(model, parameters => parameters.Add(p => p.AllowCustomValue, true), options);
+
+        var optionMetadata = cut.FindAll("script[type='application/json'][data-nt-autocomplete-option-definition='true']")
+            .Select(script => script.TextContent)
+            .Single(metadata => metadata.Contains("\"value\":\"2971\"", StringComparison.Ordinal));
+        optionMetadata.Should().Contain("\"selected\":true");
+        optionMetadata.Should().Contain("nt-combobox-option-selected");
+    }
+
     // Behavior source: Option metadata exposes optional icons, supporting text, fallback labels, disabled state, and group metadata to the enhancement module.
     [Fact]
     public void Option_Metadata_Renders_All_Documented_Optional_States() {
@@ -199,6 +213,20 @@ public class NTAutocomplete_Tests : BunitContext {
         cut.Find("input[role='combobox']").GetAttribute("value").Should().Be("Austin");
     }
 
+    [Fact]
+    public void Native_Change_Allows_Custom_Value_Without_Rendering_An_Option_Pattern() {
+        var model = new TestModel();
+        var cut = RenderAutocomplete(model);
+        var input = cut.Find("input[role='combobox']");
+        const string customValue = "0005 - FARM: NURSERY EMPLOYEES & DRIVERS";
+
+        input.Change(customValue);
+
+        model.City.Should().Be(customValue);
+        input.GetAttribute("value").Should().Be(customValue);
+        input.HasAttribute("pattern").Should().BeFalse();
+    }
+
     // Behavior source: Disabled and ReadOnly field contracts prevent native input events from changing the bound value.
     [Theory]
     [InlineData(true, false)]
@@ -284,7 +312,7 @@ public class NTAutocomplete_Tests : BunitContext {
     }
 
     [Fact]
-    public void Disallow_Custom_Value_Renders_Option_Metadata_For_Form_Post_Parameter_Binding() {
+    public void Disallow_Custom_Value_Does_Not_Render_Option_Values_As_A_Native_Pattern() {
         var model = new TestModel();
         var options = new[] {
             new AutocompleteOption("Austin", "Austin"),
@@ -300,36 +328,8 @@ public class NTAutocomplete_Tests : BunitContext {
         var input = cut.Find("input[role='combobox']");
 
         input.GetAttribute("name").Should().Be("Input.City");
-        input.GetAttribute("pattern").Should().Be(@"(?:Austin|A\/B \(North\))");
+        input.HasAttribute("pattern").Should().BeFalse();
         RenderedOptionMetadata(cut).Should().Contain("A/B (North)");
-    }
-
-    [Fact]
-    public void Disallow_Custom_Value_With_Only_Disabled_Options_Renders_Reject_All_Pattern() {
-        var model = new TestModel();
-        var options = new[] {
-            new AutocompleteOption("Austin", "Austin", Disabled: true),
-            new AutocompleteOption("Boston", "Boston", Disabled: true)
-        };
-
-        var cut = RenderAutocomplete(model, parameters => parameters
-            .Add(p => p.AllowCustomValue, false), options);
-        cut.Render();
-
-        cut.Find("input[role='combobox']").GetAttribute("pattern").Should().Be("a^");
-    }
-
-    [Fact]
-    public void Disallow_Custom_Value_Without_Options_Does_Not_Constrain_Native_Input() {
-        var model = new TestModel();
-
-        var cut = Render<NTAutocomplete>(parameters => parameters
-            .Add(p => p.Value, model.City)
-            .Add(p => p.ValueChanged, EventCallback.Factory.Create<string?>(this, value => model.City = value))
-            .Add(p => p.ValueExpression, (Expression<Func<string?>>)(() => model.City))
-            .Add(p => p.AllowCustomValue, false));
-
-        cut.Find("input[role='combobox']").HasAttribute("pattern").Should().BeFalse();
     }
 
     [Fact]

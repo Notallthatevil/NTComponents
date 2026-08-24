@@ -208,7 +208,7 @@ describe('NTAutocomplete browser behavior', () => {
         expect(input.hasAttribute('list')).toBe(false);
     });
 
-    test('synchronizes native pattern when custom values are disallowed', () => {
+    test('does not serialize option values into a native pattern', () => {
         const options = [
             ['Austin', 'Austin', 'Texas'],
             ['A/B (North)', 'A/B (North)', 'Neighborhood'],
@@ -216,7 +216,7 @@ describe('NTAutocomplete browser behavior', () => {
         ];
         const { input } = createFixture({ allowCustomValue: false, options });
 
-        expect(input.getAttribute('pattern')).toBe('(?:Austin|A\\/B \\(North\\))');
+        expect(input.hasAttribute('pattern')).toBe(false);
     });
 
     test('filters to exact and contains matches without matching supporting text', () => {

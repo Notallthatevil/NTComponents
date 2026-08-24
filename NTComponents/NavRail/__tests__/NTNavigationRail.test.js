@@ -976,6 +976,129 @@ describe('NTNavigationRail module', () => {
     expect(document.activeElement).toBe(trigger);
   });
 
+  test('data-nt-close-on-navigation closes the destination link popover when enabled', () => {
+    document.body.innerHTML = `
+      <nav class="nt-navigation-rail nt-navigation-rail-collapsed">
+        <div class="nt-navigation-rail-group">
+          <button class="nt-navigation-rail-group-trigger nt-navigation-rail-item"
+                  type="button"
+                  aria-expanded="false"
+                  aria-controls="workspace-panel"
+                  data-nt-navigation-rail-group-trigger="true">
+            Workspace
+          </button>
+          <div id="workspace-panel" class="nt-navigation-rail-group-panel" popover="auto">
+            <div class="nt-navigation-rail-group-items">
+              <a class="nt-navigation-rail-item" href="/projects"><span>Projects</span></a>
+            </div>
+          </div>
+        </div>
+      </nav>`;
+
+    const rail = document.querySelector('.nt-navigation-rail');
+    const trigger = document.querySelector('.nt-navigation-rail-group-trigger');
+    const panel = document.querySelector('.nt-navigation-rail-group-panel');
+    const item = document.querySelector('a.nt-navigation-rail-item');
+    let popoverOpen = false;
+
+    trigger.getBoundingClientRect = jest.fn(() => ({ top: 24, left: 20, right: 76, bottom: 80, width: 56, height: 56 }));
+    panel.getBoundingClientRect = jest.fn(() => ({ top: 0, left: 0, right: 200, bottom: 160, width: 200, height: 160 }));
+    panel.showPopover = jest.fn(() => {
+      popoverOpen = true;
+      panel.dispatchEvent(new Event('toggle'));
+    });
+    panel.hidePopover = jest.fn(() => {
+      popoverOpen = false;
+      panel.dispatchEvent(new Event('toggle'));
+    });
+    const matches = panel.matches.bind(panel);
+    panel.matches = selector => selector === ':popover-open' ? popoverOpen : matches(selector);
+    item.addEventListener('click', event => event.preventDefault());
+
+    module.onLoad();
+    trigger.click();
+    item.querySelector('span').click();
+
+    expect(panel.hidePopover).not.toHaveBeenCalled();
+
+    rail.setAttribute('data-nt-close-on-navigation', 'true');
+    item.querySelector('span').click();
+
+    expect(panel.hidePopover).toHaveBeenCalledTimes(1);
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  test.each([
+    { outerEnabled: true, innerEnabled: true, outerCloses: true, innerCloses: true },
+    { outerEnabled: true, innerEnabled: false, outerCloses: true, innerCloses: false },
+    { outerEnabled: false, innerEnabled: true, outerCloses: false, innerCloses: true },
+    { outerEnabled: false, innerEnabled: false, outerCloses: false, innerCloses: false }
+  ])('nested rails close only opted-in owned popovers when outer=$outerEnabled and inner=$innerEnabled', ({ outerEnabled, innerEnabled, outerCloses, innerCloses }) => {
+    document.body.innerHTML = `
+      <nav id="outer-rail" class="nt-navigation-rail nt-navigation-rail-collapsed" ${outerEnabled ? 'data-nt-close-on-navigation="true"' : ''}>
+        <div class="nt-navigation-rail-group">
+          <button class="nt-navigation-rail-group-trigger nt-navigation-rail-item"
+                  type="button"
+                  aria-expanded="false"
+                  aria-controls="outer-panel"
+                  data-nt-navigation-rail-group-trigger="true">
+            Outer
+          </button>
+          <div id="outer-panel" class="nt-navigation-rail-group-panel" popover="auto">
+            <nav id="inner-rail" class="nt-navigation-rail nt-navigation-rail-collapsed" ${innerEnabled ? 'data-nt-close-on-navigation="true"' : ''}>
+              <div class="nt-navigation-rail-group">
+                <button class="nt-navigation-rail-group-trigger nt-navigation-rail-item"
+                        type="button"
+                        aria-expanded="false"
+                        aria-controls="inner-panel"
+                        data-nt-navigation-rail-group-trigger="true">
+                  Inner
+                </button>
+                <div id="inner-panel" class="nt-navigation-rail-group-panel" popover="auto">
+                  <a class="nt-navigation-rail-item" href="/nested"><span>Nested</span></a>
+                </div>
+              </div>
+            </nav>
+          </div>
+        </div>
+      </nav>`;
+
+    const outerTrigger = document.querySelector('#outer-rail > .nt-navigation-rail-group > .nt-navigation-rail-group-trigger');
+    const outerPanel = document.querySelector('#outer-panel');
+    const innerTrigger = document.querySelector('#inner-rail .nt-navigation-rail-group-trigger');
+    const innerPanel = document.querySelector('#inner-panel');
+    const item = document.querySelector('a.nt-navigation-rail-item');
+
+    const configurePopover = panel => {
+      let popoverOpen = false;
+      const matches = panel.matches.bind(panel);
+      panel.matches = selector => selector === ':popover-open' ? popoverOpen : matches(selector);
+      panel.hidePopover = jest.fn(() => {
+        popoverOpen = false;
+        panel.dispatchEvent(new Event('toggle'));
+      });
+
+      return () => {
+        popoverOpen = true;
+        panel.dispatchEvent(new Event('toggle'));
+      };
+    };
+
+    const openOuter = configurePopover(outerPanel);
+    const openInner = configurePopover(innerPanel);
+    item.addEventListener('click', event => event.preventDefault());
+
+    module.onLoad();
+    openOuter();
+    openInner();
+    item.querySelector('span').click();
+
+    expect(outerPanel.hidePopover).toHaveBeenCalledTimes(outerCloses ? 1 : 0);
+    expect(innerPanel.hidePopover).toHaveBeenCalledTimes(innerCloses ? 1 : 0);
+    expect(outerTrigger.getAttribute('aria-expanded')).toBe(outerCloses ? 'false' : 'true');
+    expect(innerTrigger.getAttribute('aria-expanded')).toBe(innerCloses ? 'false' : 'true');
+  });
+
   test('modal rail expansion isolates background focus and escape restores the menu button', async () => {
     document.body.innerHTML = `
       <main id="content"><button id="outside">Outside</button></main>

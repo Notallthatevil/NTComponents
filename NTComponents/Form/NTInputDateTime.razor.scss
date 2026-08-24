@@ -116,6 +116,15 @@ $nt-dtp-trigger-top-dense: 14px;
         }
     }
 
+    &.nt-invalid.nt-modified,
+    &.nt-dtp-parse-invalid {
+        ::deep input[data-tnt-dtp-native-input='true']:not([value]),
+        ::deep input[data-tnt-dtp-native-input='true'][value=''] {
+            color: var(--nt-input-error-color);
+            -webkit-text-fill-color: var(--nt-input-error-color);
+        }
+    }
+
     ::deep input {
         min-width: 0;
         max-width: 100%;
