@@ -4,7 +4,7 @@
   "type": "module",
   "devDependencies": {
     "@material/material-color-utilities": "0.4.0",
-    "@oddbird/css-anchor-positioning": "0.10.1",
+    "@oddbird/css-anchor-positioning": "0.10.2",
     "esbuild": "0.28.2",
     "jest": "^30.4.2",
     "jest-environment-jsdom": "^30.4.1",
