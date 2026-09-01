@@ -313,7 +313,6 @@ $nt-input-textarea-filled-label-space-dense: 14px;
         color: var(--nt-input-text-color);
         background-color: transparent;
         caret-color: var(--nt-input-caret-color);
-        opacity: 0;
         transition: opacity $nt-input-motion-duration $nt-input-motion-easing,
             color $nt-input-motion-duration $nt-input-motion-easing,
             padding-block-start $nt-input-motion-duration $nt-input-motion-easing,
