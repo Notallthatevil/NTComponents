@@ -71,11 +71,6 @@ jobs:
             echo "is_tagged=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Install semantic-release
-        if: steps.check-tags.outputs.is_tagged == 'false'
-        run: |
-          npm install --no-save semantic-release @semantic-release/commit-analyzer @semantic-release/release-notes-generator @semantic-release/github conventional-changelog-conventionalcommits
-
       - name: Validate NuGet API key
         if: steps.check-tags.outputs.is_tagged == 'false'
         env:
@@ -93,7 +88,7 @@ jobs:
         run: |
           set -euo pipefail
           git fetch --tags
-          npx semantic-release
+          npx --no-install semantic-release
 
       - name: Resolve stable package version
         id: release-version
