@@ -4,11 +4,11 @@
   "type": "module",
   "devDependencies": {
     "@material/material-color-utilities": "0.4.0",
-    "@oddbird/css-anchor-positioning": "0.10.1",
+    "@oddbird/css-anchor-positioning": "0.10.2",
     "esbuild": "0.28.2",
-    "jest": "^30.4.2",
-    "jest-environment-jsdom": "^30.4.1",
-    "terser": "^5.50.0",
+    "jest": "^30.5.0",
+    "jest-environment-jsdom": "^30.5.0",
+    "terser": "^5.51.2",
     "typescript": "^7.0.2"
   },
   "scripts": {
