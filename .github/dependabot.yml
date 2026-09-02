@@ -30,6 +30,9 @@ updates:
         update-types:
           - "minor"
           - "patch"
+    exclude-paths:
+      - "../NTComponents/NTComponents.csproj"
+      - "../../NTComponents/NTComponents.csproj"
     commit-message:
       prefix: "chore"
       include: "scope"
