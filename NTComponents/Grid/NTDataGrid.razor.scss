@@ -65,6 +65,10 @@ $nt-data-grid-spacer-animation-duration: motion.$nt-motion-duration-extra_long_2
     table-layout: auto;
     background: colors.$tnt-color-surface;
 
+    > thead th {
+        z-index: $nt-data-grid-sticky-header-z-index;
+    }
+
     caption {
         @include typescale.nt-title-medium;
 
@@ -88,7 +92,6 @@ $nt-data-grid-spacer-animation-duration: motion.$nt-motion-duration-extra_long_2
 
     position: sticky;
     inset-block-start: $nt-data-grid-zero;
-    z-index: $nt-data-grid-sticky-header-z-index;
     block-size: $nt-data-grid-row-size;
     color: colors.$tnt-color-on-surface-variant;
     background: colors.$tnt-color-surface-container-low;
