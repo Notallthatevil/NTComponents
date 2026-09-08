@@ -1,9 +1,11 @@
-import { onUpdate as updateShape } from '../Shapes/NTShape.razor.js';
+import { animateShape, onDispose as disposeShape, onUpdate as updateShape } from '../Shapes/NTShape.razor.js';
 
 interface NTLoaderState {
     animation?: Animation;
     intervalId?: number;
     nextShapeIndex: number;
+    rotation: number;
+    rotationTarget: number;
     restartKey?: string;
     sequence?: number[];
     sequenceKey?: string;
@@ -17,7 +19,9 @@ let globalSyncScheduled = false;
 
 function getState(element: NTLoaderElement): NTLoaderState {
     element.__ntLoaderState ??= {
-        nextShapeIndex: 1
+        nextShapeIndex: 1,
+        rotation: 0,
+        rotationTarget: 0
     };
 
     return element.__ntLoaderState;
@@ -65,12 +69,12 @@ function getSequence(element: NTLoaderElement, state: NTLoaderState): number[] {
 
 function getIntervalMs(element: NTLoaderElement): number {
     const parsed = Number.parseInt(element.dataset.shapeIntervalMs ?? '', 10);
-    return Number.isFinite(parsed) && parsed > 0 ? parsed : 400;
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 650;
 }
 
 function getTransitionDurationMs(element: NTLoaderElement): number {
     const parsed = Number.parseInt(element.dataset.transitionDurationMs ?? '', 10);
-    return Number.isFinite(parsed) && parsed > 0 ? parsed : 500;
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 700;
 }
 
 function prefersReducedMotion(): boolean {
@@ -97,9 +101,16 @@ function stop(element: NTLoaderElement): void {
 
     state.animation?.cancel();
     state.animation = undefined;
+    state.rotation = 0;
+    state.rotationTarget = 0;
+    const shapeElement = getShapeElement(element);
+    if (shapeElement) {
+        disposeShape(shapeElement);
+        shapeElement.style.removeProperty('rotate');
+    }
 }
 
-function startSpinAnimation(state: NTLoaderState, shapeElement: HTMLElement, transitionDurationMs: number): void {
+function startSpinAnimation(state: NTLoaderState, shapeElement: HTMLElement, intervalMs: number): void {
     if (typeof shapeElement.animate !== 'function') {
         return;
     }
@@ -108,21 +119,25 @@ function startSpinAnimation(state: NTLoaderState, shapeElement: HTMLElement, tra
     state.animation = shapeElement.animate(
         [
             { transform: 'rotate(0deg)' },
-            { transform: 'rotate(720deg)' }
+            { transform: 'rotate(360deg)' }
         ],
         {
-            duration: transitionDurationMs,
-            easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
-            fill: 'none',
-            iterations: 1
+            // Material's constant rotation is 50 degrees per shape cycle.
+            duration: intervalMs * 360 / 50,
+            easing: 'linear',
+            iterations: Infinity
         }
     );
+}
 
-    state.animation.addEventListener('finish', () => {
-        if (state.animation?.playState === 'finished') {
-            state.animation = undefined;
-        }
-    }, { once: true });
+function springProgress(progress: number): number {
+    // Material loading indicator: stiffness 200, damping ratio 0.6, unit mass.
+    // The duration parameter scales the spring's 700ms settling window.
+    const time = progress * 0.7;
+    const frequency = Math.sqrt(200);
+    const dampedFrequency = frequency * 0.8;
+    return progress >= 1 ? 1 : 1 - Math.exp(-0.6 * frequency * time)
+        * (Math.cos(dampedFrequency * time) + 0.75 * Math.sin(dampedFrequency * time));
 }
 
 function start(element: NTLoaderElement, sequence: number[], intervalMs: number, transitionDurationMs: number): void {
@@ -136,6 +151,8 @@ function start(element: NTLoaderElement, sequence: number[], intervalMs: number,
 
     stop(element);
     state.nextShapeIndex = 1;
+    applyShape(shapeElement, sequence[0]);
+    startSpinAnimation(state, shapeElement, intervalMs);
 
     const runCycle = () => {
         const currentShapeElement = getShapeElement(element);
@@ -145,10 +162,21 @@ function start(element: NTLoaderElement, sequence: number[], intervalMs: number,
             return;
         }
 
-        startSpinAnimation(state, currentShapeElement, transitionDurationMs);
         const nextShape = sequence[state.nextShapeIndex % sequence.length];
-
-        applyShape(currentShapeElement, nextShape);
+        if (state.rotationTarget >= 360) {
+            state.rotation -= 360;
+            state.rotationTarget -= 360;
+        }
+        const startRotation = state.rotation;
+        state.rotationTarget += 90;
+        const rotationDelta = state.rotationTarget - startRotation;
+        currentShapeElement.dataset.shape = nextShape.toString();
+        currentShapeElement.dataset.transitionDurationMs = transitionDurationMs.toString();
+        animateShape(currentShapeElement, progress => {
+            state.rotation = startRotation + rotationDelta * progress;
+            // Individual rotate composes with the uninterrupted linear transform.
+            currentShapeElement.style.rotate = `${state.rotation}deg`;
+        }, currentShapeElement.dataset.transitionEasing === '0' ? springProgress : undefined);
         state.nextShapeIndex = (state.nextShapeIndex + 1) % sequence.length;
     };
 
@@ -162,8 +190,8 @@ function syncLoader(loader: NTLoaderElement): void {
     const intervalMs = getIntervalMs(loader);
     const transitionDurationMs = getTransitionDurationMs(loader);
     const animate = shouldAnimate(loader, sequence);
-    const restartKey = `${animate}|${intervalMs}|${transitionDurationMs}|${state.sequenceKey}`;
     const shapeElement = getShapeElement(loader);
+    const restartKey = `${animate}|${intervalMs}|${transitionDurationMs}|${state.sequenceKey}|${shapeElement?.dataset.transitionEasing}`;
 
     if (!shapeElement) {
         state.restartKey = undefined;
@@ -177,12 +205,11 @@ function syncLoader(loader: NTLoaderElement): void {
 
     state.restartKey = restartKey;
 
-    if (sequence.length > 0) {
-        applyShape(shapeElement, sequence[0]);
-    }
-
     if (!animate) {
         stop(loader);
+        if (sequence.length > 0) {
+            applyShape(shapeElement, sequence[0]);
+        }
         return;
     }
 

@@ -950,7 +950,7 @@ function snapToShape(state: ShapeState, shape: number): void {
     state.currentShape = shape
 }
 
-function syncShape(element: HTMLElement): void {
+function syncShape(element: HTMLElement, easingOverride?: (progress: number) => number, onProgress?: (progress: number) => void): void {
     const state = ensureState(element)
 
     if (!state.pathElement) {
@@ -983,9 +983,11 @@ function syncShape(element: HTMLElement): void {
         return
     }
 
-    const easing = getEasing(element)
+    const easing = easingOverride ?? getEasing(element)
     const startPoints = new Float32Array(state.currentPoints)
     const endPoints = alignTargetPoints(startPoints, targetDefinition.points)
+    // Track the active target even when a later morph interrupts this one.
+    state.currentShape = targetShape
     let startTimestamp: number | null = null
 
     const step = (timestamp: number) => {
@@ -1000,6 +1002,7 @@ function syncShape(element: HTMLElement): void {
 
         const progress = Math.min((timestamp - startTimestamp) / durationMs, 1)
         const easedProgress = easing(progress)
+        onProgress?.(easedProgress)
         const interpolatedPoints = interpolatePoints(startPoints, endPoints, easedProgress)
 
         state.pathElement.setAttribute('d', buildPathData(interpolatedPoints))
@@ -1047,6 +1050,11 @@ export function onUpdate(element: HTMLElement | null): void {
     }
 
     syncShape(element)
+}
+
+// Allows compound motion to use the same clock and easing as the shape morph.
+export function animateShape(element: HTMLElement, onProgress: (progress: number) => void, easing?: (progress: number) => number): void {
+    syncShape(element, easing, onProgress)
 }
 
 export const __testHooks = {

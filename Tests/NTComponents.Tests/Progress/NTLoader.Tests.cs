@@ -86,7 +86,7 @@ public class NTLoader_Tests : BunitContext {
         var shape = cut.Find("nt-shape.nt-loader-shape");
 
         loader.GetAttribute("data-shape-sequence")!.Should().Be("2 28 22");
-        loader.GetAttribute("data-shape-interval-ms")!.Should().Be("1250");
+        loader.GetAttribute("data-shape-interval-ms")!.Should().Be("650");
         loader.GetAttribute("data-transition-duration-ms")!.Should().Be("700");
         shape.GetAttribute("data-shape")!.Should().Be(((int)NTShapeType.Hexagon).ToString());
     }
@@ -112,6 +112,15 @@ public class NTLoader_Tests : BunitContext {
     }
 
     [Fact]
+    public void Default_Sequence_Uses_Material_Loading_Indicator_Shapes() {
+        var cut = Render<NTLoader>();
+        var expectedShapes = new[] { NTShapeType.SoftBurst, NTShapeType.NineSidedCookie, NTShapeType.Pentagon, NTShapeType.Pill, NTShapeType.Sunny, NTShapeType.FourSidedCookie, NTShapeType.Oval };
+
+        cut.Find(".nt-loader").GetAttribute("data-shape-sequence").Should().Be(string.Join(' ', expectedShapes.Select(shape => (int)shape)));
+        cut.Find("nt-shape").GetAttribute("data-shape").Should().Be(((int)NTShapeType.SoftBurst).ToString());
+    }
+
+    [Fact]
     public void Emits_Page_Script_For_Static_And_Interactive_Rendering() {
         var cut = Render<NTLoader>();
 
@@ -120,6 +129,14 @@ public class NTLoader_Tests : BunitContext {
             .Select(script => script.GetAttribute("src"))
             .Should()
             .ContainSingle("./_content/NTComponents/Progress/NTLoader.razor.js");
+    }
+
+    [Fact]
+    public void Static_Render_Places_Page_Script_Inside_Its_Loader_For_Browser_Initialization() {
+        SetRendererInfo(new RendererInfo("Static", false));
+        var cut = Render<NTLoader>();
+
+        cut.FindAll(".nt-loader > [hidden] > tnt-page-script").Should().ContainSingle();
     }
 
     [Fact]

@@ -122,7 +122,7 @@ public partial class NTLoader : NTDisposableComponentBase, INTPageScriptComponen
     public NTMotionDuration ShapeTransitionDuration { get; set; } = NTMotionDuration.Ms700;
 
     /// <summary>
-    ///     Easing used when morphing from one sequence step to the next.
+    ///     Easing used when morphing from one sequence step to the next. The default <see cref="NTMotionEasing.Emphasized" /> uses the Material loading indicator spring; other values override it.
     /// </summary>
     [Parameter]
     public NTMotionEasing ShapeTransitionEasing { get; set; } = NTMotionEasing.Emphasized;
@@ -160,39 +160,20 @@ public partial class NTLoader : NTDisposableComponentBase, INTPageScriptComponen
     private string ShapeContentStyle => $"clip-path:url(#{ShapeClipPathId});-webkit-clip-path:url(#{ShapeClipPathId});background-color:var(--nt-shape-content-background, transparent);";
     private string ShapeSequenceValue => _shapeSequenceValue;
     private IReadOnlyList<NTShapeType> _effectiveShapes = _defaultShapes;
-    private NTShapeType _initialShape = NTShapeType.Hexagon;
+    private NTShapeType _initialShape = NTShapeType.SoftBurst;
     private string _shapeSequenceValue = string.Empty;
     private const string LoaderJsModulePath = "./_content/NTComponents/Progress/NTLoader.razor.js";
     private const int MinimumAnimationDurationMilliseconds = 400;
-    private const int ShapeStepIntervalMilliseconds = 1250;
+    private const int ShapeStepIntervalMilliseconds = 650;
 
     private static readonly NTShapeType[] _defaultShapes = [
-        NTShapeType.Hexagon,
-        NTShapeType.TwelveSidedCookie,
         NTShapeType.SoftBurst,
-        NTShapeType.Oval,
-        NTShapeType.Pentagon,
-        NTShapeType.Semicircle,
-        NTShapeType.Puffy,
-        NTShapeType.SixSidedCookie,
-        NTShapeType.Sunny,
         NTShapeType.NineSidedCookie,
-        NTShapeType.Boom,
-        NTShapeType.Bun,
-        NTShapeType.SevenSidedCookie,
-        NTShapeType.Burst,
-        NTShapeType.EightLeafClover,
-        NTShapeType.Fan,
-        NTShapeType.Flower,
-        NTShapeType.Gem,
+        NTShapeType.Pentagon,
         NTShapeType.Pill,
-        NTShapeType.PixelCircle,
-        NTShapeType.PuffyDiamond,
-        NTShapeType.Slanted,
-        NTShapeType.FourLeafClover,
-        NTShapeType.SoftBoom,
-        NTShapeType.VerySunny,
-        NTShapeType.FourSidedCookie
+        NTShapeType.Sunny,
+        NTShapeType.FourSidedCookie,
+        NTShapeType.Oval
     ];
 
     /// <inheritdoc />

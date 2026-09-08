@@ -5,8 +5,6 @@ import { jest } from '@jest/globals'
 import { onDispose, onLoad, onUpdate } from '../NTLoader.razor.js'
 
 describe('NTLoader runtime', () => {
-  let currentTimestamp = 0
-
   function createLoaderElement({
     animate = 'true',
     sequence = '1 2 3',
@@ -23,7 +21,7 @@ describe('NTLoader runtime', () => {
     const shape = document.createElement('nt-shape')
     shape.classList.add('nt-loader-shape')
     shape.dataset.shape = sequence.split(' ')[0]
-    shape.dataset.animateShapeChanges = 'false'
+    shape.dataset.animateShapeChanges = 'true'
     shape.dataset.transitionDurationMs = '64'
     shape.dataset.transitionEasing = '0'
     shape.dataset.clipId = 'nt-loader-shape-clip-test'
@@ -54,13 +52,18 @@ describe('NTLoader runtime', () => {
     shape.animate = jest.fn(() => animation)
 
     loader.appendChild(shape)
+    const marker = document.createElement('tnt-page-script')
+    marker.setAttribute('src', './_content/NTComponents/Progress/NTLoader.razor.js')
+    const scriptHost = document.createElement('div')
+    scriptHost.hidden = true
+    scriptHost.appendChild(marker)
+    loader.appendChild(scriptHost)
     document.body.appendChild(loader)
 
-    return { animation, loader, shape }
+    return { animation, loader, shape, marker }
   }
 
   beforeEach(() => {
-    currentTimestamp = 0
     document.body.innerHTML = ''
     jest.useFakeTimers()
     Object.defineProperty(window, 'matchMedia', {
@@ -78,15 +81,10 @@ describe('NTLoader runtime', () => {
       }))
     })
 
-    jest.spyOn(global, 'requestAnimationFrame').mockImplementation((callback) => {
-      currentTimestamp += 16
-      callback(currentTimestamp)
-      return currentTimestamp
-    })
-    jest.spyOn(global, 'cancelAnimationFrame').mockImplementation(() => { })
   })
 
   afterEach(() => {
+    onDispose()
     jest.useRealTimers()
     jest.restoreAllMocks()
   })
@@ -112,6 +110,40 @@ describe('NTLoader runtime', () => {
     expect(shape.animate).toHaveBeenCalledTimes(1)
   })
 
+  test('SSR page-script callbacks start the containing loader without an interactive callback', () => {
+    const { marker, shape } = createLoaderElement()
+
+    onLoad(marker)
+    onUpdate(marker)
+    expect(shape.animate).toHaveBeenCalledTimes(1)
+    expect(shape.dataset.shape).toBe('2')
+
+    jest.advanceTimersByTime(300)
+    expect(Number.parseFloat(shape.style.rotate)).toBeGreaterThan(0)
+    onUpdate(marker)
+    expect(shape.animate).toHaveBeenCalledTimes(1)
+    jest.advanceTimersByTime(700)
+    expect(shape.dataset.shape).toBe('3')
+  })
+
+  test('removing one SSR loader disposes its animation without stopping another loader', () => {
+    const first = createLoaderElement()
+    const second = createLoaderElement()
+    onUpdate(first.marker)
+    onUpdate(second.marker)
+    jest.advanceTimersByTime(200)
+
+    first.loader.remove()
+    onDispose(first.marker)
+    const removedPath = first.shape.querySelector('path').getAttribute('d')
+    jest.advanceTimersByTime(1000)
+
+    expect(first.animation.cancel).toHaveBeenCalledTimes(1)
+    expect(first.shape.querySelector('path').getAttribute('d')).toBe(removedPath)
+    expect(second.animation.cancel).not.toHaveBeenCalled()
+    expect(second.shape.dataset.shape).toBe('3')
+  })
+
   test('scheduled cycles advance shapes until dispose clears the loader state', () => {
     const { animation, loader, shape } = createLoaderElement()
 
@@ -119,12 +151,12 @@ describe('NTLoader runtime', () => {
     jest.advanceTimersByTime(1000)
 
     expect(shape.dataset.shape).toBe('3')
-    expect(shape.animate).toHaveBeenCalledTimes(2)
+    expect(shape.animate).toHaveBeenCalledTimes(1)
 
     onDispose(loader)
     jest.advanceTimersByTime(3000)
 
-    expect(shape.animate).toHaveBeenCalledTimes(2)
+    expect(shape.animate).toHaveBeenCalledTimes(1)
     expect(animation.cancel).toHaveBeenCalled()
   })
 
@@ -144,5 +176,108 @@ describe('NTLoader runtime', () => {
     expect(querySelectorAll).toHaveBeenCalledTimes(1)
     expect(first.shape.animate).toHaveBeenCalledTimes(1)
     expect(second.shape.animate).toHaveBeenCalledTimes(1)
+  })
+
+  test('constant rotation advances 50 degrees per cycle without restarting', () => {
+    const { loader, shape, animation } = createLoaderElement({ interval: '650' })
+
+    onUpdate(loader)
+    expect(shape.animate).toHaveBeenCalledWith(
+      [{ transform: 'rotate(0deg)' }, { transform: 'rotate(360deg)' }],
+      { duration: 4680, easing: 'linear', iterations: Infinity })
+
+    jest.advanceTimersByTime(1950)
+    expect(shape.animate).toHaveBeenCalledTimes(1)
+    expect(animation.cancel).not.toHaveBeenCalled()
+  })
+
+  test('spring turn follows the morph and retains its angle between cycles', () => {
+    const { loader, shape } = createLoaderElement({ interval: '650' })
+    const path = shape.querySelector('path')
+
+    onUpdate(loader)
+    const initialPath = path.getAttribute('d')
+    jest.advanceTimersByTime(300)
+    expect(path.getAttribute('d')).not.toBe(initialPath)
+    // The underdamped spring overshoots its 90-degree target.
+    expect(Number.parseFloat(shape.style.rotate)).toBeGreaterThan(90)
+    expect(Number.parseFloat(shape.style.rotate)).toBeLessThan(100)
+
+    jest.advanceTimersByTime(340)
+    const beforeNextCycle = Number.parseFloat(shape.style.rotate)
+    expect(beforeNextCycle).toBeGreaterThan(89)
+    expect(beforeNextCycle).toBeLessThan(91)
+    jest.advanceTimersByTime(16)
+    expect(Number.parseFloat(shape.style.rotate)).toBeCloseTo(beforeNextCycle, 5)
+    jest.advanceTimersByTime(300)
+    expect(Number.parseFloat(shape.style.rotate)).toBeGreaterThan(180)
+    expect(Number.parseFloat(shape.style.rotate)).toBeLessThan(190)
+  })
+
+  test.each(['paused', 'reduced motion', 'single shape'])('%s renders a stationary initial shape', (mode) => {
+    const { loader, shape } = createLoaderElement({
+      animate: mode === 'paused' ? 'false' : 'true',
+      sequence: mode === 'single shape' ? '1' : '1 2 3'
+    })
+    if (mode === 'reduced motion') {
+      window.matchMedia.mockReturnValue({ matches: true })
+    }
+
+    onUpdate(loader)
+    const initialPath = shape.querySelector('path').getAttribute('d')
+    jest.advanceTimersByTime(3000)
+
+    expect(shape.dataset.shape).toBe('1')
+    expect(shape.querySelector('path').getAttribute('d')).toBe(initialPath)
+    expect(shape.animate).not.toHaveBeenCalled()
+    expect(shape.style.rotate).toBe('')
+  })
+
+  test('pausing cancels both rotation and an in-flight morph, and resuming starts cleanly', () => {
+    const { loader, shape, animation } = createLoaderElement()
+    onUpdate(loader)
+    jest.advanceTimersByTime(200)
+
+    loader.dataset.animate = 'false'
+    onUpdate(loader)
+    const pausedPath = shape.querySelector('path').getAttribute('d')
+    jest.advanceTimersByTime(2000)
+    expect(animation.cancel).toHaveBeenCalledTimes(1)
+    expect(shape.style.rotate).toBe('')
+    expect(shape.dataset.shape).toBe('1')
+    expect(shape.querySelector('path').getAttribute('d')).toBe(pausedPath)
+
+    loader.dataset.animate = 'true'
+    onUpdate(loader)
+    jest.advanceTimersByTime(200)
+    expect(shape.animate).toHaveBeenCalledTimes(2)
+    expect(Number.parseFloat(shape.style.rotate)).toBeGreaterThan(0)
+  })
+
+  test('dispose cancels in-flight shape frames as well as the cycle timer', () => {
+    const { loader, shape } = createLoaderElement()
+    onUpdate(loader)
+    jest.advanceTimersByTime(200)
+    onDispose(loader)
+    const finalPath = shape.querySelector('path').getAttribute('d')
+    jest.advanceTimersByTime(3000)
+
+    expect(shape.querySelector('path').getAttribute('d')).toBe(finalPath)
+    expect(shape.style.rotate).toBe('')
+    expect(jest.getTimerCount()).toBe(0)
+  })
+
+  test('a short cycle can morph back to the initial shape before earlier transitions settle', () => {
+    const { loader, shape } = createLoaderElement({ sequence: '1 2', interval: '650' })
+    onUpdate(loader)
+    jest.advanceTimersByTime(640)
+    const firstTurn = Number.parseFloat(shape.style.rotate)
+    jest.advanceTimersByTime(320)
+
+    expect(shape.dataset.shape).toBe('1')
+    expect(Number.parseFloat(shape.style.rotate)).toBeGreaterThan(firstTurn + 90)
+    jest.advanceTimersByTime(650)
+    expect(shape.dataset.shape).toBe('2')
+    expect(Number.parseFloat(shape.style.rotate)).toBeGreaterThan(270)
   })
 })
