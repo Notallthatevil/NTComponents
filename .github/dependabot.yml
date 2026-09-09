@@ -3,29 +3,16 @@ version: 2
 
 updates:
   - package-ecosystem: "nuget"
-    directories:
-      - "/LiveTest/LiveTest"
-      - "/LiveTest/LiveTest.Client"
-      - "/NTComponents.Analyzers"
-      - "/NTComponents.AspNetCore"
-      - "/NTComponents.CodeDocumentation.Generator"
-      - "/NTComponents.Extensions"
-      - "/NTComponents.MCP"
-      - "/NTComponents.Site"
-      - "/Tests/AotCompatibility.TestApp"
-      - "/Tests/NTComponents.Analyzers.Tests"
-      - "/Tests/NTComponents.IntegrationTests"
-      - "/Tests/NTComponents.MCP.IntegrationTests"
-      - "/Tests/NTComponents.MCP.Tests"
-      - "/Tests/NTComponents.Tests"
+    directory: "/"
     schedule:
       interval: "weekly"
       day: "monday"
       time: "06:00"
       timezone: "America/Denver"
     exclude-paths:
-      - "../NTComponents/NTComponents.csproj"
-      - "../../NTComponents/NTComponents.csproj"
+      # The library has its own package policy below; submodules own their dependencies.
+      - "NTComponents/NTComponents.csproj"
+      - "Submodules/**"
     commit-message:
       prefix: "chore"
       include: "scope"
