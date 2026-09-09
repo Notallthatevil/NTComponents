@@ -21,6 +21,17 @@ public class NTVirtualize_Tests : BunitContext {
     }
 
     [Fact]
+    public void DisablingMeasurement_NotifiesBrowserEvenWhenItemCountsAreUnchanged() {
+        var cut = Render<NTVirtualize<string>>(parameters => parameters
+            .Add(component => component.ItemsProvider, _ => ValueTask.FromResult(new TnTItemsProviderResult<string>([], 0)))
+            .Add(component => component.MeasureItemSize, true));
+        cut.Render(parameters => parameters.Add(component => component.MeasureItemSize, false));
+
+        var update = _module.Invocations.Last(invocation => invocation.Identifier == "updateRenderState");
+        update.Arguments[4].Should().Be(false);
+    }
+
+    [Fact]
     public void OnParametersSet_Throws_If_ItemSize_Zero_Or_Negative() {
         // Arrange
         var items = new List<string> { "Item 1" };

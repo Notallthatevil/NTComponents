@@ -20,6 +20,7 @@
 		builder.OpenElement(0, SpacerElement);
 		builder.AddAttribute(5, "class", "nt-virtualize-spacer");
 		builder.AddAttribute(10, "style", GetBeforeSpacerStyle());
+		builder.AddAttribute(11, "data-nt-virtualize-start", MeasureItemSize ? _itemsBefore : (int?)null);
 		builder.AddAttribute(20, "aria-hidden", "true");
 		builder.AddElementReferenceCapture(3, elementReference => Element = elementReference);
 		builder.AddContent(30, SpacerTemplate, new PlaceholderContext(_itemsBefore + 1, beforeSpacerSize));
@@ -44,16 +45,18 @@
 			builder.OpenRegion(50);
 
 			for (var renderIndex = _itemsBefore; renderIndex < renderLastItemIndex; renderIndex++) {
-				builder.OpenRegion(0);
+				// Keep overlapping items and their browser state when the window moves.
+				builder.OpenComponent<DeferRendering>(0);
+				builder.SetKey(renderIndex);
 				if (_itemCache.TryGetValue(renderIndex, out var item)) {
-					builder.AddContent(0, ItemTemplate, item);
+					builder.AddAttribute(1, nameof(DeferRendering.ChildContent), ItemTemplate(item));
 					_lastRenderedItemCount++;
 				}
 				else {
-					builder.AddContent(1, LoadingTemplate, new PlaceholderContext(renderIndex + 2, _itemSize));
+					builder.AddAttribute(1, nameof(DeferRendering.ChildContent), LoadingTemplate?.Invoke(new PlaceholderContext(renderIndex + 2, _itemSize)));
 					_lastRenderedPlaceholderCount++;
 				}
-				builder.CloseRegion();
+				builder.CloseComponent();
 			}
 
 			builder.CloseRegion();
@@ -63,6 +66,7 @@
 		builder.OpenElement(70, SpacerElement);
 		builder.AddAttribute(75, "class", "nt-virtualize-spacer");
 		builder.AddAttribute(80, "aria-hidden", "true");
+		builder.AddAttribute(85, "data-nt-virtualize-end", MeasureItemSize ? renderLastItemIndex : (int?)null);
 		builder.AddAttribute(90, "style", GetAfterSpacerStyle(preloadedPlaceholderCount));
 		builder.AddContent(95, SpacerTemplate, new PlaceholderContext(renderLastItemIndex + 1, afterSpacerSize));
 		builder.AddElementReferenceCapture(100, elementReference => _afterPlaceholder = elementReference);

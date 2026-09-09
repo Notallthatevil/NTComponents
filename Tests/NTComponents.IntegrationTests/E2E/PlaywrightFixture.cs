@@ -47,7 +47,13 @@ public class PlaywrightFixture : IAsyncLifetime {
         _ = factory.Services;
 
         var playwright = await Playwright.CreateAsync();
-        var browser = await playwright.Chromium.LaunchAsync(new() {
+        var browserType = Environment.GetEnvironmentVariable("NTCOMPONENTS_TEST_BROWSER")?.ToLowerInvariant() switch {
+            null or "" or "chromium" => playwright.Chromium,
+            "firefox" => playwright.Firefox,
+            "webkit" => playwright.Webkit,
+            var name => throw new InvalidOperationException($"Unsupported test browser '{name}'. Use chromium, firefox, or webkit.")
+        };
+        var browser = await browserType.LaunchAsync(new() {
             Headless = true,
         });
 

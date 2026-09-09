@@ -151,7 +151,10 @@ public sealed class Render_Tests : NTButtonGroupTestContext {
         group.ClassList.Should().Contain("nt-modified");
         group.ClassList.Should().Contain("nt-valid");
         group.ClassList.Should().NotContain("nt-invalid");
-        cut.FindAll(".tnt-validation-message").Should().BeEmpty();
+        model.SelectedKey.Should().Be(items.First().Key);
+        cut.Instance.EditContext!.GetValidationMessages().Should().BeEmpty();
+        // .NET 11 retains an empty hidden validation target for client-side validation.
+        cut.FindAll(".tnt-validation-message:not([hidden])").Should().BeEmpty();
     }
 
     /// <summary>

@@ -41,6 +41,14 @@ public partial class NTVirtualize<TItem>() : NTPageScriptComponent<NTVirtualize<
     [Parameter]
     public float ItemSize { get; set; } = 50f;
 
+    /// <summary>Measures variable-height items. Template root elements must carry data-nt-virtualize-index with their zero-based provider index; multiple elements may share an index.</summary>
+    [Parameter]
+    public bool MeasureItemSize { get; set; }
+
+    /// <summary>Gets or sets a revision that invalidates measured item sizes when content changes, including items outside the current window.</summary>
+    [Parameter]
+    public int ItemSizeVersion { get; set; }
+
     /// <summary>
     ///     Gets or sets the function providing items to the list.
     /// </summary>
@@ -144,6 +152,7 @@ public partial class NTVirtualize<TItem>() : NTPageScriptComponent<NTVirtualize<
     private int _lastRenderedItemCount;
     private int _lastRenderedPlaceholderCount;
     private int _lastReportedItemCount = -1;
+    private bool _lastReportedMeasureItemSize;
     private int _lastReportedRenderedItemCount = -1;
     private int _lastReportedRenderedPlaceholderCount = -1;
     private NTVirtualizeItemsProvider<TItem>? _lastItemsProvider;
@@ -228,16 +237,17 @@ public partial class NTVirtualize<TItem>() : NTPageScriptComponent<NTVirtualize<
                 }
             }
 
-            if (_itemCount != _lastReportedItemCount
+            if (MeasureItemSize || MeasureItemSize != _lastReportedMeasureItemSize || _itemCount != _lastReportedItemCount
                 || _lastRenderedItemCount != _lastReportedRenderedItemCount
                 || _lastRenderedPlaceholderCount != _lastReportedRenderedPlaceholderCount) {
                 if (TryGetInteropReferences(out _, out _)) {
 
                     _lastReportedItemCount = _itemCount;
+                    _lastReportedMeasureItemSize = MeasureItemSize;
                     _lastReportedRenderedItemCount = _lastRenderedItemCount;
                     _lastReportedRenderedPlaceholderCount = _lastRenderedPlaceholderCount;
                     if (TryGetInteropReferences(out var module, out var dotNetRef)) {
-                        await module.InvokeVoidAsync("updateRenderState", dotNetRef, _itemCount, _lastRenderedItemCount, _lastRenderedPlaceholderCount);
+                        await module.InvokeVoidAsync("updateRenderState", dotNetRef, _itemCount, _lastRenderedItemCount, _lastRenderedPlaceholderCount, MeasureItemSize, ItemSizeVersion);
                     }
                 }
             }
@@ -559,6 +569,10 @@ public partial class NTVirtualize<TItem>() : NTPageScriptComponent<NTVirtualize<
     private void UpdateSpacerAfterSizeFromItemCount() {
         if (_itemCount <= 0 || _visibleItemCapacity <= 0) {
             _spacerAfterSize = 0;
+            return;
+        }
+
+        if (MeasureItemSize) {
             return;
         }
 

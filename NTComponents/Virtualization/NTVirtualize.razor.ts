@@ -17,6 +17,9 @@ interface ScrollMetrics {
 }
 
 interface VirtualizeState {
+    measureItemSize: boolean;
+    itemSizeVersion: number;
+    measuredSizes: Map<number, number>;
     itemCount: number;
     itemSize: number;
     itemsBefore: number;
@@ -27,6 +30,8 @@ interface VirtualizeState {
 }
 
 interface VirtualizeObservers {
+    measureItems: (reset?: boolean) => boolean;
+    resizeObserver: ResizeObserver | null;
     cancelPendingScrollUpdate: () => void;
     cancelScrollPolling: () => void;
     intersectionObserver: IntersectionObserver;
@@ -125,6 +130,9 @@ export function init(dotNetRef: Maybe<DotNetVirtualizeRef>, topSpacer: HTMLEleme
     }, 100);
 
     const state: VirtualizeState = existingState ?? {
+        measureItemSize: false,
+        itemSizeVersion: 0,
+        measuredSizes: new Map(),
         itemSize: Math.max(0, itemSize ?? 0),
         itemCount: 0,
         itemsBefore: 0,
@@ -137,7 +145,115 @@ export function init(dotNetRef: Maybe<DotNetVirtualizeRef>, topSpacer: HTMLEleme
     state.overscanCount = Math.max(0, overscanCount ?? 0);
     state.maxItemCount = Math.max(0, maxItemCount ?? 0);
 
+    const resizeObserver = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(() => {
+        if (measureItems()) {
+            requestVisibleItemDistribution(true);
+        }
+    });
+    const measuredElements = new Set<Element>();
+
+    function measureItems(reset = false): boolean {
+        const scrollOffset = getScrollMetrics(scrollContainer, topSpacer).scrollTop;
+        const anchorIndex = Math.min(itemAtOffset(scrollOffset), Math.max(0, state.itemCount - 1));
+        const anchorOffset = itemOffset(anchorIndex);
+        const offsetWithinItem = Math.max(0, scrollOffset - anchorOffset);
+        const previousScrollTop = getObservedScrollTop();
+        if (reset) {
+            state.measuredSizes.clear();
+        }
+        const sizes = new Map<number, number>();
+        const elements = new Set<Element>();
+        let row = topSpacer.nextElementSibling;
+        while (state.measureItemSize && row && row !== bottomSpacer) {
+            const indexAttribute = row.getAttribute('data-nt-virtualize-index');
+            if (indexAttribute !== null) {
+                const index = Number(indexAttribute);
+                if (Number.isInteger(index) && index >= 0) {
+                    sizes.set(index, (sizes.get(index) ?? 0) + row.getBoundingClientRect().height);
+                    elements.add(row);
+                    if (!measuredElements.has(row)) {
+                        resizeObserver?.observe(row);
+                    }
+                }
+            }
+            row = row.nextElementSibling;
+        }
+        for (const element of measuredElements) {
+            if (!elements.has(element)) {
+                resizeObserver?.unobserve(element);
+            }
+        }
+        measuredElements.clear();
+        elements.forEach(element => measuredElements.add(element));
+        let changed = reset;
+        for (const [index, size] of sizes) {
+            if (size > 0 && Math.abs((state.measuredSizes.get(index) ?? state.itemSize) - size) > 0.5) {
+                state.measuredSizes.set(index, size);
+                changed = true;
+            }
+        }
+        if (changed && pendingScrollTop === null) {
+            const anchorSize = state.measuredSizes.get(anchorIndex) ?? state.itemSize;
+            const nextOffsetWithinItem = Math.min(offsetWithinItem, Math.max(0, anchorSize - 1));
+            const adjustment = itemOffset(anchorIndex) - anchorOffset + nextOffsetWithinItem - offsetWithinItem;
+            // Update the currently rendered spacers before adjusting scrollTop. Waiting for
+            // the asynchronous Blazor render would move the anchor a second time or clamp it.
+            const renderedStart = Number(topSpacer.getAttribute('data-nt-virtualize-start') ?? state.itemsBefore);
+            const renderedEnd = Number(bottomSpacer.getAttribute('data-nt-virtualize-end') ?? Math.min(state.itemCount, state.itemsBefore + state.visibleItemCapacity));
+            setSpacerSize(topSpacer, itemOffset(renderedStart));
+            setSpacerSize(bottomSpacer, itemOffset(state.itemCount) - itemOffset(renderedEnd));
+            if (Math.abs(adjustment) > 0.5) {
+                if (scrollContainer) {
+                    scrollContainer.scrollTop = previousScrollTop + adjustment;
+                }
+                else {
+                    window.scrollTo(0, previousScrollTop + adjustment);
+                }
+                persistScrollPosition(true);
+            }
+        }
+        return changed;
+    }
+
+    function setSpacerSize(spacer: HTMLElement, size: number): void {
+        const height = `${Math.max(0, size)}px`;
+        spacer.style.height = height;
+        if (spacer.firstElementChild instanceof HTMLTableCellElement) {
+            spacer.firstElementChild.style.height = height;
+        }
+    }
+
+    function itemOffset(index: number): number {
+        let offset = index * state.itemSize;
+        for (const [measuredIndex, size] of state.measuredSizes) {
+            if (measuredIndex < index) {
+                offset += size - state.itemSize;
+            }
+        }
+        return offset;
+    }
+
+    function itemAtOffset(offset: number): number {
+        if (state.measuredSizes.size === 0) {
+            return Math.floor(offset / state.itemSize);
+        }
+        let low = 0;
+        let high = state.itemCount;
+        while (low < high) {
+            const middle = Math.ceil((low + high) / 2);
+            if (itemOffset(middle) <= offset) {
+                low = middle;
+            }
+            else {
+                high = middle - 1;
+            }
+        }
+        return low;
+    }
+
     observersByDotNetRef.set(dotNetRefKey, {
+        measureItems,
+        resizeObserver,
         cancelPendingScrollUpdate: () => {
             if (scheduledScrollUpdate !== null) {
                 cancelFrame(scheduledScrollUpdate);
@@ -224,7 +340,7 @@ export function init(dotNetRef: Maybe<DotNetVirtualizeRef>, topSpacer: HTMLEleme
 
         scrollContainer ??= findClosestScrollContainer(topSpacer);
         const { containerSize } = getScrollMetrics(scrollContainer, topSpacer);
-        const targetScrollTop = Math.min(pendingScrollTop, Math.max(0, state.itemCount * state.itemSize - containerSize));
+        const targetScrollTop = Math.min(pendingScrollTop, Math.max(0, itemOffset(state.itemCount) - containerSize));
         const availableScrollTop = scrollContainer
             ? Math.max(0, scrollContainer.scrollHeight - scrollContainer.clientHeight)
             : Math.max(0, document.documentElement.scrollHeight - (window.innerHeight || document.documentElement.clientHeight));
@@ -274,12 +390,20 @@ export function init(dotNetRef: Maybe<DotNetVirtualizeRef>, topSpacer: HTMLEleme
 
     function calculateItemDistribution(containerSize: number, scrollTop: number): VirtualizeDistribution {
         const maxItemCapacity = state.maxItemCount + state.overscanCount * 2;
+        const firstVisibleIndex = itemAtOffset(scrollTop);
         let visibleItemCapacity = Math.ceil(containerSize / state.itemSize) + 2 * state.overscanCount;
+        if (state.measureItemSize) {
+            // The estimate is a minimum: shorter measured rows need more items to fill the viewport.
+            const viewportEnd = scrollTop + containerSize;
+            const endIndex = itemAtOffset(viewportEnd);
+            const requiredCount = endIndex - firstVisibleIndex + (itemOffset(endIndex) < viewportEnd ? 1 : 0);
+            visibleItemCapacity = Math.max(visibleItemCapacity, requiredCount + 2 * state.overscanCount);
+        }
         const unusedItemCapacity = Math.max(0, visibleItemCapacity - maxItemCapacity);
         visibleItemCapacity -= unusedItemCapacity;
 
         return {
-            itemsBefore: Math.max(0, Math.floor(scrollTop / state.itemSize) - state.overscanCount),
+            itemsBefore: Math.max(0, firstVisibleIndex - state.overscanCount),
             visibleItemCapacity,
             unusedItemCapacity,
         };
@@ -301,9 +425,9 @@ export function init(dotNetRef: Maybe<DotNetVirtualizeRef>, topSpacer: HTMLEleme
         state.visibleItemCapacity = visibleItemCapacity;
         state.unusedItemCapacity = unusedItemCapacity;
 
-        const topSpacerSize = itemsBefore * state.itemSize;
+        const topSpacerSize = itemOffset(itemsBefore);
         const itemsAfter = Math.max(0, state.itemCount - visibleItemCapacity - itemsBefore);
-        const bottomSpacerSize = (itemsAfter + unusedItemCapacity) * state.itemSize;
+        const bottomSpacerSize = itemOffset(state.itemCount) - itemOffset(state.itemCount - itemsAfter) + unusedItemCapacity * state.itemSize;
 
         void activeDotNetRef.invokeMethodAsync(
             'LoadItems',
@@ -359,7 +483,7 @@ function getScrollMetrics(scrollContainer: Maybe<HTMLElement>, topSpacer: HTMLEl
         }
 
         return {
-            scrollTop: Math.max(0, scrollContainer.scrollTop),
+            scrollTop: Math.max(0, scrollContainerRect.top + scrollContainer.clientTop - topSpacerRect.top),
             containerSize,
         };
     }
@@ -427,6 +551,7 @@ function dispose(dotNetRef: Maybe<DotNetVirtualizeRef>): void {
         return;
     }
 
+    observers.resizeObserver?.disconnect();
     observers.intersectionObserver.disconnect();
     observers.mutationObserverBefore.disconnect();
     observers.mutationObserverAfter.disconnect();
@@ -442,7 +567,7 @@ function dispose(dotNetRef: Maybe<DotNetVirtualizeRef>): void {
     observersByDotNetRef.delete(getDotNetRefKey(dotNetRef));
 }
 
-export function updateRenderState(dotNetRef: Maybe<DotNetVirtualizeRef>, itemCount: Maybe<number>, _lastRenderedItemCount: Maybe<number>, _lastRenderedPlaceholderCount: Maybe<number>): void {
+export function updateRenderState(dotNetRef: Maybe<DotNetVirtualizeRef>, itemCount: Maybe<number>, _lastRenderedItemCount: Maybe<number>, _lastRenderedPlaceholderCount: Maybe<number>, measureItemSize = false, itemSizeVersion = 0): void {
     if (!dotNetRef) {
         return;
     }
@@ -454,9 +579,21 @@ export function updateRenderState(dotNetRef: Maybe<DotNetVirtualizeRef>, itemCou
 
     const previousItemCount = observers.state.itemCount;
     observers.state.itemCount = Math.max(0, itemCount ?? 0);
+    const measurementChanged = observers.state.measureItemSize !== measureItemSize;
+    observers.state.measureItemSize = measureItemSize;
+    const versionChanged = observers.state.itemSizeVersion !== itemSizeVersion;
+    if (versionChanged) {
+        observers.state.itemSizeVersion = itemSizeVersion;
+    }
+    for (const index of observers.state.measuredSizes.keys()) {
+        if (index >= observers.state.itemCount) {
+            observers.state.measuredSizes.delete(index);
+        }
+    }
+    const sizesChanged = (measureItemSize || measurementChanged) && observers.measureItems(versionChanged || measurementChanged);
     const restoredScrollPosition = observers.restoreScrollPosition();
 
-    if (observers.state.itemCount !== previousItemCount || restoredScrollPosition) {
+    if (versionChanged || sizesChanged || observers.state.itemCount !== previousItemCount || restoredScrollPosition) {
         observers.requestVisibleItemDistribution(true);
     }
 }

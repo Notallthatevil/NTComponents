@@ -23,7 +23,7 @@ $nt-data-grid-content-padding: 8px;
 $nt-data-grid-sort-title-sorted-padding: 36px;
 $nt-data-grid-sort-title-multi-sorted-padding: 56px;
 $nt-data-grid-select-trailing-padding: 28px;
-$nt-data-grid-sticky-header-z-index: 2;
+$nt-data-grid-sticky-header-z-index: 3;
 $nt-data-grid-hover-state-opacity: 8%;
 $nt-data-grid-row-stripe-opacity: 5%;
 $nt-data-grid-row-focus-opacity: 8%;
@@ -114,7 +114,7 @@ $nt-data-grid-spacer-animation-duration: motion.$nt-motion-duration-extra_long_2
     transition: background-color $nt-data-grid-row-background-transition;
 }
 
-.nt-data-grid.nt-data-grid-cell-dividers ::deep .nt-data-grid-cell:not(:last-child) {
+.nt-data-grid.nt-data-grid-cell-dividers > .nt-data-grid-scroll > .nt-data-grid-table > tbody ::deep > .nt-data-grid-row > .nt-data-grid-cell:not(:last-child) {
     border-inline-end: $nt-data-grid-border-size solid colors.$tnt-color-outline-variant;
 }
 
@@ -122,7 +122,7 @@ $nt-data-grid-spacer-animation-duration: motion.$nt-motion-duration-extra_long_2
     --nt-data-grid-row-background: #{colors.$tnt-color-surface};
 }
 
-.nt-data-grid.nt-data-grid-striped ::deep .nt-data-grid-row-striped-even {
+.nt-data-grid.nt-data-grid-striped > .nt-data-grid-scroll > .nt-data-grid-table > tbody ::deep > .nt-data-grid-row-striped-even {
     --nt-data-grid-row-background: color-mix(in srgb, #{colors.$tnt-color-on-surface} #{$nt-data-grid-row-stripe-opacity}, #{colors.$tnt-color-surface});
 }
 
@@ -150,16 +150,16 @@ $nt-data-grid-spacer-animation-duration: motion.$nt-motion-duration-extra_long_2
 .nt-data-grid-compact {
     --nt-data-grid-row-size: #{$nt-data-grid-compact-row-size};
 
-    .nt-data-grid-header-cell {
+    > .nt-data-grid-scroll > .nt-data-grid-table > thead > tr > .nt-data-grid-header-cell {
         block-size: $nt-data-grid-compact-row-size;
     }
 
-    ::deep .nt-data-grid-cell {
+    > .nt-data-grid-scroll > .nt-data-grid-table > tbody ::deep > .nt-data-grid-row > .nt-data-grid-cell {
         block-size: $nt-data-grid-compact-row-size;
     }
 
-    .nt-data-grid-sort-link,
-    .nt-data-grid-header-label {
+    > .nt-data-grid-scroll > .nt-data-grid-table > thead > tr > th > .nt-data-grid-sort-link,
+    > .nt-data-grid-scroll > .nt-data-grid-table > thead > tr > th > .nt-data-grid-header-label {
         min-block-size: $nt-data-grid-compact-row-size;
     }
 }
@@ -505,4 +505,45 @@ $nt-data-grid-spacer-animation-duration: motion.$nt-motion-duration-extra_long_2
 
 .nt-data-grid ::deep .nt-data-grid-align-justify {
     text-align: justify;
+}
+
+.nt-data-grid {
+    .nt-data-grid-expansion-toolbar {
+        padding: $nt-data-grid-spacing-md;
+        border-block-end: $nt-data-grid-border-size solid colors.$tnt-color-outline-variant;
+    }
+
+    .nt-data-grid-expansion-column {
+        width: 1%;
+    }
+
+    .nt-data-grid-expansion-cell {
+        white-space: nowrap;
+    }
+
+    .nt-data-grid-detail-row > td {
+        padding: $nt-data-grid-zero;
+        border-block-end: $nt-data-grid-border-size solid colors.$tnt-color-outline-variant;
+    }
+
+    .nt-data-grid-detail-scroll {
+        overflow: auto;
+        padding: $nt-data-grid-spacing-xl;
+        box-sizing: border-box;
+        background: colors.$tnt-color-surface-container-low;
+
+        // Let nested headers stick to the detail viewport instead of an unbounded inner scroller.
+        > ::deep .nt-data-grid {
+            overflow: visible;
+            isolation: isolate;
+
+            > .nt-data-grid-scroll {
+                overflow: visible;
+            }
+
+            > .nt-data-grid-scroll > table > thead th {
+                inset-block-start: -$nt-data-grid-spacing-xl;
+            }
+        }
+    }
 }

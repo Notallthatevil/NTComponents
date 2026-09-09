@@ -1,0 +1,40 @@
+@page "/expandableGrid"
+@using NTComponents
+@rendermode InteractiveWebAssembly
+
+<main style="padding: 16px;">
+    <h1>Claim payments</h1>
+    <p>Insured: Mountain View Services. Click a claim or its expand button to view payment line items.</p>
+    <label><input type="checkbox" @bind="_virtualize" /> Virtualize claims (otherwise paginate)</label>
+    <label><input type="checkbox" @bind="_expanded" /> Start all claims expanded</label>
+    <NTDataGrid @ref="_grid" TItem="ClaimPayments" Items="_claims" RowKey="claim => claim.Number"
+                Caption="Payments by claim" Virtualize="_virtualize" ShowPagination="@(!_virtualize)" PageSize="5"
+                DefaultRowsExpanded="_expanded" RowDetailMaxHeight="240px" OnRowClicked="ToggleClaimAsync">
+        <ChildContent>
+            <NTPropertyColumn TItem="ClaimPayments" TValue="string" Property="claim => claim.Number" Title="Claim" />
+            <NTPropertyColumn TItem="ClaimPayments" TValue="decimal" Property="claim => claim.Total" Title="Total paid" Format="C" />
+        </ChildContent>
+        <RowDetailTemplate Context="claim">
+            <NTDataGrid TItem="Payment" Items="claim.Payments.AsQueryable()" QueryParameterPrefix="@($"payments-{claim.Number}")">
+                <NTPropertyColumn TItem="Payment" TValue="DateOnly" Property="payment => payment.Date" Title="Paid on" />
+                <NTPropertyColumn TItem="Payment" TValue="string" Property="payment => payment.Description" />
+                <NTPropertyColumn TItem="Payment" TValue="decimal" Property="payment => payment.Amount" Format="C" TextAlign="TextAlign.Right" />
+            </NTDataGrid>
+        </RowDetailTemplate>
+    </NTDataGrid>
+</main>
+
+@code {
+    private NTDataGrid<ClaimPayments>? _grid;
+    private bool _virtualize;
+    private bool _expanded;
+    private readonly IQueryable<ClaimPayments> _claims = Enumerable.Range(1, 200).Select(index => {
+        var payments = Enumerable.Range(1, index % 3 == 0 ? 20 : 2)
+            .Select(line => new Payment(new DateOnly(2026, 1, 1).AddDays(line), $"Payment {line}", index * 10m + line)).ToArray();
+        return new ClaimPayments($"CLM-{index:D4}", payments.Sum(payment => payment.Amount), payments);
+    }).AsQueryable();
+
+    private Task ToggleClaimAsync(ClaimPayments claim) => _grid!.ToggleRowExpandedAsync(claim);
+    private sealed record ClaimPayments(string Number, decimal Total, Payment[] Payments);
+    private sealed record Payment(DateOnly Date, string Description, decimal Amount);
+}

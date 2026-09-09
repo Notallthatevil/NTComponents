@@ -7,6 +7,12 @@
 </CascadingValue>
 
 <div @attributes="_rootAttributes" class="@RootClass" style="@_style">
+    @if (RowDetailTemplate is not null && ShowExpandAllButton) {
+        <div class="nt-data-grid-expansion-toolbar">
+            <NTButton Label="@(AllRowsExpanded ? "Collapse all" : "Expand all")" Variant="NTButtonVariant.Text"
+                      Disabled="@(!RendererInfo.IsInteractive)" OnClickCallback="@(() => SetAllRowsExpandedAsync(!AllRowsExpanded))" />
+        </div>
+    }
     <div class="nt-data-grid-scroll" style="@ScrollStyle">
         <table class="nt-data-grid-table">
             @if (!string.IsNullOrWhiteSpace(Caption)) {
@@ -14,6 +20,9 @@
             }
             @if (_columns.Count > 0) {
                 <colgroup>
+                    @if (RowDetailTemplate is not null) {
+                        <col class="nt-data-grid-expansion-column" />
+                    }
                     @foreach (var column in _columns) {
                         <col style="@GetColumnStyle(column)" />
                     }
@@ -21,6 +30,9 @@
             }
             <thead>
                 <tr>
+                    @if (RowDetailTemplate is not null) {
+                        <th scope="col" class="nt-data-grid-header-cell"><span class="nt-data-grid-header-label">Details</span></th>
+                    }
                     @foreach (var column in _columns) {
                         var canSort = CanSort(column);
                         var sortIndex = -1;
@@ -90,7 +102,9 @@
                                   ItemsProvider="ProvideVirtualizedItemsAsync"
                                   ItemSize="ResolvedVirtualizationItemSize"
                                   OverscanCount="VirtualizationOverscanCount"
-                                  PlaceholderPreloadWindowCount="VirtualizationPlaceholderPreloadWindowCount"
+                                  PlaceholderPreloadWindowCount="@(RowDetailTemplate is null ? VirtualizationPlaceholderPreloadWindowCount : 0)"
+                                  MeasureItemSize="@(RowDetailTemplate is not null)"
+                                  ItemSizeVersion="_expansionVersion"
                                   BackgroundPreloadWindowCount="VirtualizationBackgroundPreloadWindowCount"
                                   RevalidateCachedItems="VirtualizationRevalidateCachedItems"
                                   MaxCachedItemCount="VirtualizationMaxCachedItemCount"
@@ -188,3 +202,20 @@
         </nav>
     }
 </div>
+
+@code {
+    private RenderFragment RenderExpansionCell(TItem item) => @<td class="nt-data-grid-cell nt-data-grid-expansion-cell" @onclick:stopPropagation="true" @onkeydown:stopPropagation="true">
+        <NTButton Label="@(IsRowExpanded(item) ? "Collapse row" : "Expand row")" Variant="NTButtonVariant.Text"
+                  Disabled="@(!RendererInfo.IsInteractive)" aria-expanded="@(IsRowExpanded(item) ? "true" : "false")"
+                  OnClickCallback="@(() => ToggleRowExpandedAsync(item))" />
+    </td>;
+
+    private RenderFragment RenderRowDetail(TItem item) => @<tr @key="GetRowIdentity(item)" class="nt-data-grid-detail-row"
+        data-nt-virtualize-index="@(Virtualize && _rowIndices.TryGetValue(GetRowIdentity(item), out var index) ? index : (int?)null)">
+        <td colspan="@VisibleColumnCount">
+            <div class="nt-data-grid-detail-scroll" style="max-height: @RowDetailMaxHeight;" role="region" aria-label="Row details" tabindex="0">
+                @RowDetailTemplate!(item)
+            </div>
+        </td>
+    </tr>;
+}

@@ -137,7 +137,7 @@ jobs:
         run: dotnet tool install --global dotnet-coverage
 
       - name: Run .NET tests with coverage
-        run: dotnet-coverage collect --settings ./.github/code-coverage.config --output ./TestResults/${{ matrix.name }}.cobertura.xml --output-format cobertura dotnet test ${{ matrix.project }} --no-build --configuration ${{ inputs.configuration }} --framework ${{ matrix.framework }} --results-directory ./TestResults -v minimal
+        run: dotnet-coverage collect --settings ./.github/code-coverage.config --output ./TestResults/${{ matrix.name }}.cobertura.xml --output-format cobertura dotnet test --project ${{ matrix.project }} --no-build --configuration ${{ inputs.configuration }} --framework ${{ matrix.framework }} --results-directory ./TestResults -v minimal
 
       - name: Upload coverage shard
         uses: actions/upload-artifact@v7

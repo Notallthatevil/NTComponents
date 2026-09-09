@@ -53,7 +53,12 @@ public class NTDataGridVirtualized_IntegrationTests : IAsyncLifetime {
         initialMetrics.ScrollHeight.Should().BeGreaterThan(initialMetrics.ClientHeight);
 
         await scrollContainer.HoverAsync();
-        await _page.Mouse.WheelAsync(0, 5600);
+        // Browsers can cap a single wheel event. Exercise repeated viewport-sized gestures.
+        for (var gesture = 0; gesture < 12 && !(await GetRenderedCustomerNumbersAsync(_page)).Any(number => number >= 150); gesture++) {
+            var previous = await scrollContainer.EvaluateAsync<double>("element => element.scrollTop");
+            await _page.Mouse.WheelAsync(0, initialMetrics.ClientHeight);
+            await _page.WaitForFunctionAsync("previous => document.querySelector('.nt-data-grid-scroll').scrollTop > previous", previous);
+        }
         await _page.WaitForFunctionAsync(HasCustomerRowScript, 150, new PageWaitForFunctionOptions { Timeout = 10000 });
 
         var scrolledRows = await GetRenderedCustomerNumbersAsync(_page);

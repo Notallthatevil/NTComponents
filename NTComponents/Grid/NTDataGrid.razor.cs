@@ -87,6 +87,60 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
     private int _resolvedPageSizeOptionsPageSize;
     private int _totalItemCount;
     private int _virtualizeVersion;
+    private readonly HashSet<object> _expansionExceptions = [];
+    private int _expansionVersion;
+    private bool _allRowsExpanded;
+    private bool AllRowsExpanded => _allRowsExpanded && _expansionExceptions.Count == 0;
+    private bool? _previousDefaultRowsExpanded;
+
+    /// <summary>Gets or sets detail content for a parent row. Accepts any HTML or Blazor components, including a non-paginated, non-virtualized NTDataGrid.</summary>
+    [Parameter]
+    public RenderFragment<TItem>? RowDetailTemplate { get; set; }
+
+    /// <summary>Gets or sets whether all rows start expanded, including rows loaded later. Changing this value resets individual expansion choices.</summary>
+    [Parameter]
+    public bool DefaultRowsExpanded { get; set; }
+
+    /// <summary>Gets or sets whether the expand/collapse-all button is shown when detail content is configured.</summary>
+    [Parameter]
+    public bool ShowExpandAllButton { get; set; } = true;
+
+    /// <summary>Gets or sets the CSS maximum height of each detail viewport. Overflow scrolls inside the detail row.</summary>
+    [Parameter]
+    public string RowDetailMaxHeight { get; set; } = "320px";
+
+    /// <summary>Returns whether the row is expanded. Supply a stable RowKey to preserve expansion across provider refreshes.</summary>
+    public bool IsRowExpanded(TItem item) => RowDetailTemplate is not null && (_allRowsExpanded != _expansionExceptions.Contains(GetRowIdentity(item)));
+
+    /// <summary>Expands or collapses a row. Can be called from OnRowClicked.</summary>
+    public Task SetRowExpandedAsync(TItem item, bool expanded) => InvokeAsync(() => {
+        var key = GetRowIdentity(item);
+        var changed = expanded == _allRowsExpanded ? _expansionExceptions.Remove(key) : _expansionExceptions.Add(key);
+        if (!changed) {
+            return;
+        }
+        _expansionVersion++;
+        StateHasChanged();
+    });
+
+    /// <summary>Toggles a row's detail content. Can be assigned directly to OnRowClicked.</summary>
+    public Task ToggleRowExpandedAsync(TItem item) => SetRowExpandedAsync(item, !IsRowExpanded(item));
+
+    /// <summary>Expands all rows, including rows on other pages and rows not yet loaded by virtualization.</summary>
+    public Task ExpandAllRowsAsync() => SetAllRowsExpandedAsync(true);
+
+    /// <summary>Collapses all rows, including rows not currently rendered.</summary>
+    public Task CollapseAllRowsAsync() => SetAllRowsExpandedAsync(false);
+
+    private Task SetAllRowsExpandedAsync(bool expanded) => InvokeAsync(() => {
+        if (_allRowsExpanded == expanded && _expansionExceptions.Count == 0) {
+            return;
+        }
+        _allRowsExpanded = expanded;
+        _expansionExceptions.Clear();
+        _expansionVersion++;
+        StateHasChanged();
+    });
 
     /// <summary>
     /// Gets or sets the direct item source.
@@ -209,8 +263,26 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
     public int VirtualizationInitialItemCount { get; set; } = 20;
 
     /// <summary>
-    /// Gets or sets the query parameter prefix used for sort and page state.
+    /// Gets or sets the prefix that separates this grid's URL page and sort parameters from other grids. Defaults to <c>ntdg</c>.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A prefix of <c>claims</c> produces <c>claims-page</c> (one-based page number) and
+    /// <c>claims-sort</c> (for example, <c>TotalPaid:desc</c>). The grid reads these values
+    /// from the URL and updates them when the user pages or sorts. An empty or whitespace
+    /// prefix uses the unprefixed names <c>page</c> and <c>sort</c>.
+    /// </para>
+    /// <para>
+    /// Use a stable, distinct prefix for every grid on a page, including nested grids that
+    /// only sort. For example, use <c>claims</c> for the parent and <c>payments-123</c> for
+    /// claim 123's payment table. Sharing a prefix causes grids to share URL parameter names.
+    /// </para>
+    /// <para>
+    /// Virtualized grids also use this prefix for the browser-history scroll restoration key
+    /// (for example, <c>claims-scroll</c>); the scroll offset is not a URL query parameter.
+    /// This parameter does not persist page size, row expansion, or nested detail scroll positions.
+    /// </para>
+    /// </remarks>
     [Parameter]
     public string QueryParameterPrefix { get; set; } = "ntdg";
 
@@ -268,7 +340,7 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
     [Inject]
     private IJSRuntime _jsRuntime { get; set; } = default!;
 
-    private int VisibleColumnCount => Math.Max(_columns.Count, 1);
+    private int VisibleColumnCount => Math.Max(_columns.Count + (RowDetailTemplate is not null ? 1 : 0), 1);
 
     private int CurrentPageIndex => Math.Max(0, _currentPageIndex);
 
@@ -337,6 +409,12 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
     /// <inheritdoc />
     [SuppressMessage("Reliability", "NTBA0003:Lifecycle method should use meaningful exception handling or owner ErrorBoundary coverage", Justification = "ItemsProvider failures intentionally propagate to the consumer-owned ErrorBoundary.")]
     protected override async Task OnParametersSetAsync() {
+        if (_previousDefaultRowsExpanded != DefaultRowsExpanded) {
+            _previousDefaultRowsExpanded = DefaultRowsExpanded;
+            _expansionVersion++;
+            _allRowsExpanded = DefaultRowsExpanded;
+            _expansionExceptions.Clear();
+        }
         ValidateConfiguration();
         CaptureRootAttributes();
         _currentPageSize = PageSize > 0 ? PageSize : 10;
@@ -1003,6 +1081,10 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
             builder.AddAttribute(4, "onkeydown", EventCallback.Factory.Create<KeyboardEventArgs>(this, args => InvokeRowClickedFromKeyboardAsync(item, args)));
         }
 
+        if (RowDetailTemplate is not null) {
+            builder.AddAttribute(5, "data-nt-virtualize-index", Virtualize && _rowIndices.TryGetValue(GetRowIdentity(item), out var index) ? index : (int?)null);
+            builder.AddContent(6, RenderExpansionCell(item));
+        }
         for (var i = 0; i < _columns.Count; i++) {
             var column = _columns[i];
             builder.OpenElement(10, "td");
@@ -1016,6 +1098,9 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
             builder.CloseElement();
         }
         builder.CloseElement();
+        if (IsRowExpanded(item)) {
+            builder.AddContent(20, RenderRowDetail(item));
+        }
     };
 
     private RenderFragment RenderEmptyRow() => builder => {
