@@ -23,13 +23,6 @@ updates:
       day: "monday"
       time: "06:00"
       timezone: "America/Denver"
-    groups:
-      nuget-minor-and-patch:
-        patterns:
-          - "*"
-        update-types:
-          - "minor"
-          - "patch"
     exclude-paths:
       - "../NTComponents/NTComponents.csproj"
       - "../../NTComponents/NTComponents.csproj"
@@ -44,13 +37,6 @@ updates:
       day: "monday"
       time: "06:00"
       timezone: "America/Denver"
-    groups:
-      nuget-minor-and-patch:
-        patterns:
-          - "*"
-        update-types:
-          - "minor"
-          - "patch"
     ignore:
       - dependency-name: "Microsoft.AspNetCore.Components.WebAssembly"
     commit-message:
@@ -64,13 +50,6 @@ updates:
       day: "tuesday"
       time: "06:00"
       timezone: "America/Denver"
-    groups:
-      npm-minor-and-patch:
-        patterns:
-          - "*"
-        update-types:
-          - "minor"
-          - "patch"
     commit-message:
       prefix: "chore"
       include: "scope"
@@ -82,13 +61,6 @@ updates:
       day: "wednesday"
       time: "06:00"
       timezone: "America/Denver"
-    groups:
-      actions-minor-and-patch:
-        patterns:
-          - "*"
-        update-types:
-          - "minor"
-          - "patch"
     commit-message:
       prefix: "chore"
       include: "scope"
