@@ -5,7 +5,7 @@
   "devDependencies": {
     "@material/material-color-utilities": "0.4.0",
     "@oddbird/css-anchor-positioning": "0.10.2",
-    "conventional-changelog-conventionalcommits": "10.4.0",
+    "conventional-changelog-conventionalcommits": "9.3.1",
     "esbuild": "0.28.2",
     "jest": "^30.5.1",
     "jest-environment-jsdom": "^30.5.1",
@@ -22,7 +22,8 @@
     "build:ts:release": "npm run compile:ts && node scripts/minify-typescript.mjs && npm run build:site:release && npm run build:head",
     "build:rich-text-editor": "tsc -p tsconfig.json --pretty false",
     "build:rich-text-editor:release": "tsc -p tsconfig.json --pretty false && terser NTComponents/Editors/NTRichTextEditor.razor.js --module --compress --comments false --output NTComponents/Editors/NTRichTextEditor.razor.js && terser NTComponents/Shapes/NTShape.razor.js --module --compress --comments false --output NTComponents/Shapes/NTShape.razor.js",
-    "pretest": "npm run build:ts",
+    "pretest": "npm run build:ts && npm run test:release",
+    "test:release": "node --test scripts/release-notes.test.mjs scripts/semantic-release.test.mjs",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "test:js": "npm run test"
   },
