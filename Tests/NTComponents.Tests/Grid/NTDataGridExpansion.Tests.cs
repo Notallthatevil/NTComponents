@@ -32,6 +32,30 @@ public class NTDataGridExpansion_Tests : BunitContext {
         cut.FindAll(".nt-data-grid-detail-row").Should().BeEmpty();
     }
 
+    [Theory]
+    [InlineData(false, "Expand row", "Collapse row")]
+    [InlineData(true, "Show payments", "Hide payments")]
+    public void ExpansionText_TracksRowState(bool customize, string expandText, string collapseText) {
+        var cut = RenderGrid(parameters => {
+            if (customize) {
+                parameters.Add(grid => grid.ExpandRowText, expandText).Add(grid => grid.CollapseRowText, collapseText);
+            }
+        });
+
+        cut.Find("button[aria-expanded='false'] .nt-button-label").TextContent.Should().Be(expandText);
+        cut.Find("button[aria-expanded='false']").Click();
+        cut.WaitForAssertion(() => {
+            cut.Find("button[aria-expanded='true'] .nt-button-label").TextContent.Should().Be(collapseText);
+            cut.FindAll(".nt-data-grid-detail-row").Should().ContainSingle();
+        });
+
+        cut.Find("button[aria-expanded='true']").Click();
+        cut.WaitForAssertion(() => {
+            cut.Find("button[aria-expanded='false'] .nt-button-label").TextContent.Should().Be(expandText);
+            cut.FindAll(".nt-data-grid-detail-row").Should().BeEmpty();
+        });
+    }
+
     [Fact]
     public async Task CustomDetailTemplate_ReceivesParentItem_WithoutRequiringSubTable() {
         var cut = RenderGrid();

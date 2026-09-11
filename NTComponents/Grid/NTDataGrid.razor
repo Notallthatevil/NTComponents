@@ -205,7 +205,7 @@
 
 @code {
     private RenderFragment RenderExpansionCell(TItem item) => @<td class="nt-data-grid-cell nt-data-grid-expansion-cell" @onclick:stopPropagation="true" @onkeydown:stopPropagation="true">
-        <NTButton Label="@(IsRowExpanded(item) ? "Collapse row" : "Expand row")" Variant="NTButtonVariant.Text"
+        <NTButton Label="@(IsRowExpanded(item) ? CollapseRowText : ExpandRowText)" Variant="NTButtonVariant.Text"
                   Disabled="@(!RendererInfo.IsInteractive)" aria-expanded="@(IsRowExpanded(item) ? "true" : "false")"
                   OnClickCallback="@(() => ToggleRowExpandedAsync(item))" />
     </td>;

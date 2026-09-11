@@ -24,17 +24,24 @@
         <NTDataGrid TItem="DataGridItem"
                     Items="@Items"
                     Caption="Direct IQueryable source"
+                    ExpandRowText="Show details"
+                    CollapseRowText="Hide details"
                     Density="@(_compact ? NTDataGridDensity.Compact : NTDataGridDensity.Standard)"
                     Appearance="@(_striped ? NTDataGridAppearance.Striped : NTDataGridAppearance.Default)"
                     RowKey="item => item.Id"
                     OnRowClicked="ItemClicked">
-            <NTPropertyColumn TItem="DataGridItem" TValue="int" Title="Id" Property="item => item.Id" Width="96px" TextAlign="TextAlign.Right" HeaderTextAlign="TextAlign.Right" InitialSortDirection="SortDirection.Ascending" />
-            <NTPropertyColumn TItem="DataGridItem" TValue="string" Title="Customer" Property="item => item.Customer" MinWidth="220px" />
-            <NTPropertyColumn TItem="DataGridItem" TValue="DateTime" Title="Created" Property="item => item.Created" Format="MMM d, yyyy" MinWidth="160px" />
-            <NTPropertyColumn TItem="DataGridItem" TValue="decimal" Title="Amount" Property="item => item.Amount" Format="C" TextAlign="TextAlign.Right" HeaderTextAlign="TextAlign.Right" />
-            <NTTemplateColumn TItem="DataGridItem" Title="Action" SortBy="_actionSort">
-                <button type="button" class="nt-data-grid-demo-action" @onclick="@(() => ActionClicked(context))" @onclick:stopPropagation="true" @onkeydown:stopPropagation="true">Open</button>
-            </NTTemplateColumn>
+            <ChildContent>
+                <NTPropertyColumn TItem="DataGridItem" TValue="int" Title="Id" Property="item => item.Id" Width="96px" TextAlign="TextAlign.Right" HeaderTextAlign="TextAlign.Right" InitialSortDirection="SortDirection.Ascending" />
+                <NTPropertyColumn TItem="DataGridItem" TValue="string" Title="Customer" Property="item => item.Customer" MinWidth="220px" />
+                <NTPropertyColumn TItem="DataGridItem" TValue="DateTime" Title="Created" Property="item => item.Created" Format="MMM d, yyyy" MinWidth="160px" />
+                <NTPropertyColumn TItem="DataGridItem" TValue="decimal" Title="Amount" Property="item => item.Amount" Format="C" TextAlign="TextAlign.Right" HeaderTextAlign="TextAlign.Right" />
+                <NTTemplateColumn TItem="DataGridItem" Title="Action" SortBy="_actionSort">
+                    <button type="button" class="nt-data-grid-demo-action" @onclick="@(() => ActionClicked(context))" @onclick:stopPropagation="true" @onkeydown:stopPropagation="true">Open</button>
+                </NTTemplateColumn>
+            </ChildContent>
+            <RowDetailTemplate Context="item">
+                <p>Order @item.Id for @item.Customer: @item.Amount.ToString("C").</p>
+            </RowDetailTemplate>
         </NTDataGrid>
     </section>
 

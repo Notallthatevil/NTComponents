@@ -105,6 +105,14 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
     [Parameter]
     public bool ShowExpandAllButton { get; set; } = true;
 
+    /// <summary>Gets or sets the button text for expanding an individual row.</summary>
+    [Parameter]
+    public string ExpandRowText { get; set; } = "Expand row";
+
+    /// <summary>Gets or sets the button text for collapsing an individual row.</summary>
+    [Parameter]
+    public string CollapseRowText { get; set; } = "Collapse row";
+
     /// <summary>Gets or sets the CSS maximum height of each detail viewport. Overflow scrolls inside the detail row.</summary>
     [Parameter]
     public string RowDetailMaxHeight { get; set; } = "320px";
