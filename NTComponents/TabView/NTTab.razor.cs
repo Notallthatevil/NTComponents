@@ -119,7 +119,9 @@ public partial class NTTab {
     /// <inheritdoc />
     protected override void OnParametersSet() {
         base.OnParametersSet();
-        var headerMetadata = new HeaderMetadata(Disabled, AccessibilityLabel, AriaLabel, HeaderTooltip is not null, Icon, Label, Value, ElementName, ElementId);
+        // Icon factories return mutable instances; compare their rendered values, not their identity.
+        var iconMetadata = Icon is { } icon ? new IconMetadata(icon.Icon, icon.ElementClass, icon.ElementStyle, icon.ElementId, icon.ElementTitle, icon.Tooltip is not null) : (IconMetadata?)null;
+        var headerMetadata = new HeaderMetadata(Disabled, AccessibilityLabel, AriaLabel, HeaderTooltip is not null, iconMetadata, Label, Value, ElementName, ElementId);
         var headerMetadataChanged = _headerMetadata is { } previousHeaderMetadata && previousHeaderMetadata != headerMetadata;
         _headerMetadata = headerMetadata;
         _context?.SetTabSequence(this, _context.GetNextRenderSequence(), headerMetadataChanged);
@@ -134,5 +136,7 @@ public partial class NTTab {
         return string.IsNullOrWhiteSpace(normalized) ? "tab" : normalized;
     }
 
-    private readonly record struct HeaderMetadata(bool Disabled, string? AccessibilityLabel, string? AriaLabel, bool HasHeaderTooltip, TnTIcon? Icon, string Label, string? Value, string? ElementName, string? ElementId);
+    private readonly record struct IconMetadata(string Icon, string? Class, string? Style, string? Id, string? Title, bool HasTooltip);
+
+    private readonly record struct HeaderMetadata(bool Disabled, string? AccessibilityLabel, string? AriaLabel, bool HasHeaderTooltip, IconMetadata? Icon, string Label, string? Value, string? ElementName, string? ElementId);
 }
