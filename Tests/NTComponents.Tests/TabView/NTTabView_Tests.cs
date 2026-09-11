@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.JSInterop;
+using NSubstitute;
 
 namespace NTComponents.Tests.TabView;
 
@@ -7,9 +9,104 @@ public class NTTabView_Tests : BunitContext {
     public NTTabView_Tests() {
         Renderer.SetRendererInfo(new RendererInfo("Static", false));
         var tabViewModule = JSInterop.SetupModule("./_content/NTComponents/TabView/NTTabView.razor.js");
-        tabViewModule.SetupVoid("onLoad", _ => true);
-        tabViewModule.SetupVoid("onUpdate", _ => true);
-        tabViewModule.SetupVoid("onDispose", _ => true);
+        tabViewModule.SetupVoid("onLoad", _ => true).SetVoidResult();
+        tabViewModule.SetupVoid("onUpdate", _ => true).SetVoidResult();
+        tabViewModule.SetupVoid("onDispose", _ => true).SetVoidResult();
+    }
+
+    [Fact]
+    public async Task SelectTabAsync_AfterInteractiveRender_ReturnsBrowserSelectionResult() {
+        Renderer.SetRendererInfo(new RendererInfo("Server", true));
+        var module = JSInterop.SetupModule(NTTabView.JsModulePathValue);
+        module.SetupVoid("onLoad", _ => true).SetVoidResult();
+        module.SetupVoid("onUpdate", _ => true).SetVoidResult();
+        module.SetupVoid("onDispose", _ => true).SetVoidResult();
+        module.Setup<bool>("selectTabByValue", invocation => invocation.Arguments[1] as string == "specs").SetResult(true);
+        module.Setup<bool>("selectTabByValue", invocation => invocation.Arguments[1] as string == "missing").SetResult(false);
+        var cut = RenderTabView();
+        cut.WaitForAssertion(() => cut.Instance.IsolatedJsModule.Should().NotBeNull());
+        var importCount = JSInterop.Invocations["import"].Count;
+
+        (await cut.Instance.SelectTabAsync("specs", Xunit.TestContext.Current.CancellationToken)).Should().BeTrue();
+        (await cut.Instance.SelectTabAsync("missing", Xunit.TestContext.Current.CancellationToken)).Should().BeFalse();
+        module.Invocations["selectTabByValue"][0].Arguments[0].Should().Be(cut.Instance.Element);
+        module.Invocations["selectTabByValue"][0].CancellationToken.Should().Be(Xunit.TestContext.Current.CancellationToken);
+        JSInterop.Invocations["import"].Count.Should().Be(importCount);
+    }
+
+    [Fact]
+    public async Task SelectTabAsync_WhileModuleImportIsPending_ThrowsHelpfulError() {
+        using var context = new BunitContext();
+        var import = new TaskCompletionSource<IJSObjectReference>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var jsRuntime = Substitute.For<IJSRuntime>();
+#pragma warning disable BL0016 // Configures a substitute; no browser interop executes here.
+        jsRuntime.InvokeAsync<IJSObjectReference>("import", Arg.Any<object?[]>()).Returns(new ValueTask<IJSObjectReference>(import.Task));
+#pragma warning restore BL0016
+        context.Services.AddSingleton(jsRuntime);
+        context.Renderer.SetRendererInfo(new RendererInfo("Server", true));
+        var cut = context.Render<NTTabView>();
+
+        var act = async () => await cut.Instance.SelectTabAsync("specs", Xunit.TestContext.Current.CancellationToken);
+
+        try {
+            await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("*rendered interactively*");
+        }
+        finally {
+            import.SetResult(Substitute.For<IJSObjectReference>());
+        }
+        cut.WaitForAssertion(() => cut.Instance.IsolatedJsModule.Should().NotBeNull());
+    }
+
+    [Fact]
+    public async Task SelectTabAsync_AfterDisposal_RejectsSelectionWithoutCallingBrowser() {
+        Renderer.SetRendererInfo(new RendererInfo("Server", true));
+        var cut = RenderTabView();
+        cut.WaitForAssertion(() => cut.Instance.IsolatedJsModule.Should().NotBeNull());
+        await cut.Instance.DisposeAsync();
+
+        var act = async () => await cut.Instance.SelectTabAsync("specs", Xunit.TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("*rendered interactively*");
+        JSInterop.VerifyNotInvoke("selectTabByValue");
+        JSInterop.VerifyInvoke("onDispose", 1);
+    }
+
+    [Fact]
+    public async Task SelectTabAsync_BrowserFailure_PropagatesErrorToCaller() {
+        Renderer.SetRendererInfo(new RendererInfo("Server", true));
+        var module = JSInterop.SetupModule(NTTabView.JsModulePathValue);
+        module.SetupVoid("onLoad", _ => true).SetVoidResult();
+        module.SetupVoid("onUpdate", _ => true).SetVoidResult();
+        module.SetupVoid("onDispose", _ => true).SetVoidResult();
+        var failure = new JSException("Tab selection failed");
+        module.Setup<bool>("selectTabByValue", _ => true).SetException(failure);
+        var cut = RenderTabView();
+        cut.WaitForAssertion(() => cut.Instance.IsolatedJsModule.Should().NotBeNull());
+
+        var act = async () => await cut.Instance.SelectTabAsync("specs", Xunit.TestContext.Current.CancellationToken);
+
+        (await act.Should().ThrowExactlyAsync<JSException>()).Which.Should().BeSameAs(failure);
+    }
+
+    [Fact]
+    public async Task SelectTabAsync_StaticRendering_ThrowsHelpfulError() {
+        var cut = RenderTabView();
+
+        var act = async () => await cut.Instance.SelectTabAsync("specs", Xunit.TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("*rendered interactively*");
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData(" ")]
+    public async Task SelectTabAsync_EmptyValue_ThrowsArgumentException(string? value) {
+        var cut = RenderTabView();
+
+        var act = async () => await cut.Instance.SelectTabAsync(value!, Xunit.TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<ArgumentException>();
     }
 
     [Fact]

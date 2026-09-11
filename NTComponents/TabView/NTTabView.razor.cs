@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using NTComponents.Core;
 
 using NTComponents.CodeDocumentation;
@@ -73,6 +74,29 @@ public partial class NTTabView {
 
     [Inject]
     private NavigationManager NavigationManager { get; set; } = default!;
+
+    /// <inheritdoc />
+    public override string? JsModulePath => JsModulePathValue;
+
+    /// <summary>
+    ///     Selects an enabled tab by its value after the component has rendered interactively.
+    /// </summary>
+    /// <remarks>
+    ///     Call through a component reference from an event handler once the JavaScript module has loaded. Uses the same panel, indicator, and
+    ///     query-string behavior as clicking a tab, without moving keyboard focus. Does not change <see cref="SelectedValue" />.
+    /// </remarks>
+    /// <param name="value">The tab value to select, matched case-insensitively.</param>
+    /// <param name="cancellationToken">Cancels the JavaScript interop call.</param>
+    /// <returns>Whether a matching enabled tab was found and selected.</returns>
+    /// <exception cref="InvalidOperationException">The component's JavaScript module is not ready, or the component has been disposed.</exception>
+    public async ValueTask<bool> SelectTabAsync(string value, CancellationToken cancellationToken = default) {
+        ArgumentException.ThrowIfNullOrWhiteSpace(value);
+        if (!RendererInfo.IsInteractive || !TryGetInteropReferences(out var module, out _)) {
+            throw new InvalidOperationException($"{nameof(NTTabView)} cannot select a tab from .NET until it has rendered interactively.");
+        }
+
+        return await module.InvokeAsync<bool>("selectTabByValue", cancellationToken, Element, value);
+    }
 
     /// <summary>
     ///     Gets or sets the accessible label for the tab list.

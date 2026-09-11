@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import { jest } from '@jest/globals';
-import { __testHooks, onDispose, onLoad, onUpdate } from '../NTTabView.razor.js';
+import { __testHooks, onDispose, onLoad, onUpdate, selectTabByValue } from '../NTTabView.razor.js';
 
 const originalLocation = window.location.href;
 
@@ -56,6 +56,131 @@ describe('NTTabView page-script module', () => {
 
     return document.querySelector('nt-tab-view');
   }
+
+  test('programmatic selection overrides the initial query and updates panels without moving focus', () => {
+    const tabView = createTabView();
+    window.history.replaceState(null, '', `${originalLocation.split('?')[0]}?details=overview`);
+    const overview = tabView.querySelector('#tab-overview');
+    overview.focus();
+
+    expect(selectTabByValue(tabView, 'SPECS')).toBe(true);
+    onUpdate(tabView);
+
+    expect(overview.getAttribute('aria-selected')).toBe('false');
+    expect(overview.tabIndex).toBe(-1);
+    expect(tabView.querySelector('#tab-specs').getAttribute('aria-selected')).toBe('true');
+    expect(tabView.querySelector('#tab-specs').tabIndex).toBe(0);
+    expect(tabView.querySelector('#panel-overview').hidden).toBe(true);
+    expect(tabView.querySelector('#panel-specs').hidden).toBe(false);
+    expect(new URL(window.location.href).searchParams.get('details')).toBe('specs');
+    expect(document.activeElement).toBe(overview);
+  });
+
+  // Contract: SelectTabAsync returns whether a matching enabled tab was found and selected.
+  test.each(['disabled', 'missing'])('programmatic selection rejects a %s tab without changing selection', condition => {
+    const tabView = createTabView();
+    tabView.querySelector('#tab-specs').disabled = condition === 'disabled';
+
+    expect(selectTabByValue(tabView, condition === 'disabled' ? 'specs' : 'missing')).toBe(false);
+    expect(tabView.querySelector('#tab-overview').getAttribute('aria-selected')).toBe('true');
+    expect(tabView.querySelector('#panel-overview').hidden).toBe(false);
+    expect(tabView.querySelector('#panel-specs').hidden).toBe(true);
+    expect(window.location.href).toBe(originalLocation);
+  });
+
+  // Contract: SelectTabAsync remarks promise click-equivalent selection and query behavior;
+  // existing 'updates preserve current selection instead of reapplying query value' is the update parity target.
+  test('repeated programmatic selection survives page-script load and updates with query writes disabled', () => {
+    const tabView = createTabView();
+    tabView.dataset.ntTabUpdateQuery = 'false';
+    const initialUrl = `${originalLocation.split('?')[0]}?details=overview&other=keep#anchor`;
+    window.history.replaceState(null, '', initialUrl);
+
+    expect(selectTabByValue(tabView, 'specs')).toBe(true);
+    onLoad(document.querySelector('tnt-page-script'));
+    expect(selectTabByValue(tabView, 'specs')).toBe(true);
+    onUpdate(tabView);
+
+    expect(tabView.querySelector('#tab-specs').getAttribute('aria-selected')).toBe('true');
+    expect(tabView.querySelector('#panel-specs').hidden).toBe(false);
+    expect(tabView.querySelector('#panel-overview').hidden).toBe(true);
+    expect(tabView.querySelectorAll('[role="tab"][aria-selected="true"]')).toHaveLength(1);
+    expect(window.location.href).toBe(initialUrl);
+  });
+
+  // Contract: an ordinary render update must preserve the user's viewport while they
+  // interact with panel content; explicit selection retains documented click parity.
+  test('render updates do not scroll back to the tab after programmatic selection', () => {
+    const tabView = createTabView();
+    onLoad(tabView);
+    const overview = tabView.querySelector('#tab-overview');
+    overview.scrollIntoView = jest.fn();
+    const specs = tabView.querySelector('#tab-specs');
+    specs.scrollIntoView = jest.fn();
+
+    expect(selectTabByValue(tabView, 'specs')).toBe(true);
+    expect(specs.scrollIntoView).toHaveBeenCalledTimes(1);
+    expect(overview.scrollIntoView).not.toHaveBeenCalled();
+    specs.scrollIntoView.mockClear();
+
+    onUpdate(tabView);
+
+    expect(specs.scrollIntoView).not.toHaveBeenCalled();
+    expect(tabView.querySelector('#panel-specs').hidden).toBe(false);
+  });
+
+  // Contract: SelectTabAsync selects a tab through that component's reference;
+  // selecting one instance must leave another instance's content and selection intact.
+  test.each(['sibling', 'nested'])('programmatic selection is scoped to its view with a %s view', placement => {
+    const tabView = createTabView();
+    const otherView = tabView.cloneNode(true);
+    otherView.dataset.ntTabQueryParameter = 'other';
+    otherView.querySelectorAll('[id]').forEach(element => { element.id = `other-${element.id}`; });
+    otherView.querySelectorAll('[aria-controls]').forEach(element => {
+      element.setAttribute('aria-controls', `other-${element.getAttribute('aria-controls')}`);
+    });
+    if (placement === 'nested') {
+      tabView.querySelector('#panel-overview').append(otherView);
+    } else {
+      tabView.after(otherView);
+    }
+    onLoad(otherView);
+
+    expect(selectTabByValue(tabView, 'specs')).toBe(true);
+
+    expect(tabView.querySelector('#panel-specs').hidden).toBe(false);
+    expect(otherView.querySelector('#other-tab-overview').getAttribute('aria-selected')).toBe('true');
+    expect(otherView.querySelector('#other-panel-overview').hidden).toBe(false);
+    expect(otherView.querySelector('#other-panel-specs').hidden).toBe(true);
+    expect(new URL(window.location.href).searchParams.get('other')).toBeNull();
+  });
+
+  // Contract: disposing a removed component must not disable a still-mounted sibling.
+  // A removed ElementReference can arrive as null at the JavaScript interop boundary.
+  test('disposing a missing element leaves mounted tab navigation working', () => {
+    const tabView = createTabView();
+    onLoad(tabView);
+
+    onDispose(null);
+    tabView.querySelector('#tab-specs').click();
+
+    expect(tabView.querySelector('#tab-specs').getAttribute('aria-selected')).toBe('true');
+    expect(tabView.querySelector('#panel-specs').hidden).toBe(false);
+    expect(tabView.querySelector('#panel-overview').hidden).toBe(true);
+  });
+
+  // Compatibility contract: omitting the scope retains document-wide cleanup.
+  test('disposing without a scope removes navigation listeners from mounted views', () => {
+    const tabView = createTabView();
+    onLoad();
+
+    onDispose();
+    tabView.querySelector('#tab-specs').click();
+
+    expect(tabView.querySelector('#tab-overview').getAttribute('aria-selected')).toBe('true');
+    expect(tabView.querySelector('#panel-overview').hidden).toBe(false);
+    expect(tabView.querySelector('#panel-specs').hidden).toBe(true);
+  });
 
   test('onLoad resolves a page-script element to the preceding tab view', () => {
     const tabView = createTabView();

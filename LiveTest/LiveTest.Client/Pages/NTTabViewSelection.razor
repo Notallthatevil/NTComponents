@@ -1,0 +1,24 @@
+@page "/nt-tab-view-selection"
+@rendermode InteractiveServer
+@using NTComponents
+
+<h1>Select a tab from Blazor</h1>
+<button type="button" @onclick="SelectOverviewAsync">Show overview</button>
+<button type="button" @onclick="SelectDetailsAsync">Show details</button>
+
+<NTTabView @ref="_tabView" Name="selection-demo">
+    <NTTab Label="Overview" Value="overview">
+        Overview content.
+    </NTTab>
+    <NTTab Label="Details" Value="details">
+        Details content.
+    </NTTab>
+</NTTabView>
+
+@code {
+    private NTTabView _tabView = default!;
+
+    private async Task SelectOverviewAsync() => await _tabView.SelectTabAsync("overview");
+
+    private async Task SelectDetailsAsync() => await _tabView.SelectTabAsync("details");
+}

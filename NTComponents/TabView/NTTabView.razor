@@ -1,5 +1,5 @@
 @using NTComponents.Core
-@inherits NTComponentBase
+@inherits NTPageScriptComponent<NTTabView>
 @namespace NTComponents
 
 <nt-tab-view @attributes="AdditionalAttributes"
@@ -72,4 +72,4 @@
         </div>
     </CascadingValue>
 </nt-tab-view>
-<NTPageScript Src="@JsModulePathValue" />
+@PageScript

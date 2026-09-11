@@ -140,7 +140,7 @@ function scrollTabIntoView(tab: HTMLButtonElement): void {
     }
 }
 
-function selectTab(tabView: NTTabViewElement, selectedTab: HTMLButtonElement, updateUrl: boolean): void {
+function selectTab(tabView: NTTabViewElement, selectedTab: HTMLButtonElement, updateUrl: boolean, scrollToTab = true): void {
     if (selectedTab.disabled || selectedTab.getAttribute('aria-disabled') === 'true') {
         return;
     }
@@ -163,7 +163,9 @@ function selectTab(tabView: NTTabViewElement, selectedTab: HTMLButtonElement, up
         updateQueryString(tabView, selectedTab);
     }
 
-    scrollTabIntoView(selectedTab);
+    if (scrollToTab) {
+        scrollTabIntoView(selectedTab);
+    }
     scheduleIndicatorUpdate(tabView);
 }
 
@@ -180,7 +182,7 @@ function selectInitialTab(tabView: NTTabViewElement, useQueryString: boolean): v
     const selectedTab = queryTab ?? getSelectedTab(tabView);
 
     if (selectedTab) {
-        selectTab(tabView, selectedTab, false);
+        selectTab(tabView, selectedTab, false, useQueryString);
     } else {
         scheduleIndicatorUpdate(tabView);
     }
@@ -441,6 +443,21 @@ function disposeTabView(tabView: Maybe<NTTabViewElement>): void {
     delete tabView.__ntTabViewState;
 }
 
+export function selectTabByValue(element: Maybe<Element>, value: string): boolean {
+    if (!isTabViewElement(element)) {
+        return false;
+    }
+
+    const tab = findTabByValue(element, value);
+    if (!tab) {
+        return false;
+    }
+
+    updateTabView(element);
+    selectTab(element, tab, true);
+    return true;
+}
+
 export function onLoad(scope?: Maybe<Element>): void {
     getTargetTabViews(scope).forEach(updateTabView);
 }
@@ -450,6 +467,11 @@ export function onUpdate(scope?: Maybe<Element>): void {
 }
 
 export function onDispose(scope?: Maybe<Element>): void {
+    // A removed Blazor ElementReference resolves to null; only an omitted scope means all views.
+    if (scope === null) {
+        return;
+    }
+
     getTargetTabViews(scope).forEach(disposeTabView);
 }
 
