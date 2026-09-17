@@ -21,7 +21,169 @@ public class NTDataGrid_Tests : BunitContext {
         module.SetupVoid("onDispose", _ => true).SetVoidResult();
         module.SetupVoid("init", _ => true).SetVoidResult();
         module.SetupVoid("updateRenderState", _ => true).SetVoidResult();
+        module.SetupVoid("updateOptions", _ => true).SetVoidResult();
+        module.SetupVoid("scrollToItem", _ => true).SetVoidResult();
         JSInterop.SetupVoid("NTComponents.updateUri", _ => true).SetVoidResult();
+    }
+
+    [Fact]
+    public void Pagination_EmitsValidLowercaseAriaDisabledValues() {
+        var cut = Render<NTDataGrid<TestGridItem>>(parameters => parameters
+            .Add(grid => grid.Items, _items)
+            .Add(grid => grid.ShowPagination, true)
+            .Add(grid => grid.PageSize, 1)
+            .Add(grid => grid.ChildContent, DefaultColumns));
+        cut.Find(".pagination-first-page").GetAttribute("aria-disabled").Should().Be("true");
+        cut.Find(".pagination-previous-page").GetAttribute("aria-disabled").Should().Be("true");
+        cut.Find(".pagination-next-page").GetAttribute("aria-disabled").Should().Be("false");
+        cut.Find(".pagination-last-page").GetAttribute("aria-disabled").Should().Be("false");
+        cut.Find(".pagination-btn[aria-current='page']").GetAttribute("aria-disabled").Should().Be("true");
+    }
+
+    [Fact]
+    public async Task VirtualizedScroll_DelegatesToInteractiveVirtualizer() {
+        var cut = Render<NTDataGrid<TestGridItem>>(parameters => parameters
+            .Add(grid => grid.Items, _items)
+            .Add(grid => grid.Virtualize, true)
+            .Add(grid => grid.ChildContent, DefaultColumns));
+        await cut.InvokeAsync(() => cut.Instance.ScrollToItemAsync(2, Xunit.TestContext.Current.CancellationToken));
+        var invocation = JSInterop.Invocations.Single(call => call.Identifier == "scrollToItem");
+        invocation.Arguments[1].Should().Be(2);
+    }
+
+    [Fact]
+    public async Task CanceledVirtualizedProvider_DoesNotPublishStaleTotal() {
+        var pending = new TaskCompletionSource<NTItemsProviderResult<TestGridItem>>();
+        var totals = new List<int>();
+        var hold = false;
+        var cut = Render<NTDataGrid<TestGridItem>>(parameters => parameters
+            .Add(grid => grid.ItemsProvider, request => hold
+                ? new ValueTask<NTItemsProviderResult<TestGridItem>>(pending.Task)
+                : ValueTask.FromResult(new NTItemsProviderResult<TestGridItem>(_items.ToArray(), 3)))
+            .Add(grid => grid.Virtualize, true)
+            .Add(grid => grid.TotalItemCountChanged, value => totals.Add(value))
+            .Add(grid => grid.ChildContent, DefaultColumns));
+        var virtualizer = cut.FindComponent<NTVirtualize<TestGridItem>>().Instance;
+        await cut.InvokeAsync(() => virtualizer.LoadItems(0, 0, 0, 3));
+        totals.Clear();
+        hold = true;
+        using var cancellation = new CancellationTokenSource();
+        var requestTask = cut.InvokeAsync(async () => await virtualizer.ItemsProvider!(new NTVirtualizeItemsProviderRequest<TestGridItem> { Count = 3, CancellationToken = cancellation.Token }));
+        cancellation.Cancel();
+        pending.SetResult(new NTItemsProviderResult<TestGridItem>(_items.ToArray(), 99));
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => requestTask);
+        totals.Should().BeEmpty();
+        cut.Find("table").GetAttribute("aria-rowcount").Should().Be("4");
+    }
+
+    [Fact]
+    public void StaticPageSizeOptIn_UsesNativeLinksAndReadsPrefixedQuery() {
+        SetRendererInfo(new RendererInfo("Static", false));
+        Services.GetRequiredService<NavigationManager>().NavigateTo("https://example.test/orders?ntdg-page=2&ntdg-pageSize=1&filter=open");
+        var cut = Render<NTDataGrid<TestGridItem>>(parameters => parameters
+            .Add(grid => grid.Items, _items)
+            .Add(grid => grid.ShowPagination, true)
+            .Add(grid => grid.PersistPageSizeInQuery, true)
+            .Add(grid => grid.ChildContent, DefaultColumns));
+        cut.Find("tbody tr").TextContent.Should().Contain("Alpha");
+        var link = cut.FindAll(".nt-data-grid-page-size a").Single(element => element.TextContent == "25");
+        link.GetAttribute("href").Should().Contain("ntdg-page=1").And.Contain("ntdg-pageSize=25").And.Contain("filter=open");
+        cut.Find(".nt-data-grid-page-size a[aria-current='true']").TextContent.Should().Be("1");
+    }
+
+    [Fact]
+    public async Task VirtualizedMeasurement_IndexesOrdinaryRows_AndRefreshRetainsVirtualizer() {
+        var cut = Render<NTDataGrid<TestGridItem>>(parameters => parameters
+            .Add(grid => grid.Items, _items)
+            .Add(grid => grid.Virtualize, true)
+            .Add(grid => grid.VirtualizationMeasureItemSize, true)
+            .Add(grid => grid.VirtualizationItemSizeVersion, 5)
+            .Add(grid => grid.RowKey, item => item.Id)
+            .Add(grid => grid.ChildContent, DefaultColumns));
+        var virtualizer = cut.FindComponent<NTVirtualize<TestGridItem>>().Instance;
+        await cut.InvokeAsync(() => virtualizer.LoadItems(0, 0, 0, 3));
+        cut.FindAll("tr.nt-data-grid-row[data-nt-virtualize-index]").Select(row => row.GetAttribute("data-nt-virtualize-index")).Should().Equal("0", "1", "2");
+        cut.FindAll("tr.nt-data-grid-row[aria-rowindex]").Select(row => row.GetAttribute("aria-rowindex")).Should().Equal("2", "3", "4");
+        cut.Find("table").GetAttribute("aria-rowcount").Should().Be("4");
+        await cut.InvokeAsync(() => cut.Instance.RefreshDataGridAsync(Xunit.TestContext.Current.CancellationToken));
+        cut.FindComponent<NTVirtualize<TestGridItem>>().Instance.Should().BeSameAs(virtualizer);
+        cut.FindAll("tr.nt-data-grid-row[aria-rowindex]").Should().HaveCount(3);
+    }
+
+    [Fact]
+    public void ExpansionAndContentRevisionChanges_CannotCancelMeasurementInvalidation() {
+        var cut = Render<NTDataGrid<TestGridItem>>(parameters => parameters
+            .Add(grid => grid.Items, _items)
+            .Add(grid => grid.Virtualize, true)
+            .Add(grid => grid.VirtualizationMeasureItemSize, true)
+            .Add(grid => grid.VirtualizationItemSizeVersion, 5)
+            .Add(grid => grid.ChildContent, DefaultColumns));
+        var previousRevision = cut.FindComponent<NTVirtualize<TestGridItem>>().Instance.ItemSizeVersion;
+
+        cut.Render(parameters => parameters
+            .Add(grid => grid.VirtualizationItemSizeVersion, 4)
+            .Add(grid => grid.DefaultRowsExpanded, true));
+
+        cut.FindComponent<NTVirtualize<TestGridItem>>().Instance.ItemSizeVersion.Should().NotBe(previousRevision);
+    }
+
+    [Fact]
+    public void VirtualizedOptions_ForwardInitialPositionAnchoringAndIdentity() {
+        Func<TestGridItem, object> key = item => item.Id;
+        var comparer = EqualityComparer<TestGridItem>.Default;
+        var cut = Render<NTDataGrid<TestGridItem>>(parameters => parameters
+            .Add(grid => grid.Items, _items)
+            .Add(grid => grid.Virtualize, true)
+            .Add(grid => grid.InitialItemIndex, 2)
+            .Add(grid => grid.AnchorMode, NTVirtualizeAnchorMode.End)
+            .Add(grid => grid.ItemComparer, comparer)
+            .Add(grid => grid.RowKey, key)
+            .Add(grid => grid.ChildContent, DefaultColumns));
+        var virtualizer = cut.FindComponent<NTVirtualize<TestGridItem>>().Instance;
+        virtualizer.InitialItemIndex.Should().Be(2);
+        virtualizer.AnchorMode.Should().Be(NTVirtualizeAnchorMode.End);
+        virtualizer.ItemComparer.Should().BeSameAs(comparer);
+        virtualizer.ItemKey.Should().BeSameAs(key);
+        cut.Render(parameters => parameters.Add(grid => grid.Density, NTDataGridDensity.Compact));
+        cut.FindComponent<NTVirtualize<TestGridItem>>().Instance.ItemKey.Should().BeSameAs(key);
+    }
+
+    [Fact]
+    public void DetailRows_ReportUnknownPhysicalRowCount_WithoutFalseIndexes() {
+        var cut = Render<NTDataGrid<TestGridItem>>(parameters => parameters
+            .Add(grid => grid.Items, _items)
+            .Add(grid => grid.DefaultRowsExpanded, true)
+            .Add(grid => grid.RowDetailTemplate, item => builder => builder.AddContent(0, item.Name))
+            .Add(grid => grid.ChildContent, DefaultColumns));
+        cut.Find("table").GetAttribute("aria-rowcount").Should().Be("-1");
+        cut.FindAll("tbody [aria-rowindex]").Should().BeEmpty();
+        cut.FindAll(".nt-data-grid-detail-row").Should().HaveCount(3);
+    }
+
+    [Fact]
+    public void StaticSort_FromLaterPage_ResetsPageAndPreservesUnrelatedQuery() {
+        SetRendererInfo(new RendererInfo("Static", false));
+        Services.GetRequiredService<NavigationManager>().NavigateTo("https://example.test/orders?ntdg-page=3&filter=open#results");
+        var cut = RenderGrid();
+        var href = cut.Find(".nt-data-grid-sort-link").GetAttribute("href");
+        href.Should().Contain("ntdg-page=1").And.Contain("filter=open").And.EndWith("#results");
+    }
+
+    [Fact]
+    public async Task HistoryOptIn_NavigatesAndRestoresPageOnLocationChange() {
+        var navigation = Services.GetRequiredService<NavigationManager>();
+        navigation.NavigateTo("https://example.test/orders");
+        var cut = Render<NTDataGrid<TestGridItem>>(parameters => parameters
+            .Add(grid => grid.Items, _items)
+            .Add(grid => grid.ShowPagination, true)
+            .Add(grid => grid.PageSize, 1)
+            .Add(grid => grid.PushHistoryEntries, true)
+            .Add(grid => grid.ChildContent, DefaultColumns));
+        cut.Find(".pagination-next-page").Click();
+        navigation.Uri.Should().Contain("ntdg-page=2");
+        cut.Find("tbody tr").TextContent.Should().Contain("Alpha");
+        await cut.InvokeAsync(() => navigation.NavigateTo("https://example.test/orders?ntdg-page=1"));
+        cut.WaitForAssertion(() => cut.Find("tbody tr").TextContent.Should().Contain("Gamma"));
     }
 
     [Fact]
@@ -1443,11 +1605,12 @@ public class NTDataGrid_Tests : BunitContext {
 
         cut.WaitForAssertion(() => {
             var placeholder = cut.Find(".nt-data-grid-row-placeholder");
-            placeholder.GetAttribute("style").Should().Contain("--nt-data-grid-placeholder-row-height: 64px");
+            placeholder.GetAttribute("data-nt-virtualize-size").Should().Be("64");
+            placeholder.HasAttribute("style").Should().BeFalse();
             placeholder.GetAttribute("aria-hidden").Should().Be("true");
             var cell = placeholder.QuerySelector("td")!;
             cell.GetAttribute("colspan").Should().Be("3");
-            cell.QuerySelector(".nt-data-grid-row-skeleton .nt-skeleton")!.GetAttribute("style").Should().Contain("--nt-skeleton-height:64px");
+            cell.QuerySelector(".nt-data-grid-row-skeleton .nt-skeleton")!.GetAttribute("style").Should().NotContain("--nt-skeleton-height");
         });
 
         pending.SetResult(new NTItemsProviderResult<TestGridItem>(items.Skip(10).Take(2).ToArray(), items.Length));

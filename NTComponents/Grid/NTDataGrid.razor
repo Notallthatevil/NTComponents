@@ -14,7 +14,7 @@
         </div>
     }
     <div class="nt-data-grid-scroll" style="@ScrollStyle">
-        <table class="nt-data-grid-table">
+        <table class="nt-data-grid-table" aria-rowcount="@AccessibleRowCount">
             @if (!string.IsNullOrWhiteSpace(Caption)) {
                 <caption>@Caption</caption>
             }
@@ -29,7 +29,7 @@
                 </colgroup>
             }
             <thead>
-                <tr>
+                <tr aria-rowindex="1">
                     @if (RowDetailTemplate is not null) {
                         <th scope="col" class="nt-data-grid-header-cell"><span class="nt-data-grid-header-label">Details</span></th>
                     }
@@ -97,13 +97,17 @@
             </thead>
             <tbody>
                 @if (Virtualize) {
-                    <NTVirtualize @key="_virtualizeVersion"
+                    <NTVirtualize @key="_virtualizeVersion" @ref="_virtualizer"
                                   TItem="TItem"
                                   ItemsProvider="ProvideVirtualizedItemsAsync"
                                   ItemSize="ResolvedVirtualizationItemSize"
                                   OverscanCount="VirtualizationOverscanCount"
                                   PlaceholderPreloadWindowCount="@(RowDetailTemplate is null ? VirtualizationPlaceholderPreloadWindowCount : 0)"
-                                  MeasureItemSize="@(RowDetailTemplate is not null)"
+                                  MeasureItemSize="@MeasureVirtualizedRows"
+                                  InitialItemIndex="InitialItemIndex"
+                                  AnchorMode="AnchorMode"
+                                  ItemComparer="ItemComparer"
+                                  ItemKey="@(_hasRowKeyParameter ? RowKey : null)"
                                   ItemSizeVersion="_expansionVersion"
                                   BackgroundPreloadWindowCount="VirtualizationBackgroundPreloadWindowCount"
                                   RevalidateCachedItems="VirtualizationRevalidateCachedItems"
@@ -138,20 +142,30 @@
 
     @if (ShowPagination) {
         <nav class="nt-data-grid-pagination" aria-label="@PaginationAriaLabel">
-            <label class="nt-data-grid-page-size">
-                <span>Rows per page</span>
-                <select value="@CurrentPageSize" @onchange="ChangePageSizeAsync">
+            @if (RendererInfo.IsInteractive || !PersistPageSizeInQuery) {
+                <label class="nt-data-grid-page-size">
+                    <span>Rows per page</span>
+                    <select value="@CurrentPageSize" disabled="@(!RendererInfo.IsInteractive)" @onchange="ChangePageSizeAsync">
+                        @foreach (var pageSizeOption in GetResolvedPageSizeOptions()) {
+                            <option value="@pageSizeOption">@pageSizeOption</option>
+                        }
+                    </select>
+                </label>
+            }
+            else {
+                <div class="nt-data-grid-page-size" role="group" aria-label="Rows per page">
+                    <span>Rows per page</span>
                     @foreach (var pageSizeOption in GetResolvedPageSizeOptions()) {
-                        <option value="@pageSizeOption">@pageSizeOption</option>
+                        <a href="@BuildHref(0, _sorts, pageSizeOption)" aria-current="@(pageSizeOption == CurrentPageSize ? "true" : null)">@pageSizeOption</a>
                     }
-                </select>
-            </label>
+                </div>
+            }
             <div class="nt-data-grid-pagination-buttons">
                 <a class="@GetPaginationButtonClass(!CanGoToPreviousPage, false, "pagination-first-page")"
                    href="@BuildPageHref(0)"
                    title="First page"
                    aria-label="First page"
-                   aria-disabled="@(!CanGoToPreviousPage).ToString().ToLowerInvariant()"
+                   aria-disabled="@((!CanGoToPreviousPage).ToString().ToLowerInvariant())"
                    @onclick="() => GoToPageAsync(0)"
                    @onclick:preventDefault="true">
                     <MaterialIcon Icon="@MaterialIcon.FirstPage" Size="IconSize.Small" />
@@ -160,7 +174,7 @@
                    href="@BuildPageHref(CurrentPageIndex - 1)"
                    title="Previous page"
                    aria-label="Previous page"
-                   aria-disabled="@(!CanGoToPreviousPage).ToString().ToLowerInvariant()"
+                   aria-disabled="@((!CanGoToPreviousPage).ToString().ToLowerInvariant())"
                    @onclick="() => GoToPageAsync(CurrentPageIndex - 1)"
                    @onclick:preventDefault="true">
                     <MaterialIcon Icon="@MaterialIcon.ChevronLeft" Size="IconSize.Small" />
@@ -174,7 +188,7 @@
                            title="@($"Page {pageIndex + 1}")"
                            aria-label="@($"Page {pageIndex + 1}")"
                            aria-current="@(isCurrentPage ? "page" : null)"
-                           aria-disabled="@isCurrentPage.ToString().ToLowerInvariant()"
+                           aria-disabled="@(isCurrentPage.ToString().ToLowerInvariant())"
                            @onclick="() => GoToPageAsync(pageIndex)"
                            @onclick:preventDefault="true">@(pageIndex + 1)</a>
                     }
@@ -184,7 +198,7 @@
                    href="@BuildPageHref(CurrentPageIndex + 1)"
                    title="Next page"
                    aria-label="Next page"
-                   aria-disabled="@(!CanGoToNextPage).ToString().ToLowerInvariant()"
+                   aria-disabled="@((!CanGoToNextPage).ToString().ToLowerInvariant())"
                    @onclick="() => GoToPageAsync(CurrentPageIndex + 1)"
                    @onclick:preventDefault="true">
                     <MaterialIcon Icon="@MaterialIcon.ChevronRight" Size="IconSize.Small" />
@@ -193,7 +207,7 @@
                    href="@BuildPageHref(PageCount - 1)"
                    title="Last page"
                    aria-label="Last page"
-                   aria-disabled="@(!CanGoToNextPage).ToString().ToLowerInvariant()"
+                   aria-disabled="@((!CanGoToNextPage).ToString().ToLowerInvariant())"
                    @onclick="() => GoToPageAsync(PageCount - 1)"
                    @onclick:preventDefault="true">
                     <MaterialIcon Icon="@MaterialIcon.LastPage" Size="IconSize.Small" />

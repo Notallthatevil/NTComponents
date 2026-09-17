@@ -1,0 +1,61 @@
+@page "/virtualizationFeatures"
+@using NTComponents
+@rendermode InteractiveWebAssembly
+
+<main>
+    <h1>Virtualized grid updates</h1>
+    <p>The grid starts at item 40. Refresh returns new objects with stable row keys.</p>
+    <button @onclick="() => _grid!.ScrollToItemAsync(100)">Go to item 100</button>
+    <button @onclick="() => _grid!.ScrollToItemAsync(int.MaxValue)">Go to last item</button>
+    <button @onclick="PrependAsync">Prepend item</button>
+    <button @onclick="AppendAsync">Append item</button>
+    <label><input type="checkbox" @bind="_followEnd" /> Anchor at end</label>
+    <label><input type="checkbox" @bind="_compact" /> Compact rows</label>
+    <label><input type="checkbox" @bind="_tallRows" /> Taller ordinary rows</label>
+    <output aria-label="Refresh count">@_refreshCount</output>
+    <NTDataGrid @ref="_grid" TItem="DemoRow" ItemsProvider="ProvideRowsAsync" RowKey="row => row.Id"
+                Virtualize="true" InitialItemIndex="40" VirtualizationInitialItemCount="8"
+                VirtualizationMeasureItemSize="true" VirtualizationItemSizeVersion="@(_tallRows ? 1 : 0)"
+                VirtualizationBackgroundPreloadWindowCount="0" VirtualizationPlaceholderPreloadWindowCount="0"
+                AnchorMode="@(_followEnd ? NTVirtualizeAnchorMode.End : NTVirtualizeAnchorMode.Start)"
+                Density="@(_compact ? NTDataGridDensity.Compact : NTDataGridDensity.Standard)">
+        <NTTemplateColumn TItem="DemoRow" Title="Item">
+            <ChildContent Context="row">@row.Id</ChildContent>
+        </NTTemplateColumn>
+        <NTTemplateColumn TItem="DemoRow" Title="Description">
+            <ChildContent Context="row">
+                <span>Row @row.Id</span>
+                @if (_tallRows) {
+                    <p>Additional row content</p>
+                    <p>Measured without a detail template</p>
+                }
+            </ChildContent>
+        </NTTemplateColumn>
+    </NTDataGrid>
+</main>
+
+@code {
+    private NTDataGrid<DemoRow>? _grid;
+    private readonly List<int> _ids = Enumerable.Range(0, 200).ToList();
+    private bool _followEnd;
+    private bool _compact;
+    private bool _tallRows;
+    private int _refreshCount;
+
+    private ValueTask<NTItemsProviderResult<DemoRow>> ProvideRowsAsync(NTDataGridItemsProviderRequest<DemoRow> request) =>
+        ValueTask.FromResult(new NTItemsProviderResult<DemoRow>(_ids.Skip(request.StartIndex).Take(request.Count ?? _ids.Count).Select(id => new DemoRow(id)).ToArray(), _ids.Count));
+
+    private async Task PrependAsync() {
+        _ids.Insert(0, _ids.Min() - 1);
+        await _grid!.RefreshDataGridAsync();
+        _refreshCount++;
+    }
+
+    private async Task AppendAsync() {
+        _ids.Add(_ids.Max() + 1);
+        await _grid!.RefreshDataGridAsync();
+        _refreshCount++;
+    }
+
+    private sealed record DemoRow(int Id);
+}

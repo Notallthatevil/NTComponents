@@ -18,6 +18,8 @@ public class NTVirtualize_Tests : BunitContext {
         _module.SetupVoid("onDispose", _ => true).SetVoidResult();
         _module.SetupVoid("init", _ => true).SetVoidResult();
         _module.SetupVoid("updateRenderState", _ => true).SetVoidResult();
+        _module.SetupVoid("updateOptions", _ => true).SetVoidResult();
+        _module.SetupVoid("cancelScroll", _ => true).SetVoidResult();
     }
 
     [Fact]
@@ -72,8 +74,9 @@ public class NTVirtualize_Tests : BunitContext {
         spacers.Should().HaveCount(2);
 
         // One before, one after
-        spacers[0].GetAttribute("style").Should().Contain("height: 0px");
-        spacers[1].GetAttribute("style").Should().Contain("height: 0px");
+        spacers[0].GetAttribute("data-nt-virtualize-size").Should().Be("0");
+        spacers[1].GetAttribute("data-nt-virtualize-size").Should().Be("0");
+        spacers.Should().OnlyContain(spacer => !spacer.HasAttribute("style"));
         spacers[0].ClassList.Should().Contain("nt-virtualize-spacer");
         spacers[1].ClassList.Should().Contain("nt-virtualize-spacer");
         var initInvocation = JSInterop.Invocations.Should().ContainSingle(invocation => invocation.Identifier == "init").Subject;
@@ -185,7 +188,7 @@ public class NTVirtualize_Tests : BunitContext {
             cut.Markup.Should().Contain("-Item 5-");
             cut.FindAll(".preloaded-placeholder").Should().HaveCount(5);
             cut.FindAll(".preloaded-placeholder")[0].GetAttribute("data-index").Should().Be("7");
-            cut.FindAll(".nt-virtualize-spacer")[1].GetAttribute("style").Should().Contain("height: 500px");
+            cut.FindAll(".nt-virtualize-spacer")[1].GetAttribute("data-nt-virtualize-size").Should().Be("500");
         });
     }
 
@@ -607,6 +610,273 @@ public class NTVirtualize_Tests : BunitContext {
 
         // Assert - Should adjusted to last possible items
         cut.WaitForState(() => cut.Markup.Contains("Item 4"));
+    }
+
+    [Fact]
+    public async Task RepeatedMeasurementOfEmptyOrShortWindows_DoesNotRefetchPastTheEnd() {
+        foreach (var total in new[] { 0, 2 }) {
+            var calls = 0;
+            var cut = Render<NTVirtualize<int>>(parameters => parameters
+                .Add(component => component.MeasureItemSize, true)
+                .Add(component => component.ItemsProvider, request => {
+                    calls++;
+                    return ValueTask.FromResult(new TnTItemsProviderResult<int>(Enumerable.Range(0, total).ToArray(), total));
+                })
+                .Add(component => component.ItemTemplate, item => builder => builder.AddContent(0, item)));
+
+            await cut.InvokeAsync(() => cut.Instance.LoadItems(0, 0, 0, 10));
+            await cut.InvokeAsync(() => cut.Instance.LoadItems(0, 0, 0, 10));
+
+            calls.Should().Be(1, "items beyond the known end are not missing cache entries");
+        }
+    }
+
+    [Fact]
+    public void ChangedRuntimeOptions_UpdateBrowserWithoutReinitializing() {
+        var cut = Render<NTVirtualize<string>>(parameters => parameters
+            .Add(component => component.ItemsProvider, _ => ValueTask.FromResult(new TnTItemsProviderResult<string>([], 0))));
+
+        cut.Render(parameters => parameters
+            .Add(component => component.ItemSize, 72)
+            .Add(component => component.OverscanCount, 6)
+            .Add(component => component.MaxItemCount, 150)
+            .Add(component => component.ScrollRestorationKey, "updated-list"));
+
+        var update = _module.Invocations.Last(invocation => invocation.Identifier == "updateOptions");
+        update.Arguments.Skip(1).Should().Equal(72f, 6, 150, "updated-list");
+        _module.Invocations.Count(invocation => invocation.Identifier == "init").Should().Be(1);
+    }
+
+    [Fact]
+    public void InitialItemIndex_IsPassedToBrowserInitialization() {
+        Render<NTVirtualize<string>>(parameters => parameters
+            .Add(component => component.ItemsProvider, _ => ValueTask.FromResult(new TnTItemsProviderResult<string>([], 0)))
+            .Add(component => component.InitialItemIndex, 42));
+
+        var init = _module.Invocations.Single(invocation => invocation.Identifier == "init");
+        init.Arguments.Last().Should().Be(42);
+    }
+
+    [Fact]
+    public async Task ScrollBeforeInitialization_ReportsInvalidOperation() {
+        using var component = new NTVirtualize<string>();
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => component.ScrollToItemAsync(4, Xunit.TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task CanceledScroll_DoesNotSendBrowserNavigation() {
+        var cut = Render<NTVirtualize<string>>(parameters => parameters
+            .Add(component => component.ItemsProvider, _ => ValueTask.FromResult(new TnTItemsProviderResult<string>([], 0))));
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => cut.Instance.ScrollToItemAsync(4, cancellation.Token));
+
+        _module.Invocations.Should().NotContain(invocation => invocation.Identifier == "scrollToItem");
+    }
+
+    [Fact]
+    public async Task RefreshDataAsync_WaitsForProviderAndRendersReplacementItems() {
+        var replacement = new TaskCompletionSource<TnTItemsProviderResult<string>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var providerStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var refreshing = false;
+        NTVirtualizeItemsProvider<string> provider = _ => {
+            if (!refreshing) {
+                return ValueTask.FromResult(new TnTItemsProviderResult<string>(["old record"], 1));
+            }
+            providerStarted.TrySetResult();
+            return new ValueTask<TnTItemsProviderResult<string>>(replacement.Task);
+        };
+        var cut = Render<NTVirtualize<string>>(parameters => parameters
+            .Add(component => component.ItemsProvider, provider)
+            .Add(component => component.ItemTemplate, item => builder => builder.AddContent(0, item)));
+        await cut.InvokeAsync(() => cut.Instance.LoadItems(0, 0, 0, 1));
+        cut.WaitForAssertion(() => cut.Markup.Should().Contain("old record"));
+        refreshing = true;
+
+        var refresh = cut.InvokeAsync(() => cut.Instance.RefreshDataAsync(CancellationToken.None));
+        await providerStarted.Task.WaitAsync(TimeSpan.FromSeconds(5), Xunit.TestContext.Current.CancellationToken);
+        refresh.IsCompleted.Should().BeFalse();
+        replacement.SetResult(new TnTItemsProviderResult<string>(["replacement record"], 1));
+        await refresh;
+
+        cut.Markup.Should().Contain("replacement record").And.NotContain("old record");
+    }
+
+    [Fact]
+    public async Task CanceledRefresh_DoesNotRequestOrDiscardCurrentItems() {
+        var requests = 0;
+        NTVirtualizeItemsProvider<string> provider = _ => {
+            requests++;
+            return ValueTask.FromResult(new TnTItemsProviderResult<string>(["current record"], 1));
+        };
+        var cut = Render<NTVirtualize<string>>(parameters => parameters
+            .Add(component => component.ItemsProvider, provider)
+            .Add(component => component.ItemTemplate, item => builder => builder.AddContent(0, item)));
+        await cut.InvokeAsync(() => cut.Instance.LoadItems(0, 0, 0, 1));
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => cut.Instance.RefreshDataAsync(cancellation.Token));
+
+        requests.Should().Be(1);
+        cut.Markup.Should().Contain("current record");
+    }
+
+    [Fact]
+    public async Task SupersededRefresh_CannotOverwriteNewerProviderResults() {
+        var stale = new TaskCompletionSource<TnTItemsProviderResult<string>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var staleStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var calls = 0;
+        NTVirtualizeItemsProvider<string> provider = _ => {
+            calls++;
+            if (calls == 2) {
+                staleStarted.SetResult();
+                return new ValueTask<TnTItemsProviderResult<string>>(stale.Task);
+            }
+            return ValueTask.FromResult(new TnTItemsProviderResult<string>([calls == 1 ? "initial record" : "current record"], 1));
+        };
+        var cut = Render<NTVirtualize<string>>(parameters => parameters
+            .Add(component => component.ItemsProvider, provider)
+            .Add(component => component.ItemTemplate, item => builder => builder.AddContent(0, item)));
+        await cut.InvokeAsync(() => cut.Instance.LoadItems(0, 0, 0, 1));
+        var olderRefresh = cut.InvokeAsync(() => cut.Instance.RefreshDataAsync());
+        await staleStarted.Task.WaitAsync(TimeSpan.FromSeconds(5), Xunit.TestContext.Current.CancellationToken);
+
+        await cut.InvokeAsync(() => cut.Instance.RefreshDataAsync());
+        stale.SetResult(new TnTItemsProviderResult<string>(["obsolete record"], 1));
+        await olderRefresh;
+
+        cut.Markup.Should().Contain("current record").And.NotContain("obsolete record");
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task RefreshCanceledDuringUncooperativeProvider_PreservesRowsAndIgnoresLateCompletion(bool failsLate) {
+        var pending = new TaskCompletionSource<TnTItemsProviderResult<string>>();
+        var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var requests = 0;
+        NTVirtualizeItemsProvider<string> provider = _ => {
+            requests++;
+            if (requests == 2) {
+                started.SetResult();
+                return new ValueTask<TnTItemsProviderResult<string>>(pending.Task);
+            }
+            return ValueTask.FromResult(new TnTItemsProviderResult<string>(["current record"], 1));
+        };
+        var cut = Render<NTVirtualize<string>>(parameters => parameters
+            .Add(component => component.ItemsProvider, provider)
+            .Add(component => component.ItemTemplate, item => builder => builder.AddContent(0, item)));
+        await cut.InvokeAsync(() => cut.Instance.LoadItems(0, 0, 0, 1));
+        using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(Xunit.TestContext.Current.CancellationToken);
+        var refresh = cut.InvokeAsync(() => cut.Instance.RefreshDataAsync(cancellation.Token));
+        await started.Task.WaitAsync(TimeSpan.FromSeconds(5), Xunit.TestContext.Current.CancellationToken);
+
+        cancellation.Cancel();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => refresh.WaitAsync(TimeSpan.FromSeconds(5), Xunit.TestContext.Current.CancellationToken));
+        pending.Task.IsCompleted.Should().BeFalse("caller cancellation must not wait for an uncooperative provider");
+        cut.Markup.Should().Contain("current record");
+
+        if (failsLate) {
+            pending.SetException(new InvalidOperationException("obsolete provider failure"));
+        }
+        else {
+            pending.SetResult(new TnTItemsProviderResult<string>(["obsolete record"], 1));
+        }
+        await cut.InvokeAsync(() => cut.Render());
+
+        cut.Markup.Should().Contain("current record").And.NotContain("obsolete record");
+        var update = _module.Invocations.Last(invocation => invocation.Identifier == "updateRenderState");
+        update.Arguments.Last().Should().Be(false, "canceled refreshes must leave the browser out of its loading state");
+    }
+
+    [Theory]
+    [InlineData(true, 2)]
+    [InlineData(false, 1)]
+    public async Task RefreshWithFreshInstances_RestoresAnchorByStableItemKey(bool prepend, int expectedAnchorIndex) {
+        var items = new[] { Tuple.Create(1, "first"), Tuple.Create(2, "second"), Tuple.Create(3, "third") };
+        NTVirtualizeItemsProvider<Tuple<int, string>> provider = request => ValueTask.FromResult(
+            new TnTItemsProviderResult<Tuple<int, string>>(items.Skip(request.StartIndex).Take(request.Count ?? items.Length).ToList(), items.Length));
+        var snapshot = new NTVirtualizeAnchorSnapshot { Index = 1, Offset = 12, AtStart = false, AtEnd = false, Version = 7 };
+        _module.Setup<NTVirtualizeAnchorSnapshot>("captureAnchor", _ => true).SetResult(snapshot);
+        _module.SetupVoid("restoreAnchor", _ => true).SetVoidResult();
+        var cut = Render<NTVirtualize<Tuple<int, string>>>(parameters => parameters
+            .Add(component => component.ItemsProvider, provider)
+            .Add(component => component.AnchorMode, NTVirtualizeAnchorMode.Start)
+            .Add(component => component.ItemKey, item => item.Item1)
+            .Add(component => component.PlaceholderPreloadWindowCount, 0)
+            .Add(component => component.ItemTemplate, item => builder => builder.AddContent(0, item.Item2)));
+        await cut.InvokeAsync(() => cut.Instance.LoadItems(0, 0, 0, 3));
+        items = prepend
+            ? [Tuple.Create(0, "inserted"), Tuple.Create(1, "first updated"), Tuple.Create(2, "second updated"), Tuple.Create(3, "third updated")]
+            : [Tuple.Create(1, "first updated"), Tuple.Create(2, "second updated"), Tuple.Create(3, "third updated"), Tuple.Create(4, "appended")];
+
+        await cut.InvokeAsync(() => cut.Instance.RefreshDataAsync());
+
+        var restore = _module.Invocations.Last(invocation => invocation.Identifier == "restoreAnchor");
+        restore.Arguments[1].Should().BeSameAs(snapshot);
+        restore.Arguments[2].Should().Be(expectedAnchorIndex);
+        restore.Arguments[3].Should().Be((int)NTVirtualizeAnchorMode.Start);
+        cut.Markup.Should().Contain("second updated");
+    }
+
+    [Fact]
+    public async Task RefreshWithSameItemCount_InvalidatesBrowserMeasurementsWithoutAnchoring() {
+        var item = "original short record";
+        NTVirtualizeItemsProvider<string> provider = _ => ValueTask.FromResult(new TnTItemsProviderResult<string>([item], 1));
+        var cut = Render<NTVirtualize<string>>(parameters => parameters
+            .Add(component => component.ItemsProvider, provider)
+            .Add(component => component.MeasureItemSize, true)
+            .Add(component => component.AnchorMode, NTVirtualizeAnchorMode.None)
+            .Add(component => component.ItemTemplate, value => builder => builder.AddContent(0, value)));
+        await cut.InvokeAsync(() => cut.Instance.LoadItems(0, 0, 0, 1));
+        var previousUpdate = _module.Invocations.Last(invocation => invocation.Identifier == "updateRenderState");
+        var previousRevision = (int)previousUpdate.Arguments[5]!;
+        item = "replacement record with longer content requiring remeasurement";
+
+        await cut.InvokeAsync(() => cut.Instance.RefreshDataAsync());
+
+        var updated = _module.Invocations.Last(invocation => invocation.Identifier == "updateRenderState");
+        ((int)updated.Arguments[5]!).Should().BeGreaterThan(previousRevision);
+        updated.Arguments[1].Should().Be(1);
+        updated.Arguments[2].Should().Be(1);
+        cut.Markup.Should().Contain(item).And.NotContain("original short record");
+        _module.Invocations.Should().NotContain(invocation => invocation.Identifier == "captureAnchor" || invocation.Identifier == "restoreAnchor");
+    }
+
+    [Fact]
+    public async Task PrependLargerThanWindow_ProbesShiftedWindowAndPreservesStableAnchor() {
+        var items = Enumerable.Range(0, 20).Select(index => Tuple.Create(index, $"original {index}")).ToArray();
+        var requests = new List<NTVirtualizeItemsProviderRequest<Tuple<int, string>>>();
+        NTVirtualizeItemsProvider<Tuple<int, string>> provider = request => {
+            requests.Add(request);
+            return ValueTask.FromResult(new TnTItemsProviderResult<Tuple<int, string>>(
+                items.Skip(request.StartIndex).Take(request.Count ?? items.Length).ToList(), items.Length));
+        };
+        _module.Setup<NTVirtualizeAnchorSnapshot>("captureAnchor", _ => true).SetResult(new NTVirtualizeAnchorSnapshot { Index = 11, Offset = 9, Version = 2 });
+        _module.SetupVoid("restoreAnchor", _ => true).SetVoidResult();
+        var cut = Render<NTVirtualize<Tuple<int, string>>>(parameters => parameters
+            .Add(component => component.ItemsProvider, provider)
+            .Add(component => component.AnchorMode, NTVirtualizeAnchorMode.Start)
+            .Add(component => component.ItemKey, value => value.Item1)
+            .Add(component => component.PlaceholderPreloadWindowCount, 0)
+            .Add(component => component.ItemTemplate, value => builder => builder.AddContent(0, $"[{value.Item2}]")));
+        await cut.InvokeAsync(() => cut.Instance.LoadItems(0, 850, 0, 3));
+        await cut.InvokeAsync(() => cut.Instance.LoadItems(500, 350, 10, 3));
+        cut.Markup.Should().Contain("[original 11]");
+        requests.Clear();
+        items = Enumerable.Range(-10, 30).Select(index => Tuple.Create(index, $"updated {index}")).ToArray();
+
+        await cut.InvokeAsync(() => cut.Instance.RefreshDataAsync());
+
+        requests.Select(request => request.StartIndex).Should().Equal(10, 20);
+        requests.Should().OnlyContain(request => request.Count == 3);
+        var restore = _module.Invocations.Last(invocation => invocation.Identifier == "restoreAnchor");
+        restore.Arguments[2].Should().Be(21);
+        cut.Markup.Should().Contain("[updated 10]").And.Contain("[updated 11]").And.Contain("[updated 12]");
+        cut.Markup.Should().NotContain("[updated 0]").And.NotContain("[original 11]");
     }
 
     private sealed class TestVirtualize<TItem> : NTVirtualize<TItem> {

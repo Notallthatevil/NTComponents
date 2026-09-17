@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import { init, onDispose, updateRenderState } from '../../../NTComponents/Virtualization/NTVirtualize.razor.js';
+import { init, onDispose, onLoad, updateRenderState, updateOptions, scrollToItem, cancelScroll, captureAnchor, restoreAnchor } from '../../../NTComponents/Virtualization/NTVirtualize.razor.js';
 
 let dotNetRefId = 0;
 
@@ -69,6 +69,241 @@ describe('NTVirtualize.init', () => {
         delete global.MutationObserver;
     });
 
+
+    test('runtime density and overscan updates preserve the observer and use the new sizes', () => {
+        const { topSpacer, bottomSpacer, dotNetRef, scrollAncestor } = createVirtualizedElements('auto');
+        scrollAncestor.style.maxHeight = '100px';
+        init(dotNetRef, topSpacer, bottomSpacer, 20, 0, 100);
+        updateRenderState(dotNetRef, 100, 5, 0);
+        scrollAncestor.scrollTop = 200;
+        updateOptions(dotNetRef, 40, 2, 100);
+        expect(intersectionObservers).toHaveLength(1);
+        expect(dotNetRef.invokeMethodAsync).toHaveBeenLastCalledWith('LoadItems', 120, 3600, 3, 7);
+    });
+
+    test('scrolling to an already rendered item settles without another render, including repeated calls', async () => {
+        const { topSpacer, bottomSpacer, dotNetRef, scrollAncestor } = createVirtualizedElements('auto');
+        scrollAncestor.style.maxHeight = '100px';
+        init(dotNetRef, topSpacer, bottomSpacer, 20, 0, 100);
+        updateRenderState(dotNetRef, 100, 5, 0);
+        topSpacer.dataset.ntVirtualizeStart = '0';
+        bottomSpacer.dataset.ntVirtualizeEnd = '5';
+        await expect(scrollToItem(dotNetRef, 2, 1)).resolves.toBeUndefined();
+        await expect(scrollToItem(dotNetRef, 2, 2)).resolves.toBeUndefined();
+        expect(scrollAncestor.scrollTop).toBe(40);
+    });
+
+    test('measured spacer sizes are not overwritten by stale sizing attributes during the same render', () => {
+        const { topSpacer, bottomSpacer, dotNetRef, scrollAncestor } = createVirtualizedElements('auto');
+        scrollAncestor.style.maxHeight = '100px';
+        const row = topSpacer.nextElementSibling;
+        row.dataset.ntVirtualizeIndex = '0';
+        row.getBoundingClientRect = () => ({ height: 100 });
+        topSpacer.dataset.ntVirtualizeStart = '1';
+        topSpacer.dataset.ntVirtualizeSize = '20';
+        bottomSpacer.dataset.ntVirtualizeEnd = '5';
+        bottomSpacer.dataset.ntVirtualizeSize = '1900';
+        init(dotNetRef, topSpacer, bottomSpacer, 20, 0, 100);
+        updateRenderState(dotNetRef, 100, 5, 0, true);
+        expect(topSpacer.style.height).toBe('100px');
+    });
+
+    test('programmatic scrolling aligns rows below a sticky table header', async () => {
+        const { topSpacer, bottomSpacer, dotNetRef, scrollAncestor } = createVirtualizedElements('auto');
+        scrollAncestor.style.maxHeight = '140px';
+        const table = document.createElement('table');
+        const head = table.createTHead();
+        const header = document.createElement('th');
+        header.style.position = 'sticky';
+        header.style.top = '0px';
+        header.getBoundingClientRect = () => ({ top: 0, bottom: 40, height: 40 });
+        head.insertRow().appendChild(header);
+        const body = table.createTBody();
+        body.append(topSpacer, bottomSpacer);
+        scrollAncestor.appendChild(table);
+        init(dotNetRef, topSpacer, bottomSpacer, 20, 0, 100);
+        updateRenderState(dotNetRef, 100, 5, 0);
+        topSpacer.dataset.ntVirtualizeStart = '20';
+        bottomSpacer.dataset.ntVirtualizeEnd = '25';
+        await scrollToItem(dotNetRef, 20, 1);
+        expect(scrollAncestor.scrollTop).toBe(360);
+        expect(dotNetRef.invokeMethodAsync).toHaveBeenLastCalledWith('LoadItems', 400, 1500, 20, 5);
+    });
+
+    test('programmatic scroll waits for target render and clamps to the last item', async () => {
+        const { topSpacer, bottomSpacer, dotNetRef, scrollAncestor } = createVirtualizedElements('auto');
+        scrollAncestor.style.maxHeight = '100px';
+        init(dotNetRef, topSpacer, bottomSpacer, 20, 0, 100);
+        updateRenderState(dotNetRef, 100, 5, 0);
+        topSpacer.dataset.ntVirtualizeStart = '0';
+        bottomSpacer.dataset.ntVirtualizeEnd = '5';
+        const completed = jest.fn();
+        const task = scrollToItem(dotNetRef, 999, 1).then(completed);
+        updateRenderState(dotNetRef, 100, 5, 0);
+        await Promise.resolve();
+        expect(completed).not.toHaveBeenCalled();
+        expect(dotNetRef.invokeMethodAsync).toHaveBeenLastCalledWith('LoadItems', 1900, 0, 95, 5);
+        topSpacer.dataset.ntVirtualizeStart = '95';
+        bottomSpacer.dataset.ntVirtualizeEnd = '100';
+        updateRenderState(dotNetRef, 100, 5, 0);
+        await task;
+        expect(scrollAncestor.scrollTop).toBe(1900);
+        expect(completed).toHaveBeenCalledTimes(1);
+    });
+
+    test('latest scrolling wins and cancellation of an older operation leaves the latest active', async () => {
+        const { topSpacer, bottomSpacer, dotNetRef, scrollAncestor } = createVirtualizedElements('auto');
+        scrollAncestor.style.maxHeight = '100px';
+        init(dotNetRef, topSpacer, bottomSpacer, 20, 0, 100);
+        updateRenderState(dotNetRef, 100, 5, 0);
+        const first = scrollToItem(dotNetRef, 20, 1);
+        const second = scrollToItem(dotNetRef, 40, 2);
+        await first;
+        cancelScroll(dotNetRef, 1);
+        topSpacer.dataset.ntVirtualizeStart = '40';
+        bottomSpacer.dataset.ntVirtualizeEnd = '45';
+        updateRenderState(dotNetRef, 100, 5, 0);
+        await second;
+        expect(scrollAncestor.scrollTop).toBe(800);
+    });
+
+    test('provider failures reject the active scroll and disposal settles pending operations', async () => {
+        const { topSpacer, bottomSpacer, dotNetRef, scrollAncestor } = createVirtualizedElements('auto');
+        scrollAncestor.style.maxHeight = '100px';
+        init(dotNetRef, topSpacer, bottomSpacer, 20, 0, 100);
+        updateRenderState(dotNetRef, 100, 5, 0);
+        dotNetRef.invokeMethodAsync.mockRejectedValueOnce(new Error('provider unavailable'));
+        await expect(scrollToItem(dotNetRef, 20, 1)).rejects.toThrow('provider unavailable');
+        const pending = scrollToItem(dotNetRef, 40, 2);
+        onDispose(topSpacer, dotNetRef);
+        await expect(pending).resolves.toBeUndefined();
+    });
+
+    test('an empty completed provider settles scrolling without moving the viewport', async () => {
+        const { topSpacer, bottomSpacer, dotNetRef, scrollAncestor } = createVirtualizedElements('auto');
+        init(dotNetRef, topSpacer, bottomSpacer, 20, 0, 100);
+        const pending = scrollToItem(dotNetRef, 20, 1);
+        updateRenderState(dotNetRef, 0, 0, 0);
+        await expect(pending).resolves.toBeUndefined();
+        expect(scrollAncestor.scrollTop).toBe(0);
+    });
+
+    test('user wheel interrupts pending scroll and prevents stale anchor restoration', async () => {
+        const { topSpacer, bottomSpacer, dotNetRef, scrollAncestor } = createVirtualizedElements('auto');
+        scrollAncestor.style.maxHeight = '100px';
+        init(dotNetRef, topSpacer, bottomSpacer, 20, 0, 100);
+        updateRenderState(dotNetRef, 100, 5, 0);
+        const snapshot = captureAnchor(dotNetRef);
+        const task = scrollToItem(dotNetRef, 40, 1);
+        scrollAncestor.dispatchEvent(new Event('wheel'));
+        await task;
+        scrollAncestor.scrollTop = 200;
+        restoreAnchor(dotNetRef, snapshot, 20, 1);
+        updateRenderState(dotNetRef, 100, 5, 0);
+        expect(scrollAncestor.scrollTop).toBe(200);
+    });
+
+    test('restores an item offset after prepend and follows the end only from the end', () => {
+        const { topSpacer, bottomSpacer, dotNetRef, scrollAncestor } = createVirtualizedElements('auto');
+        scrollAncestor.style.maxHeight = '100px';
+        init(dotNetRef, topSpacer, bottomSpacer, 20, 0, 100);
+        updateRenderState(dotNetRef, 100, 5, 0);
+        scrollAncestor.scrollTop = 207;
+        const middle = captureAnchor(dotNetRef);
+        restoreAnchor(dotNetRef, middle, 15, 2);
+        updateRenderState(dotNetRef, 105, 5, 0);
+        expect(scrollAncestor.scrollTop).toBe(307);
+        scrollAncestor.scrollTop = 2000;
+        const end = captureAnchor(dotNetRef);
+        restoreAnchor(dotNetRef, end, 100, 2);
+        updateRenderState(dotNetRef, 110, 5, 0);
+        expect(scrollAncestor.scrollTop).toBe(2100);
+    });
+
+    test('identity restoration discards stale indexed heights and preserves fractional item offsets', () => {
+        const { topSpacer, bottomSpacer, dotNetRef, scrollAncestor } = createVirtualizedElements('auto');
+        scrollAncestor.style.maxHeight = '100px';
+        const row = topSpacer.nextElementSibling;
+        row.dataset.ntVirtualizeIndex = '0';
+        row.getBoundingClientRect = () => ({ height: 100 });
+        init(dotNetRef, topSpacer, bottomSpacer, 20, 0, 100);
+        updateRenderState(dotNetRef, 100, 5, 0, true);
+        scrollAncestor.scrollTop = 105.5;
+        const snapshot = captureAnchor(dotNetRef);
+        expect(snapshot.index).toBe(1);
+        expect(snapshot.offset).toBe(5.5);
+        // The tall row was replaced, and the anchored identity moved from index 1 to 2.
+        row.dataset.ntVirtualizeIndex = '2';
+        row.getBoundingClientRect = () => ({ height: 20 });
+        restoreAnchor(dotNetRef, snapshot, 2, 1);
+        updateRenderState(dotNetRef, 101, 5, 0, true);
+        expect(scrollAncestor.scrollTop).toBe(45.5);
+    });
+
+    test('operation zero cancels initial positioning without cancelling an explicit scroll', async () => {
+        const { topSpacer, bottomSpacer, dotNetRef, scrollAncestor } = createVirtualizedElements('auto');
+        scrollAncestor.style.maxHeight = '100px';
+        init(dotNetRef, topSpacer, bottomSpacer, 20, 0, 100, null, 50, 40);
+        cancelScroll(dotNetRef, 0);
+        updateRenderState(dotNetRef, 100, 5, 0);
+        expect(dotNetRef.invokeMethodAsync).toHaveBeenLastCalledWith('LoadItems', 0, 1900, 0, 5);
+        const pending = scrollToItem(dotNetRef, 20, 1);
+        cancelScroll(dotNetRef, 0);
+        topSpacer.dataset.ntVirtualizeStart = '20';
+        bottomSpacer.dataset.ntVirtualizeEnd = '25';
+        updateRenderState(dotNetRef, 100, 5, 0);
+        await pending;
+        expect(scrollAncestor.scrollTop).toBe(400);
+    });
+
+    test('refresh can discard offscreen measurements while preserving the actual pixel offset', () => {
+        const { topSpacer, bottomSpacer, dotNetRef, scrollAncestor } = createVirtualizedElements('auto');
+        scrollAncestor.style.maxHeight = '100px';
+        const row = topSpacer.nextElementSibling;
+        row.dataset.ntVirtualizeIndex = '0';
+        row.getBoundingClientRect = () => ({ height: 100 });
+        init(dotNetRef, topSpacer, bottomSpacer, 20, 0, 100);
+        updateRenderState(dotNetRef, 100, 5, 0, true);
+        scrollAncestor.scrollTop = 205;
+        // A forced refresh replaces the old tall offscreen row with ordinary rows.
+        row.dataset.ntVirtualizeIndex = '6';
+        row.getBoundingClientRect = () => ({ height: 20 });
+        topSpacer.dataset.ntVirtualizeStart = '6';
+        bottomSpacer.dataset.ntVirtualizeEnd = '11';
+        updateRenderState(dotNetRef, 100, 5, 0, true, 1, false, true);
+        expect(scrollAncestor.scrollTop).toBe(205);
+        expect(topSpacer.style.height).toBe('120px');
+        expect(dotNetRef.invokeMethodAsync).toHaveBeenLastCalledWith('LoadItems', 200, 1680, 10, 6);
+    });
+
+    test('numeric sizing attributes initialize CSP-compatible spacer and placeholder geometry', () => {
+        const { topSpacer } = createVirtualizedElements('auto');
+        topSpacer.dataset.ntVirtualizeSize = '120';
+        const placeholder = topSpacer.nextElementSibling;
+        placeholder.dataset.ntVirtualizeSize = '48';
+        placeholder.dataset.ntVirtualizePlaceholder = '';
+        onLoad(topSpacer, null);
+        expect(topSpacer.style.height).toBe('120px');
+        expect(placeholder.style.getPropertyValue('--nt-data-grid-placeholder-row-height')).toBe('48px');
+    });
+
+    test('initial index overrides history and remains pending while the provider is loading', () => {
+        history.replaceState({ __ntVirtualizeScrollPositions: { jobs: 400 } }, '');
+        const { topSpacer, bottomSpacer, dotNetRef, scrollAncestor } = createVirtualizedElements('auto');
+        scrollAncestor.style.maxHeight = '100px';
+        init(dotNetRef, topSpacer, bottomSpacer, 20, 0, 100, 'jobs', 50, 40);
+        updateRenderState(dotNetRef, 0, 0, 0, false, 0, true);
+        intersectionObservers[0].callback([{ target: bottomSpacer, isIntersecting: true }]);
+        expect(dotNetRef.invokeMethodAsync).toHaveBeenLastCalledWith('LoadItems', 800, 0, 40, 5);
+        topSpacer.dataset.ntVirtualizeStart = '0';
+        bottomSpacer.dataset.ntVirtualizeEnd = '5';
+        updateRenderState(dotNetRef, 100, 5, 0);
+        expect(dotNetRef.invokeMethodAsync).toHaveBeenLastCalledWith('LoadItems', 800, 1100, 40, 5);
+        topSpacer.dataset.ntVirtualizeStart = '40';
+        bottomSpacer.dataset.ntVirtualizeEnd = '45';
+        updateRenderState(dotNetRef, 100, 5, 0);
+        expect(scrollAncestor.scrollTop).toBe(800);
+    });
 
     test('disabling measurement clears cached heights and stops observing rows', () => {
         const unobserve = jest.fn();

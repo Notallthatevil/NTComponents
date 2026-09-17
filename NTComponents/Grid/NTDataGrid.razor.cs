@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.AspNetCore.Components.Web.Virtualization;
 using Microsoft.JSInterop;
 using System.Diagnostics.CodeAnalysis;
@@ -81,14 +82,18 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
     private bool _refreshQueued;
     private bool _sortsInitialized;
     private bool _hasVirtualizationItemSizeParameter;
+    private bool _hasRowKeyParameter;
     private SortPlan? _sortPlan;
     private int _currentPageIndex;
     private int _currentPageSize;
     private int _resolvedPageSizeOptionsPageSize;
     private int _totalItemCount;
     private int _virtualizeVersion;
+    private NTVirtualize<TItem>? _virtualizer;
+    private bool _updatingBrowserUri;
     private readonly HashSet<object> _expansionExceptions = [];
     private int _expansionVersion;
+    private int _previousVirtualizationItemSizeVersion;
     private bool _allRowsExpanded;
     private bool AllRowsExpanded => _allRowsExpanded && _expansionExceptions.Count == 0;
     private bool? _previousDefaultRowsExpanded;
@@ -228,6 +233,42 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
     [Parameter]
     public bool Virtualize { get; set; }
 
+    /// <summary>Measures ordinary row heights. Detail rows always enable measurement.</summary>
+    [Parameter]
+    public bool VirtualizationMeasureItemSize { get; set; }
+
+    /// <summary>Change this revision when externally controlled row content invalidates measured heights.</summary>
+    [Parameter]
+    public int VirtualizationItemSizeVersion { get; set; }
+
+    /// <summary>Gets or sets the zero-based item initially shown by virtualization.</summary>
+    [Parameter]
+    public int InitialItemIndex { get; set; }
+
+    /// <summary>Gets or sets how virtualization preserves the visible position during data updates.</summary>
+    [Parameter]
+    public NTVirtualizeAnchorMode AnchorMode { get; set; }
+
+    /// <summary>Gets or sets item identity comparison when no RowKey is supplied.</summary>
+    [Parameter]
+    public IEqualityComparer<TItem>? ItemComparer { get; set; }
+
+    /// <summary>Persists page size in the URL and enables page-size links during static SSR. Disabled by default for compatibility.</summary>
+    [Parameter]
+    public bool PersistPageSizeInQuery { get; set; }
+
+    /// <summary>Creates browser history entries for sorting and paging. The default replaces the current entry.</summary>
+    [Parameter]
+    public bool PushHistoryEntries { get; set; }
+
+    /// <summary>Scrolls a virtualized grid to a zero-based item. Requires an interactive rendered virtualizer.</summary>
+    public Task ScrollToItemAsync(int index, CancellationToken cancellationToken = default) {
+        if (!Virtualize || _virtualizer is null) {
+            throw new InvalidOperationException("Scrolling requires a rendered virtualized grid.");
+        }
+        return _virtualizer.ScrollToItemAsync(index, cancellationToken);
+    }
+
     /// <summary>
     /// Gets or sets the approximate virtualized row height in pixels.
     /// </summary>
@@ -288,7 +329,7 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
     /// <para>
     /// Virtualized grids also use this prefix for the browser-history scroll restoration key
     /// (for example, <c>claims-scroll</c>); the scroll offset is not a URL query parameter.
-    /// This parameter does not persist page size, row expansion, or nested detail scroll positions.
+    /// Page size is persisted only when PersistPageSizeInQuery is enabled. Row expansion and nested detail scroll positions are not persisted.
     /// </para>
     /// </remarks>
     [Parameter]
@@ -348,6 +389,11 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
     [Inject]
     private IJSRuntime _jsRuntime { get; set; } = default!;
 
+    // With detail rows, the provider's item count does not describe physical table rows.
+    private long AccessibleRowCount => RowDetailTemplate is null ? (long)_totalItemCount + 1 : -1;
+
+    private bool MeasureVirtualizedRows => VirtualizationMeasureItemSize || RowDetailTemplate is not null;
+
     private int VisibleColumnCount => Math.Max(_columns.Count + (RowDetailTemplate is not null ? 1 : 0), 1);
 
     private int CurrentPageIndex => Math.Max(0, _currentPageIndex);
@@ -396,8 +442,11 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
             return;
         }
 
+        cancellationToken.ThrowIfCancellationRequested();
         if (Virtualize) {
-            ResetVirtualizedData();
+            if (_virtualizer is not null) {
+                await _virtualizer.RefreshDataAsync(cancellationToken);
+            }
         }
         else {
             await RefreshDataAsync(cancellationToken);
@@ -409,14 +458,52 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
     }
 
     /// <inheritdoc />
+    protected override void OnInitialized() {
+        _navManager.LocationChanged += OnLocationChanged;
+    }
+
+    private async void OnLocationChanged(object? sender, LocationChangedEventArgs args) {
+        if (_disposed || _updatingBrowserUri || !PushHistoryEntries) {
+            return;
+        }
+        try {
+            await InvokeAsync(async () => {
+                SetCurrentUri(args.Location);
+                _currentPageIndex = Math.Max(0, PageIndex);
+                _currentPageSize = PageSize > 0 ? PageSize : 10;
+                ResetSorts();
+                ApplyQueryState();
+                if (Virtualize) {
+                    ResetVirtualizedData();
+                }
+                else {
+                    await RefreshDataAsync();
+                }
+                if (!_disposed) {
+                    StateHasChanged();
+                }
+            });
+        }
+        catch (OperationCanceledException) when (_disposed) { }
+        catch (Exception exception) {
+            await DispatchExceptionAsync(exception);
+        }
+    }
+
+    /// <inheritdoc />
     public override Task SetParametersAsync(ParameterView parameters) {
-        _hasVirtualizationItemSizeParameter = parameters.TryGetValue<float>(nameof(VirtualizationItemSize), out _);
+        _hasVirtualizationItemSizeParameter |= parameters.TryGetValue<float>(nameof(VirtualizationItemSize), out _);
+        _hasRowKeyParameter |= parameters.TryGetValue<Func<TItem, object>?>(nameof(RowKey), out _);
         return base.SetParametersAsync(parameters);
     }
 
     /// <inheritdoc />
     [SuppressMessage("Reliability", "NTBA0003:Lifecycle method should use meaningful exception handling or owner ErrorBoundary coverage", Justification = "ItemsProvider failures intentionally propagate to the consumer-owned ErrorBoundary.")]
     protected override async Task OnParametersSetAsync() {
+        if (_previousVirtualizationItemSizeVersion != VirtualizationItemSizeVersion) {
+            _previousVirtualizationItemSizeVersion = VirtualizationItemSizeVersion;
+            _expansionVersion++;
+        }
         if (_previousDefaultRowsExpanded != DefaultRowsExpanded) {
             _previousDefaultRowsExpanded = DefaultRowsExpanded;
             _expansionVersion++;
@@ -567,9 +654,17 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
         InitializeSorts();
         var requestedCount = request.Count > 0 ? request.Count : VirtualizationInitialItemCount;
         var result = await ResolveItemsAsync(request.StartIndex, requestedCount, request.CancellationToken);
+        request.CancellationToken.ThrowIfCancellationRequested();
+        if (_disposed) {
+            return new TnTItemsProviderResult<TItem>([], 0);
+        }
         RegisterRowIndices(request.StartIndex, result.Items);
         TrimVirtualizedRowIndices(request.StartIndex, result.Items.Count);
+        var totalChanged = _totalItemCount != Math.Max(0, result.TotalItemCount);
         await SetTotalItemCountAsync(result.TotalItemCount);
+        if (totalChanged && !_disposed) {
+            await InvokeAsync(StateHasChanged);
+        }
         return new TnTItemsProviderResult<TItem>(result.Items, result.TotalItemCount);
     }
 
@@ -766,18 +861,29 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
         }
 
         var uri = BuildPageHref(CurrentPageIndex);
-        await _jsRuntime.UpdateUriAsync(uri);
+        if (PushHistoryEntries) {
+            _updatingBrowserUri = true;
+            try {
+                _navManager.NavigateTo(uri);
+            }
+            finally {
+                _updatingBrowserUri = false;
+            }
+        }
+        else {
+            await _jsRuntime.UpdateUriAsync(uri);
+        }
         SetCurrentUri(uri);
     }
 
     private string BuildSortHref(NTDataGridColumn<TItem> column) {
         var nextSorts = GetNextSorts(column);
-        return BuildHref(CurrentPageIndex, nextSorts);
+        return BuildHref(0, nextSorts);
     }
 
     private string BuildPageHref(int pageIndex) => BuildHref(Math.Clamp(pageIndex, 0, PageCount - 1), _sorts);
 
-    private string BuildHref(int pageIndex, IReadOnlyList<NTSortDescriptor> sorts) {
+    private string BuildHref(int pageIndex, IReadOnlyList<NTSortDescriptor> sorts, int? pageSize = null) {
         pageIndex = Math.Max(0, pageIndex);
         var sortValue = SerializeSorts(sorts);
         var uriState = GetUriState();
@@ -786,7 +892,10 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
             href += $"&{uriState.SortParameter}={Uri.EscapeDataString(sortValue)}";
         }
 
-        return href;
+        if (PersistPageSizeInQuery) {
+            href += $"&{Uri.EscapeDataString(GetQueryName("pageSize"))}={(pageSize ?? CurrentPageSize).ToString(CultureInfo.InvariantCulture)}";
+        }
+        return href + _navManager.ToAbsoluteUri(GetCurrentUri()).Fragment;
     }
 
     private UriState GetUriState() {
@@ -883,6 +992,10 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
         var query = GetUriState().Query;
         if (query.TryGetValue(GetQueryName("page"), out var pageValue) && int.TryParse(pageValue, out var pageNumber)) {
             _currentPageIndex = Math.Max(1, pageNumber) - 1;
+        }
+
+        if (PersistPageSizeInQuery && query.TryGetValue(GetQueryName("pageSize"), out var pageSizeValue) && int.TryParse(pageSizeValue, out var pageSize) && pageSize > 0) {
+            _currentPageSize = pageSize;
         }
 
         if (query.TryGetValue(GetQueryName("sort"), out var sortValue)) {
@@ -1089,9 +1202,11 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
             builder.AddAttribute(4, "onkeydown", EventCallback.Factory.Create<KeyboardEventArgs>(this, args => InvokeRowClickedFromKeyboardAsync(item, args)));
         }
 
+        var hasIndex = _rowIndices.TryGetValue(GetRowIdentity(item), out var index);
+        builder.AddAttribute(5, "data-nt-virtualize-index", Virtualize && MeasureVirtualizedRows && hasIndex ? index : (int?)null);
+        builder.AddAttribute(6, "aria-rowindex", RowDetailTemplate is null && hasIndex ? (long)index + 2 : (long?)null);
         if (RowDetailTemplate is not null) {
-            builder.AddAttribute(5, "data-nt-virtualize-index", Virtualize && _rowIndices.TryGetValue(GetRowIdentity(item), out var index) ? index : (int?)null);
-            builder.AddContent(6, RenderExpansionCell(item));
+            builder.AddContent(7, RenderExpansionCell(item));
         }
         for (var i = 0; i < _columns.Count; i++) {
             var column = _columns[i];
@@ -1126,20 +1241,19 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
         builder.AddAttribute(1, "class", "nt-data-grid-row nt-data-grid-row-placeholder");
         var resolvedRowSize = Math.Max(1, context.Size);
         var rowSize = resolvedRowSize.ToString(CultureInfo.InvariantCulture);
-        builder.AddAttribute(2, "style", $"height: {rowSize}px; --nt-data-grid-placeholder-row-height: {rowSize}px;");
-        builder.AddAttribute(3, "aria-rowindex", context.Index);
-        builder.AddAttribute(4, "aria-hidden", "true");
-        builder.OpenElement(5, "td");
-        builder.AddAttribute(6, "class", "nt-data-grid-cell nt-data-grid-cell-placeholder");
-        builder.AddAttribute(7, "colspan", VisibleColumnCount);
-        builder.AddAttribute(8, "style", $"height: {rowSize}px; --nt-data-grid-placeholder-row-height: {rowSize}px;");
-        builder.OpenElement(9, "div");
-        builder.AddAttribute(10, "class", "nt-data-grid-row-skeleton");
-        builder.AddAttribute(11, "style", $"height: {rowSize}px; min-height: {rowSize}px;");
-        builder.OpenComponent<NTSkeleton>(12);
-        builder.AddAttribute(13, nameof(NTSkeleton.Shape), NTSkeletonShape.Rectangle);
-        builder.AddAttribute(14, nameof(NTSkeleton.Width), "100%");
-        builder.AddAttribute(15, nameof(NTSkeleton.Height), $"{rowSize}px");
+        builder.AddAttribute(2, "data-nt-virtualize-size", rowSize);
+        builder.AddAttribute(3, "data-nt-virtualize-placeholder", "true");
+        builder.AddAttribute(4, "aria-rowindex", RowDetailTemplate is null ? (long)context.Index : (long?)null);
+        builder.AddAttribute(5, "aria-hidden", "true");
+        builder.OpenElement(6, "td");
+        builder.AddAttribute(7, "class", "nt-data-grid-cell nt-data-grid-cell-placeholder");
+        builder.AddAttribute(8, "colspan", VisibleColumnCount);
+        builder.AddAttribute(9, "data-nt-virtualize-size", rowSize);
+        builder.OpenElement(10, "div");
+        builder.AddAttribute(11, "class", "nt-data-grid-row-skeleton");
+        builder.AddAttribute(12, "data-nt-virtualize-size", rowSize);
+        builder.OpenComponent<NTSkeleton>(13);
+        builder.AddAttribute(14, nameof(NTSkeleton.Shape), NTSkeletonShape.Rectangle);
         builder.CloseComponent();
         builder.CloseElement();
         builder.CloseElement();
@@ -1152,7 +1266,7 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
         builder.OpenElement(0, "td");
         builder.AddAttribute(1, "class", "nt-data-grid-spacer-cell");
         builder.AddAttribute(2, "colspan", VisibleColumnCount);
-        builder.AddAttribute(3, "style", $"height: {size}px;");
+        builder.AddAttribute(3, "data-nt-virtualize-size", size);
         builder.CloseElement();
     };
 
@@ -1193,6 +1307,7 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
         }
 
         _disposed = true;
+        _navManager.LocationChanged -= OnLocationChanged;
         _refreshCancellation = null;
         try {
             _componentCancellation.Cancel();

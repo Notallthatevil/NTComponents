@@ -440,6 +440,8 @@ $nt-data-grid-spacer-animation-duration: motion.$nt-motion-duration-extra_long_2
         @include typescale.tnt-label-large;
 
         display: inline-flex;
+        // Keep icon-font fallback text inside its own hit target while fonts load.
+        overflow: hidden;
         block-size: $nt-data-grid-page-button-size;
         inline-size: $nt-data-grid-page-button-size;
         min-block-size: $nt-data-grid-page-button-size;

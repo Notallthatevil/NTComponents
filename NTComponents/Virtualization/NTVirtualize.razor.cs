@@ -49,6 +49,22 @@ public partial class NTVirtualize<TItem>() : NTPageScriptComponent<NTVirtualize<
     [Parameter]
     public int ItemSizeVersion { get; set; }
 
+    /// <summary>Gets or sets the zero-based initial item index. Applied once on the first interactive render.</summary>
+    [Parameter]
+    public int InitialItemIndex { get; set; }
+
+    /// <summary>Gets or sets the opt-in anchoring behavior on refresh. Defaults to preserving the pixel offset.</summary>
+    [Parameter]
+    public NTVirtualizeAnchorMode AnchorMode { get; set; }
+
+    /// <summary>Gets or sets a stable item key, used for rendering identity and refresh anchoring.</summary>
+    [Parameter]
+    public Func<TItem, object>? ItemKey { get; set; }
+
+    /// <summary>Gets or sets the equality comparer for refresh anchoring when no item key is supplied.</summary>
+    [Parameter]
+    public IEqualityComparer<TItem>? ItemComparer { get; set; }
+
     /// <summary>
     ///     Gets or sets the function providing items to the list.
     /// </summary>
@@ -140,21 +156,11 @@ public partial class NTVirtualize<TItem>() : NTPageScriptComponent<NTVirtualize<
     public string SpacerElement { get; set; } = "div";
 
     private ElementReference _afterPlaceholder;
-    private string _afterSpacerStyle = string.Empty;
-    private float _afterSpacerStyleSize = -1f;
-    private string _beforeSpacerStyle = string.Empty;
-    private float _beforeSpacerStyleSize = -1f;
-    private string _defaultPlaceholderStyle = string.Empty;
-    private float _defaultPlaceholderStyleItemSize = -1f;
     private int _itemCount;
     private int _itemsBefore;
     private float _itemSize;
     private int _lastRenderedItemCount;
     private int _lastRenderedPlaceholderCount;
-    private int _lastReportedItemCount = -1;
-    private bool _lastReportedMeasureItemSize;
-    private int _lastReportedRenderedItemCount = -1;
-    private int _lastReportedRenderedPlaceholderCount = -1;
     private NTVirtualizeItemsProvider<TItem>? _lastItemsProvider;
     private bool _loading;
     private CancellationTokenSource? _prefetchCts;
@@ -166,6 +172,16 @@ public partial class NTVirtualize<TItem>() : NTPageScriptComponent<NTVirtualize<
     private float _spacerAfterSize;
     private float _spacerBeforeSize;
     private int _visibleItemCapacity;
+    private bool _hasLoadedItems;
+    private bool _initialized;
+    private (float ItemSize, int OverscanCount, int MaxItemCount, string? ScrollRestorationKey)? _reportedOptions;
+    private (int Count, int Loaded, int Placeholders, bool Measure, int Revision, bool Loading, int Start, int Capacity)? _reportedRenderState;
+    private NTVirtualizeAnchorSnapshot? _pendingAnchor;
+    private int _pendingAnchorIndex;
+    private long _scrollOperationId;
+    private int _measurementRevision;
+    private int _previousItemSizeVersion;
+    private bool _preserveScrollOffset;
 
     /// <summary>
     ///     Loads items based on client-side virtualization calculations.
@@ -176,9 +192,12 @@ public partial class NTVirtualize<TItem>() : NTPageScriptComponent<NTVirtualize<
     /// <param name="count">           The number of items to request.</param>
     [JSInvokable]
     public void LoadItems(float spacerBeforeSize, float spacerAfterSize, int startIndex, int count) {
+        if (DisposalStarted) {
+            return;
+        }
         var resolvedStartIndex = Math.Max(0, startIndex);
         var resolvedCount = Math.Max(0, count);
-        if (resolvedStartIndex + resolvedCount > _itemCount) {
+        if (_hasLoadedItems && (long)resolvedStartIndex + resolvedCount > _itemCount) {
             resolvedStartIndex = Math.Max(0, _itemCount - resolvedCount);
         }
 
@@ -188,7 +207,8 @@ public partial class NTVirtualize<TItem>() : NTPageScriptComponent<NTVirtualize<
         if (resolvedStartIndex != _itemsBefore
             || resolvedCount != _visibleItemCapacity
             || !resolvedSpacerBeforeSize.Equals(_spacerBeforeSize)
-            || !resolvedSpacerAfterSize.Equals(_spacerAfterSize)) {
+            || !resolvedSpacerAfterSize.Equals(_spacerAfterSize)
+            || (!_loading && TryGetMissingRange(resolvedStartIndex, _hasLoadedItems ? Math.Min(resolvedCount, Math.Max(0, _itemCount - resolvedStartIndex)) : resolvedCount, out _, out _))) {
             _itemsBefore = resolvedStartIndex;
             _visibleItemCapacity = resolvedCount;
             _spacerBeforeSize = resolvedSpacerBeforeSize;
@@ -207,9 +227,35 @@ public partial class NTVirtualize<TItem>() : NTPageScriptComponent<NTVirtualize<
     ///     Asynchronously refreshes the underlying data and re-renders the component when the refresh completes.
     /// </summary>
     /// <returns>A task that represents the asynchronous refresh operation.</returns>
-    public async Task RefreshDataAsync() {
-        ClearCachedItems(cancelForegroundRefresh: true);
-        await RefreshDataCoreAsync(renderOnSuccess: true);
+    public Task RefreshDataAsync() => RefreshDataAsync(CancellationToken.None);
+
+    /// <summary>Refreshes the current window without remounting, honoring caller cancellation.</summary>
+    public async Task RefreshDataAsync(CancellationToken cancellationToken) {
+        cancellationToken.ThrowIfCancellationRequested();
+        if (!DisposalStarted) {
+            await RefreshDataCoreAsync(renderOnSuccess: true, forceRefresh: true, cancellationToken);
+        }
+    }
+
+    /// <summary>Scrolls to a zero-based item index after interactive initialization. The latest call wins.</summary>
+    public async Task ScrollToItemAsync(int itemIndex, CancellationToken cancellationToken = default) {
+        if (!_initialized || !TryGetInteropReferences(out var module, out var dotNetRef)) {
+            throw new InvalidOperationException("Scrolling requires an initialized interactive virtualizer. Use InitialItemIndex to set the initial position.");
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+        var operationId = ++_scrollOperationId;
+        try {
+            await module.InvokeVoidAsync("scrollToItem", cancellationToken, dotNetRef, Math.Max(0, itemIndex), operationId);
+        }
+        finally {
+            if (cancellationToken.IsCancellationRequested && !DisposalStarted) {
+                try {
+                    await module.InvokeVoidAsync("cancelScroll", dotNetRef, operationId);
+                }
+                catch (JSDisconnectedException) { }
+            }
+        }
     }
 
     /// <inheritdoc />
@@ -233,23 +279,33 @@ public partial class NTVirtualize<TItem>() : NTPageScriptComponent<NTVirtualize<
         try {
             if (firstRender) {
                 if (TryGetInteropReferences(out var module, out var dotNetRef)) {
-                    await module.InvokeVoidAsync("init", dotNetRef, Element, _afterPlaceholder, _itemSize, OverscanCount, MaxItemCount, ScrollRestorationKey);
+                    await module.InvokeVoidAsync("init", dotNetRef, Element, _afterPlaceholder, _itemSize, OverscanCount, MaxItemCount, ScrollRestorationKey, 50, Math.Max(0, InitialItemIndex));
+                    _initialized = !DisposalStarted;
+                    _reportedOptions = (ItemSize, OverscanCount, MaxItemCount, ScrollRestorationKey);
                 }
             }
 
-            if (MeasureItemSize || MeasureItemSize != _lastReportedMeasureItemSize || _itemCount != _lastReportedItemCount
-                || _lastRenderedItemCount != _lastReportedRenderedItemCount
-                || _lastRenderedPlaceholderCount != _lastReportedRenderedPlaceholderCount) {
-                if (TryGetInteropReferences(out _, out _)) {
-
-                    _lastReportedItemCount = _itemCount;
-                    _lastReportedMeasureItemSize = MeasureItemSize;
-                    _lastReportedRenderedItemCount = _lastRenderedItemCount;
-                    _lastReportedRenderedPlaceholderCount = _lastRenderedPlaceholderCount;
-                    if (TryGetInteropReferences(out var module, out var dotNetRef)) {
-                        await module.InvokeVoidAsync("updateRenderState", dotNetRef, _itemCount, _lastRenderedItemCount, _lastRenderedPlaceholderCount, MeasureItemSize, ItemSizeVersion);
-                    }
+            if (TryGetInteropReferences(out var currentModule, out var currentRef)) {
+                var options = (ItemSize, OverscanCount, MaxItemCount, ScrollRestorationKey);
+                if (_reportedOptions != options) {
+                    _reportedOptions = options;
+                    _reportedRenderState = null;
+                    await currentModule.InvokeVoidAsync("updateOptions", currentRef, ItemSize, OverscanCount, MaxItemCount, ScrollRestorationKey);
                 }
+
+                if (_pendingAnchor is { } anchor) {
+                    _pendingAnchor = null;
+                    _reportedRenderState = null;
+                    await currentModule.InvokeVoidAsync("restoreAnchor", currentRef, anchor, _pendingAnchorIndex, (int)AnchorMode);
+                }
+            }
+
+            var renderState = (_itemCount, _lastRenderedItemCount, _lastRenderedPlaceholderCount, MeasureItemSize, _measurementRevision, _loading || !_hasLoadedItems, _itemsBefore, _visibleItemCapacity);
+            if ((MeasureItemSize || _reportedRenderState != renderState) && TryGetInteropReferences(out var renderModule, out var renderRef)) {
+                _reportedRenderState = renderState;
+                var preserveScrollOffset = _preserveScrollOffset;
+                _preserveScrollOffset = false;
+                await renderModule.InvokeVoidAsync("updateRenderState", renderRef, _itemCount, _lastRenderedItemCount, _lastRenderedPlaceholderCount, MeasureItemSize, _measurementRevision, _loading || !_hasLoadedItems, preserveScrollOffset);
             }
         }
         catch (JSDisconnectedException) {
@@ -259,7 +315,11 @@ public partial class NTVirtualize<TItem>() : NTPageScriptComponent<NTVirtualize<
 
     /// <inheritdoc />
     protected override void OnParametersSet() {
-        if (ItemSize <= 0) {
+        if (_previousItemSizeVersion != ItemSizeVersion) {
+            _previousItemSizeVersion = ItemSizeVersion;
+            _measurementRevision++;
+        }
+        if (!float.IsFinite(ItemSize) || ItemSize <= 0) {
             throw new InvalidOperationException(
                 $"{nameof(NTVirtualize<>)} requires a positive value for parameter '{nameof(ItemSize)}'.");
         }
@@ -270,7 +330,6 @@ public partial class NTVirtualize<TItem>() : NTPageScriptComponent<NTVirtualize<
         else if (!ItemSize.Equals(_itemSize)) {
             _itemSize = ItemSize;
             ClearCachedItems(cancelForegroundRefresh: true);
-            ResetReportedRenderState();
         }
 
         if (ItemsProvider is null) {
@@ -279,29 +338,13 @@ public partial class NTVirtualize<TItem>() : NTPageScriptComponent<NTVirtualize<
 
         if (_lastItemsProvider is not null && ItemsProvider != _lastItemsProvider) {
             SetItemCount(0);
+            _hasLoadedItems = false;
             ClearCachedItems(cancelForegroundRefresh: true);
-            ResetReportedRenderState();
         }
 
         _lastItemsProvider = ItemsProvider;
         LoadingTemplate ??= DefaultPlaceholder;
     }
-
-    private static string CreateSpacerStyle(float spacerSize) => $"height: {Math.Max(0, spacerSize).ToString(CultureInfo.InvariantCulture)}px; flex-shrink: 0;";
-
-    private static string GetCachedSpacerStyle(float spacerSize, ref float cachedSpacerSize, ref string cachedStyle) {
-        spacerSize = Math.Max(0, spacerSize);
-        if (!spacerSize.Equals(cachedSpacerSize)) {
-            cachedSpacerSize = spacerSize;
-            cachedStyle = CreateSpacerStyle(spacerSize);
-        }
-
-        return cachedStyle;
-    }
-
-    private string GetAfterSpacerStyle(int preloadedPlaceholderCount) => GetCachedSpacerStyle(GetAdjustedSpacerAfterSize(preloadedPlaceholderCount), ref _afterSpacerStyleSize, ref _afterSpacerStyle);
-
-    private string GetBeforeSpacerStyle() => GetCachedSpacerStyle(_spacerBeforeSize, ref _beforeSpacerStyleSize, ref _beforeSpacerStyle);
 
     private float GetAdjustedSpacerAfterSize(int preloadedPlaceholderCount) =>
         Math.Max(0, _spacerAfterSize - Math.Max(0, preloadedPlaceholderCount) * _itemSize);
@@ -406,31 +449,25 @@ public partial class NTVirtualize<TItem>() : NTPageScriptComponent<NTVirtualize<
 
         if (cancelForegroundRefresh) {
             CancelAndDispose(ref _refreshCts);
+            _loading = false;
         }
     }
 
     private RenderFragment DefaultPlaceholder(PlaceholderContext context) => (builder) => {
         builder.OpenComponent<TnTSkeleton>(0);
-        builder.AddAttribute(10, "style", GetDefaultPlaceholderStyle());
+        builder.AddAttribute(1, "data-nt-virtualize-size", context.Size.ToString(CultureInfo.InvariantCulture));
         builder.CloseComponent();
     };
 
-    private string GetDefaultPlaceholderStyle() {
-        if (!_itemSize.Equals(_defaultPlaceholderStyleItemSize)) {
-            _defaultPlaceholderStyleItemSize = _itemSize;
-            _defaultPlaceholderStyle = CreateSpacerStyle(_itemSize);
-        }
-
-        return _defaultPlaceholderStyle;
-    }
-
-    private async ValueTask RefreshDataCoreAsync(bool renderOnSuccess) {
+    private async ValueTask RefreshDataCoreAsync(bool renderOnSuccess, bool forceRefresh = false, CancellationToken cancellationToken = default) {
         CancelAndDispose(ref _refreshCts);
 
         // Fetch only the missing part of the active range. Cached rows keep rendering while the missing rows remain placeholders.
         var startIndex = _itemsBefore;
         var count = _visibleItemCapacity;
-        if (!TryGetMissingRange(startIndex, count, out var missingStartIndex, out var missingCount)) {
+        var missingStartIndex = startIndex;
+        var missingCount = count;
+        if (!forceRefresh && !TryGetMissingRange(startIndex, _hasLoadedItems ? Math.Min(count, Math.Max(0, _itemCount - startIndex)) : count, out missingStartIndex, out missingCount)) {
             _loading = false;
             StartBackgroundPreload();
             StartBackgroundRevalidation(startIndex, count);
@@ -441,25 +478,88 @@ public partial class NTVirtualize<TItem>() : NTPageScriptComponent<NTVirtualize<
             return;
         }
 
-        _refreshCts = new CancellationTokenSource();
-        var cancellationToken = _refreshCts.Token;
+        if (count <= 0) {
+            return; // Browser measurement owns the first request, including InitialItemIndex.
+        }
+
+        CancelAndDispose(ref _prefetchCts);
+        CancelAndDispose(ref _revalidateCts);
+        _pendingAnchor = null;
+        var refreshCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        _refreshCts = refreshCancellation;
+        var refreshToken = refreshCancellation.Token;
         _loading = true;
 
         var request = new NTVirtualizeItemsProviderRequest<TItem> {
             Count = missingCount,
             StartIndex = missingStartIndex,
-            CancellationToken = cancellationToken
+            CancellationToken = refreshToken
         };
 
         try {
-            var result = await ItemsProvider!(request);
+            NTVirtualizeAnchorSnapshot? anchor = null;
+            var anchorItem = default(TItem);
+            var hasAnchorItem = false;
+            var oldItemCount = _itemCount;
+            if (forceRefresh && AnchorMode != NTVirtualizeAnchorMode.None && TryGetInteropReferences(out var anchorModule, out var anchorRef)) {
+                anchor = await anchorModule.InvokeAsync<NTVirtualizeAnchorSnapshot?>("captureAnchor", refreshToken, anchorRef);
+                hasAnchorItem = anchor is not null && _itemCache.TryGetValue(anchor.Index, out anchorItem);
+            }
+
+            var result = await ItemsProvider!(request).AsTask().WaitAsync(refreshToken);
+            refreshToken.ThrowIfCancellationRequested();
+
+            // Providers can shrink while a window is loading, including an initial index beyond the end.
+            var clampedStart = Math.Min(request.StartIndex, Math.Max(0, result.TotalItemCount - Math.Max(1, count)));
+            if (request.StartIndex >= result.TotalItemCount && request.StartIndex > 0) {
+                request = new NTVirtualizeItemsProviderRequest<TItem> { StartIndex = clampedStart, Count = count, CancellationToken = refreshToken };
+                result = await ItemsProvider!(request).AsTask().WaitAsync(refreshToken);
+                refreshToken.ThrowIfCancellationRequested();
+            }
+
+            var anchorIndex = anchor?.Index ?? startIndex;
+            if (anchor is not null && hasAnchorItem) {
+                var match = FindAnchorIndex(result.Items, request.StartIndex, anchorItem!);
+                var countDelta = result.TotalItemCount - oldItemCount;
+                if (match < 0 && countDelta != 0) {
+                    // A prepend can move the old item beyond this window. Probe the count-shifted window,
+                    // accepting it only when stable identity confirms that the old item is actually there.
+                    var shiftedStart = (int)Math.Clamp((long)startIndex + countDelta, 0, Math.Max(0, result.TotalItemCount - count));
+                    if (shiftedStart != request.StartIndex) {
+                        var shiftedRequest = new NTVirtualizeItemsProviderRequest<TItem> { StartIndex = shiftedStart, Count = count, CancellationToken = refreshToken };
+                        var shiftedResult = await ItemsProvider!(shiftedRequest).AsTask().WaitAsync(refreshToken);
+                        refreshToken.ThrowIfCancellationRequested();
+                        match = FindAnchorIndex(shiftedResult.Items, shiftedStart, anchorItem!);
+                        if (match >= 0) {
+                            request = shiftedRequest;
+                            result = shiftedResult;
+                        }
+                    }
+                }
+
+                if (match >= 0) {
+                    anchorIndex = match;
+                }
+            }
 
             // Only apply result if the task was not canceled.
-            if (!cancellationToken.IsCancellationRequested) {
+            if (!refreshToken.IsCancellationRequested && !DisposalStarted) {
+                if (forceRefresh) {
+                    _itemCache.Clear();
+                    _measurementRevision++;
+                    _preserveScrollOffset = AnchorMode == NTVirtualizeAnchorMode.None;
+                }
+                if (forceRefresh || request.StartIndex != missingStartIndex) {
+                    _itemsBefore = request.StartIndex;
+                    _spacerBeforeSize = _itemsBefore * _itemSize;
+                }
                 SetItemCount(result.TotalItemCount);
+                _hasLoadedItems = true;
                 UpdateSpacerAfterSizeFromItemCount();
                 StoreItems(request.StartIndex, result.Items);
                 _loading = false;
+                _pendingAnchor = anchor;
+                _pendingAnchorIndex = Math.Clamp(anchorIndex, 0, Math.Max(0, _itemCount - 1));
 
                 if (renderOnSuccess) {
                     await InvokeAsync(StateHasChanged);
@@ -468,14 +568,45 @@ public partial class NTVirtualize<TItem>() : NTPageScriptComponent<NTVirtualize<
                 StartBackgroundPreload();
             }
         }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { } // No-op; we canceled the operation, so it's fine to suppress this exception
+        catch (OperationCanceledException) when (refreshToken.IsCancellationRequested) {
+            cancellationToken.ThrowIfCancellationRequested();
+        }
         catch (Exception e) {
+            if (refreshToken.IsCancellationRequested || DisposalStarted) {
+                return;
+            }
             // Cache this exception so the renderer can throw it.
             _refreshException = e;
+
+            if (TryGetInteropReferences(out var module, out var dotNetRef)) {
+                try {
+                    await module.InvokeVoidAsync("cancelScroll", dotNetRef, _scrollOperationId);
+                }
+                catch (JSDisconnectedException) { }
+            }
 
             // Re-render the component to throw the exception.
             await InvokeAsync(StateHasChanged);
         }
+        finally {
+            if (ReferenceEquals(_refreshCts, refreshCancellation)) {
+                _refreshCts = null;
+                _loading = false;
+            }
+            refreshCancellation.Dispose();
+        }
+    }
+
+    private int FindAnchorIndex(IReadOnlyCollection<TItem> items, int startIndex, TItem anchorItem) {
+        var key = ItemKey?.Invoke(anchorItem);
+        var comparer = ItemComparer ?? EqualityComparer<TItem>.Default;
+        foreach (var item in items) {
+            if (ItemKey is not null ? Equals(key, ItemKey(item)) : comparer.Equals(anchorItem, item)) {
+                return startIndex;
+            }
+            startIndex++;
+        }
+        return -1;
     }
 
     private void StartBackgroundPreload() {
@@ -588,12 +719,6 @@ public partial class NTVirtualize<TItem>() : NTPageScriptComponent<NTVirtualize<
         var visibleLastItemIndex = Math.Min(_itemsBefore + _visibleItemCapacity, _itemCount);
         var renderLastItemIndex = visibleLastItemIndex + GetPreloadedPlaceholderCount(visibleLastItemIndex);
         return startIndex < renderLastItemIndex && startIndex + count > _itemsBefore;
-    }
-
-    private void ResetReportedRenderState() {
-        _lastReportedItemCount = -1;
-        _lastReportedRenderedItemCount = -1;
-        _lastReportedRenderedPlaceholderCount = -1;
     }
 
     private void CancelAllWork() {
