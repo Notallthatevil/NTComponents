@@ -1,0 +1,100 @@
+@use 'sass:list';
+@use '../Styles/_Variables/_colors.scss' as colors;
+@use '../Styles/_Variables/_typescale.scss' as typescale;
+@use '../Buttons/buttonChrome' as buttonChrome;
+
+.nt-breadcrumb {
+    ol {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    li {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        min-inline-size: 0;
+        max-inline-size: 100%;
+    }
+
+    ::deep .nt-nav-link {
+        max-inline-size: 100%;
+        min-inline-size: 0;
+    }
+
+    .label {
+        box-sizing: border-box;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        isolation: isolate;
+        min-block-size: 48px;
+        min-inline-size: 0;
+        overflow-wrap: anywhere;
+        color: var(--nt-breadcrumb-current-fg, #{colors.$tnt-color-on-secondary-container});
+
+        &::before {
+            content: '';
+            position: absolute;
+            inset-inline: 0;
+            border-radius: inherit;
+            pointer-events: none;
+            z-index: -1;
+            background-color: var(--nt-breadcrumb-current-bg, #{colors.$tnt-color-secondary-container});
+        }
+    }
+
+    @each $size, $tokens in buttonChrome.$sizes {
+        &.tnt-size-#{$size} {
+            .label {
+                min-block-size: max(48px, list.nth($tokens, 1));
+                padding-inline: list.nth($tokens, 2);
+                border-radius: list.nth($tokens, 5);
+                @include typescale.tnt-typescale(list.nth($tokens, 8), list.nth($tokens, 9), list.nth($tokens, 10), list.nth($tokens, 11));
+
+                &::before {
+                    inset-block: buttonChrome.touch-inset(list.nth($tokens, 1));
+                }
+            }
+
+            .separator {
+                font-size: list.nth($tokens, 4);
+                min-inline-size: 1em;
+                block-size: 1em;
+            }
+        }
+    }
+
+    .separator {
+        color: var(--nt-breadcrumb-separator, #{colors.$tnt-color-on-surface-variant});
+        flex: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        user-select: none;
+
+        &.chevron::before {
+            content: '';
+            inline-size: 0.3em;
+            block-size: 0.3em;
+            border-block-start: 2px solid currentColor;
+            border-inline-end: 2px solid currentColor;
+            transform: rotate(45deg);
+        }
+
+        &.chevron:dir(rtl)::before {
+            transform: rotate(-45deg);
+        }
+    }
+
+    @media (forced-colors: active) {
+        [aria-current='page']::before {
+            border: 1px solid CanvasText;
+        }
+    }
+}

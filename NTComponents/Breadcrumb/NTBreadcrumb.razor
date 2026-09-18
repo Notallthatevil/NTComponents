@@ -1,0 +1,35 @@
+@namespace NTComponents
+@using NTComponents.Core
+@inherits NTComponentBase
+
+@if (_items.Count > 0) {
+    <nav @attributes="AdditionalAttributes"
+         class="@ElementClass"
+         style="@ElementStyle"
+         id="@ElementId"
+         lang="@ElementLang"
+         title="@ElementTitle"
+         aria-label="@AccessibleLabel"
+         @ref="Element">
+        <ol role="list">
+            @for (var index = 0; index < _items.Count; index++) {
+                var item = _items[index];
+                var isCurrent = index == _items.Count - 1;
+                <li @key="index">
+                    @if (index > 0) {
+                        <span class="@(DividerTemplate is null ? "separator chevron" : "separator")" aria-hidden="true">
+                            @DividerTemplate
+                        </span>
+                    }
+                    @if (!isCurrent && !string.IsNullOrWhiteSpace(item.Href)) {
+                        <NTNavLink href="@item.Href" Label="@item.Label" Match="NavLinkMatch.All"
+                                   Variant="NTNavLinkVariant.Text" ButtonSize="Size" TextColor="TextColor" />
+                    }
+                    else {
+                        <span class="label" aria-current="@(isCurrent ? "page" : null)">@item.Label</span>
+                    }
+                </li>
+            }
+        </ol>
+    </nav>
+}

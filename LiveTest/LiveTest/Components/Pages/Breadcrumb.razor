@@ -1,0 +1,49 @@
+@page "/breadcrumb"
+@page "/breadcrumb/product-details"
+@page "/breadcrumb/product-details/customer-reviews"
+@using NTComponents
+
+<PageTitle>Breadcrumb</PageTitle>
+
+<h1>Breadcrumb</h1>
+<p>Choose a page below to grow the trail, then use a breadcrumb link to return to a parent page.</p>
+
+<NTBreadcrumb />
+
+<ul>
+    <li><a href="breadcrumb">Breadcrumb overview</a></li>
+    <li><a href="breadcrumb/product-details">Product details</a></li>
+    <li><a href="breadcrumb/product-details/customer-reviews">Customer reviews</a></li>
+    <li><a href="breadcrumb/product-details/customer-reviews?sort=newest#examples">Reviews with query string and fragment</a></li>
+</ul>
+
+<h2 id="examples">Automatic items</h2>
+<p>Every example uses the current URL. Query strings and fragments do not become items, and the current page is plain text.</p>
+<pre><code>&lt;NTBreadcrumb /&gt;</code></pre>
+
+<h2>Custom home label</h2>
+<NTBreadcrumb HomeLabel="LiveTest" AccessibleLabel="Location in LiveTest" />
+
+<h2>Right-to-left trail</h2>
+<NTBreadcrumb dir="rtl" />
+
+<h2>Sizes</h2>
+@foreach (var size in new[] { Size.Smallest, Size.Small, Size.Medium, Size.Large, Size.Largest }) {
+    <h3>@size</h3>
+    <NTBreadcrumb Size="size" />
+}
+
+<h2>Custom divider</h2>
+<NTBreadcrumb>
+    <DividerTemplate>
+        <span>/</span>
+    </DividerTemplate>
+</NTBreadcrumb>
+
+<h2>Custom colors</h2>
+<NTBreadcrumb TextColor="TnTColor.Tertiary"
+              CurrentTextColor="TnTColor.OnTertiaryContainer"
+              CurrentBackgroundColor="TnTColor.TertiaryContainer"
+              SeparatorColor="TnTColor.Tertiary" />
+
+<p>This demo uses static server rendering. Breadcrumb navigation does not require an interactive render mode.</p>
