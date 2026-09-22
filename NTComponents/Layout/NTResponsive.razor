@@ -1,0 +1,20 @@
+@namespace NTComponents
+@using NTComponents.Core
+@inherits NTComponentBase
+
+@if (CustomBreakpoint.HasValue) {
+    <style media="@CustomMediaQuery">@((MarkupString)CustomMediaRule)</style>
+}
+
+<div @attributes="AdditionalAttributes"
+     class="@ElementClass"
+     style="@ElementStyle"
+     title="@ElementTitle"
+     lang="@ElementLang"
+     id="@ElementId"
+     data-nt-breakpoint="@BreakpointAttribute"
+     data-nt-breakpoint-direction="@DirectionAttribute"
+     data-nt-breakpoint-visibility="@VisibilityAttribute"
+     @ref="Element">
+    @ChildContent
+</div>

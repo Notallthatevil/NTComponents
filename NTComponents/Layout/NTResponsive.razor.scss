@@ -1,0 +1,28 @@
+@use '../Styles/_Variables/_screen-width.scss' as screen-width;
+
+@mixin responsive-breakpoint($name, $width) {
+    @media only screen and (min-width: $width) {
+        .nt-responsive {
+            &.nt-responsive-visible-above.nt-responsive-#{$name} {
+                display: contents;
+            }
+
+            &.nt-responsive-visible-below.nt-responsive-#{$name} {
+                display: none;
+            }
+        }
+    }
+}
+
+.nt-responsive {
+    display: contents;
+
+    &.nt-responsive-visible-above {
+        display: none;
+    }
+}
+
+@include responsive-breakpoint('small', screen-width.$small);
+@include responsive-breakpoint('medium', screen-width.$medium);
+@include responsive-breakpoint('large', screen-width.$large);
+@include responsive-breakpoint('extra-large', screen-width.$extra-large);
