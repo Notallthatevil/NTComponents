@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.AspNetCore.Components.Web.Virtualization;
 using Microsoft.JSInterop;
+using Microsoft.Extensions.DependencyInjection;
 using System.Diagnostics.CodeAnalysis;
 using NTComponents.Core;
 using NTComponents.Ext;
@@ -50,7 +51,7 @@ public enum NTDataGridAppearance {
     RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
     CompatibilitySummary = "Renders grid markup in static SSR and enhances sorting, paging, and virtualization interactively.",
     CompatibilityDetails = "Static SSR can emit the current table rows and query-link sorting or paging. Interactive sorting, paging, row callbacks, and Virtualize mode require an interactive render mode or browser enhancement.")]
-public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
+public partial class NTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)] TItem> : IDisposable where TItem : class {
     private const string _rowClass = "nt-data-grid-row";
     private const string _clickableRowClass = "nt-data-grid-row nt-data-grid-row-clickable";
     private const string _stripedOddRowClass = "nt-data-grid-row nt-data-grid-row-striped-odd";
@@ -97,6 +98,12 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
     private bool _allRowsExpanded;
     private bool AllRowsExpanded => _allRowsExpanded && _expansionExceptions.Count == 0;
     private bool? _previousDefaultRowsExpanded;
+    private PersistingComponentStateSubscription _persistenceSubscription;
+    private bool _persistenceRegistration;
+    private bool _restoredProviderResult;
+    private bool _restoreAttempted;
+    private bool _hasLoadedProviderResult;
+    private PersistentComponentState? _persistentComponentState;
 
     /// <summary>Gets or sets detail content for a parent row. Accepts any HTML or Blazor components, including a non-paginated, non-virtualized NTDataGrid.</summary>
     [Parameter]
@@ -166,6 +173,14 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
     /// </summary>
     [Parameter]
     public NTDataGridItemsProvider<TItem>? ItemsProvider { get; set; }
+
+    /// <summary>Gets or sets whether the initial non-virtualized provider page is transferred from prerender to hydration.</summary>
+    [Parameter]
+    public bool PersistPrerenderedItems { get; set; }
+
+    /// <summary>Gets or sets a stable, page-unique key for prerendered provider results. Include external filters or data versions in this value.</summary>
+    [Parameter]
+    public string? PersistenceKey { get; set; }
 
     /// <summary>
     /// Gets or sets the grid columns.
@@ -389,6 +404,9 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
     [Inject]
     private IJSRuntime _jsRuntime { get; set; } = default!;
 
+    [Inject]
+    private IServiceProvider _services { get; set; } = default!;
+
     // With detail rows, the provider's item count does not describe physical table rows.
     private long AccessibleRowCount => RowDetailTemplate is null ? (long)_totalItemCount + 1 : -1;
 
@@ -460,7 +478,43 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
     /// <inheritdoc />
     protected override void OnInitialized() {
         _navManager.LocationChanged += OnLocationChanged;
+        if (PersistPrerenderedItems && !Virtualize && ItemsProvider is not null && !string.IsNullOrWhiteSpace(PersistenceKey)
+            && _services.GetService<PersistentComponentState>() is { } state) {
+            _persistenceSubscription = state.RegisterOnPersisting(() => PersistProviderResultAsync(state));
+            _persistenceRegistration = true;
+            _persistentComponentState = state;
+        }
     }
+
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "PersistentComponentState serializes caller-owned grid items; trimmed applications must preserve serializable TItem members.")]
+    private bool TryRestoreProviderResult(int startIndex, int? count, out PersistedProviderResult<TItem> result) {
+        result = default!;
+        if (_restoreAttempted || !PersistPrerenderedItems || Virtualize || ItemsProvider is null || string.IsNullOrWhiteSpace(PersistenceKey)) {
+            return false;
+        }
+        _restoreAttempted = true;
+        if (_persistentComponentState?.TryTakeFromJson<PersistedProviderResult<TItem>>(GetPersistenceStateKey(startIndex, count), out var restored) != true || restored is null) {
+            return false;
+        }
+        result = restored;
+        return true;
+    }
+
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "PersistentComponentState serializes caller-owned grid items; trimmed applications must preserve serializable TItem members.")]
+    private Task PersistProviderResultAsync(PersistentComponentState state) {
+        if (PersistPrerenderedItems && !Virtualize && ItemsProvider is not null && !string.IsNullOrWhiteSpace(PersistenceKey)
+            && _hasLoadedProviderResult && !_restoredProviderResult) {
+            var startIndex = ShowPagination ? CurrentPageIndex * CurrentPageSize : 0;
+            int? count = ShowPagination || ItemsProvider is not null ? CurrentPageSize : null;
+            state.PersistAsJson(GetPersistenceStateKey(startIndex, count), new PersistedProviderResult<TItem>(_loadedItems.ToArray(), _totalItemCount));
+        }
+        return Task.CompletedTask;
+    }
+
+    private string GetPersistenceStateKey(int startIndex, int? count) => $"NTDataGrid:{typeof(TItem).FullName}:{PersistenceKey}:{startIndex}:{count}:{SerializeSorts(_sorts)}";
+
+    /// <summary>Represents the short-lived provider result transferred from prerender to hydration.</summary>
+    public sealed record PersistedProviderResult<T>(IReadOnlyList<T> Items, int TotalItemCount);
 
     private async void OnLocationChanged(object? sender, LocationChangedEventArgs args) {
         if (_disposed || _updatingBrowserUri || !PushHistoryEntries) {
@@ -630,6 +684,16 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
             InitializeSorts();
             var startIndex = ShowPagination ? CurrentPageIndex * CurrentPageSize : 0;
             int? count = ShowPagination || ItemsProvider is not null ? CurrentPageSize : null;
+            if (TryRestoreProviderResult(startIndex, count, out var restoredResult)) {
+                _loadedItems.Clear();
+                _loadedItems.AddRange(restoredResult.Items);
+                _rowIndices.Clear();
+                RegisterRowIndices(startIndex, _loadedItems);
+                await SetTotalItemCountAsync(restoredResult.TotalItemCount);
+                _restoredProviderResult = true;
+                _hasLoadedProviderResult = true;
+                return;
+            }
             var result = await ResolveItemsAsync(startIndex, count, refreshCancellation.Token);
             refreshCancellation.Token.ThrowIfCancellationRequested();
             _loadedItems.Clear();
@@ -637,6 +701,8 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
             _rowIndices.Clear();
             RegisterRowIndices(startIndex, _loadedItems);
             await SetTotalItemCountAsync(result.TotalItemCount);
+            _restoredProviderResult = false;
+            _hasLoadedProviderResult = true;
         }
         catch (OperationCanceledException) when (!_disposed && !ReferenceEquals(_refreshCancellation, refreshCancellation)) {
             // A newer refresh owns the rendered state.
@@ -1308,6 +1374,9 @@ public partial class NTDataGrid<TItem> : IDisposable where TItem : class {
 
         _disposed = true;
         _navManager.LocationChanged -= OnLocationChanged;
+        if (_persistenceRegistration) {
+            _persistenceSubscription.Dispose();
+        }
         _refreshCancellation = null;
         try {
             _componentCancellation.Cancel();
