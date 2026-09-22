@@ -17,7 +17,8 @@
 			@for (var itemIndex = 0; itemIndex < _items.Count; itemIndex++) {
 				var item = _items[itemIndex];
 				var state = GetItemRenderState(item, itemIndex);
-				<button class="@state.ButtonClass"
+				<button @attributes="item.AdditionalAttributes"
+						class="@state.ButtonClass"
 						@key="item.Key"
 						type="button"
 						disabled="@state.IsDisabled"
