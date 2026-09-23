@@ -77,6 +77,7 @@ public sealed class NTCarousel_IntegrationTests : IAsyncLifetime {
     [Fact]
     public async Task AutoPlay_FocusAndHoverExposePersistentAndTemporaryPauseSemantics() {
         ArgumentNullException.ThrowIfNull(_page);
+        await _page.Clock.InstallAsync();
         await NavigateToCarouselAsync();
         var section = AutoPlaySection;
         var viewport = section.Locator("[data-carousel-viewport]");
@@ -85,7 +86,7 @@ public sealed class NTCarousel_IntegrationTests : IAsyncLifetime {
         await firstItem.FocusAsync();
         await section.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Exact = true, Name = "Start rotation" }).WaitForAsync();
         var focusedPosition = await viewport.EvaluateAsync<double>("element => element.scrollLeft");
-        await _page.WaitForTimeoutAsync(4_500);
+        await _page.Clock.FastForwardAsync(4_500);
 
         (await viewport.EvaluateAsync<double>("element => element.scrollLeft")).Should().BeApproximately(focusedPosition, 1, "focus must stop rotation until the user explicitly restarts it");
         (await section.Locator("output.status").TextContentAsync())?.Trim().Should().Be(SettledItemOne);
@@ -98,7 +99,7 @@ public sealed class NTCarousel_IntegrationTests : IAsyncLifetime {
 
         await section.HoverAsync();
         var hoveredPosition = await viewport.EvaluateAsync<double>("element => element.scrollLeft");
-        await _page.WaitForTimeoutAsync(4_500);
+        await _page.Clock.FastForwardAsync(4_500);
 
         (await viewport.EvaluateAsync<double>("element => element.scrollLeft")).Should().BeApproximately(hoveredPosition, 1, "hover must pause the active timer");
         (await section.Locator("output.status").TextContentAsync())?.Trim().Should().Be(resumedStatus);

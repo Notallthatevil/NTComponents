@@ -672,7 +672,7 @@ public class NTWizard_Tests : BunitContext {
         cut.Find("div.nt-wizard-content").TextContent.Should().Contain("Step 1 content");
     }
 
-    // Behavior source: legacy parity with TnTWizard_Tests.Enter_Key_Advances_To_Next_Step_When_Not_Last_Step and NTWizard's interactive navigation contract.
+    // Behavior source: NTWizard's interactive navigation contract.
     [Fact]
     public async Task Enter_Key_Advances_To_Next_Enabled_Step() {
         var nextIndex = -1;
@@ -684,7 +684,7 @@ public class NTWizard_Tests : BunitContext {
         cut.Find("div.nt-wizard-content").TextContent.Should().Contain("Step 3 content");
     }
 
-    // Behavior source: legacy parity with TnTWizard_Tests.Non_Enter_Key_Does_Not_Advance_Step.
+    // Behavior source: NTWizard's interactive navigation contract.
     [Fact]
     public async Task NonEnter_Key_Does_Not_Advance_Or_Invoke_Next_Callback() {
         var nextCallbackCount = 0;
@@ -696,7 +696,7 @@ public class NTWizard_Tests : BunitContext {
         cut.Find("div.nt-wizard-content").TextContent.Should().Contain("Step 1 content");
     }
 
-    // Behavior source: legacy parity with TnTWizard_Tests.Enter_Key_Submits_Form_When_On_Last_Step and NTWizard.OnSubmitCallback XML documentation.
+    // Behavior source: NTWizard.OnSubmitCallback XML documentation.
     [Fact]
     public async Task Enter_Key_On_Last_Step_Invokes_Submit_Callback() {
         var submitCount = 0;
@@ -710,7 +710,7 @@ public class NTWizard_Tests : BunitContext {
         cut.Find("div.nt-wizard-content").TextContent.Should().Contain("Step 3 content");
     }
 
-    // Behavior source: legacy parity with TnTWizard_Tests.Enter_Key_Does_Not_Submit_When_SubmitButtonDisabled and NTWizard.SubmitButtonDisabled XML documentation.
+    // Behavior source: NTWizard.SubmitButtonDisabled XML documentation.
     [Fact]
     public async Task Enter_Key_On_Last_Step_Does_Not_Submit_When_Disabled() {
         var submitCount = 0;

@@ -17,9 +17,9 @@ public class TnTToast_Tests : BunitContext {
 
         // Setup required JS modules that the TnTToast component might use
         var rippleModule = JSInterop.SetupModule("./_content/NTComponents/Core/TnTRippleEffect.razor.js");
-        rippleModule.SetupVoid("onLoad", _ => true);
-        rippleModule.SetupVoid("onUpdate", _ => true);
-        rippleModule.SetupVoid("onDispose", _ => true);
+        rippleModule.SetupVoid("onLoad", _ => true).SetVoidResult();
+        rippleModule.SetupVoid("onUpdate", _ => true).SetVoidResult();
+        rippleModule.SetupVoid("onDispose", _ => true).SetVoidResult();
     }
 
     [Fact]
@@ -45,22 +45,16 @@ public class TnTToast_Tests : BunitContext {
     }
 
     [Fact]
-    public void Constructor_InitializesCorrectly() {
-        // Arrange & Act
+    public async Task Dispose_UnsubscribesFromToastService() {
         var cut = RenderToastComponent();
+        var service = Services.GetRequiredService<ITnTToastService>();
+        await service.ShowAsync("Before disposal");
+        cut.FindAll(".tnt-toast").Should().ContainSingle();
 
-        // Assert
-        cut.Should().NotBeNull();
-        cut.Instance.Should().NotBeNull();
-    }
-
-    [Fact]
-    public void Dispose_CleansUpResources() {
-        // Arrange
-        var cut = RenderToastComponent();
-
-        // Act & Assert - Should not throw exception
         cut.Instance.Dispose();
+        await service.ShowAsync("After disposal");
+
+        cut.FindAll(".tnt-toast").Should().ContainSingle();
     }
 
     [Fact]

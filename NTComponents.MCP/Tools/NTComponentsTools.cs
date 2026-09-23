@@ -69,14 +69,15 @@ public sealed class NTComponentsTools(NTComponentsCatalog _catalog) {
                 : LookupResult<ReferenceUsageSummary>.Missing($"Reference type '{name}' was not found.");
         });
 
-    [McpServerTool(Name = "search_ntcomponents", ReadOnly = true, Idempotent = true, OpenWorld = false, Destructive = false, UseStructuredContent = true), Description("Searches component, enum, and helper documentation and returns compact paged relevance-ranked matches with documentation links and typo suggestions.")]
+    [McpServerTool(Name = "search_ntcomponents", ReadOnly = true, Idempotent = true, OpenWorld = false, Destructive = false, UseStructuredContent = true), Description("Searches component, enum, and helper documentation and returns compact paged relevance-ranked matches with documentation links and typo suggestions. Use category to narrow results.")]
     public McpDocumentationSearchPage Search(
         [Description("Required search text, such as dialog, elevation, render compatibility, or a type name."), Required, MinLength(1), MaxLength(CatalogInputValidator.MaximumQueryLength)] string query,
         [Description("Maximum results from 1 through 50."), Range(CatalogInputValidator.MinimumLimit, CatalogInputValidator.MaximumMcpLimit)] int limit = DefaultSearchLimit,
-        [Description("Zero-based result offset. Use nextOffset from the prior page."), Range(0, int.MaxValue)] int offset = 0) =>
+        [Description("Zero-based result offset. Use nextOffset from the prior page."), Range(0, int.MaxValue)] int offset = 0,
+        [Description("Optional result category: Component, Enum, or Helper."), AllowedValues(CatalogInputValidator.ComponentSearchCategory, CatalogInputValidator.EnumReferenceKind, CatalogInputValidator.HelperReferenceKind)] string? category = null) =>
         Invoke(() => {
             CatalogInputValidator.ValidateMcpLimit(limit);
-            var page = _catalog.SearchPage(query, limit, offset);
+            var page = _catalog.SearchPage(query, limit, offset, category);
             return new McpDocumentationSearchPage(page.Items.Select(ToMcpSummary).ToArray(), page.TotalCount, page.NextOffset, NullIfEmpty(page.DidYouMean));
         });
 

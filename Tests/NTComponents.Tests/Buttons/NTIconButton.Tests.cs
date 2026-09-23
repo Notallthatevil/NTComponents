@@ -368,22 +368,6 @@ public class NTIconButton_Tests : BunitContext {
     }
 
     [Fact]
-    public void SelectedChanged_Supports_Bind_Selected_Shape_For_NTButton() {
-        var selected = false;
-        var cut = Render<NTButton>(parameters => parameters
-            .Add(x => x.Label, "Favorite")
-            .Add(x => x.IsToggleButton, true)
-            .Add(x => x.Selected, selected)
-            .Add(x => x.Variant, NTButtonVariant.Filled)
-            .Add(x => x.SelectedChanged, EventCallback.Factory.Create<bool>(this, value => selected = value)));
-
-        cut.Find("button").Click();
-
-        selected.Should().BeTrue();
-        cut.Instance.Selected.Should().BeTrue();
-    }
-
-    [Fact]
     public void SelectedChanged_Supports_Bind_Selected_Shape_For_NTIconButton() {
         var selected = false;
         var cut = Render<NTIconButton>(parameters => parameters

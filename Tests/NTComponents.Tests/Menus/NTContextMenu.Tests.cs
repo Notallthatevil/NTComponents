@@ -8,14 +8,14 @@ public class NTContextMenu_Tests : BunitContext {
 
     public NTContextMenu_Tests() {
         var contextMenuModule = JSInterop.SetupModule("./_content/NTComponents/Menus/NTContextMenu.razor.js");
-        contextMenuModule.SetupVoid("onLoad", _ => true);
-        contextMenuModule.SetupVoid("onUpdate", _ => true);
-        contextMenuModule.SetupVoid("onDispose", _ => true);
+        contextMenuModule.SetupVoid("onLoad", _ => true).SetVoidResult();
+        contextMenuModule.SetupVoid("onUpdate", _ => true).SetVoidResult();
+        contextMenuModule.SetupVoid("onDispose", _ => true).SetVoidResult();
 
         var menuModule = JSInterop.SetupModule("./_content/NTComponents/Menus/NTMenu.razor.js");
-        menuModule.SetupVoid("onLoad", _ => true);
-        menuModule.SetupVoid("onUpdate", _ => true);
-        menuModule.SetupVoid("onDispose", _ => true);
+        menuModule.SetupVoid("onLoad", _ => true).SetVoidResult();
+        menuModule.SetupVoid("onUpdate", _ => true).SetVoidResult();
+        menuModule.SetupVoid("onDispose", _ => true).SetVoidResult();
     }
 
     [Theory]

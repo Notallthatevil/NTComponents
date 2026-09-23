@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
-using NTComponents.Core;
 using NTComponents.Dialog;
 using NTComponents.Toast;
 
@@ -86,29 +85,6 @@ public class TnTDialog_Tests : BunitContext {
     }
 
     [Fact]
-    public async Task TnTDialog_Closes_Dialog_When_External_Click_Handler_Triggered() {
-        // Arrange
-        var component = Render<TnTDialog>();
-        var options = new TnTDialogOptions { CloseOnExternalClick = true };
-        var dialog = await _dialogService.OpenAsync<TestDialogComponent>(options);
-
-        // Act - Use the component's context to invoke the callback properly
-        var externalClickHandler = component.FindComponents<TnTExternalClickHandler>();
-        externalClickHandler.Should().HaveCount(1);
-
-        // Trigger the external click callback through the component's context
-        await component.InvokeAsync(async () => {
-            await externalClickHandler[0].Instance.ExternalClickCallback.InvokeAsync();
-        });
-
-        // Assert - Wait for the dialog to close
-        component.WaitForAssertion(() => {
-            var dialogElements = component.FindAll("dialog");
-            dialogElements.Should().BeEmpty();
-        }, timeout: TimeSpan.FromSeconds(1));
-    }
-
-    [Fact]
     public async Task TnTDialog_Closes_Dialog_When_OnCancel_Event_Triggered() {
         // Arrange
         var component = Render<TnTDialog>();
@@ -149,10 +125,6 @@ public class TnTDialog_Tests : BunitContext {
         // Assert
         var dialogElement = component.Find("dialog");
 
-        // Should have external click handler (default CloseOnExternalClick is true)
-        var externalClickHandlers = component.FindComponents<TnTExternalClickHandler>();
-        externalClickHandlers.Should().HaveCount(1);
-
         // Should have close button by default
         var headerElements = component.FindAll(".tnt-dialog-header");
         headerElements.Should().HaveCount(1); // Default ShowCloseButton is true
@@ -170,20 +142,6 @@ public class TnTDialog_Tests : BunitContext {
         // Assert
         var dialogContent = component.Find("dialog");
         dialogContent.TextContent.Should().Contain("Test Dialog Content: Hello World");
-    }
-
-    [Fact]
-    public async Task TnTDialog_Does_Not_Render_External_Click_Handler_When_CloseOnExternalClick_Is_False() {
-        // Arrange
-        var component = Render<TnTDialog>();
-        var options = new TnTDialogOptions { CloseOnExternalClick = false };
-
-        // Act
-        var dialog = await _dialogService.OpenAsync<TestDialogComponent>(options);
-
-        // Assert
-        var externalClickHandlers = component.FindComponents<TnTExternalClickHandler>();
-        externalClickHandlers.Should().BeEmpty();
     }
 
     [Fact]
@@ -250,22 +208,6 @@ public class TnTDialog_Tests : BunitContext {
         dialogElements[0].GetAttribute("id").Should().Be(dialog1.ElementId);
         dialogElements[1].GetAttribute("id").Should().Be(dialog2.ElementId);
         dialogElements[2].GetAttribute("id").Should().Be(dialog3.ElementId);
-    }
-
-    [Fact]
-    public async Task TnTDialog_Multiple_Dialogs_Only_Last_Has_External_Click_Handler() {
-        // Arrange
-        var component = Render<TnTDialog>();
-        var options = new TnTDialogOptions { CloseOnExternalClick = true };
-
-        // Act
-        var dialog1 = await _dialogService.OpenAsync<TestDialogComponent>(options);
-        var dialog2 = await _dialogService.OpenAsync<TestDialogComponent>(options);
-        var dialog3 = await _dialogService.OpenAsync<TestDialogComponent>(options);
-
-        // Assert
-        var externalClickHandlers = component.FindComponents<TnTExternalClickHandler>();
-        externalClickHandlers.Should().HaveCount(1); // Only the last dialog should have external click handler
     }
 
     [Fact]
@@ -356,22 +298,6 @@ public class TnTDialog_Tests : BunitContext {
 
         // Assert
         component.Markup.Should().NotContain("<dialog");
-    }
-
-    [Fact]
-    public async Task TnTDialog_Renders_External_Click_Handler_For_Last_Dialog_With_CloseOnExternalClick() {
-        // Arrange
-        var component = Render<TnTDialog>();
-        var options1 = new TnTDialogOptions { CloseOnExternalClick = false };
-        var options2 = new TnTDialogOptions { CloseOnExternalClick = true };
-
-        // Act
-        var dialog1 = await _dialogService.OpenAsync<TestDialogComponent>(options1);
-        var dialog2 = await _dialogService.OpenAsync<TestDialogComponent>(options2);
-
-        // Assert
-        var externalClickHandlers = component.FindComponents<TnTExternalClickHandler>();
-        externalClickHandlers.Should().HaveCount(1);
     }
 
     [Fact]

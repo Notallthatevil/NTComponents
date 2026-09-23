@@ -8,6 +8,7 @@ internal static class CatalogInputValidator {
     public const int MaximumSearchTerms = 16;
     public const string EnumReferenceKind = "Enum";
     public const string HelperReferenceKind = "Helper";
+    public const string ComponentSearchCategory = "Component";
     public const string ComponentApiReferenceScope = "ComponentApi";
     public const string LibraryApiReferenceScope = "LibraryApi";
     public const string ParameterMemberKind = "Parameter";
@@ -40,6 +41,18 @@ internal static class CatalogInputValidator {
             || (!string.Equals(kind, EnumReferenceKind, StringComparison.OrdinalIgnoreCase)
                 && !string.Equals(kind, HelperReferenceKind, StringComparison.OrdinalIgnoreCase))) {
             throw new CatalogValidationException(nameof(kind), $"kind must be {EnumReferenceKind} or {HelperReferenceKind}.");
+        }
+    }
+
+    public static void ValidateSearchCategory(string? category) {
+        if (category is null) {
+            return;
+        }
+
+        if (!string.Equals(category, ComponentSearchCategory, StringComparison.OrdinalIgnoreCase)
+            && !string.Equals(category, EnumReferenceKind, StringComparison.OrdinalIgnoreCase)
+            && !string.Equals(category, HelperReferenceKind, StringComparison.OrdinalIgnoreCase)) {
+            throw new CatalogValidationException(nameof(category), $"category must be {ComponentSearchCategory}, {EnumReferenceKind}, or {HelperReferenceKind}.");
         }
     }
 

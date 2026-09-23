@@ -11,9 +11,9 @@ namespace NTComponents.Tests.TestingUtility {
         /// <param name="testContext">The bUnit test context.</param>
         public static void SetupRippleEffectModule(BunitContext testContext) {
             var rippleModule = testContext.JSInterop.SetupModule("./_content/NTComponents/Core/TnTRippleEffect.razor.js");
-            rippleModule.SetupVoid("onLoad", _ => true);
-            rippleModule.SetupVoid("onUpdate", _ => true);
-            rippleModule.SetupVoid("onDispose", _ => true);
+            rippleModule.SetupVoid("onLoad", _ => true).SetVoidResult();
+            rippleModule.SetupVoid("onUpdate", _ => true).SetVoidResult();
+            rippleModule.SetupVoid("onDispose", _ => true).SetVoidResult();
         }
     }
 }

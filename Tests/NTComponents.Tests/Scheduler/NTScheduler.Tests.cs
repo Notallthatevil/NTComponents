@@ -6,9 +6,9 @@ namespace NTComponents.Tests.Scheduler;
 public class NTScheduler_Tests : BunitContext {
     public NTScheduler_Tests() {
         var module = JSInterop.SetupModule(NTScheduler<TnTEvent>.JsModulePathValue);
-        module.SetupVoid("onLoad", _ => true);
-        module.SetupVoid("onUpdate", _ => true);
-        module.SetupVoid("onDispose", _ => true);
+        module.SetupVoid("onLoad", _ => true).SetVoidResult();
+        module.SetupVoid("onUpdate", _ => true).SetVoidResult();
+        module.SetupVoid("onDispose", _ => true).SetVoidResult();
     }
 
     [Fact]

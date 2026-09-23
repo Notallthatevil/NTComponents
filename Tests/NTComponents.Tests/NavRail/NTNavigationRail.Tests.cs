@@ -8,9 +8,9 @@ public class NTNavigationRail_Tests : BunitContext {
 
     public NTNavigationRail_Tests() {
         var module = JSInterop.SetupModule("./_content/NTComponents/NavRail/NTNavigationRail.razor.js");
-        module.SetupVoid("onLoad", _ => true);
-        module.SetupVoid("onUpdate", _ => true);
-        module.SetupVoid("onDispose", _ => true);
+        module.SetupVoid("onLoad", _ => true).SetVoidResult();
+        module.SetupVoid("onUpdate", _ => true).SetVoidResult();
+        module.SetupVoid("onDispose", _ => true).SetVoidResult();
     }
 
     [Fact]

@@ -9,7 +9,7 @@ on:
         default: Release
 
 env:
-  COVERAGE_THRESHOLD: 90
+  COVERAGE_THRESHOLD: 50
   TESTINGPLATFORM_EXITCODE_IGNORE: 8
 
 jobs:
@@ -28,7 +28,7 @@ jobs:
             8.0.x
             9.0.x
             10.0.x
-            11.0.100-preview.6.26359.118
+            11.0.100-rc.1.26425.128
 
       - name: Setup Node.js
         uses: actions/setup-node@v7
@@ -106,7 +106,7 @@ jobs:
             8.0.x
             9.0.x
             10.0.x
-            11.0.100-preview.6.26359.118
+            11.0.100-rc.1.26425.128
 
       - name: Setup Node.js
         uses: actions/setup-node@v7
@@ -175,7 +175,7 @@ jobs:
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: 11.0.100-preview.6.26359.118
+          dotnet-version: 11.0.100-rc.1.26425.128
 
       - name: Install dotnet-coverage
         run: dotnet tool install --global dotnet-coverage

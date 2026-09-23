@@ -149,6 +149,18 @@ public class Search_Tests {
     }
 
     [Fact]
+    public void WithCategory_FiltersResultsAndSuggestions() {
+        var enumResults = _catalog.SearchPage("elevation", limit: 200, category: "enum");
+        enumResults.Items.Should().NotBeEmpty();
+        enumResults.Items.Should().OnlyContain(result => result.Category == "Enum");
+        enumResults.TotalCount.Should().Be(enumResults.Items.Count);
+
+        var componentSuggestion = _catalog.SearchPage("accoridon", category: "Component");
+        componentSuggestion.DidYouMean.Should().Be("NTAccordion");
+        _catalog.SearchPage("accoridon", category: "Enum").DidYouMean.Should().BeNull();
+    }
+
+    [Fact]
     public void ListComponents_WithNaturalLanguageQuery_ReturnsOnlyCompleteMatchesWhenAvailable() {
         var page = _catalog.ListComponentPage("accordion one open", limit: 200);
 
@@ -178,13 +190,4 @@ public class Search_Tests {
         search.DidYouMean.Should().BeNull();
     }
 
-    /// <summary>Behavior source: includeObsolete is an opt-in inclusion flag, so enabling it cannot remove reference types available from the default list.</summary>
-    [Fact]
-    public void ListReferences_WhenIncludingObsolete_PreservesDefaultResults() {
-        var expected = _catalog.ListReferencePage(limit: 200).Items;
-
-        var actual = _catalog.ListReferencePage(includeObsolete: true, limit: 200).Items;
-
-        actual.Select(reference => reference.FullName).Should().Contain(expected.Select(reference => reference.FullName));
-    }
 }

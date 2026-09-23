@@ -16,10 +16,9 @@ namespace NTComponents.IntegrationTests.Site;
 /// <summary>
 ///     Browser-level coverage for every generated NTComponents.Site component page and sandbox.
 /// </summary>
-[Collection(PlaywrightE2ECollection.Name)]
 public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
-    private const int ExpectedComponentTypeCount = 88;
-    private const int ExpectedRootRouteCount = 62;
+    private const int ExpectedComponentTypeCount = 90;
+    private const int ExpectedRootRouteCount = 64;
     private static readonly string[] ExpectedDependentComponentNames = [
         "NTAccordionItem",
         "NTAutocompleteOption",
@@ -33,7 +32,6 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
         "NTFooter",
         "NTHeader",
         "NTInputRadio",
-        "NTInputSelectOption",
         "NTMenuAnchorItem",
         "NTMenuButtonItem",
         "NTMenuDividerItem",
@@ -143,11 +141,6 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
         var exportedComponentTypes = typeof(NTButton).Assembly.ExportedTypes
             .Where(type => !type.IsAbstract && type.Name.StartsWith("NT", StringComparison.Ordinal) && typeof(IComponent).IsAssignableFrom(type))
             .ToArray();
-        var obsoleteComponentNames = exportedComponentTypes
-            .Where(type => type.IsDefined(typeof(ObsoleteAttribute), inherit: false))
-            .Select(type => RemoveGenericArity(type.Name))
-            .OrderBy(name => name, StringComparer.Ordinal)
-            .ToArray();
         var expectedComponentNames = exportedComponentTypes
             .Where(type => !type.IsDefined(typeof(ObsoleteAttribute), inherit: false))
             .Select(type => RemoveGenericArity(type.Name))
@@ -155,7 +148,7 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
         expectedComponentNames.Should().HaveCount(ExpectedComponentTypeCount, "the browser coverage contract should be updated intentionally when the public NT component surface changes");
         var expectedDependentComponentNames = ExpectedDependentComponentNames.Intersect(expectedComponentNames, StringComparer.Ordinal).ToHashSet(StringComparer.Ordinal);
         var expectedRootComponentNames = expectedComponentNames.Except(expectedDependentComponentNames, StringComparer.Ordinal).ToHashSet(StringComparer.Ordinal);
-        expectedRootComponentNames.Should().HaveCount(ExpectedRootRouteCount, "every exported component should be classified as either a root route or a composed dependent demo; excluded obsolete components: {0}", string.Join(", ", obsoleteComponentNames));
+        expectedRootComponentNames.Should().HaveCount(ExpectedRootRouteCount, "every current exported component should be classified as either a root route or a composed dependent demo");
 
         var failures = new List<string>();
         var rootComponentNames = new List<string>();
@@ -665,7 +658,20 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
                 })
             """);
         if (!hasVerifiedOutput) {
-            failures.Add($"{route}: Preview was blank and did not expose data-docs-preview-verified='true' for a successful nonvisual demo.");
+            var isHiddenResponsivePreview = route == "/components/ntresponsive" && await generatedExample.EvaluateAsync<bool>(
+                """
+                element => {
+                    const responsive = element.querySelector('.nt-responsive');
+                    return responsive?.textContent?.trim().length > 0
+                        && responsive.hasAttribute('data-nt-breakpoint')
+                        && responsive.hasAttribute('data-nt-breakpoint-direction')
+                        && responsive.hasAttribute('data-nt-breakpoint-visibility')
+                        && getComputedStyle(responsive).display === 'none';
+                }
+                """);
+            if (!isHiddenResponsivePreview) {
+                failures.Add($"{route}: Preview was blank and did not expose data-docs-preview-verified='true' for a successful nonvisual demo.");
+            }
         }
     }
 

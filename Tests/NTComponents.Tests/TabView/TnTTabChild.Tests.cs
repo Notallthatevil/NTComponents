@@ -10,9 +10,9 @@ public class TnTTabChild_Tests : BunitContext {
     public TnTTabChild_Tests() {
         // Set up JavaScript module for tab view functionality (needed by parent)
         var tabViewModule = JSInterop.SetupModule("./_content/NTComponents/TabView/TnTTabView.razor.js");
-        tabViewModule.SetupVoid("onLoad", _ => true);
-        tabViewModule.SetupVoid("onUpdate", _ => true);
-        tabViewModule.SetupVoid("onDispose", _ => true);
+        tabViewModule.SetupVoid("onLoad", _ => true).SetVoidResult();
+        tabViewModule.SetupVoid("onUpdate", _ => true).SetVoidResult();
+        tabViewModule.SetupVoid("onDispose", _ => true).SetVoidResult();
 
         // Set up ripple effect module
         TestingUtility.TestingUtility.SetupRippleEffectModule(this);

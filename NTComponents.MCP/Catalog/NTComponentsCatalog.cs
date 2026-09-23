@@ -1,6 +1,7 @@
 using System.Text;
 using System.Xml.Linq;
 using System.Reflection;
+using System.Diagnostics;
 using Microsoft.AspNetCore.Components;
 using NTComponents.GeneratedDocumentation;
 using NTComponents.MCP.Contracts;
@@ -144,13 +145,18 @@ public sealed class NTComponentsCatalog {
         return SearchPage(query, limit).Items;
     }
 
-    public DocumentationSearchPage SearchPage(string query, int limit = 25, int offset = 0) {
+    public DocumentationSearchPage SearchPage(string query, int limit = 25, int offset = 0, string? category = null) {
         CatalogInputValidator.ValidateRequiredQuery(query);
         CatalogInputValidator.ValidateLimit(limit);
         CatalogInputValidator.ValidateOffset(offset);
+        CatalogInputValidator.ValidateSearchCategory(category);
         var searchQuery = CreateSearchQuery(query);
         var results = new List<DocumentationSearchResult>();
         foreach (var component in _components) {
+            if (!MatchesCategory(component, category, isComponent: true)) {
+                continue;
+            }
+
             var match = CalculateMatch(component, searchQuery, isComponent: true);
             if (match.Score > 0) {
                 results.Add(new(component.Name, component.FullName, "Component", component.Summary, component.SourceFolder, match.Score, match.MatchedTerms, match.MatchedFields, GetComponentDocumentationUrl(component)));
@@ -158,6 +164,10 @@ public sealed class NTComponentsCatalog {
         }
 
         foreach (var reference in _references) {
+            if (!MatchesCategory(reference, category, isComponent: false)) {
+                continue;
+            }
+
             var match = CalculateMatch(reference, searchQuery, isComponent: false);
             if (match.Score > 0) {
                 results.Add(new(reference.Name, reference.FullName, GetReferenceKind(reference), reference.Summary, reference.SourceFolder, match.Score, match.MatchedTerms, match.MatchedFields, GetReferenceDocumentationUrl(reference)));
@@ -173,7 +183,7 @@ public sealed class NTComponentsCatalog {
             .ThenBy(result => result.Name, StringComparer.Ordinal)
             .ToArray();
         var page = CreatePage(orderedResults.Skip(offset).Take(limit).ToArray(), orderedResults.Length, offset, limit);
-        return new(page.Items, page.TotalCount, page.Offset, page.Limit, page.HasMore, page.NextOffset, orderedResults.Length == 0 ? GetSuggestedQuery(searchQuery) : null);
+        return new(page.Items, page.TotalCount, page.Offset, page.Limit, page.HasMore, page.NextOffset, orderedResults.Length == 0 ? GetSuggestedQuery(searchQuery, category) : null);
     }
 
     private ComponentDetails ToComponentDetails(TypeDocumentation component, bool includeRelatedEnumValues) {
@@ -503,13 +513,14 @@ public sealed class NTComponentsCatalog {
         return new(items, totalCount, offset, limit, hasMore, hasMore ? nextOffset : null);
     }
 
-    private string? GetSuggestedQuery(SearchQuery query) {
+    private string? GetSuggestedQuery(SearchQuery query, string? category) {
         if (query.Terms.Length != 1) {
             return null;
         }
 
         var requestedName = NormalizeSuggestionName(query.Terms[0]);
-        return _components.Concat(_references)
+        return _components.Where(type => MatchesCategory(type, category, isComponent: true))
+            .Concat(_references.Where(type => MatchesCategory(type, category, isComponent: false)))
             .Select(type => (type.Name, Distance: CalculateEditDistance(requestedName, NormalizeSuggestionName(type.Name))))
             .Where(candidate => candidate.Distance <= 3)
             .OrderBy(candidate => candidate.Distance)
@@ -517,6 +528,9 @@ public sealed class NTComponentsCatalog {
             .Select(candidate => candidate.Name)
             .FirstOrDefault();
     }
+
+    private static bool MatchesCategory(TypeDocumentation type, string? category, bool isComponent) =>
+        category is null || string.Equals(category, isComponent ? CatalogInputValidator.ComponentSearchCategory : GetReferenceKind(type), StringComparison.OrdinalIgnoreCase);
 
     private static string NormalizeSuggestionName(string value) {
         var normalized = new string(value.Where(char.IsLetterOrDigit).Select(char.ToLowerInvariant).ToArray());
@@ -540,9 +554,10 @@ public sealed class NTComponentsCatalog {
         return previous[^1];
     }
 
-    private static string GetAssemblyVersion(Assembly assembly) => assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
-        ?? assembly.GetName().Version?.ToString()
-        ?? "unknown";
+    private static string GetAssemblyVersion(Assembly assembly) {
+        var version = assembly.GetName().Version?.ToString() ?? "unknown";
+        return string.IsNullOrEmpty(assembly.Location) ? version : FileVersionInfo.GetVersionInfo(assembly.Location).ProductVersion ?? version;
+    }
 
     private static string GetBuildRevision(string version) {
         var separatorIndex = version.IndexOf('+');

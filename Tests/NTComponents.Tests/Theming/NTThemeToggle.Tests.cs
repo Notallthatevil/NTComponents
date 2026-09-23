@@ -4,18 +4,16 @@ public class NTThemeToggle_Tests : BunitContext {
 
     public NTThemeToggle_Tests() {
         var themeToggleModule = JSInterop.SetupModule("./_content/NTComponents/Theming/NTThemeToggle.razor.js?v=1");
-        themeToggleModule.SetupVoid("onLoad", _ => true);
-        themeToggleModule.SetupVoid("onUpdate", _ => true);
-        themeToggleModule.SetupVoid("onDispose", _ => true);
+        themeToggleModule.SetupVoid("onLoad", _ => true).SetVoidResult();
+        themeToggleModule.SetupVoid("onUpdate", _ => true).SetVoidResult();
+        themeToggleModule.SetupVoid("onDispose", _ => true).SetVoidResult();
     }
 
     [Fact]
-    public void RendersIndependentNtThemeToggleElement() {
+    public void RendersNtThemeToggleElement() {
         var cut = Render<NTThemeToggle>();
 
         cut.Find("nt-theme-toggle").Should().NotBeNull();
-        cut.FindAll("tnt-theme-toggle").Should().BeEmpty();
-        cut.Markup.Should().NotContain("<TnTThemeToggle");
     }
 
     [Fact]

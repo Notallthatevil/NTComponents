@@ -18,31 +18,33 @@ describe('NTComponents.formatToCurrency', () => {
 
       NTComponents.formatToCurrency(event);
 
-      expect(input.value).toContain('1');
+      expect(input.value).toBe('$1,234.5');
    });
 
    test('uses default culture code if not provided', () => {
       const input = document.createElement('input');
       input.value = '100';
+      input.setAttribute('currencyCode', 'EUR');
 
       const event = new Event('keyup');
       Object.defineProperty(event, 'target', { value: input });
 
       NTComponents.formatToCurrency(event);
 
-      expect(input.value).toBeTruthy();
+      expect(input.value).toBe('€100');
    });
 
    test('uses default currency code if not provided', () => {
       const input = document.createElement('input');
       input.value = '100';
+      input.setAttribute('cultureCode', 'en-US');
 
       const event = new Event('keyup');
       Object.defineProperty(event, 'target', { value: input });
 
       NTComponents.formatToCurrency(event);
 
-      expect(input.value).toBeTruthy();
+      expect(input.value).toBe('$100');
    });
 
    test('returns early for modifier keys', () => {

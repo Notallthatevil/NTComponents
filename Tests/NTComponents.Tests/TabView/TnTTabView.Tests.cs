@@ -10,9 +10,9 @@ public class TnTTabView_Tests : BunitContext {
     public TnTTabView_Tests() {
         // Set up JavaScript module for tab view functionality
         var tabViewModule = JSInterop.SetupModule("./_content/NTComponents/TabView/TnTTabView.razor.js");
-        tabViewModule.SetupVoid("onLoad", _ => true);
-        tabViewModule.SetupVoid("onUpdate", _ => true);
-        tabViewModule.SetupVoid("onDispose", _ => true);
+        tabViewModule.SetupVoid("onLoad", _ => true).SetVoidResult();
+        tabViewModule.SetupVoid("onUpdate", _ => true).SetVoidResult();
+        tabViewModule.SetupVoid("onDispose", _ => true).SetVoidResult();
 
         // Set up ripple effect module
         TestingUtility.TestingUtility.SetupRippleEffectModule(this);
@@ -267,22 +267,6 @@ public class TnTTabView_Tests : BunitContext {
             button.GetAttribute("type").Should().Be("button");
             button.GetAttribute("class").Should().Contain("tnt-tab-view-button");
             button.GetAttribute("class").Should().Contain("tnt-interactable");
-            button.GetAttribute("class").Should().Contain("tnt-ripple");
-        }
-    }
-
-    [Fact]
-    public void TabButtons_IncludeRippleEffect() {
-        // Arrange & Act
-        var cut = RenderTabViewWithTabs();
-
-        // Assert
-        cut.Markup.Should().Contain("TnTRippleEffect");
-
-        // Verify that each button has ripple class
-        var buttons = cut.FindAll(".tnt-tab-view-button");
-        buttons.Should().HaveCount(3);
-        foreach (var button in buttons) {
             button.GetAttribute("class").Should().Contain("tnt-ripple");
         }
     }

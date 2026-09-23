@@ -10,9 +10,9 @@ public class NTTooltip_Tests : BunitContext {
 
     public NTTooltip_Tests() {
         var tooltipModule = JSInterop.SetupModule("./_content/NTComponents/Tooltip/NTTooltip.razor.js");
-        tooltipModule.SetupVoid("onLoad", _ => true);
-        tooltipModule.SetupVoid("onUpdate", _ => true);
-        tooltipModule.SetupVoid("onDispose", _ => true);
+        tooltipModule.SetupVoid("onLoad", _ => true).SetVoidResult();
+        tooltipModule.SetupVoid("onUpdate", _ => true).SetVoidResult();
+        tooltipModule.SetupVoid("onDispose", _ => true).SetVoidResult();
     }
 
     [Fact]

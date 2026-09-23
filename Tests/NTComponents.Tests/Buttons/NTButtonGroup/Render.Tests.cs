@@ -274,29 +274,6 @@ public sealed class Render_Tests : NTButtonGroupTestContext {
         });
     }
 
-    /// <summary>
-    ///     Ensures the deprecated end icon parameter is ignored by the group renderer.
-    /// </summary>
-    [Fact]
-    public void WithEndIcon_DoesNotRenderEndIcon() {
-        // Arrange
-#pragma warning disable CS0618
-        RenderFragment items = builder => {
-            builder.OpenComponent<NTButtonGroupItem<string>>(0);
-            builder.AddAttribute(1, nameof(NTButtonGroupItem<string>.Key), "mail");
-            builder.AddAttribute(2, nameof(NTButtonGroupItem<string>.Label), "Mail");
-            builder.AddAttribute(3, nameof(NTButtonGroupItem<string>.EndIcon), (object)new MaterialIcon("mail"));
-            builder.CloseComponent();
-        };
-#pragma warning restore CS0618
-
-        // Act
-        var cut = Render<NTButtonGroup<string>>(parameters => parameters.AddChildContent(items));
-
-        // Assert
-        cut.FindAll("span.nt-button-icon").Should().BeEmpty();
-    }
-
     // Behavior source: NTButtonGroup.Variant XML remarks define Elevated, Filled, Tonal, and Outlined as supported group treatments.
     [Theory]
     [InlineData(NTButtonVariant.Elevated, "nt-button-group-elevated")]

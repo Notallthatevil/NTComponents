@@ -12,9 +12,9 @@ public class NTFabMenu_Tests : BunitContext {
         RippleTestingUtility.SetupRippleEffectModule(this);
 
         var fabMenuModule = JSInterop.SetupModule("./_content/NTComponents/Buttons/NTFabMenu.razor.js");
-        fabMenuModule.SetupVoid("onLoad", _ => true);
-        fabMenuModule.SetupVoid("onUpdate", _ => true);
-        fabMenuModule.SetupVoid("onDispose", _ => true);
+        fabMenuModule.SetupVoid("onLoad", _ => true).SetVoidResult();
+        fabMenuModule.SetupVoid("onUpdate", _ => true).SetVoidResult();
+        fabMenuModule.SetupVoid("onDispose", _ => true).SetVoidResult();
     }
 
     [Fact]

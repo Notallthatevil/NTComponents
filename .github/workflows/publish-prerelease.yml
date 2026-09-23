@@ -50,7 +50,7 @@ jobs:
             8.0.x
             9.0.x
             10.0.x
-            11.0.100-preview.6.26359.118
+            11.0.100-rc.1.26425.128
 
       - name: Setup Node.js
         if: steps.check-tags.outputs.is_tagged == 'false'

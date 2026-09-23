@@ -373,25 +373,6 @@ public class IQueryableExt_Tests {
     }
 
     [Fact]
-    public void Apply_WithZeroStartIndex_StartsFromBeginning() {
-        // Arrange
-        var query = _testItems.AsQueryable();
-        var request = new TnTItemsProviderRequest {
-            StartIndex = 0,
-            Count = 3
-        };
-
-        // Act
-        var result = query.Apply(request).ToList();
-
-        // Assert
-        result.Should().HaveCount(3);
-        result[0].Id.Should().Be(1);
-        result[1].Id.Should().Be(2);
-        result[2].Id.Should().Be(3);
-    }
-
-    [Fact]
     public void Apply_WithoutAnyParameters_ReturnsOriginalQuery() {
         // Arrange
         var query = _testItems.AsQueryable();

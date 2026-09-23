@@ -33,14 +33,14 @@ public class TnTTypeahead_Tests : BunitContext {
 
         // Setup required JS modules that the component might use
         var rippleModule = JSInterop.SetupModule("./_content/NTComponents/Core/TnTRippleEffect.razor.js");
-        rippleModule.SetupVoid("onLoad", _ => true);
-        rippleModule.SetupVoid("onUpdate", _ => true);
-        rippleModule.SetupVoid("onDispose", _ => true);
+        rippleModule.SetupVoid("onLoad", _ => true).SetVoidResult();
+        rippleModule.SetupVoid("onUpdate", _ => true).SetVoidResult();
+        rippleModule.SetupVoid("onDispose", _ => true).SetVoidResult();
 
         var typeaheadModule = JSInterop.SetupModule("./_content/NTComponents/Typeahead/TnTTypeahead.razor.js");
-        typeaheadModule.SetupVoid("onLoad", _ => true);
-        typeaheadModule.SetupVoid("onUpdate", _ => true);
-        typeaheadModule.SetupVoid("onDispose", _ => true);
+        typeaheadModule.SetupVoid("onLoad", _ => true).SetVoidResult();
+        typeaheadModule.SetupVoid("onUpdate", _ => true).SetVoidResult();
+        typeaheadModule.SetupVoid("onDispose", _ => true).SetVoidResult();
     }
 
     [Fact]
@@ -362,7 +362,7 @@ public class TnTTypeahead_Tests : BunitContext {
         var cut = RenderTypeahead(SimpleSearchFunc, parameters => parameters
             .Add(p => p.ElementName, "search-input"));
 
-        // Assert The ElementName is actually set on the outer div, not the input The input gets the name from the TnTInputText component
+        // Assert The ElementName is set on the outer div; the input receives its own name.
         var element = cut.Find(".tnt-typeahead");
         element.GetAttribute("name").Should().Be("search-input");
     }
@@ -847,22 +847,20 @@ public class TnTTypeahead_Tests : BunitContext {
     }
 
     [Fact]
-    public async Task Search_WithEmptyValue_ClearsResults() {
+    public void Search_WithEmptyValue_ClearsResults() {
         // Arrange
         var cut = RenderTypeahead(SimpleSearchFunc);
         var input = cut.Find("input");
 
         // First, perform a search
         input.Input("ap");
-        await Task.Delay(400, Xunit.TestContext.Current.CancellationToken);
-        cut.FindAll(".tnt-typeahead-list-item").Should().HaveCountGreaterThan(0);
+        cut.WaitForAssertion(() => cut.FindAll(".tnt-typeahead-list-item").Should().HaveCountGreaterThan(0), TimeSpan.FromSeconds(3));
 
         // Act - Clear the input
         input.Input("");
-        await Task.Delay(400, Xunit.TestContext.Current.CancellationToken);
 
         // Assert
-        cut.FindAll(".tnt-typeahead-content").Should().BeEmpty();
+        cut.WaitForAssertion(() => cut.FindAll(".tnt-typeahead-content").Should().BeEmpty(), TimeSpan.FromSeconds(3));
     }
 
     [Fact]

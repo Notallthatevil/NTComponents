@@ -40,7 +40,7 @@ jobs:
     timeout-minutes: 20
     # determine dotnet SDK version from the TFM (job-level env to avoid schema ambiguity)
     env:
-      DOTNET_VERSION: ${{ matrix.tfm == 'net11.0' && '11.0.100-preview.6.26359.118' || '10.0.x' }}
+      DOTNET_VERSION: ${{ matrix.tfm == 'net11.0' && '11.0.100-rc.1.26425.128' || '10.0.x' }}
 
     steps:
     - uses: actions/checkout@v7
@@ -51,7 +51,7 @@ jobs:
         dotnet-version: |
           8.0.x
           ${{ env.DOTNET_VERSION }}
-          11.0.100-preview.6.26359.118
+          11.0.100-rc.1.26425.128
 
     - name: Cache NuGet packages
       uses: actions/cache@v6

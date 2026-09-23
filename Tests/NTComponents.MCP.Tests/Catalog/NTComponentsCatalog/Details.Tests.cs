@@ -102,19 +102,6 @@ public class Details_Tests {
         component.Parameters.Where(parameter => parameter.IsInherited).Should().OnlyContain(parameter => parameter.Category == "Inherited");
     }
 
-    /// <summary>Behavior source: component details expose obsolescence information and usage guidance so consumers can avoid obsolete components.</summary>
-    [Fact]
-    public void GetObsoleteComponent_ReturnsMigrationGuidance() {
-        var catalog = new NTComponentsCatalog();
-
-        var component = catalog.GetComponent("NTInputSelectOption");
-
-        component.Should().NotBeNull();
-        component!.IsObsolete.Should().BeTrue();
-        component.ObsoleteMessage.Should().Contain("Use NTAutocompleteOption");
-        component.UsageGuidelines.Should().Contain(guideline => guideline.StartsWith("Do not use this obsolete component.", StringComparison.Ordinal));
-    }
-
     /// <summary>Behavior source: generated basic usage promises composition-aware required inputs, including Razor expressions for non-text content parameters.</summary>
     [Fact]
     public void GetComponent_WithRequiredContent_GeneratesRazorExpressionPlaceholder() {
@@ -173,7 +160,7 @@ public class Details_Tests {
     [Fact]
     public void GetAllReferenceDetails_ExposeOnlyConsumerAccessibleMembers() {
         var catalog = new NTComponentsCatalog();
-        var references = catalog.ListReferencePage(includeObsolete: true, limit: 200).Items;
+        var references = catalog.ListReferencePage(limit: 200).Items;
 
         var details = references.Select(reference => catalog.GetReference(reference.FullName)).ToArray();
 

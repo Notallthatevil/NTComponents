@@ -28,26 +28,20 @@ public class GeneratedCodeDocumentation_Tests {
         // Assert
         buttonType.Should().NotBeNull();
         buttonType!.Summary.Should().Contain("Represents a customizable button component.");
-        buttonType.BaseTypeFullName.Should().Be("NTComponents.Core.TnTComponentBase");
         buttonSizeProperty.Should().NotBeNull();
         buttonSizeProperty!.Summary.Should().Contain("The size of the button.");
     }
 
     [Fact]
-    public void Model_Contains_Method_And_Field_Documentation() {
+    public void Model_Contains_Field_Documentation() {
         // Arrange
         var model = GeneratedCodeDocumentation.Model;
 
         // Act
-        var wizardStepType = model.Types.FirstOrDefault(x => x.FullName == "NTComponents.Wizard.TnTWizardStepBase");
-        var renderMethod = wizardStepType?.Methods.FirstOrDefault(x => x.Name == "Render");
-
         var sizeEnumType = model.Types.FirstOrDefault(x => x.FullName == "NTComponents.Size");
         var smallestField = sizeEnumType?.Fields.FirstOrDefault(x => x.Name == "Smallest");
 
         // Assert
-        renderMethod.Should().NotBeNull();
-        renderMethod!.Summary.Should().Contain("Renders the content of the wizard step.");
         smallestField.Should().NotBeNull();
         smallestField!.Summary.Should().Contain("The smallest size.");
     }
@@ -124,21 +118,6 @@ public class GeneratedCodeDocumentation_Tests {
     }
 
     [Fact]
-    public void Model_Identifies_Obsolete_Types() {
-        // Arrange
-        var model = GeneratedCodeDocumentation.Model;
-
-        // Act
-        var cardType = model.Types.FirstOrDefault(x => x.FullName == "NTComponents.TnTCard");
-
-        // Assert
-        cardType.Should().NotBeNull();
-        cardType!.IsObsolete.Should().BeTrue();
-        cardType.ObsoleteMessage.Should().Be("Use NTCard instead.");
-        cardType.IsObsoleteError.Should().BeFalse();
-    }
-
-    [Fact]
     public void Model_Contains_Remarks_And_Source_Metadata() {
         // Arrange
         var model = GeneratedCodeDocumentation.Model;
@@ -161,9 +140,6 @@ public class GeneratedCodeDocumentation_Tests {
         // Act
         var buttonType = model.Types.First(x => x.FullName == "NTComponents.NTButton");
         var requestType = model.Types.First(x => x.FullName == "NTComponents.NTDataGridItemsProviderRequest<TItem>");
-        var gridSortType = model.Types.First(x => x.FullName == "NTComponents.Grid.TnTGridSort<TGridItem>");
-        var propertyColumnType = model.Types.First(x => x.FullName == "NTComponents.TnTPropertyColumn<TGridItem, TProp>");
-        var applyMethod = gridSortType.Methods.First(x => x.Name == "Apply" && x.Signature.Contains("bool ascending", StringComparison.Ordinal));
         var countProperty = requestType.Properties.First(x => x.Name == "Count");
         var colorType = model.Types.First(x => x.FullName == "NTComponents.TnTColor");
         var richTextEditorType = model.Types.First(x => x.FullName == "NTComponents.NTRichTextEditor");
@@ -172,8 +148,6 @@ public class GeneratedCodeDocumentation_Tests {
         // Assert
         buttonType.Remarks.Should().Contain("NTButtonVariant.Filled for the primary action");
         requestType.Summary.Should().Be("Represents a data request issued by NTDataGrid.");
-        propertyColumnType.Summary.Should().Contain("property of TGridItem. Supports formatting");
-        applyMethod.Summary.Should().Contain("supplied IQueryable. The ascending parameter is ignored");
         countProperty.Summary.Should().Contain("or null when the provider may return all items");
         colorType.Remarks.Should().Contain("areas of the UI. Primary, Secondary");
         errorMessageProperty.Summary.Should().Contain("Prefer NTFormControlBaseCore.ErrorText for new code");

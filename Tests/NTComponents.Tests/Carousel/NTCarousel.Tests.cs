@@ -8,9 +8,9 @@ public class NTCarousel_Tests : BunitContext {
     public NTCarousel_Tests() {
         RippleTestingUtility.SetupRippleEffectModule(this);
         var module = JSInterop.SetupModule("./_content/NTComponents/Carousel/NTCarousel.razor.js");
-        module.SetupVoid("onLoad", _ => true);
-        module.SetupVoid("onUpdate", _ => true);
-        module.SetupVoid("onDispose", _ => true);
+        module.SetupVoid("onLoad", _ => true).SetVoidResult();
+        module.SetupVoid("onUpdate", _ => true).SetVoidResult();
+        module.SetupVoid("onDispose", _ => true).SetVoidResult();
     }
 
     [Fact, Trait("Component", "Carousel")]

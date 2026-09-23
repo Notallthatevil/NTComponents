@@ -18,7 +18,7 @@ public class Classification_Tests {
     public void WithGeneratedDocumentation_ExcludesNestedImplementationTypes() {
         var catalog = new NTComponentsCatalog();
 
-        var componentNames = catalog.ListComponents(includeObsolete: true, limit: 200).Select(component => component.Name);
+        var componentNames = catalog.ListComponents(limit: 200).Select(component => component.Name);
 
         componentNames.Should().NotContain(NestedImplementationTypeNames);
     }
@@ -27,7 +27,6 @@ public class Classification_Tests {
     [InlineData("NTButtonGroup")]
     [InlineData("NTDataGrid")]
     [InlineData("NTInputDateTime")]
-    [InlineData("NTInputSelect")]
     [InlineData("NTScheduler")]
     public void WithGenericComponentName_ResolvesComponent(string componentName) {
         var catalog = new NTComponentsCatalog();

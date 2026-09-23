@@ -102,12 +102,21 @@ public static class DocumentationEndpoints {
         api.MapGet("/search", (NTComponentsCatalog catalog,
             [Description("Required text matched against component, enum, and helper documentation."), Required, MinLength(1), MaxLength(CatalogInputValidator.MaximumQueryLength)] string query,
             [Description("Maximum number of results from 1 through 200."), Range(CatalogInputValidator.MinimumLimit, CatalogInputValidator.MaximumLimit)] int limit = 25,
-            [Description("Zero-based result offset."), Range(0, int.MaxValue)] int offset = 0) => TypedResults.Ok(catalog.SearchPage(query, limit, offset)))
+            [Description("Zero-based result offset."), Range(0, int.MaxValue)] int offset = 0,
+            [Description("Optional result category: Component, Enum, or Helper."), AllowedValues(CatalogInputValidator.ComponentSearchCategory, CatalogInputValidator.EnumReferenceKind, CatalogInputValidator.HelperReferenceKind)] string? category = null) => TypedResults.Ok(catalog.SearchPage(query, limit, offset, category)))
             .WithName("SearchNTComponents")
             .WithSummary("Search NTComponents documentation")
-            .WithDescription("Returns relevance-ranked component, enum, and helper matches from the generated documentation catalog.")
+            .WithDescription("Returns relevance-ranked component, enum, and helper matches from the generated documentation catalog, optionally filtered by category.")
             .Produces<DocumentationSearchPage>()
-            .ProducesValidationProblem();
+            .ProducesValidationProblem()
+            .AddOpenApiOperationTransformer((operation, _, _) => {
+                var categorySchema = operation.Parameters?.SingleOrDefault(parameter => parameter.Name == "category")?.Schema;
+                if (categorySchema is OpenApiSchema schema) {
+                    schema.Enum = [JsonValue.Create(CatalogInputValidator.ComponentSearchCategory), JsonValue.Create(CatalogInputValidator.EnumReferenceKind), JsonValue.Create(CatalogInputValidator.HelperReferenceKind)];
+                }
+
+                return Task.CompletedTask;
+            });
 
         return endpoints;
     }

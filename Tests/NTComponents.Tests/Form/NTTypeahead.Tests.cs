@@ -239,14 +239,14 @@ public class NTTypeahead_Tests : BunitContext {
         };
         var cut = RenderTypeahead(
             itemsLookupFunc: lookup,
-            debounceMilliseconds: 100);
+            debounceMilliseconds: 1_000);
         var input = cut.Find("input[role='combobox']");
 
         input.Input("a");
         input.Input("ad");
         input.Input("ada");
 
-        cut.WaitForAssertion(() => searches.Should().ContainSingle().Which.Should().Be("ada"));
+        cut.WaitForAssertion(() => searches.Should().ContainSingle().Which.Should().Be("ada"), TimeSpan.FromSeconds(5));
     }
 
     [Fact]

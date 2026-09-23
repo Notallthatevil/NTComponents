@@ -95,6 +95,11 @@ public class NTComponentsTools_Tests {
         result.Value.Members.TotalCount.Should().BeGreaterThan(1_000);
         result.Value.Members.NextOffset.Should().Be(10);
 
+        var nextPage = _tools.GetReferenceType("MaterialIcon", offset: result.Value.Members.NextOffset!.Value);
+        nextPage.Value!.Members.TotalCount.Should().Be(result.Value.Members.TotalCount);
+        nextPage.Value.Members.Items.Should().HaveCount(10);
+        nextPage.Value.Members.Items.Select(member => member.Name).Should().NotIntersectWith(result.Value.Members.Items.Select(member => member.Name));
+
         var memberName = result.Value.Members.Items[0].Name;
         var filtered = _tools.GetReferenceType("MaterialIcon", query: memberName, limit: 50);
         filtered.Value!.Members.Items.Should().Contain(member => member.Name == memberName);
@@ -110,6 +115,15 @@ public class NTComponentsTools_Tests {
         page.Items[0].Name.Should().Be("NTDialog");
         page.Items[0].DocumentationUrl.Should().StartWith("https://ntcomponents.nttechnologies.dev/");
         page.DidYouMean.Should().BeNull();
+    }
+
+    [Fact]
+    public void Search_WithCategory_ReturnsOnlyRequestedReferenceKind() {
+        var page = _tools.Search("elevation", category: "Enum");
+
+        page.Items.Should().NotBeEmpty();
+        page.Items.Should().OnlyContain(result => result.Category == "Enum");
+        page.TotalCount.Should().BeGreaterThanOrEqualTo(page.Items.Count);
     }
 
     /// <summary>Behavior source: search_ntcomponents is explicitly advertised as read-only and idempotent, so repeated calls with fixed inputs must return identical structured content.</summary>
@@ -133,8 +147,6 @@ public class NTComponentsTools_Tests {
         references.Length.Should().BeLessThan(7_000);
         JsonSerializer.Serialize(_tools.GetComponent("NTButton")).Length.Should().BeLessThan(3_000);
         search.Length.Should().BeLessThan(4_000);
-        components.Should().NotContain("\"IsObsolete\":false");
-        references.Should().NotContain("\"IsObsolete\":false");
         search.Should().NotContain("MatchedFields");
     }
 

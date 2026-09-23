@@ -218,7 +218,7 @@ describe('TnTTabView web component', () => {
     await tabView.updateActiveIndicator();
     
     expect(activeIndicator.style.display).toBe('block');
-    expect(activeIndicator.style.left).toBeDefined();
+    expect(activeIndicator.style.left).toBe('50px');
   });
 
   test('updateActiveIndicator positions indicator for secondary style', async () => {
@@ -249,7 +249,7 @@ describe('TnTTabView web component', () => {
     await tabView.updateActiveIndicator();
     
     expect(activeIndicator.style.display).toBe('block');
-    expect(activeIndicator.style.left).toBeDefined();
+    expect(activeIndicator.style.left).toBe('10px');
     expect(activeIndicator.style.width).toBe('100px');
   });
 

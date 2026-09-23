@@ -82,6 +82,23 @@ public class CatalogValidation_Tests {
         await AssertRestValidationProblemAsync("/api/search?query=%20", "query");
     }
 
+    [Fact]
+    public async Task Rest_SearchCategory_FiltersResultsAndRejectsUnknownCategory() {
+        await using var factory = new McpWebAppFactory();
+        using var client = factory.CreateClient();
+
+        using var response = await client.GetAsync("/api/search?query=elevation&category=Enum", TestContext.Current.CancellationToken);
+        using var body = JsonDocument.Parse(await response.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken));
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        body.RootElement.GetProperty("items").EnumerateArray().Should().NotBeEmpty();
+        body.RootElement.GetProperty("items").EnumerateArray().Should().OnlyContain(result => result.GetProperty("category").GetString() == "Enum");
+        using var rejected = await client.GetAsync("/api/search?query=elevation&category=Widget", TestContext.Current.CancellationToken);
+        using var error = JsonDocument.Parse(await rejected.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken));
+        rejected.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        error.RootElement.GetProperty("errors").TryGetProperty("category", out _).Should().BeTrue();
+    }
+
     /// <summary>Behavior source: REST catalog query parameters accept at most 512 characters.</summary>
     [Fact]
     public async Task Rest_WithQueryLengthBoundary_Accepts512AndRejects513() {
@@ -138,6 +155,8 @@ public class CatalogValidation_Tests {
         AssertOpenApiQueryLength(paths.GetProperty("/api/references").GetProperty("get"));
         AssertOpenApiQueryLength(paths.GetProperty("/api/search").GetProperty("get"));
         AssertOpenApiAllowedKinds(paths.GetProperty("/api/references").GetProperty("get"));
+        var searchCategory = paths.GetProperty("/api/search").GetProperty("get").GetProperty("parameters").EnumerateArray().Single(parameter => parameter.GetProperty("name").GetString() == "category");
+        searchCategory.GetProperty("schema").GetProperty("enum").EnumerateArray().Select(value => value.GetString()).Should().Equal("Component", "Enum", "Helper");
     }
 
     /// <summary>Behavior source: MCP parameter contracts publish range, allowed-value, and required-input constraints to clients.</summary>
@@ -179,6 +198,7 @@ public class CatalogValidation_Tests {
         componentLookupSchema.GetProperty("properties").GetProperty("name").GetProperty("minLength").GetInt32().Should().Be(1);
         referenceLookupSchema.GetProperty("properties").GetProperty("name").GetProperty("minLength").GetInt32().Should().Be(1);
         searchSchema.GetProperty("properties").GetProperty("query").GetProperty("minLength").GetInt32().Should().Be(1);
+        searchSchema.GetProperty("properties").GetProperty("category").GetProperty("enum").EnumerateArray().Select(value => value.GetString()).Should().Equal("Component", "Enum", "Helper");
     }
 
     /// <summary>Behavior source: invalid MCP arguments return a tool error and do not corrupt the stateless session for a subsequent valid call.</summary>
@@ -213,6 +233,7 @@ public class CatalogValidation_Tests {
             (Tool: "get_nt_component_members", Arguments: new Dictionary<string, object?> { ["name"] = "NTButton", ["kind"] = "Field" }, ExpectedMessage: "kind must be Parameter or Method."),
             (Tool: "get_nt_reference_type", Arguments: new Dictionary<string, object?> { ["name"] = " " }, ExpectedMessage: "name is required and cannot be blank."),
             (Tool: "search_ntcomponents", Arguments: new Dictionary<string, object?> { ["query"] = " " }, ExpectedMessage: "query is required and cannot be blank."),
+            (Tool: "search_ntcomponents", Arguments: new Dictionary<string, object?> { ["query"] = "button", ["category"] = "Widget" }, ExpectedMessage: "category must be Component, Enum, or Helper."),
             (Tool: "list_nt_reference_types", Arguments: new Dictionary<string, object?> { ["kind"] = "Widget" }, ExpectedMessage: "kind must be Enum or Helper."),
             (Tool: "list_nt_reference_types", Arguments: new Dictionary<string, object?> { ["kind"] = " " }, ExpectedMessage: "kind must be Enum or Helper."),
             (Tool: "list_nt_reference_types", Arguments: new Dictionary<string, object?> { ["scope"] = "Widget" }, ExpectedMessage: "scope must be ComponentApi or LibraryApi."),

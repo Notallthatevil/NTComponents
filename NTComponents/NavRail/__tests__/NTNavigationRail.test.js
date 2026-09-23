@@ -4,8 +4,8 @@ function moduleUrl(relativePath) {
   return new URL(`../../../${relativePath}`, import.meta.url).href;
 }
 
-function waitForAnimationFrame(ms = 580) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+async function waitForAnimationFrame(ms = 580) {
+  await jest.advanceTimersByTimeAsync(ms);
 }
 
 describe('NTNavigationRail module', () => {
@@ -13,6 +13,7 @@ describe('NTNavigationRail module', () => {
   let originalMatchMedia;
 
   beforeEach(async () => {
+    jest.useFakeTimers();
     document.body.innerHTML = '';
     window.NTComponents = undefined;
     originalMatchMedia = window.matchMedia;
@@ -24,6 +25,7 @@ describe('NTNavigationRail module', () => {
     window.NTComponents = undefined;
     window.matchMedia = originalMatchMedia;
     document.body.innerHTML = '';
+    jest.useRealTimers();
   });
 
   test('menu button toggles collapsed and expanded rail state in place', () => {
