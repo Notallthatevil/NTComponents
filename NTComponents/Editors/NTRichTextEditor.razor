@@ -73,6 +73,8 @@
 						                    data-command="@toolbarButton.Action"
 						                    data-value="@toolbarButton.Value"
 						                    aria-label="@GetToolbarButtonAriaLabel(toolbarButton)"
+						                    aria-haspopup="@(toolbarButton.Action == "ariaLabel" ? "dialog" : null)"
+						                    aria-expanded="@(toolbarButton.Action == "ariaLabel" ? "false" : null)"
 						                    aria-keyshortcuts="@GetToolbarButtonAriaKeyShortcuts(toolbarButton)"
 						                    title="@GetToolbarButtonTitle(toolbarButton)"
 						                    aria-pressed="false"
@@ -112,6 +114,16 @@
 			                  spellcheck="true"
 			                  onkeydown="NTComponents.stopEnterPropagation(event)"
 			                  @ref="Element"></span>
+			            <span class="tnt-rich-text-editor-source-container">
+			                <pre class="tnt-rich-text-editor-source-highlight" aria-hidden="true"><code></code></pre>
+			                <textarea class="tnt-rich-text-editor-source nt-input-control"
+			                          data-role="html-source"
+			                          aria-label="Edit HTML source"
+			                          rows="1"
+			                          spellcheck="false"
+			                          hidden
+			                          disabled="@(FieldDisabled || FieldReadOnly)"></textarea>
+			            </span>
                     </span>
 
                     @if (HasLabel) {

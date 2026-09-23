@@ -7,7 +7,7 @@ namespace NTComponents.IntegrationTests.Editors;
 /// </summary>
 [Collection(PlaywrightE2ECollection.Name)]
 public class NTRichTextEditor_IntegrationTests : IAsyncLifetime {
-    private const int ExpectedDefaultToolbarButtonCount = 26;
+    private const int ExpectedDefaultToolbarButtonCount = 28;
     private const string ServerEditorTestId = "rich-text-editor-server";
     private readonly List<string> _browserDiagnostics = [];
     private PlaywrightFixture? _fixture;
@@ -164,6 +164,88 @@ public class NTRichTextEditor_IntegrationTests : IAsyncLifetime {
         await linkPanel.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 5000 });
         await EditorRoot(ServerEditorTestId).Locator("[data-role='link-cancel']").ClickAsync();
         await linkPanel.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Hidden, Timeout = 5000 });
+    }
+
+    [Fact]
+    public async Task Accessible_Label_And_Html_Source_Controls_Edit_And_Save_Html() {
+        await NavigateToRichTextEditorAsync();
+        await WaitForEditorReadyAsync(ServerEditorTestId);
+        await SetEditorHtmlAndSelectTextAsync(ServerEditorTestId, "<p>Tagged text</p>", "Tagged");
+
+        await ClickToolbarButtonAsync(new("ariaLabel"));
+        var root = EditorRoot(ServerEditorTestId);
+        await root.Locator("[data-role='aria-label-value']").FillAsync("Important phrase");
+        await root.Locator("[data-role='aria-label-apply']").ClickAsync();
+        await WaitForHiddenValueAsync(ServerEditorTestId, "aria-label=\"Important phrase\"");
+        (await root.Locator(".tnt-rich-text-editor-surface span[aria-label]").GetAttributeAsync("role")).Should().Be("group");
+
+        await ClickToolbarButtonAsync(new("editHtml"));
+        (await root.Locator(".tnt-rich-text-editor-surface").IsVisibleAsync()).Should().BeFalse();
+        (await root.Locator("[data-role='html-source']").IsVisibleAsync()).Should().BeTrue();
+        (await root.Locator("[data-command='bold']").IsEnabledAsync()).Should().BeFalse();
+        await root.Locator("[data-role='html-source']").FillAsync("<div>\n  <p>Edited <strong>HTML</strong></p>\n  <p>Second line</p>\n</div><script>bad()</script>");
+        await ClickToolbarButtonAsync(new("editHtml"));
+        const string savedHtml = "<div><p>Edited <strong>HTML</strong></p><p>Second line</p></div>";
+        await WaitForHiddenValueAsync(ServerEditorTestId, savedHtml);
+        (await root.Locator(".tnt-rich-text-editor-surface").IsVisibleAsync()).Should().BeTrue();
+        (await root.Locator(".tnt-rich-text-editor-hidden-input").InputValueAsync()).Should().Be(savedHtml);
+        await ClickToolbarButtonAsync(new("editHtml"));
+        (await root.Locator("[data-role='html-source']").InputValueAsync()).Should().Contain("\n  <p>Edited <strong>HTML</strong></p>\n");
+    }
+
+    [Fact]
+    public async Task Html_Source_Grows_With_Content_Up_To_Eighty_Percent_Of_Viewport() {
+        ArgumentNullException.ThrowIfNull(_page);
+
+        await NavigateToRichTextEditorAsync();
+        await WaitForEditorReadyAsync(ServerEditorTestId);
+        await ClickToolbarButtonAsync(new("editHtml"));
+
+        var source = EditorRoot(ServerEditorTestId).Locator("[data-role='html-source']");
+        await source.FillAsync("<p>Short</p>");
+        var highlightingIsAligned = await source.EvaluateAsync<bool>(
+            """
+            source => {
+                const highlight = source.parentElement.querySelector('.tnt-rich-text-editor-source-highlight');
+                const code = highlight.querySelector('code');
+                const sourceStyle = getComputedStyle(source);
+                const highlightStyle = getComputedStyle(highlight);
+                return highlight.getAttribute('aria-hidden') === 'true'
+                    && code.textContent === source.value
+                    && code.clientWidth === source.clientWidth
+                    && sourceStyle.fontFamily === highlightStyle.fontFamily
+                    && sourceStyle.fontSize === highlightStyle.fontSize
+                    && sourceStyle.lineHeight === highlightStyle.lineHeight
+                    && sourceStyle.letterSpacing === highlightStyle.letterSpacing
+                    && getComputedStyle(code.querySelector('.syntax-tag')).color !== highlightStyle.color;
+            }
+            """);
+        highlightingIsAligned.Should().BeTrue();
+        var shortHeight = await source.EvaluateAsync<double>("element => element.getBoundingClientRect().height");
+
+        await source.FillAsync(string.Join('\n', Enumerable.Repeat("<p>Some HTML content</p>", 12)));
+        var mediumHeight = await source.EvaluateAsync<double>("element => element.getBoundingClientRect().height");
+        mediumHeight.Should().BeGreaterThan(shortHeight);
+
+        await source.FillAsync(string.Join('\n', Enumerable.Repeat("<p>Some HTML content</p>", 100)));
+        var cappedHeight = await source.EvaluateAsync<double>("element => element.getBoundingClientRect().height");
+        var viewportCap = await _page.EvaluateAsync<double>("() => window.innerHeight * 0.8");
+        var scrollHeight = await source.EvaluateAsync<int>("element => element.scrollHeight");
+        cappedHeight.Should().BeApproximately(viewportCap, 1);
+        scrollHeight.Should().BeGreaterThan((int)cappedHeight);
+        await source.EvaluateAsync("element => { element.scrollTop = 150; element.dispatchEvent(new Event('scroll')); }");
+        var highlightScrollsWithSource = await source.EvaluateAsync<bool>(
+            """
+            source => {
+                const highlight = source.parentElement.querySelector('.tnt-rich-text-editor-source-highlight');
+                const code = highlight.querySelector('code');
+                return Math.abs(code.getBoundingClientRect().top - highlight.getBoundingClientRect().top + source.scrollTop) < 1;
+            }
+            """);
+        highlightScrollsWithSource.Should().BeTrue();
+
+        await source.FillAsync("<p>Short</p>");
+        (await source.EvaluateAsync<double>("element => element.getBoundingClientRect().height")).Should().BeApproximately(shortHeight, 1);
     }
 
     [Fact]

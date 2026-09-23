@@ -64,8 +64,8 @@ public class NTRichTextEditor_Tests : BunitContext {
             .Add(x => x.Placeholder, "Write something"));
 
         cut.Find("nt-rich-text-editor").Should().NotBeNull();
-        cut.FindAll(".tnt-rich-text-editor-toolbar .tnt-rich-text-editor-toolbar-button").Should().HaveCount(26);
-        cut.FindAll(".tnt-rich-text-editor-toolbar .tnt-rich-text-editor-toolbar-divider").Should().HaveCount(5);
+        cut.FindAll(".tnt-rich-text-editor-toolbar .tnt-rich-text-editor-toolbar-button").Should().HaveCount(28);
+        cut.FindAll(".tnt-rich-text-editor-toolbar .tnt-rich-text-editor-toolbar-divider").Should().HaveCount(6);
         cut.Find(".tnt-rich-text-editor-toolbar-button[data-command='undo']").GetAttribute("title").Should().Be("Ctrl+Z");
         cut.Find(".tnt-rich-text-editor-toolbar-button[data-command='redo']").GetAttribute("title").Should().Be("Ctrl+Y");
         cut.Find(".tnt-rich-text-editor-toolbar-button[data-command='bold']").GetAttribute("title").Should().Be("Ctrl+B");
@@ -77,6 +77,8 @@ public class NTRichTextEditor_Tests : BunitContext {
         cut.Find(".tnt-rich-text-editor-toolbar-button[data-command='image']").GetAttribute("title").Should().Be("Ctrl+Alt+M");
         cut.Find(".tnt-rich-text-editor-toolbar-button[data-command='table']").GetAttribute("title").Should().Be("Ctrl+Alt+T");
         cut.Find(".tnt-rich-text-editor-toolbar-button[data-command='iframe']").GetAttribute("title").Should().Be("Ctrl+Alt+F");
+        cut.Find(".tnt-rich-text-editor-toolbar-button[data-command='ariaLabel']").GetAttribute("aria-haspopup").Should().Be("dialog");
+        cut.Find(".tnt-rich-text-editor-toolbar-button[data-command='editHtml']").GetAttribute("aria-label").Should().Be("Edit HTML source");
         cut.FindAll(".tnt-rich-text-editor-toolbar .tnt-rich-text-editor-toolbar-icon").Should().OnlyContain(icon => !icon.HasAttribute("title"));
         cut.Find("[data-role='image-editor']").Should().NotBeNull();
         cut.Find("[data-tool-command='image']").Should().NotBeNull();
@@ -100,6 +102,8 @@ public class NTRichTextEditor_Tests : BunitContext {
         cut.Find("[data-role='link-text']").GetAttribute("type").Should().Be("text");
         cut.Find("[data-role='link-aria-label']").GetAttribute("type").Should().Be("text");
         cut.Find("[data-role='link-title']").GetAttribute("type").Should().Be("text");
+        cut.Find("[data-tool-command='ariaLabel']").GetAttribute("role").Should().Be("dialog");
+        cut.Find("[data-role='aria-label-value']").GetAttribute("type").Should().Be("text");
         cut.Find("[data-role='iframe-editor']").Should().NotBeNull();
         cut.Find("[data-tool-command='iframe']").Should().NotBeNull();
         cut.Find("[data-role='iframe-url']").GetAttribute("type").Should().Be("url");
@@ -107,6 +111,7 @@ public class NTRichTextEditor_Tests : BunitContext {
         cut.Find("[data-role='iframe-width']").GetAttribute("type").Should().Be("text");
         cut.Find("[data-role='iframe-height']").GetAttribute("type").Should().Be("text");
         cut.Find(".tnt-rich-text-editor-hidden-input").GetAttribute("type").Should().Be("hidden");
+        cut.Find("[data-role='html-source']").HasAttribute("hidden").Should().BeTrue();
         cut.Find(".tnt-rich-text-editor-hidden-input").GetAttribute("name").Should().Contain(nameof(RichTextEditorModel.Value));
         cut.FindAll("[data-tool-command] input").Should().OnlyContain(input => !input.HasAttribute("name"));
         cut.Find(".tnt-rich-text-editor-surface").GetAttribute("data-placeholder").Should().Be("Write something");

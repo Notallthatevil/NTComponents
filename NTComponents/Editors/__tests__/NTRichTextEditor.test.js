@@ -104,7 +104,9 @@ function createEditorFixture({
             <button type="button" class="tnt-rich-text-editor-toolbar-button" data-command="table" aria-keyshortcuts="Control+Alt+T" aria-pressed="false"></button>
             <button type="button" class="tnt-rich-text-editor-toolbar-button" data-command="textColor" aria-keyshortcuts="Control+Alt+X" aria-pressed="false"></button>
             <button type="button" class="tnt-rich-text-editor-toolbar-button" data-command="link" aria-keyshortcuts="Control+K" aria-pressed="false"></button>
+            <button type="button" class="tnt-rich-text-editor-toolbar-button" data-command="ariaLabel" aria-pressed="false"></button>
             <button type="button" class="tnt-rich-text-editor-toolbar-button" data-command="iframe" aria-keyshortcuts="Control+Alt+F" aria-pressed="false"></button>
+            <button type="button" class="tnt-rich-text-editor-toolbar-button" data-command="editHtml" aria-pressed="false"></button>
           </div>
 
           <div data-tool-command="image" data-role="image-editor" hidden aria-hidden="true">
@@ -151,7 +153,17 @@ function createEditorFixture({
             <button type="button" data-role="iframe-cancel"></button>
           </div>
 
+          <div data-tool-command="ariaLabel" hidden aria-hidden="true">
+            <input data-role="aria-label-value" type="text" />
+            <button type="button" data-role="aria-label-apply"></button>
+            <button type="button" data-role="aria-label-cancel"></button>
+          </div>
+
           <div class="tnt-rich-text-editor-surface" contenteditable="true" data-placeholder="Write" data-maxlength="${maxLength}" tabindex="0"></div>
+          <span class="tnt-rich-text-editor-source-container">
+            <pre class="tnt-rich-text-editor-source-highlight" aria-hidden="true"><code></code></pre>
+            <textarea data-role="html-source" hidden></textarea>
+          </span>
         </div>
       </nt-rich-text-editor>
       <span class="tnt-input-length">0/${maxLength}</span>
@@ -164,6 +176,8 @@ function createEditorFixture({
     hiddenInput: document.querySelector('.tnt-rich-text-editor-hidden-input'),
     sourceValue: document.querySelector('.tnt-rich-text-editor-value'),
     surface: document.querySelector('.tnt-rich-text-editor-surface'),
+    htmlSource: document.querySelector('[data-role="html-source"]'),
+    htmlSourceHighlight: document.querySelector('.tnt-rich-text-editor-source-highlight code'),
     length: document.querySelector('.tnt-input-length')
   };
 }
@@ -326,6 +340,167 @@ describe('NTRichTextEditor runtime behavior', () => {
       '<p><a href="https://example.com/docs" aria-label="Docs label" title="Docs title">Docs</a></p>',
       '<p><a href="https://example.com/docs" aria-label="Docs label" title="Docs title">Docs</a></p>'
     );
+  });
+
+  test('HTML source mode edits markup, disables formatting, and sanitizes on return', () => {
+    const fixture = createEditorFixture({ value: '<p>Start</p>' });
+    const dotNetRef = createDotNetRef();
+    editorModule.onLoad(fixture.element, dotNetRef);
+
+    const toggle = fixture.element.querySelector('[data-command="editHtml"]');
+    const bold = fixture.element.querySelector('[data-command="bold"]');
+    click(toggle);
+    expect(fixture.surface.hidden).toBe(true);
+    expect(fixture.htmlSource.hidden).toBe(false);
+    expect(fixture.htmlSource.value).toBe('<p>Start</p>');
+    expect(bold.disabled).toBe(true);
+    expect(toggle.getAttribute('aria-pressed')).toBe('true');
+
+    fixture.htmlSource.value = '<p onclick="bad()">Edited <strong>HTML</strong><script>bad()</script></p>';
+    fixture.htmlSource.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(fixture.hiddenInput.value).toBe('<p>Edited <strong>HTML</strong></p>');
+    click(toggle);
+    expect(fixture.surface.hidden).toBe(false);
+    expect(fixture.htmlSource.hidden).toBe(true);
+    expect(fixture.surface.innerHTML).toBe('<p>Edited <strong>HTML</strong></p>');
+    expect(fixture.hiddenInput.value).toBe(fixture.surface.innerHTML);
+    expect(dotNetRef.invokeMethodAsync).toHaveBeenCalledWith('UpdateValueFromJs', fixture.surface.innerHTML, fixture.surface.innerHTML);
+    expect(bold.disabled).toBe(false);
+    expect(toggle.getAttribute('aria-pressed')).toBe('false');
+  });
+
+  test('HTML source view indents nested blocks and saves one-line markup', () => {
+    const fixture = createEditorFixture({ value: '<div><p>First</p><p>Second</p></div><ul><li>A</li><li>B</li></ul>' });
+    editorModule.onLoad(fixture.element, createDotNetRef());
+    const toggle = fixture.element.querySelector('[data-command="editHtml"]');
+
+    click(toggle);
+    expect(fixture.htmlSource.value).toBe('<div>\n  <p>First</p>\n  <p>Second</p>\n</div>\n<ul>\n  <li>A</li>\n  <li>B</li>\n</ul>');
+    click(toggle);
+    expect(fixture.hiddenInput.value).toBe('<div><p>First</p><p>Second</p></div><ul><li>A</li><li>B</li></ul>');
+    expect(fixture.hiddenInput.value).not.toMatch(/[\r\n]/);
+  });
+
+  test('HTML source highlights editable markup without interpreting source as DOM', () => {
+    const fixture = createEditorFixture({ value: '<p title="Greeting">Hello</p>' });
+    editorModule.onLoad(fixture.element, createDotNetRef());
+    click(fixture.element.querySelector('[data-command="editHtml"]'));
+
+    expect(fixture.htmlSourceHighlight.textContent).toBe(fixture.htmlSource.value);
+    expect(fixture.htmlSourceHighlight.querySelector('.syntax-tag').textContent).toBe('<');
+    expect(fixture.htmlSourceHighlight.querySelector('.syntax-attribute').textContent).toBe('title');
+    expect(fixture.htmlSourceHighlight.querySelector('.syntax-value').textContent).toBe('"Greeting"');
+
+    fixture.htmlSource.value = '<!-- note -->\n<img src="x" onerror="alert(1)">';
+    fixture.htmlSource.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(fixture.htmlSourceHighlight.textContent).toBe(fixture.htmlSource.value);
+    expect(fixture.htmlSourceHighlight.querySelector('.syntax-comment').textContent).toBe('<!-- note -->');
+    expect(fixture.htmlSourceHighlight.querySelector('img')).toBeNull();
+    expect(fixture.htmlSourceHighlight.querySelectorAll('[onerror]')).toHaveLength(0);
+  });
+
+  test('HTML source saves compact markup without changing inline spaces or preformatted lines', () => {
+    jest.useFakeTimers();
+    const fixture = createEditorFixture({ value: '<p>Start</p>' });
+    const dotNetRef = createDotNetRef();
+    editorModule.onLoad(fixture.element, dotNetRef);
+    click(fixture.element.querySelector('[data-command="editHtml"]'));
+
+    fixture.htmlSource.value = '<div>\n  <p><em>A</em> <strong>B</strong></p>\n  <pre>line 1\n  line 2</pre>\n</div>';
+    fixture.htmlSource.dispatchEvent(new Event('input', { bubbles: true }));
+    const expected = '<div><p><em>A</em> <strong>B</strong></p><pre>line 1&#10;  line 2</pre></div>';
+    expect(fixture.hiddenInput.value).toBe(expected);
+    expect(fixture.surface.querySelector('p').textContent).toBe('A B');
+    expect(fixture.surface.querySelector('pre').textContent).toBe('line 1\n  line 2');
+
+    const outside = document.createElement('button');
+    document.body.appendChild(outside);
+    outside.focus();
+    blur(fixture.htmlSource);
+    jest.runAllTimers();
+    expect(dotNetRef.invokeMethodAsync).toHaveBeenCalledWith('CommitValueFromJs', expected, expected);
+    expect(fixture.htmlSource.value).toContain('\n  <p><em>A</em> <strong>B</strong></p>\n');
+    expect(fixture.hiddenInput.value).not.toMatch(/[\r\n]/);
+  });
+
+  test('a rerender with the original formatted parameter preserves an unfinished source draft', () => {
+    const initial = '<div>\n  <p>Start</p>\n</div>';
+    const fixture = createEditorFixture({ value: initial });
+    const dotNetRef = createDotNetRef();
+    editorModule.onLoad(fixture.element, dotNetRef);
+    click(fixture.element.querySelector('[data-command="editHtml"]'));
+
+    fixture.htmlSource.value = '<div>\n  <p>Draft <strong>';
+    fixture.htmlSource.dispatchEvent(new Event('input', { bubbles: true }));
+    fixture.sourceValue.textContent = initial;
+    editorModule.onUpdate(fixture.element, dotNetRef);
+
+    expect(fixture.htmlSource.value).toBe('<div>\n  <p>Draft <strong>');
+    expect(fixture.hiddenInput.value).toBe('<div><p>Draft <strong></strong></p></div>');
+  });
+
+  test('HTML source mode commits a sanitized value when focus leaves the editor', () => {
+    jest.useFakeTimers();
+    const fixture = createEditorFixture({ value: '<p>Start</p>' });
+    const dotNetRef = createDotNetRef();
+    editorModule.onLoad(fixture.element, dotNetRef);
+
+    click(fixture.element.querySelector('[data-command="editHtml"]'));
+    fixture.htmlSource.value = '<p>Saved <em>source</em></p><img src="javascript:bad()">';
+    fixture.htmlSource.dispatchEvent(new Event('input', { bubbles: true }));
+    const outside = document.createElement('button');
+    document.body.appendChild(outside);
+    outside.focus();
+    blur(fixture.htmlSource);
+    jest.runAllTimers();
+
+    expect(fixture.hiddenInput.value).toBe('<p>Saved <em>source</em></p>');
+    expect(dotNetRef.invokeMethodAsync).toHaveBeenCalledWith('CommitValueFromJs', fixture.hiddenInput.value, fixture.hiddenInput.value);
+  });
+
+  test('HTML source mode updates bound input without replacing an incomplete draft', () => {
+    const fixture = createEditorFixture({ bindOnInput: true, value: '<p>Start</p>' });
+    const dotNetRef = createDotNetRef();
+    editorModule.onLoad(fixture.element, dotNetRef);
+
+    click(fixture.element.querySelector('[data-command="editHtml"]'));
+    fixture.htmlSource.value = '<p>Draft <strong>';
+    fixture.htmlSource.dispatchEvent(new Event('input', { bubbles: true }));
+    editorModule.onUpdate(fixture.element, dotNetRef);
+
+    expect(fixture.htmlSource.value).toBe('<p>Draft <strong>');
+    expect(fixture.hiddenInput.value).toBe('<p>Draft <strong></strong></p>');
+    expect(dotNetRef.invokeMethodAsync).toHaveBeenCalledWith('UpdateValueFromJs', fixture.hiddenInput.value, fixture.hiddenInput.value);
+  });
+
+  test('accessible label tool wraps selected text and edits its label', () => {
+    const fixture = createEditorFixture();
+    const dotNetRef = createDotNetRef();
+    editorModule.onLoad(fixture.element, dotNetRef);
+    setSurfaceContent(fixture.surface, '<p>Alpha Beta</p>');
+    selectText(fixture.surface.querySelector('p').firstChild, 0, 5);
+
+    click(fixture.element.querySelector('[data-command="ariaLabel"]'));
+    const panel = fixture.element.querySelector('[data-tool-command="ariaLabel"]');
+    const input = fixture.element.querySelector('[data-role="aria-label-value"]');
+    expect(panel.hidden).toBe(false);
+    input.value = 'Primary term';
+    click(fixture.element.querySelector('[data-role="aria-label-apply"]'));
+
+    const tag = fixture.surface.querySelector('span[aria-label]');
+    expect(tag.textContent).toBe('Alpha');
+    expect(tag.getAttribute('aria-label')).toBe('Primary term');
+    expect(tag.getAttribute('role')).toBe('group');
+    expect(fixture.hiddenInput.value).toContain('<span role="group" aria-label="Primary term">Alpha</span>');
+    expect(dotNetRef.invokeMethodAsync).toHaveBeenCalledWith('UpdateValueFromJs', fixture.hiddenInput.value, fixture.hiddenInput.value);
+
+    selectText(tag.firstChild, 0, 5);
+    click(fixture.element.querySelector('[data-command="ariaLabel"]'));
+    expect(input.value).toBe('Primary term');
+    input.value = 'Updated term';
+    keydown(input, 'Enter');
+    expect(fixture.surface.querySelectorAll('span[aria-label]')).toHaveLength(1);
+    expect(tag.getAttribute('aria-label')).toBe('Updated term');
   });
 
   test('keyboard shortcuts execute commands and blur commits the editor value', () => {

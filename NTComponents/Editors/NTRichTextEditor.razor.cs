@@ -178,9 +178,12 @@ public partial class NTRichTextEditor : INTPageScriptComponent<NTRichTextEditor>
             new NTRichTextEditorButton("strikeThrough", "Strikethrough", "Strikethrough", icon: MaterialIcon.StrikethroughS, shortcut: "Ctrl+Shift+S"),
             new NTRichTextEditorButton("textColor", "Text Color", "Text color", icon: MaterialIcon.FormatColorText, shortcut: "Ctrl+Alt+X"),
             new NTRichTextEditorButton("link", "Insert Link", "Insert link", icon: MaterialIcon.InsertLink, shortcut: "Ctrl+K"),
+            new NTRichTextEditorButton("ariaLabel", "Accessible Label", "Add accessible label", icon: MaterialIcon.Label),
             new NTRichTextEditorButtonDivider(),
             new NTRichTextEditorButton("image", "Insert Image", "Insert image", icon: MaterialIcon.Image, shortcut: "Ctrl+Alt+M"),
-            new NTRichTextEditorButton("iframe", "Insert Iframe", "Insert iframe", icon: MaterialIcon.Web, shortcut: "Ctrl+Alt+F")
+            new NTRichTextEditorButton("iframe", "Insert Iframe", "Insert iframe", icon: MaterialIcon.Web, shortcut: "Ctrl+Alt+F"),
+            new NTRichTextEditorButtonDivider(),
+            new NTRichTextEditorButton("editHtml", "Edit HTML", "Edit HTML source", icon: MaterialIcon.Html)
         ];
 
     /// <summary>
@@ -191,6 +194,7 @@ public partial class NTRichTextEditor : INTPageScriptComponent<NTRichTextEditor>
             new NTRichTextEditorTool("table", CreateToolPanelTemplate<EditorToolTablePanel>()),
             new NTRichTextEditorTool("textColor", CreateToolPanelTemplate<EditorToolTextColorPanel>()),
             new NTRichTextEditorTool("link", CreateToolPanelTemplate<EditorToolLinkPanel>()),
+            new NTRichTextEditorTool("ariaLabel", CreateToolPanelTemplate<EditorToolAriaLabelPanel>()),
             new NTRichTextEditorTool("iframe", CreateToolPanelTemplate<EditorToolIframePanel>())
         ];
 

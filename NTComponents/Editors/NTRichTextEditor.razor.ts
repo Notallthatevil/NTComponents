@@ -98,7 +98,11 @@ interface EditorState extends RichTextEditorToolEditorState {
     toolCommands: string[];
     lastValue: string;
     lastHtml: string;
+    sourceMode: boolean;
     onInput: () => void;
+    onSourceInput: () => void;
+    onSourceScroll: () => void;
+    onWindowResize: () => void;
     onFocus: () => void;
     onFocusIn: () => void;
     onBlur: () => void;
@@ -117,6 +121,7 @@ const richTextEditorToolRegistry: { tools: Map<string, RegisteredTool>; onChange
 };
 const editorState = new WeakMap<HTMLElement, EditorState>();
 const blockNodeTags = new Set<string>(['DIV', 'P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'UL', 'OL', 'BLOCKQUOTE', 'PRE', 'TABLE', 'IFRAME']);
+const sourceBlockTags = new Set<string>([...blockNodeTags, 'CAPTION', 'IMG', 'LI', 'TBODY', 'TD', 'TFOOT', 'TH', 'THEAD', 'TR']);
 const blockSelector = 'h1, h2, h3, h4, h5, h6, pre, blockquote, table, th, td, iframe, li, p, div';
 const defaultTableBorderColor = '#94a3b8';
 const defaultTextColor = '#1d4ed8';
@@ -239,6 +244,150 @@ function placeCaretAtEnd(surface: HTMLElement): void {
 
 function getSurface(element: Maybe<ParentNode>): HTMLElement | null {
     return qs<HTMLElement>(element, '.tnt-rich-text-editor-surface');
+}
+
+function getHtmlSource(element: Maybe<ParentNode>): HTMLTextAreaElement | null {
+    return qs<HTMLTextAreaElement>(element, '[data-role="html-source"]');
+}
+
+function syncHtmlSourceScroll(source: HTMLTextAreaElement): void {
+    const code = source.parentElement?.querySelector<HTMLElement>('.tnt-rich-text-editor-source-highlight code');
+    if (code) {
+        code.style.transform = `translate(${-source.scrollLeft}px, ${-source.scrollTop}px)`;
+    }
+}
+
+function updateHtmlSourceView(source: HTMLTextAreaElement): void {
+    const code = source.parentElement?.querySelector<HTMLElement>('.tnt-rich-text-editor-source-highlight code');
+    if (code) {
+        const fragment = document.createDocumentFragment();
+        const value = source.value;
+        const append = (text: string, kind?: string): void => {
+            if (!text) {
+                return;
+            }
+
+            const node = kind ? document.createElement('span') : document.createTextNode(text);
+            if (kind) {
+                (node as HTMLElement).className = `syntax-${kind}`;
+            }
+            node.textContent = text;
+            fragment.appendChild(node);
+        };
+
+        let index = 0;
+        while (index < value.length) {
+            if (value.startsWith('<!--', index)) {
+                const end = value.indexOf('-->', index + 4);
+                const next = end < 0 ? value.length : end + 3;
+                append(value.slice(index, next), 'comment');
+                index = next;
+                continue;
+            }
+
+            if (/^<![A-Za-z]/.test(value.slice(index))) {
+                const end = value.indexOf('>', index + 2);
+                const next = end < 0 ? value.length : end + 1;
+                append(value.slice(index, next), 'tag');
+                index = next;
+                continue;
+            }
+
+            const tag = value[index] === '<' ? /^<(\/?)([A-Za-z][\w:-]*)/.exec(value.slice(index)) : null;
+            if (!tag) {
+                const next = value.indexOf('<', index + 1);
+                const end = next < 0 ? value.length : next;
+                append(value.slice(index, end));
+                index = end;
+                continue;
+            }
+
+            append(`<${tag[1]}`, 'tag');
+            append(tag[2], 'tag');
+            index += tag[0].length;
+            let expectsValue = false;
+            while (index < value.length && value[index] !== '>') {
+                const remaining = value.slice(index);
+                const whitespace = /^\s+/.exec(remaining);
+                if (whitespace) {
+                    append(whitespace[0]);
+                    index += whitespace[0].length;
+                } else if (value[index] === '=') {
+                    append('=', 'tag');
+                    expectsValue = true;
+                    index++;
+                } else if (value[index] === '/' && value[index + 1] === '>') {
+                    append('/', 'tag');
+                    index++;
+                } else if (value[index] === '"' || value[index] === "'") {
+                    const quote = value[index];
+                    const end = value.indexOf(quote, index + 1);
+                    const next = end < 0 ? value.length : end + 1;
+                    append(value.slice(index, next), 'value');
+                    index = next;
+                    expectsValue = false;
+                } else {
+                    const token = /^[^\s=<>"']+/.exec(remaining);
+                    if (token) {
+                        append(token[0], expectsValue ? 'value' : 'attribute');
+                        index += token[0].length;
+                        expectsValue = false;
+                    } else {
+                        append(value[index]);
+                        index++;
+                    }
+                }
+            }
+            if (value[index] === '>') {
+                append('>', 'tag');
+                index++;
+            }
+        }
+
+        if (value.endsWith('\n')) {
+            append('\u200b');
+        }
+        code.replaceChildren(fragment);
+    }
+
+    source.style.height = 'auto';
+    source.style.height = `${source.scrollHeight}px`;
+    if (code) {
+        code.style.width = `${source.clientWidth}px`;
+        syncHtmlSourceScroll(source);
+    }
+}
+
+function setHtmlSourceMode(element: HTMLElement, state: EditorState, enabled: boolean): void {
+    const surface = getSurface(element);
+    const source = getHtmlSource(element);
+    if (!surface || !source || state.sourceMode === enabled) {
+        return;
+    }
+
+    if (enabled) {
+        syncValueFromSurface(element, true);
+        closeOtherTools(element, state);
+        source.value = formatHtmlSource(state.lastHtml);
+    } else {
+        surface.innerHTML = flattenEditorHtml(source.value);
+        state.selectionRange = null;
+    }
+
+    state.sourceMode = enabled;
+    surface.hidden = enabled;
+    source.hidden = !enabled;
+    for (const button of state.toolbarButtons) {
+        button.disabled = enabled && button.dataset.command !== 'editHtml';
+    }
+    toolHost.getToolbarButton(element, 'editHtml')?.setAttribute('aria-pressed', `${enabled}`);
+    if (enabled) {
+        updateHtmlSourceView(source);
+        source.focus();
+    } else {
+        syncValueFromSurface(element, true);
+        surface.focus();
+    }
 }
 
 function getSourceValueElement(element: Maybe<ParentNode>): HTMLDivElement | null {
@@ -590,6 +739,13 @@ function sanitizeElementAttributes(element: Element): void {
             continue;
         }
 
+        if (name === 'role') {
+            if (tagName !== 'SPAN' || element.getAttribute('role') !== 'group') {
+                element.removeAttribute(attribute.name);
+            }
+            continue;
+        }
+
         if (!['align', 'alt', 'aria-label', 'data-border-color', 'data-language', 'height', 'href', 'loading', 'scope', 'src', 'title', 'width'].includes(name)) {
             element.removeAttribute(attribute.name);
         }
@@ -651,6 +807,62 @@ function sanitizeEditorHtml(html: string): string {
     template.innerHTML = html;
     sanitizeHtmlFragment(template.content);
     return template.innerHTML;
+}
+
+function hasOnlySourceBlocks(parent: ParentNode): boolean {
+    const children = Array.from(parent.childNodes);
+    return children.some((child) => child instanceof Element)
+        && children.every((child) => child instanceof Element
+            ? sourceBlockTags.has(child.tagName)
+            : child.nodeType === Node.TEXT_NODE && !child.textContent?.trim());
+}
+
+function flattenEditorHtml(html: string): string {
+    const template = document.createElement('template');
+    template.innerHTML = html;
+    sanitizeHtmlFragment(template.content);
+
+    const flattenChildren = (parent: ParentNode, preserveWhitespace = false): void => {
+        const preserve = preserveWhitespace || parent instanceof Element && (parent.tagName === 'PRE' || parent.tagName === 'CODE');
+        const removeFormattingSpace = hasOnlySourceBlocks(parent);
+        for (const child of Array.from(parent.childNodes)) {
+            if (child.nodeType === Node.TEXT_NODE && !preserve) {
+                const value = (child.textContent ?? '').replace(/[ \t\r\n\f]+/g, ' ');
+                if (value === ' ' && removeFormattingSpace) {
+                    child.parentNode?.removeChild(child);
+                } else {
+                    child.textContent = value;
+                }
+            } else if (child instanceof Element) {
+                flattenChildren(child, preserve);
+            }
+        }
+    };
+
+    flattenChildren(template.content);
+    return template.innerHTML.replace(/\r\n|[\r\n]/g, '&#10;').replace(/\t/g, '&#9;');
+}
+
+function formatHtmlSource(html: string): string {
+    const template = document.createElement('template');
+    template.innerHTML = html;
+    if (!hasOnlySourceBlocks(template.content)) {
+        return template.innerHTML;
+    }
+
+    const formatElement = (element: Element, depth: number): string => {
+        const indent = '  '.repeat(depth);
+        if (!hasOnlySourceBlocks(element)) {
+            return indent + element.outerHTML;
+        }
+
+        const closingTag = `</${element.tagName.toLowerCase()}>`;
+        const openingTag = (element.cloneNode(false) as Element).outerHTML.slice(0, -closingTag.length);
+        const children = Array.from(element.children).map((child) => formatElement(child, depth + 1)).join('\n');
+        return `${indent}${openingTag}\n${children}\n${indent}${closingTag}`;
+    };
+
+    return Array.from(template.content.children).map((element) => formatElement(element, 0)).join('\n');
 }
 
 function normalizeImageDimension(value: unknown): string {
@@ -762,6 +974,16 @@ interface IframeToolState {
     onIframeApply?: (event: MouseEvent) => void;
     onIframeCancel?: (event: MouseEvent) => void;
     onIframeEditorKeyDown?: (event: KeyboardEvent) => void;
+}
+
+interface AriaLabelToolState {
+    input: HTMLInputElement | null;
+    applyButton: HTMLButtonElement | null;
+    cancelButton: HTMLButtonElement | null;
+    target: HTMLSpanElement | null;
+    onApply?: (event: MouseEvent) => void;
+    onCancel?: (event: MouseEvent) => void;
+    onKeyDown?: (event: KeyboardEvent) => void;
 }
 
 const defaultIframeTitle = 'Embedded content';
@@ -1866,6 +2088,129 @@ function applyIframeEditor(context: RichTextEditorToolContext<IframeToolState>):
     return true;
 }
 
+function closeAriaLabelEditor(context: RichTextEditorToolContext<AriaLabelToolState>, options: InlineToolCloseOptions = {}): void {
+    context.toolState.target = null;
+    closeInlineTool(context, 'ariaLabel', options);
+}
+
+function openAriaLabelEditor(context: RichTextEditorToolContext<AriaLabelToolState>): boolean {
+    const { element, editorState: state, host, toolState } = context;
+    const surface = host.getSurface(element);
+    if (!surface) {
+        return false;
+    }
+
+    const target = getSelectionClosest(surface, 'span[role="group"][aria-label]', isHtmlSpanElement);
+    const selection = window.getSelection?.();
+    const range = selection?.rangeCount ? selection.getRangeAt(0) : null;
+    if (!target && (!range || range.collapsed || !surface.contains(range.commonAncestorContainer) || range.cloneContents().querySelector(blockSelector))) {
+        return false;
+    }
+
+    host.closeOtherTools(element, state, 'ariaLabel');
+    host.saveSelectionRange(surface, state);
+    toolState.target = target;
+    if (toolState.input) {
+        toolState.input.value = target?.getAttribute('aria-label') ?? '';
+    }
+
+    host.setToolPanelOpen(element, 'ariaLabel', true);
+    toolState.input?.focus();
+    return false;
+}
+
+function applyAriaLabelEditor(context: RichTextEditorToolContext<AriaLabelToolState>): boolean {
+    const { element, editorState: state, host, toolState } = context;
+    const surface = host.getSurface(element);
+    const label = toolState.input?.value.trim() ?? '';
+    if (!surface || !label) {
+        toolState.input?.focus();
+        return false;
+    }
+
+    if (toolState.target && surface.contains(toolState.target)) {
+        toolState.target.setAttribute('aria-label', label);
+    } else {
+        host.restoreSelectionRange(surface, state);
+        const selection = window.getSelection?.();
+        const range = selection?.rangeCount ? selection.getRangeAt(0) : null;
+        if (!range || range.collapsed || !surface.contains(range.commonAncestorContainer) || range.cloneContents().querySelector(blockSelector)) {
+            toolState.input?.focus();
+            return false;
+        }
+
+        const wrapper = document.createElement('span');
+        wrapper.setAttribute('role', 'group');
+        wrapper.setAttribute('aria-label', label);
+        wrapper.appendChild(range.extractContents());
+        range.insertNode(wrapper);
+    }
+
+    closeAriaLabelEditor(context, { focusSurface: true });
+    return true;
+}
+
+function bindAriaLabelTool(context: RichTextEditorToolContext<AriaLabelToolState>): void {
+    const { element, host, toolState } = context;
+    toolState.input = getRoleInput(element, 'aria-label-value');
+    toolState.applyButton = getRoleButton(element, 'aria-label-apply');
+    toolState.cancelButton = getRoleButton(element, 'aria-label-cancel');
+    toolState.onApply ??= (event) => {
+        event.preventDefault();
+        if (applyAriaLabelEditor(context)) {
+            host.syncValueFromSurface(element, true);
+        }
+    };
+    toolState.onCancel ??= (event) => {
+        event.preventDefault();
+        closeAriaLabelEditor(context, { focusSurface: true });
+    };
+    toolState.onKeyDown ??= (event) => {
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            closeAriaLabelEditor(context, { focusSurface: true });
+        } else if (event.key === 'Enter') {
+            event.preventDefault();
+            if (applyAriaLabelEditor(context)) {
+                host.syncValueFromSurface(element, true);
+            }
+        }
+    };
+    toolState.applyButton?.addEventListener('click', toolState.onApply);
+    toolState.cancelButton?.addEventListener('click', toolState.onCancel);
+    toolState.input?.addEventListener('keydown', toolState.onKeyDown);
+}
+
+function unbindAriaLabelTool({ toolState }: RichTextEditorToolContext<AriaLabelToolState>): void {
+    if (toolState.onApply) {
+        toolState.applyButton?.removeEventListener('click', toolState.onApply);
+    }
+    if (toolState.onCancel) {
+        toolState.cancelButton?.removeEventListener('click', toolState.onCancel);
+    }
+    if (toolState.onKeyDown) {
+        toolState.input?.removeEventListener('keydown', toolState.onKeyDown);
+    }
+}
+
+registerRichTextEditorTool<AriaLabelToolState>({
+    command: 'ariaLabel',
+    createState: () => ({ input: null, applyButton: null, cancelButton: null, target: null }),
+    bind: bindAriaLabelTool,
+    unbind: unbindAriaLabelTool,
+    setDisabled: ({ toolState }, disabled) => {
+        setDisabled(toolState.input, disabled);
+        setDisabled(toolState.applyButton, disabled);
+        setDisabled(toolState.cancelButton, disabled);
+    },
+    execute: openAriaLabelEditor,
+    close: closeAriaLabelEditor,
+    syncState: ({ element, host }) => {
+        const target = getSelectionClosest(host.getSurface(element), 'span[role="group"][aria-label]', isHtmlSpanElement);
+        host.setToolbarButtonPressed(element, 'ariaLabel', Boolean(target));
+    }
+});
+
 registerRichTextEditorTool<ImageToolState>({
     command: 'image',
     createState: () => ({ imageEditorInputs: [], imageFileInput: null, imageApplyButton: null, imageCancelButton: null, imageTarget: null }),
@@ -2095,7 +2440,7 @@ function getTableRows(tableElement: HTMLTableElement): HTMLTableRowElement[] {
 }
 
 function surfaceToValue(_element: HTMLElement, surface: HTMLElement): string {
-    return sanitizeEditorHtml(surface.innerHTML);
+    return flattenEditorHtml(surface.innerHTML);
 }
 
 function updateSourceValue(element: HTMLElement, value: string): void {
@@ -2141,7 +2486,7 @@ function applyHtmlToSurface(element: HTMLElement, html: string): void {
         return;
     }
 
-    const sanitizedHtml = sanitizeEditorHtml(html);
+    const sanitizedHtml = flattenEditorHtml(html);
     surface.innerHTML = sanitizedHtml;
     updateEmptyState(surface);
     updateLength(element, sanitizedHtml);
@@ -2178,10 +2523,12 @@ function syncValueFromSurface(element: HTMLElement, notifyDotNet: boolean): void
         return;
     }
 
-    const html = sanitizeEditorHtml(surface.innerHTML);
-    if (html !== surface.innerHTML) {
-        surface.innerHTML = html;
+    const sanitizedHtml = sanitizeEditorHtml(surface.innerHTML);
+    if (sanitizedHtml !== surface.innerHTML) {
+        surface.innerHTML = sanitizedHtml;
     }
+
+    const html = flattenEditorHtml(sanitizedHtml);
 
     const value = html;
     const didValueChange = value !== state.lastValue || html !== state.lastHtml;
@@ -2204,10 +2551,26 @@ function commitValue(element: HTMLElement): void {
         return;
     }
 
+    if (state.sourceMode) {
+        const source = getHtmlSource(element);
+        if (source) {
+            surface.innerHTML = flattenEditorHtml(source.value);
+        }
+    }
+
     clearPendingSync(state);
-    const html = sanitizeEditorHtml(surface.innerHTML);
-    if (html !== surface.innerHTML) {
-        surface.innerHTML = html;
+    const sanitizedHtml = sanitizeEditorHtml(surface.innerHTML);
+    if (sanitizedHtml !== surface.innerHTML) {
+        surface.innerHTML = sanitizedHtml;
+    }
+
+    const html = flattenEditorHtml(sanitizedHtml);
+    if (state.sourceMode) {
+        const source = getHtmlSource(element);
+        if (source) {
+            source.value = formatHtmlSource(html);
+            updateHtmlSourceView(source);
+        }
     }
 
     const value = html;
@@ -2224,6 +2587,11 @@ function commitValue(element: HTMLElement): void {
 function updateToolbarState(element: HTMLElement): void {
     const state = editorState.get(element);
     if (!state) {
+        return;
+    }
+
+    if (state.sourceMode) {
+        toolHost.getToolbarButton(element, 'editHtml')?.setAttribute('aria-pressed', 'true');
         return;
     }
 
@@ -2458,6 +2826,15 @@ function executeEditorCommand(element: HTMLElement, command: string | undefined,
         return false;
     }
 
+    if (command === 'editHtml' && state) {
+        setHtmlSourceMode(element, state, !state.sourceMode);
+        return false;
+    }
+
+    if (state?.sourceMode) {
+        return false;
+    }
+
     surface.focus();
     let didChange = true;
     const tool = state ? getRichTextEditorTool(command) : null;
@@ -2665,6 +3042,7 @@ function ensureState(element: Maybe<HTMLElement>, dotNetRef: DotNetEditorRef | n
         toolStates: new Map<string, unknown>(),
         lastValue: getSourceValueElement(element)?.textContent ?? '',
         lastHtml: '',
+        sourceMode: false,
         onInput: () => {
             const shouldNotify = element.dataset.bindOnInput === 'true';
             if (shouldNotify) {
@@ -2673,6 +3051,43 @@ function ensureState(element: Maybe<HTMLElement>, dotNetRef: DotNetEditorRef | n
             }
 
             scheduleSyncValueFromSurface(element, false);
+        },
+        onSourceInput: () => {
+            const source = getHtmlSource(element);
+            if (!source) {
+                return;
+            }
+
+            updateHtmlSourceView(source);
+            const html = flattenEditorHtml(source.value);
+            surface.innerHTML = html;
+            updateEmptyState(surface);
+            updateLength(element, html);
+            const hiddenInput = getHiddenInput(element);
+            if (hiddenInput) {
+                hiddenInput.value = html;
+            }
+
+            if (element.dataset.bindOnInput === 'true') {
+                if (html !== state.lastValue || html !== state.lastHtml) {
+                    state.lastValue = html;
+                    state.lastHtml = html;
+                    updateSourceValue(element, html);
+                    invokeDotNetVoid(state.dotNetRef, 'UpdateValueFromJs', html, html);
+                }
+            }
+        },
+        onSourceScroll: () => {
+            const source = getHtmlSource(element);
+            if (source) {
+                syncHtmlSourceScroll(source);
+            }
+        },
+        onWindowResize: () => {
+            const source = getHtmlSource(element);
+            if (state.sourceMode && source) {
+                updateHtmlSourceView(source);
+            }
         },
         onFocus: () => {
             clearBlurTimeout(state);
@@ -2721,6 +3136,10 @@ function ensureState(element: Maybe<HTMLElement>, dotNetRef: DotNetEditorRef | n
     surface.addEventListener('keyup', state.onKeyUp);
     surface.addEventListener('mouseup', state.onMouseUp);
     surface.addEventListener('keydown', state.onKeyDown);
+    getHtmlSource(element)?.addEventListener('input', state.onSourceInput);
+    getHtmlSource(element)?.addEventListener('scroll', state.onSourceScroll);
+    getHtmlSource(element)?.addEventListener('blur', state.onBlur);
+    window.addEventListener('resize', state.onWindowResize);
     element.addEventListener('focusin', state.onFocusIn);
 
     state.toolCommands = collectToolCommands(element, state.toolbarButtons);
@@ -2744,20 +3163,33 @@ function synchronizeElement(element: Maybe<HTMLElement>, dotNetRef: DotNetEditor
     state.isDisposed = false;
     state.dotNetRef = dotNetRef ?? state.dotNetRef;
 
-    const value = getSourceValueElement(element)?.textContent ?? '';
+    const value = flattenEditorHtml(getSourceValueElement(element)?.textContent ?? '');
     if (state.requiresInitialRender || value !== state.lastValue) {
         applySourceToSurface(element, value);
+        if (state.sourceMode) {
+            const source = getHtmlSource(element);
+            if (source) {
+                source.value = formatHtmlSource(value);
+                updateHtmlSourceView(source);
+            }
+        }
         state.requiresInitialRender = false;
     } else {
         updateLength(element, value);
         updateEmptyState(getSurface(element));
-        updateSourceValue(element, value);
+        if (!state.sourceMode) {
+            updateSourceValue(element, value);
+        }
     }
 
     const isEditable = element.dataset.editable === 'true';
     const surface = getSurface(element);
     if (surface) {
         surface.setAttribute('contenteditable', isEditable ? 'true' : 'false');
+    }
+    const source = getHtmlSource(element);
+    if (source) {
+        source.disabled = !isEditable;
     }
 
     bindToolbarButtons(element, state);
@@ -2766,7 +3198,7 @@ function synchronizeElement(element: Maybe<HTMLElement>, dotNetRef: DotNetEditor
     bindRegisteredToolControls(element, state);
 
     for (const button of state.toolbarButtons) {
-        button.disabled = !isEditable;
+        button.disabled = !isEditable || (state.sourceMode && button.dataset.command !== 'editHtml');
     }
 
     setRegisteredToolDisabledState(element, state, !isEditable);
@@ -2775,10 +3207,12 @@ function synchronizeElement(element: Maybe<HTMLElement>, dotNetRef: DotNetEditor
         closeOtherTools(element, state);
     }
 
-    const currentHtml = surface ? sanitizeEditorHtml(surface.innerHTML) : '';
-    if (surface && currentHtml !== surface.innerHTML) {
-        surface.innerHTML = currentHtml;
+    const sanitizedHtml = surface ? sanitizeEditorHtml(surface.innerHTML) : '';
+    if (surface && sanitizedHtml !== surface.innerHTML) {
+        surface.innerHTML = sanitizedHtml;
     }
+
+    const currentHtml = flattenEditorHtml(sanitizedHtml);
 
     if (currentHtml !== state.lastHtml) {
         state.lastHtml = currentHtml;
@@ -2875,6 +3309,13 @@ export function onDispose(element: Maybe<HTMLElement>): void {
         surface.removeEventListener('keyup', state.onKeyUp);
         surface.removeEventListener('mouseup', state.onMouseUp);
         surface.removeEventListener('keydown', state.onKeyDown);
+    }
+
+    if (state) {
+        getHtmlSource(editorElement)?.removeEventListener('input', state.onSourceInput);
+        getHtmlSource(editorElement)?.removeEventListener('scroll', state.onSourceScroll);
+        getHtmlSource(editorElement)?.removeEventListener('blur', state.onBlur);
+        window.removeEventListener('resize', state.onWindowResize);
     }
 
     if (state) {
