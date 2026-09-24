@@ -3,6 +3,7 @@
 @use '../Styles/_Variables/_typescale.scss' as typescale;
 @use '../Styles/_Variables/_interactable.scss' as interactable;
 @use '../Styles/_Variables/_elevation.scss' as elevation;
+@use '../Styles/_Variables/_measurements.scss' as measurements;
 
 $bg-color: var(--tnt-button-bg-color);
 $fg-color: var(--tnt-button-fg-color);
@@ -174,8 +175,8 @@ $on-tint-color: var(--tnt-button-on-tint-color);
     }
 }
 
-body:has(.tnt-footer) {
+body:has(.tnt-footer, .nt-footer) {
     .tnt-fab-button-container:not(:has(.tnt-in-container)) {
-        bottom: calc(var(--tnt-footer-height) + 16px);
+        bottom: calc(#{measurements.$tnt-footer-height} + 16px);
     }
 }

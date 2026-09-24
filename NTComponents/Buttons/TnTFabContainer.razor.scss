@@ -178,9 +178,16 @@
     }
 }
 
-body:has(.tnt-footer) {
+body:has(.tnt-footer, .nt-footer) {
     .tnt-fab-container.tnt-position-bottomright,
     .tnt-fab-container.tnt-position-bottomleft {
-        bottom: calc(var(--tnt-footer-height) + 16px);
+        bottom: calc(#{measurements.$tnt-footer-height} + 16px);
+    }
+}
+
+body:has(.tnt-header, .nt-header) {
+    .tnt-fab-container.tnt-position-topright,
+    .tnt-fab-container.tnt-position-topleft {
+        top: calc(#{measurements.$tnt-header-height} + 16px);
     }
 }

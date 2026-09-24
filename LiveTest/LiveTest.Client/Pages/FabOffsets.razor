@@ -1,0 +1,33 @@
+@page "/fab-offsets"
+@rendermode InteractiveAuto
+@using NTComponents
+
+<h1>FAB offset checks</h1>
+
+<NTFabButton Icon="MaterialIcon.Add" AriaLabel="Upper right FAB" Placement="NTFabButtonPlacement.UpperRight" />
+<NTFabButton Icon="MaterialIcon.Add" AriaLabel="Upper left FAB" Placement="NTFabButtonPlacement.UpperLeft" />
+<NTFabButton Icon="MaterialIcon.Add" AriaLabel="Lower right FAB" Placement="NTFabButtonPlacement.LowerRight" />
+<NTFabButton Icon="MaterialIcon.Add" AriaLabel="Lower left FAB" Placement="NTFabButtonPlacement.LowerLeft" />
+
+<NTFabMenu Icon="MaterialIcon.Add" AriaLabel="Upper right FAB menu" Placement="NTFabButtonPlacement.UpperRight">
+    <NTFabMenuButtonItem Label="First" />
+    <NTFabMenuButtonItem Label="Second" />
+</NTFabMenu>
+<NTFabMenu Icon="MaterialIcon.Add" AriaLabel="Upper left FAB menu" Placement="NTFabButtonPlacement.UpperLeft">
+    <NTFabMenuButtonItem Label="First" />
+    <NTFabMenuButtonItem Label="Second" />
+</NTFabMenu>
+<NTFabMenu Icon="MaterialIcon.Add" AriaLabel="Lower right FAB menu" Placement="NTFabButtonPlacement.LowerRight">
+    <NTFabMenuButtonItem Label="First" />
+    <NTFabMenuButtonItem Label="Second" />
+</NTFabMenu>
+<NTFabMenu Icon="MaterialIcon.Add" AriaLabel="Lower left FAB menu" Placement="NTFabButtonPlacement.LowerLeft">
+    <NTFabMenuButtonItem Label="First" />
+    <NTFabMenuButtonItem Label="Second" />
+</NTFabMenu>
+
+<TnTFabContainer Position="Corner.TopRight"><TnTFabButton>Top right</TnTFabButton></TnTFabContainer>
+<TnTFabContainer Position="Corner.TopLeft"><TnTFabButton>Top left</TnTFabButton></TnTFabContainer>
+<TnTFabContainer Position="Corner.BottomRight"><TnTFabButton>Bottom right</TnTFabButton></TnTFabContainer>
+<TnTFabContainer Position="Corner.BottomLeft"><TnTFabButton>Bottom left</TnTFabButton></TnTFabContainer>
+<TnTFabButton>Standalone FAB</TnTFabButton>
