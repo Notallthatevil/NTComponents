@@ -69,6 +69,38 @@ public class NTLayout_IntegrationTests : IAsyncLifetime {
     }
 
     [Fact]
+    public async Task NestedLayout_Body_Uses_Only_Present_Header_And_Footer_Rows() {
+        ArgumentNullException.ThrowIfNull(_page);
+
+        await _page.SetViewportSizeAsync(1280, 900);
+        await _page.GotoAsync($"{AppBaseUrl}/nestedLayout", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await _page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var nested = _page.Locator(".nt-layout-nested");
+        await nested.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 5000 });
+        await nested.EvaluateAsync("element => { element.closest('.nt-body').style.blockSize = '360px'; element.closest('.nt-body').style.maxBlockSize = '360px'; }");
+
+        var empty = await MeasureBodyGapsAsync(nested);
+        empty[0].Should().BeApproximately(0, 1, "a nested layout without a header must start its body at the top");
+        empty[1].Should().BeApproximately(0, 1, "a nested layout without a footer must end its body at the bottom");
+
+        await nested.EvaluateAsync("element => { const header = document.createElement('header'); header.className = 'nt-header'; header.style.blockSize = '64px'; element.appendChild(header); }");
+        var withHeader = await MeasureBodyGapsAsync(nested);
+        withHeader[0].Should().BeApproximately(64, 1, "adding a header must reserve only its height above the body");
+        withHeader[1].Should().BeApproximately(0, 1);
+
+        await nested.EvaluateAsync("element => { const footer = document.createElement('footer'); footer.className = 'nt-footer'; footer.style.blockSize = '48px'; element.appendChild(footer); }");
+        var withBoth = await MeasureBodyGapsAsync(nested);
+        withBoth[0].Should().BeApproximately(64, 1);
+        withBoth[1].Should().BeApproximately(48, 1, "adding a footer must reserve only its height below the body");
+
+        await nested.EvaluateAsync("element => element.querySelector(':scope > .nt-header').remove()");
+        var withFooter = await MeasureBodyGapsAsync(nested);
+        withFooter[0].Should().BeApproximately(0, 1, "removing the header must let the body reach the top again");
+        withFooter[1].Should().BeApproximately(48, 1);
+    }
+
+    [Fact]
     public async Task NestedLayout_On_Small_Screen_Expands_Rail_Within_Its_Own_Bounds() {
         ArgumentNullException.ThrowIfNull(_page);
 
@@ -160,6 +192,18 @@ public class NTLayout_IntegrationTests : IAsyncLifetime {
             }
             """);
         triggerIsLocal.Should().BeTrue("a headerless nested shell needs a trigger anchored within its own layout");
+
+        var bodyGaps = await externalMenuButton.EvaluateAsync<double[]>(
+            """
+            button => {
+                const nested = button.closest('.nt-layout-nested');
+                const body = nested.querySelector(':scope > .nt-body');
+                return [body.getBoundingClientRect().top - button.getBoundingClientRect().bottom,
+                    nested.getBoundingClientRect().bottom - body.getBoundingClientRect().bottom];
+            }
+            """);
+        bodyGaps[0].Should().BeApproximately(0, 1, "the headerless body should start directly below its local rail trigger");
+        bodyGaps[1].Should().BeApproximately(0, 1, "the footerless body should reach the nested layout bottom");
 
         await externalMenuButton.ClickAsync();
         await _page.WaitForFunctionAsync(
@@ -277,4 +321,13 @@ public class NTLayout_IntegrationTests : IAsyncLifetime {
             """,
             railId);
     }
+
+    private static Task<double[]> MeasureBodyGapsAsync(ILocator nested) => nested.EvaluateAsync<double[]>(
+        """
+        element => {
+            const layout = element.getBoundingClientRect();
+            const body = element.querySelector(':scope > .nt-body').getBoundingClientRect();
+            return [body.top - layout.top, layout.bottom - body.bottom];
+        }
+        """);
 }

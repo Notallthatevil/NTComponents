@@ -31,7 +31,7 @@
             "rail gap body"
             "rail gap footer";
         grid-template-columns: auto layout.$nt-layout-navigation-rail-body-gap minmax(0, 1fr);
-        grid-template-rows: layout.$nt-layout-header-height layout.$nt-layout-body-height layout.$nt-layout-footer-height;
+        grid-template-rows: auto layout.$nt-layout-body-height auto;
         min-block-size: 100dvh;
     }
 
