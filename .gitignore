@@ -374,6 +374,7 @@ coverlet.runsettings
 /NTComponents/Menus/NTContextMenu.razor.js
 /.m3-scrape
 /output
+/.artifacts/
 /NTComponents/NavRail/NTNavigationRail.razor.js
 /NTComponents/Progress/NTProgress.razor.js
 /NTComponents/Progress/NTProgress.razor.js
