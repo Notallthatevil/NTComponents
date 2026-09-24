@@ -149,7 +149,7 @@ public abstract class NTDataGridColumn<TItem> : ComponentBase, IDisposable where
         }
 
         if (_registered && stateChanged) {
-            Owner?.NotifyColumnChanged(this, sortStateChanged, !_hasParameterState);
+            Owner?.NotifyColumnChanged(this, sortStateChanged);
         }
 
         _hasParameterState = true;

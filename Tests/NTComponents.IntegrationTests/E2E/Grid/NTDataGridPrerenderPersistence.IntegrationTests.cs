@@ -17,20 +17,20 @@ public class NTDataGridPrerenderPersistence_IntegrationTests : IAsyncLifetime {
         response.Should().NotBeNull();
         response!.Status.Should().Be(200);
         var html = await response.TextAsync();
-        html.Should().Contain("Fetch 2");
+        html.Should().Contain("Fetch 1");
         html.Should().NotContain("InvalidOperationException");
 
         await _fixture.Page.GetByRole(AriaRole.Button, new() { Name = "Show fetch count" }).ClickAsync();
-        await Expect(_fixture.Page.GetByLabel("Provider fetch count")).ToHaveTextAsync("2");
-        await Expect(_fixture.Page.GetByRole(AriaRole.Cell, new() { Name = "Fetch 2" })).ToBeVisibleAsync();
+        await Expect(_fixture.Page.GetByLabel("Provider fetch count")).ToHaveTextAsync("1");
+        await Expect(_fixture.Page.GetByRole(AriaRole.Cell, new() { Name = "Fetch 1" })).ToBeVisibleAsync();
     }
 
     [Fact]
     public async Task PersistenceDisabled_HydrationFetchesAgain() {
         await _fixture.Page.GotoAsync($"{_fixture.ServerAddress}/grid-prerender-persistence?id={Guid.NewGuid():N}&optOut=true");
         await _fixture.Page.GetByRole(AriaRole.Button, new() { Name = "Show fetch count" }).ClickAsync();
-        await Expect(_fixture.Page.GetByLabel("Provider fetch count")).ToHaveTextAsync("4");
-        await Expect(_fixture.Page.GetByRole(AriaRole.Cell, new() { Name = "Fetch 4" })).ToBeVisibleAsync();
+        await Expect(_fixture.Page.GetByLabel("Provider fetch count")).ToHaveTextAsync("2");
+        await Expect(_fixture.Page.GetByRole(AriaRole.Cell, new() { Name = "Fetch 2" })).ToBeVisibleAsync();
     }
 
     [Fact]
@@ -43,17 +43,17 @@ public class NTDataGridPrerenderPersistence_IntegrationTests : IAsyncLifetime {
         await Expect(_fixture.Page.GetByRole(AriaRole.Table, new() { Name = "Prerender persistence grid" })).ToHaveCountAsync(2);
 
         await _fixture.Page.GetByRole(AriaRole.Button, new() { Name = "Show fetch count" }).ClickAsync();
-        await Expect(_fixture.Page.GetByLabel("Provider fetch count")).ToHaveTextAsync("4");
+        await Expect(_fixture.Page.GetByLabel("Provider fetch count")).ToHaveTextAsync("2");
     }
 
     [Fact]
     public async Task RestoredProviderResult_ExplicitRefreshFetchesAgain() {
         await _fixture.Page.GotoAsync($"{_fixture.ServerAddress}/grid-prerender-persistence?id={Guid.NewGuid():N}");
-        await Expect(_fixture.Page.GetByRole(AriaRole.Cell, new() { Name = "Fetch 2" })).ToBeVisibleAsync();
+        await Expect(_fixture.Page.GetByRole(AriaRole.Cell, new() { Name = "Fetch 1" })).ToBeVisibleAsync();
 
         await _fixture.Page.GetByRole(AriaRole.Button, new() { Name = "Refresh grid" }).ClickAsync();
-        await Expect(_fixture.Page.GetByRole(AriaRole.Cell, new() { Name = "Fetch 3" })).ToBeVisibleAsync();
+        await Expect(_fixture.Page.GetByRole(AriaRole.Cell, new() { Name = "Fetch 2" })).ToBeVisibleAsync();
         await _fixture.Page.GetByRole(AriaRole.Button, new() { Name = "Show fetch count" }).ClickAsync();
-        await Expect(_fixture.Page.GetByLabel("Provider fetch count")).ToHaveTextAsync("3");
+        await Expect(_fixture.Page.GetByLabel("Provider fetch count")).ToHaveTextAsync("2");
     }
 }

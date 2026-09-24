@@ -81,6 +81,7 @@ public partial class NTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessedM
     private bool _hasDataStateSnapshot;
     private bool _disposed;
     private bool _refreshQueued;
+    private bool _initialColumnConfigurationComplete;
     private bool _sortsInitialized;
     private bool _hasVirtualizationItemSizeParameter;
     private bool _hasRowKeyParameter;
@@ -106,7 +107,6 @@ public partial class NTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessedM
     private bool _restoreAttempted;
     private bool _hasLoadedProviderResult;
     private PersistentComponentState? _persistentComponentState;
-    private string? _restoredProviderResultKey;
 
     /// <summary>Gets or sets detail content for a parent row. Accepts any HTML or Blazor components, including a non-paginated, non-virtualized NTDataGrid.</summary>
     [Parameter]
@@ -501,7 +501,6 @@ public partial class NTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessedM
             return false;
         }
         result = restored;
-        _restoredProviderResultKey = key;
         return true;
     }
 
@@ -583,8 +582,35 @@ public partial class NTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessedM
                 ResetVirtualizedData();
             }
         }
-        else if (_columns.Count > 0 && dataStateChanged && !_refreshQueued) {
+        else if (_initialColumnConfigurationComplete && _columns.Count > 0 && dataStateChanged && !_refreshQueued) {
             await RefreshDataAsync();
+        }
+    }
+
+    private RenderFragment ColumnBoundary => builder => {
+        builder.OpenComponent<NTDataGridColumnBoundary<TItem>>(0);
+        builder.CloseComponent();
+    };
+
+    internal async Task CompleteInitialColumnConfigurationAsync() {
+        if (_initialColumnConfigurationComplete) {
+            return;
+        }
+
+        _initialColumnConfigurationComplete = true;
+        if (_columns.Count == 0 || _disposed) {
+            return;
+        }
+
+        if (Virtualize) {
+            ResetVirtualizedData();
+        }
+        else {
+            await RefreshDataAsync();
+        }
+
+        if (!_disposed) {
+            await InvokeAsync(StateHasChanged);
         }
     }
 
@@ -597,10 +623,9 @@ public partial class NTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessedM
         _columns.Add(column);
         RebuildColumnSortLookup();
         TryAddInitialSort(column);
-        QueueRefresh();
     }
 
-    internal void NotifyColumnChanged(NTDataGridColumn<TItem> column, bool sortStateChanged, bool initialParameters) {
+    internal void NotifyColumnChanged(NTDataGridColumn<TItem> column, bool sortStateChanged) {
         if (!_columns.Contains(column)) {
             return;
         }
@@ -610,10 +635,7 @@ public partial class NTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessedM
             ResetSorts();
         }
 
-        // The registration refresh already restored this result; an initial column update only needs a render.
-        if (initialParameters && _restoredProviderResult && string.Equals(_restoredProviderResultKey,
-            GetPersistenceStateKey(ShowPagination ? CurrentPageIndex * CurrentPageSize : 0, CurrentPageSize), StringComparison.Ordinal)) {
-            StateHasChanged();
+        if (!_initialColumnConfigurationComplete) {
             return;
         }
 
@@ -625,7 +647,9 @@ public partial class NTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessedM
             ReindexColumns();
             RebuildColumnSortLookup();
             ResetSorts();
-            QueueRefresh();
+            if (_initialColumnConfigurationComplete) {
+                QueueRefresh();
+            }
         }
     }
 
@@ -704,6 +728,7 @@ public partial class NTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessedM
         try {
             previousRefreshCancellation?.Cancel();
             InitializeSorts();
+            _previousDataState = GetDataState();
             var startIndex = ShowPagination ? CurrentPageIndex * CurrentPageSize : 0;
             int? count = ShowPagination || ItemsProvider is not null ? CurrentPageSize : null;
             if (TryRestoreProviderResult(startIndex, count, out var restoredResult)) {
@@ -1260,7 +1285,7 @@ public partial class NTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessedM
     }
 
     private bool CaptureDataStateChanged() {
-        var state = string.Join("|", CurrentPageIndex, CurrentPageSize, ShowPagination, Virtualize, AllowMultiSort, GetCurrentUri(), SerializeSorts(_sorts));
+        var state = GetDataState();
         var changed = !_hasDataStateSnapshot
             || !ReferenceEquals(Items, _previousItems)
             || ItemsProvider != _previousItemsProvider
@@ -1274,6 +1299,8 @@ public partial class NTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessedM
         _previousDataState = state;
         return changed;
     }
+
+    private string GetDataState() => string.Join("|", CurrentPageIndex, CurrentPageSize, ShowPagination, Virtualize, AllowMultiSort, GetCurrentUri(), SerializeSorts(_sorts));
 
     private Task InvokeRowClickedAsync(TItem item) => HasRowClickCallback ? OnRowClicked.InvokeAsync(item) : Task.CompletedTask;
 
