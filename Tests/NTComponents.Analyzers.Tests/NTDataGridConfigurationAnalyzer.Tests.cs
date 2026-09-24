@@ -82,6 +82,121 @@ namespace NTComponents {
         Assert.Equal(NTDataGridConfigurationAnalyzer.MissingSourceDiagnosticId, diagnostic.Id);
     }
 
+    [Theory]
+    [InlineData("builder.AddComponentParameter(2, \"PersistPrerenderedItems\", true);", "NTC1076", "NTDataGrid persistence requires a non-empty PersistenceKey")]
+    [InlineData("builder.AddAttribute(2, \"PersistenceKey\", \"orders\");", "NTC1075", "NTDataGrid PersistenceKey requires PersistPrerenderedItems")]
+    public async Task Reports_WhenPersistenceConfigurationIsIncomplete(string persistenceAttribute, string diagnosticId, string message) {
+        var source = $$"""
+using Microsoft.AspNetCore.Components.Rendering;
+
+public static class GridFactory {
+    public static void Build(RenderTreeBuilder builder) {
+        builder.OpenComponent<global::NTComponents.NTDataGrid<Row>>(0);
+        builder.AddComponentParameter(1, "Items", new object());
+        {{persistenceAttribute}}
+        builder.CloseComponent();
+    }
+}
+
+public sealed class Row { }
+""" + SupportTypes;
+
+        var diagnostic = Assert.Single(await GetDiagnosticsAsync(("GridFactory.razor.g.cs", source)));
+        Assert.Equal(diagnosticId, diagnostic.Id);
+        Assert.Equal(message, diagnostic.GetMessage());
+    }
+
+    [Theory]
+    [InlineData("builder.AddComponentParameter(3, \"Caption\", \"Orders\");")]
+    [InlineData("builder.AddAttribute(3, \"id\", \"orders-grid\");")]
+    public async Task CaptionOrIdWithoutPersistenceKey_Reports(string identityAttribute) {
+        var source = $$"""
+using Microsoft.AspNetCore.Components.Rendering;
+
+public static class GridFactory {
+    public static void Build(RenderTreeBuilder builder) {
+        builder.OpenComponent<global::NTComponents.NTDataGrid<Row>>(0);
+        builder.AddComponentParameter(1, "Items", new object());
+        builder.AddComponentParameter(2, "PersistPrerenderedItems", true);
+        {{identityAttribute}}
+        builder.CloseComponent();
+    }
+}
+
+public sealed class Row { }
+""" + SupportTypes;
+
+        var diagnostic = Assert.Single(await GetDiagnosticsAsync(("GridFactory.razor.g.cs", source)));
+        Assert.Equal("NTC1076", diagnostic.Id);
+        Assert.Equal("NTDataGrid persistence requires a non-empty PersistenceKey", diagnostic.GetMessage());
+    }
+
+    [Fact]
+    public async Task BlankPersistenceKey_WithCaption_Reports() {
+        const string source = """
+using Microsoft.AspNetCore.Components.Rendering;
+
+public static class GridFactory {
+    public static void Build(RenderTreeBuilder builder) {
+        builder.OpenComponent<global::NTComponents.NTDataGrid<Row>>(0);
+        builder.AddComponentParameter(1, "Items", new object());
+        builder.AddComponentParameter(2, "PersistPrerenderedItems", true);
+        builder.AddComponentParameter(3, "PersistenceKey", " ");
+        builder.AddComponentParameter(4, "Caption", "Orders");
+        builder.CloseComponent();
+    }
+}
+
+public sealed class Row { }
+""" + SupportTypes;
+
+        var diagnostic = Assert.Single(await GetDiagnosticsAsync(("GridFactory.razor.g.cs", source)));
+        Assert.Equal("NTC1076", diagnostic.Id);
+    }
+
+    [Fact]
+    public async Task DisabledPersistenceWithoutKey_DoesNotReport() {
+        var source = """
+using Microsoft.AspNetCore.Components.Rendering;
+
+public static class GridFactory {
+    public static void Build(RenderTreeBuilder builder) {
+        builder.OpenComponent<global::NTComponents.NTDataGrid<Row>>(0);
+        builder.AddComponentParameter(1, "Items", new object());
+        builder.AddComponentParameter(2, "PersistPrerenderedItems", false);
+        builder.CloseComponent();
+    }
+}
+
+public sealed class Row { }
+""" + SupportTypes;
+
+        Assert.Empty(await GetDiagnosticsAsync(("GridFactory.razor.g.cs", source)));
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task BothPersistenceParametersSupplied_DoesNotReport(bool persistPrerenderedItems) {
+        var source = $$"""
+using Microsoft.AspNetCore.Components.Rendering;
+
+public static class GridFactory {
+    public static void Build(RenderTreeBuilder builder) {
+        builder.OpenComponent<global::NTComponents.NTDataGrid<Row>>(0);
+        builder.AddComponentParameter(1, "Items", new object());
+        builder.AddComponentParameter(2, "PersistPrerenderedItems", {{persistPrerenderedItems.ToString().ToLowerInvariant()}});
+        builder.AddComponentParameter(3, "PersistenceKey", "orders");
+        builder.CloseComponent();
+    }
+}
+
+public sealed class Row { }
+""" + SupportTypes;
+
+        Assert.Empty(await GetDiagnosticsAsync(("GridFactory.razor.g.cs", source)));
+    }
+
     [Fact]
     public async Task DoesNotReport_For_One_Source_And_NonVirtualizedPagination() {
         const string source = """

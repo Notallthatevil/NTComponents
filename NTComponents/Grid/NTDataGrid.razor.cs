@@ -84,6 +84,8 @@ public partial class NTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessedM
     private bool _sortsInitialized;
     private bool _hasVirtualizationItemSizeParameter;
     private bool _hasRowKeyParameter;
+    private bool _hasPersistPrerenderedItemsParameter;
+    private bool _hasPersistenceKeyParameter;
     private SortPlan? _sortPlan;
     private int _currentPageIndex;
     private int _currentPageSize;
@@ -104,6 +106,7 @@ public partial class NTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessedM
     private bool _restoreAttempted;
     private bool _hasLoadedProviderResult;
     private PersistentComponentState? _persistentComponentState;
+    private string? _restoredProviderResultKey;
 
     /// <summary>Gets or sets detail content for a parent row. Accepts any HTML or Blazor components, including a non-paginated, non-virtualized NTDataGrid.</summary>
     [Parameter]
@@ -174,11 +177,11 @@ public partial class NTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessedM
     [Parameter]
     public NTDataGridItemsProvider<TItem>? ItemsProvider { get; set; }
 
-    /// <summary>Gets or sets whether the initial non-virtualized provider page is transferred from prerender to hydration.</summary>
+    /// <summary>Gets or sets whether the initial non-virtualized provider page is transferred from prerender to hydration. Requires a non-empty PersistenceKey when enabled.</summary>
     [Parameter]
     public bool PersistPrerenderedItems { get; set; }
 
-    /// <summary>Gets or sets a stable, page-unique key for prerendered provider results. Include external filters or data versions in this value.</summary>
+    /// <summary>Gets or sets a stable, page-unique key for prerendered provider results. Required when PersistPrerenderedItems is enabled. Include external filters or data versions in this value.</summary>
     [Parameter]
     public string? PersistenceKey { get; set; }
 
@@ -480,9 +483,9 @@ public partial class NTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessedM
         _navManager.LocationChanged += OnLocationChanged;
         if (PersistPrerenderedItems && !Virtualize && ItemsProvider is not null && !string.IsNullOrWhiteSpace(PersistenceKey)
             && _services.GetService<PersistentComponentState>() is { } state) {
-            _persistenceSubscription = state.RegisterOnPersisting(() => PersistProviderResultAsync(state));
-            _persistenceRegistration = true;
             _persistentComponentState = state;
+            _persistenceSubscription = state.RegisterOnPersisting(PersistProviderResultAsync);
+            _persistenceRegistration = true;
         }
     }
 
@@ -493,16 +496,18 @@ public partial class NTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessedM
             return false;
         }
         _restoreAttempted = true;
-        if (_persistentComponentState?.TryTakeFromJson<PersistedProviderResult<TItem>>(GetPersistenceStateKey(startIndex, count), out var restored) != true || restored is null) {
+        var key = GetPersistenceStateKey(startIndex, count);
+        if (_persistentComponentState?.TryTakeFromJson<PersistedProviderResult<TItem>>(key, out var restored) != true || restored is null) {
             return false;
         }
         result = restored;
+        _restoredProviderResultKey = key;
         return true;
     }
 
     [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "PersistentComponentState serializes caller-owned grid items; trimmed applications must preserve serializable TItem members.")]
-    private Task PersistProviderResultAsync(PersistentComponentState state) {
-        if (PersistPrerenderedItems && !Virtualize && ItemsProvider is not null && !string.IsNullOrWhiteSpace(PersistenceKey)
+    private Task PersistProviderResultAsync() {
+        if (_persistentComponentState is { } state && PersistPrerenderedItems && !Virtualize && ItemsProvider is not null && !string.IsNullOrWhiteSpace(PersistenceKey)
             && _hasLoadedProviderResult && !_restoredProviderResult) {
             var startIndex = ShowPagination ? CurrentPageIndex * CurrentPageSize : 0;
             int? count = ShowPagination || ItemsProvider is not null ? CurrentPageSize : null;
@@ -548,6 +553,8 @@ public partial class NTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessedM
     public override Task SetParametersAsync(ParameterView parameters) {
         _hasVirtualizationItemSizeParameter |= parameters.TryGetValue<float>(nameof(VirtualizationItemSize), out _);
         _hasRowKeyParameter |= parameters.TryGetValue<Func<TItem, object>?>(nameof(RowKey), out _);
+        _hasPersistPrerenderedItemsParameter |= parameters.TryGetValue<bool>(nameof(PersistPrerenderedItems), out _);
+        _hasPersistenceKeyParameter |= parameters.TryGetValue<string?>(nameof(PersistenceKey), out _);
         return base.SetParametersAsync(parameters);
     }
 
@@ -593,7 +600,7 @@ public partial class NTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessedM
         QueueRefresh();
     }
 
-    internal void NotifyColumnChanged(NTDataGridColumn<TItem> column, bool sortStateChanged) {
+    internal void NotifyColumnChanged(NTDataGridColumn<TItem> column, bool sortStateChanged, bool initialParameters) {
         if (!_columns.Contains(column)) {
             return;
         }
@@ -601,6 +608,13 @@ public partial class NTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessedM
         if (sortStateChanged) {
             RebuildColumnSortLookup();
             ResetSorts();
+        }
+
+        // The registration refresh already restored this result; an initial column update only needs a render.
+        if (initialParameters && _restoredProviderResult && string.Equals(_restoredProviderResultKey,
+            GetPersistenceStateKey(ShowPagination ? CurrentPageIndex * CurrentPageSize : 0, CurrentPageSize), StringComparison.Ordinal)) {
+            StateHasChanged();
+            return;
         }
 
         QueueRefresh();
@@ -659,6 +673,14 @@ public partial class NTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessedM
     }
 
     private void ValidateConfiguration() {
+        if (_hasPersistenceKeyParameter && !_hasPersistPrerenderedItemsParameter) {
+            throw new InvalidOperationException($"{nameof(NTDataGrid<TItem>)} {nameof(PersistenceKey)} requires {nameof(PersistPrerenderedItems)}.");
+        }
+
+        if (PersistPrerenderedItems && string.IsNullOrWhiteSpace(PersistenceKey)) {
+            throw new InvalidOperationException($"{nameof(NTDataGrid<TItem>)} persistence requires a non-empty {nameof(PersistenceKey)}.");
+        }
+
         if (Items is not null && ItemsProvider is not null) {
             throw new InvalidOperationException($"{nameof(NTDataGrid<TItem>)} requires either {nameof(Items)} or {nameof(ItemsProvider)}, not both.");
         }

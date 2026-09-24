@@ -17,6 +17,8 @@ public sealed class NTDataGridConfigurationAnalyzer : DiagnosticAnalyzer {
     public const string MissingSourceDiagnosticId = "NTC1066";
     public const string VirtualizedPaginationDiagnosticId = "NTC1067";
     public const string ComputedPropertySortDiagnosticId = "NTC1068";
+    public const string PersistencePairDiagnosticId = "NTC1075";
+    public const string PersistenceIdentityDiagnosticId = "NTC1076";
 
     private static readonly DiagnosticDescriptor DuplicateSourceRule = new(
         DuplicateSourceDiagnosticId,
@@ -50,12 +52,30 @@ public sealed class NTDataGridConfigurationAnalyzer : DiagnosticAnalyzer {
         DiagnosticSeverity.Warning,
         isEnabledByDefault: true);
 
+    private static readonly DiagnosticDescriptor PersistencePairRule = new(
+        PersistencePairDiagnosticId,
+        "NTDataGrid PersistenceKey requires persistence to be enabled",
+        "NTDataGrid PersistenceKey requires PersistPrerenderedItems",
+        "Usage",
+        DiagnosticSeverity.Warning,
+        isEnabledByDefault: true);
+
+    private static readonly DiagnosticDescriptor PersistenceIdentityRule = new(
+        PersistenceIdentityDiagnosticId,
+        "NTDataGrid persistence requires a key",
+        "NTDataGrid persistence requires a non-empty PersistenceKey",
+        "Usage",
+        DiagnosticSeverity.Warning,
+        isEnabledByDefault: true);
+
     /// <inheritdoc />
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => [
         DuplicateSourceRule,
         MissingSourceRule,
         VirtualizedPaginationRule,
-        ComputedPropertySortRule
+        ComputedPropertySortRule,
+        PersistencePairRule,
+        PersistenceIdentityRule
     ];
 
     /// <inheritdoc />
@@ -141,6 +161,16 @@ public sealed class NTDataGridConfigurationAnalyzer : DiagnosticAnalyzer {
             && TryGetBooleanConstant(frame, "ShowPagination", out var showPagination)
             && showPagination) {
             context.ReportDiagnostic(Diagnostic.Create(VirtualizedPaginationRule, GetAttributeOrComponentLocation(frame, "ShowPagination")));
+        }
+
+        var hasPersistenceOption = frame.Attributes.ContainsKey("PersistPrerenderedItems");
+        if (frame.Attributes.ContainsKey("PersistenceKey") && !hasPersistenceOption) {
+            context.ReportDiagnostic(Diagnostic.Create(PersistencePairRule, GetAttributeOrComponentLocation(frame, "PersistenceKey")));
+        }
+        if (hasPersistenceOption
+            && !(TryGetBooleanConstant(frame, "PersistPrerenderedItems", out var enabled) && !enabled)
+            && !HasSuppliedNonBlankAttribute(frame, "PersistenceKey")) {
+            context.ReportDiagnostic(Diagnostic.Create(PersistenceIdentityRule, GetAttributeOrComponentLocation(frame, "PersistPrerenderedItems")));
         }
     }
 
@@ -235,6 +265,17 @@ public sealed class NTDataGridConfigurationAnalyzer : DiagnosticAnalyzer {
 
     private static bool HasSuppliedNonNullAttribute(ComponentFrame frame, string attributeName) =>
         frame.Attributes.TryGetValue(attributeName, out var attribute) && !IsNullConstant(attribute.Operation);
+
+    private static bool HasSuppliedNonBlankAttribute(ComponentFrame frame, string attributeName) {
+        if (!frame.Attributes.TryGetValue(attributeName, out var attribute) || IsNullConstant(attribute.Operation)) {
+            return false;
+        }
+
+        var operation = UnwrapOperation(attribute.Operation);
+        return operation?.ConstantValue.HasValue != true
+            || operation.ConstantValue.Value is not string value
+            || !string.IsNullOrWhiteSpace(value);
+    }
 
     private static bool TryGetBooleanConstant(ComponentFrame frame, string attributeName, out bool value) {
         value = false;

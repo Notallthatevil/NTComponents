@@ -1642,6 +1642,68 @@ public class NTDataGrid_Tests : BunitContext {
         act.Should().Throw<InvalidOperationException>().WithMessage("*Virtualize*ShowPagination*");
     }
 
+    [Fact]
+    public void PersistPrerenderedItemsWithoutKey_Throws() {
+        var act = () => Render<NTDataGrid<TestGridItem>>(parameters => parameters
+            .Add(grid => grid.Items, _items)
+            .Add(grid => grid.PersistPrerenderedItems, true)
+            .Add(grid => grid.ChildContent, DefaultColumns));
+
+        act.Should().Throw<InvalidOperationException>().WithMessage("*PersistenceKey*");
+    }
+
+    [Fact]
+    public void PersistenceKeyWithoutPersistPrerenderedItems_Throws() {
+        var act = () => RenderGrid(parameters => parameters.Add(grid => grid.PersistenceKey, "orders"));
+
+        act.Should().Throw<InvalidOperationException>().WithMessage("*PersistenceKey*PersistPrerenderedItems*");
+    }
+
+    [Fact]
+    public void PersistenceEnabledWithCaptionWithoutKey_Throws() {
+        var act = () => RenderGrid(parameters => parameters.Add(grid => grid.PersistPrerenderedItems, true));
+
+        act.Should().Throw<InvalidOperationException>().WithMessage("*PersistenceKey*");
+    }
+
+    [Fact]
+    public void PersistenceEnabledWithIdWithoutKey_Throws() {
+        var act = () => Render<NTDataGrid<TestGridItem>>(parameters => parameters
+            .Add(grid => grid.Items, _items)
+            .Add(grid => grid.PersistPrerenderedItems, true)
+            .Add(grid => grid.AdditionalAttributes, new Dictionary<string, object> { ["id"] = "orders-grid" })
+            .Add(grid => grid.ChildContent, DefaultColumns));
+
+        act.Should().Throw<InvalidOperationException>().WithMessage("*PersistenceKey*");
+    }
+
+    [Fact]
+    public void PersistenceEnabledWithBlankKey_Throws() {
+        var act = () => RenderGrid(parameters => parameters
+            .Add(grid => grid.PersistPrerenderedItems, true)
+            .Add(grid => grid.PersistenceKey, " "));
+
+        act.Should().Throw<InvalidOperationException>().WithMessage("*PersistenceKey*");
+    }
+
+    [Fact]
+    public void PersistenceDisabledWithoutKey_Renders() {
+        var cut = RenderGrid(parameters => parameters.Add(grid => grid.PersistPrerenderedItems, false));
+
+        cut.Find("table").Should().NotBeNull();
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void BothPersistenceParametersSupplied_Renders(bool persistPrerenderedItems) {
+        var cut = RenderGrid(parameters => parameters
+            .Add(grid => grid.PersistPrerenderedItems, persistPrerenderedItems)
+            .Add(grid => grid.PersistenceKey, "orders"));
+
+        cut.Find("table").Should().NotBeNull();
+    }
+
     private IRenderedComponent<NTDataGrid<TestGridItem>> RenderGrid(RenderFragment? columns = null) => RenderGrid(null, columns);
 
     private IRenderedComponent<NTDataGrid<TestGridItem>> RenderGrid(Action<ComponentParameterCollectionBuilder<NTDataGrid<TestGridItem>>>? configure, RenderFragment? columns = null) =>

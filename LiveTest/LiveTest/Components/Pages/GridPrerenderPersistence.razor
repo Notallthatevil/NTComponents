@@ -1,0 +1,42 @@
+@page "/grid-prerender-persistence"
+@using System.Collections.Concurrent
+@using NTComponents
+@rendermode InteractiveServer
+
+<NTDataGrid TItem="string" @ref="_grid" ItemsProvider="GetItemsAsync" PersistPrerenderedItems="@(!OptOut)" PersistenceKey="@Id" Caption="Prerender persistence grid">
+    <NTTemplateColumn TItem="string" Title="Result">@context</NTTemplateColumn>
+</NTDataGrid>
+
+@if (Two) {
+    <NTDataGrid TItem="string" ItemsProvider="GetItemsAsync" PersistPrerenderedItems="true" PersistenceKey="@($"{Id}:second")" Caption="Prerender persistence grid">
+        <NTTemplateColumn TItem="string" Title="Result">@context</NTTemplateColumn>
+    </NTDataGrid>
+}
+
+<button type="button" @onclick="ShowFetchCount">Show fetch count</button>
+<button type="button" @onclick="RefreshAsync">Refresh grid</button>
+<output aria-label="Provider fetch count">@_displayedFetchCount</output>
+
+@code {
+    private static readonly ConcurrentDictionary<string, int> _fetchCounts = new();
+    private NTDataGrid<string>? _grid;
+    private int _displayedFetchCount;
+
+    [SupplyParameterFromQuery]
+    public string Id { get; set; } = "grid-prerender-persistence";
+
+    [SupplyParameterFromQuery]
+    public bool OptOut { get; set; }
+
+    [SupplyParameterFromQuery]
+    public bool Two { get; set; }
+
+    private ValueTask<NTItemsProviderResult<string>> GetItemsAsync(NTDataGridItemsProviderRequest<string> request) {
+        var count = _fetchCounts.AddOrUpdate(Id, 1, (_, previous) => previous + 1);
+        return ValueTask.FromResult(new NTItemsProviderResult<string>([$"Fetch {count}"], 1));
+    }
+
+    private void ShowFetchCount() => _displayedFetchCount = _fetchCounts[Id];
+
+    private Task RefreshAsync() => _grid?.RefreshDataGridAsync() ?? Task.CompletedTask;
+}

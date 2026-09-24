@@ -77,3 +77,5 @@ NTC1071 | Usage | Warning | Full-screen NTCarousel requires snapping.
 NTC1072 | Usage | Warning | NTCarouselItem AriaLabel cannot be empty because it provides the slide accessible name.
 NTC1073 | Usage | Warning | NTCarouselItem AspectRatio must be finite and remain within the Material 3 range.
 NTC1074 | Usage | Warning | NTCarousel Appearance must be a defined CarouselAppearance value.
+NTC1075 | Usage | Warning | NTDataGrid PersistenceKey requires PersistPrerenderedItems.
+NTC1076 | Usage | Warning | NTDataGrid persistence requires a non-empty PersistenceKey.
