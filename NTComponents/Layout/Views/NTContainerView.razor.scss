@@ -37,14 +37,53 @@
 
     .nt-container-view-quick-nav-title {
         @include typescale.nt-label-small;
+        display: none;
         letter-spacing: 0;
         margin-block-end: 10px;
         color: var(--nt-container-view-on-this-page-label-color, #{colors.$tnt-color-on-surface-variant});
         font-weight: 600;
 
-        &:has(+ .nt-container-view-quick-nav-heading) {
+        &:has(~ .nt-container-view-quick-nav-heading) {
             margin-block-end: 2px;
         }
+    }
+
+    .nt-container-view-quick-nav-toggle {
+        @include typescale.nt-label-large;
+        align-items: center;
+        background: transparent;
+        border: 0;
+        color: var(--nt-container-view-on-this-page-label-color, #{colors.$tnt-color-on-surface-variant});
+        cursor: pointer;
+        display: flex;
+        inline-size: 100%;
+        justify-content: space-between;
+        min-block-size: 44px;
+        padding: 0;
+        text-align: start;
+
+        &:focus-visible {
+            outline: 2px solid colors.$tnt-color-primary;
+            outline-offset: 2px;
+        }
+
+        &[aria-expanded="false"] ~ .nt-container-view-quick-nav-heading,
+        &[aria-expanded="false"] ~ .nt-container-view-quick-nav-list {
+            display: none;
+        }
+
+        &[aria-expanded="true"] .nt-container-view-quick-nav-chevron {
+            transform: rotate(225deg);
+        }
+    }
+
+    .nt-container-view-quick-nav-chevron {
+        block-size: 8px;
+        border-block-end: 2px solid currentColor;
+        border-inline-end: 2px solid currentColor;
+        inline-size: 8px;
+        margin-inline: 4px;
+        transform: rotate(45deg);
     }
 
     .nt-container-view-quick-nav-heading {
@@ -67,6 +106,7 @@
         position: relative;
 
         &::before {
+            display: none;
             position: absolute;
             z-index: 0;
             inset-block-start: 0;
@@ -162,6 +202,26 @@
     }
 
     @container (min-width: #{screen-width.$medium}) {
+        .nt-container-view-quick-nav-title {
+            display: block;
+        }
+
+        .nt-container-view-quick-nav-toggle {
+            display: none;
+
+            &[aria-expanded="false"] ~ .nt-container-view-quick-nav-heading {
+                display: block;
+            }
+
+            &[aria-expanded="false"] ~ .nt-container-view-quick-nav-list {
+                display: grid;
+            }
+        }
+
+        .nt-container-view-quick-nav-list::before {
+            display: block;
+        }
+
         .nt-container-view-quick-nav {
             inset-block-start: calc(var(--tnt-header-height, 0px) + #{view.$gap});
             inline-size: min(220px, 30%);

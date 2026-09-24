@@ -1,4 +1,5 @@
 using Microsoft.Playwright;
+using static Microsoft.Playwright.Assertions;
 
 namespace NTComponents.IntegrationTests.Layout;
 
@@ -96,6 +97,88 @@ public class NTContainerView_IntegrationTests : IAsyncLifetime {
 
         stickyOffsetClearsHeader.Should().BeTrue(
             "the sticky quick navigation must honor the fixed-header height plus its 16px layout gap");
+    }
+
+    [Fact]
+    public async Task Views_Mobile_QuickNav_Toggles_Without_Active_Outline_And_Desktop_Remains_Visible() {
+        ArgumentNullException.ThrowIfNull(_page);
+
+        await _page.SetViewportSizeAsync(390, 844);
+        await NavigateToViewsAsync();
+
+        var nav = _page.Locator(".nt-container-view-with-quick-nav .nt-container-view-quick-nav");
+        var toggle = nav.GetByRole(AriaRole.Button, new() { Name = "On this page" });
+        var heading = nav.Locator(".nt-container-view-quick-nav-heading");
+        var list = nav.Locator(".nt-container-view-quick-nav-list");
+
+        await Expect(toggle).ToBeVisibleAsync();
+        await Expect(toggle).ToHaveAttributeAsync("aria-expanded", "false");
+        await Expect(heading).ToBeHiddenAsync();
+        await Expect(list).ToBeHiddenAsync();
+
+        await toggle.ClickAsync();
+        await Expect(toggle).ToHaveAttributeAsync("aria-expanded", "true");
+        await Expect(heading).ToBeVisibleAsync();
+        await Expect(list).ToBeVisibleAsync();
+        (await list.EvaluateAsync<string>("element => getComputedStyle(element, '::before').display")).Should().Be("none");
+
+        await nav.GetByRole(AriaRole.Link).First.ClickAsync();
+        await Expect(toggle).ToHaveAttributeAsync("aria-expanded", "false");
+        await Expect(list).ToBeHiddenAsync();
+
+        await _page.SetViewportSizeAsync(1280, 900);
+        await Expect(toggle).ToBeHiddenAsync();
+        await Expect(heading).ToBeVisibleAsync();
+        await Expect(list).ToBeVisibleAsync();
+    }
+
+    [Fact]
+    public async Task Views_Mobile_QuickNav_KeyboardTogglesWithVisibleFocus() {
+        ArgumentNullException.ThrowIfNull(_page);
+
+        await _page.SetViewportSizeAsync(390, 844);
+        await NavigateToViewsAsync();
+
+        var nav = _page.Locator(".nt-container-view-with-quick-nav .nt-container-view-quick-nav");
+        var toggle = nav.GetByRole(AriaRole.Button, new() { Name = "On this page" });
+        var list = nav.Locator(".nt-container-view-quick-nav-list");
+
+        await toggle.FocusAsync();
+        await _page.Keyboard.PressAsync("Shift+Tab");
+        await _page.Keyboard.PressAsync("Tab");
+        await Expect(toggle).ToBeFocusedAsync();
+        var outline = await toggle.EvaluateAsync<double[]>(
+            "element => [Number.parseFloat(getComputedStyle(element).outlineWidth), getComputedStyle(element).outlineStyle === 'solid' ? 1 : 0]");
+        outline[0].Should().BeGreaterThanOrEqualTo(2);
+        outline[1].Should().Be(1);
+        (await toggle.EvaluateAsync<string>("element => getComputedStyle(element).outlineColor")).Should().NotBe("rgba(0, 0, 0, 0)");
+
+        await _page.Keyboard.PressAsync("Enter");
+        await Expect(toggle).ToHaveAttributeAsync("aria-expanded", "true");
+        await Expect(list).ToBeVisibleAsync();
+
+        await _page.Keyboard.PressAsync("Space");
+        await Expect(toggle).ToHaveAttributeAsync("aria-expanded", "false");
+        await Expect(list).ToBeHiddenAsync();
+    }
+
+    [Fact]
+    public async Task Views_QuickNav_Uses_Heading_Label_And_Exclusion_Attributes() {
+        ArgumentNullException.ThrowIfNull(_page);
+
+        await _page.SetViewportSizeAsync(1280, 900);
+        await NavigateToViewsAsync();
+
+        var nav = _page.Locator(".nt-container-view-with-quick-nav .nt-container-view-quick-nav");
+        var heading = _page.GetByRole(AriaRole.Heading, new() { Name = "Planning summary" });
+        var link = nav.GetByRole(AriaRole.Link, new() { Name = "Plan" });
+
+        await Expect(link).ToBeVisibleAsync();
+        (await link.GetAttributeAsync("href")).Should().Be($"#{await heading.GetAttributeAsync("id")}");
+        await Expect(nav.GetByRole(AriaRole.Link, new() { Name = "Release criteria" })).ToHaveCountAsync(0);
+
+        await heading.EvaluateAsync("element => element.setAttribute('data-nt-nav-label', 'Updated plan')");
+        await Expect(nav.GetByRole(AriaRole.Link, new() { Name = "Updated plan" })).ToBeVisibleAsync();
     }
 
     private async Task NavigateToViewsAsync() {

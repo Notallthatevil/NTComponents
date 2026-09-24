@@ -6,6 +6,10 @@
         @if (EnableOnThisPageNavigation) {
             <nav class="nt-container-view-quick-nav" aria-label="@OnThisPageNavigationAriaLabel" data-nt-container-view-quick-nav hidden>
                 <div class="nt-container-view-quick-nav-title">@OnThisPageLabel</div>
+                <button class="nt-container-view-quick-nav-toggle" type="button" aria-expanded="false" data-nt-container-view-quick-nav-toggle>
+                    <span>@OnThisPageLabel</span>
+                    <span class="nt-container-view-quick-nav-chevron" aria-hidden="true"></span>
+                </button>
                 @if (HasOnThisPageTitle) {
                     <div class="nt-container-view-quick-nav-heading">@OnThisPageTitle</div>
                 }

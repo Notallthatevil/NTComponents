@@ -25,8 +25,11 @@ interface NTContainerViewRegistration {
 const containerViewSelector = '[data-nt-container-view]';
 const viewSelector = '[data-nt-container-view][data-nt-container-view-quick-nav-enabled="true"]';
 const quickNavSelector = '[data-nt-container-view-quick-nav]';
+const quickNavToggleSelector = '[data-nt-container-view-quick-nav-toggle]';
 const quickNavListSelector = '[data-nt-container-view-quick-nav-list]';
 const headingSelector = 'h1, h2, h3, h4, h5, h6';
+const navLabelAttribute = 'data-nt-nav-label';
+const navExcludeAttribute = 'data-nt-nav-exclude';
 const withQuickNavClass = 'nt-container-view-with-quick-nav';
 const activeLinkClass = 'nt-container-view-quick-nav-link-active';
 const registeredViews = new Map<HTMLElement, NTContainerViewRegistration>();
@@ -159,6 +162,7 @@ function getHeadings(view: HTMLElement, quickNav: HTMLElement): HTMLElement[] {
     return Array.from(view.querySelectorAll<HTMLElement>(headingSelector))
         .filter(heading => !quickNav.contains(heading))
         .filter(heading => heading.closest(containerViewSelector) === view)
+        .filter(heading => !heading.hasAttribute(navExcludeAttribute) || heading.getAttribute(navExcludeAttribute)?.trim().toLowerCase() === 'false')
         .filter(heading => getHeadingText(heading).length > 0);
 }
 
@@ -166,7 +170,7 @@ function getHeadingEntries(view: HTMLElement, quickNav: HTMLElement): HeadingEnt
     return getHeadings(view, quickNav).map((heading, index) => ({
         heading,
         id: ensureHeadingId(view, heading, index),
-        text: getHeadingText(heading)
+        text: heading.getAttribute(navLabelAttribute)?.replace(/\s+/g, ' ').trim() || getHeadingText(heading)
     }));
 }
 
@@ -337,6 +341,13 @@ function handleQuickNavClick(view: HTMLElement, event: MouseEvent): void {
     }
 
     const target = event.target instanceof Element ? event.target : null;
+    const toggle = target?.closest<HTMLButtonElement>(quickNavToggleSelector);
+
+    if (toggle && toggle.closest(containerViewSelector) === view) {
+        toggle.setAttribute('aria-expanded', String(toggle.getAttribute('aria-expanded') !== 'true'));
+        return;
+    }
+
     const link = target?.closest<HTMLAnchorElement>(`${quickNavSelector} a[href^="#"]`);
 
     if (!(link instanceof HTMLAnchorElement)) {
@@ -355,6 +366,7 @@ function handleQuickNavClick(view: HTMLElement, event: MouseEvent): void {
     event.preventDefault();
     history.pushState(null, '', `#${encodeURIComponent(headingId)}`);
     setActiveHeading(view, headingEntry ?? heading);
+    view.querySelector(quickNavToggleSelector)?.setAttribute('aria-expanded', 'false');
     scrollToHeading(heading, registration?.scrollContainer ?? getScrollContainer(view));
 }
 
@@ -418,7 +430,7 @@ function observeView(view: HTMLElement): void {
 
     registration.observer.observe(view, {
         attributes: true,
-        attributeFilter: ['id'],
+        attributeFilter: ['id', navLabelAttribute, navExcludeAttribute],
         characterData: true,
         childList: true,
         subtree: true

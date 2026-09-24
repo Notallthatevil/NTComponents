@@ -14,6 +14,13 @@ namespace NTComponents;
 /// compositions that need comfortable reading width. Keep shape, color, elevation, and surface styling on the content
 /// inside the container. </para> <para> Do not use this view to create cards, panels, or visual surfaces. It controls
 /// only horizontal placement and width.</para>
+/// <para>The "On this page" navigation finds headings (<c>h1</c> through <c>h6</c>) in the container. Set
+/// <c>data-nt-nav-label</c> on a heading to change its navigation link text, or <c>data-nt-nav-exclude</c> to omit
+/// its link. A value of <c>false</c> includes the heading when the exclusion attribute is bound conditionally.</para>
+/// <code>
+/// &lt;h2 data-nt-nav-label="Summary"&gt;Overview and scope&lt;/h2&gt;
+/// &lt;h2 data-nt-nav-exclude&gt;Internal details&lt;/h2&gt;
+/// </code>
 /// </remarks>
 [NTDocumentation(
     RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
@@ -33,6 +40,7 @@ public partial class NTContainerView {
     /// <summary>
     ///     Whether the container should render and hydrate the generated "On this page" navigation.
     /// </summary>
+    /// <remarks>Headings can set <c>data-nt-nav-label</c> to override their link text or <c>data-nt-nav-exclude</c> to omit the link.</remarks>
     [Parameter]
     public bool EnableOnThisPageNavigation { get; set; } = true;
 

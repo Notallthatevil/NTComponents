@@ -202,6 +202,20 @@ public class NTCanonicalView_Tests : BunitContext {
     }
 
     [Fact]
+    public void Container_Renders_Collapsed_OnThisPage_Toggle_With_Custom_Label() {
+        var cut = Render<NTContainerView>(p => p
+            .Add(c => c.OnThisPageLabel, "Page contents")
+            .AddChildContent("<h2>Heading</h2>"));
+
+        var toggle = cut.Find(".nt-container-view-quick-nav-toggle");
+
+        toggle.TagName.Should().Be("BUTTON");
+        toggle.GetAttribute("type").Should().Be("button");
+        toggle.GetAttribute("aria-expanded").Should().Be("false");
+        toggle.TextContent.Should().Contain("Page contents");
+    }
+
+    [Fact]
     public void Container_Renders_PageScript_Inside_View_For_Static_Enhancement() {
         var cut = Render<NTContainerView>(p => p
             .AddChildContent("<h2>Heading</h2><p>Content</p>"));

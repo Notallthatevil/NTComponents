@@ -27,6 +27,9 @@ function setContainerMarkup(content, { wrapInScrollContainer = false } = {}) {
     <div class="nt-container-view" id="docs" data-nt-container-view data-nt-container-view-quick-nav-enabled="true">
       <nav class="nt-container-view-quick-nav" aria-label="On this page" data-nt-container-view-quick-nav hidden>
         <div class="nt-container-view-quick-nav-title">On this page</div>
+        <button class="nt-container-view-quick-nav-toggle" type="button" aria-expanded="false" data-nt-container-view-quick-nav-toggle>
+          <span>On this page</span><span class="nt-container-view-quick-nav-chevron" aria-hidden="true"></span>
+        </button>
         <ol class="nt-container-view-quick-nav-list" data-nt-container-view-quick-nav-list></ol>
       </nav>
       ${content}
@@ -75,6 +78,42 @@ describe('NTContainerView quick navigation runtime', () => {
     expect(links.map(link => link.textContent)).toEqual(['Intro', 'Details Now', 'Details Now']);
     expect(links.map(link => link.getAttribute('href'))).toEqual(['#intro', '#docs-details-now', '#docs-details-now-2']);
     expect(links[0].getAttribute('aria-current')).toBe('location');
+  });
+
+  test('uses custom link labels and excludes marked headings', () => {
+    const view = setContainerMarkup(`
+      <h1 data-nt-nav-label="  Page summary  ">Introduction</h1>
+      <h2 id="private" data-nt-nav-exclude>Internal details</h2>
+      <h2 id="public" data-nt-nav-exclude="false">Public details</h2>
+      <h2 id="final" data-nt-nav-label="   ">Final notes</h2>`);
+
+    onLoad(view);
+
+    const links = Array.from(view.querySelectorAll('.nt-container-view-quick-nav-list a'));
+    expect(links.map(link => link.textContent)).toEqual(['Page summary', 'Public details', 'Final notes']);
+    expect(links.map(link => link.getAttribute('href'))).toEqual(['#docs-introduction', '#public', '#final']);
+  });
+
+  test('updates links when heading navigation attributes change', async () => {
+    const view = setContainerMarkup('<h2 id="details">Details</h2>');
+    const heading = view.querySelector('#details');
+    const nav = view.querySelector('[data-nt-container-view-quick-nav]');
+
+    onLoad(view);
+
+    heading.setAttribute('data-nt-nav-label', 'Summary');
+    await new Promise(resolve => queueMicrotask(resolve));
+    expect(view.querySelector('.nt-container-view-quick-nav-list a').textContent).toBe('Summary');
+
+    heading.setAttribute('data-nt-nav-exclude', 'true');
+    await new Promise(resolve => queueMicrotask(resolve));
+    expect(nav.hidden).toBe(true);
+    expect(view.querySelectorAll('.nt-container-view-quick-nav-list a')).toHaveLength(0);
+
+    heading.removeAttribute('data-nt-nav-exclude');
+    await new Promise(resolve => queueMicrotask(resolve));
+    expect(nav.hidden).toBe(false);
+    expect(view.querySelector('.nt-container-view-quick-nav-list a').textContent).toBe('Summary');
   });
 
   test('enhances quick nav when static page script is rendered inside the container', () => {
@@ -184,6 +223,24 @@ describe('NTContainerView quick navigation runtime', () => {
     expect(pushState).toHaveBeenCalledWith(null, '', '#availability');
     expect(links[1].getAttribute('aria-current')).toBe('location');
     expect(links[1].classList.contains('nt-container-view-quick-nav-link-active')).toBe(true);
+  });
+
+  test('toggles mobile quick nav and closes it after selecting a heading', () => {
+    const view = setContainerMarkup('<h1 id="intro">Intro</h1><h2 id="details">Details</h2>');
+
+    onLoad(view);
+
+    const toggle = view.querySelector('[data-nt-container-view-quick-nav-toggle]');
+    const link = view.querySelector('.nt-container-view-quick-nav-list a[href="#details"]');
+
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    toggle.click();
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    toggle.click();
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    toggle.click();
+    link.click();
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
   });
 
   test('uses the nearest scroll container for scroll tracking and link navigation', () => {
