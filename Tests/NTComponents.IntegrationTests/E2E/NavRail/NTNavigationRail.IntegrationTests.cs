@@ -73,6 +73,32 @@ public class NTNavigationRail_IntegrationTests : IAsyncLifetime {
     }
 
     [Fact]
+    public async Task Rail_FullWidth_Indicator_Preserves_Top_Level_And_Nested_Item_Indent() {
+        ArgumentNullException.ThrowIfNull(_page);
+
+        await NavigateToRailTestPageAsync();
+        await GetExpandButton().ClickAsync();
+        await WaitForMenuStateAsync(expanded: true);
+        await _page.WaitForFunctionAsync("() => !document.querySelector('[data-testid=\"nav-rail-under-test\"]')?.classList.contains('nt-navigation-rail-expanding')");
+
+        var homeHug = await GetIndicatorBoundsAsync(GetHomeLink());
+        var projectsHug = await GetIndicatorBoundsAsync(GetRail().GetByRole(AriaRole.Link, new LocatorGetByRoleOptions { Name = "Projects" }));
+
+        await NavigateToRailTestPageAsync(fullWidth: true);
+        await GetExpandButton().ClickAsync();
+        await WaitForMenuStateAsync(expanded: true);
+        await _page.WaitForFunctionAsync("() => !document.querySelector('[data-testid=\"nav-rail-under-test\"]')?.classList.contains('nt-navigation-rail-expanding')");
+
+        var homeFull = await GetIndicatorBoundsAsync(GetHomeLink());
+        var projectsFull = await GetIndicatorBoundsAsync(GetRail().GetByRole(AriaRole.Link, new LocatorGetByRoleOptions { Name = "Projects" }));
+
+        homeFull[0].Should().BeApproximately(homeHug[0], 0.5);
+        projectsFull[0].Should().BeApproximately(projectsHug[0], 0.5);
+        homeFull[1].Should().BeGreaterThan(homeHug[1]);
+        projectsFull[1].Should().BeGreaterThan(projectsHug[1]);
+    }
+
+    [Fact]
     public async Task Rail_LimitToOneExpanded_Closes_Other_Top_Level_Group_Without_Closing_Nested_Group() {
         ArgumentNullException.ThrowIfNull(_page);
 
@@ -468,10 +494,10 @@ public class NTNavigationRail_IntegrationTests : IAsyncLifetime {
         return _page.GetByRole(AriaRole.Link, new PageGetByRoleOptions { Name = "Reference" });
     }
 
-    private async Task NavigateToRailTestPageAsync(bool compact = false) {
+    private async Task NavigateToRailTestPageAsync(bool compact = false, bool fullWidth = false) {
         ArgumentNullException.ThrowIfNull(_page);
 
-        await _page.GotoAsync($"{AppBaseUrl}/nav-rail-e2e-test{(compact ? "/true" : string.Empty)}", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await _page.GotoAsync($"{AppBaseUrl}/nav-rail-e2e-test{(compact ? "/true" : string.Empty)}{(fullWidth ? "?fullWidth=true" : string.Empty)}", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
         await _page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await GetRail().WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 5000 });
         await GetExpandButton().WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 5000 });
@@ -486,6 +512,9 @@ public class NTNavigationRail_IntegrationTests : IAsyncLifetime {
         await GetPrimaryLiveTestRail().WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 5000 });
         await GetPrimaryLiveTestRail().GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Collapse navigation rail", Exact = true }).WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 5000 });
     }
+
+    private static Task<double[]> GetIndicatorBoundsAsync(ILocator item) => item.Locator(".nt-navigation-rail-item-content").EvaluateAsync<double[]>(
+        "content => { const rect = content.getBoundingClientRect(); return [rect.left, rect.width]; }");
 
     private static Task<bool> StateLayerMatchesSelectedGeometryAsync(ILocator item, bool expanded, bool expectFocusRing) => item.EvaluateAsync<bool>(
         """

@@ -9,6 +9,7 @@
                       LimitToOneExpanded="true"
                       ShowDivider="true"
                       Variant="NTNavigationRailVariant.Square"
+                      IndicatorStyle="@(FullWidth ? ActiveLinkIndicatorStyle.FullWidth : ActiveLinkIndicatorStyle.HugContent)"
                       data-testid="nav-rail-under-test">
         <NTNavigationRailItem Label="Home"
                               Href="/nav-rail-e2e-test"
@@ -56,4 +57,7 @@
 @code {
     [Parameter]
     public bool CompactMode { get; set; }
+
+    [SupplyParameterFromQuery]
+    public bool FullWidth { get; set; }
 }

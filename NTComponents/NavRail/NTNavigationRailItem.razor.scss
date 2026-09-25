@@ -310,10 +310,6 @@ $nt-navigation-rail-expanded-label-max-width: 256px;
     }
 
     &.nt-navigation-rail-item-expanded.nt-navigation-rail-item-indicator-full {
-        .nt-navigation-rail-item-body {
-            padding-inline: 0;
-        }
-
         .nt-navigation-rail-item-content {
             width: 100%;
         }
