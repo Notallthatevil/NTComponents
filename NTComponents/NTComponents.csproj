@@ -1,16 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk.Razor">
+	<Import Project="..\PackageMetadata.props" />
 	<PropertyGroup>
 		<TargetFrameworks>net9.0;net10.0;net11.0</TargetFrameworks>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
-		<PackageReadmeFile>README.md</PackageReadmeFile>
-		<GenerateDocumentationFile>False</GenerateDocumentationFile>
 		<Title>NTComponents</Title>
-		<Company>NT Technologies</Company>
-		<PackageProjectUrl>https://github.com/Notallthatevil/NTComponents</PackageProjectUrl>
-		<RepositoryUrl>https://github.com/Notallthatevil/NTComponents</RepositoryUrl>
 		<PackageTags>Blazor;Web;UI;Components;Material;MaterialDesign;WebAssembly;BlazorComponents;.NET9;.NET10;.NET11</PackageTags>
-		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
 		<WarningLevel>8</WarningLevel>
 		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
@@ -18,13 +13,11 @@
 		<WarningsNotAsErrors Condition="'$(TargetFramework)' == 'net11.0'">$(WarningsNotAsErrors);BL0012;BL0016</WarningsNotAsErrors>
 		<NoWarn>$(NoWarn);CS0618</NoWarn>
 		<PackageId>NTComponents</PackageId>
-		<Authors>NT Technologies</Authors>
 		<Description>Collection of Material-design inspired Blazor UI components for Web and WebAssembly projects. Designed for .NET 9, .NET 10, and .NET 11.</Description>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<RepositoryType>git</RepositoryType>
 		<IsAotCompatible>true</IsAotCompatible>
 		<LangVersion>latest</LangVersion>
-		<PackageIcon>Logo.png</PackageIcon>
 	</PropertyGroup>
 	<ItemGroup>
 	  <Content Remove="compilerconfig.json" />
@@ -67,11 +60,6 @@
 
 	<ItemGroup>
 		<None Include="..\NTComponents.Analyzers\bin\$(Configuration)\netstandard2.0\NTComponents.Analyzers.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
-		<None Include="..\Logo.png">
-		  <Pack>True</Pack>
-		  <PackagePath>\</PackagePath>
-		</None>
-		<None Include="..\README.md" Pack="true" PackagePath="\" />
 		<None Include="compilerconfig.json" />
 		<None Include="ThirdPartyLicenses\css-anchor-positioning-LICENSE.txt" Pack="true" PackagePath="ThirdPartyLicenses\" />
 	</ItemGroup>

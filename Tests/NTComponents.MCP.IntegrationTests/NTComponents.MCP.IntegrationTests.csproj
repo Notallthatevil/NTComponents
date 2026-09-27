@@ -2,28 +2,16 @@
 
 	<PropertyGroup>
 		<TargetFramework>net10.0</TargetFramework>
-		<ImplicitUsings>enable</ImplicitUsings>
-		<Nullable>enable</Nullable>
-		<IsPackable>false</IsPackable>
-		<OutputType>Exe</OutputType>
-		<WarningLevel>8</WarningLevel>
-		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="AwesomeAssertions" Version="9.6.0" />
-		<PackageReference Include="AwesomeAssertions.Analyzers" Version="9.0.8">
+		<PackageReference Include="AwesomeAssertions" />
+		<PackageReference Include="AwesomeAssertions.Analyzers">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.10" />
-		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
-		<PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-		</PackageReference>
-		<PackageReference Include="xunit.v3" Version="3.2.2" />
-	</ItemGroup>
+		<PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+  </ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\..\NTComponents.MCP\NTComponents.MCP.csproj" />
