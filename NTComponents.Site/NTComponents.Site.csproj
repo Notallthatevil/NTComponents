@@ -24,7 +24,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="AspNetCore.SassCompiler" Version="1.103.0" PrivateAssets="all" />
+		<PackageReference Include="AspNetCore.SassCompiler" Version="1.103.1" PrivateAssets="all" />
 	</ItemGroup>
 
 	<ItemGroup>
