@@ -19,6 +19,7 @@
                    disabled="@Disabled"
                    autofocus="@AutoFocus"
                    aria-label="@AriaLabel"
+                   aria-describedby="@BadgeDescribedBy"
                    @onchange="HandleSelectedChangedAsync" />
             <span class="@ContainerClass">
                 @if (EffectiveLeadingIcon is not null) {
@@ -46,6 +47,7 @@
                             disabled="@Disabled"
                             autofocus="@AutoFocus"
                             aria-label="@AriaLabel"
+                            aria-describedby="@BadgeDescribedBy"
                             aria-haspopup="menu"
                             aria-controls="@MenuId"
                             aria-expanded="false"
@@ -73,6 +75,7 @@
                        target="@Target"
                        rel="@Rel"
                        aria-label="@AriaLabel"
+                       aria-describedby="@BadgeDescribedBy"
                        aria-disabled="@AriaDisabled"
                        tabindex="@DisabledTabIndex"
                        @onclick="@LinkClickCallback"
@@ -97,6 +100,7 @@
                             disabled="@Disabled"
                             autofocus="@AutoFocus"
                             aria-label="@AriaLabel"
+                            aria-describedby="@BadgeDescribedBy"
                             @onclick="@ActionClickCallback"
                             @onkeydown="@RemoveKeyDownCallback">
                         @if (EffectiveLeadingIcon is not null) {
@@ -158,6 +162,7 @@
                 disabled="@Disabled"
                 autofocus="@AutoFocus"
                 aria-label="@AriaLabel"
+                aria-describedby="@BadgeDescribedBy"
                 aria-haspopup="menu"
                 aria-controls="@MenuId"
                 aria-expanded="false"
@@ -187,6 +192,7 @@
            target="@Target"
            rel="@Rel"
            aria-label="@AriaLabel"
+           aria-describedby="@BadgeDescribedBy"
            aria-disabled="@AriaDisabled"
            tabindex="@DisabledTabIndex"
            @onclick="@LinkClickCallback"
@@ -213,6 +219,7 @@
                 disabled="@Disabled"
                 autofocus="@AutoFocus"
                 aria-label="@AriaLabel"
+                aria-describedby="@BadgeDescribedBy"
                 @onclick="@ActionClickCallback"
                 @onkeydown="@RemoveKeyDownCallback">
             <span class="@ContainerClass">
@@ -241,5 +248,8 @@
                 CloseOnContentClick="@CloseOnMenuContentClick">
             @MenuContent
         </NTMenu>
+    }
+    @if (ShowBadge) {
+        <NTBadge ElementId="@BadgeId" Content="@BadgeContent" AriaLabel="@BadgeAriaLabel" Placement="NTBadgePlacement.Edge" />
     }
 </span>

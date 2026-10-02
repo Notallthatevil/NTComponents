@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Components;
 using NTComponents.Core;
+using NTComponents.Interfaces;
 
 using NTComponents.CodeDocumentation;
 namespace NTComponents;
@@ -16,7 +17,20 @@ namespace NTComponents;
     RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
     CompatibilitySummary = "Renders useful static HTML and adds Blazor behavior when interactive.",
     CompatibilityDetails = "Static SSR preserves the rendered markup and native browser behavior. EventCallback handlers, bound state updates, and live validation require an interactive render mode.")]
-public partial class NTFabButton : NTButtonBase {
+public partial class NTFabButton : NTButtonBase, INTBadgeable {
+    /// <inheritdoc />
+    [Parameter]
+    public string? BadgeAriaLabel { get; set; }
+
+    /// <inheritdoc />
+    [Parameter]
+    public string? BadgeContent { get; set; }
+
+    /// <inheritdoc />
+    /// <remarks>The badge straddles the container's top-end corner, centered on its rounded edge for every shape.</remarks>
+    [Parameter]
+    public bool ShowBadge { get; set; }
+
 
     /// <summary>
     ///     Gets or sets the accessible name announced for icon-only FABs or a more descriptive name for extended FABs.
@@ -76,6 +90,8 @@ public partial class NTFabButton : NTButtonBase {
     [Parameter]
     public NTFabButtonPlacement Placement { get; set; } = NTFabButtonPlacement.Inline;
 
+    internal string? AriaDescribedBy => NTBadge.GetDescribedBy(AdditionalAttributes?.GetValueOrDefault("aria-describedby"), ShowBadge && EffectiveAriaLabel is not null, BadgeId);
+
     internal string? EffectiveAriaLabel => string.IsNullOrWhiteSpace(AriaLabel) ? null : AriaLabel;
 
     internal Size EffectiveButtonSize => ButtonSize switch {
@@ -86,6 +102,8 @@ public partial class NTFabButton : NTButtonBase {
         Size.Largest => Size.Large,
         _ => Size.Medium
     };
+
+    private string BadgeId => $"{ComponentIdentifier}-badge";
 
     internal bool HasLabel => !string.IsNullOrWhiteSpace(Label);
 

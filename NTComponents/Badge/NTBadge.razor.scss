@@ -1,0 +1,77 @@
+@use 'sass:map';
+@use '../Styles/_Variables/_colors.scss' as colors;
+@use '../Styles/_Variables/_elevation.scss' as elevation;
+@use '../Styles/_Variables/_typescale.scss' as typescale;
+
+// Sized up from the Material 3 badge tokens (6px dot, 16px label) for legibility. Offsets keep each badge centered where
+// Material 3 BadgedBox places it: the dot 3px inside the anchor's top-end corner, the label 6px below the anchor's top.
+$nt-badge-small-size: 8px;
+$nt-badge-small-offset: 7px;
+$nt-badge-large-size: 20px;
+$nt-badge-large-padding-inline: 6px;
+$nt-badge-large-offset-inline: 12px;
+$nt-badge-large-offset-block: 16px;
+
+// Hosts describe their icon anchor with --nt-badge-anchor-block-start and --nt-badge-anchor-inline-end; both default to the containing block's top-end corner.
+.nt-badge {
+    background-color: colors.$tnt-color-error;
+    block-size: $nt-badge-small-size;
+    border-radius: 9999px;
+    box-shadow: map.get(elevation.$elevation-shadows, 1);
+    box-sizing: border-box;
+    display: block;
+    flex: none;
+    grid-area: var(--nt-badge-grid-area, auto);
+    inline-size: $nt-badge-small-size;
+    inset-block-start: calc(var(--nt-badge-anchor-block-start, 0px) + #{$nt-badge-small-offset - $nt-badge-small-size});
+    inset-inline-start: calc(var(--nt-badge-anchor-inline-end, 100%) - #{$nt-badge-small-offset});
+    pointer-events: none;
+    position: absolute;
+    z-index: 4;
+
+    &.nt-badge-large {
+        @include typescale.nt-label-medium;
+        align-items: center;
+        block-size: $nt-badge-large-size;
+        color: colors.$tnt-color-on-error;
+        display: inline-flex;
+        inline-size: auto;
+        inset-block-start: calc(var(--nt-badge-anchor-block-start, 0px) + #{$nt-badge-large-offset-block - $nt-badge-large-size});
+        inset-inline-start: calc(var(--nt-badge-anchor-inline-end, 100%) - #{$nt-badge-large-offset-inline});
+        justify-content: center;
+        min-inline-size: $nt-badge-large-size;
+        padding-inline: $nt-badge-large-padding-inline;
+        white-space: nowrap;
+    }
+
+    // Edge badges center on the anchor point so they straddle the host's edge. Longer labels grow toward the end.
+    &.nt-badge-edge {
+        inset-block-start: calc(var(--nt-badge-anchor-block-start, 0px) - #{$nt-badge-small-size * 0.5});
+        inset-inline-start: calc(var(--nt-badge-anchor-inline-end, 100%) - #{$nt-badge-small-size * 0.5});
+
+        &.nt-badge-large {
+            inset-block-start: calc(var(--nt-badge-anchor-block-start, 0px) - #{$nt-badge-large-size * 0.5});
+            inset-inline-start: calc(var(--nt-badge-anchor-inline-end, 100%) - #{$nt-badge-large-size * 0.5});
+        }
+    }
+
+    &.nt-badge-inline {
+        align-self: center;
+        inset: auto;
+        position: relative;
+        vertical-align: middle;
+    }
+
+    > .nt-badge-accessible-label {
+        block-size: 1px;
+        clip-path: inset(50%);
+        inline-size: 1px;
+        overflow: hidden;
+        position: absolute;
+        white-space: nowrap;
+    }
+
+    @media (forced-colors: active) {
+        outline: 1px solid CanvasText;
+    }
+}

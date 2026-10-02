@@ -1,0 +1,18 @@
+@namespace NTComponents
+@using NTComponents.Core
+@inherits NTComponentBase
+
+<span @attributes="AdditionalAttributes"
+      class="@ElementClass"
+      style="@ElementStyle"
+      title="@ElementTitle"
+      lang="@ElementLang"
+      id="@ElementId"
+      @ref="Element">
+    @if (IsLarge) {
+        <span class="nt-badge-label" aria-hidden="@LabelAriaHidden">@Content</span>
+    }
+    @if (HasAriaLabel) {
+        <span class="nt-badge-accessible-label">@AriaLabel</span>
+    }
+</span>

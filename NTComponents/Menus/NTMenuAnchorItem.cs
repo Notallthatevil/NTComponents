@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
 
 using NTComponents.CodeDocumentation;
+using NTComponents.Interfaces;
 namespace NTComponents;
 
 /// <summary>
@@ -12,7 +13,7 @@ namespace NTComponents;
     RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
     CompatibilitySummary = "Participates in parent component rendering and inherits the parent interaction model.",
     CompatibilityDetails = "The parent menu can emit a usable anchor in static SSR. Menu closing, submenu coordination, and focus behavior are enhanced by the parent menu script.")]
-public class NTMenuAnchorItem : Microsoft.AspNetCore.Components.IComponent, INTMenuItem, IDisposable {
+public class NTMenuAnchorItem : Microsoft.AspNetCore.Components.IComponent, INTMenuItem, INTBadgeable, IDisposable {
     private NTMenu? _registeredParent;
 
     /// <inheritdoc />
@@ -25,6 +26,19 @@ public class NTMenuAnchorItem : Microsoft.AspNetCore.Components.IComponent, INTM
     /// <inheritdoc />
     [Parameter]
     public string? AriaLabel { get; set; }
+
+    /// <inheritdoc />
+    [Parameter]
+    public string? BadgeAriaLabel { get; set; }
+
+    /// <inheritdoc />
+    [Parameter]
+    public string? BadgeContent { get; set; }
+
+    /// <inheritdoc />
+    /// <remarks>Menu items show the badge inline in the trailing position.</remarks>
+    [Parameter]
+    public bool ShowBadge { get; set; }
 
     /// <inheritdoc />
     [Parameter]
@@ -86,6 +100,7 @@ public class NTMenuAnchorItem : Microsoft.AspNetCore.Components.IComponent, INTM
         builder.AddAttribute(sequence++, "role", "menuitem");
         builder.AddAttribute(sequence++, "aria-disabled", owner.GetMenuItemAriaDisabled(this));
         builder.AddAttribute(sequence++, "aria-label", owner.GetMenuItemAriaLabel(this));
+        builder.AddAttribute(sequence++, "aria-describedby", owner.GetMenuItemAriaDescribedBy(this));
         builder.AddAttribute(sequence++, "aria-selected", owner.GetMenuItemSelectedAttribute(this));
         builder.AddAttribute(sequence++, "tabindex", owner.GetMenuItemTabIndex(this));
         builder.AddContent(sequence++, owner.RenderMenuItemContent(this));
@@ -101,6 +116,7 @@ public class NTMenuAnchorItem : Microsoft.AspNetCore.Components.IComponent, INTM
         var previousIcon = Icon;
         var previousLabel = Label;
         var previousSelected = Selected;
+        var previousBadge = (ShowBadge, BadgeContent, BadgeAriaLabel);
         var previousTarget = Target;
         parameters.SetParameterProperties(this);
 
@@ -121,7 +137,7 @@ public class NTMenuAnchorItem : Microsoft.AspNetCore.Components.IComponent, INTM
             Parent.RegisterMenuItem(this);
             _registeredParent = Parent;
         }
-        else if (_registeredParent is not null && RenderedStateChanged(previousAriaLabel, previousDisabled, previousHref, previousIcon, previousLabel, previousSelected, previousTarget)) {
+        else if (_registeredParent is not null && (previousBadge != (ShowBadge, BadgeContent, BadgeAriaLabel) || RenderedStateChanged(previousAriaLabel, previousDisabled, previousHref, previousIcon, previousLabel, previousSelected, previousTarget))) {
             Parent.NotifyMenuItemChanged(this);
         }
 

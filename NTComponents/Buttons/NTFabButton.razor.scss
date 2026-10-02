@@ -63,6 +63,7 @@ $medium-placement-offset: $space-unit;
     $container-size: map.get($tokens, container-size);
 
     --nt-button-progress-ring-size: max(24px, calc(#{$container-size} - 8px));
+    @include buttonChrome.badge-anchor(0px, map.get($tokens, radius));
 
     border-radius: map.get($tokens, radius);
     min-block-size: max(48px, #{$container-size});

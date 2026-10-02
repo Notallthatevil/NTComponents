@@ -8,18 +8,19 @@ internal static class DocumentationDemoProfiles {
         ["NTAccordion"] = ["Variant", "Appearance", "LimitToOneExpanded", "GroupName", "Separated"],
         ["NTAnimation"] = ["Animation", "Once", "Delay", "EnterDuration", "EnterEasing", "AnimateOut", "ExitDuration", "ExitEasing"],
         ["NTAutocomplete"] = ["AllowCustomValue", "MenuItemAppearance", "EmptyText", "CustomValueOptionFormat"],
-        ["NTButton"] = ["Label", "Variant", "LeadingIcon", "Shape", "Elevation", "IsToggleButton", "Selected"],
+        ["NTBadge"] = ["Content", "AriaLabel"],
+        ["NTButton"] = ["Label", "Variant", "LeadingIcon", "Shape", "Elevation", "IsToggleButton", "Selected", "ShowBadge", "BadgeContent", "BadgeAriaLabel"],
         ["NTButtonGroup"] = ["SelectionMode", "SelectedKey", "DisplayType", "Variant", "ButtonSize", "SelectionRequired", "Disabled", "FullWidth"],
         ["NTCard"] = ["Variant", "Elevation", "CornerRadius"],
         ["NTCarousel"] = ["Appearance", "PreferredItemWidth", "ItemHeight", "AllowDragging", "EnableSnapping", "AutoPlayInterval", "AriaLabel"],
-        ["NTChip"] = ["Label", "Variant", "LeadingIcon", "Selectable", "Selected", "Removable", "Appearance", "Disabled"],
+        ["NTChip"] = ["Label", "Variant", "LeadingIcon", "Selectable", "Selected", "Removable", "Appearance", "Disabled", "ShowBadge", "BadgeContent", "BadgeAriaLabel"],
         ["NTCombobox"] = ["Searchable", "MenuItemAppearance", "SelectedTextSeparator", "EmptyText"],
         ["NTContainerView"] = ["EnableOnThisPageNavigation", "OnThisPageLabel", "OnThisPageTitle", "OnThisPageAriaLabel"],
         ["NTContextMenu"] = ["AriaLabel", "Appearance", "CloseOnContentClick", "Disabled", "LongPressDelay", "Elevation"],
         ["NTDataGrid"] = ["Caption", "Appearance", "Density", "ShowPagination", "PageSize", "PageSizeOptions", "AllowMultiSort", "Virtualize"],
         ["NTDialog"] = ["Title", "SupportingText", "ShowCloseButton", "CloseOnBackdrop", "CloseOnEscape", "ButtonSpacing", "Elevation", "Open"],
         ["NTDivider"] = ["Direction", "Variant", "Color"],
-        ["NTFabButton"] = ["Label", "AriaLabel", "ButtonSize", "Placement", "Elevation"],
+        ["NTFabButton"] = ["Label", "AriaLabel", "ButtonSize", "Placement", "Elevation", "ShowBadge", "BadgeContent", "BadgeAriaLabel"],
         ["NTFabMenu"] = ["AriaLabel", "Placement", "ButtonSize", "Expanded", "CloseOnMenuContentClick", "Disabled", "Elevation"],
         ["NTFeedView"] = ["MinItemWidth"],
         ["NTFileUpload"] = ["ChooseButtonText", "Multiple", "Accept", "MaximumFileCount", "MaximumFileSize", "AutoUpload", "ShowUploadButton", "UploadButtonText"],
@@ -28,7 +29,7 @@ internal static class DocumentationDemoProfiles {
         ["NTFormFieldLayoutSpan"] = ["Span", "SmallColumns", "MediumColumns", "LargeColumns"],
         ["NTFormSectionView"] = ["Heading", "Description", "UseFieldset", "MaxColumns"],
         ["NTHeadDependencies"] = [],
-        ["NTIconButton"] = ["AriaLabel", "Icon", "Variant", "Shape", "Width", "Elevation", "IsToggleButton", "Selected"],
+        ["NTIconButton"] = ["AriaLabel", "Icon", "Variant", "Shape", "Width", "Elevation", "IsToggleButton", "Selected", "ShowBadge", "BadgeContent", "BadgeAriaLabel"],
         ["NTInputCheckbox"] = ["Label", "Indeterminate", "Variant"],
         ["NTInputColor"] = ["Label"],
         ["NTInputCurrency"] = ["Label"],
@@ -81,6 +82,8 @@ internal static class DocumentationDemoProfiles {
         var configuredValue = (componentName, parameter.Name) switch {
             ("NTAccordion", "GroupName") => "docs-accordion-example",
             ("NTAnimation", "RootMargin") => "0px 0px -10% 0px",
+            ("NTBadge", "AriaLabel") => "3 unread messages",
+            ("NTBadge", "Content") => "3",
             ("NTButton", "Label") => "Save changes",
             ("NTDialog", "CloseButtonAriaLabel") => "Close dialog",
             ("NTDialog", "Id") => "docs-example-dialog",
@@ -155,7 +158,7 @@ internal static class DocumentationDemoProfiles {
             return SandboxControlGroup.Advanced;
         }
 
-        if (name.StartsWith("Aria", StringComparison.Ordinal) || name is "Role" or "HideFromAssistiveTechnology" or "UseRegionRole") {
+        if (name.StartsWith("Aria", StringComparison.Ordinal) || name.EndsWith("AriaLabel", StringComparison.Ordinal) || name is "Role" or "HideFromAssistiveTechnology" or "UseRegionRole") {
             return SandboxControlGroup.Accessibility;
         }
 
@@ -193,7 +196,7 @@ internal static class DocumentationDemoProfiles {
     }
 
     private static bool IsContent(string name) => name is
-        "Accept" or "Caption" or "ChooseButtonText" or "Description" or "EmptyText" or "Heading" or "Label" or "LoadingText" or "MenuButtonLabel" or "NoResultsText" or "Placeholder" or "ReadyText" or "SearchText" or "SelectedTextSeparator" or "SupportingText" or "Title" or "TodayButtonLabel" or "UploadButtonText";
+        "Accept" or "BadgeContent" or "Caption" or "Content" or "ChooseButtonText" or "Description" or "EmptyText" or "Heading" or "Label" or "LoadingText" or "MenuButtonLabel" or "NoResultsText" or "Placeholder" or "ReadyText" or "SearchText" or "SelectedTextSeparator" or "SupportingText" or "Title" or "TodayButtonLabel" or "UploadButtonText";
 
     private static bool IsAppearance(string name) =>
         name.EndsWith("Color", StringComparison.Ordinal) ||

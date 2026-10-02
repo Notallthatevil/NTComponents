@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using NTComponents.Core;
+using NTComponents.Interfaces;
 
 using NTComponents.CodeDocumentation;
 namespace NTComponents;
@@ -21,7 +22,7 @@ namespace NTComponents;
     RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
     CompatibilitySummary = "Renders native chip buttons, anchors, checkboxes, and popover triggers in static SSR.",
     CompatibilityDetails = "Static SSR preserves link, button, checkbox, and menu-trigger markup. Blazor callbacks, selected-state binding, removal callbacks, and menu synchronization require interactive enhancement.")]
-public partial class NTChip : NTComponentBase {
+public partial class NTChip : NTComponentBase, INTBadgeable {
     private bool _appearanceWasProvided;
     private bool _backgroundColorWasProvided;
     private bool _disabledBackgroundColorWasProvided;
@@ -53,6 +54,19 @@ public partial class NTChip : NTComponentBase {
     /// </summary>
     [Parameter]
     public string? AriaLabel { get; set; }
+
+    /// <inheritdoc />
+    [Parameter]
+    public string? BadgeAriaLabel { get; set; }
+
+    /// <inheritdoc />
+    [Parameter]
+    public string? BadgeContent { get; set; }
+
+    /// <inheritdoc />
+    /// <remarks>The badge straddles the chip container's top-end corner, centered on its rounded edge, and is described by every chip action.</remarks>
+    [Parameter]
+    public bool ShowBadge { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for the unselected chip container color.
@@ -335,6 +349,8 @@ public partial class NTChip : NTComponentBase {
 
     private EventCallback<MouseEventArgs> ActionClickCallback => OnClickCallback.HasDelegate ? EventCallback.Factory.Create<MouseEventArgs>(this, HandleClickAsync) : default;
     private string? AriaDisabled => Disabled ? "true" : null;
+    private string? BadgeDescribedBy => NTBadge.GetDescribedBy(null, ShowBadge, BadgeId);
+    private string BadgeId => $"{StableElementId}-badge";
     private string? ContainerClass => CssClassBuilder.Create("nt-chip-container")
         .AddElevation(EffectiveElevation)
         .Build();

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
 using NTComponents.Core;
+using NTComponents.Interfaces;
 
 using NTComponents.CodeDocumentation;
 namespace NTComponents;
@@ -16,7 +17,7 @@ namespace NTComponents;
     RenderCompatibility = NTComponentRenderCompatibility.SsrCompatible,
     CompatibilitySummary = "Renders native navigation links or buttons for static SSR.",
     CompatibilityDetails = "Href-backed items navigate as ordinary anchors and button items can participate in native forms through attributes. Route-selected state updates require a new render.")]
-public partial class NTNavigationRailItem : NTComponentBase {
+public partial class NTNavigationRailItem : NTComponentBase, INTBadgeable {
 
     /// <summary>
     ///     Optional active icon. When omitted for a selected Material icon, the icon is rendered with the rail's selected filled-symbol class.
@@ -35,6 +36,14 @@ public partial class NTNavigationRailItem : NTComponentBase {
     /// </summary>
     [Parameter]
     public string? AriaLabel { get; set; }
+
+    /// <inheritdoc />
+    [Parameter]
+    public string? BadgeAriaLabel { get; set; }
+
+    /// <inheritdoc />
+    [Parameter]
+    public string? BadgeContent { get; set; }
 
     /// <summary>
     ///     Whether the destination is disabled.
@@ -99,6 +108,11 @@ public partial class NTNavigationRailItem : NTComponentBase {
     [Parameter]
     public bool Selected { get; set; }
 
+    /// <inheritdoc />
+    /// <remarks>The badge is anchored to the top-end corner of the item icon using Material 3 offsets.</remarks>
+    [Parameter]
+    public bool ShowBadge { get; set; }
+
     /// <summary>
     ///     Native button type when the item renders as a button.
     /// </summary>
@@ -114,8 +128,10 @@ public partial class NTNavigationRailItem : NTComponentBase {
     [Inject]
     private NavigationManager NavigationManager { get; set; } = default!;
 
+    private string? AriaDescribedBy => NTBadge.GetDescribedBy(RenderedAdditionalAttributes?.GetValueOrDefault("aria-describedby"), ShowBadge && EffectiveAriaLabel is not null, BadgeId);
     private string? AriaCurrent => _isSelected && !Disabled ? "page" : null;
     private string? AriaDisabled => Disabled && RendersAnchor ? "true" : null;
+    private string BadgeId => $"{ComponentIdentifier}-badge";
     private string? EffectiveAriaLabel => string.IsNullOrWhiteSpace(AriaLabel) || string.Equals(AriaLabel, Label, StringComparison.Ordinal) ? null : AriaLabel;
     private string? EffectiveElementId => ElementId ?? TryGetStringAttribute("id");
     private string? EffectiveElementLang => ElementLang ?? TryGetStringAttribute("lang");

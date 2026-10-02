@@ -49,8 +49,17 @@ $nt-icon-button-sizes: (
     }
 }
 
+// The icon is centered in the button, so the badge anchor is the icon's top and end edges measured from the button's center.
+@mixin nt-icon-button-badge-anchor($icon-size) {
+    --nt-badge-anchor-block-start: calc(50% - #{math.div($icon-size, 2)});
+    --nt-badge-anchor-inline-end: calc(50% + #{math.div($icon-size, 2)});
+}
+
 @mixin nt-icon-button-size($height, $narrow-width, $default-width, $wide-width, $icon-size, $radius, $pressed-radius, $square-radius) {
+    @include nt-icon-button-badge-anchor($icon-size);
     border-radius: $radius;
+    // Grow the layout box with containers taller than the 48px touch target so they do not overflow into neighbors.
+    min-block-size: max(48px, #{$height});
 
     @include nt-icon-button-container($height, $default-width);
 
@@ -85,6 +94,7 @@ $nt-icon-button-sizes: (
 }
 
 .nt-icon-button {
+    @include nt-icon-button-badge-anchor(24px);
     align-items: center;
     appearance: none;
     background: transparent;

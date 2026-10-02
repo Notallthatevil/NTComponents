@@ -106,6 +106,10 @@ $nt-tab-motion-easing: motion.$nt-motion-easing-standard;
     }
 
     .nt-tab-view-content {
+        // Primary tabs stack the icon at the top center of the content box.
+        --nt-badge-anchor-block-start: 0px;
+        --nt-badge-anchor-inline-end: calc(50% + 12px);
+
         position: relative;
         z-index: 1;
         display: inline-flex;
@@ -210,6 +214,8 @@ $nt-tab-motion-easing: motion.$nt-motion-easing-standard;
         }
 
         .nt-tab-view-content {
+            --nt-badge-anchor-inline-end: calc(50% + 10px);
+
             min-block-size: 28px;
             gap: 1px;
         }
@@ -252,6 +258,12 @@ $nt-tab-motion-easing: motion.$nt-motion-easing-standard;
         .nt-tab-view-tab:first-of-type {
             margin-inline-start: auto;
         }
+    }
+
+    // Text-only and secondary tabs place an inline badge after the label instead of overlapping it.
+    .nt-tab-view-content.nt-tab-view-text-only {
+        flex-direction: row;
+        gap: 4px;
     }
 }
 

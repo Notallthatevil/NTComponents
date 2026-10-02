@@ -1,0 +1,188 @@
+@page "/badges"
+@rendermode InteractiveAuto
+@using Microsoft.AspNetCore.Components.Web
+@using NTComponents
+
+<main class="badges-demo">
+    <section class="badges-demo-section">
+        <h1>Badges</h1>
+        <p>Small badges signal status; large badges show a count of up to four characters. The "Badges" navigation rail item in this app's layout also shows a badge.</p>
+
+        <div class="badges-demo-group" aria-label="Badge count controls">
+            <NTButton Label="Add" LeadingIcon="@MaterialIcon.Add" Variant="NTButtonVariant.Tonal" OnClickCallback="@(() => SetCount(_count + 1))" />
+            <NTButton Label="Add 500" Variant="NTButtonVariant.Tonal" OnClickCallback="@(() => SetCount(_count + 500))" />
+            <NTButton Label="Clear" Variant="NTButtonVariant.Text" OnClickCallback="@(() => SetCount(0))" />
+            <span class="badges-demo-status" aria-live="polite">Count: @_count</span>
+        </div>
+    </section>
+
+    <section class="badges-demo-section">
+        <h2>NTBadge</h2>
+        <div class="badges-demo-group">
+            <span class="badges-demo-anchor"><NTBadge AriaLabel="New activity" /></span>
+            <span class="badges-demo-anchor"><NTBadge Content="3" AriaLabel="3 unread messages" /></span>
+            <span class="badges-demo-anchor"><NTBadge Content="999+" AriaLabel="More than 999 unread messages" /></span>
+            <span class="badges-demo-anchor badges-demo-edge"><NTBadge Content="3" Placement="NTBadgePlacement.Edge" AriaLabel="3 unread messages" /></span>
+            <span>Inline <NTBadge Content="12" Placement="NTBadgePlacement.Inline" AriaLabel="12 updates" /></span>
+        </div>
+    </section>
+
+    <section class="badges-demo-section">
+        <h2>NTIconButton</h2>
+        @foreach (var variant in ButtonVariants) {
+            <div class="badges-demo-group" aria-label="@($"{variant} icon buttons")">
+                @foreach (var size in IconButtonSizes) {
+                    <NTIconButton Icon="@MaterialIcon.Notifications" AriaLabel="Notifications" Variant="@variant" ButtonSize="@size" ShowBadge="true" BadgeAriaLabel="New notifications" />
+                    <NTIconButton Icon="@MaterialIcon.Mail" AriaLabel="Inbox" Variant="@variant" ButtonSize="@size" ShowBadge="@HasCount" BadgeContent="@CountText" BadgeAriaLabel="@CountAriaLabel" />
+                }
+            </div>
+        }
+    </section>
+
+    <section class="badges-demo-section">
+        <h2>NTButton</h2>
+        @foreach (var variant in ButtonVariants) {
+            <div class="badges-demo-group" aria-label="@($"{variant} buttons")">
+                <NTButton Label="Updates" Variant="@variant" ButtonSize="Size.XS" ShowBadge="true" BadgeAriaLabel="New updates" />
+                <NTButton Label="Inbox" LeadingIcon="@MaterialIcon.Mail" Variant="@variant" ShowBadge="@HasCount" BadgeContent="@CountText" BadgeAriaLabel="@CountAriaLabel" />
+                <NTButton Label="Square" Variant="@variant" Shape="ButtonShape.Square" ButtonSize="Size.Medium" ShowBadge="@HasCount" BadgeContent="@CountText" BadgeAriaLabel="@CountAriaLabel" />
+                <NTButton Label="Large" Variant="@variant" ButtonSize="Size.Large" ShowBadge="true" BadgeContent="5" BadgeAriaLabel="5 pending" />
+            </div>
+        }
+    </section>
+
+    <section class="badges-demo-section">
+        <h2>NTButton shapes and sizes</h2>
+        @foreach (var shape in ButtonShapes) {
+            <div class="badges-demo-group" aria-label="@($"{shape} buttons")">
+                @foreach (var size in ButtonSizes) {
+                    <NTButton Label="@shape.ToString()" Variant="NTButtonVariant.Filled" Shape="@shape" ButtonSize="@size" ShowBadge="true" BadgeContent="@(size == Size.XS ? null : CountText)" BadgeAriaLabel="@CountAriaLabel" />
+                }
+            </div>
+        }
+        <div class="badges-demo-group" aria-label="Toggle buttons">
+            <NTButton Label="Toggle" Variant="NTButtonVariant.Elevated" IsToggleButton="true" @bind-Selected="_toggleA" ShowBadge="true" BadgeContent="@CountText" BadgeAriaLabel="@CountAriaLabel" />
+            <NTButton Label="Toggle square" Variant="NTButtonVariant.Filled" Shape="ButtonShape.Square" IsToggleButton="true" @bind-Selected="_toggleB" ShowBadge="true" BadgeAriaLabel="New" />
+        </div>
+    </section>
+
+    <section class="badges-demo-section">
+        <h2>NTFabButton</h2>
+        <div class="badges-demo-group" aria-label="FAB buttons">
+            <NTFabButton Icon="@MaterialIcon.Edit" AriaLabel="Compose" ButtonSize="Size.Small" ShowBadge="true" BadgeAriaLabel="Unsent draft" />
+            <NTFabButton Icon="@MaterialIcon.Edit" AriaLabel="Compose" ButtonSize="Size.Medium" ShowBadge="@HasCount" BadgeContent="@CountText" BadgeAriaLabel="@CountAriaLabel" />
+            <NTFabButton Icon="@MaterialIcon.Edit" AriaLabel="Compose" ButtonSize="Size.Large" ShowBadge="true" BadgeContent="2" BadgeAriaLabel="2 drafts" />
+            <NTFabButton Icon="@MaterialIcon.Edit" Label="Compose" ShowBadge="@HasCount" BadgeContent="@CountText" BadgeAriaLabel="@CountAriaLabel" />
+        </div>
+    </section>
+
+    <section class="badges-demo-section">
+        <h2>NTChip</h2>
+        <div class="badges-demo-group" aria-label="Chips">
+            <NTChip Label="Alerts" Variant="NTChipVariant.Assist" LeadingIcon="@MaterialIcon.Notifications" ShowBadge="true" BadgeAriaLabel="New alerts" />
+            <NTChip Label="Unread" Variant="NTChipVariant.Filter" @bind-Selected="_unreadFilter" ShowBadge="@HasCount" BadgeContent="@CountText" BadgeAriaLabel="@CountAriaLabel" />
+            <NTChip Label="Ada Lovelace" Variant="NTChipVariant.Input" LeadingIcon="@MaterialIcon.Person" ShowBadge="true" BadgeContent="2" BadgeAriaLabel="2 shared files" />
+            <NTChip Label="Nearby" Variant="NTChipVariant.Suggestion" Href="/badges" ShowBadge="true" BadgeContent="9" BadgeAriaLabel="9 places" />
+        </div>
+    </section>
+
+    <section class="badges-demo-section">
+        <h2>NTTabView</h2>
+        <NTTabView Name="badges-primary-icons" AriaLabel="Primary tabs with icon badges">
+            <NTTab Label="Inbox" Value="inbox" Icon="@MaterialIcon.Mail" ShowBadge="@HasCount" BadgeContent="@CountText" BadgeAriaLabel="@CountAriaLabel">Inbox content</NTTab>
+            <NTTab Label="Updates" Value="updates" Icon="@MaterialIcon.Notifications" ShowBadge="true" BadgeAriaLabel="New updates">Updates content</NTTab>
+            <NTTab Label="Archive" Value="archive" Icon="@MaterialIcon.Archive">Archive content</NTTab>
+        </NTTabView>
+        <NTTabView Name="badges-primary-text" AriaLabel="Primary text tabs with inline badges">
+            <NTTab Label="Inbox" Value="inbox" ShowBadge="@HasCount" BadgeContent="@CountText" BadgeAriaLabel="@CountAriaLabel">Inbox content</NTTab>
+            <NTTab Label="Updates" Value="updates" ShowBadge="true" BadgeAriaLabel="New updates">Updates content</NTTab>
+            <NTTab Label="Archive" Value="archive">Archive content</NTTab>
+        </NTTabView>
+        <NTTabView Name="badges-secondary" AriaLabel="Secondary tabs with badges" Variant="NTTabViewVariant.Secondary">
+            <NTTab Label="Inbox" Value="inbox" Icon="@MaterialIcon.Mail" ShowBadge="@HasCount" BadgeContent="@CountText" BadgeAriaLabel="@CountAriaLabel">Inbox content</NTTab>
+            <NTTab Label="Updates" Value="updates" Icon="@MaterialIcon.Notifications" ShowBadge="true" BadgeAriaLabel="New updates">Updates content</NTTab>
+            <NTTab Label="Archive" Value="archive">Archive content</NTTab>
+        </NTTabView>
+        <NTTabView Name="badges-compact" AriaLabel="Compact tabs with badges" Compact="true">
+            <NTTab Label="Inbox" Value="inbox" Icon="@MaterialIcon.Mail" ShowBadge="@HasCount" BadgeContent="@CountText" BadgeAriaLabel="@CountAriaLabel">Inbox content</NTTab>
+            <NTTab Label="Updates" Value="updates" Icon="@MaterialIcon.Notifications" ShowBadge="true" BadgeAriaLabel="New updates">Updates content</NTTab>
+        </NTTabView>
+    </section>
+
+    <section class="badges-demo-section">
+        <h2>NTMenu</h2>
+        <div class="badges-demo-group">
+            <NTButton ElementId="@MenuButtonId"
+                      Label="Open menu"
+                      LeadingIcon="@MaterialIcon.MoreVert"
+                      Variant="NTButtonVariant.Filled"
+                      style="@($"anchor-name: {MenuAnchorName};")"
+                      popovertarget="@MenuId"
+                      popovertargetaction="toggle" />
+        </div>
+        <NTMenu ElementId="@MenuId" AnchorName="@MenuAnchorName" AnchorSelector="@($"#{MenuButtonId}")" AriaLabel="Mail actions">
+            <NTMenuButtonItem Label="Inbox" Icon="@MaterialIcon.Mail" ShowBadge="@HasCount" BadgeContent="@CountText" BadgeAriaLabel="@CountAriaLabel" />
+            <NTMenuButtonItem Label="Mentions" Icon="@MaterialIcon.AlternateEmail" ShowBadge="true" BadgeAriaLabel="New mentions" />
+            <NTMenuAnchorItem Label="Drafts" Icon="@MaterialIcon.Drafts" Href="/badges" ShowBadge="true" BadgeContent="2" BadgeAriaLabel="2 drafts" />
+            <NTMenuSubMenuItem Label="Folders" Icon="@MaterialIcon.Folder" ShowBadge="true" BadgeContent="4" BadgeAriaLabel="4 folders with unread mail">
+                <NTMenuButtonItem Label="Work" ShowBadge="true" BadgeContent="4" BadgeAriaLabel="4 unread" />
+                <NTMenuButtonItem Label="Personal" />
+            </NTMenuSubMenuItem>
+        </NTMenu>
+    </section>
+</main>
+
+<style>
+    .badges-demo {
+        display: grid;
+        gap: 32px;
+        padding: 24px;
+    }
+
+    .badges-demo-section {
+        display: grid;
+        gap: 16px;
+    }
+
+    .badges-demo-group {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 24px;
+    }
+
+    .badges-demo-edge {
+        --nt-badge-anchor-block-start: 0px;
+        --nt-badge-anchor-inline-end: 100%;
+    }
+
+    .badges-demo-anchor {
+        background: var(--tnt-color-surface-container-highest);
+        block-size: 24px;
+        border-radius: 4px;
+        display: inline-block;
+        inline-size: 24px;
+        position: relative;
+    }
+</style>
+
+@code {
+    private const string MenuAnchorName = "--badges-demo-menu-anchor";
+    private const string MenuButtonId = "badges-demo-menu-button";
+    private const string MenuId = "badges-demo-menu";
+    private static readonly NTButtonVariant[] ButtonVariants = Enum.GetValues<NTButtonVariant>();
+    private static readonly Size[] IconButtonSizes = [Size.XS, Size.Small, Size.Medium, Size.Large, Size.XL];
+    private static readonly Size[] ButtonSizes = IconButtonSizes;
+    private static readonly ButtonShape[] ButtonShapes = Enum.GetValues<ButtonShape>();
+
+    private int _count = 3;
+    private bool _toggleA;
+    private bool _toggleB = true;
+    private bool _unreadFilter;
+
+    private string? CountAriaLabel => $"{_count} unread messages";
+    private string? CountText => _count > 999 ? "999+" : _count.ToString();
+    private bool HasCount => _count > 0;
+
+    private void SetCount(int count) => _count = count;
+}

@@ -13,6 +13,7 @@
         id="@ElementId"
         aria-label="@AriaLabel"
         aria-pressed="@AriaPressed"
+        aria-describedby="@AriaDescribedBy"
         @onclick="HandleClickAsync"
         @onclick:stopPropagation="StopPropagation"
         @ref="Element">
@@ -31,6 +32,10 @@
     </span>
 
     @ButtonProgressIndicator
+
+    @if (ShowBadge) {
+        <NTBadge ElementId="@BadgeId" Content="@BadgeContent" AriaLabel="@BadgeAriaLabel" />
+    }
 </button>
 <script>
     (function (script) {

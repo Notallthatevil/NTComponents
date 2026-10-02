@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components.Web;
 
 using NTComponents.CodeDocumentation;
+using NTComponents.Interfaces;
 namespace NTComponents;
 
 /// <summary>
@@ -13,7 +14,7 @@ namespace NTComponents;
     RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
     CompatibilitySummary = "Participates in parent component rendering and inherits the parent interaction model.",
     CompatibilityDetails = "The parent menu can emit a button in static SSR. Blazor click callbacks and menu closing behavior require the parent menu enhancement or an interactive render mode.")]
-public class NTMenuButtonItem : Microsoft.AspNetCore.Components.IComponent, INTMenuItem, IDisposable {
+public class NTMenuButtonItem : Microsoft.AspNetCore.Components.IComponent, INTMenuItem, INTBadgeable, IDisposable {
     private NTMenu? _registeredParent;
 
     /// <inheritdoc />
@@ -26,6 +27,19 @@ public class NTMenuButtonItem : Microsoft.AspNetCore.Components.IComponent, INTM
     /// <inheritdoc />
     [Parameter]
     public string? AriaLabel { get; set; }
+
+    /// <inheritdoc />
+    [Parameter]
+    public string? BadgeAriaLabel { get; set; }
+
+    /// <inheritdoc />
+    [Parameter]
+    public string? BadgeContent { get; set; }
+
+    /// <inheritdoc />
+    /// <remarks>Menu items show the badge inline in the trailing position.</remarks>
+    [Parameter]
+    public bool ShowBadge { get; set; }
 
     /// <inheritdoc />
     [Parameter]
@@ -81,6 +95,7 @@ public class NTMenuButtonItem : Microsoft.AspNetCore.Components.IComponent, INTM
         builder.AddAttribute(sequence++, "role", "menuitem");
         builder.AddAttribute(sequence++, "aria-disabled", owner.GetMenuItemAriaDisabled(this));
         builder.AddAttribute(sequence++, "aria-label", owner.GetMenuItemAriaLabel(this));
+        builder.AddAttribute(sequence++, "aria-describedby", owner.GetMenuItemAriaDescribedBy(this));
         builder.AddAttribute(sequence++, "aria-selected", owner.GetMenuItemSelectedAttribute(this));
         builder.AddAttribute(sequence++, "data-nt-menu-disabled", owner.GetMenuItemDisabledAttribute(this));
         builder.AddAttribute(sequence++, "popovertarget", owner.GetMenuItemPopoverTarget(this));
@@ -102,6 +117,7 @@ public class NTMenuButtonItem : Microsoft.AspNetCore.Components.IComponent, INTM
         var previousIcon = Icon;
         var previousLabel = Label;
         var previousSelected = Selected;
+        var previousBadge = (ShowBadge, BadgeContent, BadgeAriaLabel);
         parameters.SetParameterProperties(this);
 
         if (Parent is null) {
@@ -117,7 +133,7 @@ public class NTMenuButtonItem : Microsoft.AspNetCore.Components.IComponent, INTM
             Parent.RegisterMenuItem(this);
             _registeredParent = Parent;
         }
-        else if (_registeredParent is not null && RenderedStateChanged(previousAriaLabel, previousDisabled, previousIcon, previousLabel, previousSelected)) {
+        else if (_registeredParent is not null && (previousBadge != (ShowBadge, BadgeContent, BadgeAriaLabel) || RenderedStateChanged(previousAriaLabel, previousDisabled, previousIcon, previousLabel, previousSelected))) {
             Parent.NotifyMenuItemChanged(this);
         }
 

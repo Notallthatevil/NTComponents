@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
 
 using NTComponents.CodeDocumentation;
+using NTComponents.Interfaces;
 namespace NTComponents;
 
 /// <summary>
@@ -12,7 +13,7 @@ namespace NTComponents;
     RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
     CompatibilitySummary = "Participates in parent component rendering and inherits the parent interaction model.",
     CompatibilityDetails = "Static SSR can emit the submenu surface and trigger. Hover, keyboard, focus, and closing behavior are enhanced by the parent menu script.")]
-public class NTMenuSubMenuItem : Microsoft.AspNetCore.Components.IComponent, INTMenuItem, IDisposable {
+public class NTMenuSubMenuItem : Microsoft.AspNetCore.Components.IComponent, INTMenuItem, INTBadgeable, IDisposable {
     private readonly string _componentId = $"nt-menu-submenu-{Guid.NewGuid():N}";
     private NTMenu? _registeredParent;
 
@@ -26,6 +27,19 @@ public class NTMenuSubMenuItem : Microsoft.AspNetCore.Components.IComponent, INT
     /// <inheritdoc />
     [Parameter]
     public string? AriaLabel { get; set; }
+
+    /// <inheritdoc />
+    [Parameter]
+    public string? BadgeAriaLabel { get; set; }
+
+    /// <inheritdoc />
+    [Parameter]
+    public string? BadgeContent { get; set; }
+
+    /// <inheritdoc />
+    /// <remarks>Menu items show the badge inline in the trailing position.</remarks>
+    [Parameter]
+    public bool ShowBadge { get; set; }
 
     /// <summary>
     ///     Gets or sets the nested menu content.
@@ -91,6 +105,7 @@ public class NTMenuSubMenuItem : Microsoft.AspNetCore.Components.IComponent, INT
         builder.AddAttribute(sequence++, "aria-controls", SubMenuId);
         builder.AddAttribute(sequence++, "aria-expanded", "false");
         builder.AddAttribute(sequence++, "aria-label", owner.GetMenuItemAriaLabel(this));
+        builder.AddAttribute(sequence++, "aria-describedby", owner.GetMenuItemAriaDescribedBy(this));
         builder.AddAttribute(sequence++, "aria-selected", owner.GetMenuItemSelectedAttribute(this));
         builder.AddAttribute(sequence++, "data-nt-menu-disabled", owner.GetMenuItemDisabledAttribute(this));
         builder.AddAttribute(sequence++, "data-nt-menu-submenu-trigger", "true");
@@ -127,6 +142,7 @@ public class NTMenuSubMenuItem : Microsoft.AspNetCore.Components.IComponent, INT
         var previousIcon = Icon;
         var previousLabel = Label;
         var previousSelected = Selected;
+        var previousBadge = (ShowBadge, BadgeContent, BadgeAriaLabel);
         parameters.SetParameterProperties(this);
 
         if (Parent is null) {
@@ -142,7 +158,7 @@ public class NTMenuSubMenuItem : Microsoft.AspNetCore.Components.IComponent, INT
             Parent.RegisterMenuItem(this);
             _registeredParent = Parent;
         }
-        else if (_registeredParent is not null && RenderedStateChanged(previousAriaLabel, previousDisabled, previousIcon, previousLabel, previousSelected)) {
+        else if (_registeredParent is not null && (previousBadge != (ShowBadge, BadgeContent, BadgeAriaLabel) || RenderedStateChanged(previousAriaLabel, previousDisabled, previousIcon, previousLabel, previousSelected))) {
             Parent.NotifyMenuItemChanged(this);
         }
 

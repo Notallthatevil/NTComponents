@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using NTComponents.Core;
+using NTComponents.Interfaces;
 
 using NTComponents.CodeDocumentation;
 namespace NTComponents;
@@ -11,7 +12,7 @@ namespace NTComponents;
     RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
     CompatibilitySummary = "Participates in parent component rendering and inherits the parent interaction model.",
     CompatibilityDetails = "The selected panel content is present in the static response. Tab switching, query-string activation after load, and keyboard navigation depend on the parent tab-view script.")]
-public partial class NTTab {
+public partial class NTTab : INTBadgeable {
     private HeaderMetadata? _headerMetadata;
     private int _sequence;
 
@@ -50,6 +51,19 @@ public partial class NTTab {
     [Parameter]
     public string? AriaLabel { get; set; }
 
+    /// <inheritdoc />
+    [Parameter]
+    public string? BadgeAriaLabel { get; set; }
+
+    /// <inheritdoc />
+    [Parameter]
+    public string? BadgeContent { get; set; }
+
+    /// <inheritdoc />
+    /// <remarks>Primary tabs anchor the badge to the tab icon. Secondary and text-only tabs show it inline after the label.</remarks>
+    [Parameter]
+    public bool ShowBadge { get; set; }
+
     /// <summary>
     ///     Gets or sets optional tooltip content for the tab header.
     /// </summary>
@@ -80,6 +94,10 @@ public partial class NTTab {
 
     [CascadingParameter]
     private NTTabView _context { get; set; } = default!;
+
+    internal string? AriaDescribedBy => NTBadge.GetDescribedBy(null, ShowBadge && ResolvedAriaLabel is not null, BadgeId);
+
+    internal string BadgeId => $"{ResolvedTabId}-badge";
 
     internal bool IsInitiallySelected => _context.IsInitiallySelected(this);
 
@@ -121,7 +139,7 @@ public partial class NTTab {
         base.OnParametersSet();
         // Icon factories return mutable instances; compare their rendered values, not their identity.
         var iconMetadata = Icon is { } icon ? new IconMetadata(icon.Icon, icon.ElementClass, icon.ElementStyle, icon.ElementId, icon.ElementTitle, icon.Tooltip is not null) : (IconMetadata?)null;
-        var headerMetadata = new HeaderMetadata(Disabled, AccessibilityLabel, AriaLabel, HeaderTooltip is not null, iconMetadata, Label, Value, ElementName, ElementId);
+        var headerMetadata = new HeaderMetadata(Disabled, AccessibilityLabel, AriaLabel, HeaderTooltip is not null, iconMetadata, Label, Value, ElementName, ElementId, ShowBadge, BadgeContent, BadgeAriaLabel);
         var headerMetadataChanged = _headerMetadata is { } previousHeaderMetadata && previousHeaderMetadata != headerMetadata;
         _headerMetadata = headerMetadata;
         _context?.SetTabSequence(this, _context.GetNextRenderSequence(), headerMetadataChanged);
@@ -138,5 +156,5 @@ public partial class NTTab {
 
     private readonly record struct IconMetadata(string Icon, string? Class, string? Style, string? Id, string? Title, bool HasTooltip);
 
-    private readonly record struct HeaderMetadata(bool Disabled, string? AccessibilityLabel, string? AriaLabel, bool HasHeaderTooltip, IconMetadata? Icon, string Label, string? Value, string? ElementName, string? ElementId);
+    private readonly record struct HeaderMetadata(bool Disabled, string? AccessibilityLabel, string? AriaLabel, bool HasHeaderTooltip, IconMetadata? Icon, string Label, string? Value, string? ElementName, string? ElementId, bool ShowBadge, string? BadgeContent, string? BadgeAriaLabel);
 }

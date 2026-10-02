@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components.Web;
 using NTComponents.Core;
+using NTComponents.Interfaces;
 
 using NTComponents.CodeDocumentation;
 namespace NTComponents;
@@ -212,6 +213,9 @@ public partial class NTMenu {
 
     internal string? GetMenuItemAriaDisabled(INTMenuItem item) => IsMenuItemDisabled(item) ? "true" : null;
 
+    internal string? GetMenuItemAriaDescribedBy(INTMenuItem item) =>
+        NTBadge.GetDescribedBy(TryGetAdditionalAttribute(item, "aria-describedby", out var describedBy) ? describedBy : null, item is INTBadgeable { ShowBadge: true }, GetMenuItemBadgeId(item));
+
     internal string GetMenuItemAriaLabel(INTMenuItem item) => string.IsNullOrWhiteSpace(item.AriaLabel) ? item.Label : item.AriaLabel;
 
     internal string GetMenuItemClass(INTMenuItem item) => CssClassBuilder.Create("nt-menu-item")
@@ -294,14 +298,38 @@ public partial class NTMenu {
         builder.AddContent(7, item.Label);
         builder.CloseElement();
 
-        if (trailingIcon is not null) {
+        // A badge shares the trailing grid column with any trailing icon.
+        var badge = item as INTBadgeable;
+        var showBadge = badge is { ShowBadge: true };
+        var wrapTrailing = showBadge && trailingIcon is not null;
+        if (wrapTrailing) {
             builder.OpenElement(8, "span");
-            builder.AddAttribute(9, "class", "nt-menu-item-trailing-icon");
-            builder.AddAttribute(10, "aria-hidden", "true");
-            builder.AddContent(11, trailingIcon.Render());
+            builder.AddAttribute(9, "class", "nt-menu-item-trailing");
+        }
+
+        if (showBadge) {
+            builder.OpenComponent<NTBadge>(10);
+            builder.AddComponentParameter(11, nameof(NTBadge.ElementId), GetMenuItemBadgeId(item));
+            builder.AddComponentParameter(12, nameof(NTBadge.Content), badge!.BadgeContent);
+            builder.AddComponentParameter(13, nameof(NTBadge.AriaLabel), badge.BadgeAriaLabel);
+            builder.AddComponentParameter(14, nameof(NTBadge.Placement), NTBadgePlacement.Inline);
+            builder.CloseComponent();
+        }
+
+        if (trailingIcon is not null) {
+            builder.OpenElement(15, "span");
+            builder.AddAttribute(16, "class", "nt-menu-item-trailing-icon");
+            builder.AddAttribute(17, "aria-hidden", "true");
+            builder.AddContent(18, trailingIcon.Render());
+            builder.CloseElement();
+        }
+
+        if (wrapTrailing) {
             builder.CloseElement();
         }
     };
+
+    private string GetMenuItemBadgeId(INTMenuItem item) => $"{ComponentIdentifier}-item-{_menuItems.IndexOf(item)}-badge";
 
     /// <summary>
     ///     Unregisters a menu item when it is removed.

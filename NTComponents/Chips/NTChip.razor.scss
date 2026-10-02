@@ -39,6 +39,10 @@ $nt-chip-elevations: (
 );
 
 .nt-chip {
+    // The 32px container is centered in the touch target; the edge badge centers on its rounded top-end corner.
+    --nt-badge-anchor-block-start: calc(50% - #{$nt-chip-height * 0.5} + var(--nt-sys-shape-corner-small, 8px) * 0.2929);
+    --nt-badge-anchor-inline-end: calc(100% - var(--nt-sys-shape-corner-small, 8px) * 0.2929);
+
     align-items: center;
     background: transparent;
     border-radius: var(--nt-sys-shape-corner-small, 8px);

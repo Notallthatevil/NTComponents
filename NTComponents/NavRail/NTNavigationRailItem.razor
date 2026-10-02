@@ -9,6 +9,7 @@
        href="@RenderedHref"
        aria-current="@AriaCurrent"
        aria-label="@EffectiveAriaLabel"
+       aria-describedby="@AriaDescribedBy"
        aria-disabled="@AriaDisabled"
        tabindex="@RenderedTabIndex"
        lang="@EffectiveElementLang"
@@ -30,6 +31,7 @@ else {
             disabled="@Disabled"
             aria-current="@AriaCurrent"
             aria-label="@EffectiveAriaLabel"
+            aria-describedby="@AriaDescribedBy"
             lang="@EffectiveElementLang"
             title="@EffectiveElementTitle"
             id="@EffectiveElementId"
@@ -53,6 +55,9 @@ else {
                     @EffectiveIconFragment
                 }
             </span>
+            @if (ShowBadge) {
+                <NTBadge ElementId="@BadgeId" Content="@BadgeContent" AriaLabel="@BadgeAriaLabel" />
+            }
             <span class="nt-navigation-rail-item-label">@Label</span>
         </span>
     </span>;

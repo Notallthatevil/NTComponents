@@ -23,6 +23,68 @@ public class NTIconButton_Tests : BunitContext {
     }
 
     [Fact]
+    public void Badge_Is_Not_Rendered_By_Default() {
+        var cut = Render<NTIconButton>(parameters => parameters
+            .Add(x => x.Icon, SampleIcon)
+            .Add(x => x.AriaLabel, "Open inbox"));
+
+        cut.FindAll(".nt-badge").Should().BeEmpty();
+        cut.Find("button").HasAttribute("aria-describedby").Should().BeFalse();
+    }
+
+    [Fact]
+    public void ShowBadge_Renders_Badge_Outside_AriaHidden_Icon_And_Describes_Button() {
+        var cut = Render<NTIconButton>(parameters => parameters
+            .Add(x => x.Icon, SampleIcon)
+            .Add(x => x.AriaLabel, "Open inbox")
+            .Add(x => x.ShowBadge, true)
+            .Add(x => x.BadgeContent, "3")
+            .Add(x => x.BadgeAriaLabel, "3 unread messages"));
+
+        var button = cut.Find("button");
+        var badge = button.Children.Single(child => child.ClassList.Contains("nt-badge"));
+
+        badge.ClassList.Should().Contain("nt-badge-large");
+        badge.Id.Should().NotBeNullOrWhiteSpace();
+        button.GetAttribute("aria-describedby").Should().Be(badge.Id);
+        button.QuerySelector(".nt-icon-button-icon .nt-badge").Should().BeNull();
+        badge.QuerySelector(".nt-badge-accessible-label")!.TextContent.Should().Be("3 unread messages");
+    }
+
+    [Fact]
+    public void ShowBadge_Without_Content_Renders_Small_Badge() {
+        var cut = Render<NTIconButton>(parameters => parameters
+            .Add(x => x.Icon, SampleIcon)
+            .Add(x => x.AriaLabel, "Open inbox")
+            .Add(x => x.ShowBadge, true));
+
+        cut.Find(".nt-badge").ClassList.Should().Contain("nt-badge-small");
+    }
+
+    [Fact]
+    public void ShowBadge_Appends_Badge_Id_To_Existing_AriaDescribedBy() {
+        var cut = Render<NTIconButton>(parameters => parameters
+            .Add(x => x.Icon, SampleIcon)
+            .Add(x => x.AriaLabel, "Open inbox")
+            .Add(x => x.ShowBadge, true)
+            .AddUnmatched("aria-describedby", "inbox-help"));
+
+        var badgeId = cut.Find(".nt-badge").Id;
+
+        cut.Find("button").GetAttribute("aria-describedby").Should().Be($"inbox-help {badgeId}");
+    }
+
+    [Fact]
+    public void Hidden_Badge_Preserves_Existing_AriaDescribedBy() {
+        var cut = Render<NTIconButton>(parameters => parameters
+            .Add(x => x.Icon, SampleIcon)
+            .Add(x => x.AriaLabel, "Open inbox")
+            .AddUnmatched("aria-describedby", "inbox-help"));
+
+        cut.Find("button").GetAttribute("aria-describedby").Should().Be("inbox-help");
+    }
+
+    [Fact]
     public void Requires_Icon_Parameter() {
         var render = () => Render<NTIconButton>(parameters => parameters.Add(x => x.AriaLabel, "Open menu"));
 

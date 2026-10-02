@@ -88,10 +88,17 @@ $sizes: (
     }
 }
 
+// Anchors an edge-placed NTBadge on the container's rounded top-end corner: the point at 45 degrees on the corner arc, inset by radius * (1 - 1/sqrt(2)).
+@mixin badge-anchor($block-offset, $corner-radius) {
+    --nt-badge-anchor-block-start: calc(#{$block-offset} + #{$corner-radius} * 0.2929);
+    --nt-badge-anchor-inline-end: calc(100% - #{$corner-radius} * 0.2929);
+}
+
 @mixin size($square-shape-class, $height, $padding, $gap, $icon-size, $radius, $pressed-radius, $square-radius, $weight, $font-size, $line-height, $tracking) {
     --nt-button-progress-inset-block: #{touch-inset($height)};
     --nt-button-progress-inset-inline: 0px;
     --nt-button-progress-ring-size: max(24px, calc(#{$height} - 8px));
+    @include badge-anchor(touch-inset($height), math.div($height, 2));
 
     border-radius: $radius;
     gap: $gap;
@@ -106,6 +113,7 @@ $sizes: (
     }
 
     &.#{$square-shape-class} {
+        @include badge-anchor(touch-inset($height), $square-radius);
         border-radius: $square-radius;
     }
 

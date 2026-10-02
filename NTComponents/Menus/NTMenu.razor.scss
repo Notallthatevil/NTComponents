@@ -238,6 +238,12 @@ $menu-selected-content-color: colors.$tnt-color-on-tertiary-container;
             color: inherit;
         }
 
+        .nt-menu-item-trailing {
+            align-items: center;
+            display: inline-flex;
+            gap: 12px;
+        }
+
         .nt-menu-item-label {
             min-inline-size: 0;
             overflow: hidden;

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using NTComponents.CodeDocumentation;
 using NTComponents.Core;
+using NTComponents.Interfaces;
 
 namespace NTComponents;
 
@@ -18,7 +19,20 @@ namespace NTComponents;
     RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
     CompatibilitySummary = "Renders a native button in static SSR and adds Blazor callbacks when interactive.",
     CompatibilityDetails = "Use AdditionalAttributes for native HTML attributes in static SSR. Blazor EventCallback parameters require an interactive render mode.")]
-public partial class NTButton : NTButtonBase {
+public partial class NTButton : NTButtonBase, INTBadgeable {
+    /// <inheritdoc />
+    [Parameter]
+    public string? BadgeAriaLabel { get; set; }
+
+    /// <inheritdoc />
+    [Parameter]
+    public string? BadgeContent { get; set; }
+
+    /// <inheritdoc />
+    /// <remarks>The badge straddles the container's top-end corner, centered on its rounded edge for every shape.</remarks>
+    [Parameter]
+    public bool ShowBadge { get; set; }
+
 
     /// <inheritdoc />
     public override string? ElementClass => CssClassBuilder.Create()
@@ -95,6 +109,10 @@ public partial class NTButton : NTButtonBase {
     public NTButtonVariant Variant { get; set; } = NTButtonVariant.Filled;
 
     internal string? AriaPressed => ToggleAriaPressed;
+
+    private string? AriaDescribedBy => NTBadge.GetDescribedBy(AdditionalAttributes?.GetValueOrDefault("aria-describedby"), ShowBadge && AdditionalAttributes?.ContainsKey("aria-label") == true, BadgeId);
+
+    private string BadgeId => $"{ComponentIdentifier}-badge";
 
     private ButtonShape EffectiveShape => GetEffectiveToggleShape(Shape);
 

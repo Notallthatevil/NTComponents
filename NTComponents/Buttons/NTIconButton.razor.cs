@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using NTComponents.Core;
+using NTComponents.Interfaces;
 
 using NTComponents.CodeDocumentation;
 namespace NTComponents;
@@ -29,7 +30,7 @@ namespace NTComponents;
     RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
     CompatibilitySummary = "Renders useful static HTML and adds Blazor behavior when interactive.",
     CompatibilityDetails = "Static SSR preserves the rendered markup and native browser behavior. EventCallback handlers, bound state updates, and live validation require an interactive render mode.")]
-public partial class NTIconButton : NTButtonBase {
+public partial class NTIconButton : NTButtonBase, INTBadgeable {
 
     /// <summary>
     ///     Gets or sets the accessible name announced for the icon-only button.
@@ -39,6 +40,20 @@ public partial class NTIconButton : NTButtonBase {
     /// </remarks>
     [Parameter, EditorRequired]
     public string AriaLabel { get; set; } = string.Empty;
+
+    /// <inheritdoc />
+    /// <remarks>Announced through <c>aria-describedby</c> after the button's <see cref="AriaLabel" />.</remarks>
+    [Parameter]
+    public string? BadgeAriaLabel { get; set; }
+
+    /// <inheritdoc />
+    [Parameter]
+    public string? BadgeContent { get; set; }
+
+    /// <inheritdoc />
+    /// <remarks>The badge is anchored to the top-end corner of <see cref="Icon" /> using Material 3 offsets.</remarks>
+    [Parameter]
+    public bool ShowBadge { get; set; }
 
     /// <inheritdoc />
     public override string? ElementClass => CssClassBuilder.Create()
@@ -133,6 +148,10 @@ public partial class NTIconButton : NTButtonBase {
     public NTIconButtonAppearance Width { get; set; } = NTIconButtonAppearance.Default;
 
     internal string? AriaPressed => ToggleAriaPressed;
+
+    private string? AriaDescribedBy => NTBadge.GetDescribedBy(AdditionalAttributes?.GetValueOrDefault("aria-describedby"), ShowBadge, BadgeId);
+
+    private string BadgeId => $"{ComponentIdentifier}-badge";
 
     private ButtonShape EffectiveShape => GetEffectiveToggleShape(Shape);
 

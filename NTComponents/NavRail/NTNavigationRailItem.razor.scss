@@ -109,6 +109,11 @@ $nt-navigation-rail-expanded-label-max-width: 256px;
 }
 
 .nt-navigation-rail-item-content {
+    // The badge shares the icon's grid cell (explicit end lines, since auto lines span to the padding edge for absolute items).
+    --nt-badge-grid-area: 1 / 1 / 2 / 2;
+    --nt-badge-anchor-block-start: calc(50% - #{$nt-navigation-rail-icon-size * 0.5});
+    --nt-badge-anchor-inline-end: calc(50% + #{$nt-navigation-rail-icon-size * 0.5});
+
     align-items: start;
     border-radius: var(--nt-navigation-rail-indicator-shape, 999px);
     box-sizing: border-box;

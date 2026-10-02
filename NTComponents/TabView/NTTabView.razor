@@ -36,6 +36,7 @@
                                 aria-selected="@(selected ? "true" : "false")"
                                 aria-controls="@tab.ResolvedPanelId"
                                 aria-label="@tab.ResolvedAriaLabel"
+                                aria-describedby="@tab.AriaDescribedBy"
                                 aria-disabled="@(tab.Disabled ? "true" : null)"
                                 disabled="@(tab.Disabled ? true : null)"
                                 tabindex="@(selected && !tab.Disabled ? "0" : "-1")"
@@ -44,11 +45,14 @@
                                 data-nt-tab-index="@index">
                             <span class="nt-tab-view-state-layer" aria-hidden="true"></span>
                             @NTRipple.Render()
-                            <span class="nt-tab-view-content nt-tab-view-indicator-target">
+                            <span class="nt-tab-view-content nt-tab-view-indicator-target@(tab.Icon is null ? " nt-tab-view-text-only" : null)">
                                 @if (tab.Icon is not null) {
                                     <span class="nt-tab-view-icon" aria-hidden="true">@tab.Icon.Render()</span>
                                 }
                                 <span class="nt-tab-view-label">@tab.Label</span>
+                                @if (tab.ShowBadge) {
+                                    <NTBadge ElementId="@tab.BadgeId" Content="@tab.BadgeContent" AriaLabel="@tab.BadgeAriaLabel" Placement="@(tab.Icon is null || Variant == NTTabViewVariant.Secondary ? NTBadgePlacement.Inline : NTBadgePlacement.Icon)" />
+                                }
                             </span>
 
                             @if (tab.HeaderTooltip is not null) {
