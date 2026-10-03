@@ -328,8 +328,22 @@ public sealed partial class DocumentationCatalog {
         }
 
         var defaultComponent = componentType.GetConstructor(Type.EmptyTypes) is null ? null : Activator.CreateInstance(componentType);
-        var parameters = documentation.Parameters
-            .Where(parameter => !parameter.IsFromBaseType && IsPublicOrProtected(parameter.Accessibility))
+        var isFormControl = componentType.GetProperty("ValueExpression") is not null || componentType == typeof(NTFileUpload);
+        var documentedParameters = documentation.Parameters
+            .Where(parameter => IsPublicOrProtected(parameter.Accessibility) && (!parameter.IsFromBaseType || isFormControl && IsFormDemoParameter(parameter.Name)));
+        if (isFormControl) {
+            // Razor-generated inheritance is not always available when source documentation is generated.
+            // Resolve shared field options from the actual runtime base types as well.
+            for (var baseType = componentType.BaseType; baseType is not null; baseType = baseType.BaseType) {
+                var baseName = (baseType.FullName ?? baseType.Name).Split('`')[0];
+                var baseDocumentation = GeneratedCodeDocumentation.Model.Types.FirstOrDefault(type => type.FullName == baseName || type.FullName.StartsWith($"{baseName}<", StringComparison.Ordinal));
+                if (baseDocumentation is not null) {
+                    documentedParameters = documentedParameters.Concat(baseDocumentation.Parameters.Where(parameter => IsPublicOrProtected(parameter.Accessibility) && IsFormDemoParameter(parameter.Name)));
+                }
+            }
+        }
+
+        var parameters = documentedParameters.DistinctBy(parameter => parameter.Name)
             .Select(parameter => CreateSandboxParameter(documentation.Name, componentType, defaultComponent, parameter))
             .Select(parameter => DocumentationDemoProfiles.Apply(documentation.Name, parameter))
             .OrderBy(parameter => parameter.ControlGroup)
@@ -347,6 +361,8 @@ public sealed partial class DocumentationCatalog {
 
         return new SandboxDocumentation(componentType, parameters);
     }
+
+    private static bool IsFormDemoParameter(string name) => name is "Label" or "Placeholder" or "Disabled" or "ReadOnly" or "Required" or "SupportingText";
 
     private static SandboxParameterDocumentation CreateSandboxParameter(string componentName, Type componentType, object? defaultComponent, PropertyDocumentation parameter) {
         var property = componentType.GetProperty(parameter.Name);
@@ -367,11 +383,13 @@ public sealed partial class DocumentationCatalog {
         }
 
         if (valueType == typeof(string)) {
-            return SandboxParameterDocumentation.Supported(parameter, SandboxParameterKind.Text, DocumentationDemoProfiles.BuildStringDefault(componentName, parameter, componentDefault as string));
+            return SandboxParameterDocumentation.Supported(parameter, SandboxParameterKind.Text, DocumentationDemoProfiles.BuildStringDefault(componentName, parameter, componentDefault as string), isControlVisible: !(componentName == "NTBrowserTimeZone" && parameter.Name == "Value"));
         }
 
         if (IsNumericType(valueType.FullName ?? valueType.Name)) {
-            return SandboxParameterDocumentation.Supported(parameter, SandboxParameterKind.Number, DocumentationDemoProfiles.BuildNumericDefault(componentName, parameter.Name, valueType, componentDefault));
+            var isNullable = Nullable.GetUnderlyingType(propertyType) is not null;
+            var defaultValue = isNullable && componentDefault is null ? null : DocumentationDemoProfiles.BuildNumericDefault(componentName, parameter.Name, valueType, componentDefault);
+            return SandboxParameterDocumentation.Supported(parameter, SandboxParameterKind.Number, defaultValue, valueType, isNullable: isNullable);
         }
 
         if (valueType == typeof(DateTime) || valueType == typeof(DateOnly) || valueType == typeof(TimeOnly) || valueType == typeof(DateTimeOffset)) {

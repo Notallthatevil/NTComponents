@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Forms;
 using NTComponents.Site.Documentation;
 using NTComponents.Virtualization;
 using System.Globalization;
@@ -6,9 +7,15 @@ using System.Globalization;
 namespace NTComponents.Site.Components;
 
 public partial class DocumentationCuratedDemo {
-    private static readonly string[] SupportedComponentNames = ["NTDialog", "NTMenu", "NTSnackbar", "NTToast", "NTTooltip", "NTVirtualize"];
+    private static readonly string[] SupportedComponentNames = ["NTContextMenu", "NTDialog", "NTFileUpload", "NTForm", "NTMenu", "NTSnackbar", "NTToast", "NTTooltip", "NTVirtualize", "NTWindowHost"];
     private static readonly string[] Items = [.. Enumerable.Range(1, 100).Select(index => $"Item {index}")];
     private NTDialog? _dialog;
+    private readonly DocumentationContactModel _contact = new();
+    private INTWindow? _managedWindow;
+    private string? _formResult;
+    private string? _uploadResult;
+    private string? _contextResult;
+    private IReadOnlyList<IBrowserFile>? _files;
 
     [Parameter, EditorRequired]
     public ComponentDocumentationEntry Component { get; set; } = default!;
@@ -26,6 +33,10 @@ public partial class DocumentationCuratedDemo {
 
     public static string GetGeneratedRazorMarkup(string? componentName, Func<string, string?> attributeFormatter) {
         var (markup, marker, parameterNames) = componentName switch {
+            "NTForm" => (FormMarkup, "<NTForm Model=\"_contact\"", new[] { "FormName", "Enhance", "Appearance", "Density", "BindOnInput", "Disabled", "ReadOnly", "ShowRequiredSupportingText", "RequiredSupportingText" }),
+            "NTFileUpload" => (FileUploadMarkup, "<NTFileUpload", new[] { "Label", "ChooseButtonText", "Multiple", "Accept", "MaximumFileCount", "MaximumFileSize", "AutoUpload", "ShowUploadButton", "UploadButtonText", "ReadyText", "UploadingText", "UploadCompleteText", "Disabled", "ReadOnly", "Required", "SupportingText" }),
+            "NTContextMenu" => (ContextMenuMarkup, "<NTContextMenu", new[] { "AriaLabel", "Appearance", "CloseOnContentClick", "Disabled", "LongPressDelay", "Elevation", "ContainerColor", "TextColor", "SelectedContainerColor", "SelectedTextColor" }),
+            "NTWindowHost" => (WindowHostMarkup, "<NTWindowHost", new[] { "AriaLabel" }),
             "NTDialog" => (DialogMarkup, "<NTDialog @ref=\"_dialog\"", new[] { "Id", "Title", "SupportingText", "CloseButtonAriaLabel", "ButtonSpacing", "CloseOnBackdrop", "CloseOnEscape", "Elevation", "Open", "ShowCloseButton" }),
             "NTMenu" => (MenuMarkup, "<NTMenu ElementId=\"docs-example-menu\"", new[] { "AnchorName", "AnchorSelector", "Appearance", "AriaLabel", "CloseOnContentClick", "ContainerColor", "Disabled", "Elevation", "IsSubMenu", "Popover", "Role", "SelectedContainerColor", "SelectedTextColor", "TextColor" }),
             "NTSnackbar" => (SnackbarMarkup, "<NTSnackbar", new[] { "Position" }),
@@ -58,6 +69,31 @@ public partial class DocumentationCuratedDemo {
 
     private Task ShowToastAsync() => ToastService.ShowSuccessAsync("Saved", "Your changes were saved.", timeout: 8);
 
+    private void SubmitContact() => _formResult = $"Submitted {_contact.Name} ({_contact.Email}).";
+
+    private async Task ReadSampleFileAsync(NTFileUploadEventArgs args) {
+        if (args.Stream is not null) {
+            await args.Stream.CopyToAsync(Stream.Null);
+            _uploadResult = $"Read {args.Name}: {args.Size} bytes.";
+        }
+    }
+
+    private void OpenManagedWindow() {
+        if (_managedWindow is not null) {
+            WindowService.Close(_managedWindow);
+        }
+
+        _managedWindow = WindowService.Open("Managed project notes", builder => builder.AddContent(0, "This window is rendered by NTWindowHost."));
+    }
+
+    public void Dispose() {
+        if (_managedWindow is not null) {
+            WindowService.Close(_managedWindow);
+        }
+
+        GC.SuppressFinalize(this);
+    }
+
     private T Value<T>(string parameterName, T fallback) {
         var value = ValueProvider(parameterName);
         if (value is T typedValue) {
@@ -82,7 +118,7 @@ public partial class DocumentationCuratedDemo {
 
     private string TextValue(string parameterName, string fallback) {
         var value = ValueProvider(parameterName) as string;
-        return string.IsNullOrWhiteSpace(value) ? fallback : value;
+        return value ?? fallback;
     }
 
     private TnTColor? ColorValue(string parameterName) => Value<TnTColor?>(parameterName, null);
@@ -102,6 +138,85 @@ public partial class DocumentationCuratedDemo {
         ("NTVirtualize", "ItemSize") => "ItemSize=\"50\"",
         _ => null
     };
+
+    private const string FormMarkup = """
+        @using System.ComponentModel.DataAnnotations
+
+        <NTForm Model="_contact" OnValidSubmit="SubmitContact">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <NTInputText Label="Name" @bind-Value="_contact.Name" />
+            <NTInputText Label="Email" InputType="TextInputType.Email" @bind-Value="_contact.Email" />
+            <button type="submit">Submit example form</button>
+            <output>@_formResult</output>
+        </NTForm>
+
+        @code {
+            private readonly ContactModel _contact = new();
+            private string? _formResult;
+            private void SubmitContact() => _formResult = $"Submitted {_contact.Name} ({_contact.Email}).";
+            private sealed class ContactModel {
+                [Required] public string Name { get; set; } = "Ada Lovelace";
+                [Required, EmailAddress] public string Email { get; set; } = "ada@example.com";
+            }
+        }
+        """;
+
+    private const string FileUploadMarkup = """
+        @using Microsoft.AspNetCore.Components.Forms
+
+        <NTFileUpload @bind-Value="_files" OnUploadFile="ReadSampleFileAsync" OnFileError="args => _uploadResult = args.ErrorMessage" />
+        <output>@_uploadResult</output>
+        <NTFileUploadItem Name="example.txt" Status="Ready" Percent="100" ShouldShowPercent="true" />
+
+        @code {
+            private string? _uploadResult;
+            private IReadOnlyList<IBrowserFile>? _files;
+            private async Task ReadSampleFileAsync(NTFileUploadEventArgs args) {
+                if (args.Stream is not null) {
+                    await args.Stream.CopyToAsync(Stream.Null);
+                    _uploadResult = $"Read {args.Name}: {args.Size} bytes.";
+                }
+            }
+        }
+        """;
+
+    private const string ContextMenuMarkup = """
+        <NTContextMenu>
+            <TargetContent><button type="button">Right-click or long-press for actions</button></TargetContent>
+            <MenuContent>
+                <NTMenuButtonItem Label="Archive example" Icon="MaterialIcon.Archive" OnClickCallback='_ => _contextResult = "Example archived"' />
+            </MenuContent>
+        </NTContextMenu>
+        <output>@_contextResult</output>
+
+        @code {
+            private string? _contextResult;
+        }
+        """;
+
+    private const string WindowHostMarkup = """
+        @inject INTWindowService WindowService
+        @implements IDisposable
+
+        <NTButton Label="Open managed window" OnClickCallback="_ => OpenManagedWindow()" />
+        <NTWindowHost />
+
+        @code {
+            private INTWindow? _managedWindow;
+            private void OpenManagedWindow() {
+                if (_managedWindow is not null) {
+                    WindowService.Close(_managedWindow);
+                }
+                _managedWindow = WindowService.Open("Managed project notes", builder => builder.AddContent(0, "This window is rendered by NTWindowHost."));
+            }
+            public void Dispose() {
+                if (_managedWindow is not null) {
+                    WindowService.Close(_managedWindow);
+                }
+            }
+        }
+        """;
 
     private const string DialogMarkup = """
         <NTButton Label="Open example dialog" OnClickCallback="OpenDialogAsync" />

@@ -177,6 +177,8 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
                 continue;
             }
 
+            await WaitForRenderAsync(_page);
+
             var routeDemoComponentNames = (await sandbox.Locator("[data-docs-demo-component]").EvaluateAllAsync<string[]>(
                     "elements => elements.map(element => element.getAttribute('data-docs-demo-component')).filter(Boolean)"))
                 .Select(RemoveGenericArity)
@@ -232,6 +234,14 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
                 await ValidatePreviewAsync(failures, route, sandbox);
             }
 
+            await WaitForRenderAsync(_page);
+            await _page.SetViewportSizeAsync(390, 844);
+            await WaitForRenderAsync(_page);
+            var mobileOverflow = await _page.EvaluateAsync<int>("Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) - innerWidth");
+            if (mobileOverflow > 1) {
+                failures.Add($"{route}: mobile page overflowed horizontally by {mobileOverflow}px.");
+            }
+            await _page.SetViewportSizeAsync(1280, 720);
             await WaitForRenderAsync(_page);
             foreach (var diagnostic in _browserDiagnostics.Skip(diagnosticCountBeforeNavigation)) {
                 failures.Add($"{diagnostic.Route}: browser {diagnostic.Kind}: {FirstLine(diagnostic.Message)}");
@@ -512,9 +522,9 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
 
         await OpenComponentDemoAsync("ntbutton");
         var groupNames = await _page.Locator(".docs-control-group").EvaluateAllAsync<string[]>("groups => groups.map(group => group.dataset.docsControlGroup)");
-        groupNames.Should().Equal("Content", "Appearance", "Behavior");
+        groupNames.Should().Equal("Content", "Appearance", "Behavior", "Accessibility");
         var buttonControls = await _page.Locator("[data-docs-control-name]").EvaluateAllAsync<string[]>("rows => rows.map(row => row.dataset.docsControlName)");
-        buttonControls.Should().Equal("Label", "Variant", "LeadingIcon", "Shape", "Elevation", "IsToggleButton", "Selected");
+        buttonControls.Should().Equal("Label", "BadgeContent", "Variant", "LeadingIcon", "Shape", "Elevation", "IsToggleButton", "Selected", "ShowBadge", "BadgeAriaLabel");
         (await _page.Locator("#docs-sandbox-ntbutton-label").InputValueAsync()).Should().Be("Save changes");
 
         await OpenComponentDemoAsync("ntbuttongroup");
@@ -604,11 +614,273 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
         _browserDiagnostics.Should().BeEmpty("curated interactions should not produce browser errors");
     }
 
+    [Theory]
+    [InlineData("ntbutton", "label", "", "Label")]
+    [InlineData("ntcarousel", "autoplayinterval", "0", "AutoPlayInterval")]
+    [InlineData("ntvirtualize", "itemsize", "0", "ItemSize")]
+    [InlineData("ntvirtualize", "overscancount", "1.5", "OverscanCount requires a whole number")]
+    [InlineData("nttooltip", "showdelay", "999999999999", "ShowDelay is outside the supported range")]
+    public async Task InvalidDemoOptions_ShowSpecificError_AndRecoverAfterCorrection(string slug, string parameter, string invalidValue, string expectedError) {
+        ArgumentNullException.ThrowIfNull(_page);
+        await OpenComponentDemoAsync(slug);
+        var control = _page.Locator($"#docs-sandbox-{slug}-{parameter}");
+        var originalValue = await control.InputValueAsync();
+        await control.FillAsync(invalidValue);
+        await control.PressAsync("Tab");
+        var alert = _page.Locator(".docs-generated-example [role='alert']");
+        await Assertions.Expect(alert).ToContainTextAsync(expectedError);
+        await Assertions.Expect(_page.Locator(".docs-sandbox-controls")).ToBeVisibleAsync();
+
+        await control.FillAsync(originalValue);
+        await control.PressAsync("Tab");
+        await Assertions.Expect(alert).ToHaveCountAsync(0);
+        var failures = new List<string>();
+        await ValidatePreviewAsync(failures, _activeRoute, _page.Locator(".docs-sandbox"));
+        failures.Should().BeEmpty();
+        _browserDiagnostics.Should().BeEmpty("an invalid demo option must be contained in its preview");
+    }
+
+    [Fact]
+    public async Task IncompatibleDemoOptions_ReportTheContract_AndResetToWorkingDefaults() {
+        ArgumentNullException.ThrowIfNull(_page);
+        await OpenComponentDemoAsync("ntbutton");
+        await _page.Locator("#docs-sandbox-ntbutton-variant").SelectOptionAsync(new SelectOptionValue { Label = "Text" });
+        await _page.Locator("#docs-sandbox-ntbutton-istogglebutton").CheckAsync();
+        var alert = _page.Locator(".docs-generated-example [role='alert']");
+        await Assertions.Expect(alert).ToContainTextAsync("Text buttons do not support toggle behavior");
+        await alert.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Reset example", Exact = true }).ClickAsync();
+        await Assertions.Expect(alert).ToHaveCountAsync(0);
+        await Assertions.Expect(_page.Locator("#docs-sandbox-ntbutton-istogglebutton")).Not.ToBeCheckedAsync();
+        await Assertions.Expect(_page.Locator(".docs-generated-example button").First).ToHaveTextAsync("Save changes");
+
+        await OpenComponentDemoAsync("ntdatagrid");
+        await _page.Locator("#docs-sandbox-ntdatagrid-virtualize").CheckAsync();
+        await _page.Locator("#docs-sandbox-ntdatagrid-showpagination").CheckAsync();
+        await Assertions.Expect(alert).ToContainTextAsync("does not support using Virtualize and ShowPagination together");
+        await _page.Locator("#docs-sandbox-ntdatagrid-showpagination").UncheckAsync();
+        await Assertions.Expect(alert).ToHaveCountAsync(0);
+        await Assertions.Expect(_page.Locator(".docs-generated-example")).ToContainTextAsync("Alpha");
+        _browserDiagnostics.Should().BeEmpty();
+    }
+
+    [Theory]
+    [InlineData("ntinputtext", "Grace Hopper")]
+    [InlineData("nttextArea", "An edited message")]
+    [InlineData("ntinputnumeric", "42")]
+    public async Task InputDemo_EditsUpdateTheBoundValue_AndSurviveOptionAndModeChanges(string slug, string value) {
+        ArgumentNullException.ThrowIfNull(_page);
+        slug = slug.ToLowerInvariant();
+        await OpenComponentDemoAsync(slug);
+        var input = _page.Locator(".docs-generated-example input:not([type=hidden]), .docs-generated-example textarea").First;
+        await input.FillAsync(value);
+        await input.PressAsync("Tab");
+        var output = _page.Locator("output[aria-label='Current value']");
+        await Assertions.Expect(output).ToHaveTextAsync(value);
+
+        var label = _page.Locator($"#docs-sandbox-{slug}-label");
+        await label.FillAsync("Edited label");
+        await label.PressAsync("Tab");
+        await Assertions.Expect(input).ToHaveValueAsync(value);
+        await _page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Razor", Exact = true }).ClickAsync();
+        await _page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Preview", Exact = true }).ClickAsync();
+        await Assertions.Expect(input).ToHaveValueAsync(value);
+        await Assertions.Expect(output).ToHaveTextAsync(value);
+        _browserDiagnostics.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task SelectionAndSliderDemos_UpdateTheirBoundOutput() {
+        ArgumentNullException.ThrowIfNull(_page);
+        foreach (var slug in new[] { "ntinputcheckbox", "ntinputswitch" }) {
+            await OpenComponentDemoAsync(slug);
+            await _page.Locator(".docs-generated-example input[type=checkbox]").UncheckAsync();
+            await Assertions.Expect(_page.Locator("output[aria-label='Current value']")).ToHaveTextAsync("False");
+        }
+
+        await OpenComponentDemoAsync("ntinputradiogroup");
+        await _page.Locator(".docs-generated-example input[type=radio]").Nth(1).CheckAsync();
+        await Assertions.Expect(_page.Locator("output[aria-label='Current value']")).ToHaveTextAsync("two");
+
+        await OpenComponentDemoAsync("ntselect");
+        await _page.Locator(".docs-generated-example select").SelectOptionAsync("two");
+        await Assertions.Expect(_page.Locator("output[aria-label='Current value']")).ToHaveTextAsync("two");
+
+        await OpenComponentDemoAsync("ntcombobox");
+        await _page.Locator(".docs-generated-example input[role=combobox]").ClickAsync();
+        await _page.Locator(".docs-generated-example [role=option]").Filter(new LocatorFilterOptions { HasText = "Two" }).ClickAsync();
+        await Assertions.Expect(_page.Locator("output[aria-label='Current value']")).ToHaveTextAsync("one, two");
+
+        await OpenComponentDemoAsync("ntinputslider");
+        var slider = _page.Locator(".docs-generated-example input[type=range]");
+        await slider.PressAsync("Home");
+        await slider.PressAsync("ArrowRight");
+        await Assertions.Expect(_page.Locator("output[aria-label='Current value']")).ToHaveTextAsync("1");
+
+        await OpenComponentDemoAsync("ntinputcolor");
+        await _page.Locator(".docs-generated-example input[type=color]").EvaluateAsync("input => { input.value = '#123456'; input.dispatchEvent(new Event('change', { bubbles: true })); }");
+        await Assertions.Expect(_page.Locator("output[aria-label='Current value']")).ToHaveTextAsync("#123456");
+        _browserDiagnostics.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task TabWizardAndButtonGroupDemos_NavigateToTheSelectedContent() {
+        ArgumentNullException.ThrowIfNull(_page);
+        await OpenComponentDemoAsync("nttabview");
+        var demo = _page.Locator(".docs-generated-example");
+        await demo.GetByRole(AriaRole.Tab, new LocatorGetByRoleOptions { Name = "Details", Exact = true }).ClickAsync();
+        await Assertions.Expect(demo.GetByRole(AriaRole.Tabpanel)).ToHaveTextAsync("Details content");
+
+        await OpenComponentDemoAsync("ntwizard");
+        await demo.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Next Step", Exact = true }).ClickAsync();
+        await Assertions.Expect(demo.GetByRole(AriaRole.Tabpanel)).ToContainTextAsync("Second step content");
+        await demo.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Previous Step", Exact = true }).ClickAsync();
+        await Assertions.Expect(demo.GetByRole(AriaRole.Tabpanel)).ToContainTextAsync("First step content");
+
+        await OpenComponentDemoAsync("ntbuttongroup");
+        var two = demo.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Two", Exact = true });
+        await two.ClickAsync();
+        await Assertions.Expect(two).ToHaveAttributeAsync("aria-pressed", "true");
+        await Assertions.Expect(_page.Locator("#docs-sandbox-ntbuttongroup-selectedkey")).ToHaveValueAsync("two");
+        _browserDiagnostics.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task FormDemo_ValidatesAndSubmitsEditedValues_AndAppliesFormOptions() {
+        ArgumentNullException.ThrowIfNull(_page);
+        await OpenComponentDemoAsync("ntform");
+        var demo = _page.Locator(".docs-curated-demo");
+        var name = demo.GetByRole(AriaRole.Textbox, new LocatorGetByRoleOptions { NameRegex = new System.Text.RegularExpressions.Regex("^Name\\b") });
+        var email = demo.GetByRole(AriaRole.Textbox, new LocatorGetByRoleOptions { NameRegex = new System.Text.RegularExpressions.Regex("^Email\\b") });
+        await name.FillAsync("");
+        await demo.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Submit example form", Exact = true }).ClickAsync();
+        await Assertions.Expect(demo).ToContainTextAsync("The Name field is required.");
+        await Assertions.Expect(demo.Locator("output")).ToBeEmptyAsync();
+
+        await name.FillAsync("Grace Hopper");
+        await email.FillAsync("grace@example.com");
+        await demo.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Submit example form", Exact = true }).ClickAsync();
+        await Assertions.Expect(demo.Locator("output")).ToHaveTextAsync("Submitted Grace Hopper (grace@example.com).");
+        await _page.Locator("#docs-sandbox-ntform-disabled").CheckAsync();
+        await Assertions.Expect(name).ToBeDisabledAsync();
+        await _page.Locator("#docs-sandbox-ntform-disabled").UncheckAsync();
+        await Assertions.Expect(name).ToBeEnabledAsync();
+        await Assertions.Expect(name).ToHaveValueAsync("Grace Hopper");
+        _browserDiagnostics.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task FileUploadDemo_ReadsTheSelectedBytes_AndRejectsOversizedFiles() {
+        ArgumentNullException.ThrowIfNull(_page);
+        await OpenComponentDemoAsync("ntfileupload");
+        var demo = _page.Locator(".docs-curated-demo");
+        var fileInput = demo.Locator("input[type=file]");
+        await fileInput.SetInputFilesAsync(new FilePayload { Name = "hello.txt", MimeType = "text/plain", Buffer = Encoding.UTF8.GetBytes("hello") });
+        await demo.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Upload", Exact = true }).ClickAsync();
+        await Assertions.Expect(demo.Locator("output")).ToHaveTextAsync("Read hello.txt: 5 bytes.");
+        await Assertions.Expect(demo).ToContainTextAsync("Complete");
+
+        await _page.Locator("#docs-sandbox-ntfileupload-maximumfilesize").FillAsync("4");
+        await _page.Locator("#docs-sandbox-ntfileupload-maximumfilesize").PressAsync("Tab");
+        await fileInput.SetInputFilesAsync(new FilePayload { Name = "oversized.txt", MimeType = "text/plain", Buffer = Encoding.UTF8.GetBytes("hello") });
+        await Assertions.Expect(demo).ToContainTextAsync("Too large");
+        await Assertions.Expect(demo.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Upload", Exact = true })).ToBeDisabledAsync();
+        _browserDiagnostics.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task ContextMenuDemo_InvokesTheAction_AndHonorsDisabled() {
+        ArgumentNullException.ThrowIfNull(_page);
+        await OpenComponentDemoAsync("ntcontextmenu");
+        var demo = _page.Locator(".docs-curated-demo");
+        var trigger = demo.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Right-click or long-press for actions", Exact = true });
+        await trigger.ClickAsync(new LocatorClickOptions { Button = MouseButton.Right });
+        await demo.GetByRole(AriaRole.Menuitem, new LocatorGetByRoleOptions { Name = "Archive example", Exact = true }).ClickAsync();
+        await Assertions.Expect(demo.Locator("output")).ToHaveTextAsync("Example archived");
+        await _page.Locator("#docs-sandbox-ntcontextmenu-disabled").CheckAsync();
+        await trigger.ClickAsync(new LocatorClickOptions { Button = MouseButton.Right });
+        await Assertions.Expect(demo.Locator(":popover-open")).ToHaveCountAsync(0);
+        _browserDiagnostics.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task WindowHostDemo_OpensClosesAndReopensManagedContent() {
+        ArgumentNullException.ThrowIfNull(_page);
+        await OpenComponentDemoAsync("ntwindowhost");
+        var demo = _page.Locator(".docs-curated-demo");
+        var open = demo.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Open managed window", Exact = true });
+        await open.ClickAsync();
+        var window = demo.Locator(".nt-window");
+        await Assertions.Expect(window).ToContainTextAsync("This window is rendered by NTWindowHost.");
+        await window.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Close Managed project notes", Exact = true }).ClickAsync();
+        await Assertions.Expect(window).ToHaveCountAsync(0);
+        await open.ClickAsync();
+        await Assertions.Expect(window).ToHaveCountAsync(1);
+        await _page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Razor", Exact = true }).ClickAsync();
+        await _page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Preview", Exact = true }).ClickAsync();
+        await Assertions.Expect(window).ToHaveCountAsync(0, new LocatorAssertionsToHaveCountOptions { Timeout = 5_000 });
+        _browserDiagnostics.Should().BeEmpty("preview disposal must release its managed windows");
+    }
+
+    [Fact]
+    public async Task LayoutDemos_RenderRealPanesCardsFieldsAndDocumentNavigation() {
+        ArgumentNullException.ThrowIfNull(_page);
+        await OpenComponentDemoAsync("ntmultipaneview");
+        await Assertions.Expect(_page.Locator(".docs-generated-example .nt-multi-pane-view > .nt-card")).ToHaveCountAsync(3);
+        await _page.Locator("#docs-sandbox-ntmultipaneview-panecount").FillAsync("3");
+        await _page.Locator("#docs-sandbox-ntmultipaneview-panecount").PressAsync("Tab");
+        await Assertions.Expect(_page.Locator(".docs-generated-example .nt-multi-pane-view")).ToHaveClassAsync(new System.Text.RegularExpressions.Regex("nt-multi-pane-view-3-panes"));
+
+        await OpenComponentDemoAsync("ntfeedview");
+        await Assertions.Expect(_page.Locator(".docs-generated-example .nt-feed-view > .nt-card")).ToHaveCountAsync(6);
+
+        foreach (var slug in new[] { "ntformfieldgridview", "ntformsectionview", "ntformfieldlayoutspan" }) {
+            await OpenComponentDemoAsync(slug);
+            var fields = _page.Locator(".docs-generated-example input:not([type=hidden])");
+            await Assertions.Expect(fields).ToHaveCountAsync(2);
+            await fields.First.FillAsync("Edited field");
+            await fields.First.PressAsync("Tab");
+            await Assertions.Expect(fields.First).ToHaveValueAsync("Edited field");
+        }
+
+        await OpenComponentDemoAsync("ntcontainerview");
+        var view = _page.Locator(".docs-generated-example .nt-container-view");
+        await Assertions.Expect(view.Locator(".nt-container-view-content h2")).ToHaveCountAsync(3);
+        await _page.Locator("#docs-sandbox-ntcontainerview-enableonthispagenavigation").CheckAsync();
+        await Assertions.Expect(view.Locator(".nt-container-view-quick-nav-list a")).ToHaveCountAsync(3);
+        _browserDiagnostics.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task ClearingOptionalDemoValues_RestoresAutomaticSpan_AndRemovesTheIcon() {
+        ArgumentNullException.ThrowIfNull(_page);
+        await OpenComponentDemoAsync("ntformfieldlayoutspan");
+        var columns = _page.Locator("#docs-sandbox-ntformfieldlayoutspan-smallcolumns");
+        await Assertions.Expect(columns).ToHaveValueAsync("");
+        await columns.FillAsync("4");
+        await columns.PressAsync("Tab");
+        var span = _page.Locator(".docs-generated-example .nt-form-field-layout-span");
+        await _page.WaitForFunctionAsync("getComputedStyle(document.querySelector('.docs-generated-example .nt-form-field-layout-span')).getPropertyValue('--nt-form-field-layout-span-small').trim() === '4'");
+        await columns.FillAsync("");
+        await columns.PressAsync("Tab");
+        (await span.EvaluateAsync<string>("element => element.style.getPropertyValue('--nt-form-field-layout-span-small')")).Should().BeEmpty();
+        await _page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Razor", Exact = true }).ClickAsync();
+        await Assertions.Expect(_page.Locator(".docs-code-group pre code")).ToContainTextAsync("SmallColumns=\"@null\"");
+
+        await OpenComponentDemoAsync("ntbutton");
+        var icon = _page.Locator("#docs-sandbox-ntbutton-leadingicon");
+        await icon.SelectOptionAsync(new SelectOptionValue { Label = "MaterialIcon.Add" });
+        await Assertions.Expect(_page.Locator(".docs-generated-example .nt-button-icon")).ToHaveCountAsync(1);
+        await icon.SelectOptionAsync(new SelectOptionValue { Label = "None" });
+        await Assertions.Expect(_page.Locator(".docs-generated-example .nt-button-icon")).ToHaveCountAsync(0);
+        _browserDiagnostics.Should().BeEmpty();
+    }
+
     private async Task OpenComponentDemoAsync(string slug) {
         ArgumentNullException.ThrowIfNull(_page);
         _activeRoute = $"/components/{slug}";
         await _page.GotoAsync($"{_baseUrl}{_activeRoute}", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
         await _page.Locator(".docs-sandbox-preview").WaitForAsync();
+        await Assertions.Expect(_page.Locator(".docs-generated-example [role='alert']")).ToHaveCountAsync(0);
     }
 
     private static async Task ValidateControlLayoutAsync(ICollection<string> failures, string route, ILocator sandbox) {
@@ -630,7 +902,41 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
     }
 
     private static async Task ValidatePreviewAsync(ICollection<string> failures, string route, ILocator sandbox) {
+        var errors = await sandbox.Locator(".docs-generated-example [role='alert']").AllInnerTextsAsync();
+        if (errors.Count > 0) {
+            failures.Add($"{route}: default preview failed: {string.Join(" | ", errors)}");
+            return;
+        }
         var generatedExample = sandbox.Locator(".docs-generated-example");
+        var expectedSelector = route switch {
+            "/components/ntheaddependencies" => "[data-docs-demo-component='NTPageScript']",
+            "/components/ntbrowsertimezone" => "input[data-nt-browser-time-zone]",
+            "/components/ntform" => "form",
+            "/components/ntinputcheckbox" or "/components/ntinputswitch" => "input[type=checkbox]",
+            "/components/ntinputradiogroup" => "input[type=radio]",
+            "/components/ntinputslider" or "/components/ntinputrangeslider" => "input[type=range]",
+            "/components/ntinputcolor" => "input[type=color]",
+            "/components/ntinputnumeric" => "input[type=number]",
+            "/components/ntinputcurrency" or "/components/ntinputtext" or "/components/ntinputdatetime" => ".nt-input-control",
+            "/components/ntselect" => "select",
+            "/components/nttextarea" => "textarea",
+            "/components/ntautocomplete" or "/components/ntcombobox" or "/components/nttypeahead" => "input[role=combobox]",
+            "/components/ntfileupload" => "input[type=file]",
+            "/components/ntrichtexteditor" => "[contenteditable=true]",
+            "/components/ntsnackbar" => ".nt-snackbar-container",
+            "/components/nttoast" => ".nt-toast-container",
+            "/components/ntthemetoggle" => "nt-theme-toggle",
+            "/components/ntvirtualize" => ".virtualize-item",
+            _ => string.Empty
+        };
+        // Most roots use a kebab-case component class. Resolve these explicitly so a marker alone cannot prove rendering.
+        if (expectedSelector.Length == 0) {
+            var name = (await sandbox.Locator("[data-docs-demo-component]").First.GetAttributeAsync("data-docs-demo-component"))![2..];
+            expectedSelector = ".nt-" + System.Text.RegularExpressions.Regex.Replace(name, "(?<=[a-z0-9])(?=[A-Z])", "-").ToLowerInvariant();
+        }
+        if (!await TryWaitForAttachedAsync(generatedExample.Locator(expectedSelector).First)) {
+            failures.Add($"{route}: expected component output '{expectedSelector}' was missing.");
+        }
         var messages = (await generatedExample.Locator(".docs-callout").AllInnerTextsAsync())
             .Where(message => message.Contains("requires additional sample data", StringComparison.OrdinalIgnoreCase))
             .ToArray();
@@ -741,6 +1047,7 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
 
     private async Task<string> RootColorAsync(string propertyName) {
         ArgumentNullException.ThrowIfNull(_page);
+        await _page.WaitForFunctionAsync("name => getComputedStyle(document.documentElement).getPropertyValue(name).trim().length > 0", propertyName);
         return await _page.EvaluateAsync<string>(
             """
             name => {
@@ -866,6 +1173,16 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
     private static async Task<bool> TryWaitForVisibleAsync(ILocator locator) {
         try {
             await locator.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 2000 });
+            return true;
+        }
+        catch (TimeoutException) {
+            return false;
+        }
+    }
+
+    private static async Task<bool> TryWaitForAttachedAsync(ILocator locator) {
+        try {
+            await locator.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Attached, Timeout = 5_000 });
             return true;
         }
         catch (TimeoutException) {

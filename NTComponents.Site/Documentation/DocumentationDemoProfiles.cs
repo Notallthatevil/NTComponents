@@ -140,6 +140,9 @@ internal static class DocumentationDemoProfiles {
 
     public static string BuildInputValue(string componentName) => componentName switch {
         "NTInputText" => "Ada Lovelace",
+        "NTInputColor" => "#6750a4",
+        "NTAutocomplete" => "First option",
+        "NTTypeahead" => "Alpha",
         "NTRichTextEditor" => "A concise example with meaningful content.",
         "NTTextArea" => "A short example message.",
         _ => "Example value"

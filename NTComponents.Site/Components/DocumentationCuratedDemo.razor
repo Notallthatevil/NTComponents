@@ -3,9 +3,82 @@
 @using NTComponents.Toast
 @inject INTSnackbarService SnackbarService
 @inject INTToastService ToastService
+@inject INTWindowService WindowService
+@implements IDisposable
 
 <div class="docs-curated-demo">
     @switch (Component.Type.Name) {
+        case "NTForm":
+        <NTForm Model="_contact"
+                FormName="@TextValue("FormName", "docs-contact")"
+                Enhance="@Value("Enhance", false)"
+                Appearance="@Value("Appearance", NTFormAppearance.Outlined)"
+                Density="@Value("Density", NTFormDensity.Standard)"
+                BindOnInput="@Value("BindOnInput", false)"
+                Disabled="@Value("Disabled", false)"
+                ReadOnly="@Value("ReadOnly", false)"
+                ShowRequiredSupportingText="@Value("ShowRequiredSupportingText", false)"
+                RequiredSupportingText="@TextValue("RequiredSupportingText", "Required")"
+                OnValidSubmit="SubmitContact">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <NTInputText Label="Name" @bind-Value="_contact.Name" />
+            <NTInputText Label="Email" InputType="TextInputType.Email" @bind-Value="_contact.Email" />
+            <button type="submit">Submit example form</button>
+            <output aria-label="Form result">@_formResult</output>
+        </NTForm>
+            break;
+        case "NTFileUpload":
+        <div class="stack">
+            <p>Choose a file to read it locally and see its byte count.</p>
+            <NTFileUpload @bind-Value="_files"
+                          Label="@TextValue("Label", "File upload example")"
+                          ChooseButtonText="@TextValue("ChooseButtonText", "Choose file")"
+                          Multiple="@Value("Multiple", false)"
+                          Accept="@(ValueProvider("Accept") as string)"
+                          MaximumFileCount="@Value("MaximumFileCount", 1)"
+                          MaximumFileSize="@Value("MaximumFileSize", 512_000L)"
+                          AutoUpload="@Value("AutoUpload", false)"
+                          ShowUploadButton="@Value("ShowUploadButton", true)"
+                          UploadButtonText="@TextValue("UploadButtonText", "Upload")"
+                          ReadyText="@TextValue("ReadyText", "Ready")"
+                          UploadingText="@TextValue("UploadingText", "Uploading")"
+                          UploadCompleteText="@TextValue("UploadCompleteText", "Complete")"
+                          Disabled="@Value("Disabled", false)"
+                          ReadOnly="@Value("ReadOnly", false)"
+                          Required="@Value("Required", false)"
+                          SupportingText="@(ValueProvider("SupportingText") as string)"
+                          OnUploadFile="ReadSampleFileAsync"
+                          OnFileError="args => _uploadResult = args.ErrorMessage" />
+            <output aria-label="Upload result">@_uploadResult</output>
+            <NTFileUploadItem Name="example.txt" Status="Ready" Percent="100" ShouldShowPercent="true" />
+            <span data-docs-demo-component="NTFileUploadItem" hidden></span>
+        </div>
+            break;
+        case "NTContextMenu":
+        <NTContextMenu AriaLabel="@TextValue("AriaLabel", "Example context actions")"
+                       Appearance="@Value("Appearance", NTMenuAppearance.Standard)"
+                       CloseOnContentClick="@Value("CloseOnContentClick", true)"
+                       Disabled="@Value("Disabled", false)"
+                       LongPressDelay="@Value("LongPressDelay", 500)"
+                       Elevation="@Value("Elevation", NTElevation.Medium)"
+                       ContainerColor="@(ColorValue("ContainerColor"))"
+                       TextColor="@(ColorValue("TextColor"))"
+                       SelectedContainerColor="@(ColorValue("SelectedContainerColor"))"
+                       SelectedTextColor="@(ColorValue("SelectedTextColor"))">
+            <TargetContent><button type="button">Right-click or long-press for actions</button></TargetContent>
+            <MenuContent>
+                <NTMenuButtonItem Label="Archive example" Icon="MaterialIcon.Archive" OnClickCallback='_ => _contextResult = "Example archived"' />
+            </MenuContent>
+        </NTContextMenu>
+        <output aria-label="Context action result">@_contextResult</output>
+            break;
+        case "NTWindowHost":
+        <div class="stack">
+            <NTButton Label="Open managed window" OnClickCallback="_ => OpenManagedWindow()" />
+            <NTWindowHost AriaLabel="@TextValue("AriaLabel", "Example windows")" />
+        </div>
+            break;
         case "NTDialog":
         <div class="stack">
             <NTButton Label="Open example dialog" OnClickCallback="OpenDialogAsync" />

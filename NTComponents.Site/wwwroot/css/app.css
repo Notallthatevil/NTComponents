@@ -376,6 +376,9 @@ code {
   gap: 1rem;
   grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
 }
+.docs-sandbox-grid:has(.nt-wizard) {
+  grid-template-columns: minmax(0, 1fr);
+}
 
 .docs-sandbox-preview {
   align-items: center;
@@ -409,6 +412,23 @@ code {
   align-content: center;
   justify-items: center;
   min-height: 5rem;
+}
+.docs-curated-example > .nt-view,
+.docs-curated-example > .nt-form-field-grid-view,
+.docs-curated-example > .nt-form-section-view,
+.docs-generated-example > .nt-view,
+.docs-generated-example > .nt-form-field-grid-view,
+.docs-generated-example > .nt-form-section-view {
+  inline-size: 100%;
+}
+.docs-curated-example > .nt-wizard,
+.docs-generated-example > .nt-wizard {
+  block-size: auto;
+}
+
+.docs-badge-anchor {
+  display: inline-block;
+  position: relative;
 }
 
 .docs-curated-example + .docs-generated-example {

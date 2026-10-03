@@ -28,32 +28,56 @@
         <div class="docs-sandbox-grid">
             <div class="docs-sandbox-preview">
                 <div class="docs-generated-example">
-                    @if (DocumentationCuratedDemo.Supports(Component.Type.Name)) {
-                        <DocumentationCuratedDemo Component="Component" ValueProvider="GetRuntimeValue" />
-                    }
-                    else if (Component.Type.Name == "NTHeadDependencies") {
-                        <div class="docs-callout">Place <code>NTHeadDependencies</code> in the document head. It supplies the shared NTComponents styles and browser loader and is intentionally not duplicated inside this page preview.</div>
-                        <NTPageScript Src="./js/docs.js" />
-                        <span data-docs-demo-component="NTPageScript" hidden></span>
-                    }
-                    else {
-                    <ErrorBoundary @ref="_errorBoundary">
+                    <DocumentationPreviewBoundary @ref="_errorBoundary" @key="_componentKey">
                         <ChildContent>
-                            @if (_editContext is not null) {
-                                <EditForm EditContext="_editContext">
-                                    <DynamicComponent Type="@Sandbox.ComponentType" Parameters="@BuildComponentParameters()" />
-                                </EditForm>
+                            @if (DocumentationCuratedDemo.Supports(Component.Type.Name)) {
+                                <DocumentationCuratedDemo Component="Component" ValueProvider="GetRuntimeValue" />
+                            }
+                            else if (Component.Type.Name == "NTHeadDependencies") {
+                                <div class="docs-callout">Place <code>NTHeadDependencies</code> in the document head. It supplies the shared NTComponents styles and browser loader and is intentionally not duplicated inside this page preview.</div>
+                                <NTPageScript Src="./js/docs.js" />
+                                <span data-docs-demo-component="NTPageScript" hidden></span>
                             }
                             else {
-                                <DynamicComponent Type="@Sandbox.ComponentType" Parameters="@BuildComponentParameters()" />
+                                @if (_editContext is not null) {
+                                    <EditForm EditContext="_editContext">
+                                        <DynamicComponent Type="@Sandbox.ComponentType" Parameters="@BuildComponentParameters()" />
+                                    </EditForm>
+                                }
+                                else if (Component.Type.Name == "NTFormFieldLayoutSpan") {
+                                    <NTFormFieldGridView MaxColumns="3">
+                                        <div class="docs-example-card-content">A single-column field</div>
+                                        <DynamicComponent Type="@Sandbox.ComponentType" Parameters="@BuildComponentParameters()" />
+                                        <div class="docs-example-card-content">Another single-column field</div>
+                                    </NTFormFieldGridView>
+                                }
+                                else if (Component.Type.Name == "NTBadge") {
+                                    <span class="docs-badge-anchor">
+                                        <NTIconButton Icon="MaterialIcon.Mail" AriaLabel="Messages" />
+                                        <DynamicComponent Type="@Sandbox.ComponentType" Parameters="@BuildComponentParameters()" />
+                                    </span>
+                                }
+                                else {
+                                    <DynamicComponent Type="@Sandbox.ComponentType" Parameters="@BuildComponentParameters()" />
+                                }
+                                @BuildSupplementalDependents()
+                                @if (_valueHolder is not null) {
+                                    <p class="docs-muted">Current value: <output aria-label="Current value">@FormatInputValue()</output></p>
+                                }
+                                else if (Component.Type.Name == "NTBrowserTimeZone") {
+                                    <p class="docs-muted">Browser time zone: <output aria-label="Browser time zone">@GetRuntimeValue("Value")</output></p>
+                                }
                             }
                         </ChildContent>
-                        <ErrorContent>
-                            <div class="docs-callout">This component requires additional sample data before it can render in the automatic sandbox.</div>
+                        <ErrorContent Context="exception">
+                            <div class="docs-callout docs-callout-error" role="alert">
+                                <strong>Unable to render this example.</strong>
+                                <p>@exception.GetBaseException().Message</p>
+                                <p>Change the options or reset the example to try again.</p>
+                                <NTButton Label="Reset example" OnClickCallback="_ => ResetExample()" />
+                            </div>
                         </ErrorContent>
-                    </ErrorBoundary>
-                    @BuildSupplementalDependents()
-                    }
+                    </DocumentationPreviewBoundary>
                 </div>
             </div>
 
@@ -88,7 +112,7 @@
                                                             Label="@parameter.Property.Name"
                                                             ElementId="@BuildControlElementId(parameter)"
                                                             Value="@GetNumber(parameter)"
-                                                            ValueChanged="value => SetValue(parameter, value ?? 0m)"
+                                                            ValueChanged="value => SetValue(parameter, parameter.IsNullable ? value : value ?? 0m)"
                                                             ValueExpression="@(() => _form.NumberValue)"
                                                             SubmitValue="false" />
                                             break;
@@ -142,7 +166,8 @@
     private readonly Dictionary<string, object?> _values = new(StringComparer.Ordinal);
     private readonly HashSet<string> _modifiedParameterNames = new(StringComparer.Ordinal);
     private readonly SandboxFormModel _form = new();
-    private ErrorBoundary? _errorBoundary;
+    private readonly DocumentationContactModel _layoutContact = new();
+    private DocumentationPreviewBoundary? _errorBoundary;
     private EditContext? _editContext;
     private object? _valueHolder;
     private string? _componentKey;
@@ -156,6 +181,7 @@
     protected override void OnParametersSet() {
         if (!string.Equals(_componentKey, Component.Type.FullName, StringComparison.Ordinal)) {
             _componentKey = Component.Type.FullName;
+            _showMarkup = false;
             _values.Clear();
             _modifiedParameterNames.Clear();
             PrepareInputContext();
@@ -188,6 +214,11 @@
             }
 
             parameters[parameter.Property.Name] = convertedValue!;
+            var callback = Sandbox.ComponentType.GetProperty($"{parameter.Property.Name}Changed");
+            if (callback?.PropertyType.IsGenericType == true && callback.PropertyType.GetGenericTypeDefinition() == typeof(EventCallback<>)) {
+                parameters[callback.Name] = GetType().GetMethod(nameof(BuildParameterChangedCore), System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+                    .MakeGenericMethod(callback.PropertyType.GetGenericArguments()[0]).Invoke(this, [parameter])!;
+            }
         }
 
         AddInputParameters(parameters);
@@ -195,6 +226,13 @@
 
         return parameters;
     }
+
+    private EventCallback<TValue> BuildParameterChangedCore<TValue>(SandboxParameterDocumentation parameter) => EventCallback.Factory.Create<TValue>(this, value => {
+        object? controlValue = parameter.Kind == SandboxParameterKind.Enum
+            ? parameter.Options.OfType<SandboxEnumOption>().FirstOrDefault(option => Equals(option.Value, value))
+            : value;
+        SetValue(parameter, controlValue);
+    });
 
     private object? ConvertValue(SandboxParameterDocumentation parameter, Type targetType) {
         var value = GetValue(parameter);
@@ -228,7 +266,16 @@
         }
 
         if (IsNumeric(nullableTargetType)) {
-            return Convert.ChangeType(value, nullableTargetType, CultureInfo.InvariantCulture);
+            try {
+                if (nullableTargetType != typeof(float) && nullableTargetType != typeof(double) && nullableTargetType != typeof(decimal) && Convert.ToDecimal(value, CultureInfo.InvariantCulture) % 1 != 0) {
+                    throw new ArgumentException($"{parameter.Property.Name} requires a whole number.");
+                }
+
+                return Convert.ChangeType(value, nullableTargetType, CultureInfo.InvariantCulture);
+            }
+            catch (OverflowException) {
+                throw new ArgumentOutOfRangeException(parameter.Property.Name, value, $"{parameter.Property.Name} is outside the supported range for {nullableTargetType.Name}.");
+            }
         }
 
         if (nullableTargetType == typeof(DateTime) || nullableTargetType == typeof(DateOnly) || nullableTargetType == typeof(TimeOnly) || nullableTargetType == typeof(DateTimeOffset)) {
@@ -257,6 +304,7 @@
         var functionType = expressionProperty.PropertyType.GetGenericArguments()[0];
         var valueType = functionType.GetGenericArguments()[0];
         _valueHolder = Activator.CreateInstance(typeof(SandboxValue<>).MakeGenericType(valueType));
+        _valueHolder!.GetType().GetProperty(nameof(SandboxValue<object>.Value))!.SetValue(_valueHolder, BuildInputValue(valueType));
         _editContext = new EditContext(_valueHolder!);
     }
 
@@ -271,11 +319,25 @@
             return;
         }
 
-        var value = BuildInputValue(valueProperty.PropertyType);
-        _valueHolder.GetType().GetProperty(nameof(SandboxValue<object>.Value))!.SetValue(_valueHolder, value);
+        var value = _valueHolder.GetType().GetProperty(nameof(SandboxValue<object>.Value))!.GetValue(_valueHolder);
         parameters.TryAdd(valueProperty.Name, value!);
         parameters.TryAdd(expressionProperty.Name, BuildValueExpression(valueProperty.PropertyType));
+        parameters.TryAdd("ValueChanged", GetType().GetMethod(nameof(BuildValueChangedCore), System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+            .MakeGenericMethod(valueProperty.PropertyType).Invoke(this, null)!);
     }
+
+    private EventCallback<TValue> BuildValueChangedCore<TValue>() => EventCallback.Factory.Create<TValue>(this, value => {
+        ((SandboxValue<TValue>)_valueHolder!).Value = value;
+        var parameter = Sandbox.Parameters.FirstOrDefault(candidate => candidate.Property.Name == "Value");
+        if (parameter?.IsSupported == true) {
+            _values["Value"] = value;
+        }
+    });
+
+    private string FormatInputValue() => _valueHolder?.GetType().GetProperty(nameof(SandboxValue<object>.Value))?.GetValue(_valueHolder) switch {
+        IReadOnlyList<string> values => string.Join(", ", values),
+        var value => Convert.ToString(value, CultureInfo.InvariantCulture) ?? "(empty)"
+    };
 
     private object BuildValueExpression(Type valueType) =>
         GetType().GetMethod(nameof(BuildValueExpressionCore), System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
@@ -412,6 +474,12 @@
         }
 
         var markup = FormatElementMarkup(tagName, attributes, string.Join("\r\n", childContentBlocks));
+        if (Component.Type.Name == "NTFormFieldLayoutSpan") {
+            markup = $"<NTFormFieldGridView MaxColumns=\"3\">\r\n    <div class=\"docs-example-card-content\">A single-column field</div>\r\n{IndentMarkup(markup, 1)}\r\n    <div class=\"docs-example-card-content\">Another single-column field</div>\r\n</NTFormFieldGridView>";
+        }
+        else if (Component.Type.Name == "NTBadge") {
+            markup = $"<span style=\"position: relative; display: inline-block;\">\r\n    <NTIconButton Icon=\"MaterialIcon.Mail\" AriaLabel=\"Messages\" />\r\n{IndentMarkup(markup, 1)}\r\n</span>";
+        }
         markup += Component.Type.Name switch {
             "NTFileUpload" => "\r\n\r\n<NTFileUploadItem Name=\"example.txt\" Status=\"Ready\" Percent=\"100\" ShouldShowPercent=\"true\" />",
             "NTHeadDependencies" => "\r\n\r\n<NTPageScript Src=\"./js/docs.js\" />",
@@ -434,7 +502,9 @@
         }
 
         if (Component.Type.Name == "NTButtonGroup") {
-            attributes.Add("SelectedKey=\"one\"");
+            if (!attributes.Any(attribute => attribute.StartsWith("SelectedKey=", StringComparison.Ordinal))) {
+                attributes.Add("SelectedKey=\"one\"");
+            }
         }
 
         else if (Component.Type.Name == "NTForm") {
@@ -450,6 +520,12 @@
         }
 
         switch (Component.Type.Name) {
+            case "NTFormFieldGridView":
+            case "NTFormFieldLayoutSpan":
+            case "NTFormSectionView":
+                declarations.Add("private string _name = \"Ada Lovelace\";");
+                declarations.Add("private string _email = \"ada@example.com\";");
+                break;
             case "NTCombobox":
                 declarations.Add("private static readonly IReadOnlyList<NTComboboxOption<string>> SampleOptions = [new(\"one\", \"One\"), new(\"two\", \"Two\")];");
                 break;
@@ -476,7 +552,8 @@
 
     private string BuildInputInitializer(Type valueType) {
         if (valueType == typeof(string)) {
-            return $"\"{DocumentationDemoProfiles.BuildInputValue(Component.Type.Name)}\"";
+            var value = _valueHolder?.GetType().GetProperty(nameof(SandboxValue<object>.Value))?.GetValue(_valueHolder) as string;
+            return System.Text.Json.JsonSerializer.Serialize(value);
         }
 
         if (valueType == typeof(bool)) {
@@ -562,8 +639,7 @@
     private static bool ShouldIncludeParameter(SandboxParameterDocumentation parameter) => parameter.IsSupported;
 
     private bool ShouldPassNullParameter(SandboxParameterDocumentation parameter) =>
-        parameter.Kind == SandboxParameterKind.Enum &&
-        parameter.IsNullable &&
+        (parameter.Kind == SandboxParameterKind.Icon || parameter.Kind is SandboxParameterKind.Enum or SandboxParameterKind.Number && parameter.IsNullable) &&
         _modifiedParameterNames.Contains(parameter.Property.Name);
 
     private string BuildControlElementId(SandboxParameterDocumentation parameter) =>
@@ -575,6 +651,10 @@
             "NTAutocomplete" => BuildAutocompleteOptions(),
             "NTButtonGroup" => BuildButtonGroupItems(),
             "NTCarousel" => BuildCarouselItems(),
+            "NTContainerView" => builder => builder.AddMarkupContent(0, DocumentSectionsMarkup),
+            "NTFeedView" => BuildCollectionCards(6),
+            "NTMultiPaneView" => BuildCollectionCards(3),
+            "NTFormFieldGridView" or "NTFormFieldLayoutSpan" or "NTFormSectionView" => BuildSampleFields(),
             "NTDataGrid" => BuildDataGridColumns(),
             "NTFabMenu" => BuildFabMenuItems(),
             "NTInputRadioGroup" => BuildRadioItems(),
@@ -588,6 +668,37 @@
             "NTWizard" => BuildWizardSteps(),
             _ => BuildTextChildContent(parameter)
         };
+
+    private const string DocumentSectionsMarkup = """
+        <section id="docs-example-introduction"><h2>Introduction</h2><p>Start with the components that fit your workflow.</p></section>
+        <section id="docs-example-guidelines"><h2>Guidelines</h2><p>Keep related content together and provide clear actions.</p></section>
+        <section id="docs-example-next-steps"><h2>Next steps</h2><p>Use the controls to explore this document view.</p></section>
+        """;
+
+    private static RenderFragment BuildCollectionCards(int count) => builder => {
+        for (var index = 1; index <= count; index++) {
+            builder.OpenComponent<NTCard>(0);
+            builder.SetKey(index);
+            var itemIndex = index;
+            builder.AddAttribute(1, nameof(NTCard.ChildContent), (RenderFragment)(content => content.AddMarkupContent(0, $"<div class=\"docs-example-card-content\"><h3>Project {itemIndex}</h3><p>Recent activity and next steps for this project.</p></div>")));
+            builder.CloseComponent();
+        }
+    };
+
+    private RenderFragment BuildSampleFields() => builder => {
+        builder.OpenComponent<NTInputText>(0);
+        builder.AddAttribute(1, nameof(NTInputText.Label), "Name");
+        builder.AddAttribute(2, nameof(NTInputText.Value), _layoutContact.Name);
+        builder.AddAttribute(3, nameof(NTInputText.ValueChanged), EventCallback.Factory.Create<string?>(this, value => _layoutContact.Name = value ?? string.Empty));
+        builder.AddAttribute(4, nameof(NTInputText.ValueExpression), (Expression<Func<string?>>)(() => _layoutContact.Name));
+        builder.CloseComponent();
+        builder.OpenComponent<NTInputText>(10);
+        builder.AddAttribute(11, nameof(NTInputText.Label), "Email");
+        builder.AddAttribute(12, nameof(NTInputText.Value), _layoutContact.Email);
+        builder.AddAttribute(13, nameof(NTInputText.ValueChanged), EventCallback.Factory.Create<string?>(this, value => _layoutContact.Email = value ?? string.Empty));
+        builder.AddAttribute(14, nameof(NTInputText.ValueExpression), (Expression<Func<string?>>)(() => _layoutContact.Email));
+        builder.CloseComponent();
+    };
 
     private RenderFragment BuildTextChildContent(SandboxParameterDocumentation parameter) {
         var text = BuildRenderFragmentText(parameter);
@@ -835,6 +946,9 @@
 
     private string BuildChildContentMarkup(SandboxParameterDocumentation parameter) =>
         Component.Type.Name switch {
+            "NTContainerView" => DocumentSectionsMarkup,
+            "NTFeedView" or "NTMultiPaneView" => string.Join("\r\n", Enumerable.Range(1, Component.Type.Name == "NTFeedView" ? 6 : 3).Select(index => $"<NTCard><div class=\"docs-example-card-content\"><h3>Project {index}</h3><p>Recent activity and next steps for this project.</p></div></NTCard>")),
+            "NTFormFieldGridView" or "NTFormFieldLayoutSpan" or "NTFormSectionView" => "<NTInputText Label=\"Name\" @bind-Value=\"_name\" />\r\n<NTInputText Label=\"Email\" @bind-Value=\"_email\" />",
             "NTAccordion" => "<NTAccordionItem\r\n    Label=\"Getting started\"\r\n    SupportingText=\"Native disclosure item\"\r\n    Open=\"true\">\r\n    Accordion content is generated from the source documentation model.\r\n</NTAccordionItem>\r\n<NTAccordionItem\r\n    Label=\"Details\">\r\n    Use accordion items for related sections that can expand and collapse.\r\n</NTAccordionItem>",
             "NTAutocomplete" => "<NTAutocompleteOptionGroup Label=\"Examples\" />\r\n<NTAutocompleteOption Value=\"First option\" />\r\n<NTAutocompleteOption Value=\"Second option\" />",
             "NTButtonGroup" => "<NTButtonGroupItem Key=\"one\" Label=\"One\" />\r\n<NTButtonGroupItem Key=\"two\" Label=\"Two\" />",
@@ -863,13 +977,14 @@
         return GetValue(parameter) switch {
             SandboxEnumOption enumOption => enumOption.Value,
             SandboxIconOption iconOption => iconOption.Icon,
+            var value when parameter.Kind == SandboxParameterKind.Number && Sandbox.ComponentType?.GetProperty(parameterName) is { } property => ConvertValue(parameter, property.PropertyType),
             var value => value
         };
     }
 
     private string? FormatCuratedParameter(string parameterName) {
         var parameter = Sandbox.Parameters.FirstOrDefault(candidate => string.Equals(candidate.Property.Name, parameterName, StringComparison.Ordinal));
-        return parameter is null || !parameter.IsSupported || parameter.Kind == SandboxParameterKind.Text && string.IsNullOrWhiteSpace(GetString(parameter)) && !parameter.Property.IsEditorRequired
+        return parameter is null || !parameter.IsSupported
             ? null
             : FormatMarkupAttribute(parameter, FormatMarkupValue(parameter));
     }
@@ -886,7 +1001,8 @@
         parameter.Kind switch {
             SandboxParameterKind.Icon => $"{parameter.Property.Name}=\"@{formattedValue}\"",
             SandboxParameterKind.Enum when parameter.IsNullable && GetValue(parameter) is SandboxEnumOption { Value: null } => $"{parameter.Property.Name}=\"@null\"",
-            _ => $"{parameter.Property.Name}=\"{formattedValue}\""
+            SandboxParameterKind.Number when parameter.IsNullable && GetValue(parameter) is null => $"{parameter.Property.Name}=\"@null\"",
+            _ => $"{parameter.Property.Name}=\"{System.Net.WebUtility.HtmlEncode(formattedValue).Replace("@", "&#64;", StringComparison.Ordinal)}\""
         };
 
     private string FormatMarkupValue(SandboxParameterDocumentation parameter) {
@@ -908,7 +1024,7 @@
 
     private bool GetBool(SandboxParameterDocumentation parameter) => GetValue(parameter) as bool? ?? false;
 
-    private decimal? GetNumber(SandboxParameterDocumentation parameter) => Convert.ToDecimal(GetValue(parameter), CultureInfo.InvariantCulture);
+    private decimal? GetNumber(SandboxParameterDocumentation parameter) => GetValue(parameter) is { } value ? Convert.ToDecimal(value, CultureInfo.InvariantCulture) : null;
 
     private string? GetString(SandboxParameterDocumentation parameter) => Convert.ToString(GetValue(parameter), CultureInfo.InvariantCulture);
 
@@ -962,6 +1078,13 @@
     }
 
     private void ShowPreview() => _showMarkup = false;
+
+    private void ResetExample() {
+        _values.Clear();
+        _modifiedParameterNames.Clear();
+        PrepareInputContext();
+        _errorBoundary?.Recover();
+    }
 
     private void ShowMarkup() => _showMarkup = true;
 

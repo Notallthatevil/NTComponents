@@ -382,6 +382,10 @@ code {
     display: grid;
     gap: 1rem;
     grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
+
+    &:has(.nt-wizard) {
+        grid-template-columns: minmax(0, 1fr);
+    }
 }
 
 .docs-sandbox-preview {
@@ -416,6 +420,21 @@ code {
     align-content: center;
     justify-items: center;
     min-height: 5rem;
+
+    > .nt-view,
+    > .nt-form-field-grid-view,
+    > .nt-form-section-view {
+        inline-size: 100%;
+    }
+
+    > .nt-wizard {
+        block-size: auto;
+    }
+}
+
+.docs-badge-anchor {
+    display: inline-block;
+    position: relative;
 }
 
 .docs-curated-example + .docs-generated-example {
