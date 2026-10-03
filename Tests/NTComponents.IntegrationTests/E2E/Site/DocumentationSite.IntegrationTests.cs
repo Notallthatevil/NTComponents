@@ -517,6 +517,88 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
     }
 
     [Fact]
+    public async Task GettingStarted_RendersSetupGuide_AndComponentsStartCollapsed() {
+        ArgumentNullException.ThrowIfNull(_page);
+        _activeRoute = "/";
+        await _page.GotoAsync(_baseUrl);
+        var navigation = _page.GetByRole(AriaRole.Navigation, new PageGetByRoleOptions { Name = "Documentation navigation", Exact = true });
+        var components = navigation.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Components", Exact = true });
+        await Assertions.Expect(components).ToHaveAttributeAsync("aria-expanded", "false");
+        var panel = navigation.Locator(".nt-navigation-rail-group-panel[aria-label='Components destinations']");
+        await Assertions.Expect(panel).ToHaveAttributeAsync("inert", "");
+        (await panel.EvaluateAsync<double>("element => element.getBoundingClientRect().height")).Should().BeLessThanOrEqualTo(1);
+        await components.ClickAsync();
+        await Assertions.Expect(components).ToHaveAttributeAsync("aria-expanded", "true");
+        await Assertions.Expect(navigation.GetByRole(AriaRole.Link, new LocatorGetByRoleOptions { Name = "All components", Exact = true })).ToBeVisibleAsync();
+        await components.ClickAsync();
+        await Assertions.Expect(components).ToHaveAttributeAsync("aria-expanded", "false");
+        await Assertions.Expect(panel).ToHaveAttributeAsync("inert", "");
+
+        _activeRoute = "/getting-started";
+        await navigation.GetByRole(AriaRole.Link, new LocatorGetByRoleOptions { Name = "Getting started", Exact = true }).ClickAsync();
+        await _page.WaitForURLAsync("**/getting-started");
+        await Assertions.Expect(_page.Locator("main h1")).ToHaveTextAsync("Getting started");
+        (await _page.Locator("main h2").CountAsync()).Should().Be(8);
+        var guideCode = string.Join("\n", await _page.Locator("main pre code").AllTextContentsAsync());
+        guideCode.Should().Contain("dotnet add package NTComponents").And.Contain("builder.Services.AddNTServices();")
+            .And.Contain("<NTHeadDependencies />").And.Contain("<HeadContent>").And.Contain("<NTToast />")
+            .And.Contain("@page \"/welcome\"").And.Contain("light-hc.css").And.Contain("dark-hc.css");
+        await Assertions.Expect(_page.Locator("main a[href='/tools/material-theme']")).ToBeVisibleAsync();
+        await _page.ReloadAsync();
+        await Assertions.Expect(_page.Locator("main h1")).ToHaveTextAsync("Getting started");
+        await Assertions.Expect(components).ToHaveAttributeAsync("aria-expanded", "false");
+        await _page.ScreenshotAsync(new PageScreenshotOptions { Path = Path.Combine(FindRepositoryRoot(), "artifacts", "site-getting-started-desktop.png") });
+        await _page.SetViewportSizeAsync(390, 844);
+        await WaitForRenderAsync(_page);
+        await navigation.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Collapse navigation rail", Exact = true }).ClickAsync();
+        await Assertions.Expect(_page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Expand navigation rail", Exact = true })).ToBeVisibleAsync();
+        await _page.EvaluateAsync("() => Promise.allSettled(document.getAnimations().filter(animation => animation.effect?.getTiming().iterations !== Infinity).map(animation => animation.finished))");
+        (await _page.Locator("main h1").BoundingBoxAsync())!.X.Should().BeGreaterThanOrEqualTo(0);
+        (await _page.EvaluateAsync<int>("Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) - innerWidth")).Should().BeLessThanOrEqualTo(1);
+        await _page.ScreenshotAsync(new PageScreenshotOptions { Path = Path.Combine(FindRepositoryRoot(), "artifacts", "site-getting-started-mobile.png") });
+        _browserDiagnostics.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task HeaderThemeSelector_ChangesAndPersistsTheme_AndFitsMobile() {
+        ArgumentNullException.ThrowIfNull(_page);
+        await OpenComponentDemoAsync("ntbutton");
+        var selector = _page.Locator(".docs-topbar nt-theme-toggle select");
+        await Assertions.Expect(selector).ToBeVisibleAsync();
+        (await selector.Locator("option").AllTextContentsAsync()).Should().Equal("Light", "Dark", "System");
+
+        var activeTheme = _page.Locator("link[data-nt-theme][data-nt-theme-loaded='true']");
+        await selector.SelectOptionAsync("LIGHT-DEFAULT");
+        await Assertions.Expect(activeTheme).ToHaveAttributeAsync("href", new System.Text.RegularExpressions.Regex("/Themes/light\\.css$"));
+        var lightSurface = await RootColorAsync("--tnt-color-surface");
+        await selector.SelectOptionAsync("DARK-DEFAULT");
+        await Assertions.Expect(activeTheme).ToHaveAttributeAsync("href", new System.Text.RegularExpressions.Regex("/Themes/dark\\.css$"));
+        (await RootColorAsync("--tnt-color-surface")).Should().NotBe(lightSurface);
+        (await _page.EvaluateAsync<string>("localStorage.getItem('NTComponentsStoredThemeKey')")).Should().Be("DARK");
+        await _page.ScreenshotAsync(new PageScreenshotOptions { Path = Path.Combine(FindRepositoryRoot(), "artifacts", "site-header-theme-desktop.png") });
+
+        await _page.ReloadAsync();
+        await _page.Locator(".docs-topbar nt-theme-toggle select").WaitForAsync();
+        await Assertions.Expect(selector).ToHaveValueAsync("DARK-DEFAULT");
+        await Assertions.Expect(activeTheme).ToHaveAttributeAsync("href", new System.Text.RegularExpressions.Regex("/Themes/dark\\.css$"));
+        await _page.SetViewportSizeAsync(390, 844);
+        var github = _page.Locator(".docs-github-link");
+        await Assertions.Expect(github).ToBeVisibleAsync();
+        await Assertions.Expect(selector).ToBeVisibleAsync();
+        var githubBounds = (await github.BoundingBoxAsync())!;
+        var selectorBounds = (await selector.BoundingBoxAsync())!;
+        selectorBounds.X.Should().BeGreaterThanOrEqualTo(githubBounds.X + githubBounds.Width);
+        (await _page.EvaluateAsync<int>("Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) - innerWidth")).Should().BeLessThanOrEqualTo(1);
+        await _page.ScreenshotAsync(new PageScreenshotOptions { Path = Path.Combine(FindRepositoryRoot(), "artifacts", "site-header-theme-mobile.png") });
+
+        await _page.EmulateMediaAsync(new PageEmulateMediaOptions { ColorScheme = ColorScheme.Light });
+        await selector.SelectOptionAsync("SYSTEM-DEFAULT");
+        await Assertions.Expect(activeTheme).ToHaveAttributeAsync("href", new System.Text.RegularExpressions.Regex("/Themes/light\\.css$"));
+        (await _page.EvaluateAsync<string>("localStorage.getItem('NTComponentsStoredThemeKey')")).Should().Be("SYSTEM");
+        _browserDiagnostics.Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task DemoControls_ArePrioritizedGroupedAndHeightContained() {
         ArgumentNullException.ThrowIfNull(_page);
 

@@ -1,0 +1,236 @@
+@page "/getting-started"
+
+<PageTitle>Getting started | NTComponents</PageTitle>
+
+<main class="docs-page docs-overview-copy">
+    <DocumentationPageHeader Kicker="Documentation"
+                             Title="Getting started"
+                             Description="Install NTComponents, configure your Blazor host, and build your first interactive page with a complete Material 3 theme." />
+
+    <nav class="docs-actions" aria-label="Getting started sections">
+        <a href="#install">Install</a>
+        <a href="#services">Services</a>
+        <a href="#host">Host setup</a>
+        <a href="#themes">Themes</a>
+        <a href="#layout">Layout and hosts</a>
+        <a href="#first-page">First page</a>
+        <a href="#configuration">Configuration</a>
+        <a href="#troubleshooting">Troubleshooting</a>
+    </nav>
+
+    <section id="install" class="docs-section docs-overview-copy">
+        <h2>1. Install the package</h2>
+        <p>Use a Blazor application targeting .NET 9, 10, or 11 and an SDK that supports that target. To create a new .NET 10 Blazor Web App with global Server interactivity:</p>
+        <pre class="docs-code"><code>dotnet new blazor -n YourApp -f net10.0 --interactivity Server --all-interactive
+cd YourApp</code></pre>
+        <p>In your new or existing project, install the component package:</p>
+        <pre class="docs-code"><code>dotnet add package NTComponents</code></pre>
+        <p>For Interactive WebAssembly or Auto in a Blazor Web App, install the package in both the server and <code>.Client</code> projects. Register services in both projects too, so prerendering and browser execution have the same dependencies.</p>
+        <p>Ensure these imports are in the <code>_Imports.razor</code> that applies to your pages and layouts, adding any that are missing. In a split app, include them in both projects:</p>
+        <pre class="docs-code"><code>@_imports</code></pre>
+        <p>The package supplies component CSS and JavaScript as static web assets. A consuming application does not need npm or a Sass compiler to use the library.</p>
+    </section>
+
+    <section id="services" class="docs-section docs-overview-copy">
+        <h2>2. Register services and defaults</h2>
+        <p>In <code>Program.cs</code>, register NTComponents before building the host:</p>
+        <pre class="docs-code"><code>@_services</code></pre>
+        <p>Registration includes toast, snackbar, window, dialog compatibility, local storage, and session storage services. Use the <code>NT*</code> components for new pages.</p>
+        <p>The optional <code>AddNTServices</code> options callback exposes <code>DefaultFormAppearance</code>, which defaults to <code>FormAppearance.OutlinedCompact</code>. That enum is a legacy API; use the supported parameters in each current component's guide for new form styling.</p>
+    </section>
+
+    <section id="host" class="docs-section docs-overview-copy">
+        <h2>3. Configure your Blazor host</h2>
+        <h3>Blazor Web App: Interactive Server</h3>
+        <p>Keep the middleware from your generated template. In the server's <code>Program.cs</code>, enable interactive services and endpoints:</p>
+        <pre class="docs-code"><code>@_server</code></pre>
+        <p>In <code>Components/App.razor</code>, retain your template's base URL, app stylesheet, import map, and Blazor script. Add one <code>NTHeadDependencies</code> inside <code>head</code> and retain the app's generated scoped stylesheet. Replace <code>YourApp</code> with your application's assembly name:</p>
+        <pre class="docs-code"><code>@_serverHead</code></pre>
+        <p>For global interactivity, give <code>Routes</code> and <code>HeadOutlet</code> the same render mode. Layouts and pages inside the routes inherit it:</p>
+        <pre class="docs-code"><code>@_serverRoutes</code></pre>
+        <h3>Blazor Web App: Interactive WebAssembly or Auto</h3>
+        <p>Use a template configured for your chosen mode. On the server, add <code>AddInteractiveWebAssemblyComponents()</code> and <code>AddInteractiveWebAssemblyRenderMode()</code>; Auto also needs the Server registrations above. Keep the template's <code>AddAdditionalAssemblies</code> registration for the client assembly and put browser-rendered pages in <code>.Client</code>. Match the <code>Routes</code> and <code>HeadOutlet</code> render modes to <code>InteractiveWebAssembly</code> or <code>InteractiveAuto</code>.</p>
+        <p>See Microsoft's <a href="https://learn.microsoft.com/en-us/aspnet/core/blazor/components/render-modes?view=aspnetcore-10.0">Blazor render modes guide</a> for host configuration and render boundaries.</p>
+        <h3>Standalone Blazor WebAssembly</h3>
+        <p>In <code>Program.cs</code>, keep the template's app root component and register <code>HeadOutlet</code> once, alongside <code>AddNTServices()</code>:</p>
+        <pre class="docs-code"><code>@_wasmHeadOutlet</code></pre>
+        <p>In the root <code>App.razor</code>, place the dependencies in <code>HeadContent</code> before your existing router:</p>
+        <pre class="docs-code"><code>@_wasmHead</code></pre>
+        <p>Keep <code>&lt;link href="YourApp.styles.css" rel="stylesheet" /&gt;</code> in <code>wwwroot/index.html</code>, using your assembly name. WebAssembly is already interactive and does not need an <code>@@rendermode</code> directive.</p>
+        <div class="docs-callout">The generated <code>YourApp.styles.css</code> imports the package's scoped CSS. <code>NTHeadDependencies</code> supplies shared theme, measurement, ripple, font, and browser dependencies. Include both, and render the head dependencies once.</div>
+    </section>
+
+    <section id="themes" class="docs-section docs-overview-copy">
+        <h2>4. Add a complete theme</h2>
+        <p>Create your colors with the <a href="/tools/material-theme">Material 3 theme creator</a> and download the generated themes. Extract the archive's <code>Themes</code> folder into your application's <code>wwwroot</code> so these six files are served:</p>
+        <pre class="docs-code"><code>@_themeFiles</code></pre>
+        <p>These are application assets; installing the package does not create them. All six files let users choose light, dark, or system mode with default, medium, or high contrast. System mode follows the operating system's color preference.</p>
+        <p>Add a selector in your header or layout:</p>
+        <pre class="docs-code"><code>&lt;NTThemeToggle /&gt;</code></pre>
+        <p>For light, dark, and system selection without contrast choices, use <code>AllowContrastSelection="false"</code>. Theme choices persist in local storage under <code>NTComponentsStoredThemeKey</code> and <code>NTComponentsStoredContrastKey</code>.</p>
+    </section>
+
+    <section id="layout" class="docs-section docs-overview-copy">
+        <h2>5. Configure the layout and service hosts</h2>
+        <p>A minimal <code>MainLayout.razor</code> can use the library's page shell. Add one toast or snackbar host when you use its service, and one window host when you use managed floating windows. Keep hosts in the same interactive scope as their callers:</p>
+        <pre class="docs-code"><code>@_layout</code></pre>
+        <p><code>NTDialog</code> belongs in the page or layout that owns its content and can be opened through its component reference. It does not need a separate dialog host. See the <a href="/components/ntdialog">dialog demo</a> and <a href="/components/ntwindowhost">window host demo</a> for complete examples.</p>
+    </section>
+
+    <section id="first-page" class="docs-section docs-overview-copy">
+        <h2>6. Build your first page</h2>
+        <p>Add <code>Welcome.razor</code> to your pages folder. This example uses the toast host from the layout and a Blazor callback to confirm a click:</p>
+        <pre class="docs-code"><code>@_firstPage</code></pre>
+        <p>Run <code>dotnet run</code>, open your app at <code>/welcome</code>, and select Save. A success toast should appear. Change the theme selector to check that colors switch and the choice survives a reload.</p>
+        <p>Callbacks and service-driven updates require interactivity. For an app using per-page render modes, add <code>@@rendermode InteractiveServer</code> and the <code>NTToast</code> host to this page instead of keeping that host in a static layout. Each <a href="/components">component guide</a> describes its static SSR, progressive enhancement, or interactive requirements.</p>
+    </section>
+
+    <section id="configuration" class="docs-section docs-overview-copy">
+        <h2>7. Configure themes, fonts, and dimensions</h2>
+        <h3>Custom theme paths and defaults</h3>
+        <p>The default theme root is <code>/Themes</code>. For an application hosted under <code>/my-app/</code>, put the base path in the root explicitly. Apply matching paths and defaults to both the head dependencies and the selector:</p>
+        <pre class="docs-code"><code>@_themeConfiguration</code></pre>
+        <p>Both components also accept <code>LightDefaultCss</code>, <code>LightMediumCss</code>, <code>LightHighCss</code>, <code>DarkDefaultCss</code>, <code>DarkMediumCss</code>, and <code>DarkHighCss</code> for custom file names. Defaults apply when no valid saved choice exists; a saved preference takes priority.</p>
+        <h3>Fonts and layout measurements</h3>
+        <p><code>NTHeadDependencies</code> loads Roboto and Material Symbols from Google Fonts by default. For self-hosted fonts, provide a stylesheet that defines the required font families and point <code>FontStylesheetHref</code> at it. To omit generated font requests, use <code>FontFamilies="NTFontFamily.None"</code>.</p>
+        <pre class="docs-code"><code>@_headConfiguration</code></pre>
+        <p><code>HeaderHeight</code>, <code>FooterHeight</code>, and <code>SideNavWidth</code> are pixel measurements; their defaults are 64, 64, and 256. <code>TokenScopeSelector</code> defaults to <code>:root</code>. These settings belong on the same head dependency instance used during host setup.</p>
+        <p>Use Material theme tokens such as <code>var(--tnt-color-surface)</code> and <code>var(--tnt-color-on-surface)</code> in your application's styles so custom content follows the selected theme.</p>
+    </section>
+
+    <section id="troubleshooting" class="docs-section docs-overview-copy">
+        <h2>8. Verify the setup and troubleshoot</h2>
+        <div class="docs-table-wrap">
+            <table class="docs-table">
+                <thead><tr><th>Symptom</th><th>Check</th></tr></thead>
+                <tbody>
+                    <tr><td>Components appear unstyled</td><td>The app's <code>.styles.css</code> must load, along with its <code>_content/NTComponents</code> imports and the shared assets from <code>NTHeadDependencies</code>. Keep <code>MapStaticAssets()</code> in a Blazor Web App.</td></tr>
+                    <tr><td>Colors do not switch</td><td>Check for successful theme CSS responses in browser Network tools. Verify all six files, file-name casing, and matching <code>ThemesRoot</code> values, including any application base path.</td></tr>
+                    <tr><td>Click callbacks do not run</td><td>Enable an interactive render mode and retain the template's Blazor script. Static SSR does not execute Blazor event callbacks.</td></tr>
+                    <tr><td>A toast, snackbar, or window never appears</td><td>Register <code>AddNTServices()</code>, render the appropriate host once, and keep it in the caller's interactive service scope.</td></tr>
+                    <tr><td>A service is missing during prerendering</td><td>For WebAssembly or Auto, register NTComponents in both server and client. Call browser storage or JS interop after interactive rendering, rather than during prerendering.</td></tr>
+                    <tr><td>Icons show words or fonts fail to load</td><td>Check the configured font stylesheet and font requests. With self-hosted fonts, include the Material Symbols families your components use.</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <p>After publishing, verify the same static asset and theme paths from the deployed app. Browse the <a href="/components">live component demos</a> for supported parameter combinations and copyable Razor examples.</p>
+    </section>
+</main>
+
+@code {
+    private const string _imports = """
+        @using NTComponents
+        @using Microsoft.AspNetCore.Components.Web
+        @using static Microsoft.AspNetCore.Components.Web.RenderMode
+        """;
+
+    private const string _services = """
+        using Microsoft.Extensions.DependencyInjection;
+        using NTComponents;
+
+        builder.Services.AddNTServices();
+        """;
+
+    private const string _server = """
+        builder.Services.AddRazorComponents()
+            .AddInteractiveServerComponents();
+        builder.Services.AddNTServices();
+
+        // After building the app and configuring template middleware:
+        app.MapStaticAssets();
+        app.MapRazorComponents<App>()
+            .AddInteractiveServerRenderMode();
+        """;
+
+    private const string _serverHead = """
+        <head>
+            <!-- Keep the other head elements from your template. -->
+            <link rel="stylesheet" href="@Assets["YourApp.styles.css"]" />
+            <NTHeadDependencies />
+            <HeadOutlet @rendermode="InteractiveServer" />
+        </head>
+        """;
+
+    private const string _serverRoutes = """
+        <Routes @rendermode="InteractiveServer" />
+        <script src="@Assets["_framework/blazor.web.js"]"></script>
+        """;
+
+    private const string _wasmHeadOutlet = """
+        using Microsoft.AspNetCore.Components.Web;
+
+        builder.RootComponents.Add<HeadOutlet>("head::after");
+        builder.Services.AddNTServices();
+        """;
+
+    private const string _wasmHead = """
+        <HeadContent>
+            <NTHeadDependencies />
+        </HeadContent>
+        """;
+
+    private const string _themeFiles = """
+        wwwroot/
+          Themes/
+            light.css
+            light-mc.css
+            light-hc.css
+            dark.css
+            dark-mc.css
+            dark-hc.css
+        """;
+
+    private const string _layout = """
+        @inherits LayoutComponentBase
+
+        <NTLayout>
+            <NTHeader>
+                <NTThemeToggle />
+            </NTHeader>
+            <NTBody>
+                @Body
+            </NTBody>
+        </NTLayout>
+
+        <NTToast />
+        <NTSnackbar />
+        <NTWindowHost />
+        """;
+
+    private const string _firstPage = """
+        @page "/welcome"
+        @inject INTToastService ToastService
+
+        <h1>Welcome to NTComponents</h1>
+        <NTCard>
+            <p>Your component library is ready.</p>
+            <NTButton Label="Save"
+                      Variant="NTButtonVariant.Filled"
+                      OnClickCallback="SaveAsync" />
+        </NTCard>
+
+        @code {
+            private Task SaveAsync() => ToastService.ShowSuccessAsync("Saved", "Your setup is working.");
+        }
+        """;
+
+    private const string _themeConfiguration = """
+        <!-- In your document head: -->
+        <NTHeadDependencies ThemesRoot="/my-app/Themes"
+                            DefaultTheme="NTTheme.System"
+                            DefaultContrast="NTThemeContrast.Default" />
+
+        <!-- In your header or layout: -->
+        <NTThemeToggle ThemesRoot="/my-app/Themes"
+                       DefaultTheme="NTTheme.System"
+                       DefaultContrast="NTThemeContrast.Default"
+                       AllowContrastSelection="false" />
+        """;
+
+    private const string _headConfiguration = """
+        <NTHeadDependencies FontStylesheetHref="/fonts/fonts.css"
+                            HeaderHeight="64"
+                            FooterHeight="64"
+                            SideNavWidth="256" />
+        """;
+}
