@@ -60,6 +60,11 @@
     };
     restoreOrApplyTheme();
 
+    // WebAssembly can connect controls before the head script initializes the runtime.
+    document.querySelectorAll<HTMLElement & { syncFromRuntime?: () => Promise<void> }>('nt-theme-toggle').forEach(control => {
+        void control.syncFromRuntime?.();
+    });
+
     const registerEnhancedNavigationHandlers = () => {
         rootWindow.Blazor?.addEventListener?.('enhancednavigationstart', () => enhancedNavigationState.preserveHeadAttributes = true);
         rootWindow.Blazor?.addEventListener?.('enhancedload', restoreOrApplyTheme);

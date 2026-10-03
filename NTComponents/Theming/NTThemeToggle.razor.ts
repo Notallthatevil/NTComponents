@@ -297,6 +297,10 @@ class NTThemeToggleElement extends HTMLElement {
     }
 
     async syncFromRuntime(): Promise<void> {
+        if (!this.runtime) {
+            return;
+        }
+
         if (this.syncPromise) {
             await this.syncPromise;
             return;
