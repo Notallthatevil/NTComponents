@@ -142,7 +142,7 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
             .Where(type => !type.IsAbstract && type.Name.StartsWith("NT", StringComparison.Ordinal) && typeof(IComponent).IsAssignableFrom(type))
             .ToArray();
         var expectedComponentNames = exportedComponentTypes
-            .Where(type => !type.IsDefined(typeof(ObsoleteAttribute), inherit: false))
+            .Where(type => type != typeof(NTBadge) && !type.IsDefined(typeof(ObsoleteAttribute), inherit: false))
             .Select(type => RemoveGenericArity(type.Name))
             .ToHashSet(StringComparer.Ordinal);
         expectedComponentNames.Should().HaveCount(ExpectedComponentTypeCount, "the browser coverage contract should be updated intentionally when the public NT component surface changes");

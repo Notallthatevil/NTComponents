@@ -284,6 +284,7 @@ public sealed partial class DocumentationCatalog {
         !documentation.IsObsolete &&
         !runtimeType.IsDefined(typeof(ObsoleteAttribute), inherit: false) &&
         !runtimeType.IsAbstract &&
+        runtimeType != typeof(NTBadge) &&
         typeof(IComponent).IsAssignableFrom(runtimeType);
 
     private static bool IsReferenceType(TypeDocumentation type, HashSet<string> referencedTypeNames) {
