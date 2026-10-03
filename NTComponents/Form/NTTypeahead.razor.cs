@@ -348,7 +348,12 @@ public partial class NTTypeahead<TItem> : IAsyncDisposable {
     }
 
     private async Task ClearSearchAsync(bool clearValue) {
+        var searchVersion = Interlocked.Increment(ref _searchVersion);
         await CancelSearchAsync();
+        if (_disposed || searchVersion != Volatile.Read(ref _searchVersion)) {
+            return;
+        }
+
         _items = [];
         _activeIndex = -1;
         _isOpen = false;
@@ -398,6 +403,7 @@ public partial class NTTypeahead<TItem> : IAsyncDisposable {
     }
 
     private void ResetResults() {
+        Interlocked.Increment(ref _searchVersion);
         _items = [];
         _activeIndex = -1;
         _isOpen = false;
@@ -412,6 +418,10 @@ public partial class NTTypeahead<TItem> : IAsyncDisposable {
         }
 
         var searchText = args.Value?.ToString();
+        if (string.Equals(searchText, _searchText, StringComparison.Ordinal) && (_searchCancellationTokenSource is not null || _items.Count > 0)) {
+            return;
+        }
+
         var searchVersion = Interlocked.Increment(ref _searchVersion);
         var searchTextChangedTask = SetSearchTextAsync(searchText);
         if (ResetSelectionOnInput && !string.Equals(_searchText, FormatValueAsString(CurrentValue), StringComparison.Ordinal)) {
@@ -527,7 +537,16 @@ public partial class NTTypeahead<TItem> : IAsyncDisposable {
     }
 
     private async Task SearchAsync(string? searchText, int searchVersion) {
+        if (_disposed || searchVersion != Volatile.Read(ref _searchVersion)) {
+            return;
+        }
+
         await CancelSearchAsync();
+
+        // Cancellation can yield while a newer input starts its own search.
+        if (_disposed || searchVersion != Volatile.Read(ref _searchVersion)) {
+            return;
+        }
 
         if (string.IsNullOrWhiteSpace(searchText) || searchText.Length < MinimumSearchLength) {
             _items = [];
@@ -582,6 +601,7 @@ public partial class NTTypeahead<TItem> : IAsyncDisposable {
     }
 
     private async Task SelectItemAsync(TItem item) {
+        Interlocked.Increment(ref _searchVersion);
         await CancelSearchAsync();
         CurrentValue = item;
         _lastSyncedValue = CurrentValue;

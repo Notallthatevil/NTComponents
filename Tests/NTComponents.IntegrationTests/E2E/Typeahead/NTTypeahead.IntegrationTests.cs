@@ -22,6 +22,32 @@ public class NTTypeahead_IntegrationTests : IAsyncLifetime {
     }
 
     [Fact]
+    public async Task Live_Demo_Rapid_Input_Renders_Latest_Async_Results() {
+        ArgumentNullException.ThrowIfNull(_page);
+        var errors = new List<string>();
+        _page.PageError += (_, error) => errors.Add(error);
+        _page.Console += (_, message) => {
+            if (message.Type == "error") {
+                errors.Add(message.Text);
+            }
+        };
+        await NavigateToTypeaheadDemoAsync();
+        var input = _page.GetByTestId("nt-typeahead-customer");
+        var root = _page.Locator(".nt-typeahead").Nth(0);
+
+        await input.PressSequentiallyAsync("Grace");
+
+        var option = await WaitForFirstOptionAsync(root, input);
+        await Assertions.Expect(option).ToContainTextAsync("Grace Hopper");
+        await Assertions.Expect(root.GetByRole(AriaRole.Option)).ToHaveCountAsync(1);
+        await Assertions.Expect(input).ToHaveValueAsync("Grace");
+        await Assertions.Expect(input).ToHaveAttributeAsync("aria-expanded", "true");
+        await Assertions.Expect(root.Locator(".nt-combobox-empty")).ToHaveCountAsync(0);
+        await Assertions.Expect(root.Locator(".nt-typeahead-progress")).ToHaveCountAsync(0);
+        errors.Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task Live_Demo_Search_Selects_And_Clear_Button_Clears_Value() {
         ArgumentNullException.ThrowIfNull(_page);
 

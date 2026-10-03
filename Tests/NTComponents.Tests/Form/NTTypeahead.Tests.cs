@@ -231,6 +231,378 @@ public class NTTypeahead_Tests : BunitContext {
     }
 
     [Fact]
+    public async Task Rapid_Input_With_Async_Lookup_Renders_Latest_Results() {
+        var searches = new List<string?>();
+        var lookupStarted = new TaskCompletionSource<CancellationToken>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseLookup = new TaskCompletionSource<IEnumerable<CityOption>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var cut = RenderTypeahead(
+            configure: parameters => parameters.Add(p => p.MinimumSearchLength, 2),
+            itemsLookupFunc: async (search, cancellationToken) => {
+                searches.Add(search);
+                lookupStarted.TrySetResult(cancellationToken);
+                var results = await releaseLookup.Task;
+                cancellationToken.ThrowIfCancellationRequested();
+                return results;
+            },
+            debounceMilliseconds: 300);
+
+        // Dispatch the whole burst before any debounce continuation can run on the renderer.
+        await cut.InvokeAsync(async () => {
+            foreach (var text in new[] { "C", "Ca", "Cas", "Case", "Casey" }) {
+                await cut.Find("input[role='combobox']").InputAsync(text);
+            }
+        });
+        var lookupToken = await lookupStarted.Task.WaitAsync(TimeSpan.FromSeconds(5), Xunit.TestContext.Current.CancellationToken);
+        searches.Should().Equal("Casey");
+        lookupToken.IsCancellationRequested.Should().BeFalse();
+        releaseLookup.SetResult([new CityOption("Casey", "Remote match")]);
+
+        cut.WaitForAssertion(() => {
+            cut.Find("input[role='combobox']").GetAttribute("value").Should().Be("Casey");
+            cut.FindAll("[role='option']").Should().ContainSingle().Which.TextContent.Should().Contain("Casey");
+            cut.FindAll(".nt-combobox-empty").Should().BeEmpty();
+            cut.Find("input[role='combobox']").GetAttribute("aria-expanded").Should().Be("true");
+        }, TimeSpan.FromSeconds(5));
+    }
+
+    [Fact]
+    public async Task Rapid_Input_With_Delayed_Selection_Reset_Does_Not_Cancel_Latest_Lookup() {
+        var selectionResetStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseSelectionReset = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var lookupStarted = new TaskCompletionSource<CancellationToken>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseLookup = new TaskCompletionSource<IEnumerable<CityOption>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var searches = new List<string?>();
+        var cut = RenderTypeahead(new TestModel { City = CityOptions[0] },
+            configure: parameters => parameters
+                .Add(p => p.MinimumSearchLength, 2)
+                .Add(p => p.BindAfter, EventCallback.Factory.Create<CityOption?>(this, async _ => {
+                    selectionResetStarted.SetResult();
+                    await releaseSelectionReset.Task;
+                })),
+            itemsLookupFunc: async (search, cancellationToken) => {
+                searches.Add(search);
+                lookupStarted.SetResult(cancellationToken);
+                var results = await releaseLookup.Task;
+                cancellationToken.ThrowIfCancellationRequested();
+                return results;
+            },
+            debounceMilliseconds: 300);
+
+        // The first input yields in the public selection callback while the later keys are dispatched.
+        var firstInput = cut.Find("input[role='combobox']").InputAsync("C");
+        await selectionResetStarted.Task.WaitAsync(TimeSpan.FromSeconds(5), Xunit.TestContext.Current.CancellationToken);
+        foreach (var text in new[] { "Ca", "Cas", "Case", "Casey" }) {
+            await cut.Find("input[role='combobox']").InputAsync(text);
+        }
+        var lookupToken = await lookupStarted.Task.WaitAsync(TimeSpan.FromSeconds(5), Xunit.TestContext.Current.CancellationToken);
+        searches.Should().Equal("Casey");
+        releaseSelectionReset.SetResult();
+        await firstInput.WaitAsync(TimeSpan.FromSeconds(5), Xunit.TestContext.Current.CancellationToken);
+        releaseLookup.SetResult([new CityOption("Casey", "Remote match")]);
+
+        cut.WaitForAssertion(() => {
+            cut.Find("input[role='combobox']").GetAttribute("value").Should().Be("Casey");
+            cut.FindAll("[role='option']").Should().ContainSingle().Which.TextContent.Should().Contain("Casey");
+            cut.FindAll(".nt-combobox-empty").Should().BeEmpty();
+            cut.Find("input[role='combobox']").GetAttribute("aria-expanded").Should().Be("true");
+            lookupToken.IsCancellationRequested.Should().BeFalse();
+        }, TimeSpan.FromSeconds(5));
+    }
+
+    [Fact]
+    public async Task Duplicate_Input_During_Lookup_Preserves_Request_And_Results() {
+        var searches = new List<string?>();
+        var lookupStarted = new TaskCompletionSource<CancellationToken>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseLookup = new TaskCompletionSource<IEnumerable<CityOption>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var cut = RenderTypeahead(itemsLookupFunc: async (search, cancellationToken) => {
+            searches.Add(search);
+            lookupStarted.TrySetResult(cancellationToken);
+            return await releaseLookup.Task.WaitAsync(cancellationToken);
+        });
+
+        await cut.Find("input[role='combobox']").InputAsync("Casey");
+        var lookupToken = await lookupStarted.Task.WaitAsync(TimeSpan.FromSeconds(5), Xunit.TestContext.Current.CancellationToken);
+        await cut.Find("input[role='combobox']").InputAsync("Casey");
+        releaseLookup.SetResult([new CityOption("Casey", "Remote match")]);
+
+        cut.WaitForAssertion(() => cut.FindAll("[role='option']").Should().ContainSingle().Which.TextContent.Should().Contain("Casey"));
+        searches.Should().Equal("Casey");
+        lookupToken.IsCancellationRequested.Should().BeFalse();
+        cut.FindAll(".nt-combobox-empty").Should().BeEmpty();
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Parent_Rerender_During_Rapid_Lookup_Preserves_Latest_Results(bool bindSearchText) {
+        var cut = Render<AsyncSearchWrapper>(parameters => parameters.Add(p => p.BindSearchText, bindSearchText));
+        foreach (var text in new[] { "C", "Ca", "Cas", "Case", "Casey" }) {
+            await cut.Find("input[role='combobox']").InputAsync(text);
+        }
+        var lookupToken = await cut.Instance.LookupStarted.Task.WaitAsync(TimeSpan.FromSeconds(5), Xunit.TestContext.Current.CancellationToken);
+        await cut.InvokeAsync(() => cut.Render());
+        cut.Instance.ReleaseLookup.SetResult([new CityOption("Casey", "Remote match")]);
+
+        cut.WaitForAssertion(() => {
+            cut.FindAll("[role='option']").Should().ContainSingle().Which.TextContent.Should().Contain("Casey");
+            cut.Find("input[role='combobox']").GetAttribute("value").Should().Be("Casey");
+            cut.FindAll(".nt-combobox-empty").Should().BeEmpty();
+        });
+        cut.Instance.Searches.Should().Equal("Casey");
+        lookupToken.IsCancellationRequested.Should().BeFalse();
+        if (bindSearchText) {
+            cut.Instance.SearchText.Should().Be("Casey");
+        }
+    }
+
+    [Fact]
+    public async Task Superseded_Lookup_Throwing_Cancellation_Does_Not_Clear_Latest_Results() {
+        var firstLookupStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var firstLookupCancelled = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseFirstLookup = new TaskCompletionSource<IEnumerable<CityOption>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseLatestLookup = new TaskCompletionSource<IEnumerable<CityOption>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var searches = new List<string?>();
+        var cut = RenderTypeahead(itemsLookupFunc: async (search, cancellationToken) => {
+            searches.Add(search);
+            if (search == "Ca") {
+                firstLookupStarted.SetResult();
+                try {
+                    return await releaseFirstLookup.Task.WaitAsync(cancellationToken);
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {
+                    firstLookupCancelled.SetResult();
+                    throw;
+                }
+            }
+            return await releaseLatestLookup.Task.WaitAsync(cancellationToken);
+        });
+
+        await cut.Find("input[role='combobox']").InputAsync("Ca");
+        await firstLookupStarted.Task.WaitAsync(TimeSpan.FromSeconds(5), Xunit.TestContext.Current.CancellationToken);
+        await cut.Find("input[role='combobox']").InputAsync("Casey");
+        await firstLookupCancelled.Task.WaitAsync(TimeSpan.FromSeconds(5), Xunit.TestContext.Current.CancellationToken);
+        releaseLatestLookup.SetResult([new CityOption("Casey", "Remote match")]);
+
+        cut.WaitForAssertion(() => {
+            cut.FindAll("[role='option']").Should().ContainSingle().Which.TextContent.Should().Contain("Casey");
+            cut.FindAll(".nt-combobox-empty").Should().BeEmpty();
+            cut.FindAll(".nt-typeahead-progress").Should().BeEmpty();
+        });
+        searches.Should().Equal("Ca", "Casey");
+    }
+
+    [Fact]
+    public async Task Escape_During_Delayed_Selection_Reset_Does_Not_Restart_Queued_Input() {
+        var selectionResetStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseSelectionReset = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var searches = new List<string?>();
+        var cut = RenderTypeahead(new TestModel { City = CityOptions[0] },
+            configure: parameters => parameters.Add(p => p.BindAfter, EventCallback.Factory.Create<CityOption?>(this, async _ => {
+                selectionResetStarted.SetResult();
+                await releaseSelectionReset.Task;
+            })),
+            itemsLookupFunc: (search, _) => {
+                searches.Add(search);
+                return Task.FromResult<IEnumerable<CityOption>>(CityOptions);
+            });
+
+        var pendingInput = cut.Find("input[role='combobox']").InputAsync("Ca");
+        await selectionResetStarted.Task.WaitAsync(TimeSpan.FromSeconds(5), Xunit.TestContext.Current.CancellationToken);
+        await cut.Find("input[role='combobox']").KeyDownAsync(new KeyboardEventArgs { Key = "Escape" });
+        releaseSelectionReset.SetResult();
+        await pendingInput.WaitAsync(TimeSpan.FromSeconds(5), Xunit.TestContext.Current.CancellationToken);
+
+        searches.Should().BeEmpty();
+        cut.Find("input[role='combobox']").GetAttribute("value").Should().BeNullOrEmpty();
+        cut.Find("input[role='combobox']").GetAttribute("aria-expanded").Should().Be("false");
+        cut.FindAll("[role='option']").Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Newer_Input_During_Async_Cancellation_Keeps_Latest_Search_Ownership() {
+        var initialLookupStarted = new TaskCompletionSource<CancellationToken>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var latestLookupStarted = new TaskCompletionSource<CancellationToken>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var cancellationStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var pendingInitialLookup = new TaskCompletionSource<IEnumerable<CityOption>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var releaseCancellation = new ManualResetEventSlim();
+        var searches = new List<string?>();
+        var cut = RenderTypeahead(itemsLookupFunc: async (search, cancellationToken) => {
+            searches.Add(search);
+            if (search == "Before") {
+                initialLookupStarted.SetResult(cancellationToken);
+                return await pendingInitialLookup.Task.WaitAsync(cancellationToken);
+            }
+            latestLookupStarted.SetResult(cancellationToken);
+            // Keep the latest response pending past the obsolete debounce continuation.
+            await Task.Delay(200, cancellationToken);
+            return [new CityOption("Casey", "Remote match")];
+        }, debounceMilliseconds: 10);
+
+        await cut.Find("input[role='combobox']").InputAsync("Before");
+        var initialToken = await initialLookupStarted.Task.WaitAsync(TimeSpan.FromSeconds(5), Xunit.TestContext.Current.CancellationToken);
+        await using var registration = initialToken.Register(() => {
+            cancellationStarted.SetResult();
+            releaseCancellation.Wait(Xunit.TestContext.Current.CancellationToken);
+        });
+        try {
+            await cut.Find("input[role='combobox']").InputAsync("Ca");
+            await cancellationStarted.Task.WaitAsync(TimeSpan.FromSeconds(5), Xunit.TestContext.Current.CancellationToken);
+            await cut.Find("input[role='combobox']").InputAsync("Casey");
+            var latestToken = await latestLookupStarted.Task.WaitAsync(TimeSpan.FromSeconds(5), Xunit.TestContext.Current.CancellationToken);
+            releaseCancellation.Set();
+
+            cut.WaitForAssertion(() => {
+                cut.FindAll("[role='option']").Should().ContainSingle().Which.TextContent.Should().Contain("Casey");
+                cut.FindAll(".nt-combobox-empty").Should().BeEmpty();
+                latestToken.IsCancellationRequested.Should().BeFalse();
+            }, TimeSpan.FromSeconds(5));
+            searches.Should().Equal("Before", "Casey");
+        }
+        finally {
+            releaseCancellation.Set();
+        }
+    }
+
+    [Fact]
+    public async Task Escape_Keeping_Text_Allows_Searching_The_Same_Query_Again() {
+        var cut = RenderTypeahead(configure: parameters => parameters.Add(p => p.ResetValueOnEscape, false));
+        await cut.Find("input[role='combobox']").InputAsync("aus");
+        cut.WaitForAssertion(() => cut.FindAll("[role='option']").Should().ContainSingle());
+        await cut.Find("input[role='combobox']").KeyDownAsync(new KeyboardEventArgs { Key = "Escape" });
+        await cut.Find("input[role='combobox']").InputAsync("aus");
+
+        cut.WaitForAssertion(() => {
+            cut.FindAll("[role='option']").Should().ContainSingle().Which.TextContent.Should().Contain("Austin");
+            cut.Find("input[role='combobox']").GetAttribute("aria-expanded").Should().Be("true");
+        });
+    }
+
+    [Fact]
+    public async Task External_SearchText_Reset_Does_Not_Restart_Queued_Input() {
+        var selectionResetStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseSelectionReset = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var searches = new List<string?>();
+        var model = new TestModel { City = CityOptions[0] };
+        var cut = RenderTypeahead(model,
+            configure: parameters => parameters.Add(p => p.BindAfter, EventCallback.Factory.Create<CityOption?>(this, async _ => {
+                selectionResetStarted.SetResult();
+                await releaseSelectionReset.Task;
+            })),
+            itemsLookupFunc: (search, _) => {
+                searches.Add(search);
+                return Task.FromResult<IEnumerable<CityOption>>(CityOptions);
+            });
+
+        var pendingInput = cut.Find("input[role='combobox']").InputAsync("Ca");
+        await selectionResetStarted.Task.WaitAsync(TimeSpan.FromSeconds(5), Xunit.TestContext.Current.CancellationToken);
+        await cut.InvokeAsync(() => cut.Render(parameters => parameters.Add(p => p.SearchText, "Boston").Add(p => p.Value, model.City)));
+        releaseSelectionReset.SetResult();
+        await pendingInput.WaitAsync(TimeSpan.FromSeconds(5), Xunit.TestContext.Current.CancellationToken);
+
+        searches.Should().BeEmpty();
+        cut.Find("input[role='combobox']").GetAttribute("value").Should().Be("Boston");
+        cut.Find("input[role='combobox']").GetAttribute("aria-expanded").Should().Be("false");
+        cut.FindAll("[role='option']").Should().BeEmpty();
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Selection_And_Clear_Do_Not_Restart_Queued_Input(bool clearSelection) {
+        var selectionResetStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseSelectionReset = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var searches = new List<string?>();
+        var model = new TestModel { City = CityOptions[0] };
+        var cut = RenderTypeahead(model,
+            configure: parameters => parameters
+                .Add(p => p.Label, "City")
+                .Add(p => p.ShowClearButton, true)
+                .Add(p => p.ResetSelectionOnInput, false)
+                .Add(p => p.BindAfter, EventCallback.Factory.Create<CityOption?>(this, async value => {
+                    if (value is null && selectionResetStarted.TrySetResult()) {
+                        await releaseSelectionReset.Task;
+                    }
+                })),
+            itemsLookupFunc: (search, _) => {
+                searches.Add(search);
+                return Task.FromResult<IEnumerable<CityOption>>(CityOptions);
+            });
+        await cut.Find("input[role='combobox']").InputAsync("a");
+        cut.WaitForAssertion(() => cut.FindAll("[role='option']").Should().HaveCount(3));
+        await cut.InvokeAsync(() => cut.Render(parameters => parameters.Add(p => p.ResetSelectionOnInput, true)));
+
+        var pendingInput = cut.Find("input[role='combobox']").InputAsync("Ca");
+        await selectionResetStarted.Task.WaitAsync(TimeSpan.FromSeconds(5), Xunit.TestContext.Current.CancellationToken);
+        await cut.Find("[role='option']").TriggerEventAsync("onpointerdown", new PointerEventArgs());
+        if (clearSelection) {
+            await cut.Find("button[aria-label='Clear City']").ClickAsync();
+        }
+        releaseSelectionReset.SetResult();
+        await pendingInput.WaitAsync(TimeSpan.FromSeconds(5), Xunit.TestContext.Current.CancellationToken);
+
+        searches.Should().Equal("a");
+        model.City.Should().Be(clearSelection ? null : CityOptions[0]);
+        cut.Find("input[role='combobox']").GetAttribute("value").Should().Be(clearSelection ? null : "Austin");
+        cut.Find("input[role='combobox']").GetAttribute("aria-expanded").Should().Be("false");
+        cut.FindAll("[role='option']").Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Escape_Cancellation_Completing_After_Newer_Lookup_Does_Not_Clear_Results() {
+        var initialLookupStarted = new TaskCompletionSource<CancellationToken>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var latestLookupStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var cancellationStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var pendingLookup = new TaskCompletionSource<IEnumerable<CityOption>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseLatestLookup = new TaskCompletionSource<IEnumerable<CityOption>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var releaseCancellation = new ManualResetEventSlim();
+        var cut = RenderTypeahead(itemsLookupFunc: async (search, cancellationToken) => {
+            if (search == "Before") {
+                initialLookupStarted.SetResult(cancellationToken);
+                return await pendingLookup.Task.WaitAsync(cancellationToken);
+            }
+            latestLookupStarted.SetResult();
+            return await releaseLatestLookup.Task.WaitAsync(cancellationToken);
+        });
+        await cut.Find("input[role='combobox']").InputAsync("Before");
+        var initialToken = await initialLookupStarted.Task.WaitAsync(TimeSpan.FromSeconds(5), Xunit.TestContext.Current.CancellationToken);
+        await using var registration = initialToken.Register(() => {
+            cancellationStarted.SetResult();
+            releaseCancellation.Wait(Xunit.TestContext.Current.CancellationToken);
+        });
+        try {
+            var escape = cut.Find("input[role='combobox']").KeyDownAsync(new KeyboardEventArgs { Key = "Escape" });
+            await cancellationStarted.Task.WaitAsync(TimeSpan.FromSeconds(5), Xunit.TestContext.Current.CancellationToken);
+            await cut.Find("input[role='combobox']").InputAsync("Casey");
+            await latestLookupStarted.Task.WaitAsync(TimeSpan.FromSeconds(5), Xunit.TestContext.Current.CancellationToken);
+            releaseLatestLookup.SetResult([new CityOption("Casey", "Remote match")]);
+            cut.WaitForAssertion(() => cut.FindAll("[role='option']").Should().ContainSingle());
+            releaseCancellation.Set();
+            await escape.WaitAsync(TimeSpan.FromSeconds(5), Xunit.TestContext.Current.CancellationToken);
+
+            cut.FindAll("[role='option']").Should().ContainSingle().Which.TextContent.Should().Contain("Casey");
+            cut.Find("input[role='combobox']").GetAttribute("value").Should().Be("Casey");
+            cut.Find("input[role='combobox']").GetAttribute("aria-expanded").Should().Be("true");
+        }
+        finally {
+            releaseCancellation.Set();
+        }
+    }
+
+    [Fact]
+    public async Task Typing_After_Bound_Selection_Preserves_Query_And_Renders_Results() {
+        var cut = Render<AsyncSearchWrapper>(parameters => parameters.Add(p => p.InitialValue, CityOptions[0]));
+        await cut.Find("input[role='combobox']").InputAsync("Casey");
+        await cut.Instance.LookupStarted.Task.WaitAsync(TimeSpan.FromSeconds(5), Xunit.TestContext.Current.CancellationToken);
+        cut.Instance.ReleaseLookup.SetResult([new CityOption("Casey", "Remote match")]);
+
+        cut.WaitForAssertion(() => {
+            cut.FindAll("[role='option']").Should().ContainSingle().Which.TextContent.Should().Contain("Casey");
+            cut.Find("input[role='combobox']").GetAttribute("value").Should().Be("Casey");
+            cut.FindAll(".nt-combobox-empty").Should().BeEmpty();
+        });
+    }
+
+    [Fact]
     public void Rapid_Input_During_Debounce_Only_Invokes_Latest_Search() {
         var searches = new List<string?>();
         Func<string?, CancellationToken, Task<IEnumerable<CityOption>>> lookup = (search, _) => {
@@ -520,6 +892,44 @@ public class NTTypeahead_Tests : BunitContext {
             .Where(item => item.Name.Contains(search ?? string.Empty, StringComparison.OrdinalIgnoreCase))
             .AsEnumerable();
         return Task.FromResult(results);
+    }
+
+    private sealed class AsyncSearchWrapper : ComponentBase {
+        private readonly TestModel _model = new();
+
+        [Parameter]
+        public bool BindSearchText { get; set; }
+
+        [Parameter]
+        public CityOption? InitialValue { get; set; }
+
+        public string? SearchText { get; private set; }
+        public List<string?> Searches { get; } = [];
+        public TaskCompletionSource<CancellationToken> LookupStarted { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public TaskCompletionSource<IEnumerable<CityOption>> ReleaseLookup { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        protected override void OnInitialized() => _model.City = InitialValue;
+
+        protected override void BuildRenderTree(RenderTreeBuilder builder) {
+            builder.OpenComponent<NTTypeahead<CityOption>>(0);
+            builder.AddAttribute(1, nameof(NTTypeahead<CityOption>.Value), _model.City);
+            builder.AddAttribute(2, nameof(NTTypeahead<CityOption>.ValueChanged), EventCallback.Factory.Create<CityOption?>(this, value => _model.City = value));
+            builder.AddAttribute(3, nameof(NTTypeahead<CityOption>.ValueExpression), (Expression<Func<CityOption?>>)(() => _model.City));
+            builder.AddAttribute(4, nameof(NTTypeahead<CityOption>.ItemsLookupFunc), (Func<string?, CancellationToken, Task<IEnumerable<CityOption>>>)SearchAsync);
+            builder.AddAttribute(5, nameof(NTTypeahead<CityOption>.ItemTextSelector), (Func<CityOption, string>)(item => item.Name));
+            builder.AddAttribute(6, nameof(NTTypeahead<CityOption>.MinimumSearchLength), 2);
+            if (BindSearchText) {
+                builder.AddAttribute(7, nameof(NTTypeahead<CityOption>.SearchText), SearchText);
+                builder.AddAttribute(8, nameof(NTTypeahead<CityOption>.SearchTextChanged), EventCallback.Factory.Create<string?>(this, value => SearchText = value));
+            }
+            builder.CloseComponent();
+        }
+
+        private async Task<IEnumerable<CityOption>> SearchAsync(string? search, CancellationToken cancellationToken) {
+            Searches.Add(search);
+            LookupStarted.TrySetResult(cancellationToken);
+            return await ReleaseLookup.Task.WaitAsync(cancellationToken);
+        }
     }
 
     private sealed class ControlledSearchTextWrapper : ComponentBase {
