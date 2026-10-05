@@ -23,7 +23,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="11.0.0-rc.1.26425.128" PrivateAssets="all" />
-		<PackageReference Include="AspNetCore.SassCompiler" Version="1.103.1" PrivateAssets="all" />
+		<PackageReference Include="AspNetCore.SassCompiler" Version="1.105.1" PrivateAssets="all" />
 	</ItemGroup>
 
 	<ItemGroup>
