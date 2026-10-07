@@ -34,10 +34,10 @@ $nt-navigation-rail-modal-width: min($nt-navigation-rail-expanded-width, 88vw);
 
 .nt-navigation-rail {
     align-self: flex-start;
-    background: var(--nt-navigation-rail-container-color, #{colors.$tnt-color-surface});
+    background: var(--nt-navigation-rail-container-color, #{colors.$nt-color-surface});
     block-size: 100dvh;
     box-sizing: border-box;
-    color: colors.$tnt-color-on-surface-variant;
+    color: colors.$nt-color-on-surface-variant;
     display: flex;
     flex: 0 0 auto;
     flex-direction: column;
@@ -155,14 +155,14 @@ $nt-navigation-rail-modal-width: min($nt-navigation-rail-expanded-width, 88vw);
     }
 
     &.nt-navigation-rail-with-divider {
-        border-right: 1px solid var(--nt-navigation-rail-divider-color, #{colors.$tnt-color-outline-variant});
+        border-right: 1px solid var(--nt-navigation-rail-divider-color, #{colors.$nt-color-outline-variant});
     }
 
     &.nt-navigation-rail-expanded {
         inline-size: $nt-navigation-rail-expanded-width;
 
         &.nt-navigation-rail-with-divider {
-            border-right: 1px solid var(--nt-navigation-rail-divider-color, #{colors.$tnt-color-outline-variant});
+            border-right: 1px solid var(--nt-navigation-rail-divider-color, #{colors.$nt-color-outline-variant});
         }
     }
 
@@ -187,7 +187,7 @@ $nt-navigation-rail-modal-width: min($nt-navigation-rail-expanded-width, 88vw);
         &.nt-navigation-rail-modal.nt-navigation-rail-collapsing {
             border-end-end-radius: $nt-navigation-rail-modal-corner-radius;
             border-start-end-radius: $nt-navigation-rail-modal-corner-radius;
-            box-shadow: 0 8px 24px color-mix(in srgb, #{colors.$tnt-color-shadow} 24%, transparent);
+            box-shadow: 0 8px 24px color-mix(in srgb, #{colors.$nt-color-shadow} 24%, transparent);
             inset-inline-start: 0;
             max-inline-size: min($nt-navigation-rail-expanded-max-width, 88vw);
             position: fixed;
@@ -202,7 +202,7 @@ $nt-navigation-rail-modal-width: min($nt-navigation-rail-expanded-width, 88vw);
         &.nt-navigation-rail-expanding {
             border-end-end-radius: $nt-navigation-rail-modal-corner-radius;
             border-start-end-radius: $nt-navigation-rail-modal-corner-radius;
-            box-shadow: 0 8px 24px color-mix(in srgb, #{colors.$tnt-color-shadow} 24%, transparent);
+            box-shadow: 0 8px 24px color-mix(in srgb, #{colors.$nt-color-shadow} 24%, transparent);
             inline-size: $nt-navigation-rail-expanded-width;
             margin-inline-end: calc($nt-navigation-rail-collapsed-width - $nt-navigation-rail-expanded-width);
             z-index: 1000;
@@ -211,7 +211,7 @@ $nt-navigation-rail-modal-width: min($nt-navigation-rail-expanded-width, 88vw);
         &.nt-navigation-rail-collapsing {
             border-end-end-radius: $nt-navigation-rail-modal-corner-radius;
             border-start-end-radius: $nt-navigation-rail-modal-corner-radius;
-            box-shadow: 0 8px 24px color-mix(in srgb, #{colors.$tnt-color-shadow} 24%, transparent);
+            box-shadow: 0 8px 24px color-mix(in srgb, #{colors.$nt-color-shadow} 24%, transparent);
             z-index: 1000;
         }
     }
@@ -223,7 +223,7 @@ $nt-navigation-rail-modal-width: min($nt-navigation-rail-expanded-width, 88vw);
     &[dir='rtl'],
     :dir(rtl) & {
         &.nt-navigation-rail-with-divider {
-            border-left: 1px solid var(--nt-navigation-rail-divider-color, #{colors.$tnt-color-outline-variant});
+            border-left: 1px solid var(--nt-navigation-rail-divider-color, #{colors.$nt-color-outline-variant});
             border-right: 0;
         }
 
@@ -265,14 +265,14 @@ $nt-navigation-rail-modal-width: min($nt-navigation-rail-expanded-width, 88vw);
 }
 
 .nt-navigation-rail-menu-button {
-    --nt-button-state-layer-color: var(--nt-navigation-rail-state-layer-color, #{colors.$tnt-color-on-secondary-container});
+    --nt-button-state-layer-color: var(--nt-navigation-rail-state-layer-color, #{colors.$nt-color-on-secondary-container});
     align-items: center;
     appearance: none;
     background: transparent;
     border: 0;
     border-radius: 999px;
     box-sizing: border-box;
-    color: colors.$tnt-color-on-surface-variant;
+    color: colors.$nt-color-on-surface-variant;
     cursor: pointer;
     display: inline-flex;
     font: inherit;
@@ -369,7 +369,7 @@ $nt-navigation-rail-modal-width: min($nt-navigation-rail-expanded-width, 88vw);
 
 .nt-navigation-rail-header {
     background: inherit;
-    border-block-end: 1px solid var(--nt-navigation-rail-divider-color, #{colors.$tnt-color-outline-variant});
+    border-block-end: 1px solid var(--nt-navigation-rail-divider-color, #{colors.$nt-color-outline-variant});
     gap: 12px;
     min-block-size: $nt-navigation-rail-region-min-height;
     position: sticky;
@@ -471,7 +471,7 @@ $nt-navigation-rail-modal-width: min($nt-navigation-rail-expanded-width, 88vw);
 
 .nt-navigation-rail-footer {
     background: inherit;
-    border-block-start: 1px solid var(--nt-navigation-rail-divider-color, #{colors.$tnt-color-outline-variant});
+    border-block-start: 1px solid var(--nt-navigation-rail-divider-color, #{colors.$nt-color-outline-variant});
     bottom: 0;
     min-block-size: $nt-navigation-rail-region-min-height;
     position: sticky;
@@ -511,7 +511,7 @@ $nt-navigation-rail-modal-width: min($nt-navigation-rail-expanded-width, 88vw);
     }
 
     &::backdrop {
-        background: color-mix(in srgb, var(--nt-navigation-rail-scrim-color, #{colors.$tnt-color-scrim}) 32%, transparent);
+        background: color-mix(in srgb, var(--nt-navigation-rail-scrim-color, #{colors.$nt-color-scrim}) 32%, transparent);
     }
 
     &.nt-navigation-rail-modal-dialog-entering {
@@ -658,13 +658,13 @@ tnt-page-script {
     }
 
     to {
-        background: color-mix(in srgb, var(--nt-navigation-rail-scrim-color, #{colors.$tnt-color-scrim}) 32%, transparent);
+        background: color-mix(in srgb, var(--nt-navigation-rail-scrim-color, #{colors.$nt-color-scrim}) 32%, transparent);
     }
 }
 
 @keyframes nt-navigation-rail-modal-backdrop-exit {
     from {
-        background: color-mix(in srgb, var(--nt-navigation-rail-scrim-color, #{colors.$tnt-color-scrim}) 32%, transparent);
+        background: color-mix(in srgb, var(--nt-navigation-rail-scrim-color, #{colors.$nt-color-scrim}) 32%, transparent);
     }
 
     to {

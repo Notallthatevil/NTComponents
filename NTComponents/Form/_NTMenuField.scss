@@ -54,10 +54,10 @@ $nt-menu-field-disabled-opacity: 0.38;
             box-sizing: border-box;
             max-height: $nt-menu-field-menu-max-height;
             overflow: auto;
-            color: colors.$tnt-color-on-surface;
-            background-color: colors.$tnt-color-surface-container;
+            color: colors.$nt-color-on-surface;
+            background-color: colors.$nt-color-surface-container;
             border-radius: corners.$nt-corner-radius-extra-small;
-            box-shadow: map.get(elevation.$elevation-shadows, 3);
+            box-shadow: map.get(elevation.$nt-elevation-shadows, 3);
         }
 
         ::deep .nt-combobox-menu-layer {
@@ -101,7 +101,7 @@ $nt-menu-field-disabled-opacity: 0.38;
             border: 0;
             gap: $nt-menu-field-option-gap;
             padding: $nt-menu-field-option-padding-block $nt-menu-field-option-padding-inline;
-            color: colors.$tnt-color-on-surface;
+            color: colors.$nt-color-on-surface;
             font: inherit;
             text-align: start;
             background: transparent;
@@ -118,7 +118,7 @@ $nt-menu-field-disabled-opacity: 0.38;
                 position: absolute;
                 inset: 0;
                 content: '';
-                background-color: colors.$tnt-color-on-surface;
+                background-color: colors.$nt-color-on-surface;
                 opacity: 0;
                 transition: opacity $nt-menu-field-motion-duration $nt-menu-field-motion-easing;
             }
@@ -134,22 +134,22 @@ $nt-menu-field-disabled-opacity: 0.38;
         }
 
         ::deep .nt-combobox-option-selected {
-            color: colors.$tnt-color-on-secondary-container;
-            background-color: colors.$tnt-color-secondary-container;
+            color: colors.$nt-color-on-secondary-container;
+            background-color: colors.$nt-color-secondary-container;
 
             &::before {
-                background-color: colors.$tnt-color-on-secondary-container;
+                background-color: colors.$nt-color-on-secondary-container;
             }
 
             .nt-combobox-option-leading,
             .nt-combobox-option-trailing,
             .nt-combobox-option-supporting {
-                color: colors.$tnt-color-on-secondary-container;
+                color: colors.$nt-color-on-secondary-container;
             }
         }
 
         ::deep .nt-combobox-option-disabled {
-            color: colors.$tnt-color-on-surface;
+            color: colors.$nt-color-on-surface;
             cursor: default;
             opacity: $nt-menu-field-disabled-opacity;
             pointer-events: none;
@@ -163,7 +163,7 @@ $nt-menu-field-disabled-opacity: 0.38;
             justify-content: center;
             width: $nt-menu-field-icon-size;
             height: $nt-menu-field-icon-size;
-            color: colors.$tnt-color-on-surface-variant;
+            color: colors.$nt-color-on-surface-variant;
         }
 
         ::deep .nt-combobox-option-leading {
@@ -202,14 +202,14 @@ $nt-menu-field-disabled-opacity: 0.38;
 
         ::deep .nt-combobox-option-supporting {
             overflow: hidden;
-            color: colors.$tnt-color-on-surface-variant;
+            color: colors.$nt-color-on-surface-variant;
             text-overflow: ellipsis;
             white-space: nowrap;
         }
 
         ::deep .nt-combobox-empty {
             padding: 12px $nt-menu-field-option-padding-inline;
-            color: colors.$tnt-color-on-surface-variant;
+            color: colors.$nt-color-on-surface-variant;
         }
 
         &.nt-input-standard {

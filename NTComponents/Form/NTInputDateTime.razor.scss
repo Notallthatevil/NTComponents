@@ -70,7 +70,7 @@ $nt-dtp-trigger-top-dense: 14px;
         margin: 0;
         padding: 0;
         background-color: transparent;
-        color: var(--nt-input-icon-color, #{colors.$tnt-color-on-surface-variant});
+        color: var(--nt-input-icon-color, #{colors.$nt-color-on-surface-variant});
         cursor: pointer;
         transform: translateY(-50%);
         transition: background-color $nt-dtp-motion-duration $nt-dtp-motion-easing,
@@ -78,12 +78,12 @@ $nt-dtp-trigger-top-dense: 14px;
             opacity $nt-dtp-motion-duration $nt-dtp-motion-easing;
 
         &:hover {
-            background-color: color-mix(in srgb, var(--nt-input-state-layer-color, #{colors.$tnt-color-on-surface}) 8%, transparent);
-            color: var(--nt-input-text-color, #{colors.$tnt-color-on-surface});
+            background-color: color-mix(in srgb, var(--nt-input-state-layer-color, #{colors.$nt-color-on-surface}) 8%, transparent);
+            color: var(--nt-input-text-color, #{colors.$nt-color-on-surface});
         }
 
         &:focus-visible {
-            outline: 2px solid var(--nt-input-focus-color, #{colors.$tnt-color-primary});
+            outline: 2px solid var(--nt-input-focus-color, #{colors.$nt-color-primary});
             outline-offset: 2px;
         }
 
@@ -99,7 +99,7 @@ $nt-dtp-trigger-top-dense: 14px;
 
     .tnt-dtp-native-trigger {
         display: none;
-        color: colors.$tnt-color-on-surface;
+        color: colors.$nt-color-on-surface;
     }
 
     &[data-tnt-dtp-native-enhanced='true'] {
@@ -179,7 +179,7 @@ $nt-dtp-trigger-top-dense: 14px;
         padding: 12px;
         box-sizing: border-box;
         overflow: hidden;
-        background-color: color-mix(in srgb, colors.$tnt-color-scrim 32%, transparent);
+        background-color: color-mix(in srgb, colors.$nt-color-scrim 32%, transparent);
         backdrop-filter: blur(4px);
         -webkit-backdrop-filter: blur(4px);
         align-items: center;
@@ -202,24 +202,24 @@ $nt-dtp-trigger-top-dense: 14px;
         }
 
         .tnt-dtp-actions {
-            border-top: 1px solid color-mix(in srgb, colors.$tnt-color-outline 50%, transparent);
+            border-top: 1px solid color-mix(in srgb, colors.$nt-color-outline 50%, transparent);
         }
     }
 
     .tnt-dtp-surface {
         border-radius: corners.$nt-corner-radius-large;
         overflow: hidden;
-        background-color: colors.$tnt-color-surface-container-high;
-        color: colors.$tnt-color-on-surface;
-        @include elevation.tnt-elevation(3, false);
+        background-color: colors.$nt-color-surface-container-high;
+        color: colors.$nt-color-on-surface;
+        @include elevation.tnt-elevation(3, false, elevation.$nt-elevation-shadows);
     }
 
     .tnt-dtp-header {
         display: none;
         padding: 10px 14px 8px 14px;
-        background-color: colors.$tnt-color-primary-container;
-        color: colors.$tnt-color-on-primary-container;
-        border-bottom: 1px solid color-mix(in srgb, colors.$tnt-color-on-primary-container 18%, transparent);
+        background-color: colors.$nt-color-primary-container;
+        color: colors.$nt-color-on-primary-container;
+        border-bottom: 1px solid color-mix(in srgb, colors.$nt-color-on-primary-container 18%, transparent);
 
         .tnt-dtp-headline {
             @include typescale.tnt-title-large;
@@ -262,13 +262,13 @@ $nt-dtp-trigger-top-dense: 14px;
         height: $nt-dtp-touch-target;
         cursor: pointer;
         background-color: transparent;
-        color: colors.$tnt-color-on-surface-variant;
+        color: colors.$nt-color-on-surface-variant;
         @include typescale.tnt-title-medium;
 
         &:hover,
         &:focus-visible {
-            background-color: color-mix(in srgb, colors.$tnt-color-primary 14%, transparent);
-            color: colors.$tnt-color-on-surface;
+            background-color: color-mix(in srgb, colors.$nt-color-primary 14%, transparent);
+            color: colors.$nt-color-on-surface;
         }
     }
 
@@ -276,7 +276,7 @@ $nt-dtp-trigger-top-dense: 14px;
         display: grid;
         grid-template-columns: repeat(7, minmax(0, 1fr));
         text-align: center;
-        color: colors.$tnt-color-on-surface-variant;
+        color: colors.$nt-color-on-surface-variant;
         @include typescale.tnt-label-small;
 
         span {
@@ -298,27 +298,27 @@ $nt-dtp-trigger-top-dense: 14px;
         border-radius: 999px;
         cursor: pointer;
         background-color: transparent;
-        color: colors.$tnt-color-on-surface;
+        color: colors.$nt-color-on-surface;
         transition: background-color 160ms ease, color 160ms ease;
         @include typescale.tnt-label-medium;
 
         &:hover,
         &:focus-visible {
-            background-color: color-mix(in srgb, colors.$tnt-color-primary 16%, transparent);
+            background-color: color-mix(in srgb, colors.$nt-color-primary 16%, transparent);
         }
 
         &.tnt-dtp-outside-month {
-            color: color-mix(in srgb, colors.$tnt-color-on-surface-variant 55%, transparent);
+            color: color-mix(in srgb, colors.$nt-color-on-surface-variant 55%, transparent);
         }
 
         &.tnt-dtp-today {
-            outline: 1px solid colors.$tnt-color-primary;
+            outline: 1px solid colors.$nt-color-primary;
             outline-offset: -1px;
         }
 
         &.tnt-dtp-selected-day {
-            background-color: colors.$tnt-color-primary;
-            color: colors.$tnt-color-on-primary;
+            background-color: colors.$nt-color-primary;
+            color: colors.$nt-color-on-primary;
         }
 
         &:disabled {
@@ -344,13 +344,13 @@ $nt-dtp-trigger-top-dense: 14px;
         border-radius: $nt-dtp-picker-option-radius;
         cursor: pointer;
         background-color: transparent;
-        color: colors.$tnt-color-on-surface;
+        color: colors.$nt-color-on-surface;
         transition: background-color 160ms ease, color 160ms ease;
         @include typescale.tnt-label-medium;
 
         &:hover,
         &:focus-visible {
-            background-color: color-mix(in srgb, colors.$tnt-color-primary 16%, transparent);
+            background-color: color-mix(in srgb, colors.$nt-color-primary 16%, transparent);
         }
 
         &:disabled {
@@ -360,19 +360,19 @@ $nt-dtp-trigger-top-dense: 14px;
 
         &.tnt-dtp-today,
         &.tnt-dtp-current-year {
-            outline: 1px solid colors.$tnt-color-primary;
+            outline: 1px solid colors.$nt-color-primary;
             outline-offset: -1px;
         }
 
         &.tnt-dtp-selected-day,
         &.tnt-dtp-selected-year {
-            background-color: colors.$tnt-color-primary;
-            color: colors.$tnt-color-on-primary;
+            background-color: colors.$nt-color-primary;
+            color: colors.$nt-color-on-primary;
         }
     }
 
     .tnt-dtp-time-panel {
-        border-top: 1px solid color-mix(in srgb, colors.$tnt-color-outline 50%, transparent);
+        border-top: 1px solid color-mix(in srgb, colors.$nt-color-outline 50%, transparent);
         padding: 8px 4px 0;
     }
 
@@ -389,7 +389,7 @@ $nt-dtp-trigger-top-dense: 14px;
         gap: 4px;
 
         span {
-            color: colors.$tnt-color-on-surface-variant;
+            color: colors.$nt-color-on-surface-variant;
             @include typescale.tnt-label-small;
         }
 
@@ -397,18 +397,18 @@ $nt-dtp-trigger-top-dense: 14px;
             width: 100%;
             height: $nt-dtp-time-input-height;
             box-sizing: border-box;
-            border: 1px solid colors.$tnt-color-outline-variant;
+            border: 1px solid colors.$nt-color-outline-variant;
             border-radius: 10px;
-            background-color: colors.$tnt-color-surface-container-low;
-            color: colors.$tnt-color-on-surface;
+            background-color: colors.$nt-color-surface-container-low;
+            color: colors.$nt-color-on-surface;
             padding: 6px 8px;
             outline: none;
             text-align: center;
             @include typescale.tnt-body-large;
 
             &:focus-visible {
-                border-color: colors.$tnt-color-primary;
-                box-shadow: 0 0 0 1px colors.$tnt-color-primary;
+                border-color: colors.$nt-color-primary;
+                box-shadow: 0 0 0 1px colors.$nt-color-primary;
             }
         }
     }
@@ -451,11 +451,11 @@ $nt-dtp-trigger-top-dense: 14px;
         min-width: 0;
         max-width: 100%;
         min-height: 32px;
-        border: 1px solid color-mix(in srgb, colors.$tnt-color-outline-variant 72%, transparent);
+        border: 1px solid color-mix(in srgb, colors.$nt-color-outline-variant 72%, transparent);
         border-radius: measurements.$tnt-pill-border-radius-small;
         padding: 0 8px 0 12px;
-        background-color: colors.$tnt-color-surface-container-highest;
-        color: colors.$tnt-color-on-surface;
+        background-color: colors.$nt-color-surface-container-highest;
+        color: colors.$nt-color-on-surface;
         cursor: pointer;
         transition: background-color $nt-dtp-motion-duration $nt-dtp-motion-easing,
             border-color $nt-dtp-motion-duration $nt-dtp-motion-easing,
@@ -477,9 +477,9 @@ $nt-dtp-trigger-top-dense: 14px;
 
         &:hover,
         &:focus-visible {
-            border-color: color-mix(in srgb, colors.$tnt-color-primary 54%, colors.$tnt-color-outline-variant);
-            background-color: color-mix(in srgb, colors.$tnt-color-primary 12%, colors.$tnt-color-surface-container-highest);
-            color: colors.$tnt-color-primary;
+            border-color: color-mix(in srgb, colors.$nt-color-primary 54%, colors.$nt-color-outline-variant);
+            background-color: color-mix(in srgb, colors.$nt-color-primary 12%, colors.$nt-color-surface-container-highest);
+            color: colors.$nt-color-primary;
         }
     }
 
@@ -487,7 +487,7 @@ $nt-dtp-trigger-top-dense: 14px;
         flex: 0 0 auto;
         font-size: 20px;
         line-height: 1;
-        color: colors.$tnt-color-on-surface-variant;
+        color: colors.$nt-color-on-surface-variant;
         transition: color $nt-dtp-motion-duration $nt-dtp-motion-easing,
             transform $nt-dtp-motion-duration $nt-dtp-motion-easing;
     }
@@ -495,7 +495,7 @@ $nt-dtp-trigger-top-dense: 14px;
     .tnt-dtp-menu-button:hover,
     .tnt-dtp-menu-button:focus-visible {
         .tnt-dtp-menu-button-icon {
-            color: colors.$tnt-color-primary;
+            color: colors.$nt-color-primary;
             transform: translateY(1px);
         }
     }
@@ -504,7 +504,7 @@ $nt-dtp-trigger-top-dense: 14px;
         height: $nt-dtp-time-input-height;
         display: inline-flex;
         align-items: center;
-        color: colors.$tnt-color-on-surface;
+        color: colors.$nt-color-on-surface;
         @include typescale.tnt-display-small;
     }
 
@@ -513,39 +513,39 @@ $nt-dtp-trigger-top-dense: 14px;
         grid-template-rows: 1fr 1fr;
         width: $nt-dtp-period-selector-width;
         height: $nt-dtp-time-input-height;
-        border: 1px solid colors.$tnt-color-outline-variant;
+        border: 1px solid colors.$nt-color-outline-variant;
         border-radius: 8px;
         overflow: hidden;
-        background-color: colors.$tnt-color-surface-container-low;
+        background-color: colors.$nt-color-surface-container-low;
     }
 
     .tnt-dtp-meridiem-button {
         border: none;
         margin: 0;
         background-color: transparent;
-        color: colors.$tnt-color-on-surface-variant;
+        color: colors.$nt-color-on-surface-variant;
         cursor: pointer;
         @include typescale.tnt-label-small;
 
         &:not(:first-child) {
-            border-top: 1px solid colors.$tnt-color-outline-variant;
+            border-top: 1px solid colors.$nt-color-outline-variant;
         }
 
         &.tnt-dtp-meridiem-selected {
-            background-color: colors.$tnt-color-primary;
-            color: colors.$tnt-color-on-primary;
+            background-color: colors.$nt-color-primary;
+            color: colors.$nt-color-on-primary;
         }
 
         &:hover,
         &:focus-visible {
-            background-color: color-mix(in srgb, colors.$tnt-color-primary 14%, transparent);
-            color: colors.$tnt-color-on-surface;
+            background-color: color-mix(in srgb, colors.$nt-color-primary 14%, transparent);
+            color: colors.$nt-color-on-surface;
         }
 
         &.tnt-dtp-meridiem-selected:hover,
         &.tnt-dtp-meridiem-selected:focus-visible {
-            background-color: colors.$tnt-color-primary;
-            color: colors.$tnt-color-on-primary;
+            background-color: colors.$nt-color-primary;
+            color: colors.$nt-color-on-primary;
         }
     }
 
@@ -577,35 +577,35 @@ $nt-dtp-trigger-top-dense: 14px;
         @include typescale.tnt-label-large;
 
         &:focus-visible {
-            outline: 2px solid color-mix(in srgb, colors.$tnt-color-primary 50%, transparent);
+            outline: 2px solid color-mix(in srgb, colors.$nt-color-primary 50%, transparent);
             outline-offset: 1px;
         }
     }
 
     .tnt-dtp-text-button {
         background-color: transparent;
-        color: colors.$tnt-color-primary;
+        color: colors.$nt-color-primary;
 
         &:hover {
-            background-color: color-mix(in srgb, colors.$tnt-color-primary 14%, transparent);
+            background-color: color-mix(in srgb, colors.$nt-color-primary 14%, transparent);
         }
     }
 
     .tnt-dtp-tonal-button {
-        background-color: colors.$tnt-color-secondary-container;
-        color: colors.$tnt-color-on-secondary-container;
+        background-color: colors.$nt-color-secondary-container;
+        color: colors.$nt-color-on-secondary-container;
 
         &:hover {
-            background-color: color-mix(in srgb, colors.$tnt-color-secondary-container 70%, colors.$tnt-color-secondary);
+            background-color: color-mix(in srgb, colors.$nt-color-secondary-container 70%, colors.$nt-color-secondary);
         }
     }
 
     .tnt-dtp-filled-button {
-        background-color: colors.$tnt-color-primary;
-        color: colors.$tnt-color-on-primary;
+        background-color: colors.$nt-color-primary;
+        color: colors.$nt-color-on-primary;
 
         &:hover {
-            background-color: color-mix(in srgb, colors.$tnt-color-primary 82%, colors.$tnt-color-on-primary 18%);
+            background-color: color-mix(in srgb, colors.$nt-color-primary 82%, colors.$nt-color-on-primary 18%);
         }
     }
 

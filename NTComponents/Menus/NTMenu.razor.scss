@@ -10,11 +10,11 @@ $menu-exit-transition: menuMotion.$nt-menu-exit-transition;
 $menu-state-transition: motion.$nt-motion-duration-short_3 motion.$nt-motion-easing-standard;
 $menu-shape-transition: motion.$nt-motion-duration-short_4 motion.$nt-motion-easing-emphasized;
 $menu-anchor-gap: 4px;
-$menu-container-color: colors.$tnt-color-surface-container-low;
-$menu-content-color: colors.$tnt-color-on-surface;
-$menu-secondary-content-color: colors.$tnt-color-on-surface-variant;
-$menu-selected-container-color: colors.$tnt-color-tertiary-container;
-$menu-selected-content-color: colors.$tnt-color-on-tertiary-container;
+$menu-container-color: colors.$nt-color-surface-container-low;
+$menu-content-color: colors.$nt-color-on-surface;
+$menu-secondary-content-color: colors.$nt-color-on-surface-variant;
+$menu-selected-container-color: colors.$nt-color-tertiary-container;
+$menu-selected-content-color: colors.$nt-color-on-tertiary-container;
 
 .nt-menu {
     background: transparent;
@@ -203,7 +203,7 @@ $menu-selected-content-color: colors.$tnt-color-on-tertiary-container;
 
             &:disabled,
             &.nt-menu-item-disabled {
-                color: color-mix(in srgb, #{colors.$tnt-color-on-surface} 38%, transparent);
+                color: color-mix(in srgb, #{colors.$nt-color-on-surface} 38%, transparent);
                 cursor: not-allowed;
                 pointer-events: none;
             }
@@ -258,7 +258,7 @@ $menu-selected-content-color: colors.$tnt-color-on-tertiary-container;
         }
 
         .nt-menu-divider {
-            background: #{colors.$tnt-color-outline-variant};
+            background: #{colors.$nt-color-outline-variant};
             block-size: 1px;
             box-sizing: border-box;
             flex: 0 0 auto;

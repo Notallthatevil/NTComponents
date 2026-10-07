@@ -15,12 +15,12 @@ $nt-window-minimized-inline-size: 360px;
 
 .nt-window {
     animation: nt-window-enter motion.$nt-motion-duration-medium_3 motion.$nt-motion-easing-emphasized-decelerate;
-    background: var(--nt-window-background-color, #{colors.$tnt-color-surface-container-high});
-    border: 1px solid var(--nt-window-outline-color, #{colors.$tnt-color-outline-variant});
+    background: var(--nt-window-background-color, #{colors.$nt-color-surface-container-high});
+    border: 1px solid var(--nt-window-outline-color, #{colors.$nt-color-outline-variant});
     border-radius: var(--nt-window-corner-radius, #{corners.$nt-corner-radius-large});
-    box-shadow: map.get(elevation.$elevation-shadows, 3);
+    box-shadow: map.get(elevation.$nt-elevation-shadows, 3);
     box-sizing: border-box;
-    color: var(--nt-window-text-color, #{colors.$tnt-color-on-surface});
+    color: var(--nt-window-text-color, #{colors.$nt-color-on-surface});
     display: grid;
     grid-template-rows: auto minmax(0, 1fr);
     inline-size: min(var(--nt-window-inline-size, 480px), calc(100dvw - 48px));
@@ -54,7 +54,7 @@ $nt-window-minimized-inline-size: 360px;
 
     .nt-window-header {
         align-items: center;
-        background: var(--nt-window-header-background-color, #{colors.$tnt-color-surface-container-highest});
+        background: var(--nt-window-header-background-color, #{colors.$nt-color-surface-container-highest});
         display: flex;
         gap: 8px;
         min-block-size: 64px;
@@ -74,7 +74,7 @@ $nt-window-minimized-inline-size: 360px;
     .nt-window-title {
         @include typescale.nt-title-medium;
 
-        color: var(--nt-window-title-color, #{colors.$tnt-color-on-surface});
+        color: var(--nt-window-title-color, #{colors.$nt-color-on-surface});
         flex: 1 1 auto;
         margin: 0;
         min-inline-size: 0;
@@ -95,7 +95,7 @@ $nt-window-minimized-inline-size: 360px;
         background: transparent;
         border: 0;
         border-radius: corners.$nt-corner-radius-full;
-        color: var(--nt-window-control-color, #{colors.$tnt-color-on-surface-variant});
+        color: var(--nt-window-control-color, #{colors.$nt-color-on-surface-variant});
         cursor: pointer;
         display: inline-flex;
         inline-size: 48px;

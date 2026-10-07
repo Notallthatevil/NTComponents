@@ -30,10 +30,10 @@ $nt-file-upload-list-gap: 6px;
         justify-content: center;
         flex: 0 0 auto;
         min-height: $nt-file-upload-choose-height;
-        border: 1px solid colors.$tnt-color-outline;
+        border: 1px solid colors.$nt-color-outline;
         border-radius: measurements.$tnt-pill-border-radius-xs;
         padding-inline: 12px;
-        color: colors.$tnt-color-primary;
+        color: colors.$nt-color-primary;
         background: transparent;
         transition: border-color $nt-file-upload-motion-duration $nt-file-upload-motion-easing,
             background-color $nt-file-upload-motion-duration $nt-file-upload-motion-easing,
@@ -42,8 +42,8 @@ $nt-file-upload-list-gap: 6px;
     }
 
     .nt-input-container:hover .nt-file-upload-choose {
-        border-color: colors.$tnt-color-on-surface;
-        background: color-mix(in srgb, colors.$tnt-color-primary 8%, transparent);
+        border-color: colors.$nt-color-on-surface;
+        background: color-mix(in srgb, colors.$nt-color-primary 8%, transparent);
     }
 
     .nt-file-upload-value {
@@ -103,8 +103,8 @@ $nt-file-upload-list-gap: 6px;
         border-radius: measurements.$tnt-pill-border-radius-xs;
         margin-inline-end: 8px;
         padding-inline: 16px;
-        color: colors.$tnt-color-on-primary;
-        background: colors.$tnt-color-primary;
+        color: colors.$nt-color-on-primary;
+        background: colors.$nt-color-primary;
         cursor: pointer;
         transition: background-color $nt-file-upload-motion-duration $nt-file-upload-motion-easing,
             box-shadow $nt-file-upload-motion-duration $nt-file-upload-motion-easing,

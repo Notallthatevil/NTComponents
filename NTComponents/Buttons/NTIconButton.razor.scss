@@ -101,7 +101,7 @@ $nt-icon-button-sizes: (
     border: 0;
     border-radius: measurements.$tnt-pill-border-radius-small;
     box-sizing: border-box;
-    color: var(--nt-icon-button-fg, #{colors.$tnt-color-on-surface-variant});
+    color: var(--nt-icon-button-fg, #{colors.$nt-color-on-surface-variant});
     cursor: pointer;
     display: inline-flex;
     inline-size: 48px;
@@ -181,7 +181,7 @@ $nt-icon-button-sizes: (
 
     &.nt-icon-button-outlined::after {
         background: transparent;
-        border-color: colors.$tnt-color-outline;
+        border-color: colors.$nt-color-outline;
     }
 
     > .nt-icon-button-icon {
@@ -203,23 +203,23 @@ $nt-icon-button-sizes: (
     }
 
     &.nt-elevation-lowest::after {
-        box-shadow: map.get(elevation.$elevation-shadows, 1);
+        box-shadow: map.get(elevation.$nt-elevation-shadows, 1);
     }
 
     &.nt-elevation-low::after {
-        box-shadow: map.get(elevation.$elevation-shadows, 2);
+        box-shadow: map.get(elevation.$nt-elevation-shadows, 2);
     }
 
     &.nt-elevation-medium::after {
-        box-shadow: map.get(elevation.$elevation-shadows, 3);
+        box-shadow: map.get(elevation.$nt-elevation-shadows, 3);
     }
 
     &.nt-elevation-high::after {
-        box-shadow: map.get(elevation.$elevation-shadows, 4);
+        box-shadow: map.get(elevation.$nt-elevation-shadows, 4);
     }
 
     &.nt-elevation-highest::after {
-        box-shadow: map.get(elevation.$elevation-shadows, 5);
+        box-shadow: map.get(elevation.$nt-elevation-shadows, 5);
     }
 
     &.nt-button-progress-active {
@@ -232,12 +232,12 @@ $nt-icon-button-sizes: (
     &.tnt-disabled,
     &:disabled:not(.nt-button-progress-active) {
         box-shadow: none;
-        color: color-mix(in srgb, #{colors.$tnt-color-on-surface} 38%, transparent);
+        color: color-mix(in srgb, #{colors.$nt-color-on-surface} 38%, transparent);
         cursor: not-allowed;
         outline: none;
 
         &::after {
-            background: color-mix(in srgb, #{colors.$tnt-color-on-surface} 12%, transparent);
+            background: color-mix(in srgb, #{colors.$nt-color-on-surface} 12%, transparent);
             border-color: transparent;
         }
 
@@ -247,7 +247,7 @@ $nt-icon-button-sizes: (
         }
 
         &.nt-icon-button-outlined::after {
-            border-color: color-mix(in srgb, #{colors.$tnt-color-on-surface} 12%, transparent);
+            border-color: color-mix(in srgb, #{colors.$nt-color-on-surface} 12%, transparent);
         }
     }
 

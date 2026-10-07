@@ -36,7 +36,7 @@
         min-block-size: 48px;
         min-inline-size: 0;
         overflow-wrap: anywhere;
-        color: var(--nt-breadcrumb-current-fg, #{colors.$tnt-color-on-secondary-container});
+        color: var(--nt-breadcrumb-current-fg, #{colors.$nt-color-on-secondary-container});
 
         &::before {
             content: '';
@@ -45,7 +45,7 @@
             border-radius: inherit;
             pointer-events: none;
             z-index: -1;
-            background-color: var(--nt-breadcrumb-current-bg, #{colors.$tnt-color-secondary-container});
+            background-color: var(--nt-breadcrumb-current-bg, #{colors.$nt-color-secondary-container});
         }
     }
 
@@ -71,7 +71,7 @@
     }
 
     .separator {
-        color: var(--nt-breadcrumb-separator, #{colors.$tnt-color-on-surface-variant});
+        color: var(--nt-breadcrumb-separator, #{colors.$nt-color-on-surface-variant});
         flex: none;
         display: inline-flex;
         align-items: center;

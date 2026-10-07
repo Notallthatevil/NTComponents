@@ -11,15 +11,15 @@ $nt-tooltip-position-offset: var(--nt-tooltip-position-offset, 8px);
 $nt-tooltip-plain-min-height: var(--nt-tooltip-plain-min-height, 24px);
 $nt-tooltip-plain-padding-block: var(--nt-tooltip-plain-padding-block, 4px);
 $nt-tooltip-plain-padding-inline: var(--nt-tooltip-plain-padding-inline, 8px);
-$nt-tooltip-plain-container-color: var(--nt-tooltip-plain-container-color, #{colors.$tnt-color-inverse-surface});
-$nt-tooltip-plain-label-color: var(--nt-tooltip-plain-label-color, #{colors.$tnt-color-inverse-on-surface});
+$nt-tooltip-plain-container-color: var(--nt-tooltip-plain-container-color, #{colors.$nt-color-inverse-surface});
+$nt-tooltip-plain-label-color: var(--nt-tooltip-plain-label-color, #{colors.$nt-color-inverse-on-surface});
 $nt-tooltip-plain-container-shape: var(--nt-tooltip-plain-container-shape, #{radius.$nt-corner-radius-extra-small});
 $nt-tooltip-plain-max-width: min(var(--nt-tooltip-plain-max-width, 200px), calc(100vw - 16px));
 
 $nt-tooltip-rich-padding-block: var(--nt-tooltip-rich-padding-block, 12px);
 $nt-tooltip-rich-padding-inline: var(--nt-tooltip-rich-padding-inline, 16px);
-$nt-tooltip-rich-container-color: var(--nt-tooltip-rich-container-color, #{colors.$tnt-color-surface-container});
-$nt-tooltip-rich-label-color: var(--nt-tooltip-rich-label-color, #{colors.$tnt-color-on-surface-variant});
+$nt-tooltip-rich-container-color: var(--nt-tooltip-rich-container-color, #{colors.$nt-color-surface-container});
+$nt-tooltip-rich-label-color: var(--nt-tooltip-rich-label-color, #{colors.$nt-color-on-surface-variant});
 $nt-tooltip-rich-container-shape: var(--nt-tooltip-rich-container-shape, #{radius.$nt-corner-radius-small});
 $nt-tooltip-rich-max-width: min(var(--nt-tooltip-rich-max-width, 320px), calc(100vw - 16px));
 $nt-tooltip-rich-content-gap: var(--nt-tooltip-rich-content-gap, 4px);
@@ -88,7 +88,7 @@ $tooltip-border-width: var(--nt-tooltip-border-width, 0px);
         border-radius: $nt-tooltip-rich-container-shape;
         text-align: start;
 
-        @include elevation.tnt-elevation(2, false);
+        @include elevation.tnt-elevation(2, false, elevation.$nt-elevation-shadows);
         @include typescale.tnt-body-medium;
 
         .nt-tooltip-content {

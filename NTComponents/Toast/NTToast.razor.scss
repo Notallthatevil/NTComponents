@@ -4,9 +4,9 @@
 @use '../Styles/_Variables/_motion.scss' as motion;
 @use '../Styles/_Variables/_typescale.scss' as typescale;
 
-$background-color: var(--nt-toast-background-color, var(--nt-toast-variant-background-color, var(--tnt-color-surface-container-high)));
-$text-color: var(--nt-toast-text-color, var(--nt-toast-variant-text-color, var(--tnt-color-on-surface)));
-$icon-color: var(--nt-toast-icon-color, var(--nt-toast-variant-icon-color, var(--tnt-color-primary)));
+$background-color: var(--nt-toast-background-color, var(--nt-toast-variant-background-color, var(--nt-color-surface-container-high)));
+$text-color: var(--nt-toast-text-color, var(--nt-toast-variant-text-color, var(--nt-color-on-surface)));
+$icon-color: var(--nt-toast-icon-color, var(--nt-toast-variant-icon-color, var(--nt-color-primary)));
 $container-edge-offset: 16px;
 $container-edge-offset-medium: 24px;
 $container-inline-size: 360px;
@@ -77,33 +77,33 @@ $toast-min-block-size: 64px;
             }
 
             &.nt-toast-success {
-                --nt-toast-variant-background-color: var(--tnt-color-success-container);
-                --nt-toast-variant-icon-color: var(--tnt-color-success);
-                --nt-toast-variant-text-color: var(--tnt-color-on-success-container);
+                --nt-toast-variant-background-color: var(--nt-color-success-container);
+                --nt-toast-variant-icon-color: var(--nt-color-success);
+                --nt-toast-variant-text-color: var(--nt-color-on-success-container);
             }
 
             &.nt-toast-info {
-                --nt-toast-variant-background-color: var(--tnt-color-info-container);
-                --nt-toast-variant-icon-color: var(--tnt-color-info);
-                --nt-toast-variant-text-color: var(--tnt-color-on-info-container);
+                --nt-toast-variant-background-color: var(--nt-color-info-container);
+                --nt-toast-variant-icon-color: var(--nt-color-info);
+                --nt-toast-variant-text-color: var(--nt-color-on-info-container);
             }
 
             &.nt-toast-warning {
-                --nt-toast-variant-background-color: var(--tnt-color-warning-container);
-                --nt-toast-variant-icon-color: var(--tnt-color-warning);
-                --nt-toast-variant-text-color: var(--tnt-color-on-warning-container);
+                --nt-toast-variant-background-color: var(--nt-color-warning-container);
+                --nt-toast-variant-icon-color: var(--nt-color-warning);
+                --nt-toast-variant-text-color: var(--nt-color-on-warning-container);
             }
 
             &.nt-toast-error {
-                --nt-toast-variant-background-color: var(--tnt-color-error-container);
-                --nt-toast-variant-icon-color: var(--tnt-color-error);
-                --nt-toast-variant-text-color: var(--tnt-color-on-error-container);
+                --nt-toast-variant-background-color: var(--nt-color-error-container);
+                --nt-toast-variant-icon-color: var(--nt-color-error);
+                --nt-toast-variant-text-color: var(--nt-color-on-error-container);
             }
 
             &.nt-toast-assert {
-                --nt-toast-variant-background-color: var(--tnt-color-assert-container);
-                --nt-toast-variant-icon-color: var(--tnt-color-assert);
-                --nt-toast-variant-text-color: var(--tnt-color-on-assert-container);
+                --nt-toast-variant-background-color: var(--nt-color-assert-container);
+                --nt-toast-variant-icon-color: var(--nt-color-assert);
+                --nt-toast-variant-text-color: var(--nt-color-on-assert-container);
             }
 
             .nt-toast-icon {

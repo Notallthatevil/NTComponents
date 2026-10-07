@@ -131,7 +131,7 @@ $nt-button-group-sizes: (
         background: transparent;
         border: 0;
         box-sizing: border-box;
-        color: var(--nt-button-group-fg, #{colors.$tnt-color-on-secondary-container});
+        color: var(--nt-button-group-fg, #{colors.$nt-color-on-secondary-container});
         cursor: pointer;
         display: inline-flex;
         justify-content: center;
@@ -157,7 +157,7 @@ $nt-button-group-sizes: (
         }
 
         &::after {
-            background: var(--nt-button-group-bg, #{colors.$tnt-color-secondary-container});
+            background: var(--nt-button-group-bg, #{colors.$nt-color-secondary-container});
             border: 1px solid transparent;
             z-index: 0;
         }
@@ -169,10 +169,10 @@ $nt-button-group-sizes: (
         }
 
         &[aria-pressed='true'] {
-            color: var(--nt-button-group-selected-fg, #{colors.$tnt-color-on-secondary});
+            color: var(--nt-button-group-selected-fg, #{colors.$nt-color-on-secondary});
 
             &::after {
-                background: var(--nt-button-group-selected-bg, #{colors.$tnt-color-secondary});
+                background: var(--nt-button-group-selected-bg, #{colors.$nt-color-secondary});
             }
         }
 
@@ -198,12 +198,12 @@ $nt-button-group-sizes: (
 
         &:disabled {
             box-shadow: none;
-            color: color-mix(in srgb, #{colors.$tnt-color-on-surface} 38%, transparent);
+            color: color-mix(in srgb, #{colors.$nt-color-on-surface} 38%, transparent);
             cursor: not-allowed;
             outline: none;
 
             &::after {
-                background: color-mix(in srgb, #{colors.$tnt-color-on-surface} 12%, transparent);
+                background: color-mix(in srgb, #{colors.$nt-color-on-surface} 12%, transparent);
                 border-color: transparent;
             }
         }
@@ -232,7 +232,7 @@ $nt-button-group-sizes: (
     }
 
     &.nt-button-group-elevated > .nt-btn-grp-btn {
-        box-shadow: map.get(elevation.$elevation-shadows, 1);
+        box-shadow: map.get(elevation.$nt-elevation-shadows, 1);
 
         &[aria-pressed='true'],
         &:disabled {
@@ -243,7 +243,7 @@ $nt-button-group-sizes: (
     &.nt-button-group-outlined > .nt-btn-grp-btn {
         &::after {
             background: transparent;
-            border-color: colors.$tnt-color-outline;
+            border-color: colors.$nt-color-outline;
         }
 
         &[aria-pressed='true']::after {
@@ -262,17 +262,17 @@ $nt-button-group-sizes: (
     }
 
     &.nt-invalid.nt-modified > .nt-btn-grp-btn {
-        color: colors.$tnt-color-on-error-container;
+        color: colors.$nt-color-on-error-container;
 
         &::after {
-            background: colors.$tnt-color-error-container;
+            background: colors.$nt-color-error-container;
         }
 
         &[aria-pressed='true'] {
-            color: colors.$tnt-color-on-error;
+            color: colors.$nt-color-on-error;
 
             &::after {
-                background: colors.$tnt-color-error;
+                background: colors.$nt-color-error;
             }
         }
     }

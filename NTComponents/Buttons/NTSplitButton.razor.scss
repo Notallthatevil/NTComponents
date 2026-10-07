@@ -167,27 +167,27 @@ $sizes: (
         &.nt-elevation-medium,
         &.nt-elevation-high,
         &.nt-elevation-highest {
-            box-shadow: map.get(elevation.$elevation-shadows, 0);
+            box-shadow: map.get(elevation.$nt-elevation-shadows, 0);
         }
 
         &.nt-elevation-lowest::after {
-            box-shadow: map.get(elevation.$elevation-shadows, 1);
+            box-shadow: map.get(elevation.$nt-elevation-shadows, 1);
         }
 
         &.nt-elevation-low::after {
-            box-shadow: map.get(elevation.$elevation-shadows, 2);
+            box-shadow: map.get(elevation.$nt-elevation-shadows, 2);
         }
 
         &.nt-elevation-medium::after {
-            box-shadow: map.get(elevation.$elevation-shadows, 3);
+            box-shadow: map.get(elevation.$nt-elevation-shadows, 3);
         }
 
         &.nt-elevation-high::after {
-            box-shadow: map.get(elevation.$elevation-shadows, 4);
+            box-shadow: map.get(elevation.$nt-elevation-shadows, 4);
         }
 
         &.nt-elevation-highest::after {
-            box-shadow: map.get(elevation.$elevation-shadows, 5);
+            box-shadow: map.get(elevation.$nt-elevation-shadows, 5);
         }
 
         &::before {
@@ -217,12 +217,12 @@ $sizes: (
         }
 
         &:disabled {
-            box-shadow: map.get(elevation.$elevation-shadows, 0);
-            color: color-mix(in srgb, #{colors.$tnt-color-on-surface} 38%, transparent);
+            box-shadow: map.get(elevation.$nt-elevation-shadows, 0);
+            color: color-mix(in srgb, #{colors.$nt-color-on-surface} 38%, transparent);
             cursor: not-allowed;
 
             &::after {
-                background: color-mix(in srgb, #{colors.$tnt-color-on-surface} 12%, transparent);
+                background: color-mix(in srgb, #{colors.$nt-color-on-surface} 12%, transparent);
                 border-color: transparent;
             }
         }
@@ -235,12 +235,12 @@ $sizes: (
     &.nt-split-button-outlined {
         .nt-split-button-segment::after {
             background: transparent;
-            border-color: colors.$tnt-color-outline;
+            border-color: colors.$nt-color-outline;
         }
 
         .nt-split-button-segment:disabled::after {
             background: transparent;
-            border-color: color-mix(in srgb, #{colors.$tnt-color-on-surface} 12%, transparent);
+            border-color: color-mix(in srgb, #{colors.$nt-color-on-surface} 12%, transparent);
         }
     }
 

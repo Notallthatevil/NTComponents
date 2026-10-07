@@ -5,7 +5,7 @@
     display: grid;
     gap: 16px;
     min-inline-size: 0;
-    color: colors.$tnt-color-on-surface;
+    color: colors.$nt-color-on-surface;
 
     &.nt-form-section-view-fieldset {
         border: 0;
@@ -32,7 +32,7 @@
     .nt-form-section-view-heading {
         @include typescale.nt-title-medium;
 
-        color: colors.$tnt-color-on-surface;
+        color: colors.$nt-color-on-surface;
         margin: 0;
         padding: 0;
     }
@@ -44,7 +44,7 @@
     .nt-form-section-view-description {
         @include typescale.nt-body-medium;
 
-        color: colors.$tnt-color-on-surface-variant;
+        color: colors.$nt-color-on-surface-variant;
         margin: 0;
     }
 }

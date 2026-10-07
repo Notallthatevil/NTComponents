@@ -29,7 +29,7 @@ $nt-navigation-rail-expanded-label-max-width: 256px;
     background: transparent;
     border: 0;
     box-sizing: border-box;
-    color: colors.$tnt-color-on-surface-variant;
+    color: colors.$nt-color-on-surface-variant;
     cursor: pointer;
     display: flex;
     font: inherit;
@@ -46,33 +46,33 @@ $nt-navigation-rail-expanded-label-max-width: 256px;
 
     &.tnt-disabled,
     &:disabled {
-        color: color-mix(in srgb, #{colors.$tnt-color-on-surface} 38%, transparent);
+        color: color-mix(in srgb, #{colors.$nt-color-on-surface} 38%, transparent);
         cursor: not-allowed;
         pointer-events: none;
     }
 
     &:not(.tnt-disabled):not(:disabled):hover {
         .nt-navigation-rail-item-content::after {
-            background: color-mix(in srgb, var(--nt-navigation-rail-state-layer-color, #{colors.$tnt-color-on-secondary-container}) 8%, transparent);
+            background: color-mix(in srgb, var(--nt-navigation-rail-state-layer-color, #{colors.$nt-color-on-secondary-container}) 8%, transparent);
         }
     }
 
     &:not(.tnt-disabled):not(:disabled):focus-visible {
         .nt-navigation-rail-item-content::after {
-            background: color-mix(in srgb, var(--nt-navigation-rail-state-layer-color, #{colors.$tnt-color-on-secondary-container}) 10%, transparent);
-            box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--nt-navigation-rail-state-layer-color, #{colors.$tnt-color-on-secondary-container}) 44%, transparent);
+            background: color-mix(in srgb, var(--nt-navigation-rail-state-layer-color, #{colors.$nt-color-on-secondary-container}) 10%, transparent);
+            box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--nt-navigation-rail-state-layer-color, #{colors.$nt-color-on-secondary-container}) 44%, transparent);
         }
     }
 
     &:not(.tnt-disabled):not(:disabled):active {
         .nt-navigation-rail-item-content::after {
-            background: color-mix(in srgb, var(--nt-navigation-rail-state-layer-color, #{colors.$tnt-color-on-secondary-container}) 10%, transparent);
+            background: color-mix(in srgb, var(--nt-navigation-rail-state-layer-color, #{colors.$nt-color-on-secondary-container}) 10%, transparent);
         }
     }
 
     &.nt-navigation-rail-item-selected {
         .nt-navigation-rail-item-icon {
-            color: var(--nt-navigation-rail-active-color, #{colors.$tnt-color-on-secondary-container});
+            color: var(--nt-navigation-rail-active-color, #{colors.$nt-color-on-secondary-container});
         }
 
         .nt-navigation-rail-item-indicator {
@@ -143,7 +143,7 @@ $nt-navigation-rail-expanded-label-max-width: 256px;
 }
 
 .nt-navigation-rail-item-content::before {
-    background: var(--nt-navigation-rail-indicator-color, #{colors.$tnt-color-secondary-container});
+    background: var(--nt-navigation-rail-indicator-color, #{colors.$nt-color-secondary-container});
     border-radius: inherit;
     content: '';
     inset: 0;
@@ -171,7 +171,7 @@ $nt-navigation-rail-expanded-label-max-width: 256px;
 }
 
 .nt-navigation-rail-item-indicator {
-    background: var(--nt-navigation-rail-indicator-color, #{colors.$tnt-color-secondary-container});
+    background: var(--nt-navigation-rail-indicator-color, #{colors.$nt-color-secondary-container});
     block-size: $nt-navigation-rail-indicator-height;
     border-radius: var(--nt-navigation-rail-indicator-shape, 999px);
     inline-size: $nt-navigation-rail-indicator-width;
@@ -241,7 +241,7 @@ $nt-navigation-rail-expanded-label-max-width: 256px;
         text-align: start;
 
         &.nt-navigation-rail-item-selected {
-            color: var(--nt-navigation-rail-active-color, #{colors.$tnt-color-on-secondary-container});
+            color: var(--nt-navigation-rail-active-color, #{colors.$nt-color-on-secondary-container});
 
             .nt-navigation-rail-item-content::before {
                 animation: $nt-navigation-rail-indicator-enter-animation;

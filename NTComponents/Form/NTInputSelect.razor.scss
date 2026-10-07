@@ -36,8 +36,8 @@
             @include base.tnt-label(input);
             @include base.disabled-and-readonly;
             @include base.invalid(input);
-            @include base.filled(input);
-            @include base.outlined;
+            @include base.filled(input, colors.$nt-color-outline-variant);
+            @include base.outlined(colors.$nt-color-outline);
 
             &:has(.tnt-start-icon):has(.tnt-end-icon) {
                 grid-template-areas: "pad1 start-icon pad2 input pad3 end-icon pad4";
@@ -78,10 +78,10 @@
             margin: 4px 4px 16px 4px;
             z-index: 200;
             position: absolute;
-            background-color: colors.$tnt-color-surface-variant;
+            background-color: colors.$nt-color-surface-variant;
             border-radius: 8px;
             @include typescale.tnt-body-large;
-            @include elevation.tnt-elevation(1, false);
+            @include elevation.tnt-elevation(1, false, elevation.$nt-elevation-shadows);
 
             &.tnt-input-select-search-fixed {
                 position: fixed;
@@ -99,14 +99,14 @@
 
         .tnt-input-select-search-list-item {
             list-style: none;
-            border-top: 1px solid colors.$tnt-color-outline;
+            border-top: 1px solid colors.$nt-color-outline;
             cursor: pointer;
             padding: 2px 8px;
 
             &.tnt-focused,
             &:hover,
             span:hover {
-                background-color: color-mix(in srgb, colors.$tnt-color-surface-tint 20%, transparent);
+                background-color: color-mix(in srgb, colors.$nt-color-surface-tint 20%, transparent);
             }
 
             span {
@@ -124,7 +124,7 @@
 
         .tnt-input-select-search-no-results {
             padding: 16px;
-            color: colors.$tnt-color-on-surface-variant;
+            color: colors.$nt-color-on-surface-variant;
         }
     }
 

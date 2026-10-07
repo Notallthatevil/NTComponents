@@ -74,23 +74,23 @@ $nt-switch-exit-easing: motion.$nt-motion-easing-emphasized-accelerate;
 }
 
 .nt-switch {
-    --nt-switch-disabled-handle-color: #{colors.$tnt-color-on-surface};
-    --nt-switch-disabled-icon-color: #{colors.$tnt-color-surface};
-    --nt-switch-disabled-track-color: #{colors.$tnt-color-on-surface};
-    --nt-switch-error-color: #{colors.$tnt-color-error};
-    --nt-switch-focus-indicator-color: #{colors.$tnt-color-primary};
-    --nt-switch-icon-color: #{colors.$tnt-color-on-surface-variant};
-    --nt-switch-label-color: #{colors.$tnt-color-on-surface};
-    --nt-switch-selected-handle-color: #{colors.$tnt-color-on-primary};
-    --nt-switch-selected-icon-color: #{colors.$tnt-color-primary};
-    --nt-switch-selected-state-layer-color: #{colors.$tnt-color-primary};
-    --nt-switch-selected-track-color: #{colors.$tnt-color-primary};
-    --nt-switch-state-layer-color: #{colors.$tnt-color-on-surface};
-    --nt-switch-supporting-text-color: #{colors.$tnt-color-on-surface-variant};
-    --nt-switch-unselected-handle-color: #{colors.$tnt-color-outline};
-    --nt-switch-unselected-icon-color: #{colors.$tnt-color-surface-container-highest};
-    --nt-switch-unselected-outline-color: #{colors.$tnt-color-outline};
-    --nt-switch-unselected-track-color: #{colors.$tnt-color-surface-container-highest};
+    --nt-switch-disabled-handle-color: #{colors.$nt-color-on-surface};
+    --nt-switch-disabled-icon-color: #{colors.$nt-color-surface};
+    --nt-switch-disabled-track-color: #{colors.$nt-color-on-surface};
+    --nt-switch-error-color: #{colors.$nt-color-error};
+    --nt-switch-focus-indicator-color: #{colors.$nt-color-primary};
+    --nt-switch-icon-color: #{colors.$nt-color-on-surface-variant};
+    --nt-switch-label-color: #{colors.$nt-color-on-surface};
+    --nt-switch-selected-handle-color: #{colors.$nt-color-on-primary};
+    --nt-switch-selected-icon-color: #{colors.$nt-color-primary};
+    --nt-switch-selected-state-layer-color: #{colors.$nt-color-primary};
+    --nt-switch-selected-track-color: #{colors.$nt-color-primary};
+    --nt-switch-state-layer-color: #{colors.$nt-color-on-surface};
+    --nt-switch-supporting-text-color: #{colors.$nt-color-on-surface-variant};
+    --nt-switch-unselected-handle-color: #{colors.$nt-color-outline};
+    --nt-switch-unselected-icon-color: #{colors.$nt-color-surface-container-highest};
+    --nt-switch-unselected-outline-color: #{colors.$nt-color-outline};
+    --nt-switch-unselected-track-color: #{colors.$nt-color-surface-container-highest};
     --nt-switch-external-icon-size: #{$nt-switch-external-icon-size};
 
     display: inline-flex;

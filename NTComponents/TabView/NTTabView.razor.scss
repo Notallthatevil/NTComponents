@@ -8,20 +8,20 @@ $nt-tab-motion-easing: motion.$nt-motion-easing-standard;
 .nt-tab-view {
     --nt-tab-view-active-indicator-x: 0px;
     --nt-tab-view-active-indicator-width: 0px;
-    --nt-tab-view-indicator-color: #{colors.$tnt-color-primary};
+    --nt-tab-view-indicator-color: #{colors.$nt-color-primary};
     --nt-tab-view-tab-gap: 0px;
 
     display: block;
     inline-size: 100%;
     min-inline-size: 0;
-    color: colors.$tnt-color-on-surface;
+    color: colors.$nt-color-on-surface;
 
     .nt-tab-view-header {
         position: relative;
         inline-size: 100%;
         min-inline-size: 0;
-        border-block-end: 1px solid colors.$tnt-color-surface-variant;
-        background: colors.$tnt-color-surface;
+        border-block-end: 1px solid colors.$nt-color-surface-variant;
+        background: colors.$nt-color-surface;
         overflow: hidden;
     }
 
@@ -63,7 +63,7 @@ $nt-tab-motion-easing: motion.$nt-motion-easing-standard;
         outline: none;
         appearance: none;
         background: transparent;
-        color: colors.$tnt-color-on-surface-variant;
+        color: colors.$nt-color-on-surface-variant;
         cursor: pointer;
         @include typescale.nt-title-small;
         transition: color $nt-tab-motion-duration $nt-tab-motion-easing,
@@ -72,14 +72,14 @@ $nt-tab-motion-easing: motion.$nt-motion-easing-standard;
 
         &:disabled,
         &[aria-disabled='true'] {
-            color: color-mix(in srgb, colors.$tnt-color-on-surface 38%, transparent);
+            color: color-mix(in srgb, colors.$nt-color-on-surface 38%, transparent);
             cursor: default;
             pointer-events: none;
         }
 
         &:focus-visible {
             z-index: 1;
-            outline: 3px solid color-mix(in srgb, colors.$tnt-color-primary 54%, transparent);
+            outline: 3px solid color-mix(in srgb, colors.$nt-color-primary 54%, transparent);
             outline-offset: -3px;
         }
 

@@ -38,7 +38,7 @@ $nt-radio-motion-easing: motion.$nt-motion-easing-standard;
     align-items: center;
     width: 100%;
     min-width: 0;
-    color: var(--nt-radio-label-color, #{colors.$tnt-color-on-surface});
+    color: var(--nt-radio-label-color, #{colors.$nt-color-on-surface});
     cursor: pointer;
     user-select: none;
 
@@ -79,7 +79,7 @@ $nt-radio-motion-easing: motion.$nt-motion-easing-standard;
         width: $nt-radio-state-layer-size;
         height: $nt-radio-state-layer-size;
         border-radius: 50%;
-        background-color: var(--nt-radio-state-layer-color, #{colors.$tnt-color-on-surface});
+        background-color: var(--nt-radio-state-layer-color, #{colors.$nt-color-on-surface});
         opacity: 0;
         pointer-events: none;
         transition: opacity $nt-radio-motion-duration $nt-radio-motion-easing;
@@ -93,7 +93,7 @@ $nt-radio-motion-easing: motion.$nt-motion-easing-standard;
         width: $nt-radio-icon-size;
         height: $nt-radio-icon-size;
         box-sizing: border-box;
-        border: $nt-radio-outline-width solid var(--nt-radio-unselected-color, #{colors.$tnt-color-on-surface-variant});
+        border: $nt-radio-outline-width solid var(--nt-radio-unselected-color, #{colors.$nt-color-on-surface-variant});
         border-radius: 50%;
         pointer-events: none;
         transition: border-color $nt-radio-motion-duration $nt-radio-motion-easing;
@@ -103,7 +103,7 @@ $nt-radio-motion-easing: motion.$nt-motion-easing-standard;
             height: $nt-radio-dot-size;
             content: '';
             border-radius: 50%;
-            background-color: var(--nt-radio-selected-color, #{colors.$tnt-color-primary});
+            background-color: var(--nt-radio-selected-color, #{colors.$nt-color-primary});
             opacity: 0;
             transform: scale(0);
             transition:
@@ -124,14 +124,14 @@ $nt-radio-motion-easing: motion.$nt-motion-easing-standard;
         @include typescale.nt-body-large;
 
         min-width: 0;
-        color: var(--nt-radio-label-color, #{colors.$tnt-color-on-surface});
+        color: var(--nt-radio-label-color, #{colors.$nt-color-on-surface});
         overflow-wrap: anywhere;
     }
 
     .nt-radio-option-supporting {
         @include typescale.nt-body-small;
 
-        color: var(--nt-radio-supporting-text-color, #{colors.$tnt-color-on-surface-variant});
+        color: var(--nt-radio-supporting-text-color, #{colors.$nt-color-on-surface-variant});
         overflow-wrap: anywhere;
     }
 
@@ -144,7 +144,7 @@ $nt-radio-motion-easing: motion.$nt-motion-easing-standard;
         flex: 0 0 auto;
         width: $nt-radio-external-icon-size;
         height: $nt-radio-external-icon-size;
-        color: var(--nt-radio-unselected-color, #{colors.$tnt-color-on-surface-variant});
+        color: var(--nt-radio-unselected-color, #{colors.$nt-color-on-surface-variant});
     }
 
     .nt-radio-option-leading {
@@ -190,18 +190,18 @@ $nt-radio-motion-easing: motion.$nt-motion-easing-standard;
     }
 
     &.nt-radio-option-highlighted:not(.nt-radio-option-disabled):not(.nt-radio-option-readonly) {
-        --nt-radio-state-layer-color: var(--nt-radio-focus-color, #{colors.$tnt-color-primary});
+        --nt-radio-state-layer-color: var(--nt-radio-focus-color, #{colors.$nt-color-primary});
 
         .nt-radio-option-icon {
-            border-color: var(--nt-radio-focus-color, #{colors.$tnt-color-primary});
+            border-color: var(--nt-radio-focus-color, #{colors.$nt-color-primary});
         }
     }
 
     &:has(input:checked) {
-        --nt-radio-state-layer-color: var(--nt-radio-selected-state-layer-color, #{colors.$tnt-color-primary});
+        --nt-radio-state-layer-color: var(--nt-radio-selected-state-layer-color, #{colors.$nt-color-primary});
 
         .nt-radio-option-icon {
-            border-color: var(--nt-radio-selected-color, #{colors.$tnt-color-primary});
+            border-color: var(--nt-radio-selected-color, #{colors.$nt-color-primary});
 
             &::after {
                 opacity: 1;
@@ -217,16 +217,16 @@ $nt-radio-motion-easing: motion.$nt-motion-easing-standard;
         .nt-radio-option-supporting,
         .nt-radio-option-leading,
         .nt-radio-option-trailing {
-            color: var(--nt-radio-disabled-content-color, #{colors.$tnt-color-on-surface});
+            color: var(--nt-radio-disabled-content-color, #{colors.$nt-color-on-surface});
             opacity: $nt-radio-disabled-opacity;
         }
 
         .nt-radio-option-icon {
-            border-color: var(--nt-radio-disabled-content-color, #{colors.$tnt-color-on-surface});
+            border-color: var(--nt-radio-disabled-content-color, #{colors.$nt-color-on-surface});
             opacity: $nt-radio-disabled-opacity;
 
             &::after {
-                background-color: var(--nt-radio-disabled-content-color, #{colors.$tnt-color-on-surface});
+                background-color: var(--nt-radio-disabled-content-color, #{colors.$nt-color-on-surface});
             }
         }
     }

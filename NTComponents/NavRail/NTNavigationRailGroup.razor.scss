@@ -48,7 +48,7 @@ $nt-navigation-rail-group-shape-transition: motion.$nt-motion-duration-short_4 m
     background: transparent;
     border: 0;
     box-sizing: border-box;
-    color: colors.$tnt-color-on-surface-variant;
+    color: colors.$nt-color-on-surface-variant;
     cursor: pointer;
     display: flex;
     font: inherit;
@@ -65,7 +65,7 @@ $nt-navigation-rail-group-shape-transition: motion.$nt-motion-duration-short_4 m
 
     &.tnt-disabled,
     &:disabled {
-        color: color-mix(in srgb, #{colors.$tnt-color-on-surface} 38%, transparent);
+        color: color-mix(in srgb, #{colors.$nt-color-on-surface} 38%, transparent);
         cursor: not-allowed;
         pointer-events: none;
     }
@@ -95,7 +95,7 @@ $nt-navigation-rail-group-shape-transition: motion.$nt-motion-duration-short_4 m
     &.nt-navigation-rail-item-selected {
         .nt-navigation-rail-item-icon,
         .nt-navigation-rail-group-chevron {
-            color: var(--nt-navigation-rail-active-color, #{colors.$tnt-color-on-secondary-container});
+            color: var(--nt-navigation-rail-active-color, #{colors.$nt-color-on-secondary-container});
         }
 
         .nt-navigation-rail-item-indicator {
@@ -131,12 +131,12 @@ $nt-navigation-rail-group-shape-transition: motion.$nt-motion-duration-short_4 m
 }
 
 .nt-navigation-rail-item-body::before {
-    background: var(--nt-navigation-rail-state-layer-color, #{colors.$tnt-color-on-secondary-container});
+    background: var(--nt-navigation-rail-state-layer-color, #{colors.$nt-color-on-secondary-container});
     z-index: 1;
 }
 
 .nt-navigation-rail-item-body::after {
-    border: 3px solid color-mix(in srgb, var(--nt-navigation-rail-state-layer-color, #{colors.$tnt-color-on-secondary-container}) 44%, transparent);
+    border: 3px solid color-mix(in srgb, var(--nt-navigation-rail-state-layer-color, #{colors.$nt-color-on-secondary-container}) 44%, transparent);
     box-sizing: border-box;
     z-index: 3;
 }
@@ -162,7 +162,7 @@ $nt-navigation-rail-group-shape-transition: motion.$nt-motion-duration-short_4 m
 }
 
 .nt-navigation-rail-item-content::before {
-    background: var(--nt-navigation-rail-state-layer-color, #{colors.$tnt-color-on-secondary-container});
+    background: var(--nt-navigation-rail-state-layer-color, #{colors.$nt-color-on-secondary-container});
     border-radius: inherit;
     content: '';
     inset: 0;
@@ -178,7 +178,7 @@ $nt-navigation-rail-group-shape-transition: motion.$nt-motion-duration-short_4 m
 }
 
 .nt-navigation-rail-item-indicator {
-    background: var(--nt-navigation-rail-indicator-color, #{colors.$tnt-color-secondary-container});
+    background: var(--nt-navigation-rail-indicator-color, #{colors.$nt-color-secondary-container});
     block-size: $nt-navigation-rail-indicator-height;
     border-radius: var(--nt-navigation-rail-indicator-shape, 999px);
     inline-size: $nt-navigation-rail-indicator-width;
@@ -276,10 +276,10 @@ $nt-navigation-rail-group-shape-transition: motion.$nt-motion-duration-short_4 m
     text-align: start;
 
     &.nt-navigation-rail-item-selected {
-        color: var(--nt-navigation-rail-active-color, #{colors.$tnt-color-on-secondary-container});
+        color: var(--nt-navigation-rail-active-color, #{colors.$nt-color-on-secondary-container});
 
         .nt-navigation-rail-item-content::before {
-            background: var(--nt-navigation-rail-indicator-color, #{colors.$tnt-color-secondary-container});
+            background: var(--nt-navigation-rail-indicator-color, #{colors.$nt-color-secondary-container});
             opacity: 1;
         }
 
@@ -350,7 +350,7 @@ $nt-navigation-rail-group-shape-transition: motion.$nt-motion-duration-short_4 m
 .nt-navigation-rail-group-panel {
     border: 0;
     box-sizing: border-box;
-    color: colors.$tnt-color-on-surface-variant;
+    color: colors.$nt-color-on-surface-variant;
     margin: 0;
     min-inline-size: 0;
     padding: 0;
@@ -435,9 +435,9 @@ $nt-navigation-rail-group-shape-transition: motion.$nt-motion-duration-short_4 m
 }
 
 .nt-navigation-rail-group-panel[popover] .nt-navigation-rail-group-items {
-    background: var(--nt-navigation-rail-container-color, #{colors.$tnt-color-surface});
+    background: var(--nt-navigation-rail-container-color, #{colors.$nt-color-surface});
     border-radius: corners.$nt-corner-radius-large;
-    box-shadow: 0 4px 8px 3px var(--tnt-color-shadow);
+    box-shadow: 0 4px 8px 3px var(--nt-color-shadow);
     max-block-size: inherit;
     max-inline-size: 100%;
     overflow-x: hidden;

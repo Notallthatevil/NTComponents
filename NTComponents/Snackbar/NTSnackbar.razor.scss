@@ -3,9 +3,9 @@
 @use '../Styles/_Variables/_motion.scss' as motion;
 @use '../Styles/_Variables/_typescale.scss' as typescale;
 
-$background-color: var(--nt-snackbar-background-color, var(--tnt-color-inverse-surface));
-$text-color: var(--nt-snackbar-text-color, var(--tnt-color-inverse-on-surface));
-$action-color: var(--nt-snackbar-action-color, var(--tnt-color-inverse-primary));
+$background-color: var(--nt-snackbar-background-color, var(--nt-color-inverse-surface));
+$text-color: var(--nt-snackbar-text-color, var(--nt-color-inverse-on-surface));
+$action-color: var(--nt-snackbar-action-color, var(--nt-color-inverse-primary));
 $container-shape: 4px;
 
 .nt-snackbar-container {

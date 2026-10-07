@@ -22,8 +22,8 @@ nt-carousel-item {
         block-size: 100%;
         overflow: clip;
         border-radius: corners.$nt-corner-radius-extra-large;
-        color: colors.$tnt-color-on-surface;
-        background: colors.$tnt-color-surface-container-low;
+        color: colors.$nt-color-on-surface;
+        background: colors.$nt-color-surface-container-low;
         transform: scale(1);
         transform-origin: center;
         transition: border-radius motion.$nt-motion-duration-short_3 motion.$nt-motion-easing-standard,
@@ -35,7 +35,7 @@ nt-carousel-item {
             z-index: 2;
             inset: 0;
             border-radius: inherit;
-            background: colors.$tnt-color-on-surface;
+            background: colors.$nt-color-on-surface;
             opacity: 0;
             pointer-events: none;
             transition: opacity motion.$nt-motion-duration-short_3 motion.$nt-motion-easing-standard;
@@ -115,7 +115,7 @@ nt-carousel-item {
     }
 
     &:focus-visible .nt-carousel-item-mask {
-        outline: 3px solid colors.$tnt-color-primary;
+        outline: 3px solid colors.$nt-color-primary;
         outline-offset: 4px;
     }
 }

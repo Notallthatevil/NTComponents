@@ -29,12 +29,12 @@ $nt-dialog-exit-easing: motion.$nt-motion-easing-emphasized-accelerate;
 $nt-dialog-static-scrim-spread: 100vmax;
 
 .nt-dialog {
-    background-color: colors.$tnt-color-surface-container-high;
+    background-color: colors.$nt-color-surface-container-high;
     border: 0;
     border-radius: $nt-dialog-container-shape;
     block-size: fit-content;
     box-sizing: border-box;
-    color: colors.$tnt-color-on-surface;
+    color: colors.$nt-color-on-surface;
     flex-direction: column;
     inline-size: min(#{$nt-dialog-container-max-inline-size}, calc(100vw - #{$nt-dialog-viewport-margin}));
     inset: 0;
@@ -47,7 +47,7 @@ $nt-dialog-static-scrim-spread: 100vmax;
     transform-origin: center;
 
     &::backdrop {
-        background-color: color-mix(in srgb, #{colors.$tnt-color-scrim} 32%, transparent);
+        background-color: color-mix(in srgb, #{colors.$nt-color-scrim} 32%, transparent);
     }
 
     &[open] {
@@ -56,7 +56,7 @@ $nt-dialog-static-scrim-spread: 100vmax;
     }
 
     &:not(:modal)[open] {
-        box-shadow: 0 0 0 $nt-dialog-static-scrim-spread color-mix(in srgb, #{colors.$tnt-color-scrim} 32%, transparent);
+        box-shadow: 0 0 0 $nt-dialog-static-scrim-spread color-mix(in srgb, #{colors.$nt-color-scrim} 32%, transparent);
         z-index: 1000;
     }
 
@@ -103,7 +103,7 @@ $nt-dialog-static-scrim-spread: 100vmax;
 
     .nt-dialog-icon {
         align-items: center;
-        color: #{colors.$tnt-color-secondary};
+        color: #{colors.$nt-color-secondary};
         display: flex;
         flex: 0 0 auto;
         font-size: $nt-dialog-icon-size;
@@ -125,7 +125,7 @@ $nt-dialog-static-scrim-spread: 100vmax;
         background: transparent;
         border: 0;
         border-radius: $nt-dialog-icon-button-shape;
-        color: #{colors.$tnt-color-on-surface-variant};
+        color: #{colors.$nt-color-on-surface-variant};
         cursor: pointer;
         display: inline-flex;
         block-size: $nt-dialog-icon-button-size;
@@ -140,21 +140,21 @@ $nt-dialog-static-scrim-spread: 100vmax;
         }
 
         &:focus-visible {
-            outline: 3px solid #{colors.$tnt-color-primary};
+            outline: 3px solid #{colors.$nt-color-primary};
             outline-offset: 2px;
         }
     }
 
     .nt-dialog-supporting-text {
         @include typescale.nt-body-medium;
-        color: #{colors.$tnt-color-on-surface-variant};
+        color: #{colors.$nt-color-on-surface-variant};
         margin: 0;
         overflow-wrap: anywhere;
     }
 
     .nt-dialog-content {
         @include typescale.nt-body-medium;
-        border-block: 0 solid #{colors.$tnt-color-outline-variant};
+        border-block: 0 solid #{colors.$nt-color-outline-variant};
         flex: 1 1 auto;
         margin-block-start: $nt-dialog-title-body-gap;
         min-block-size: 0;
@@ -186,7 +186,7 @@ $nt-dialog-static-scrim-spread: 100vmax;
             background: transparent;
             border: 0;
             border-radius: $nt-dialog-action-button-shape;
-            color: #{colors.$tnt-color-primary};
+            color: #{colors.$nt-color-primary};
             cursor: pointer;
             display: inline-flex;
             height: $nt-dialog-action-button-height;
@@ -200,7 +200,7 @@ $nt-dialog-static-scrim-spread: 100vmax;
             }
 
             &:focus-visible {
-                outline: 3px solid #{colors.$tnt-color-primary};
+                outline: 3px solid #{colors.$nt-color-primary};
                 outline-offset: 2px;
             }
         }

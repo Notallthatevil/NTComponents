@@ -1,4 +1,5 @@
 @use '_inputBase.scss' as base;
+@use '../Styles/_Variables/_colors.scss' as colors;
 @use '../Styles/_Variables/_typescale.scss' as typescale;
 @use '../Buttons/_buttonStyleMixins.scss' as buttonMixins;
 
@@ -77,8 +78,8 @@ $action-fg-color: var(--nt-input-file-action-fg-color);
         @include base.tnt-label;
         @include base.disabled-and-readonly;
         @include base.invalid;
-        @include base.outlined;
-        @include base.filled;
+        @include base.outlined(colors.$nt-color-outline);
+        @include base.filled($outline-color: colors.$nt-color-outline-variant);
 
         &.tnt-form-outlined:has(.tnt-label) {
             .tnt-label {
@@ -198,7 +199,7 @@ $action-fg-color: var(--nt-input-file-action-fg-color);
 
         &.tnt-form-outlined {
             ::deep input::file-selector-button {
-                @include buttonMixins.tnt-button-outlined-colors($action-fg-color);
+                @include buttonMixins.tnt-button-outlined-colors($action-fg-color, colors.$nt-color-outline-variant);
             }
 
             ::deep input:hover::file-selector-button, ::deep input:focus::file-selector-button, ::deep input:focus-visible::file-selector-button {
@@ -256,7 +257,7 @@ $action-fg-color: var(--nt-input-file-action-fg-color);
 
             .nt-input-file-progress-subtitle {
                 @include typescale.tnt-label-medium;
-                color: var(--tnt-color-on-surface-variant);
+                color: var(--nt-color-on-surface-variant);
                 overflow: hidden;
                 text-overflow: ellipsis;
                 white-space: nowrap;

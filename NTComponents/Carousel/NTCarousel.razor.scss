@@ -6,7 +6,7 @@
     display: block;
     inline-size: 100%;
     min-inline-size: 0;
-    color: colors.$tnt-color-on-surface;
+    color: colors.$nt-color-on-surface;
     background: var(--nt-carousel-background-color, transparent);
 
     @include typescale.nt-body-large;
@@ -16,17 +16,17 @@
         padding-inline: 16px;
         border: 0;
         border-radius: corners.$nt-corner-radius-extra-large;
-        color: colors.$tnt-color-primary;
+        color: colors.$nt-color-primary;
         background: transparent;
         font: inherit;
         cursor: pointer;
 
         &:hover {
-            background: color-mix(in srgb, colors.$tnt-color-primary 8%, transparent);
+            background: color-mix(in srgb, colors.$nt-color-primary 8%, transparent);
         }
 
         &:focus-visible {
-            outline: 3px solid colors.$tnt-color-primary;
+            outline: 3px solid colors.$nt-color-primary;
             outline-offset: 2px;
         }
     }

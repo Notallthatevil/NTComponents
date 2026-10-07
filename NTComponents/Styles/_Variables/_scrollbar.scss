@@ -1,6 +1,6 @@
 @use './colors' as colors;
 
-@mixin nt-scrollbar($thumb-color: colors.$tnt-color-primary-fixed, $track-color: transparent) {
+@mixin nt-scrollbar($thumb-color: colors.$nt-color-primary-fixed, $track-color: transparent) {
     scrollbar-color: #{$thumb-color} #{$track-color};
     scrollbar-gutter: auto;
     scrollbar-width: thin;

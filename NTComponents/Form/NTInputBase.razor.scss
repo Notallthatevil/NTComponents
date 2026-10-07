@@ -84,25 +84,25 @@ $nt-input-textarea-filled-label-space-dense: 14px;
 }
 
 .nt-input {
-    --nt-input-active-indicator-color: #{colors.$tnt-color-on-surface-variant};
+    --nt-input-active-indicator-color: #{colors.$nt-color-on-surface-variant};
     --nt-input-caret-color: var(--nt-input-focus-color);
-    --nt-input-container-color: #{colors.$tnt-color-surface-container-highest};
-    --nt-input-disabled-container-color: #{colors.$tnt-color-on-surface};
-    --nt-input-disabled-content-color: #{colors.$tnt-color-on-surface};
-    --nt-input-disabled-outline-color: #{colors.$tnt-color-on-surface};
+    --nt-input-container-color: #{colors.$nt-color-surface-container-highest};
+    --nt-input-disabled-container-color: #{colors.$nt-color-on-surface};
+    --nt-input-disabled-content-color: #{colors.$nt-color-on-surface};
+    --nt-input-disabled-outline-color: #{colors.$nt-color-on-surface};
     --nt-input-error-caret-color: var(--nt-input-error-color);
-    --nt-input-error-color: #{colors.$tnt-color-error};
-    --nt-input-focus-color: #{colors.$tnt-color-primary};
-    --nt-input-hover-active-indicator-color: #{colors.$tnt-color-on-surface};
-    --nt-input-hover-outline-color: #{colors.$tnt-color-on-surface};
-    --nt-input-icon-color: #{colors.$tnt-color-on-surface-variant};
-    --nt-input-label-color: #{colors.$tnt-color-on-surface-variant};
-    --nt-input-outline-color: #{colors.$tnt-color-outline};
-    --nt-input-placeholder-color: #{colors.$tnt-color-on-surface-variant};
-    --nt-input-prefix-suffix-color: #{colors.$tnt-color-on-surface-variant};
-    --nt-input-state-layer-color: #{colors.$tnt-color-on-surface};
-    --nt-input-supporting-text-color: #{colors.$tnt-color-on-surface-variant};
-    --nt-input-text-color: #{colors.$tnt-color-on-surface};
+    --nt-input-error-color: #{colors.$nt-color-error};
+    --nt-input-focus-color: #{colors.$nt-color-primary};
+    --nt-input-hover-active-indicator-color: #{colors.$nt-color-on-surface};
+    --nt-input-hover-outline-color: #{colors.$nt-color-on-surface};
+    --nt-input-icon-color: #{colors.$nt-color-on-surface-variant};
+    --nt-input-label-color: #{colors.$nt-color-on-surface-variant};
+    --nt-input-outline-color: #{colors.$nt-color-outline};
+    --nt-input-placeholder-color: #{colors.$nt-color-on-surface-variant};
+    --nt-input-prefix-suffix-color: #{colors.$nt-color-on-surface-variant};
+    --nt-input-state-layer-color: #{colors.$nt-color-on-surface};
+    --nt-input-supporting-text-color: #{colors.$nt-color-on-surface-variant};
+    --nt-input-text-color: #{colors.$nt-color-on-surface};
 
     position: relative;
     display: inline-flex;

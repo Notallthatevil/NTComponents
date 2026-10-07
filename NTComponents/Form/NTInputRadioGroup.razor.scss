@@ -37,22 +37,22 @@ $nt-radio-disabled-content-opacity: 0.38;
 $nt-radio-disabled-outline-opacity: 0.12;
 
 .nt-radio {
-    --nt-radio-active-indicator-color: #{colors.$tnt-color-on-surface-variant};
-    --nt-radio-container-color: #{colors.$tnt-color-surface-container-highest};
-    --nt-radio-disabled-container-color: #{colors.$tnt-color-on-surface};
-    --nt-radio-disabled-content-color: #{colors.$tnt-color-on-surface};
-    --nt-radio-disabled-outline-color: #{colors.$tnt-color-on-surface};
-    --nt-radio-error-color: #{colors.$tnt-color-error};
-    --nt-radio-focus-color: #{colors.$tnt-color-primary};
-    --nt-radio-hover-active-indicator-color: #{colors.$tnt-color-on-surface};
-    --nt-radio-hover-outline-color: #{colors.$tnt-color-on-surface};
-    --nt-radio-label-color: #{colors.$tnt-color-on-surface-variant};
-    --nt-radio-outline-color: #{colors.$tnt-color-outline};
+    --nt-radio-active-indicator-color: #{colors.$nt-color-on-surface-variant};
+    --nt-radio-container-color: #{colors.$nt-color-surface-container-highest};
+    --nt-radio-disabled-container-color: #{colors.$nt-color-on-surface};
+    --nt-radio-disabled-content-color: #{colors.$nt-color-on-surface};
+    --nt-radio-disabled-outline-color: #{colors.$nt-color-on-surface};
+    --nt-radio-error-color: #{colors.$nt-color-error};
+    --nt-radio-focus-color: #{colors.$nt-color-primary};
+    --nt-radio-hover-active-indicator-color: #{colors.$nt-color-on-surface};
+    --nt-radio-hover-outline-color: #{colors.$nt-color-on-surface};
+    --nt-radio-label-color: #{colors.$nt-color-on-surface-variant};
+    --nt-radio-outline-color: #{colors.$nt-color-outline};
     --nt-radio-selected-color: var(--nt-radio-focus-color);
     --nt-radio-selected-state-layer-color: var(--nt-radio-selected-color);
-    --nt-radio-state-layer-color: #{colors.$tnt-color-on-surface};
-    --nt-radio-supporting-text-color: #{colors.$tnt-color-on-surface-variant};
-    --nt-radio-unselected-color: #{colors.$tnt-color-on-surface-variant};
+    --nt-radio-state-layer-color: #{colors.$nt-color-on-surface};
+    --nt-radio-supporting-text-color: #{colors.$nt-color-on-surface-variant};
+    --nt-radio-unselected-color: #{colors.$nt-color-on-surface-variant};
 
     display: inline-flex;
     vertical-align: top;

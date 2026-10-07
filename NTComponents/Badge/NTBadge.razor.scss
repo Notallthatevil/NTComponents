@@ -14,10 +14,10 @@ $nt-badge-large-offset-block: 16px;
 
 // Hosts describe their icon anchor with --nt-badge-anchor-block-start and --nt-badge-anchor-inline-end; both default to the containing block's top-end corner.
 .nt-badge {
-    background-color: colors.$tnt-color-error;
+    background-color: colors.$nt-color-error;
     block-size: $nt-badge-small-size;
     border-radius: 9999px;
-    box-shadow: map.get(elevation.$elevation-shadows, 1);
+    box-shadow: map.get(elevation.$nt-elevation-shadows, 1);
     box-sizing: border-box;
     display: block;
     flex: none;
@@ -33,7 +33,7 @@ $nt-badge-large-offset-block: 16px;
         @include typescale.nt-label-medium;
         align-items: center;
         block-size: $nt-badge-large-size;
-        color: colors.$tnt-color-on-error;
+        color: colors.$nt-color-on-error;
         display: inline-flex;
         inline-size: auto;
         inset-block-start: calc(var(--nt-badge-anchor-block-start, 0px) + #{$nt-badge-large-offset-block - $nt-badge-large-size});

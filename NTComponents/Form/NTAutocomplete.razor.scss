@@ -17,7 +17,7 @@
         box-sizing: border-box;
         min-height: 32px;
         padding: 8px 12px 4px;
-        color: colors.$tnt-color-on-surface-variant;
+        color: colors.$nt-color-on-surface-variant;
         pointer-events: none;
     }
 
@@ -38,7 +38,7 @@
         @include typescale.nt-label-large;
 
         overflow: hidden;
-        color: colors.$tnt-color-primary;
+        color: colors.$nt-color-primary;
         text-overflow: ellipsis;
         white-space: nowrap;
     }

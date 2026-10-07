@@ -5,10 +5,10 @@
 @use './layoutVariables' as layout;
 
 .nt-layout {
-    background: var(--nt-layout-background-color, #{colors.$tnt-color-background});
+    background: var(--nt-layout-background-color, #{colors.$nt-color-background});
     block-size: auto;
     box-sizing: border-box;
-    color: var(--nt-layout-text-color, #{colors.$tnt-color-on-background});
+    color: var(--nt-layout-text-color, #{colors.$nt-color-on-background});
     display: flex;
     flex: 1 1 auto;
     flex-direction: column;

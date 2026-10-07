@@ -15,12 +15,12 @@ $menu-enter-transition: motion.$nt-motion-duration-medium_1 motion.$nt-motion-ea
 $menu-exit-transition: motion.$nt-motion-duration-short_4 motion.$nt-motion-easing-standard-accelerate;
 $menu-item-enter-stagger: math.div(motion.$nt-motion-duration-short_1, 2);
 $menu-item-exit-stagger: math.div(motion.$nt-motion-duration-short_3, 10);
-$fab-bg: var(--nt-fab-menu-fab-bg, #{colors.$tnt-color-primary-container});
-$fab-fg: var(--nt-fab-menu-fab-fg, #{colors.$tnt-color-on-primary-container});
-$selected-fab-bg: var(--nt-fab-menu-selected-fab-bg, #{colors.$tnt-color-primary});
-$selected-fab-fg: var(--nt-fab-menu-selected-fab-fg, #{colors.$tnt-color-on-primary});
-$item-bg: var(--nt-fab-menu-item-bg, #{colors.$tnt-color-primary-container});
-$item-fg: var(--nt-fab-menu-item-fg, #{colors.$tnt-color-on-primary-container});
+$fab-bg: var(--nt-fab-menu-fab-bg, #{colors.$nt-color-primary-container});
+$fab-fg: var(--nt-fab-menu-fab-fg, #{colors.$nt-color-on-primary-container});
+$selected-fab-bg: var(--nt-fab-menu-selected-fab-bg, #{colors.$nt-color-primary});
+$selected-fab-fg: var(--nt-fab-menu-selected-fab-fg, #{colors.$nt-color-on-primary});
+$item-bg: var(--nt-fab-menu-item-bg, #{colors.$nt-color-primary-container});
+$item-fg: var(--nt-fab-menu-item-fg, #{colors.$nt-color-on-primary-container});
 $space-unit: measurements.$gutter-width;
 $touch-target-size: $space-unit * 2;
 $viewport-edge-margin: math.div($space-unit * 4, 3);
@@ -198,27 +198,27 @@ $fab-menu-sizes: (
         }
 
         &.nt-elevation-none::after {
-            box-shadow: map.get(elevation.$elevation-shadows, 0);
+            box-shadow: map.get(elevation.$nt-elevation-shadows, 0);
         }
 
         &.nt-elevation-lowest::after {
-            box-shadow: map.get(elevation.$elevation-shadows, 1);
+            box-shadow: map.get(elevation.$nt-elevation-shadows, 1);
         }
 
         &.nt-elevation-low::after {
-            box-shadow: map.get(elevation.$elevation-shadows, 2);
+            box-shadow: map.get(elevation.$nt-elevation-shadows, 2);
         }
 
         &.nt-elevation-medium::after {
-            box-shadow: map.get(elevation.$elevation-shadows, 3);
+            box-shadow: map.get(elevation.$nt-elevation-shadows, 3);
         }
 
         &.nt-elevation-high::after {
-            box-shadow: map.get(elevation.$elevation-shadows, 4);
+            box-shadow: map.get(elevation.$nt-elevation-shadows, 4);
         }
 
         &.nt-elevation-highest::after {
-            box-shadow: map.get(elevation.$elevation-shadows, 5);
+            box-shadow: map.get(elevation.$nt-elevation-shadows, 5);
         }
 
         &:not(:disabled) {
@@ -241,12 +241,12 @@ $fab-menu-sizes: (
         }
 
         &:disabled {
-            color: color-mix(in srgb, #{colors.$tnt-color-on-surface} 38%, transparent);
+            color: color-mix(in srgb, #{colors.$nt-color-on-surface} 38%, transparent);
             cursor: not-allowed;
 
             &::after {
-                background: color-mix(in srgb, #{colors.$tnt-color-on-surface} 12%, transparent);
-                box-shadow: map.get(elevation.$elevation-shadows, 0);
+                background: color-mix(in srgb, #{colors.$nt-color-on-surface} 12%, transparent);
+                box-shadow: map.get(elevation.$nt-elevation-shadows, 0);
             }
         }
     }
@@ -496,12 +496,12 @@ $fab-menu-sizes: (
 
             &:disabled,
             &.nt-fab-menu-item-disabled {
-                color: color-mix(in srgb, #{colors.$tnt-color-on-surface} 38%, transparent);
+                color: color-mix(in srgb, #{colors.$nt-color-on-surface} 38%, transparent);
                 cursor: not-allowed;
                 pointer-events: none;
 
                 &::after {
-                    background: color-mix(in srgb, #{colors.$tnt-color-on-surface} 12%, transparent);
+                    background: color-mix(in srgb, #{colors.$nt-color-on-surface} 12%, transparent);
                 }
             }
         }

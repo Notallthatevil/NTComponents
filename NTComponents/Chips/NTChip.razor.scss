@@ -4,20 +4,20 @@
 @use '../Styles/_Variables/_typescale.scss' as typescale;
 
 $nt-chip-bg-color: var(--nt-chip-bg, transparent);
-$nt-chip-text-color: var(--nt-chip-fg, #{colors.$tnt-color-on-surface});
+$nt-chip-text-color: var(--nt-chip-fg, #{colors.$nt-color-on-surface});
 $nt-chip-icon-color: var(--nt-chip-icon, currentColor);
-$nt-chip-outline-color: var(--nt-chip-outline, #{colors.$tnt-color-outline});
-$nt-chip-selected-bg-color: var(--nt-chip-selected-bg, #{colors.$tnt-color-secondary-container});
-$nt-chip-selected-text-color: var(--nt-chip-selected-fg, #{colors.$tnt-color-on-secondary-container});
+$nt-chip-outline-color: var(--nt-chip-outline, #{colors.$nt-color-outline});
+$nt-chip-selected-bg-color: var(--nt-chip-selected-bg, #{colors.$nt-color-secondary-container});
+$nt-chip-selected-text-color: var(--nt-chip-selected-fg, #{colors.$nt-color-on-secondary-container});
 $nt-chip-selected-icon-color: var(--nt-chip-selected-icon, #{$nt-chip-selected-text-color});
 $nt-chip-selected-outline-color: var(--nt-chip-selected-outline, transparent);
 $nt-chip-state-layer-color: var(--nt-chip-state-layer, currentColor);
 $nt-chip-selected-state-layer-color: var(--nt-chip-selected-state-layer, currentColor);
-$nt-chip-focus-outline-color: var(--nt-chip-focus-outline, #{colors.$tnt-color-outline});
-$nt-chip-disabled-bg-color: var(--nt-chip-disabled-bg, color-mix(in srgb, #{colors.$tnt-color-on-surface} 12%, transparent));
-$nt-chip-disabled-text-color: var(--nt-chip-disabled-fg, color-mix(in srgb, #{colors.$tnt-color-on-surface} 38%, transparent));
+$nt-chip-focus-outline-color: var(--nt-chip-focus-outline, #{colors.$nt-color-outline});
+$nt-chip-disabled-bg-color: var(--nt-chip-disabled-bg, color-mix(in srgb, #{colors.$nt-color-on-surface} 12%, transparent));
+$nt-chip-disabled-text-color: var(--nt-chip-disabled-fg, color-mix(in srgb, #{colors.$nt-color-on-surface} 38%, transparent));
 $nt-chip-disabled-icon-color: var(--nt-chip-disabled-icon, #{$nt-chip-disabled-text-color});
-$nt-chip-disabled-outline-color: var(--nt-chip-disabled-outline, color-mix(in srgb, #{colors.$tnt-color-on-surface} 12%, transparent));
+$nt-chip-disabled-outline-color: var(--nt-chip-disabled-outline, color-mix(in srgb, #{colors.$nt-color-on-surface} 12%, transparent));
 $nt-chip-height: 32px;
 $nt-chip-target-size: 48px;
 $nt-chip-icon-size: 18px;
@@ -127,7 +127,7 @@ $nt-chip-elevations: (
 
         @each $name, $level in $nt-chip-elevations {
             &.nt-elevation-#{$name} {
-                box-shadow: map.get(elevation.$elevation-shadows, $level);
+                box-shadow: map.get(elevation.$nt-elevation-shadows, $level);
             }
         }
     }
@@ -138,18 +138,18 @@ $nt-chip-elevations: (
     }
 
     &.nt-chip-elevated .nt-chip-container {
-        background: var(--nt-chip-bg, #{colors.$tnt-color-surface-container-low});
+        background: var(--nt-chip-bg, #{colors.$nt-color-surface-container-low});
         border: $nt-chip-border-width solid transparent;
     }
 
     &.nt-chip-filter,
     &.nt-chip-input,
     &.nt-chip-suggestion {
-        color: var(--nt-chip-fg, #{colors.$tnt-color-on-surface-variant});
+        color: var(--nt-chip-fg, #{colors.$nt-color-on-surface-variant});
     }
 
     &.nt-chip-assist .nt-chip-icon {
-        color: var(--nt-chip-icon, #{colors.$tnt-color-primary});
+        color: var(--nt-chip-icon, #{colors.$nt-color-primary});
     }
 
     &.nt-chip-selected {

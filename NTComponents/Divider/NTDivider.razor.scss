@@ -1,6 +1,6 @@
 @use '../Styles/_Variables/_colors.scss' as colors;
 
-$divider-color: var(--nt-divider-color, #{colors.$tnt-color-outline-variant});
+$divider-color: var(--nt-divider-color, #{colors.$nt-color-outline-variant});
 $divider-inset: 16px;
 
 .nt-divider {

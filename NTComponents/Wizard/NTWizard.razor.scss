@@ -231,7 +231,7 @@ $wizard-medium-screen-up-plus: measurements.$medium-screen-up + 1px;
 .nt-wizard {
     background-color: inherit;
     box-sizing: border-box;
-    color: colors.$tnt-color-on-surface;
+    color: colors.$nt-color-on-surface;
     display: grid;
     grid-template-areas: "steps body";
     grid-template-columns: minmax(0, $wizard-step-rail-width) minmax(0, 1fr);
@@ -254,7 +254,7 @@ $wizard-medium-screen-up-plus: measurements.$medium-screen-up + 1px;
         @include typescale.nt-title-large;
         @include contain-inline;
 
-        border-block-end: 1px solid colors.$tnt-color-outline-variant;
+        border-block-end: 1px solid colors.$nt-color-outline-variant;
         grid-area: title;
         margin: 0;
         overflow: hidden;
@@ -277,7 +277,7 @@ $wizard-medium-screen-up-plus: measurements.$medium-screen-up + 1px;
         .nt-wizard-step-indicator {
             @include contain-inline;
 
-            color: colors.$tnt-color-outline;
+            color: colors.$nt-color-outline;
             cursor: default;
             display: flex;
             flex-direction: column;
@@ -318,7 +318,7 @@ $wizard-medium-screen-up-plus: measurements.$medium-screen-up + 1px;
             .nt-wizard-step-index {
                 align-items: center;
                 aspect-ratio: 1 / 1;
-                border: 2px solid colors.$tnt-color-outline;
+                border: 2px solid colors.$nt-color-outline;
                 border-radius: corners.$nt-corner-radius-full;
                 box-sizing: border-box;
                 color: inherit;
@@ -356,7 +356,7 @@ $wizard-medium-screen-up-plus: measurements.$medium-screen-up + 1px;
             }
 
     &:not(:last-child)::after {
-        background-color: colors.$tnt-color-outline-variant;
+        background-color: colors.$nt-color-outline-variant;
         block-size: auto;
         border-radius: $wizard-step-connector-radius;
         bottom: 8px;
@@ -369,34 +369,34 @@ $wizard-medium-screen-up-plus: measurements.$medium-screen-up + 1px;
     }
 
             &.current-step {
-                color: colors.$tnt-color-primary;
+                color: colors.$nt-color-primary;
 
                 .nt-wizard-step-index {
-                    background-color: colors.$tnt-color-primary;
-                    border-color: colors.$tnt-color-primary;
-                    color: colors.$tnt-color-on-primary;
+                    background-color: colors.$nt-color-primary;
+                    border-color: colors.$nt-color-primary;
+                    color: colors.$nt-color-on-primary;
                 }
 
                 .nt-wizard-step-subtitle {
-                    color: colors.$tnt-color-secondary;
+                    color: colors.$nt-color-secondary;
                 }
 
                 &:not(:last-child)::after {
-                    background-color: colors.$tnt-color-primary;
+                    background-color: colors.$nt-color-primary;
                 }
             }
 
             &.completed-step {
-                color: colors.$tnt-color-secondary;
+                color: colors.$nt-color-secondary;
 
                 .nt-wizard-step-index {
-                    background-color: colors.$tnt-color-secondary;
-                    border-color: colors.$tnt-color-secondary;
-                    color: colors.$tnt-color-on-secondary;
+                    background-color: colors.$nt-color-secondary;
+                    border-color: colors.$nt-color-secondary;
+                    color: colors.$nt-color-on-secondary;
                 }
 
                 &:not(:last-child)::after {
-                    background-color: colors.$tnt-color-secondary;
+                    background-color: colors.$nt-color-secondary;
                 }
             }
 
@@ -414,35 +414,35 @@ $wizard-medium-screen-up-plus: measurements.$medium-screen-up + 1px;
             }
 
             &.disabled-step {
-                color: colors.$tnt-color-outline-variant;
+                color: colors.$nt-color-outline-variant;
                 opacity: 0.72;
             }
 
             &.invalid-step {
-                color: colors.$tnt-color-error;
+                color: colors.$nt-color-error;
 
                 .nt-wizard-step-index {
-                    border-color: colors.$tnt-color-error;
+                    border-color: colors.$nt-color-error;
                 }
             }
 
             &.current-step.invalid-step {
                 .nt-wizard-step-index {
-                    background-color: colors.$tnt-color-error;
-                    border-color: colors.$tnt-color-error;
-                    color: colors.$tnt-color-on-error;
+                    background-color: colors.$nt-color-error;
+                    border-color: colors.$nt-color-error;
+                    color: colors.$nt-color-on-error;
                 }
 
                 &:not(:last-child)::after {
-                    background-color: colors.$tnt-color-error;
+                    background-color: colors.$nt-color-error;
                 }
             }
 
             &.skipped-step {
-                color: colors.$tnt-color-tertiary;
+                color: colors.$nt-color-tertiary;
 
                 .nt-wizard-step-index {
-                    border-color: colors.$tnt-color-tertiary;
+                    border-color: colors.$nt-color-tertiary;
                 }
             }
         }

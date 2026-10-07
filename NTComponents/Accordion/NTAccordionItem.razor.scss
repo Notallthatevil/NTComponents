@@ -9,10 +9,10 @@ $content-enter-fade-transition: motion.$nt-motion-duration-short_4 motion.$nt-mo
 $content-exit-fade-transition: motion.$nt-motion-duration-short_2 motion.$nt-motion-easing-standard-accelerate;
 
 .nt-accordion-item {
-    background: var(--nt-accordion-content-color, var(--tnt-color-surface-container-low));
+    background: var(--nt-accordion-content-color, var(--nt-color-surface-container-low));
     border: 1px solid var(--nt-accordion-item-border-color, transparent);
     box-sizing: border-box;
-    color: var(--nt-accordion-content-text-color, var(--tnt-color-on-surface));
+    color: var(--nt-accordion-content-text-color, var(--nt-color-on-surface));
     display: block;
     min-inline-size: 0;
     overflow: hidden;
@@ -52,9 +52,9 @@ $content-exit-fade-transition: motion.$nt-motion-duration-short_2 motion.$nt-mot
     @include typescale.nt-title-small;
 
     align-items: center;
-    background: var(--nt-accordion-header-color, var(--tnt-color-surface-container-highest));
+    background: var(--nt-accordion-header-color, var(--nt-color-surface-container-highest));
     border-radius: inherit;
-    color: var(--nt-accordion-header-text-color, var(--tnt-color-on-surface));
+    color: var(--nt-accordion-header-text-color, var(--nt-color-on-surface));
     cursor: pointer;
     display: grid;
     gap: 16px;
@@ -134,13 +134,13 @@ $content-exit-fade-transition: motion.$nt-motion-duration-short_2 motion.$nt-mot
     }
 
     & > .nt-accordion-item-summary:focus-visible {
-        outline: 3px solid var(--nt-accordion-outline-color, var(--tnt-color-outline-variant));
+        outline: 3px solid var(--nt-accordion-outline-color, var(--nt-color-outline-variant));
         outline-offset: -3px;
     }
 
     @supports (color: color-mix(in srgb, black 50%, white)) {
         & > .nt-accordion-item-summary:focus-visible {
-            outline-color: color-mix(in srgb, var(--nt-accordion-outline-color, var(--tnt-color-outline-variant)) 60%, transparent);
+            outline-color: color-mix(in srgb, var(--nt-accordion-outline-color, var(--nt-color-outline-variant)) 60%, transparent);
         }
     }
 
@@ -167,7 +167,7 @@ $content-exit-fade-transition: motion.$nt-motion-duration-short_2 motion.$nt-mot
 .nt-accordion-item-supporting-text {
     @include typescale.nt-body-medium;
 
-    color: var(--tnt-color-on-surface-variant);
+    color: var(--nt-color-on-surface-variant);
     margin-block-start: 2px;
 
     @supports (color: color-mix(in srgb, black 50%, white)) {
@@ -216,9 +216,9 @@ $content-exit-fade-transition: motion.$nt-motion-duration-short_2 motion.$nt-mot
 .nt-accordion-item-content {
     @include typescale.nt-body-medium;
 
-    background: var(--nt-accordion-content-color, var(--tnt-color-surface-container-low));
+    background: var(--nt-accordion-content-color, var(--nt-color-surface-container-low));
     box-sizing: border-box;
-    color: var(--nt-accordion-content-text-color, var(--tnt-color-on-surface));
+    color: var(--nt-accordion-content-text-color, var(--nt-color-on-surface));
     opacity: 0;
     padding-block: 16px 24px;
     padding-inline: 24px;
@@ -234,10 +234,10 @@ $content-exit-fade-transition: motion.$nt-motion-duration-short_2 motion.$nt-mot
 }
 
 .nt-accordion-item-disabled {
-    color: var(--tnt-color-on-surface-variant);
+    color: var(--nt-color-on-surface-variant);
 
     @supports (color: color-mix(in srgb, black 50%, white)) {
-        color: color-mix(in srgb, var(--nt-accordion-header-text-color, var(--tnt-color-on-surface)) 38%, transparent);
+        color: color-mix(in srgb, var(--nt-accordion-header-text-color, var(--nt-color-on-surface)) 38%, transparent);
     }
 
     > .nt-accordion-item-summary {

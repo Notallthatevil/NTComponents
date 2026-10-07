@@ -31,21 +31,21 @@ $state-transition: motion.$nt-motion-duration-short_3 motion.$nt-motion-easing-s
     }
 
     &.nt-accordion-outlined {
-        --nt-accordion-item-border-color: var(--nt-accordion-outline-color, var(--tnt-color-outline));
+        --nt-accordion-item-border-color: var(--nt-accordion-outline-color, var(--nt-color-outline));
         --nt-accordion-header-color: transparent;
         --nt-accordion-content-color: transparent;
 
         ::deep .nt-accordion-item-content {
-            border-block-start: 1px solid var(--nt-accordion-outline-color, var(--tnt-color-outline));
+            border-block-start: 1px solid var(--nt-accordion-outline-color, var(--nt-color-outline));
         }
     }
 
     &.nt-accordion-elevated {
         --nt-accordion-item-border-color: transparent;
-        --nt-accordion-header-color: var(--tnt-color-surface-container-low);
+        --nt-accordion-header-color: var(--nt-color-surface-container-low);
 
         ::deep .nt-accordion-item {
-            @include elevation.tnt-elevation(1, false);
+            @include elevation.tnt-elevation(1, false, elevation.$nt-elevation-shadows);
         }
     }
 

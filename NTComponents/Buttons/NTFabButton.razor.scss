@@ -102,7 +102,7 @@ $medium-placement-offset: $space-unit;
     border: 0;
     border-radius: corners.$nt-corner-radius-large-increased;
     box-sizing: border-box;
-    color: var(--nt-fab-fg, #{colors.$tnt-color-on-primary-container});
+    color: var(--nt-fab-fg, #{colors.$nt-color-on-primary-container});
     cursor: pointer;
     display: inline-flex;
     justify-content: center;
@@ -128,7 +128,7 @@ $medium-placement-offset: $space-unit;
     }
 
     &::after {
-        background: var(--nt-fab-bg, #{colors.$tnt-color-primary-container});
+        background: var(--nt-fab-bg, #{colors.$nt-color-primary-container});
         transition: background-color buttonMotion.$nt-button-state-transition, border-radius buttonMotion.$nt-button-shape-transition, box-shadow buttonMotion.$nt-button-state-transition;
         z-index: 0;
     }
@@ -149,11 +149,11 @@ $medium-placement-offset: $space-unit;
     @each $name, $tokens in $nt-fab-elevations {
         &.nt-elevation-#{$name} {
             &::after {
-                box-shadow: map.get(elevation.$elevation-shadows, map.get($tokens, rest));
+                box-shadow: map.get(elevation.$nt-elevation-shadows, map.get($tokens, rest));
             }
 
             &:not(.tnt-disabled):not(:disabled):hover::after {
-                box-shadow: map.get(elevation.$elevation-shadows, map.get($tokens, hover));
+                box-shadow: map.get(elevation.$nt-elevation-shadows, map.get($tokens, hover));
             }
         }
     }
@@ -270,12 +270,12 @@ $medium-placement-offset: $space-unit;
 
     &.tnt-disabled,
     &:disabled:not(.nt-button-progress-active) {
-        color: color-mix(in srgb, #{colors.$tnt-color-on-surface} 38%, transparent);
+        color: color-mix(in srgb, #{colors.$nt-color-on-surface} 38%, transparent);
         cursor: not-allowed;
         outline: none;
 
         &::after {
-            background: color-mix(in srgb, #{colors.$tnt-color-on-surface} 12%, transparent);
+            background: color-mix(in srgb, #{colors.$nt-color-on-surface} 12%, transparent);
             box-shadow: none;
         }
     }

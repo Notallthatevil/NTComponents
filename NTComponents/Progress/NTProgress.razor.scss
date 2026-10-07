@@ -4,7 +4,7 @@
     box-sizing: border-box;
     color: var(--nt-progress-indicator-color);
     vertical-align: middle;
-    --nt-progress-track-color: var(--tnt-color-secondary-container);
+    --nt-progress-track-color: var(--nt-color-secondary-container);
 
     &.tnt-size-xs {
         --nt-progress-size: 24px;

@@ -184,15 +184,15 @@ $nt-rich-text-media-radius: corners.$nt-corner-radius-extra-small;
             display: block;
 
             ::deep .syntax-tag {
-                color: var(--tnt-color-info);
+                color: var(--nt-color-info);
             }
 
             ::deep .syntax-attribute {
-                color: var(--tnt-color-warning);
+                color: var(--nt-color-warning);
             }
 
             ::deep .syntax-value {
-                color: var(--tnt-color-success);
+                color: var(--nt-color-success);
             }
 
             ::deep .syntax-comment {

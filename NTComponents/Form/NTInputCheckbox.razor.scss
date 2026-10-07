@@ -53,23 +53,23 @@ $nt-checkbox-exit-easing: motion.$nt-motion-easing-emphasized-accelerate;
 }
 
 .nt-checkbox {
-    --nt-checkbox-disabled-container-color: #{colors.$tnt-color-on-surface};
-    --nt-checkbox-disabled-icon-color: #{colors.$tnt-color-surface};
-    --nt-checkbox-disabled-outline-color: #{colors.$tnt-color-on-surface};
-    --nt-checkbox-error-color: #{colors.$tnt-color-error};
-    --nt-checkbox-error-icon-color: #{colors.$tnt-color-on-error};
-    --nt-checkbox-focus-indicator-color: #{colors.$tnt-color-primary};
-    --nt-checkbox-focus-outline-color: #{colors.$tnt-color-on-surface};
-    --nt-checkbox-hover-outline-color: #{colors.$tnt-color-on-surface};
-    --nt-checkbox-icon-color: #{colors.$tnt-color-on-surface-variant};
-    --nt-checkbox-label-color: #{colors.$tnt-color-on-surface};
-    --nt-checkbox-outline-color: #{colors.$tnt-color-on-surface-variant};
-    --nt-checkbox-pressed-outline-color: #{colors.$tnt-color-on-surface};
-    --nt-checkbox-selected-container-color: #{colors.$tnt-color-primary};
-    --nt-checkbox-selected-icon-color: #{colors.$tnt-color-on-primary};
-    --nt-checkbox-selected-state-layer-color: #{colors.$tnt-color-primary};
-    --nt-checkbox-state-layer-color: #{colors.$tnt-color-on-surface};
-    --nt-checkbox-supporting-text-color: #{colors.$tnt-color-on-surface-variant};
+    --nt-checkbox-disabled-container-color: #{colors.$nt-color-on-surface};
+    --nt-checkbox-disabled-icon-color: #{colors.$nt-color-surface};
+    --nt-checkbox-disabled-outline-color: #{colors.$nt-color-on-surface};
+    --nt-checkbox-error-color: #{colors.$nt-color-error};
+    --nt-checkbox-error-icon-color: #{colors.$nt-color-on-error};
+    --nt-checkbox-focus-indicator-color: #{colors.$nt-color-primary};
+    --nt-checkbox-focus-outline-color: #{colors.$nt-color-on-surface};
+    --nt-checkbox-hover-outline-color: #{colors.$nt-color-on-surface};
+    --nt-checkbox-icon-color: #{colors.$nt-color-on-surface-variant};
+    --nt-checkbox-label-color: #{colors.$nt-color-on-surface};
+    --nt-checkbox-outline-color: #{colors.$nt-color-on-surface-variant};
+    --nt-checkbox-pressed-outline-color: #{colors.$nt-color-on-surface};
+    --nt-checkbox-selected-container-color: #{colors.$nt-color-primary};
+    --nt-checkbox-selected-icon-color: #{colors.$nt-color-on-primary};
+    --nt-checkbox-selected-state-layer-color: #{colors.$nt-color-primary};
+    --nt-checkbox-state-layer-color: #{colors.$nt-color-on-surface};
+    --nt-checkbox-supporting-text-color: #{colors.$nt-color-on-surface-variant};
     --nt-checkbox-external-icon-size: #{$nt-checkbox-external-icon-size};
 
     display: inline-flex;

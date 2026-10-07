@@ -20,8 +20,8 @@
     box-sizing: border-box;
     overflow: auto;
     padding: 8px;
-    background: colors.$tnt-color-surface-container-lowest;
-    color: colors.$tnt-color-on-surface;
+    background: colors.$nt-color-surface-container-lowest;
+    color: colors.$nt-color-on-surface;
     border-radius: corner-radius.$nt-corner-radius-large;
     font-family: Roboto, Arial, sans-serif;
     container-type: inline-size;
@@ -37,8 +37,8 @@
             align-items: center;
             padding: 8px;
             border-radius: 8px;
-            background: colors.$tnt-color-surface-container;
-            @include elevation.tnt-elevation(1, false);
+            background: colors.$nt-color-surface-container;
+            @include elevation.tnt-elevation(1, false, elevation.$nt-elevation-shadows);
 
             .date-navigation {
                 display: inline-flex;
@@ -59,9 +59,9 @@
             display: flex;
             flex-direction: column;
             min-inline-size: calc(7 * var(--nt-scheduler-day-min-width));
-            border-block-start: 1px solid colors.$tnt-color-outline-variant;
-            border-inline-start: 1px solid colors.$tnt-color-outline-variant;
-            background: colors.$tnt-color-surface;
+            border-block-start: 1px solid colors.$nt-color-outline-variant;
+            border-inline-start: 1px solid colors.$nt-color-outline-variant;
+            background: colors.$nt-color-surface;
         }
 
         .month-weekdays,
@@ -84,10 +84,10 @@
             min-block-size: 40px;
             padding: 10px 8px;
             box-sizing: border-box;
-            border-block-end: 1px solid colors.$tnt-color-outline-variant;
-            border-inline-end: 1px solid colors.$tnt-color-outline-variant;
-            background: colors.$tnt-color-surface-container-low;
-            color: colors.$tnt-color-on-surface-variant;
+            border-block-end: 1px solid colors.$nt-color-outline-variant;
+            border-inline-end: 1px solid colors.$nt-color-outline-variant;
+            background: colors.$nt-color-surface-container-low;
+            color: colors.$nt-color-on-surface-variant;
             font-size: typescale.$tnt-typescale-label-large-font-size;
             font-weight: typescale.$tnt-typescale-label-large-font-weight;
             line-height: typescale.$tnt-typescale-label-large-line-height;
@@ -101,24 +101,24 @@
             block-size: var(--nt-scheduler-month-week-height);
             padding: 8px;
             border: 0;
-            border-block-end: 1px solid colors.$tnt-color-outline-variant;
-            border-inline-end: 1px solid colors.$tnt-color-outline-variant;
-            background: colors.$tnt-color-surface;
-            color: colors.$tnt-color-on-surface;
+            border-block-end: 1px solid colors.$nt-color-outline-variant;
+            border-inline-end: 1px solid colors.$nt-color-outline-variant;
+            background: colors.$nt-color-surface;
+            color: colors.$nt-color-on-surface;
             text-align: start;
 
             &:hover {
-                background: colors.$tnt-color-surface-container-low;
+                background: colors.$nt-color-surface-container-low;
             }
 
             &.outside-month {
-                color: colors.$tnt-color-on-surface-variant;
-                background: colors.$tnt-color-surface-container-lowest;
+                color: colors.$nt-color-on-surface-variant;
+                background: colors.$nt-color-surface-container-lowest;
             }
 
             &.today .day-number {
-                background: colors.$tnt-color-primary;
-                color: colors.$tnt-color-on-primary;
+                background: colors.$nt-color-primary;
+                color: colors.$nt-color-on-primary;
             }
 
             .day-number {
@@ -138,7 +138,7 @@
             display: flex;
             flex-direction: column;
             min-inline-size: calc(var(--nt-scheduler-time-gutter-width) + 7 * var(--nt-scheduler-day-min-width));
-            background: colors.$tnt-color-surface;
+            background: colors.$nt-color-surface;
         }
 
         .agenda-header,
@@ -152,8 +152,8 @@
             position: sticky;
             inset-block-start: 72px;
             z-index: 9;
-            background: colors.$tnt-color-surface-container-low;
-            border-block-end: 1px solid colors.$tnt-color-outline-variant;
+            background: colors.$nt-color-surface-container-low;
+            border-block-end: 1px solid colors.$nt-color-outline-variant;
         }
 
         .agenda-days,
@@ -170,10 +170,10 @@
             align-items: center;
             justify-content: center;
             min-block-size: 72px;
-            border-inline-end: 1px solid colors.$tnt-color-outline-variant;
+            border-inline-end: 1px solid colors.$nt-color-outline-variant;
 
             .day-name {
-                color: colors.$tnt-color-on-surface-variant;
+                color: colors.$nt-color-on-surface-variant;
                 font-size: typescale.$tnt-typescale-label-medium-font-size;
                 font-weight: typescale.$tnt-typescale-label-medium-font-weight;
                 line-height: typescale.$tnt-typescale-label-medium-line-height;
@@ -194,8 +194,8 @@
             }
 
             &.today .day-number {
-                background: colors.$tnt-color-primary;
-                color: colors.$tnt-color-on-primary;
+                background: colors.$nt-color-primary;
+                color: colors.$nt-color-on-primary;
             }
         }
 
@@ -204,13 +204,13 @@
             inset-inline-start: 0;
             z-index: 7;
             background: inherit;
-            color: colors.$tnt-color-on-surface-variant;
-            border-inline-end: 1px solid colors.$tnt-color-outline-variant;
+            color: colors.$nt-color-on-surface-variant;
+            border-inline-end: 1px solid colors.$nt-color-outline-variant;
         }
 
         .all-day-row {
-            border-block-end: 1px solid colors.$tnt-color-outline-variant;
-            background: colors.$tnt-color-surface-container-lowest;
+            border-block-end: 1px solid colors.$nt-color-outline-variant;
+            background: colors.$nt-color-surface-container-lowest;
 
             .all-day-label {
                 display: flex;
@@ -235,11 +235,11 @@
             grid-row: 1 / -1;
             min-block-size: calc(2 * var(--nt-scheduler-all-day-lane-height));
             border: 0;
-            border-inline-end: 1px solid colors.$tnt-color-outline-variant;
+            border-inline-end: 1px solid colors.$nt-color-outline-variant;
             background: transparent;
 
             &:hover {
-                background: colors.$tnt-color-surface-container-low;
+                background: colors.$nt-color-surface-container-low;
             }
         }
 
@@ -252,7 +252,7 @@
             padding-block-start: 4px;
             padding-inline-end: 8px;
             box-sizing: border-box;
-            border-block-end: 1px solid colors.$tnt-color-outline-variant;
+            border-block-end: 1px solid colors.$nt-color-outline-variant;
             text-align: end;
             font-size: typescale.$tnt-typescale-label-small-font-size;
             font-weight: typescale.$tnt-typescale-label-small-font-weight;
@@ -263,7 +263,7 @@
         .timed-day {
             position: relative;
             min-block-size: calc(24 * var(--nt-scheduler-row-height));
-            border-inline-end: 1px solid colors.$tnt-color-outline-variant;
+            border-inline-end: 1px solid colors.$nt-color-outline-variant;
         }
 
         .time-slot {
@@ -271,11 +271,11 @@
             inline-size: 100%;
             block-size: var(--nt-scheduler-row-height);
             border: 0;
-            border-block-end: 1px solid colors.$tnt-color-outline-variant;
+            border-block-end: 1px solid colors.$nt-color-outline-variant;
             background: transparent;
 
             &:hover {
-                background: colors.$tnt-color-surface-container-low;
+                background: colors.$nt-color-surface-container-low;
             }
         }
 
@@ -293,7 +293,7 @@
             background: var(--event-bg, var(--nt-scheduler-event-bg));
             color: var(--event-fg, var(--nt-scheduler-event-fg));
             cursor: pointer;
-            @include elevation.tnt-elevation(1, false);
+            @include elevation.tnt-elevation(1, false, elevation.$nt-elevation-shadows);
 
             &.event-draggable {
                 cursor: grab;
@@ -415,8 +415,8 @@
         }
 
         .drop-target-active {
-            background: color-mix(in srgb, colors.$tnt-color-primary 12%, transparent);
-            outline: 2px solid colors.$tnt-color-primary;
+            background: color-mix(in srgb, colors.$nt-color-primary 12%, transparent);
+            outline: 2px solid colors.$nt-color-primary;
             outline-offset: -2px;
         }
 
@@ -427,8 +427,8 @@
             inset-inline: 4px;
             block-size: max(16px, calc(var(--drop-duration-minutes) / 60 * var(--nt-scheduler-row-height)));
             border-radius: 8px;
-            background: color-mix(in srgb, colors.$tnt-color-primary 16%, transparent);
-            outline: 2px solid colors.$tnt-color-primary;
+            background: color-mix(in srgb, colors.$nt-color-primary 16%, transparent);
+            outline: 2px solid colors.$nt-color-primary;
             outline-offset: 2px;
             pointer-events: none;
         }
@@ -440,8 +440,8 @@
             inset-inline: 4px;
             block-size: max(14px, calc((var(--selection-end-minute) - var(--selection-start-minute)) / 60 * var(--nt-scheduler-row-height)));
             border-radius: corner-radius.$nt-corner-radius-small;
-            background: color-mix(in srgb, colors.$tnt-color-primary 18%, transparent);
-            outline: 2px solid colors.$tnt-color-primary;
+            background: color-mix(in srgb, colors.$nt-color-primary 18%, transparent);
+            outline: 2px solid colors.$nt-color-primary;
             outline-offset: -2px;
             pointer-events: none;
         }
@@ -461,7 +461,7 @@
         opacity: .88;
         pointer-events: none;
         transform: translate3d(var(--nt-scheduler-preview-x), var(--nt-scheduler-preview-y), 0);
-        @include elevation.tnt-elevation(3, false);
+        @include elevation.tnt-elevation(3, false, elevation.$nt-elevation-shadows);
     }
 
     &[data-nt-scheduler-range-select-enabled='true'] {

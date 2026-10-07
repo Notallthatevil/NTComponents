@@ -5,7 +5,7 @@ $nt-skeleton-wave-duration: motion.$nt-motion-duration-extra_long_4;
 $nt-skeleton-pulse-duration: motion.$nt-motion-duration-long_2;
 
 .nt-skeleton {
-    --nt-skeleton-default-highlight-color: color-mix(in srgb, #{colors.$tnt-color-on-surface} 8%, var(--nt-skeleton-container-color));
+    --nt-skeleton-default-highlight-color: color-mix(in srgb, #{colors.$nt-color-on-surface} 8%, var(--nt-skeleton-container-color));
 
     display: block;
     position: relative;

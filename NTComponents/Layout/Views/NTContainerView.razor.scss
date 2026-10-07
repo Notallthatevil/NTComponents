@@ -28,7 +28,7 @@
         padding: 0;
         border: 0;
         background: transparent;
-        color: colors.$tnt-color-on-surface;
+        color: colors.$nt-color-on-surface;
 
         &[hidden] {
             display: none;
@@ -40,7 +40,7 @@
         display: none;
         letter-spacing: 0;
         margin-block-end: 10px;
-        color: var(--nt-container-view-on-this-page-label-color, #{colors.$tnt-color-on-surface-variant});
+        color: var(--nt-container-view-on-this-page-label-color, #{colors.$nt-color-on-surface-variant});
         font-weight: 600;
 
         &:has(~ .nt-container-view-quick-nav-heading) {
@@ -53,7 +53,7 @@
         align-items: center;
         background: transparent;
         border: 0;
-        color: var(--nt-container-view-on-this-page-label-color, #{colors.$tnt-color-on-surface-variant});
+        color: var(--nt-container-view-on-this-page-label-color, #{colors.$nt-color-on-surface-variant});
         cursor: pointer;
         display: flex;
         inline-size: 100%;
@@ -63,7 +63,7 @@
         text-align: start;
 
         &:focus-visible {
-            outline: 2px solid colors.$tnt-color-primary;
+            outline: 2px solid colors.$nt-color-primary;
             outline-offset: 2px;
         }
 
@@ -90,7 +90,7 @@
         @include typescale.nt-title-large;
         letter-spacing: 0;
         margin-block-end: 10px;
-        color: var(--nt-container-view-on-this-page-text-color, #{colors.$tnt-color-on-surface});
+        color: var(--nt-container-view-on-this-page-text-color, #{colors.$nt-color-on-surface});
     }
 
     .nt-container-view-quick-nav-list {
@@ -112,7 +112,7 @@
             inset-block-start: 0;
             inset-inline: 0;
             block-size: var(--nt-container-view-quick-nav-active-height);
-            border: 1px solid var(--nt-container-view-on-this-page-selector-color, #{colors.$tnt-color-outline});
+            border: 1px solid var(--nt-container-view-on-this-page-selector-color, #{colors.$nt-color-outline});
             border-radius: min(24px, corners.$nt-corner-radius-large);
             content: "";
             opacity: var(--nt-container-view-quick-nav-active-opacity);
@@ -143,7 +143,7 @@
             padding-block: 4px;
             padding-inline: 14px;
             border-radius: min(24px, corners.$nt-corner-radius-large);
-            color: var(--nt-container-view-on-this-page-text-color, #{colors.$tnt-color-on-surface});
+            color: var(--nt-container-view-on-this-page-text-color, #{colors.$nt-color-on-surface});
             letter-spacing: 0;
             overflow-wrap: anywhere;
             text-decoration: none;
@@ -151,29 +151,29 @@
             white-space: normal;
 
             &:visited {
-                color: var(--nt-container-view-on-this-page-text-color, #{colors.$tnt-color-on-surface});
+                color: var(--nt-container-view-on-this-page-text-color, #{colors.$nt-color-on-surface});
             }
 
             &:hover,
             &:focus-visible {
-                background: color-mix(in srgb, colors.$tnt-color-on-surface 8%, transparent);
-                color: var(--nt-container-view-on-this-page-text-color, #{colors.$tnt-color-on-surface});
+                background: color-mix(in srgb, colors.$nt-color-on-surface 8%, transparent);
+                color: var(--nt-container-view-on-this-page-text-color, #{colors.$nt-color-on-surface});
                 outline: none;
             }
 
             &:focus-visible {
-                outline: 2px solid colors.$tnt-color-primary;
+                outline: 2px solid colors.$nt-color-primary;
                 outline-offset: 1px;
             }
 
             &.nt-container-view-quick-nav-link-active {
                 @include on-this-page-link-type;
                 min-block-size: 40px;
-                color: var(--nt-container-view-on-this-page-selected-text-color, #{colors.$tnt-color-on-surface});
+                color: var(--nt-container-view-on-this-page-selected-text-color, #{colors.$nt-color-on-surface});
                 font-weight: var(--nt-ref-typeface-weight-bold, 700);
 
                 &:visited {
-                    color: var(--nt-container-view-on-this-page-selected-text-color, #{colors.$tnt-color-on-surface});
+                    color: var(--nt-container-view-on-this-page-selected-text-color, #{colors.$nt-color-on-surface});
                 }
             }
         }

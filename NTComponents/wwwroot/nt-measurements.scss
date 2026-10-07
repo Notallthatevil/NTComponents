@@ -238,23 +238,23 @@ body {
 }
 
 .nt-elevation-lowest {
-    box-shadow: 0px 1px 1px 0px var(--tnt-color-shadow);
+    box-shadow: 0px 1px 1px 0px var(--nt-color-shadow);
 }
 
 .nt-elevation-low {
-    box-shadow: 0px 2px 3px 0px var(--tnt-color-shadow);
+    box-shadow: 0px 2px 3px 0px var(--nt-color-shadow);
 }
 
 .nt-elevation-medium {
-    box-shadow: 0px 4px 6px 0px var(--tnt-color-shadow);
+    box-shadow: 0px 4px 6px 0px var(--nt-color-shadow);
 }
 
 .nt-elevation-high {
-    box-shadow: 0px 6px 8px 0px var(--tnt-color-shadow);
+    box-shadow: 0px 6px 8px 0px var(--nt-color-shadow);
 }
 
 .nt-elevation-highest {
-    box-shadow: 0px 8px 12px 0px var(--tnt-color-shadow);
+    box-shadow: 0px 8px 12px 0px var(--nt-color-shadow);
 }
 
 @each $corner-radius, $value in $nt-corner-radii {
@@ -264,7 +264,7 @@ body {
 }
 
 .nt-scrollbar {
-    scrollbar-color: var(--tnt-color-primary-fixed) transparent;
+    scrollbar-color: var(--nt-color-primary-fixed) transparent;
     scrollbar-gutter: auto;
     scrollbar-width: thin;
 }
@@ -279,7 +279,7 @@ body {
 }
 
 .nt-scrollbar::-webkit-scrollbar-thumb {
-    background: var(--tnt-color-primary-fixed);
+    background: var(--nt-color-primary-fixed);
     background-clip: content-box;
     border: 2px solid transparent;
     border-radius: 9999px;
