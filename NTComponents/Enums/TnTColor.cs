@@ -45,6 +45,7 @@ namespace NTComponents;
 ///         flips from brightest in light theme to dimmest in dark theme.
 ///     </para>
 /// </remarks>
+[Obsolete("Use NTColor instead.")]
 public enum TnTColor {
 
     /// <summary>

@@ -5,6 +5,7 @@ namespace NTComponents;
 /// <summary>
 ///     Specifies the text alignment options.
 /// </summary>
+[Obsolete("Use NTTextAlign instead.")]
 public enum TextAlign {
 
     /// <summary>

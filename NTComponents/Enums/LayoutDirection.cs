@@ -5,6 +5,7 @@ namespace NTComponents;
 /// <summary>
 /// Specifies the direction of the layout.
 /// </summary>
+[Obsolete("Use NTLayoutDirection instead.")]
 public enum LayoutDirection {
     /// <summary>
     /// Layout elements vertically.

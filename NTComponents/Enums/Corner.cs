@@ -3,6 +3,7 @@ namespace NTComponents;
 /// <summary>
 /// Specifies the corner of the screen.
 /// </summary>
+[Obsolete("Corner is obsolete and retained for legacy components.")]
 public enum Corner {
     /// <summary>
     /// The top-left corner.

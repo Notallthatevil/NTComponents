@@ -9,6 +9,7 @@ namespace NTComponents;
 /// <summary>
 ///     Represents different sizes that can be used in the application.
 /// </summary>
+[Obsolete("Use NTSize instead.")]
 public enum Size {
 
     /// <summary>

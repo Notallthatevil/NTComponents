@@ -13,6 +13,7 @@ namespace NTComponents.Enums;
 ///     Use this enumeration to control the visual arrangement of the checkbox and label within a container. The layout affects alignment and appearance, which can be important for accessibility and
 ///     consistency in user interfaces.
 /// </remarks>
+[Obsolete("CheckboxLayout is obsolete and retained for legacy components.")]
 public enum CheckboxLayout {
 
     /// <summary>

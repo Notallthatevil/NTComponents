@@ -3,6 +3,7 @@ namespace NTComponents;
 /// <summary>
 /// Specifies the expansion mode of the FAB container.
 /// </summary>
+[Obsolete("FabExpandMode is obsolete and retained for legacy components.")]
 public enum FabExpandMode {
     /// <summary>
     /// The FABs are always visible.
