@@ -694,6 +694,17 @@ public static partial class TnTColorEnumExt {
     /// <returns>The css variable</returns>
     public static string ToCssTnTColorVariable(this TnTColor tnTColorEnum) => $"var(--tnt-color-{tnTColorEnum.ToCssClassName()})";
 
+    /// <summary>Converts a legacy scheduler color to an NT theme reference or a literal utility color.</summary>
+    public static string ToCssNTColorVariable(this TnTColor color) => color switch {
+        TnTColor.None => "inherit",
+        TnTColor.Black => "black",
+        TnTColor.White => "white",
+        _ => ((NTColor)(int)color).ToCssNTColorVariable()
+    };
+
+    /// <summary>Converts a shared NT color for a legacy child component.</summary>
+    public static TnTColor ToLegacyColor(this NTColor color) => (TnTColor)(int)color;
+
     /// <summary>
     ///     Finds all capital letters in a string except the first letter.
     /// </summary>

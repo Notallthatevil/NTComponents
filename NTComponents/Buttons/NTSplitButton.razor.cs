@@ -39,7 +39,7 @@ public partial class NTSplitButton {
     ///     Gets or sets an optional override for the split button container color.
     /// </summary>
     [Parameter]
-    public TnTColor? BackgroundColor { get; set; }
+    public NTColor? BackgroundColor { get; set; }
 
     /// <summary>
     ///     Gets or sets the size of both split button segments.
@@ -92,8 +92,8 @@ public partial class NTSplitButton {
     /// <inheritdoc />
     public override string? ElementStyle => CssStyleBuilder.Create()
         .AddFromAdditionalAttributes(AdditionalAttributes)
-        .AddVariable("nt-split-button-bg", BackgroundColor.ToCssTnTColorVariable(), BackgroundColor.HasValue)
-        .AddVariable("nt-split-button-fg", TextColor.ToCssTnTColorVariable(), TextColor.HasValue)
+        .AddVariable("nt-split-button-bg", BackgroundColor.ToCssNTColorVariable(), BackgroundColor.HasValue)
+        .AddVariable("nt-split-button-fg", TextColor.ToCssNTColorVariable(), TextColor.HasValue)
         .Build();
 
     /// <inheritdoc />
@@ -139,7 +139,7 @@ public partial class NTSplitButton {
     ///     Gets or sets an optional override for the menu panel container color.
     /// </summary>
     [Parameter]
-    public TnTColor? MenuBackgroundColor { get; set; }
+    public NTColor? MenuBackgroundColor { get; set; }
 
     /// <summary>
     ///     Gets or sets whether the trailing menu segment is disabled.
@@ -157,19 +157,19 @@ public partial class NTSplitButton {
     ///     Gets or sets an optional override for the selected menu item container color.
     /// </summary>
     [Parameter]
-    public TnTColor? MenuSelectedBackgroundColor { get; set; }
+    public NTColor? MenuSelectedBackgroundColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for selected menu item text and icon color.
     /// </summary>
     [Parameter]
-    public TnTColor? MenuSelectedTextColor { get; set; }
+    public NTColor? MenuSelectedTextColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for the menu panel content color.
     /// </summary>
     [Parameter]
-    public TnTColor? MenuTextColor { get; set; }
+    public NTColor? MenuTextColor { get; set; }
 
     /// <summary>
     ///     Gets or sets the callback invoked by the leading action segment.
@@ -193,7 +193,7 @@ public partial class NTSplitButton {
     ///     Gets or sets an optional override for the split button content color.
     /// </summary>
     [Parameter]
-    public TnTColor? TextColor { get; set; }
+    public NTColor? TextColor { get; set; }
 
     /// <summary>
     ///     Gets or sets the native button type for the leading action.
@@ -309,19 +309,19 @@ public partial class NTSplitButton {
         }
 
         if (!_menuBackgroundColorWasProvided || !MenuBackgroundColor.HasValue) {
-            MenuBackgroundColor = TnTColor.SurfaceContainerLow;
+            MenuBackgroundColor = NTColor.SurfaceContainerLow;
         }
 
         if (!_menuSelectedBackgroundColorWasProvided || !MenuSelectedBackgroundColor.HasValue) {
-            MenuSelectedBackgroundColor = TnTColor.TertiaryContainer;
+            MenuSelectedBackgroundColor = NTColor.TertiaryContainer;
         }
 
         if (!_menuSelectedTextColorWasProvided || !MenuSelectedTextColor.HasValue) {
-            MenuSelectedTextColor = TnTColor.OnTertiaryContainer;
+            MenuSelectedTextColor = NTColor.OnTertiaryContainer;
         }
 
         if (!_menuTextColorWasProvided || !MenuTextColor.HasValue) {
-            MenuTextColor = TnTColor.OnSurface;
+            MenuTextColor = NTColor.OnSurface;
         }
 
         ValidateVariantColorCombination();
@@ -344,13 +344,13 @@ public partial class NTSplitButton {
     [JSInvokable]
     public Task NotifySplitButtonExpandedChanged(bool expanded) => SetExpandedAsync(expanded);
 
-    private TnTColor GetDefaultBackgroundColor() {
+    private NTColor GetDefaultBackgroundColor() {
         return Variant switch {
-            NTButtonVariant.Elevated => TnTColor.SurfaceContainerLow,
-            NTButtonVariant.Filled => TnTColor.Primary,
-            NTButtonVariant.Tonal => TnTColor.SecondaryContainer,
-            NTButtonVariant.Outlined => TnTColor.Transparent,
-            NTButtonVariant.Text => TnTColor.Transparent,
+            NTButtonVariant.Elevated => NTColor.SurfaceContainerLow,
+            NTButtonVariant.Filled => NTColor.Primary,
+            NTButtonVariant.Tonal => NTColor.SecondaryContainer,
+            NTButtonVariant.Outlined => NTColor.Transparent,
+            NTButtonVariant.Text => NTColor.Transparent,
             _ => throw new ArgumentOutOfRangeException(nameof(Variant), Variant, null)
         };
     }
@@ -359,13 +359,13 @@ public partial class NTSplitButton {
         return Variant == NTButtonVariant.Elevated ? NTElevation.Lowest : NTElevation.None;
     }
 
-    private TnTColor GetDefaultTextColor() {
+    private NTColor GetDefaultTextColor() {
         return Variant switch {
-            NTButtonVariant.Elevated => TnTColor.Primary,
-            NTButtonVariant.Filled => TnTColor.OnPrimary,
-            NTButtonVariant.Tonal => TnTColor.OnSecondaryContainer,
-            NTButtonVariant.Outlined => TnTColor.Primary,
-            NTButtonVariant.Text => TnTColor.Primary,
+            NTButtonVariant.Elevated => NTColor.Primary,
+            NTButtonVariant.Filled => NTColor.OnPrimary,
+            NTButtonVariant.Tonal => NTColor.OnSecondaryContainer,
+            NTButtonVariant.Outlined => NTColor.Primary,
+            NTButtonVariant.Text => NTColor.Primary,
             _ => throw new ArgumentOutOfRangeException(nameof(Variant), Variant, null)
         };
     }
@@ -395,32 +395,32 @@ public partial class NTSplitButton {
         }
 
         if (Variant is NTButtonVariant.Outlined or NTButtonVariant.Text) {
-            if (BackgroundColor != TnTColor.Transparent) {
+            if (BackgroundColor != NTColor.Transparent) {
                 throw new InvalidOperationException($"{Variant} split buttons must use a transparent {nameof(BackgroundColor)}.");
             }
 
             return;
         }
 
-        if (BackgroundColor is TnTColor.None or TnTColor.Transparent) {
+        if (BackgroundColor is NTColor.Transparent) {
             throw new InvalidOperationException($"{Variant} split buttons must use a visible container {nameof(BackgroundColor)}.");
         }
     }
 
     private void ValidateMenuColors() {
-        if (MenuBackgroundColor is TnTColor.None or TnTColor.Transparent) {
+        if (MenuBackgroundColor is NTColor.Transparent) {
             throw new InvalidOperationException($"{nameof(MenuBackgroundColor)} must be a visible menu container color.");
         }
 
-        if (MenuTextColor is TnTColor.None or TnTColor.Transparent) {
+        if (MenuTextColor is NTColor.Transparent) {
             throw new InvalidOperationException($"{nameof(MenuTextColor)} must be a visible menu content color.");
         }
 
-        if (MenuSelectedBackgroundColor is TnTColor.None or TnTColor.Transparent) {
+        if (MenuSelectedBackgroundColor is NTColor.Transparent) {
             throw new InvalidOperationException($"{nameof(MenuSelectedBackgroundColor)} must be a visible selected menu item container color.");
         }
 
-        if (MenuSelectedTextColor is TnTColor.None or TnTColor.Transparent) {
+        if (MenuSelectedTextColor is NTColor.Transparent) {
             throw new InvalidOperationException($"{nameof(MenuSelectedTextColor)} must be a visible selected menu item content color.");
         }
     }
@@ -428,7 +428,7 @@ public partial class NTSplitButton {
     private void ValidateVariantColorCombination() {
         ValidateBackgroundColorForVariant();
 
-        if (TextColor is TnTColor.None or TnTColor.Transparent) {
+        if (TextColor is NTColor.Transparent) {
             throw new InvalidOperationException($"{nameof(TextColor)} must be a visible split button content color.");
         }
     }

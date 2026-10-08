@@ -84,7 +84,7 @@ public sealed class NTButtonConfigurationAnalyzer : DiagnosticAnalyzer {
         context.RegisterCompilationStartAction(static startContext => {
             var ntButtonType = startContext.Compilation.GetTypeByMetadataName("NTComponents.NTButton");
             var buttonVariantType = startContext.Compilation.GetTypeByMetadataName("NTComponents.NTButtonVariant");
-            var colorType = startContext.Compilation.GetTypeByMetadataName("NTComponents.TnTColor");
+            var colorType = startContext.Compilation.GetTypeByMetadataName("NTComponents.NTColor") ?? startContext.Compilation.GetTypeByMetadataName("NTComponents.TnTColor");
             var elevationType = startContext.Compilation.GetTypeByMetadataName("NTComponents.NTElevation");
 
             if (ntButtonType is null || buttonVariantType is null || colorType is null || elevationType is null) {

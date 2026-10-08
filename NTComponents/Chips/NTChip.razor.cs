@@ -72,7 +72,7 @@ public partial class NTChip : NTComponentBase, INTBadgeable {
     ///     Gets or sets an optional override for the unselected chip container color.
     /// </summary>
     [Parameter]
-    public TnTColor? BackgroundColor { get; set; }
+    public NTColor? BackgroundColor { get; set; }
 
     /// <summary>
     ///     Gets or sets whether the chip is disabled.
@@ -84,25 +84,25 @@ public partial class NTChip : NTComponentBase, INTBadgeable {
     ///     Gets or sets an optional override for the disabled chip container color.
     /// </summary>
     [Parameter]
-    public TnTColor? DisabledBackgroundColor { get; set; }
+    public NTColor? DisabledBackgroundColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for disabled leading, trailing, and remove icon color.
     /// </summary>
     [Parameter]
-    public TnTColor? DisabledIconColor { get; set; }
+    public NTColor? DisabledIconColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for the disabled outlined chip border color.
     /// </summary>
     [Parameter]
-    public TnTColor? DisabledOutlineColor { get; set; }
+    public NTColor? DisabledOutlineColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for disabled chip label color.
     /// </summary>
     [Parameter]
-    public TnTColor? DisabledTextColor { get; set; }
+    public NTColor? DisabledTextColor { get; set; }
 
     /// <inheritdoc />
     public override string? ElementClass => CssClassBuilder.Create()
@@ -136,21 +136,21 @@ public partial class NTChip : NTComponentBase, INTBadgeable {
     /// <inheritdoc />
     public override string? ElementStyle => CssStyleBuilder.Create()
         .AddFromAdditionalAttributes(AdditionalAttributes)
-        .AddVariable("nt-chip-bg", BackgroundColor.ToCssTnTColorVariable(), _backgroundColorWasProvided && BackgroundColor.HasValue)
-        .AddVariable("nt-chip-fg", TextColor.ToCssTnTColorVariable(), _textColorWasProvided && TextColor.HasValue)
-        .AddVariable("nt-chip-icon", IconColor.ToCssTnTColorVariable(), _iconColorWasProvided && IconColor.HasValue)
-        .AddVariable("nt-chip-outline", OutlineColor.ToCssTnTColorVariable(), _outlineColorWasProvided && OutlineColor.HasValue)
-        .AddVariable("nt-chip-selected-bg", SelectedBackgroundColor.ToCssTnTColorVariable(), _selectedBackgroundColorWasProvided && SelectedBackgroundColor.HasValue)
-        .AddVariable("nt-chip-selected-fg", SelectedTextColor.ToCssTnTColorVariable(), _selectedTextColorWasProvided && SelectedTextColor.HasValue)
-        .AddVariable("nt-chip-selected-icon", SelectedIconColor.ToCssTnTColorVariable(), _selectedIconColorWasProvided && SelectedIconColor.HasValue)
-        .AddVariable("nt-chip-selected-outline", SelectedOutlineColor.ToCssTnTColorVariable(), _selectedOutlineColorWasProvided && SelectedOutlineColor.HasValue)
-        .AddVariable("nt-chip-state-layer", StateLayerColor.ToCssTnTColorVariable(), _stateLayerColorWasProvided && StateLayerColor.HasValue)
-        .AddVariable("nt-chip-selected-state-layer", SelectedStateLayerColor.ToCssTnTColorVariable(), _selectedStateLayerColorWasProvided && SelectedStateLayerColor.HasValue)
-        .AddVariable("nt-chip-focus-outline", FocusOutlineColor.ToCssTnTColorVariable(), _focusOutlineColorWasProvided && FocusOutlineColor.HasValue)
-        .AddVariable("nt-chip-disabled-bg", DisabledBackgroundColor.ToCssTnTColorVariable(), _disabledBackgroundColorWasProvided && DisabledBackgroundColor.HasValue)
-        .AddVariable("nt-chip-disabled-fg", DisabledTextColor.ToCssTnTColorVariable(), _disabledTextColorWasProvided && DisabledTextColor.HasValue)
-        .AddVariable("nt-chip-disabled-icon", DisabledIconColor.ToCssTnTColorVariable(), _disabledIconColorWasProvided && DisabledIconColor.HasValue)
-        .AddVariable("nt-chip-disabled-outline", DisabledOutlineColor.ToCssTnTColorVariable(), _disabledOutlineColorWasProvided && DisabledOutlineColor.HasValue)
+        .AddVariable("nt-chip-bg", BackgroundColor.ToCssNTColorVariable(), _backgroundColorWasProvided && BackgroundColor.HasValue)
+        .AddVariable("nt-chip-fg", TextColor.ToCssNTColorVariable(), _textColorWasProvided && TextColor.HasValue)
+        .AddVariable("nt-chip-icon", IconColor.ToCssNTColorVariable(), _iconColorWasProvided && IconColor.HasValue)
+        .AddVariable("nt-chip-outline", OutlineColor.ToCssNTColorVariable(), _outlineColorWasProvided && OutlineColor.HasValue)
+        .AddVariable("nt-chip-selected-bg", SelectedBackgroundColor.ToCssNTColorVariable(), _selectedBackgroundColorWasProvided && SelectedBackgroundColor.HasValue)
+        .AddVariable("nt-chip-selected-fg", SelectedTextColor.ToCssNTColorVariable(), _selectedTextColorWasProvided && SelectedTextColor.HasValue)
+        .AddVariable("nt-chip-selected-icon", SelectedIconColor.ToCssNTColorVariable(), _selectedIconColorWasProvided && SelectedIconColor.HasValue)
+        .AddVariable("nt-chip-selected-outline", SelectedOutlineColor.ToCssNTColorVariable(), _selectedOutlineColorWasProvided && SelectedOutlineColor.HasValue)
+        .AddVariable("nt-chip-state-layer", StateLayerColor.ToCssNTColorVariable(), _stateLayerColorWasProvided && StateLayerColor.HasValue)
+        .AddVariable("nt-chip-selected-state-layer", SelectedStateLayerColor.ToCssNTColorVariable(), _selectedStateLayerColorWasProvided && SelectedStateLayerColor.HasValue)
+        .AddVariable("nt-chip-focus-outline", FocusOutlineColor.ToCssNTColorVariable(), _focusOutlineColorWasProvided && FocusOutlineColor.HasValue)
+        .AddVariable("nt-chip-disabled-bg", DisabledBackgroundColor.ToCssNTColorVariable(), _disabledBackgroundColorWasProvided && DisabledBackgroundColor.HasValue)
+        .AddVariable("nt-chip-disabled-fg", DisabledTextColor.ToCssNTColorVariable(), _disabledTextColorWasProvided && DisabledTextColor.HasValue)
+        .AddVariable("nt-chip-disabled-icon", DisabledIconColor.ToCssNTColorVariable(), _disabledIconColorWasProvided && DisabledIconColor.HasValue)
+        .AddVariable("nt-chip-disabled-outline", DisabledOutlineColor.ToCssNTColorVariable(), _disabledOutlineColorWasProvided && DisabledOutlineColor.HasValue)
         .Build();
 
     /// <summary>
@@ -163,7 +163,7 @@ public partial class NTChip : NTComponentBase, INTBadgeable {
     ///     Gets or sets an optional override for the focused chip outline color.
     /// </summary>
     [Parameter]
-    public TnTColor? FocusOutlineColor { get; set; }
+    public NTColor? FocusOutlineColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional URL. When provided, non-selectable chips render as anchors.
@@ -175,7 +175,7 @@ public partial class NTChip : NTComponentBase, INTBadgeable {
     ///     Gets or sets an optional override for leading, trailing, and remove icon color.
     /// </summary>
     [Parameter]
-    public TnTColor? IconColor { get; set; }
+    public NTColor? IconColor { get; set; }
 
     /// <summary>
     ///     Gets or sets the visible text label.
@@ -233,7 +233,7 @@ public partial class NTChip : NTComponentBase, INTBadgeable {
     ///     Gets or sets an optional override for the outlined chip border color.
     /// </summary>
     [Parameter]
-    public TnTColor? OutlineColor { get; set; }
+    public NTColor? OutlineColor { get; set; }
 
     /// <summary>
     ///     Gets or sets whether the chip can be removed.
@@ -263,25 +263,25 @@ public partial class NTChip : NTComponentBase, INTBadgeable {
     ///     Gets or sets an optional override for the selected chip container color.
     /// </summary>
     [Parameter]
-    public TnTColor? SelectedBackgroundColor { get; set; }
+    public NTColor? SelectedBackgroundColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for selected leading, trailing, and remove icon color.
     /// </summary>
     [Parameter]
-    public TnTColor? SelectedIconColor { get; set; }
+    public NTColor? SelectedIconColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for the selected outlined chip border color.
     /// </summary>
     [Parameter]
-    public TnTColor? SelectedOutlineColor { get; set; }
+    public NTColor? SelectedOutlineColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for the selected hover, focus, and pressed state layer color.
     /// </summary>
     [Parameter]
-    public TnTColor? SelectedStateLayerColor { get; set; }
+    public NTColor? SelectedStateLayerColor { get; set; }
 
     /// <summary>
     ///     Gets or sets the callback invoked when <see cref="Selected" /> changes.
@@ -293,7 +293,7 @@ public partial class NTChip : NTComponentBase, INTBadgeable {
     ///     Gets or sets an optional override for the selected chip content color.
     /// </summary>
     [Parameter]
-    public TnTColor? SelectedTextColor { get; set; }
+    public NTColor? SelectedTextColor { get; set; }
 
     /// <summary>
     ///     Gets or sets whether the chip is selectable. Filter chips are selectable by default.
@@ -311,7 +311,7 @@ public partial class NTChip : NTComponentBase, INTBadgeable {
     ///     Gets or sets an optional override for the hover, focus, and pressed state layer color.
     /// </summary>
     [Parameter]
-    public TnTColor? StateLayerColor { get; set; }
+    public NTColor? StateLayerColor { get; set; }
 
     /// <summary>
     ///     Gets or sets the anchor target when <see cref="Href" /> is provided.
@@ -323,7 +323,7 @@ public partial class NTChip : NTComponentBase, INTBadgeable {
     ///     Gets or sets an optional override for the unselected chip content color.
     /// </summary>
     [Parameter]
-    public TnTColor? TextColor { get; set; }
+    public NTColor? TextColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional trailing icon.

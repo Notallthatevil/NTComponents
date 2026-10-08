@@ -96,7 +96,7 @@ public sealed class NTButtonGroupConfigurationAnalyzer : DiagnosticAnalyzer {
             var buttonGroupItemType = startContext.Compilation.GetTypeByMetadataName("NTComponents.NTButtonGroupItem`1");
             var buttonVariantType = startContext.Compilation.GetTypeByMetadataName("NTComponents.NTButtonVariant");
             var selectionModeType = startContext.Compilation.GetTypeByMetadataName("NTComponents.NTButtonGroupSelectionMode");
-            var colorType = startContext.Compilation.GetTypeByMetadataName("NTComponents.TnTColor");
+            var colorType = startContext.Compilation.GetTypeByMetadataName("NTComponents.NTColor") ?? startContext.Compilation.GetTypeByMetadataName("NTComponents.TnTColor");
 
             if (buttonGroupType is null
                 || buttonGroupItemType is null

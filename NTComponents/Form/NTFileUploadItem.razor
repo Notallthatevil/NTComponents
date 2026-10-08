@@ -16,8 +16,8 @@
         <span class="nt-file-upload-progress">
             <NTProgress Variant="NTProgressVariant.Linear"
                         Value="@(IsIndeterminate ? null : (double?)Percent)"
-                        ProgressColor="@(HasError ? TnTColor.Error : TnTColor.Primary)"
-                        TrackColor="@(HasError ? TnTColor.ErrorContainer : TnTColor.SecondaryContainer)"
+                        ProgressColor="@(HasError ? NTColor.Error : NTColor.Primary)"
+                        TrackColor="@(HasError ? NTColor.ErrorContainer : NTColor.SecondaryContainer)"
                         TrackVisible="true"
                         AriaLabel="@ProgressAriaLabel" />
         </span>

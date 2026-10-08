@@ -168,10 +168,10 @@ public class NTCanonicalView_Tests : BunitContext {
         view.GetAttribute("data-testid").Should().Be("container-view");
         view.HasAttribute("autofocus").Should().BeTrue();
         view.GetAttribute("data-nt-container-view-quick-nav-enabled").Should().Be("true");
-        view.GetAttribute("style").Should().Contain("--nt-container-view-on-this-page-label-color:var(--tnt-color-on-surface-variant)");
-        view.GetAttribute("style").Should().Contain("--nt-container-view-on-this-page-selector-color:var(--tnt-color-outline)");
-        view.GetAttribute("style").Should().Contain("--nt-container-view-on-this-page-selected-text-color:var(--tnt-color-on-surface)");
-        view.GetAttribute("style").Should().Contain("--nt-container-view-on-this-page-text-color:var(--tnt-color-on-surface)");
+        view.GetAttribute("style").Should().Contain("--nt-container-view-on-this-page-label-color:var(--nt-color-on-surface-variant)");
+        view.GetAttribute("style").Should().Contain("--nt-container-view-on-this-page-selector-color:var(--nt-color-outline)");
+        view.GetAttribute("style").Should().Contain("--nt-container-view-on-this-page-selected-text-color:var(--nt-color-on-surface)");
+        view.GetAttribute("style").Should().Contain("--nt-container-view-on-this-page-text-color:var(--nt-color-on-surface)");
         cut.Find(".nt-container-view-quick-nav").HasAttribute("hidden").Should().BeTrue();
         cut.Find(".nt-container-view-quick-nav").GetAttribute("aria-label").Should().Be("On this page");
         cut.Find(".nt-container-view-quick-nav-title").TextContent.Should().Be("On this page");
@@ -246,18 +246,18 @@ public class NTCanonicalView_Tests : BunitContext {
     [Fact]
     public void Container_Emits_OnThisPage_Color_Variables() {
         var cut = Render<NTContainerView>(p => p
-            .Add(c => c.OnThisPageLabelColor, TnTColor.Primary)
-            .Add(c => c.OnThisPageSelectorColor, TnTColor.Secondary)
-            .Add(c => c.OnThisPageSelectedTextColor, TnTColor.Tertiary)
-            .Add(c => c.OnThisPageTextColor, TnTColor.OnSurface)
+            .Add(c => c.OnThisPageLabelColor, NTColor.Primary)
+            .Add(c => c.OnThisPageSelectorColor, NTColor.Secondary)
+            .Add(c => c.OnThisPageSelectedTextColor, NTColor.Tertiary)
+            .Add(c => c.OnThisPageTextColor, NTColor.OnSurface)
             .AddChildContent("<h2>Heading</h2>"));
 
         var style = cut.Find("div.nt-container-view").GetAttribute("style");
 
-        style.Should().Contain("--nt-container-view-on-this-page-label-color:var(--tnt-color-primary)");
-        style.Should().Contain("--nt-container-view-on-this-page-selector-color:var(--tnt-color-secondary)");
-        style.Should().Contain("--nt-container-view-on-this-page-selected-text-color:var(--tnt-color-tertiary)");
-        style.Should().Contain("--nt-container-view-on-this-page-text-color:var(--tnt-color-on-surface)");
+        style.Should().Contain("--nt-container-view-on-this-page-label-color:var(--nt-color-primary)");
+        style.Should().Contain("--nt-container-view-on-this-page-selector-color:var(--nt-color-secondary)");
+        style.Should().Contain("--nt-container-view-on-this-page-selected-text-color:var(--nt-color-tertiary)");
+        style.Should().Contain("--nt-container-view-on-this-page-text-color:var(--nt-color-on-surface)");
     }
 
     [Fact]

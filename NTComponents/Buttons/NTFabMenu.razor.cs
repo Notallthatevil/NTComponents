@@ -37,11 +37,11 @@ public partial class NTFabMenu {
     /// </summary>
     /// <remarks>
     ///     Leave unset to use the primary container default. When overriding, pair this with a matching <see cref="TextColor" /> from the same Material color role family, such as
-    ///     <see cref="TnTColor.SecondaryContainer" /> with <see cref="TnTColor.OnSecondaryContainer" />. The closed FAB, selected FAB, and menu items should use one coordinated primary, secondary,
+    ///     <see cref="NTColor.SecondaryContainer" /> with <see cref="NTColor.OnSecondaryContainer" />. The closed FAB, selected FAB, and menu items should use one coordinated primary, secondary,
     ///     or tertiary set rather than mixing unrelated roles.
     /// </remarks>
     [Parameter]
-    public TnTColor? BackgroundColor { get; set; }
+    public NTColor? BackgroundColor { get; set; }
 
     /// <summary>
     ///     Gets or sets the source FAB size.
@@ -92,12 +92,12 @@ public partial class NTFabMenu {
     /// <inheritdoc />
     public override string? ElementStyle => CssStyleBuilder.Create()
         .AddFromAdditionalAttributes(AdditionalAttributes)
-        .AddVariable("nt-fab-menu-fab-bg", BackgroundColor.ToCssTnTColorVariable(), BackgroundColor.HasValue)
-        .AddVariable("nt-fab-menu-fab-fg", TextColor.ToCssTnTColorVariable(), TextColor.HasValue)
-        .AddVariable("nt-fab-menu-selected-fab-bg", SelectedFabBackgroundColor.ToCssTnTColorVariable(), SelectedFabBackgroundColor.HasValue)
-        .AddVariable("nt-fab-menu-selected-fab-fg", SelectedFabTextColor.ToCssTnTColorVariable(), SelectedFabTextColor.HasValue)
-        .AddVariable("nt-fab-menu-item-bg", MenuItemBackgroundColor.ToCssTnTColorVariable(), MenuItemBackgroundColor.HasValue)
-        .AddVariable("nt-fab-menu-item-fg", MenuItemTextColor.ToCssTnTColorVariable(), MenuItemTextColor.HasValue)
+        .AddVariable("nt-fab-menu-fab-bg", BackgroundColor.ToCssNTColorVariable(), BackgroundColor.HasValue)
+        .AddVariable("nt-fab-menu-fab-fg", TextColor.ToCssNTColorVariable(), TextColor.HasValue)
+        .AddVariable("nt-fab-menu-selected-fab-bg", SelectedFabBackgroundColor.ToCssNTColorVariable(), SelectedFabBackgroundColor.HasValue)
+        .AddVariable("nt-fab-menu-selected-fab-fg", SelectedFabTextColor.ToCssNTColorVariable(), SelectedFabTextColor.HasValue)
+        .AddVariable("nt-fab-menu-item-bg", MenuItemBackgroundColor.ToCssNTColorVariable(), MenuItemBackgroundColor.HasValue)
+        .AddVariable("nt-fab-menu-item-fg", MenuItemTextColor.ToCssNTColorVariable(), MenuItemTextColor.HasValue)
         .Build();
 
     /// <summary>
@@ -138,21 +138,21 @@ public partial class NTFabMenu {
     /// </summary>
     /// <remarks>
     ///     Leave unset to match the closed FAB container default. Material FAB menus work best when menu items use the container tone of the chosen color set, such as
-    ///     <see cref="TnTColor.PrimaryContainer" />, <see cref="TnTColor.SecondaryContainer" />, or <see cref="TnTColor.TertiaryContainer" />. Pair this with the corresponding
+    ///     <see cref="NTColor.PrimaryContainer" />, <see cref="NTColor.SecondaryContainer" />, or <see cref="NTColor.TertiaryContainer" />. Pair this with the corresponding
     ///     <see cref="MenuItemTextColor" /> value.
     /// </remarks>
     [Parameter]
-    public TnTColor? MenuItemBackgroundColor { get; set; }
+    public NTColor? MenuItemBackgroundColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for menu item content color.
     /// </summary>
     /// <remarks>
-    ///     Leave unset to match the closed FAB content default. Use the matching on-container role for the menu item container, such as <see cref="TnTColor.OnPrimaryContainer" />,
-    ///     <see cref="TnTColor.OnSecondaryContainer" />, or <see cref="TnTColor.OnTertiaryContainer" />. Avoid low-contrast custom pairings.
+    ///     Leave unset to match the closed FAB content default. Use the matching on-container role for the menu item container, such as <see cref="NTColor.OnPrimaryContainer" />,
+    ///     <see cref="NTColor.OnSecondaryContainer" />, or <see cref="NTColor.OnTertiaryContainer" />. Avoid low-contrast custom pairings.
     /// </remarks>
     [Parameter]
-    public TnTColor? MenuItemTextColor { get; set; }
+    public NTColor? MenuItemTextColor { get; set; }
 
     /// <summary>
     ///     Gets or sets where the FAB menu is positioned.
@@ -165,21 +165,21 @@ public partial class NTFabMenu {
     /// </summary>
     /// <remarks>
     ///     Leave unset to use the primary selected default. The selected FAB is the expanded close button and should use the stronger base role of the chosen set, such as
-    ///     <see cref="TnTColor.Primary" />, <see cref="TnTColor.Secondary" />, or <see cref="TnTColor.Tertiary" />. Pair this with the matching <see cref="SelectedFabTextColor" /> value so the close
+    ///     <see cref="NTColor.Primary" />, <see cref="NTColor.Secondary" />, or <see cref="NTColor.Tertiary" />. Pair this with the matching <see cref="SelectedFabTextColor" /> value so the close
     ///     icon remains legible.
     /// </remarks>
     [Parameter]
-    public TnTColor? SelectedFabBackgroundColor { get; set; }
+    public NTColor? SelectedFabBackgroundColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for the selected FAB content color.
     /// </summary>
     /// <remarks>
-    ///     Leave unset to use the primary selected content default. Use the matching on-color role for the selected FAB container, such as <see cref="TnTColor.OnPrimary" />,
-    ///     <see cref="TnTColor.OnSecondary" />, or <see cref="TnTColor.OnTertiary" />.
+    ///     Leave unset to use the primary selected content default. Use the matching on-color role for the selected FAB container, such as <see cref="NTColor.OnPrimary" />,
+    ///     <see cref="NTColor.OnSecondary" />, or <see cref="NTColor.OnTertiary" />.
     /// </remarks>
     [Parameter]
-    public TnTColor? SelectedFabTextColor { get; set; }
+    public NTColor? SelectedFabTextColor { get; set; }
 
     /// <summary>
     ///     Gets or sets whether click events should stop propagating on the FAB toggle.
@@ -191,11 +191,11 @@ public partial class NTFabMenu {
     ///     Gets or sets an optional override for the closed FAB content color.
     /// </summary>
     /// <remarks>
-    ///     Leave unset to use the primary container content default. Use the matching on-container role for <see cref="BackgroundColor" />, such as <see cref="TnTColor.OnPrimaryContainer" />,
-    ///     <see cref="TnTColor.OnSecondaryContainer" />, or <see cref="TnTColor.OnTertiaryContainer" />.
+    ///     Leave unset to use the primary container content default. Use the matching on-container role for <see cref="BackgroundColor" />, such as <see cref="NTColor.OnPrimaryContainer" />,
+    ///     <see cref="NTColor.OnSecondaryContainer" />, or <see cref="NTColor.OnTertiaryContainer" />.
     /// </remarks>
     [Parameter]
-    public TnTColor? TextColor { get; set; }
+    public NTColor? TextColor { get; set; }
 
     internal Size EffectiveButtonSize => ButtonSize switch {
         Size.Smallest => Size.Small,
@@ -236,27 +236,27 @@ public partial class NTFabMenu {
             throw new ArgumentException("NTFabMenu requires a non-empty AriaLabel that describes the menu opened by the FAB.", nameof(AriaLabel));
         }
 
-        if (BackgroundColor is TnTColor.None or TnTColor.Transparent) {
+        if (BackgroundColor is NTColor.Transparent) {
             throw new InvalidOperationException($"{nameof(BackgroundColor)} must be a visible color.");
         }
 
-        if (TextColor is TnTColor.None or TnTColor.Transparent) {
+        if (TextColor is NTColor.Transparent) {
             throw new InvalidOperationException($"{nameof(TextColor)} must be a visible color.");
         }
 
-        if (SelectedFabBackgroundColor is TnTColor.None or TnTColor.Transparent) {
+        if (SelectedFabBackgroundColor is NTColor.Transparent) {
             throw new InvalidOperationException($"{nameof(SelectedFabBackgroundColor)} must be a visible color.");
         }
 
-        if (SelectedFabTextColor is TnTColor.None or TnTColor.Transparent) {
+        if (SelectedFabTextColor is NTColor.Transparent) {
             throw new InvalidOperationException($"{nameof(SelectedFabTextColor)} must be a visible color.");
         }
 
-        if (MenuItemBackgroundColor is TnTColor.None or TnTColor.Transparent) {
+        if (MenuItemBackgroundColor is NTColor.Transparent) {
             throw new InvalidOperationException($"{nameof(MenuItemBackgroundColor)} must be a visible color.");
         }
 
-        if (MenuItemTextColor is TnTColor.None or TnTColor.Transparent) {
+        if (MenuItemTextColor is NTColor.Transparent) {
             throw new InvalidOperationException($"{nameof(MenuItemTextColor)} must be a visible color.");
         }
 

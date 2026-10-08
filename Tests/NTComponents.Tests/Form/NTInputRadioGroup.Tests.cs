@@ -426,41 +426,41 @@ public class NTInputRadioGroup_Tests : BunitContext {
     [Fact]
     public void Color_Overrides_Emit_Component_Css_Variables() {
         var cut = RenderStringRadioGroup(configure: parameters => parameters
-            .Add(p => p.ActiveIndicatorColor, TnTColor.Secondary)
-            .Add(p => p.BackgroundColor, TnTColor.SurfaceContainerHigh)
-            .Add(p => p.DisabledContainerColor, TnTColor.SurfaceContainerLow)
-            .Add(p => p.DisabledContentColor, TnTColor.OnSurfaceVariant)
-            .Add(p => p.DisabledOutlineColor, TnTColor.OutlineVariant)
-            .Add(p => p.ErrorColor, TnTColor.Error)
-            .Add(p => p.FocusColor, TnTColor.Primary)
-            .Add(p => p.HoverActiveIndicatorColor, TnTColor.OnSurface)
-            .Add(p => p.HoverOutlineColor, TnTColor.OnSurface)
-            .Add(p => p.LabelColor, TnTColor.Secondary)
-            .Add(p => p.OutlineColor, TnTColor.Outline)
-            .Add(p => p.SelectedColor, TnTColor.Primary)
-            .Add(p => p.SelectedStateLayerColor, TnTColor.Primary)
-            .Add(p => p.StateLayerColor, TnTColor.OnSurface)
-            .Add(p => p.SupportingTextColor, TnTColor.Secondary)
-            .Add(p => p.UnselectedColor, TnTColor.OnSurfaceVariant));
+            .Add(p => p.ActiveIndicatorColor, NTColor.Secondary)
+            .Add(p => p.BackgroundColor, NTColor.SurfaceContainerHigh)
+            .Add(p => p.DisabledContainerColor, NTColor.SurfaceContainerLow)
+            .Add(p => p.DisabledContentColor, NTColor.OnSurfaceVariant)
+            .Add(p => p.DisabledOutlineColor, NTColor.OutlineVariant)
+            .Add(p => p.ErrorColor, NTColor.Error)
+            .Add(p => p.FocusColor, NTColor.Primary)
+            .Add(p => p.HoverActiveIndicatorColor, NTColor.OnSurface)
+            .Add(p => p.HoverOutlineColor, NTColor.OnSurface)
+            .Add(p => p.LabelColor, NTColor.Secondary)
+            .Add(p => p.OutlineColor, NTColor.Outline)
+            .Add(p => p.SelectedColor, NTColor.Primary)
+            .Add(p => p.SelectedStateLayerColor, NTColor.Primary)
+            .Add(p => p.StateLayerColor, NTColor.OnSurface)
+            .Add(p => p.SupportingTextColor, NTColor.Secondary)
+            .Add(p => p.UnselectedColor, NTColor.OnSurfaceVariant));
 
         var style = cut.Find(".nt-radio").GetAttribute("style");
 
-        style.Should().Contain("--nt-radio-active-indicator-color:var(--tnt-color-secondary);");
-        style.Should().Contain("--nt-radio-container-color:var(--tnt-color-surface-container-high);");
-        style.Should().Contain("--nt-radio-disabled-container-color:var(--tnt-color-surface-container-low);");
-        style.Should().Contain("--nt-radio-disabled-content-color:var(--tnt-color-on-surface-variant);");
-        style.Should().Contain("--nt-radio-disabled-outline-color:var(--tnt-color-outline-variant);");
-        style.Should().Contain("--nt-radio-error-color:var(--tnt-color-error);");
-        style.Should().Contain("--nt-radio-focus-color:var(--tnt-color-primary);");
-        style.Should().Contain("--nt-radio-hover-active-indicator-color:var(--tnt-color-on-surface);");
-        style.Should().Contain("--nt-radio-hover-outline-color:var(--tnt-color-on-surface);");
-        style.Should().Contain("--nt-radio-label-color:var(--tnt-color-secondary);");
-        style.Should().Contain("--nt-radio-outline-color:var(--tnt-color-outline);");
-        style.Should().Contain("--nt-radio-selected-color:var(--tnt-color-primary);");
-        style.Should().Contain("--nt-radio-selected-state-layer-color:var(--tnt-color-primary);");
-        style.Should().Contain("--nt-radio-state-layer-color:var(--tnt-color-on-surface);");
-        style.Should().Contain("--nt-radio-supporting-text-color:var(--tnt-color-secondary);");
-        style.Should().Contain("--nt-radio-unselected-color:var(--tnt-color-on-surface-variant);");
+        style.Should().Contain("--nt-radio-active-indicator-color:var(--nt-color-secondary);");
+        style.Should().Contain("--nt-radio-container-color:var(--nt-color-surface-container-high);");
+        style.Should().Contain("--nt-radio-disabled-container-color:var(--nt-color-surface-container-low);");
+        style.Should().Contain("--nt-radio-disabled-content-color:var(--nt-color-on-surface-variant);");
+        style.Should().Contain("--nt-radio-disabled-outline-color:var(--nt-color-outline-variant);");
+        style.Should().Contain("--nt-radio-error-color:var(--nt-color-error);");
+        style.Should().Contain("--nt-radio-focus-color:var(--nt-color-primary);");
+        style.Should().Contain("--nt-radio-hover-active-indicator-color:var(--nt-color-on-surface);");
+        style.Should().Contain("--nt-radio-hover-outline-color:var(--nt-color-on-surface);");
+        style.Should().Contain("--nt-radio-label-color:var(--nt-color-secondary);");
+        style.Should().Contain("--nt-radio-outline-color:var(--nt-color-outline);");
+        style.Should().Contain("--nt-radio-selected-color:var(--nt-color-primary);");
+        style.Should().Contain("--nt-radio-selected-state-layer-color:var(--nt-color-primary);");
+        style.Should().Contain("--nt-radio-state-layer-color:var(--nt-color-on-surface);");
+        style.Should().Contain("--nt-radio-supporting-text-color:var(--nt-color-secondary);");
+        style.Should().Contain("--nt-radio-unselected-color:var(--nt-color-on-surface-variant);");
     }
 
     [Fact]

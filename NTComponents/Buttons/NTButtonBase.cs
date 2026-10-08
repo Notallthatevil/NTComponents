@@ -16,7 +16,7 @@ public abstract class NTButtonBase : NTComponentBase {
     ///     Gets or sets an optional override for the button container color.
     /// </summary>
     [Parameter]
-    public TnTColor? BackgroundColor { get; set; }
+    public NTColor? BackgroundColor { get; set; }
 
     /// <summary>
     ///     Gets or sets the size of the button.
@@ -76,7 +76,7 @@ public abstract class NTButtonBase : NTComponentBase {
     ///     Gets or sets an optional override for the button content color.
     /// </summary>
     [Parameter]
-    public TnTColor? TextColor { get; set; }
+    public NTColor? TextColor { get; set; }
 
     /// <summary>
     ///     Gets or sets the content displayed as a tooltip.
@@ -98,7 +98,7 @@ public abstract class NTButtonBase : NTComponentBase {
     /// <summary>
     ///     Gets the progress indicator color.
     /// </summary>
-    protected virtual TnTColor EffectiveProgressColor => TextColor ?? TnTColor.Primary;
+    protected virtual NTColor EffectiveProgressColor => TextColor ?? NTColor.Primary;
 
     /// <summary>
     ///     Gets the progress indicator size.

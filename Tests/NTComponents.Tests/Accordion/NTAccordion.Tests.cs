@@ -73,7 +73,7 @@ public class NTAccordion_Tests : BunitContext {
         var root = cut.Find(".nt-accordion");
 
         root.GetAttribute("class")!.Should().Contain("nt-accordion-outlined");
-        root.GetAttribute("style")!.Should().Contain("--nt-accordion-outline-color:var(--tnt-color-outline)");
+        root.GetAttribute("style")!.Should().Contain("--nt-accordion-outline-color:var(--nt-color-outline)");
         root.GetAttribute("style")!.Should().NotContain("--nt-accordion-header-color");
         root.GetAttribute("style")!.Should().NotContain("--nt-accordion-content-color");
     }
@@ -178,37 +178,37 @@ public class NTAccordion_Tests : BunitContext {
     [Fact]
     public void Custom_Colors_Are_Emitted_As_Css_Variables() {
         var cut = Render<NTAccordion>(p => p
-            .Add(a => a.HeaderColor, TnTColor.PrimaryContainer)
-            .Add(a => a.HeaderTextColor, TnTColor.OnPrimaryContainer)
-            .Add(a => a.ContentColor, TnTColor.Surface)
-            .Add(a => a.ContentTextColor, TnTColor.OnSurface)
-            .Add(a => a.OutlineColor, TnTColor.Outline)
-            .Add(a => a.StateLayerColor, TnTColor.OnPrimaryContainer)
+            .Add(a => a.HeaderColor, NTColor.PrimaryContainer)
+            .Add(a => a.HeaderTextColor, NTColor.OnPrimaryContainer)
+            .Add(a => a.ContentColor, NTColor.Surface)
+            .Add(a => a.ContentTextColor, NTColor.OnSurface)
+            .Add(a => a.OutlineColor, NTColor.Outline)
+            .Add(a => a.StateLayerColor, NTColor.OnPrimaryContainer)
             .AddChildContent(Items(Item("Summary", "Body"))));
 
         var style = cut.Find(".nt-accordion").GetAttribute("style")!;
 
-        style.Should().Contain("--nt-accordion-header-color:var(--tnt-color-primary-container)");
-        style.Should().Contain("--nt-accordion-header-text-color:var(--tnt-color-on-primary-container)");
-        style.Should().Contain("--nt-accordion-content-color:var(--tnt-color-surface)");
-        style.Should().Contain("--nt-accordion-content-text-color:var(--tnt-color-on-surface)");
-        style.Should().Contain("--nt-accordion-outline-color:var(--tnt-color-outline)");
-        style.Should().Contain("--nt-accordion-state-layer-color:var(--tnt-color-on-primary-container)");
+        style.Should().Contain("--nt-accordion-header-color:var(--nt-color-primary-container)");
+        style.Should().Contain("--nt-accordion-header-text-color:var(--nt-color-on-primary-container)");
+        style.Should().Contain("--nt-accordion-content-color:var(--nt-color-surface)");
+        style.Should().Contain("--nt-accordion-content-text-color:var(--nt-color-on-surface)");
+        style.Should().Contain("--nt-accordion-outline-color:var(--nt-color-outline)");
+        style.Should().Contain("--nt-accordion-state-layer-color:var(--nt-color-on-primary-container)");
     }
 
     [Fact]
     public void Item_HeaderTextColor_Does_Not_Override_Explicit_Parent_StateLayer_Color() {
         var cut = Render<NTAccordion>(p => p
-            .Add(a => a.StateLayerColor, TnTColor.OnPrimaryContainer)
+            .Add(a => a.StateLayerColor, NTColor.OnPrimaryContainer)
             .AddChildContent(builder => {
                 builder.OpenComponent<NTAccordionItem>(0);
                 builder.AddAttribute(1, nameof(NTAccordionItem.Label), "Custom state");
-                builder.AddAttribute(2, nameof(NTAccordionItem.HeaderTextColor), TnTColor.OnSecondaryContainer);
+                builder.AddAttribute(2, nameof(NTAccordionItem.HeaderTextColor), NTColor.OnSecondaryContainer);
                 builder.AddAttribute(3, nameof(NTAccordionItem.ChildContent), (RenderFragment)(contentBuilder => contentBuilder.AddContent(0, "Body")));
                 builder.CloseComponent();
             }));
 
-        cut.Find(".nt-accordion").GetAttribute("style")!.Should().Contain("--nt-accordion-state-layer-color:var(--tnt-color-on-primary-container)");
+        cut.Find(".nt-accordion").GetAttribute("style")!.Should().Contain("--nt-accordion-state-layer-color:var(--nt-color-on-primary-container)");
         cut.Find("details.nt-accordion-item").GetAttribute("style")!.Should().NotContain("--nt-accordion-state-layer-color");
     }
 

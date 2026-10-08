@@ -42,7 +42,7 @@ public partial class NTCarousel {
     ///     Gets or sets the optional carousel background color.
     /// </summary>
     [Parameter]
-    public TnTColor? BackgroundColor { get; set; }
+    public NTColor? BackgroundColor { get; set; }
 
     /// <summary>
     ///     Gets or sets the carousel items.

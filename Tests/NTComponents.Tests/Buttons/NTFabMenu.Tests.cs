@@ -178,23 +178,23 @@ public class NTFabMenu_Tests : BunitContext {
         var cut = Render<NTFabMenu>(parameters => parameters
             .Add(x => x.Icon, SampleIcon)
             .Add(x => x.AriaLabel, "Create options")
-            .Add(x => x.BackgroundColor, TnTColor.SecondaryContainer)
-            .Add(x => x.TextColor, TnTColor.OnSecondaryContainer)
-            .Add(x => x.SelectedFabBackgroundColor, TnTColor.Secondary)
-            .Add(x => x.SelectedFabTextColor, TnTColor.OnSecondary)
-            .Add(x => x.MenuItemBackgroundColor, TnTColor.TertiaryContainer)
-            .Add(x => x.MenuItemTextColor, TnTColor.OnTertiaryContainer)
+            .Add(x => x.BackgroundColor, NTColor.SecondaryContainer)
+            .Add(x => x.TextColor, NTColor.OnSecondaryContainer)
+            .Add(x => x.SelectedFabBackgroundColor, NTColor.Secondary)
+            .Add(x => x.SelectedFabTextColor, NTColor.OnSecondary)
+            .Add(x => x.MenuItemBackgroundColor, NTColor.TertiaryContainer)
+            .Add(x => x.MenuItemTextColor, NTColor.OnTertiaryContainer)
             .AddChildContent<NTFabMenuButtonItem>(item => item.Add(x => x.Label, "Draft"))
             .AddChildContent<NTFabMenuButtonItem>(item => item.Add(x => x.Label, "Import")));
 
         var style = cut.Find("nt-fab-menu").GetAttribute("style");
 
-        style.Should().Contain("--nt-fab-menu-fab-bg:var(--tnt-color-secondary-container)");
-        style.Should().Contain("--nt-fab-menu-fab-fg:var(--tnt-color-on-secondary-container)");
-        style.Should().Contain("--nt-fab-menu-selected-fab-bg:var(--tnt-color-secondary)");
-        style.Should().Contain("--nt-fab-menu-selected-fab-fg:var(--tnt-color-on-secondary)");
-        style.Should().Contain("--nt-fab-menu-item-bg:var(--tnt-color-tertiary-container)");
-        style.Should().Contain("--nt-fab-menu-item-fg:var(--tnt-color-on-tertiary-container)");
+        style.Should().Contain("--nt-fab-menu-fab-bg:var(--nt-color-secondary-container)");
+        style.Should().Contain("--nt-fab-menu-fab-fg:var(--nt-color-on-secondary-container)");
+        style.Should().Contain("--nt-fab-menu-selected-fab-bg:var(--nt-color-secondary)");
+        style.Should().Contain("--nt-fab-menu-selected-fab-fg:var(--nt-color-on-secondary)");
+        style.Should().Contain("--nt-fab-menu-item-bg:var(--nt-color-tertiary-container)");
+        style.Should().Contain("--nt-fab-menu-item-fg:var(--nt-color-on-tertiary-container)");
     }
 
     [Theory]
@@ -283,19 +283,13 @@ public class NTFabMenu_Tests : BunitContext {
     }
 
     [Theory]
-    [InlineData("BackgroundColor", TnTColor.None)]
-    [InlineData("BackgroundColor", TnTColor.Transparent)]
-    [InlineData("TextColor", TnTColor.None)]
-    [InlineData("TextColor", TnTColor.Transparent)]
-    [InlineData("SelectedFabBackgroundColor", TnTColor.None)]
-    [InlineData("SelectedFabBackgroundColor", TnTColor.Transparent)]
-    [InlineData("SelectedFabTextColor", TnTColor.None)]
-    [InlineData("SelectedFabTextColor", TnTColor.Transparent)]
-    [InlineData("MenuItemBackgroundColor", TnTColor.None)]
-    [InlineData("MenuItemBackgroundColor", TnTColor.Transparent)]
-    [InlineData("MenuItemTextColor", TnTColor.None)]
-    [InlineData("MenuItemTextColor", TnTColor.Transparent)]
-    public void Invisible_Color_Overrides_Are_Rejected(string parameterName, TnTColor color) {
+    [InlineData("BackgroundColor", NTColor.Transparent)]
+    [InlineData("TextColor", NTColor.Transparent)]
+    [InlineData("SelectedFabBackgroundColor", NTColor.Transparent)]
+    [InlineData("SelectedFabTextColor", NTColor.Transparent)]
+    [InlineData("MenuItemBackgroundColor", NTColor.Transparent)]
+    [InlineData("MenuItemTextColor", NTColor.Transparent)]
+    public void Invisible_Color_Overrides_Are_Rejected(string parameterName, NTColor color) {
         var render = () => Render<NTFabMenu>(parameters => {
             parameters
                 .Add(x => x.Icon, SampleIcon)

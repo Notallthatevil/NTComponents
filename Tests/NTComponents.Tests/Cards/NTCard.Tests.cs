@@ -38,9 +38,9 @@ public class NTCard_Tests : BunitContext {
         cls.Should().Contain("nt-card-filled");
         cls.Should().Contain("nt-corner-radius-medium");
         cls.Should().NotContain("nt-card-actionable");
-        style.Should().Contain("--nt-card-background-color:var(--tnt-color-surface-container-highest)");
-        style.Should().Contain("--nt-card-content-color:var(--tnt-color-on-surface)");
-        style.Should().Contain("--nt-card-state-layer-color:var(--tnt-color-on-surface)");
+        style.Should().Contain("--nt-card-background-color:var(--nt-color-surface-container-highest)");
+        style.Should().Contain("--nt-card-content-color:var(--nt-color-on-surface)");
+        style.Should().Contain("--nt-card-state-layer-color:var(--nt-color-on-surface)");
         cut.Markup.Should().Contain("Content");
     }
 
@@ -57,8 +57,8 @@ public class NTCard_Tests : BunitContext {
 
         var card = cut.Find("div.nt-card");
         card.GetAttribute("class")!.Should().Contain("nt-card-outlined");
-        card.GetAttribute("style")!.Should().Contain("--nt-card-background-color:var(--tnt-color-transparent)");
-        card.GetAttribute("style")!.Should().Contain("--nt-card-outline-color:var(--tnt-color-outline-variant)");
+        card.GetAttribute("style")!.Should().Contain("--nt-card-background-color:var(--nt-color-transparent)");
+        card.GetAttribute("style")!.Should().Contain("--nt-card-outline-color:var(--nt-color-outline-variant)");
         card.GetAttribute("style")!.Should().NotContain("--nt-card-content-color");
     }
 
@@ -69,7 +69,7 @@ public class NTCard_Tests : BunitContext {
             .Add(c => c.Elevation, NTElevation.Low));
 
         cut.Find("div.nt-card").GetAttribute("class")!.Should().Contain("nt-elevation-low");
-        cut.Find("div.nt-card").GetAttribute("style")!.Should().Contain("--nt-card-background-color:var(--tnt-color-surface-container-low)");
+        cut.Find("div.nt-card").GetAttribute("style")!.Should().Contain("--nt-card-background-color:var(--nt-color-surface-container-low)");
     }
 
     [Fact]
@@ -147,39 +147,39 @@ public class NTCard_Tests : BunitContext {
     [Fact]
     public void Custom_Colors_Appear_In_Style() {
         var cut = Render<NTCard>(p => p
-            .Add(c => c.BackgroundColor, TnTColor.SuccessContainer)
-            .Add(c => c.TextColor, TnTColor.OnSuccessContainer)
-            .Add(c => c.OutlineColor, TnTColor.Outline));
+            .Add(c => c.BackgroundColor, NTColor.SuccessContainer)
+            .Add(c => c.TextColor, NTColor.OnSuccessContainer)
+            .Add(c => c.OutlineColor, NTColor.Outline));
 
         var style = cut.Find(".nt-card").GetAttribute("style")!;
-        style.Should().Contain("--nt-card-background-color:var(--tnt-color-success-container)");
-        style.Should().Contain("--nt-card-content-color:var(--tnt-color-on-success-container)");
-        style.Should().Contain("--nt-card-outline-color:var(--tnt-color-outline)");
-        style.Should().Contain("--nt-card-state-layer-color:var(--tnt-color-on-success-container)");
+        style.Should().Contain("--nt-card-background-color:var(--nt-color-success-container)");
+        style.Should().Contain("--nt-card-content-color:var(--nt-color-on-success-container)");
+        style.Should().Contain("--nt-card-outline-color:var(--nt-color-outline)");
+        style.Should().Contain("--nt-card-state-layer-color:var(--nt-color-on-success-container)");
     }
 
     [Fact]
     public void Filled_Transparent_Background_Falls_Back_To_Default_Surface() {
-        var cut = Render<NTCard>(p => p.Add(c => c.BackgroundColor, TnTColor.Transparent));
+        var cut = Render<NTCard>(p => p.Add(c => c.BackgroundColor, NTColor.Transparent));
 
-        cut.Find(".nt-card").GetAttribute("style")!.Should().Contain("--nt-card-background-color:var(--tnt-color-surface-container-highest)");
+        cut.Find(".nt-card").GetAttribute("style")!.Should().Contain("--nt-card-background-color:var(--nt-color-surface-container-highest)");
     }
 
     [Fact]
     public void Elevated_Transparent_Background_Falls_Back_To_Elevated_Default() {
         var cut = Render<NTCard>(p => p
             .Add(c => c.Variant, NTCardVariant.Elevated)
-            .Add(c => c.BackgroundColor, TnTColor.Transparent));
+            .Add(c => c.BackgroundColor, NTColor.Transparent));
 
-        cut.Find(".nt-card").GetAttribute("style")!.Should().Contain("--nt-card-background-color:var(--tnt-color-surface-container-low)");
+        cut.Find(".nt-card").GetAttribute("style")!.Should().Contain("--nt-card-background-color:var(--nt-color-surface-container-low)");
     }
 
     [Fact]
     public void Outlined_Allows_Transparent_Background_Override() {
         var cut = Render<NTCard>(p => p
             .Add(c => c.Variant, NTCardVariant.Outlined)
-            .Add(c => c.BackgroundColor, TnTColor.Transparent));
+            .Add(c => c.BackgroundColor, NTColor.Transparent));
 
-        cut.Find(".nt-card").GetAttribute("style")!.Should().Contain("--nt-card-background-color:var(--tnt-color-transparent)");
+        cut.Find(".nt-card").GetAttribute("style")!.Should().Contain("--nt-card-background-color:var(--nt-color-transparent)");
     }
 }

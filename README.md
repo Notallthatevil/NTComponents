@@ -220,6 +220,24 @@ The repository produces:
 
 The component package includes analyzer projects during build so component rules stay close to the public API.
 
+## Migrating Colors To NTColor
+
+Active NT-prefixed components, their models, and services now use `NTColor`. This is a breaking API change: replace `TnTColor.Primary` with `NTColor.Primary`, update color property and variable types, and use `ToCssNTColorVariable()` when generating styles. Legacy TnT components and obsolete `NTInputSelect` retain `TnTColor`; use `NTAutocomplete` or `NTSelect` for new code.
+
+The `NTComponents` and `NTComponents.Analyzers` packages include the migration analyzer and code fixer. After updating your package reference, run this from your application's solution directory to analyze and apply supported C# fixes in one command:
+
+```shell
+dotnet format analyzers --diagnostics NTC1077 NTC1079 --severity warn
+```
+
+You can also pass a project or solution path after `analyzers`. The same fixes are available through your editor's Quick Actions and Fix All commands. The command covers C# files, including `.razor.cs`; `.razor` markup must be updated in the editor. Build diagnostics identify legacy references in Razor expressions.
+
+The fixer converts legacy color references throughout the selected C# scope. If you still use TnT components, keep their `TnTColor` arguments or pass migrated shared colors through `ToLegacyColor()`; review those bindings after applying Fix All.
+
+`NTC1078` identifies `None`, `Black`, and `White`, which have no NTColor equivalent and are left for manual migration. Use `null` or omit an optional color parameter for the component default; choose an appropriate semantic role for fixed black or white colors. Do not cast those three legacy values into NTColor.
+
+Existing themes that define `--tnt-color-*` on `:root` continue to work through the compatibility stylesheet loaded by `NTHeadDependencies`. Theme CSS files do not need to change for this migration.
+
 ## Development
 
 Restore, build, and test from the repository root:

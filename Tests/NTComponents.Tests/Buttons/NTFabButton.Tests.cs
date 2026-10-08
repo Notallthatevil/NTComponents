@@ -74,13 +74,13 @@ public class NTFabButton_Tests : BunitContext {
         var cut = Render<NTFabButton>(parameters => parameters
             .Add(x => x.Icon, SampleIcon)
             .Add(x => x.AriaLabel, "Create item")
-            .Add(x => x.BackgroundColor, TnTColor.SecondaryContainer)
-            .Add(x => x.TextColor, TnTColor.OnSecondaryContainer));
+            .Add(x => x.BackgroundColor, NTColor.SecondaryContainer)
+            .Add(x => x.TextColor, NTColor.OnSecondaryContainer));
 
         var style = cut.Find("button").GetAttribute("style");
 
-        style.Should().Contain("--nt-fab-bg:var(--tnt-color-secondary-container)");
-        style.Should().Contain("--nt-fab-fg:var(--tnt-color-on-secondary-container)");
+        style.Should().Contain("--nt-fab-bg:var(--nt-color-secondary-container)");
+        style.Should().Contain("--nt-fab-fg:var(--nt-color-on-secondary-container)");
     }
 
     [Fact]
@@ -100,7 +100,7 @@ public class NTFabButton_Tests : BunitContext {
         var render = () => Render<NTFabButton>(parameters => parameters
             .Add(x => x.Icon, SampleIcon)
             .Add(x => x.AriaLabel, "Create item")
-            .Add(x => x.BackgroundColor, TnTColor.Transparent));
+            .Add(x => x.BackgroundColor, NTColor.Transparent));
 
         render.Should().Throw<InvalidOperationException>()
             .WithMessage("*BackgroundColor must be a visible container color*");
@@ -111,7 +111,7 @@ public class NTFabButton_Tests : BunitContext {
         var render = () => Render<NTFabButton>(parameters => parameters
             .Add(x => x.Icon, SampleIcon)
             .Add(x => x.AriaLabel, "Create item")
-            .Add(x => x.TextColor, TnTColor.Transparent));
+            .Add(x => x.TextColor, NTColor.Transparent));
 
         render.Should().Throw<InvalidOperationException>()
             .WithMessage("*TextColor must be a visible content color*");

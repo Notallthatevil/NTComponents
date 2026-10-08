@@ -1048,8 +1048,8 @@ window.NTComponents = Object.assign(window.NTComponents || {}, {
         }
     },
     /**
-     * Returns the color value for a given TnTColor enum variable name as a string.
-     * @param {string} colorName - The TnTColor enum variable name (e.g., 'Primary', 'OnPrimaryContainer').
+     * Returns the root theme color value, preferring NT variables and falling back to legacy TnT variables.
+     * @param {string} colorName - The color enum member name (e.g., 'Primary', 'OnPrimaryContainer').
      * @returns {string|null} The color value as defined in CSS variables (e.g., 'var(--tnt-primary)'), or null if not found.
      */
     getColorValueFromEnumName: function (colorName) {
@@ -1058,9 +1058,9 @@ window.NTComponents = Object.assign(window.NTComponents || {}, {
         // Convert PascalCase or camelCase to kebab-case (e.g., 'OnPrimaryContainer' -> 'on-primary-container')
         const kebab = colorName.replace(/(?<=.)([A-Z])/g, '-$1').toLowerCase();
         // Compose the CSS variable name
-        const cssVar = `--tnt-color-${kebab}`;
-        // Try to get the value from the root element
-        let value = getComputedStyle(document.documentElement).getPropertyValue(cssVar);
+        const rootStyle = getComputedStyle(document.documentElement);
+        let value = rootStyle.getPropertyValue(`--nt-color-${kebab}`)
+            || rootStyle.getPropertyValue(`--tnt-color-${kebab}`);
         if (!value) return null;
         value = value.trim();
 

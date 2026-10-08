@@ -49,7 +49,7 @@ public partial class NTInputFile : IAsyncDisposable {
     ///     Gets or sets the background color of the input.
     /// </summary>
     [Parameter]
-    public TnTColor BackgroundColor { get; set; } = TnTColor.SurfaceContainerHighest;
+    public NTColor BackgroundColor { get; set; } = NTColor.SurfaceContainerHighest;
 
     /// <summary>
     ///     Gets or sets the id attribute for the input element.
@@ -79,7 +79,7 @@ public partial class NTInputFile : IAsyncDisposable {
     ///     Gets or sets the error color for the input.
     /// </summary>
     [Parameter]
-    public TnTColor ErrorColor { get; set; } = TnTColor.Error;
+    public NTColor ErrorColor { get; set; } = NTColor.Error;
 
     /// <summary>
     ///     Gets or sets the icon displayed at the end of the input.
@@ -183,7 +183,7 @@ public partial class NTInputFile : IAsyncDisposable {
     ///     Gets or sets the color used for content on the file selector button.
     /// </summary>
     [Parameter]
-    public TnTColor OnTintColor { get; set; } = TnTColor.OnPrimary;
+    public NTColor OnTintColor { get; set; } = NTColor.OnPrimary;
 
     /// <summary>
     ///     Indicates the component is read-only.
@@ -225,13 +225,13 @@ public partial class NTInputFile : IAsyncDisposable {
     ///     Gets or sets the text color for the input.
     /// </summary>
     [Parameter]
-    public TnTColor TextColor { get; set; } = TnTColor.OnSurface;
+    public NTColor TextColor { get; set; } = NTColor.OnSurface;
 
     /// <summary>
     ///     Gets or sets the tint color for the input and file button.
     /// </summary>
     [Parameter]
-    public TnTColor TintColor { get; set; } = TnTColor.Primary;
+    public NTColor TintColor { get; set; } = NTColor.Primary;
 
     /// <summary>
     ///     Gets or sets the native file-selector button size.
@@ -249,19 +249,19 @@ public partial class NTInputFile : IAsyncDisposable {
     ///     Gets or sets the upload button background color.
     /// </summary>
     [Parameter]
-    public TnTColor? UploadButtonBackgroundColor { get; set; }
+    public NTColor? UploadButtonBackgroundColor { get; set; }
 
     /// <summary>
     ///     Gets or sets the upload button text color.
     /// </summary>
     [Parameter]
-    public TnTColor? UploadButtonTextColor { get; set; }
+    public NTColor? UploadButtonTextColor { get; set; }
 
     private FormAppearance EffectiveAppearance => FormAppearanceResolver.ResolveEffective(_tntForm, Appearance, Services);
 
-    private TnTColor EffectiveUploadButtonBackgroundColor => UploadButtonBackgroundColor ?? TintColor;
+    private NTColor EffectiveUploadButtonBackgroundColor => UploadButtonBackgroundColor ?? TintColor;
 
-    private TnTColor EffectiveUploadButtonTextColor => UploadButtonTextColor ?? (UploadButtonAppearance == ButtonAppearance.Outlined ? EffectiveUploadButtonBackgroundColor : OnTintColor);
+    private NTColor EffectiveUploadButtonTextColor => UploadButtonTextColor ?? (UploadButtonAppearance == ButtonAppearance.Outlined ? EffectiveUploadButtonBackgroundColor : OnTintColor);
 
     private Size EffectiveUploadButtonSize => UploadButtonSize ?? EffectiveAppearance switch {
         FormAppearance.Outlined or FormAppearance.Filled => Size.Small,
@@ -312,13 +312,13 @@ public partial class NTInputFile : IAsyncDisposable {
         .Build();
 
     private string? ElementStyle => CssStyleBuilder.Create()
-        .AddVariable("tnt-input-on-tint-color", OnTintColor.ToCssTnTColorVariable())
-        .AddVariable("tnt-input-tint-color", TintColor.ToCssTnTColorVariable())
-        .AddVariable("tnt-input-background-color", BackgroundColor.ToCssTnTColorVariable())
-        .AddVariable("tnt-input-text-color", TextColor.ToCssTnTColorVariable())
-        .AddVariable("tnt-input-error-color", ErrorColor.ToCssTnTColorVariable())
-        .AddVariable("nt-input-file-action-bg-color", EffectiveUploadButtonBackgroundColor.ToCssTnTColorVariable())
-        .AddVariable("nt-input-file-action-fg-color", EffectiveUploadButtonTextColor.ToCssTnTColorVariable())
+        .AddVariable("tnt-input-on-tint-color", OnTintColor.ToCssNTColorVariable())
+        .AddVariable("tnt-input-tint-color", TintColor.ToCssNTColorVariable())
+        .AddVariable("tnt-input-background-color", BackgroundColor.ToCssNTColorVariable())
+        .AddVariable("tnt-input-text-color", TextColor.ToCssNTColorVariable())
+        .AddVariable("tnt-input-error-color", ErrorColor.ToCssNTColorVariable())
+        .AddVariable("nt-input-file-action-bg-color", EffectiveUploadButtonBackgroundColor.ToCssNTColorVariable())
+        .AddVariable("nt-input-file-action-fg-color", EffectiveUploadButtonTextColor.ToCssNTColorVariable())
         .AddVariable("nt-input-file-selector-height", GetSelectorButtonHeight(InputButtonSize))
         .AddVariable("nt-input-file-selector-padding-x", GetSelectorButtonPaddingX(InputButtonSize))
         .AddVariable("nt-input-file-selector-radius", GetSelectorButtonBorderRadius(InputButtonSize))

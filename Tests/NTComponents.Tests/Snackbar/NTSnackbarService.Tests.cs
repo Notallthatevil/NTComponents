@@ -50,18 +50,18 @@ public class NTSnackbarService_Tests : BunitContext {
         openedSnackbar!.Message.Should().Be("Saved");
         openedSnackbar.Timeout.Should().Be(4);
         openedSnackbar.ShowClose.Should().BeFalse();
-        openedSnackbar.BackgroundColor.Should().Be(TnTColor.InverseSurface);
-        openedSnackbar.TextColor.Should().Be(TnTColor.InverseOnSurface);
-        openedSnackbar.ActionColor.Should().Be(TnTColor.InversePrimary);
+        openedSnackbar.BackgroundColor.Should().Be(NTColor.InverseSurface);
+        openedSnackbar.TextColor.Should().Be(NTColor.InverseOnSurface);
+        openedSnackbar.ActionColor.Should().Be(NTColor.InversePrimary);
         openedSnackbar.HasAction.Should().BeFalse();
         openedSnackbar.Actions.Should().BeEmpty();
 
         GetQueuedArgument<string>(1).Should().Be("Saved");
         GetQueuedArgument<double>(3).Should().Be(4);
         GetQueuedArgument<bool>(4).Should().BeFalse();
-        GetQueuedArgument<string>(5).Should().Be("var(--tnt-color-inverse-surface)");
-        GetQueuedArgument<string>(6).Should().Be("var(--tnt-color-inverse-on-surface)");
-        GetQueuedArgument<string>(7).Should().Be("var(--tnt-color-inverse-primary)");
+        GetQueuedArgument<string>(5).Should().Be("var(--nt-color-inverse-surface)");
+        GetQueuedArgument<string>(6).Should().Be("var(--nt-color-inverse-on-surface)");
+        GetQueuedArgument<string>(7).Should().Be("var(--nt-color-inverse-primary)");
         JSInterop.VerifyInvoke("import", 1);
         JSInterop.VerifyInvoke("queueSnackbarFromBlazor", 1);
         JSInterop.Invocations.Should().NotContain(invocation => invocation.Identifier == "queueSnackbar");
@@ -113,14 +113,14 @@ public class NTSnackbarService_Tests : BunitContext {
         var service = CreateService();
 
         // Act
-        await service.ShowAsync("Saved", "Undo", () => Task.CompletedTask, timeout: 9, showClose: false, backgroundColor: TnTColor.Primary, textColor: TnTColor.OnPrimary, actionColor: TnTColor.Secondary);
+        await service.ShowAsync("Saved", "Undo", () => Task.CompletedTask, timeout: 9, showClose: false, backgroundColor: NTColor.Primary, textColor: NTColor.OnPrimary, actionColor: NTColor.Secondary);
 
         // Assert
         GetQueuedArgument<double>(3).Should().Be(9);
         GetQueuedArgument<bool>(4).Should().BeFalse();
-        GetQueuedArgument<string>(5).Should().Be("var(--tnt-color-primary)");
-        GetQueuedArgument<string>(6).Should().Be("var(--tnt-color-on-primary)");
-        GetQueuedArgument<string>(7).Should().Be("var(--tnt-color-secondary)");
+        GetQueuedArgument<string>(5).Should().Be("var(--nt-color-primary)");
+        GetQueuedArgument<string>(6).Should().Be("var(--nt-color-on-primary)");
+        GetQueuedArgument<string>(7).Should().Be("var(--nt-color-secondary)");
     }
 
     [Fact]
@@ -375,9 +375,9 @@ public class NTSnackbarService_Tests : BunitContext {
         snackbar.Message.Should().BeNullOrEmpty();
         snackbar.Timeout.Should().Be(4);
         snackbar.ShowClose.Should().BeFalse();
-        snackbar.BackgroundColor.Should().Be(TnTColor.InverseSurface);
-        snackbar.TextColor.Should().Be(TnTColor.InverseOnSurface);
-        snackbar.ActionColor.Should().Be(TnTColor.InversePrimary);
+        snackbar.BackgroundColor.Should().Be(NTColor.InverseSurface);
+        snackbar.TextColor.Should().Be(NTColor.InverseOnSurface);
+        snackbar.ActionColor.Should().Be(NTColor.InversePrimary);
         snackbar.HasAction.Should().BeFalse();
         snackbar.Actions.Should().BeEmpty();
         snackbar.Closing.Should().BeFalse();

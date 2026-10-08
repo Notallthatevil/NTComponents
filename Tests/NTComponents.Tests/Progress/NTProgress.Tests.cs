@@ -312,10 +312,10 @@ public class NTProgress_Tests : BunitContext {
 
     [Fact]
     public void Indicator_Color_Sets_Css_Variable() {
-        var cut = Render<NTProgress>(p => p.Add(c => c.ProgressColor, TnTColor.Tertiary));
+        var cut = Render<NTProgress>(p => p.Add(c => c.ProgressColor, NTColor.Tertiary));
         var progress = cut.Find(".nt-progress");
 
-        progress.GetAttribute("style")!.Should().Contain("--nt-progress-indicator-color:var(--tnt-color-tertiary)");
+        progress.GetAttribute("style")!.Should().Contain("--nt-progress-indicator-color:var(--nt-color-tertiary)");
         progress.GetAttribute("style")!.Should().NotContain("--nt-shape-content-background");
     }
 
@@ -323,10 +323,10 @@ public class NTProgress_Tests : BunitContext {
     public void Track_Color_Sets_Css_Variable() {
         var cut = Render<NTProgress>(p => p
             .Add(c => c.Variant, NTProgressVariant.Linear)
-            .Add(c => c.TrackColor, TnTColor.TertiaryContainer));
+            .Add(c => c.TrackColor, NTColor.TertiaryContainer));
         var progress = cut.Find(".nt-progress");
 
-        progress.GetAttribute("style")!.Should().Contain("--nt-progress-track-color:var(--tnt-color-tertiary-container)");
+        progress.GetAttribute("style")!.Should().Contain("--nt-progress-track-color:var(--nt-color-tertiary-container)");
     }
 
     [Fact]

@@ -42,13 +42,13 @@ public partial class NTAccordion : NTComponentBase {
     ///     Optional background color override for item content regions.
     /// </summary>
     [Parameter]
-    public TnTColor? ContentColor { get; set; }
+    public NTColor? ContentColor { get; set; }
 
     /// <summary>
     ///     Text color for item content regions.
     /// </summary>
     [Parameter]
-    public TnTColor ContentTextColor { get; set; } = TnTColor.OnSurface;
+    public NTColor ContentTextColor { get; set; } = NTColor.OnSurface;
 
     /// <summary>
     ///     The accordion items to render.
@@ -77,12 +77,12 @@ public partial class NTAccordion : NTComponentBase {
     /// <inheritdoc />
     public override string? ElementStyle => CssStyleBuilder.Create()
         .AddFromAdditionalAttributes(AdditionalAttributes)
-        .AddVariable("nt-accordion-header-color", HeaderColor.ToCssTnTColorVariable(), HeaderColor.HasValue)
+        .AddVariable("nt-accordion-header-color", HeaderColor.ToCssNTColorVariable(), HeaderColor.HasValue)
         .AddVariable("nt-accordion-header-text-color", HeaderTextColor)
-        .AddVariable("nt-accordion-content-color", ContentColor.ToCssTnTColorVariable(), ContentColor.HasValue)
+        .AddVariable("nt-accordion-content-color", ContentColor.ToCssNTColorVariable(), ContentColor.HasValue)
         .AddVariable("nt-accordion-content-text-color", ContentTextColor)
         .AddVariable("nt-accordion-outline-color", OutlineColor)
-        .AddVariable("nt-accordion-state-layer-color", StateLayerColor.ToCssTnTColorVariable(), StateLayerColor.HasValue)
+        .AddVariable("nt-accordion-state-layer-color", StateLayerColor.ToCssNTColorVariable(), StateLayerColor.HasValue)
         .Build();
 
     /// <summary>
@@ -95,13 +95,13 @@ public partial class NTAccordion : NTComponentBase {
     ///     Optional background color override for item summary rows.
     /// </summary>
     [Parameter]
-    public TnTColor? HeaderColor { get; set; }
+    public NTColor? HeaderColor { get; set; }
 
     /// <summary>
     ///     Text color for item summary rows.
     /// </summary>
     [Parameter]
-    public TnTColor HeaderTextColor { get; set; } = TnTColor.OnSurface;
+    public NTColor HeaderTextColor { get; set; } = NTColor.OnSurface;
 
     /// <summary>
     ///     When set, native browser behavior limits the group to one expanded item at a time.
@@ -113,7 +113,7 @@ public partial class NTAccordion : NTComponentBase {
     ///     Outline and focus-ring color.
     /// </summary>
     [Parameter]
-    public TnTColor OutlineColor { get; set; } = TnTColor.Outline;
+    public NTColor OutlineColor { get; set; } = NTColor.Outline;
 
     /// <summary>
     ///     When set, each item is rendered as an individually rounded surface with spacing between items.
@@ -125,7 +125,7 @@ public partial class NTAccordion : NTComponentBase {
     ///     Color used for summary row hover, focus, and pressed state layers.
     /// </summary>
     [Parameter]
-    public TnTColor? StateLayerColor { get; set; }
+    public NTColor? StateLayerColor { get; set; }
 
     /// <summary>
     ///     Visual treatment for the accordion surfaces.

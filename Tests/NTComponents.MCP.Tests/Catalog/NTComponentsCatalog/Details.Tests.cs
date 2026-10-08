@@ -72,7 +72,7 @@ public class Details_Tests {
         summary!.RelatedEnums.Should().BeEmpty();
         expanded.Should().NotBeNull();
         expanded!.RelatedEnums.Should().Contain(enumDetails => enumDetails.Name == "NTButtonVariant" && enumDetails.Values.Count > 0 && !enumDetails.IsTruncated);
-        expanded.RelatedEnums.Should().Contain(enumDetails => enumDetails.Name == "TnTColor" && enumDetails.Values.Count == 20 && enumDetails.TotalValueCount > 20 && enumDetails.IsTruncated);
+        expanded.RelatedEnums.Should().Contain(enumDetails => enumDetails.Name == "NTColor" && enumDetails.Values.Count == 20 && enumDetails.TotalValueCount > 20 && enumDetails.IsTruncated);
     }
 
     [Fact]

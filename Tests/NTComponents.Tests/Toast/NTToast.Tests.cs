@@ -52,9 +52,9 @@ public class NTToast_Tests : BunitContext {
             Timeout = 0,
             ShowClose = false,
             Icon = "",
-            BackgroundColor = TnTColor.ErrorContainer,
-            TextColor = TnTColor.OnErrorContainer,
-            IconColor = TnTColor.Error,
+            BackgroundColor = NTColor.ErrorContainer,
+            TextColor = NTColor.OnErrorContainer,
+            IconColor = NTColor.Error,
             Id = "auth-code-toast",
             Host = "toast-host"
         }));
@@ -68,9 +68,9 @@ public class NTToast_Tests : BunitContext {
         script.Should().Contain("timeout: 0");
         script.Should().Contain("showClose: false");
         script.Should().Contain("icon: \"\"");
-        script.Should().Contain("backgroundColor: \"var(--tnt-color-error-container)\"");
-        script.Should().Contain("textColor: \"var(--tnt-color-on-error-container)\"");
-        script.Should().Contain("iconColor: \"var(--tnt-color-error)\"");
+        script.Should().Contain("backgroundColor: \"var(--nt-color-error-container)\"");
+        script.Should().Contain("textColor: \"var(--nt-color-on-error-container)\"");
+        script.Should().Contain("iconColor: \"var(--nt-color-error)\"");
         script.Should().Contain("id: \"auth-code-toast\"");
         script.Should().Contain("host: \"toast-host\"");
         script.Should().Contain("if (window.NTToast?.queueToast)");

@@ -91,24 +91,24 @@
         <div style="display:grid; gap:1.5rem; inline-size:100%;">
             <NTProgress Variant="NTProgressVariant.Linear" AriaLabel="Indeterminate linear progress indicator" />
             <NTProgress Variant="NTProgressVariant.Linear" Value="45" AriaLabel="Determinate linear progress indicator" />
-            <NTProgress Variant="NTProgressVariant.LinearWave" ProgressColor="TnTColor.Tertiary" AriaLabel="Indeterminate linear sine wave progress indicator" />
-            <NTProgress Variant="NTProgressVariant.LinearWave" Value="45" ProgressColor="TnTColor.Tertiary" AriaLabel="Determinate linear sine wave progress indicator" />
+            <NTProgress Variant="NTProgressVariant.LinearWave" ProgressColor="NTColor.Tertiary" AriaLabel="Indeterminate linear sine wave progress indicator" />
+            <NTProgress Variant="NTProgressVariant.LinearWave" Value="45" ProgressColor="NTColor.Tertiary" AriaLabel="Determinate linear sine wave progress indicator" />
         </div>
     </div>
 
     <div style="display:grid; gap:1rem;">
         <h4 style="margin:0;">Ring</h4>
         <div style="display:flex; gap:1.5rem; align-items:center; flex-wrap:wrap;">
-            <NTProgress Variant="NTProgressVariant.Ring" ProgressColor="TnTColor.Secondary" AriaLabel="Indeterminate ring progress indicator" />
-            <NTProgress Variant="NTProgressVariant.Ring" Value="45" ProgressColor="TnTColor.Secondary" AriaLabel="Determinate ring progress indicator" />
-            <NTProgress Variant="NTProgressVariant.RingWave" Value="45" ProgressColor="TnTColor.Success" AriaLabel="Ring sine wave progress indicator" />
+            <NTProgress Variant="NTProgressVariant.Ring" ProgressColor="NTColor.Secondary" AriaLabel="Indeterminate ring progress indicator" />
+            <NTProgress Variant="NTProgressVariant.Ring" Value="45" ProgressColor="NTColor.Secondary" AriaLabel="Determinate ring progress indicator" />
+            <NTProgress Variant="NTProgressVariant.RingWave" Value="45" ProgressColor="NTColor.Success" AriaLabel="Ring sine wave progress indicator" />
         </div>
     </div>
 
     <div style="display:grid; gap:1rem;">
         <h4 style="margin:0;">Button progress</h4>
         <button style="display:inline-flex; inline-size:max-content; min-inline-size:8rem; align-items:center; justify-content:center; gap:.75rem; padding:.625rem 1rem; border:0; border-radius:999px; color:var(--tnt-color-on-primary); background:var(--tnt-color-primary);">
-            <NTProgress Variant="NTProgressVariant.Ring" Size="Size.Smallest" ProgressColor="TnTColor.OnPrimary" TrackVisible="false" AriaLabel="Saving changes" />
+            <NTProgress Variant="NTProgressVariant.Ring" Size="Size.Smallest" ProgressColor="NTColor.OnPrimary" TrackVisible="false" AriaLabel="Saving changes" />
             Saving
         </button>
     </div>
@@ -122,24 +122,24 @@
     private int progressValue = 45;
     private NTProgressVariant variant = NTProgressVariant.Linear;
     private Size size = Size.Medium;
-    private TnTColor indicatorColor = TnTColor.Primary;
-    private TnTColor trackColor = TnTColor.SecondaryContainer;
+    private NTColor indicatorColor = NTColor.Primary;
+    private NTColor trackColor = NTColor.SecondaryContainer;
 
-    private static readonly TnTColor[] ColorOptions = [
-        TnTColor.Primary,
-        TnTColor.Secondary,
-        TnTColor.Tertiary,
-        TnTColor.Success,
-        TnTColor.Warning,
-        TnTColor.Error
+    private static readonly NTColor[] ColorOptions = [
+        NTColor.Primary,
+        NTColor.Secondary,
+        NTColor.Tertiary,
+        NTColor.Success,
+        NTColor.Warning,
+        NTColor.Error
     ];
 
-    private static readonly TnTColor[] TrackColorOptions = [
-        TnTColor.SecondaryContainer,
-        TnTColor.PrimaryContainer,
-        TnTColor.TertiaryContainer,
-        TnTColor.SurfaceContainerHigh,
-        TnTColor.SurfaceContainerHighest
+    private static readonly NTColor[] TrackColorOptions = [
+        NTColor.SecondaryContainer,
+        NTColor.PrimaryContainer,
+        NTColor.TertiaryContainer,
+        NTColor.SurfaceContainerHigh,
+        NTColor.SurfaceContainerHighest
     ];
 
     private double? EffectiveProgressValue => isDeterminate ? progressValue : null;

@@ -26,8 +26,8 @@ public class NTTag_Tests : BunitContext {
 
         // Assert
         style.Should().NotBeNull();
-        style!.Should().Contain("--nt-tag-background-color:var(--tnt-color-secondary-container)");
-        style.Should().Contain("--nt-tag-text-color:var(--tnt-color-on-secondary-container)");
+        style!.Should().Contain("--nt-tag-background-color:var(--nt-color-secondary-container)");
+        style.Should().Contain("--nt-tag-text-color:var(--nt-color-on-secondary-container)");
     }
 
     [Fact]

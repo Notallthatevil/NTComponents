@@ -23,9 +23,9 @@ public partial class NTDivider {
     /// <summary>
     ///     Gets or sets the divider color.
     /// </summary>
-    /// <remarks>Material 3 uses <see cref="TnTColor.OutlineVariant" /> for the divider color role. Override only when the divider needs to follow a surrounding component contract.</remarks>
+    /// <remarks>Material 3 uses <see cref="NTColor.OutlineVariant" /> for the divider color role. Override only when the divider needs to follow a surrounding component contract.</remarks>
     [Parameter]
-    public TnTColor? Color { get; set; } = TnTColor.OutlineVariant;
+    public NTColor? Color { get; set; } = NTColor.OutlineVariant;
 
     /// <summary>
     ///     Gets or sets the divider orientation.
@@ -45,7 +45,7 @@ public partial class NTDivider {
     /// <inheritdoc />
     public override string? ElementStyle => CssStyleBuilder.Create()
         .AddFromAdditionalAttributes(AdditionalAttributes)
-        .AddVariable("nt-divider-color", Color.GetValueOrDefault().ToCssTnTColorVariable(), Color.HasValue)
+        .AddVariable("nt-divider-color", Color.GetValueOrDefault().ToCssNTColorVariable(), Color.HasValue)
         .Build();
 
     /// <summary>

@@ -185,37 +185,37 @@
 
 @code {
     private static readonly TagColorOption[] ColorOptions = [
-        new("Secondary", TnTColor.SecondaryContainer, TnTColor.OnSecondaryContainer),
-        new("Success", TnTColor.SuccessContainer, TnTColor.OnSuccessContainer),
-        new("Warning", TnTColor.WarningContainer, TnTColor.OnWarningContainer),
-        new("Error", TnTColor.ErrorContainer, TnTColor.OnErrorContainer),
-        new("Info", TnTColor.InfoContainer, TnTColor.OnInfoContainer),
-        new("Assert", TnTColor.AssertContainer, TnTColor.OnAssertContainer)
+        new("Secondary", NTColor.SecondaryContainer, NTColor.OnSecondaryContainer),
+        new("Success", NTColor.SuccessContainer, NTColor.OnSuccessContainer),
+        new("Warning", NTColor.WarningContainer, NTColor.OnWarningContainer),
+        new("Error", NTColor.ErrorContainer, NTColor.OnErrorContainer),
+        new("Info", NTColor.InfoContainer, NTColor.OnInfoContainer),
+        new("Assert", NTColor.AssertContainer, NTColor.OnAssertContainer)
     ];
 
     private static readonly TagSample[] StatusTags = [
-        new("Draft", TnTColor.SecondaryContainer, TnTColor.OnSecondaryContainer, NTElevation.Lowest),
-        new("Approved", TnTColor.SuccessContainer, TnTColor.OnSuccessContainer, NTElevation.Lowest),
-        new("Blocked", TnTColor.ErrorContainer, TnTColor.OnErrorContainer, NTElevation.Lowest),
-        new("In review", TnTColor.InfoContainer, TnTColor.OnInfoContainer, NTElevation.Lowest),
-        new("External", TnTColor.AssertContainer, TnTColor.OnAssertContainer, NTElevation.Lowest),
-        new("SLA risk", TnTColor.WarningContainer, TnTColor.OnWarningContainer, NTElevation.Lowest)
+        new("Draft", NTColor.SecondaryContainer, NTColor.OnSecondaryContainer, NTElevation.Lowest),
+        new("Approved", NTColor.SuccessContainer, NTColor.OnSuccessContainer, NTElevation.Lowest),
+        new("Blocked", NTColor.ErrorContainer, NTColor.OnErrorContainer, NTElevation.Lowest),
+        new("In review", NTColor.InfoContainer, NTColor.OnInfoContainer, NTElevation.Lowest),
+        new("External", NTColor.AssertContainer, NTColor.OnAssertContainer, NTElevation.Lowest),
+        new("SLA risk", NTColor.WarningContainer, NTColor.OnWarningContainer, NTElevation.Lowest)
     ];
 
     private static readonly MetadataRecord[] Records = [
         new("Release candidate", "Build 2026.06.02 is waiting on final checks.", [
-            new("RC", TnTColor.InfoContainer, TnTColor.OnInfoContainer, NTElevation.None),
-            new("QA", TnTColor.SecondaryContainer, TnTColor.OnSecondaryContainer, NTElevation.None),
-            new("Risk low", TnTColor.SuccessContainer, TnTColor.OnSuccessContainer, NTElevation.None)
+            new("RC", NTColor.InfoContainer, NTColor.OnInfoContainer, NTElevation.None),
+            new("QA", NTColor.SecondaryContainer, NTColor.OnSecondaryContainer, NTElevation.None),
+            new("Risk low", NTColor.SuccessContainer, NTColor.OnSuccessContainer, NTElevation.None)
         ]),
         new("Customer escalation", "Open support case with ownership assigned.", [
-            new("P1", TnTColor.ErrorContainer, TnTColor.OnErrorContainer, NTElevation.None),
-            new("Support", TnTColor.AssertContainer, TnTColor.OnAssertContainer, NTElevation.None),
-            new("SLA risk", TnTColor.WarningContainer, TnTColor.OnWarningContainer, NTElevation.None)
+            new("P1", NTColor.ErrorContainer, NTColor.OnErrorContainer, NTElevation.None),
+            new("Support", NTColor.AssertContainer, NTColor.OnAssertContainer, NTElevation.None),
+            new("SLA risk", NTColor.WarningContainer, NTColor.OnWarningContainer, NTElevation.None)
         ]),
         new("Content review", "Documentation update queued for publishing.", [
-            new("Docs", TnTColor.SecondaryContainer, TnTColor.OnSecondaryContainer, NTElevation.None),
-            new("Review", TnTColor.InfoContainer, TnTColor.OnInfoContainer, NTElevation.None)
+            new("Docs", NTColor.SecondaryContainer, NTColor.OnSecondaryContainer, NTElevation.None),
+            new("Review", NTColor.InfoContainer, NTColor.OnInfoContainer, NTElevation.None)
         ])
     ];
 
@@ -231,9 +231,9 @@
 
     private TagColorOption SelectedColor => ColorOptions.First(option => option.Name == SelectedColorName);
 
-    private sealed record TagColorOption(string Name, TnTColor BackgroundColor, TnTColor TextColor);
+    private sealed record TagColorOption(string Name, NTColor BackgroundColor, NTColor TextColor);
 
-    private sealed record TagSample(string Label, TnTColor BackgroundColor, TnTColor TextColor, NTElevation Elevation);
+    private sealed record TagSample(string Label, NTColor BackgroundColor, NTColor TextColor, NTElevation Elevation);
 
     private sealed record MetadataRecord(string Title, string Description, TagSample[] Tags);
 }

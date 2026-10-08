@@ -22,7 +22,7 @@ public abstract class NTLayoutComponentBase : NTComponentBase {
     ///     Optional override for the layout region background color.
     /// </summary>
     [Parameter]
-    public TnTColor? BackgroundColor { get; set; }
+    public NTColor? BackgroundColor { get; set; }
 
     /// <summary>
     ///     The child content to render inside the layout region.
@@ -52,7 +52,7 @@ public abstract class NTLayoutComponentBase : NTComponentBase {
     ///     Optional override for the layout region text color.
     /// </summary>
     [Parameter]
-    public TnTColor? TextColor { get; set; }
+    public NTColor? TextColor { get; set; }
 
     /// <inheritdoc />
     public override string? ElementClass => _elementClass ?? BuildElementClass();
@@ -140,15 +140,15 @@ public abstract class NTLayoutComponentBase : NTComponentBase {
 
         return CssStyleBuilder.Create()
             .AddFromAdditionalAttributes(AdditionalAttributes)
-            .AddVariable($"{CssVariablePrefix}-background-color", BackgroundColor.ToCssTnTColorVariable(), BackgroundColor is not null and not TnTColor.None)
-            .AddVariable($"{CssVariablePrefix}-text-color", TextColor.ToCssTnTColorVariable(), TextColor is not null and not TnTColor.None)
+            .AddVariable($"{CssVariablePrefix}-background-color", BackgroundColor.ToCssNTColorVariable(), BackgroundColor is not null)
+            .AddVariable($"{CssVariablePrefix}-text-color", TextColor.ToCssNTColorVariable(), TextColor is not null)
             .Build();
     }
 
     private bool HasRenderedStyle =>
         AdditionalAttributes?.TryGetValue("style", out var style) == true && style is not null
-        || BackgroundColor is not null and not TnTColor.None
-        || TextColor is not null and not TnTColor.None;
+        || BackgroundColor is not null
+        || TextColor is not null;
 
     private static void SetAttribute(IDictionary<string, object> elementAttributes, string attributeName, object? attributeValue) {
         if (attributeValue is null) {

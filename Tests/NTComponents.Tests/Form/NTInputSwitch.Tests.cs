@@ -190,29 +190,29 @@ public class NTInputSwitch_Tests : BunitContext {
     [Fact]
     public void Color_Overrides_Emit_Component_Css_Variables() {
         var cut = RenderSwitch(configure: parameters => parameters
-            .Add(p => p.DisabledHandleColor, TnTColor.SurfaceContainerLow)
-            .Add(p => p.DisabledIconColor, TnTColor.Surface)
-            .Add(p => p.DisabledTrackColor, TnTColor.OutlineVariant)
-            .Add(p => p.ErrorColor, TnTColor.Error)
-            .Add(p => p.IconColor, TnTColor.Tertiary)
-            .Add(p => p.LabelColor, TnTColor.Secondary)
-            .Add(p => p.SelectedHandleColor, TnTColor.OnPrimary)
-            .Add(p => p.SelectedIconColor, TnTColor.Primary)
-            .Add(p => p.SelectedStateLayerColor, TnTColor.Primary)
-            .Add(p => p.SelectedTrackColor, TnTColor.Primary)
-            .Add(p => p.StateLayerColor, TnTColor.OnSurface)
-            .Add(p => p.SupportingTextColor, TnTColor.Secondary)
-            .Add(p => p.UnselectedHandleColor, TnTColor.Outline)
-            .Add(p => p.UnselectedIconColor, TnTColor.SurfaceContainerHighest)
-            .Add(p => p.UnselectedOutlineColor, TnTColor.Outline)
-            .Add(p => p.UnselectedTrackColor, TnTColor.SurfaceContainerHighest));
+            .Add(p => p.DisabledHandleColor, NTColor.SurfaceContainerLow)
+            .Add(p => p.DisabledIconColor, NTColor.Surface)
+            .Add(p => p.DisabledTrackColor, NTColor.OutlineVariant)
+            .Add(p => p.ErrorColor, NTColor.Error)
+            .Add(p => p.IconColor, NTColor.Tertiary)
+            .Add(p => p.LabelColor, NTColor.Secondary)
+            .Add(p => p.SelectedHandleColor, NTColor.OnPrimary)
+            .Add(p => p.SelectedIconColor, NTColor.Primary)
+            .Add(p => p.SelectedStateLayerColor, NTColor.Primary)
+            .Add(p => p.SelectedTrackColor, NTColor.Primary)
+            .Add(p => p.StateLayerColor, NTColor.OnSurface)
+            .Add(p => p.SupportingTextColor, NTColor.Secondary)
+            .Add(p => p.UnselectedHandleColor, NTColor.Outline)
+            .Add(p => p.UnselectedIconColor, NTColor.SurfaceContainerHighest)
+            .Add(p => p.UnselectedOutlineColor, NTColor.Outline)
+            .Add(p => p.UnselectedTrackColor, NTColor.SurfaceContainerHighest));
 
         var style = cut.Find(".nt-switch").GetAttribute("style");
 
-        style.Should().Contain("--nt-switch-selected-track-color:var(--tnt-color-primary);");
-        style.Should().Contain("--nt-switch-unselected-track-color:var(--tnt-color-surface-container-highest);");
-        style.Should().Contain("--nt-switch-selected-handle-color:var(--tnt-color-on-primary);");
-        style.Should().Contain("--nt-switch-disabled-track-color:var(--tnt-color-outline-variant);");
+        style.Should().Contain("--nt-switch-selected-track-color:var(--nt-color-primary);");
+        style.Should().Contain("--nt-switch-unselected-track-color:var(--nt-color-surface-container-highest);");
+        style.Should().Contain("--nt-switch-selected-handle-color:var(--nt-color-on-primary);");
+        style.Should().Contain("--nt-switch-disabled-track-color:var(--nt-color-outline-variant);");
     }
 
     [Fact]

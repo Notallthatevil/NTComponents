@@ -319,17 +319,17 @@ public class NTInputSlider_Tests : BunitContext {
     [Fact]
     public void Color_Overrides_Emit_Component_Css_Variables() {
         var cut = RenderSlider(configure: parameters => parameters
-            .Add(p => p.ActiveTrackColor, TnTColor.Secondary)
-            .Add(p => p.HandleColor, TnTColor.Primary)
-            .Add(p => p.InactiveTrackColor, TnTColor.SecondaryContainer)
-            .Add(p => p.SupportingTextColor, TnTColor.Tertiary));
+            .Add(p => p.ActiveTrackColor, NTColor.Secondary)
+            .Add(p => p.HandleColor, NTColor.Primary)
+            .Add(p => p.InactiveTrackColor, NTColor.SecondaryContainer)
+            .Add(p => p.SupportingTextColor, NTColor.Tertiary));
 
         var style = cut.Find(".nt-slider").GetAttribute("style");
 
-        style.Should().Contain("--nt-slider-active-track-color:var(--tnt-color-secondary);");
-        style.Should().Contain("--nt-slider-handle-color:var(--tnt-color-primary);");
-        style.Should().Contain("--nt-slider-inactive-track-color:var(--tnt-color-secondary-container);");
-        style.Should().Contain("--nt-slider-supporting-text-color:var(--tnt-color-tertiary);");
+        style.Should().Contain("--nt-slider-active-track-color:var(--nt-color-secondary);");
+        style.Should().Contain("--nt-slider-handle-color:var(--nt-color-primary);");
+        style.Should().Contain("--nt-slider-inactive-track-color:var(--nt-color-secondary-container);");
+        style.Should().Contain("--nt-slider-supporting-text-color:var(--nt-color-tertiary);");
     }
 
     private IRenderedComponent<NTInputSlider<int>> RenderSlider(TestModel? model = null, Action<ComponentParameterCollectionBuilder<NTInputSlider<int>>>? configure = null) {

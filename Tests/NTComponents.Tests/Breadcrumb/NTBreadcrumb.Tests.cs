@@ -51,16 +51,16 @@ public class NTBreadcrumb_Tests : BunitContext {
     public void Colors_CustomizeLinksCurrentPageAndSeparators() {
         Services.GetRequiredService<NavigationManager>().NavigateTo("/catalog");
         var cut = Render<NTBreadcrumb>(p => p
-            .Add(c => c.TextColor, TnTColor.Tertiary)
-            .Add(c => c.CurrentTextColor, TnTColor.OnTertiaryContainer)
-            .Add(c => c.CurrentBackgroundColor, TnTColor.TertiaryContainer)
-            .Add(c => c.SeparatorColor, TnTColor.Outline));
+            .Add(c => c.TextColor, NTColor.Tertiary)
+            .Add(c => c.CurrentTextColor, NTColor.OnTertiaryContainer)
+            .Add(c => c.CurrentBackgroundColor, NTColor.TertiaryContainer)
+            .Add(c => c.SeparatorColor, NTColor.Outline));
 
-        cut.Find("a").GetAttribute("style").Should().Contain("--nt-nav-link-fg:var(--tnt-color-tertiary)");
+        cut.Find("a").GetAttribute("style").Should().Contain("--nt-nav-link-fg:var(--nt-color-tertiary)");
         cut.Find("nav").GetAttribute("style").Should()
-            .Contain("--nt-breadcrumb-current-fg:var(--tnt-color-on-tertiary-container)")
-            .And.Contain("--nt-breadcrumb-current-bg:var(--tnt-color-tertiary-container)")
-            .And.Contain("--nt-breadcrumb-separator:var(--tnt-color-outline)");
+            .Contain("--nt-breadcrumb-current-fg:var(--nt-color-on-tertiary-container)")
+            .And.Contain("--nt-breadcrumb-current-bg:var(--nt-color-tertiary-container)")
+            .And.Contain("--nt-breadcrumb-separator:var(--nt-color-outline)");
     }
 
     [Fact]

@@ -40,7 +40,7 @@ public partial class NTContextMenu {
     ///     Gets or sets an optional override for the menu container color.
     /// </summary>
     [Parameter]
-    public TnTColor? ContainerColor { get; set; }
+    public NTColor? ContainerColor { get; set; }
 
     /// <summary>
     ///     Gets or sets whether context menu invocation is disabled.
@@ -97,13 +97,13 @@ public partial class NTContextMenu {
     ///     Gets or sets an optional override for the selected menu item container color.
     /// </summary>
     [Parameter]
-    public TnTColor? SelectedContainerColor { get; set; }
+    public NTColor? SelectedContainerColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for selected menu item text and icon color.
     /// </summary>
     [Parameter]
-    public TnTColor? SelectedTextColor { get; set; }
+    public NTColor? SelectedTextColor { get; set; }
 
     /// <summary>
     ///     Gets or sets the target content that receives context menu gestures.
@@ -116,7 +116,7 @@ public partial class NTContextMenu {
     ///     Gets or sets an optional override for the menu text and icon color.
     /// </summary>
     [Parameter]
-    public TnTColor? TextColor { get; set; }
+    public NTColor? TextColor { get; set; }
 
     private IReadOnlyList<RenderFragment> InheritedParentMenuContent =>
         InheritParentMenus && ParentContextMenu is not null

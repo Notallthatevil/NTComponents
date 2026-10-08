@@ -84,7 +84,7 @@ public partial class NTMenu {
     ///     Gets or sets an optional override for the menu container color.
     /// </summary>
     [Parameter]
-    public TnTColor? ContainerColor { get; set; }
+    public NTColor? ContainerColor { get; set; }
 
     /// <summary>
     ///     Gets or sets whether the menu and registered items are disabled.
@@ -108,10 +108,10 @@ public partial class NTMenu {
     public override string? ElementStyle => CssStyleBuilder.Create()
         .AddFromAdditionalAttributes(AdditionalAttributes)
         .AddStyle("position-anchor", AnchorName, !string.IsNullOrWhiteSpace(AnchorName))
-        .AddVariable("nt-menu-container-color", ContainerColor.ToCssTnTColorVariable(), ContainerColor.HasValue)
-        .AddVariable("nt-menu-content-color", TextColor.ToCssTnTColorVariable(), TextColor.HasValue)
-        .AddVariable("nt-menu-selected-container-color", SelectedContainerColor.ToCssTnTColorVariable(), SelectedContainerColor.HasValue)
-        .AddVariable("nt-menu-selected-content-color", SelectedTextColor.ToCssTnTColorVariable(), SelectedTextColor.HasValue)
+        .AddVariable("nt-menu-container-color", ContainerColor.ToCssNTColorVariable(), ContainerColor.HasValue)
+        .AddVariable("nt-menu-content-color", TextColor.ToCssNTColorVariable(), TextColor.HasValue)
+        .AddVariable("nt-menu-selected-container-color", SelectedContainerColor.ToCssNTColorVariable(), SelectedContainerColor.HasValue)
+        .AddVariable("nt-menu-selected-content-color", SelectedTextColor.ToCssNTColorVariable(), SelectedTextColor.HasValue)
         .Build();
 
     /// <summary>
@@ -149,19 +149,19 @@ public partial class NTMenu {
     ///     Gets or sets an optional override for the selected menu item container color.
     /// </summary>
     [Parameter]
-    public TnTColor? SelectedContainerColor { get; set; }
+    public NTColor? SelectedContainerColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for selected menu item text and icon color.
     /// </summary>
     [Parameter]
-    public TnTColor? SelectedTextColor { get; set; }
+    public NTColor? SelectedTextColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for the menu text and icon color.
     /// </summary>
     [Parameter]
-    public TnTColor? TextColor { get; set; }
+    public NTColor? TextColor { get; set; }
 
     /// <summary>
     ///     Gets whether this menu has at least one actionable registered item.

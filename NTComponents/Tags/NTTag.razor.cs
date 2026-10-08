@@ -26,11 +26,11 @@ public partial class NTTag {
     ///     Gets or sets the tag background color.
     /// </summary>
     /// <remarks>
-    ///     Prefer semantic container colors, such as <see cref="TnTColor.SecondaryContainer" />, <see cref="TnTColor.SuccessContainer" />, or <see cref="TnTColor.ErrorContainer" />, paired with the
+    ///     Prefer semantic container colors, such as <see cref="NTColor.SecondaryContainer" />, <see cref="NTColor.SuccessContainer" />, or <see cref="NTColor.ErrorContainer" />, paired with the
     ///     matching on-container <see cref="TextColor" />.
     /// </remarks>
     [Parameter]
-    public TnTColor BackgroundColor { get; set; } = TnTColor.SecondaryContainer;
+    public NTColor BackgroundColor { get; set; } = NTColor.SecondaryContainer;
 
     /// <inheritdoc />
     public override string? ElementClass => CssClassBuilder.Create()
@@ -78,5 +78,5 @@ public partial class NTTag {
     ///     Pair this with <see cref="BackgroundColor" /> using the matching on-container color token whenever possible.
     /// </remarks>
     [Parameter]
-    public TnTColor TextColor { get; set; } = TnTColor.OnSecondaryContainer;
+    public NTColor TextColor { get; set; } = NTColor.OnSecondaryContainer;
 }

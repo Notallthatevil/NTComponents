@@ -105,7 +105,7 @@ public sealed class NTFabMenuConfigurationAnalyzer : DiagnosticAnalyzer {
             var fabMenuType = startContext.Compilation.GetTypeByMetadataName("NTComponents.NTFabMenu");
             var buttonItemType = startContext.Compilation.GetTypeByMetadataName("NTComponents.NTFabMenuButtonItem");
             var anchorItemType = startContext.Compilation.GetTypeByMetadataName("NTComponents.NTFabMenuAnchorItem");
-            var colorType = startContext.Compilation.GetTypeByMetadataName("NTComponents.TnTColor");
+            var colorType = startContext.Compilation.GetTypeByMetadataName("NTComponents.NTColor") ?? startContext.Compilation.GetTypeByMetadataName("NTComponents.TnTColor");
             var sizeType = startContext.Compilation.GetTypeByMetadataName("NTComponents.Size");
             var placementType = startContext.Compilation.GetTypeByMetadataName("NTComponents.NTFabButtonPlacement");
 

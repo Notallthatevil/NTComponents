@@ -22,13 +22,13 @@ public partial class NTTooltip : NTPageScriptComponent<NTTooltip> {
     ///     Optional container color override. Material 3 defaults are used when unset.
     /// </summary>
     [Parameter]
-    public TnTColor? BackgroundColor { get; set; }
+    public NTColor? BackgroundColor { get; set; }
 
     /// <summary>
     ///     Optional border color override. Material 3 tooltips do not render a border when unset.
     /// </summary>
     [Parameter]
-    public TnTColor? BorderColor { get; set; }
+    public NTColor? BorderColor { get; set; }
 
     /// <summary>
     ///     The passive content to be displayed inside the tooltip.
@@ -61,7 +61,7 @@ public partial class NTTooltip : NTPageScriptComponent<NTTooltip> {
     ///     Optional label color override. Material 3 defaults are used when unset.
     /// </summary>
     [Parameter]
-    public TnTColor? TextColor { get; set; }
+    public NTColor? TextColor { get; set; }
 
     /// <summary>
     ///     The Material 3 tooltip variant to render.

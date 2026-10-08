@@ -51,13 +51,13 @@ public partial class NTScheduler<TEventType> where TEventType : TnTEvent {
         .AddFromAdditionalAttributes(AdditionalAttributes)
         .AddClass("nt-scheduler")
         .AddClass($"nt-scheduler-view-{View.ToString().ToLowerInvariant()}")
-        .AddBackgroundColor(BackgroundColor)
-        .AddForegroundColor(TextColor)
         .Build();
 
     /// <inheritdoc />
     public override string? ElementStyle => CssStyleBuilder.Create()
         .AddFromAdditionalAttributes(AdditionalAttributes)
+        .AddBackgroundColor(BackgroundColor)
+        .AddForegroundColor(TextColor)
         .AddVariable("nt-scheduler-row-height", $"{HourRowHeight}px")
         .AddVariable("nt-scheduler-event-bg", EventBackgroundColor)
         .AddVariable("nt-scheduler-event-fg", EventTextColor)
@@ -85,7 +85,7 @@ public partial class NTScheduler<TEventType> where TEventType : TnTEvent {
     ///     Gets or sets the scheduler container color.
     /// </summary>
     [Parameter]
-    public TnTColor BackgroundColor { get; set; } = TnTColor.SurfaceContainerLowest;
+    public NTColor BackgroundColor { get; set; } = NTColor.SurfaceContainerLowest;
 
     /// <summary>
     ///     Gets or sets the date currently displayed by the scheduler.
@@ -109,7 +109,7 @@ public partial class NTScheduler<TEventType> where TEventType : TnTEvent {
     ///     Gets or sets the default event background color when an event does not provide one.
     /// </summary>
     [Parameter]
-    public TnTColor EventBackgroundColor { get; set; } = TnTColor.TertiaryContainer;
+    public NTColor EventBackgroundColor { get; set; } = NTColor.TertiaryContainer;
 
     /// <summary>
     ///     Gets or sets the callback invoked when an event is clicked.
@@ -127,7 +127,7 @@ public partial class NTScheduler<TEventType> where TEventType : TnTEvent {
     ///     Gets or sets the default event text color when an event does not provide one.
     /// </summary>
     [Parameter]
-    public TnTColor EventTextColor { get; set; } = TnTColor.OnTertiaryContainer;
+    public NTColor EventTextColor { get; set; } = NTColor.OnTertiaryContainer;
 
     /// <summary>
     ///     Gets or sets the events rendered by the scheduler.
@@ -193,7 +193,7 @@ public partial class NTScheduler<TEventType> where TEventType : TnTEvent {
     ///     Gets or sets the scheduler text color.
     /// </summary>
     [Parameter]
-    public TnTColor TextColor { get; set; } = TnTColor.OnSurface;
+    public NTColor TextColor { get; set; } = NTColor.OnSurface;
 
     /// <summary>
     ///     Gets or sets the time zone used to display event dates and create drop target values.
@@ -760,10 +760,10 @@ public partial class NTScheduler<TEventType> where TEventType : TnTEvent {
 
     private string? GetEventStyle(SchedulerEventSegment segment, bool monthSegment) {
         var backgroundColor = string.IsNullOrWhiteSpace(segment.Event.BackgroundColorCss)
-            ? (segment.Event.BackgroundColor == default ? EventBackgroundColor : segment.Event.BackgroundColor).ToCssTnTColorVariable()
+            ? (segment.Event.BackgroundColor == default ? EventBackgroundColor.ToCssNTColorVariable() : segment.Event.BackgroundColor.ToCssNTColorVariable())
             : segment.Event.BackgroundColorCss.Trim();
         var foregroundColor = string.IsNullOrWhiteSpace(segment.Event.ForegroundColorCss)
-            ? (segment.Event.ForegroundColor == default ? EventTextColor : segment.Event.ForegroundColor).ToCssTnTColorVariable()
+            ? (segment.Event.ForegroundColor == default ? EventTextColor.ToCssNTColorVariable() : segment.Event.ForegroundColor.ToCssNTColorVariable())
             : segment.Event.ForegroundColorCss.Trim();
         var builder = CssStyleBuilder.Create()
             .AddVariable("event-bg", backgroundColor)

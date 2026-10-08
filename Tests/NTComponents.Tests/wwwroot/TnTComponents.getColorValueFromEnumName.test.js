@@ -20,6 +20,13 @@ describe('NTComponents.getColorValueFromEnumName', () => {
       expect(result).toBe('#ff0000');
    });
 
+   test('prefers NT tokens when both theme namespaces are present', () => {
+      document.documentElement.style.setProperty('--nt-color-primary', 'rgb(12, 34, 56)');
+      document.documentElement.style.setProperty('--tnt-color-primary', '#ff0000');
+
+      expect(NTComponents.getColorValueFromEnumName('Primary')).toBe('#0c2238');
+   });
+
    test('converts complex camelCase color names correctly', () => {
       document.documentElement.style.setProperty('--tnt-color-on-primary-container', '#00ff00');
       const result = NTComponents.getColorValueFromEnumName('OnPrimaryContainer');

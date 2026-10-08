@@ -47,7 +47,7 @@ public partial class NTButtonGroup<TObjectType> : NTComponentBase {
     /// Gets or sets an optional override for the resting button container color.
     /// </summary>
     [Parameter]
-    public TnTColor? BackgroundColor { get; set; }
+    public NTColor? BackgroundColor { get; set; }
 
     /// <summary>
     /// The size applied to every button inside the group.
@@ -118,10 +118,10 @@ public partial class NTButtonGroup<TObjectType> : NTComponentBase {
     /// <inheritdoc />
     public override string? ElementStyle => CssStyleBuilder.Create()
         .AddFromAdditionalAttributes(AdditionalAttributes)
-        .AddVariable("nt-button-group-bg", BackgroundColor.ToCssTnTColorVariable(), BackgroundColor.HasValue)
-        .AddVariable("nt-button-group-fg", TextColor.ToCssTnTColorVariable(), TextColor.HasValue)
-        .AddVariable("nt-button-group-selected-bg", SelectedBackgroundColor.ToCssTnTColorVariable(), SelectedBackgroundColor.HasValue)
-        .AddVariable("nt-button-group-selected-fg", SelectedTextColor.ToCssTnTColorVariable(), SelectedTextColor.HasValue)
+        .AddVariable("nt-button-group-bg", BackgroundColor.ToCssNTColorVariable(), BackgroundColor.HasValue)
+        .AddVariable("nt-button-group-fg", TextColor.ToCssNTColorVariable(), TextColor.HasValue)
+        .AddVariable("nt-button-group-selected-bg", SelectedBackgroundColor.ToCssNTColorVariable(), SelectedBackgroundColor.HasValue)
+        .AddVariable("nt-button-group-selected-fg", SelectedTextColor.ToCssNTColorVariable(), SelectedTextColor.HasValue)
         .Build();
 
     /// <summary>
@@ -134,7 +134,7 @@ public partial class NTButtonGroup<TObjectType> : NTComponentBase {
     /// The color used to indicate an error state in the user interface.
     /// </summary>
     [Parameter]
-    public TnTColor ErrorColor { get; set; } = TnTColor.Error;
+    public NTColor ErrorColor { get; set; } = NTColor.Error;
 
     /// <summary>
     /// Expands the button group to fill the available inline space.
@@ -150,7 +150,7 @@ public partial class NTButtonGroup<TObjectType> : NTComponentBase {
     /// The color used to on <see cref="ErrorColor" />.
     /// </summary>
     [Parameter]
-    public TnTColor OnErrorColor { get; set; } = TnTColor.OnError;
+    public NTColor OnErrorColor { get; set; } = NTColor.OnError;
 
     /// <summary>
     /// Invoked whenever selection toggles and passes the impacted item.
@@ -162,7 +162,7 @@ public partial class NTButtonGroup<TObjectType> : NTComponentBase {
     /// Gets or sets an optional override for the selected button container color.
     /// </summary>
     [Parameter]
-    public TnTColor? SelectedBackgroundColor { get; set; }
+    public NTColor? SelectedBackgroundColor { get; set; }
 
     /// <summary>
     /// The key that represents the currently selected button in single-select mode.
@@ -198,7 +198,7 @@ public partial class NTButtonGroup<TObjectType> : NTComponentBase {
     /// Gets or sets an optional override for the selected button content color.
     /// </summary>
     [Parameter]
-    public TnTColor? SelectedTextColor { get; set; }
+    public NTColor? SelectedTextColor { get; set; }
 
     /// <summary>
     /// Determines whether the group uses single-select or multi-select behavior.
@@ -242,7 +242,7 @@ public partial class NTButtonGroup<TObjectType> : NTComponentBase {
     /// Gets or sets an optional override for the resting button content color.
     /// </summary>
     [Parameter]
-    public TnTColor? TextColor { get; set; }
+    public NTColor? TextColor { get; set; }
 
     /// <summary>
     /// The default visual variant applied to every item.
@@ -496,53 +496,53 @@ public partial class NTButtonGroup<TObjectType> : NTComponentBase {
         }
     }
 
-    private TnTColor GetDefaultBackgroundColor() {
+    private NTColor GetDefaultBackgroundColor() {
         return Variant switch {
-            NTButtonVariant.Elevated => TnTColor.SurfaceContainerLow,
-            NTButtonVariant.Filled => TnTColor.SurfaceContainer,
-            NTButtonVariant.Tonal => TnTColor.SecondaryContainer,
-            NTButtonVariant.Outlined => TnTColor.Transparent,
-            NTButtonVariant.Text => TnTColor.Transparent,
+            NTButtonVariant.Elevated => NTColor.SurfaceContainerLow,
+            NTButtonVariant.Filled => NTColor.SurfaceContainer,
+            NTButtonVariant.Tonal => NTColor.SecondaryContainer,
+            NTButtonVariant.Outlined => NTColor.Transparent,
+            NTButtonVariant.Text => NTColor.Transparent,
             _ => throw new ArgumentOutOfRangeException(nameof(Variant), Variant, null)
         };
     }
 
-    private TnTColor GetDefaultSelectedBackgroundColor() {
+    private NTColor GetDefaultSelectedBackgroundColor() {
         return Variant switch {
-            NTButtonVariant.Elevated => TnTColor.Primary,
-            NTButtonVariant.Filled => TnTColor.Primary,
-            NTButtonVariant.Tonal => TnTColor.Secondary,
-            NTButtonVariant.Outlined => TnTColor.InverseSurface,
-            NTButtonVariant.Text => TnTColor.Transparent,
+            NTButtonVariant.Elevated => NTColor.Primary,
+            NTButtonVariant.Filled => NTColor.Primary,
+            NTButtonVariant.Tonal => NTColor.Secondary,
+            NTButtonVariant.Outlined => NTColor.InverseSurface,
+            NTButtonVariant.Text => NTColor.Transparent,
             _ => throw new ArgumentOutOfRangeException(nameof(Variant), Variant, null)
         };
     }
 
-    private TnTColor GetDefaultSelectedTextColor() {
+    private NTColor GetDefaultSelectedTextColor() {
         return Variant switch {
-            NTButtonVariant.Elevated => TnTColor.OnPrimary,
-            NTButtonVariant.Filled => TnTColor.OnPrimary,
-            NTButtonVariant.Tonal => TnTColor.OnSecondary,
-            NTButtonVariant.Outlined => TnTColor.InverseOnSurface,
-            NTButtonVariant.Text => TnTColor.Primary,
+            NTButtonVariant.Elevated => NTColor.OnPrimary,
+            NTButtonVariant.Filled => NTColor.OnPrimary,
+            NTButtonVariant.Tonal => NTColor.OnSecondary,
+            NTButtonVariant.Outlined => NTColor.InverseOnSurface,
+            NTButtonVariant.Text => NTColor.Primary,
             _ => throw new ArgumentOutOfRangeException(nameof(Variant), Variant, null)
         };
     }
 
-    private TnTColor GetDefaultTextColor() {
+    private NTColor GetDefaultTextColor() {
         return Variant switch {
-            NTButtonVariant.Elevated => TnTColor.Primary,
-            NTButtonVariant.Filled => TnTColor.OnSurfaceVariant,
-            NTButtonVariant.Tonal => TnTColor.OnSecondaryContainer,
-            NTButtonVariant.Outlined => TnTColor.OnSurfaceVariant,
-            NTButtonVariant.Text => TnTColor.Primary,
+            NTButtonVariant.Elevated => NTColor.Primary,
+            NTButtonVariant.Filled => NTColor.OnSurfaceVariant,
+            NTButtonVariant.Tonal => NTColor.OnSecondaryContainer,
+            NTButtonVariant.Outlined => NTColor.OnSurfaceVariant,
+            NTButtonVariant.Text => NTColor.Primary,
             _ => throw new ArgumentOutOfRangeException(nameof(Variant), Variant, null)
         };
     }
 
-    private static bool IsTransparentContainerColor(TnTColor color) => color is TnTColor.None or TnTColor.Transparent;
+    private static bool IsTransparentContainerColor(NTColor color) => color is NTColor.Transparent;
 
-    private static bool IsVisibleContentColor(TnTColor? color) => color is not (null or TnTColor.None or TnTColor.Transparent);
+    private static bool IsVisibleContentColor(NTColor? color) => color is not (null or NTColor.Transparent);
 
     private void ValidateBackgroundColorForVariant() {
         if (!BackgroundColor.HasValue) {
@@ -550,7 +550,7 @@ public partial class NTButtonGroup<TObjectType> : NTComponentBase {
         }
 
         if (Variant is NTButtonVariant.Text or NTButtonVariant.Outlined) {
-            if (BackgroundColor != TnTColor.Transparent) {
+            if (BackgroundColor != NTColor.Transparent) {
                 throw new InvalidOperationException($"{Variant} button groups must use a transparent {nameof(BackgroundColor)}.");
             }
 
@@ -568,7 +568,7 @@ public partial class NTButtonGroup<TObjectType> : NTComponentBase {
         }
 
         if (Variant == NTButtonVariant.Text) {
-            if (SelectedBackgroundColor != TnTColor.Transparent) {
+            if (SelectedBackgroundColor != NTColor.Transparent) {
                 throw new InvalidOperationException($"{Variant} button groups must use a transparent {nameof(SelectedBackgroundColor)}.");
             }
 

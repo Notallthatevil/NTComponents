@@ -56,8 +56,8 @@ public partial class NTButton : NTButtonBase, INTBadgeable {
     /// <inheritdoc />
     public override string? ElementStyle => CssStyleBuilder.Create()
         .AddFromAdditionalAttributes(AdditionalAttributes)
-        .AddVariable("nt-button-bg", BackgroundColor.ToCssTnTColorVariable(), BackgroundColor.HasValue)
-        .AddVariable("nt-button-fg", TextColor.ToCssTnTColorVariable(), TextColor.HasValue)
+        .AddVariable("nt-button-bg", BackgroundColor.ToCssNTColorVariable(), BackgroundColor.HasValue)
+        .AddVariable("nt-button-fg", TextColor.ToCssNTColorVariable(), TextColor.HasValue)
         .Build();
 
     /// <summary>
@@ -152,28 +152,28 @@ public partial class NTButton : NTButtonBase, INTBadgeable {
         ValidateVariantElevationCombination();
     }
 
-    private TnTColor GetDefaultBackgroundColor() {
+    private NTColor GetDefaultBackgroundColor() {
         if (IsToggleButton) {
             return GetDefaultToggleBackgroundColor();
         }
 
         return Variant switch {
-            NTButtonVariant.Elevated => TnTColor.SurfaceContainerLow,
-            NTButtonVariant.Filled => TnTColor.Primary,
-            NTButtonVariant.Tonal => TnTColor.SecondaryContainer,
-            NTButtonVariant.Outlined => TnTColor.Transparent,
-            NTButtonVariant.Text => TnTColor.Transparent,
+            NTButtonVariant.Elevated => NTColor.SurfaceContainerLow,
+            NTButtonVariant.Filled => NTColor.Primary,
+            NTButtonVariant.Tonal => NTColor.SecondaryContainer,
+            NTButtonVariant.Outlined => NTColor.Transparent,
+            NTButtonVariant.Text => NTColor.Transparent,
             _ => throw new ArgumentOutOfRangeException(nameof(Variant), Variant, null)
         };
     }
 
-    private TnTColor GetDefaultToggleBackgroundColor() {
+    private NTColor GetDefaultToggleBackgroundColor() {
         return Variant switch {
-            NTButtonVariant.Elevated => Selected ? TnTColor.Primary : TnTColor.SurfaceContainerLow,
-            NTButtonVariant.Filled => Selected ? TnTColor.Primary : TnTColor.SurfaceContainer,
-            NTButtonVariant.Tonal => Selected ? TnTColor.Secondary : TnTColor.SecondaryContainer,
-            NTButtonVariant.Outlined => Selected ? TnTColor.InverseSurface : TnTColor.Transparent,
-            NTButtonVariant.Text => TnTColor.Transparent,
+            NTButtonVariant.Elevated => Selected ? NTColor.Primary : NTColor.SurfaceContainerLow,
+            NTButtonVariant.Filled => Selected ? NTColor.Primary : NTColor.SurfaceContainer,
+            NTButtonVariant.Tonal => Selected ? NTColor.Secondary : NTColor.SecondaryContainer,
+            NTButtonVariant.Outlined => Selected ? NTColor.InverseSurface : NTColor.Transparent,
+            NTButtonVariant.Text => NTColor.Transparent,
             _ => throw new ArgumentOutOfRangeException(nameof(Variant), Variant, null)
         };
     }
@@ -182,28 +182,28 @@ public partial class NTButton : NTButtonBase, INTBadgeable {
         return Variant == NTButtonVariant.Elevated ? NTElevation.Lowest : NTElevation.None;
     }
 
-    private TnTColor GetDefaultTextColor() {
+    private NTColor GetDefaultTextColor() {
         if (IsToggleButton) {
             return GetDefaultToggleTextColor();
         }
 
         return Variant switch {
-            NTButtonVariant.Elevated => TnTColor.Primary,
-            NTButtonVariant.Filled => TnTColor.OnPrimary,
-            NTButtonVariant.Tonal => TnTColor.OnSecondaryContainer,
-            NTButtonVariant.Outlined => TnTColor.Primary,
-            NTButtonVariant.Text => TnTColor.Primary,
+            NTButtonVariant.Elevated => NTColor.Primary,
+            NTButtonVariant.Filled => NTColor.OnPrimary,
+            NTButtonVariant.Tonal => NTColor.OnSecondaryContainer,
+            NTButtonVariant.Outlined => NTColor.Primary,
+            NTButtonVariant.Text => NTColor.Primary,
             _ => throw new ArgumentOutOfRangeException(nameof(Variant), Variant, null)
         };
     }
 
-    private TnTColor GetDefaultToggleTextColor() {
+    private NTColor GetDefaultToggleTextColor() {
         return Variant switch {
-            NTButtonVariant.Elevated => Selected ? TnTColor.OnPrimary : TnTColor.Primary,
-            NTButtonVariant.Filled => Selected ? TnTColor.OnPrimary : TnTColor.OnSurfaceVariant,
-            NTButtonVariant.Tonal => Selected ? TnTColor.OnSecondary : TnTColor.OnSecondaryContainer,
-            NTButtonVariant.Outlined => Selected ? TnTColor.InverseOnSurface : TnTColor.OnSurfaceVariant,
-            NTButtonVariant.Text => TnTColor.Primary,
+            NTButtonVariant.Elevated => Selected ? NTColor.OnPrimary : NTColor.Primary,
+            NTButtonVariant.Filled => Selected ? NTColor.OnPrimary : NTColor.OnSurfaceVariant,
+            NTButtonVariant.Tonal => Selected ? NTColor.OnSecondary : NTColor.OnSecondaryContainer,
+            NTButtonVariant.Outlined => Selected ? NTColor.InverseOnSurface : NTColor.OnSurfaceVariant,
+            NTButtonVariant.Text => NTColor.Primary,
             _ => throw new ArgumentOutOfRangeException(nameof(Variant), Variant, null)
         };
     }
@@ -211,21 +211,21 @@ public partial class NTButton : NTButtonBase, INTBadgeable {
     private void ValidateBackgroundColorForVariant() {
         if (Variant is NTButtonVariant.Text or NTButtonVariant.Outlined) {
             if (Variant == NTButtonVariant.Outlined && IsToggleButton && Selected) {
-                if (BackgroundColor is TnTColor.None or TnTColor.Transparent) {
+                if (BackgroundColor is NTColor.Transparent) {
                     throw new InvalidOperationException($"{Variant} selected toggle buttons must use a visible container {nameof(BackgroundColor)}.");
                 }
 
                 return;
             }
 
-            if (BackgroundColor != TnTColor.Transparent) {
+            if (BackgroundColor != NTColor.Transparent) {
                 throw new InvalidOperationException($"{Variant} buttons must use a transparent {nameof(BackgroundColor)}.");
             }
 
             return;
         }
 
-        if (BackgroundColor is TnTColor.None or TnTColor.Transparent) {
+        if (BackgroundColor is NTColor.Transparent) {
             throw new InvalidOperationException($"{Variant} buttons must use a visible container {nameof(BackgroundColor)}.");
         }
     }
@@ -235,7 +235,7 @@ public partial class NTButton : NTButtonBase, INTBadgeable {
             ValidateBackgroundColorForVariant();
         }
 
-        if (TextColor is TnTColor.None or TnTColor.Transparent) {
+        if (TextColor is NTColor.Transparent) {
             throw new InvalidOperationException($"{nameof(TextColor)} must be a visible content color.");
         }
     }

@@ -15,17 +15,17 @@
         _ => "SSR unknown"
     };
 
-    private TnTColor BackgroundColor => Type.RenderCompatibility switch {
-        "SsrCompatible" => TnTColor.SuccessContainer,
-        "ProgressivelyEnhanced" => TnTColor.SecondaryContainer,
-        "InteractiveRequired" => TnTColor.ErrorContainer,
-        _ => TnTColor.SurfaceContainerHighest
+    private NTColor BackgroundColor => Type.RenderCompatibility switch {
+        "SsrCompatible" => NTColor.SuccessContainer,
+        "ProgressivelyEnhanced" => NTColor.SecondaryContainer,
+        "InteractiveRequired" => NTColor.ErrorContainer,
+        _ => NTColor.SurfaceContainerHighest
     };
 
-    private TnTColor TextColor => Type.RenderCompatibility switch {
-        "SsrCompatible" => TnTColor.OnSuccessContainer,
-        "ProgressivelyEnhanced" => TnTColor.OnSecondaryContainer,
-        "InteractiveRequired" => TnTColor.OnErrorContainer,
-        _ => TnTColor.OnSurfaceVariant
+    private NTColor TextColor => Type.RenderCompatibility switch {
+        "SsrCompatible" => NTColor.OnSuccessContainer,
+        "ProgressivelyEnhanced" => NTColor.OnSecondaryContainer,
+        "InteractiveRequired" => NTColor.OnErrorContainer,
+        _ => NTColor.OnSurfaceVariant
     };
 }

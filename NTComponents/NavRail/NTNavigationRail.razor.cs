@@ -57,13 +57,13 @@ public partial class NTNavigationRail {
     ///     Rail container color.
     /// </summary>
     [Parameter]
-    public TnTColor? ContainerColor { get; set; }
+    public NTColor? ContainerColor { get; set; }
 
     /// <summary>
     ///     Color used by the optional content-adjacent divider.
     /// </summary>
     [Parameter]
-    public TnTColor? DividerColor { get; set; }
+    public NTColor? DividerColor { get; set; }
 
     /// <summary>
     ///     Optional elevation class applied to the rail surface.
@@ -122,25 +122,25 @@ public partial class NTNavigationRail {
     ///     Optional override for the selected destination icon and label color.
     /// </summary>
     [Parameter]
-    public TnTColor? ActiveColor { get; set; }
+    public NTColor? ActiveColor { get; set; }
 
     /// <summary>
     ///     Optional override for the active destination indicator color.
     /// </summary>
     [Parameter]
-    public TnTColor? IndicatorColor { get; set; }
+    public NTColor? IndicatorColor { get; set; }
 
     /// <summary>
     ///     Optional override for the modal scrim color. Defaults to the Material 3 scrim color role.
     /// </summary>
     [Parameter]
-    public TnTColor? ScrimColor { get; set; }
+    public NTColor? ScrimColor { get; set; }
 
     /// <summary>
     ///     Optional override for hover, focus, pressed, and ripple state-layer color.
     /// </summary>
     [Parameter]
-    public TnTColor? StateLayerColor { get; set; }
+    public NTColor? StateLayerColor { get; set; }
 
     /// <summary>
     ///     Optional custom menu/collapse affordance content.
@@ -228,12 +228,12 @@ public partial class NTNavigationRail {
 
         _stableElementId = CreateStableElementId(AriaLabel);
 
-        ContainerColor ??= TnTColor.Surface;
-        DividerColor ??= TnTColor.OutlineVariant;
-        IndicatorColor ??= TnTColor.SecondaryContainer;
-        ActiveColor ??= TnTColor.OnSecondaryContainer;
-        ScrimColor ??= TnTColor.Scrim;
-        StateLayerColor ??= TnTColor.OnSecondaryContainer;
+        ContainerColor ??= NTColor.Surface;
+        DividerColor ??= NTColor.OutlineVariant;
+        IndicatorColor ??= NTColor.SecondaryContainer;
+        ActiveColor ??= NTColor.OnSecondaryContainer;
+        ScrimColor ??= NTColor.Scrim;
+        StateLayerColor ??= NTColor.OnSecondaryContainer;
 
         _effectiveElementId = ElementId ?? TryGetStringAttribute("id") ?? _stableElementId;
         _externalMenuButtonId = $"{_effectiveElementId}-xs-menu-button";
@@ -267,12 +267,12 @@ public partial class NTNavigationRail {
 
     private string? BuildElementStyle() => CssStyleBuilder.Create()
         .AddFromAdditionalAttributes(AdditionalAttributes)
-        .AddVariable("nt-navigation-rail-container-color", ContainerColor.ToCssTnTColorVariable(), ContainerColor.HasValue)
-        .AddVariable("nt-navigation-rail-divider-color", DividerColor.ToCssTnTColorVariable(), (ShowDivider || Header is not null || Footer is not null) && DividerColor.HasValue)
-        .AddVariable("nt-navigation-rail-indicator-color", IndicatorColor.ToCssTnTColorVariable(), IndicatorColor.HasValue)
-        .AddVariable("nt-navigation-rail-active-color", ActiveColor.ToCssTnTColorVariable(), ActiveColor.HasValue)
-        .AddVariable("nt-navigation-rail-scrim-color", ScrimColor.ToCssTnTColorVariable(), ScrimColor.HasValue)
-        .AddVariable("nt-navigation-rail-state-layer-color", StateLayerColor.ToCssTnTColorVariable(), StateLayerColor.HasValue)
+        .AddVariable("nt-navigation-rail-container-color", ContainerColor.ToCssNTColorVariable(), ContainerColor.HasValue)
+        .AddVariable("nt-navigation-rail-divider-color", DividerColor.ToCssNTColorVariable(), (ShowDivider || Header is not null || Footer is not null) && DividerColor.HasValue)
+        .AddVariable("nt-navigation-rail-indicator-color", IndicatorColor.ToCssNTColorVariable(), IndicatorColor.HasValue)
+        .AddVariable("nt-navigation-rail-active-color", ActiveColor.ToCssNTColorVariable(), ActiveColor.HasValue)
+        .AddVariable("nt-navigation-rail-scrim-color", ScrimColor.ToCssNTColorVariable(), ScrimColor.HasValue)
+        .AddVariable("nt-navigation-rail-state-layer-color", StateLayerColor.ToCssNTColorVariable(), StateLayerColor.HasValue)
         .Build();
 
     private string? TryGetStringAttribute(string attributeName) {

@@ -333,39 +333,39 @@ public class NTChip_Tests : BunitContext {
     public void Color_Overrides_Render_As_Css_Variables() {
         var cut = Render<NTChip>(parameters => parameters
             .Add(chip => chip.Label, "Custom")
-            .Add(chip => chip.BackgroundColor, TnTColor.TertiaryContainer)
-            .Add(chip => chip.TextColor, TnTColor.OnTertiaryContainer)
-            .Add(chip => chip.IconColor, TnTColor.Tertiary)
-            .Add(chip => chip.OutlineColor, TnTColor.Tertiary)
-            .Add(chip => chip.SelectedBackgroundColor, TnTColor.PrimaryContainer)
-            .Add(chip => chip.SelectedTextColor, TnTColor.OnPrimaryContainer)
-            .Add(chip => chip.SelectedIconColor, TnTColor.Primary)
-            .Add(chip => chip.SelectedOutlineColor, TnTColor.Primary)
-            .Add(chip => chip.StateLayerColor, TnTColor.Tertiary)
-            .Add(chip => chip.SelectedStateLayerColor, TnTColor.Primary)
-            .Add(chip => chip.FocusOutlineColor, TnTColor.Primary)
-            .Add(chip => chip.DisabledBackgroundColor, TnTColor.SurfaceContainerHighest)
-            .Add(chip => chip.DisabledTextColor, TnTColor.OnSurfaceVariant)
-            .Add(chip => chip.DisabledIconColor, TnTColor.OnSurfaceVariant)
-            .Add(chip => chip.DisabledOutlineColor, TnTColor.OutlineVariant));
+            .Add(chip => chip.BackgroundColor, NTColor.TertiaryContainer)
+            .Add(chip => chip.TextColor, NTColor.OnTertiaryContainer)
+            .Add(chip => chip.IconColor, NTColor.Tertiary)
+            .Add(chip => chip.OutlineColor, NTColor.Tertiary)
+            .Add(chip => chip.SelectedBackgroundColor, NTColor.PrimaryContainer)
+            .Add(chip => chip.SelectedTextColor, NTColor.OnPrimaryContainer)
+            .Add(chip => chip.SelectedIconColor, NTColor.Primary)
+            .Add(chip => chip.SelectedOutlineColor, NTColor.Primary)
+            .Add(chip => chip.StateLayerColor, NTColor.Tertiary)
+            .Add(chip => chip.SelectedStateLayerColor, NTColor.Primary)
+            .Add(chip => chip.FocusOutlineColor, NTColor.Primary)
+            .Add(chip => chip.DisabledBackgroundColor, NTColor.SurfaceContainerHighest)
+            .Add(chip => chip.DisabledTextColor, NTColor.OnSurfaceVariant)
+            .Add(chip => chip.DisabledIconColor, NTColor.OnSurfaceVariant)
+            .Add(chip => chip.DisabledOutlineColor, NTColor.OutlineVariant));
 
         var style = cut.Find("span.nt-chip").GetAttribute("style")!;
 
-        style.Should().Contain("--nt-chip-bg:var(--tnt-color-tertiary-container)");
-        style.Should().Contain("--nt-chip-fg:var(--tnt-color-on-tertiary-container)");
-        style.Should().Contain("--nt-chip-icon:var(--tnt-color-tertiary)");
-        style.Should().Contain("--nt-chip-outline:var(--tnt-color-tertiary)");
-        style.Should().Contain("--nt-chip-selected-bg:var(--tnt-color-primary-container)");
-        style.Should().Contain("--nt-chip-selected-fg:var(--tnt-color-on-primary-container)");
-        style.Should().Contain("--nt-chip-selected-icon:var(--tnt-color-primary)");
-        style.Should().Contain("--nt-chip-selected-outline:var(--tnt-color-primary)");
-        style.Should().Contain("--nt-chip-state-layer:var(--tnt-color-tertiary)");
-        style.Should().Contain("--nt-chip-selected-state-layer:var(--tnt-color-primary)");
-        style.Should().Contain("--nt-chip-focus-outline:var(--tnt-color-primary)");
-        style.Should().Contain("--nt-chip-disabled-bg:var(--tnt-color-surface-container-highest)");
-        style.Should().Contain("--nt-chip-disabled-fg:var(--tnt-color-on-surface-variant)");
-        style.Should().Contain("--nt-chip-disabled-icon:var(--tnt-color-on-surface-variant)");
-        style.Should().Contain("--nt-chip-disabled-outline:var(--tnt-color-outline-variant)");
+        style.Should().Contain("--nt-chip-bg:var(--nt-color-tertiary-container)");
+        style.Should().Contain("--nt-chip-fg:var(--nt-color-on-tertiary-container)");
+        style.Should().Contain("--nt-chip-icon:var(--nt-color-tertiary)");
+        style.Should().Contain("--nt-chip-outline:var(--nt-color-tertiary)");
+        style.Should().Contain("--nt-chip-selected-bg:var(--nt-color-primary-container)");
+        style.Should().Contain("--nt-chip-selected-fg:var(--nt-color-on-primary-container)");
+        style.Should().Contain("--nt-chip-selected-icon:var(--nt-color-primary)");
+        style.Should().Contain("--nt-chip-selected-outline:var(--nt-color-primary)");
+        style.Should().Contain("--nt-chip-state-layer:var(--nt-color-tertiary)");
+        style.Should().Contain("--nt-chip-selected-state-layer:var(--nt-color-primary)");
+        style.Should().Contain("--nt-chip-focus-outline:var(--nt-color-primary)");
+        style.Should().Contain("--nt-chip-disabled-bg:var(--nt-color-surface-container-highest)");
+        style.Should().Contain("--nt-chip-disabled-fg:var(--nt-color-on-surface-variant)");
+        style.Should().Contain("--nt-chip-disabled-icon:var(--nt-color-on-surface-variant)");
+        style.Should().Contain("--nt-chip-disabled-outline:var(--nt-color-outline-variant)");
     }
 
     [Theory]

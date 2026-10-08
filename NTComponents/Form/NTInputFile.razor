@@ -27,8 +27,8 @@
 						   ButtonSize="@EffectiveUploadButtonSize"
 						   Type="ButtonType.Button"
 						   Disabled="@UploadButtonDisabled"
-						   BackgroundColor="@EffectiveUploadButtonBackgroundColor"
-						   TextColor="@EffectiveUploadButtonTextColor"
+						   BackgroundColor="@EffectiveUploadButtonBackgroundColor.ToLegacyColor()"
+						   TextColor="@EffectiveUploadButtonTextColor.ToLegacyColor()"
 						   OnClickCallback="OnUploadButtonClickedAsync">
 					<span>@UploadButtonText</span>
 				</TnTButton>
@@ -63,8 +63,8 @@
 															ButtonSize="Size.XS"
 															Disabled="@(_isUploading || FieldDisabled || FieldReadonly)"
 															Icon="@MaterialIcon.Close"
-															TextColor="TnTColor.OnSurfaceVariant"
-															TintColor="TnTColor.Primary"
+															TextColor="@NTColor.OnSurfaceVariant.ToLegacyColor()"
+															TintColor="@NTColor.Primary.ToLegacyColor()"
 															Type="ButtonType.Button"
 															ElementTitle="Remove file"
 															StopPropagation="true"

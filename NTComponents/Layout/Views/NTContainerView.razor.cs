@@ -66,25 +66,25 @@ public partial class NTContainerView {
     ///     Optional color override for the "On this page" label.
     /// </summary>
     [Parameter]
-    public TnTColor? OnThisPageLabelColor { get; set; } = TnTColor.OnSurfaceVariant;
+    public NTColor? OnThisPageLabelColor { get; set; } = NTColor.OnSurfaceVariant;
 
     /// <summary>
     ///     Optional color override for the quick navigation selector outline.
     /// </summary>
     [Parameter]
-    public TnTColor? OnThisPageSelectorColor { get; set; } = TnTColor.Outline;
+    public NTColor? OnThisPageSelectorColor { get; set; } = NTColor.Outline;
 
     /// <summary>
     ///     Optional color override for the selected quick navigation link text.
     /// </summary>
     [Parameter]
-    public TnTColor? OnThisPageSelectedTextColor { get; set; } = TnTColor.OnSurface;
+    public NTColor? OnThisPageSelectedTextColor { get; set; } = NTColor.OnSurface;
 
     /// <summary>
     ///     Optional color override for quick navigation link text.
     /// </summary>
     [Parameter]
-    public TnTColor? OnThisPageTextColor { get; set; } = TnTColor.OnSurface;
+    public NTColor? OnThisPageTextColor { get; set; } = NTColor.OnSurface;
 
     /// <inheritdoc />
     protected override string ComponentClass => "nt-container-view";
@@ -103,9 +103,9 @@ public partial class NTContainerView {
     /// <inheritdoc />
     protected override void AddComponentStyles(CssStyleBuilder builder) {
         builder
-            .AddVariable("nt-container-view-on-this-page-label-color", OnThisPageLabelColor.ToCssTnTColorVariable(), OnThisPageLabelColor.HasValue)
-            .AddVariable("nt-container-view-on-this-page-selector-color", OnThisPageSelectorColor.ToCssTnTColorVariable(), OnThisPageSelectorColor.HasValue)
-            .AddVariable("nt-container-view-on-this-page-selected-text-color", OnThisPageSelectedTextColor.ToCssTnTColorVariable(), OnThisPageSelectedTextColor.HasValue)
-            .AddVariable("nt-container-view-on-this-page-text-color", OnThisPageTextColor.ToCssTnTColorVariable(), OnThisPageTextColor.HasValue);
+            .AddVariable("nt-container-view-on-this-page-label-color", OnThisPageLabelColor.ToCssNTColorVariable(), OnThisPageLabelColor.HasValue)
+            .AddVariable("nt-container-view-on-this-page-selector-color", OnThisPageSelectorColor.ToCssNTColorVariable(), OnThisPageSelectorColor.HasValue)
+            .AddVariable("nt-container-view-on-this-page-selected-text-color", OnThisPageSelectedTextColor.ToCssNTColorVariable(), OnThisPageSelectedTextColor.HasValue)
+            .AddVariable("nt-container-view-on-this-page-text-color", OnThisPageTextColor.ToCssNTColorVariable(), OnThisPageTextColor.HasValue);
     }
 }

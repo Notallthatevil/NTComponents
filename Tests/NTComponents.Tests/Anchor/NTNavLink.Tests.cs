@@ -14,8 +14,8 @@ public class NTNavLink_Tests : BunitContext {
         link.GetAttribute("class")!.Should().Contain("nt-nav-link-button-chrome");
         link.GetAttribute("class")!.Should().Contain("nt-nav-link-filled");
         link.GetAttribute("class")!.Should().Contain("tnt-size-s");
-        link.GetAttribute("style")!.Should().Contain("--nt-nav-link-bg:var(--tnt-color-primary)");
-        link.GetAttribute("style")!.Should().Contain("--nt-nav-link-fg:var(--tnt-color-on-primary)");
+        link.GetAttribute("style")!.Should().Contain("--nt-nav-link-bg:var(--nt-color-primary)");
+        link.GetAttribute("style")!.Should().Contain("--nt-nav-link-fg:var(--nt-color-on-primary)");
         link.GetAttribute("style")!.Should().NotContain("--nt-nav-link-active-bg");
         link.GetAttribute("style")!.Should().NotContain("--nt-nav-link-active-fg");
     }
@@ -201,16 +201,16 @@ public class NTNavLink_Tests : BunitContext {
     [Fact]
     public void Active_Colors_Render_As_Css_Variables_And_Classes() {
         var cut = Render<NTNavLink>(parameters => parameters
-            .Add(x => x.ActiveBackgroundColor, TnTColor.Secondary)
-            .Add(x => x.ActiveTextColor, TnTColor.OnSecondary)
+            .Add(x => x.ActiveBackgroundColor, NTColor.Secondary)
+            .Add(x => x.ActiveTextColor, NTColor.OnSecondary)
             .Add(x => x.Label, "Home"));
 
         var link = cut.Find("a");
 
         link.GetAttribute("class")!.Should().Contain("active-bg-color");
         link.GetAttribute("class")!.Should().Contain("active-fg-color");
-        link.GetAttribute("style")!.Should().Contain("--nt-nav-link-active-bg:var(--tnt-color-secondary)");
-        link.GetAttribute("style")!.Should().Contain("--nt-nav-link-active-fg:var(--tnt-color-on-secondary)");
+        link.GetAttribute("style")!.Should().Contain("--nt-nav-link-active-bg:var(--nt-color-secondary)");
+        link.GetAttribute("style")!.Should().Contain("--nt-nav-link-active-fg:var(--nt-color-on-secondary)");
     }
 
     [Theory]
@@ -228,8 +228,8 @@ public class NTNavLink_Tests : BunitContext {
 
         link.GetAttribute("class")!.Should().Contain(expectedClass);
         link.GetAttribute("class")!.Should().Contain("nt-nav-link-button-chrome");
-        link.GetAttribute("style")!.Should().Contain($"--nt-nav-link-bg:var(--tnt-color-{expectedBackground})");
-        link.GetAttribute("style")!.Should().Contain($"--nt-nav-link-fg:var(--tnt-color-{expectedText})");
+        link.GetAttribute("style")!.Should().Contain($"--nt-nav-link-bg:var(--nt-color-{expectedBackground})");
+        link.GetAttribute("style")!.Should().Contain($"--nt-nav-link-fg:var(--nt-color-{expectedText})");
         link.GetAttribute("style")!.Should().NotContain("--nt-nav-link-active-bg");
         link.GetAttribute("style")!.Should().NotContain("--nt-nav-link-active-fg");
     }
@@ -252,9 +252,9 @@ public class NTNavLink_Tests : BunitContext {
     public void InlineText_Renders_Text_Link_With_No_Underline_Class_And_Color_Overrides() {
         var cut = Render<NTNavLink>(parameters => parameters
             .Add(x => x.Variant, NTNavLinkVariant.InlineText)
-            .Add(x => x.TextColor, TnTColor.Primary)
-            .Add(x => x.HoverTextColor, TnTColor.Secondary)
-            .Add(x => x.VisitedTextColor, TnTColor.Tertiary)
+            .Add(x => x.TextColor, NTColor.Primary)
+            .Add(x => x.HoverTextColor, NTColor.Secondary)
+            .Add(x => x.VisitedTextColor, NTColor.Tertiary)
             .Add(x => x.Label, "inline docs"));
 
         var link = cut.Find("a");
@@ -262,9 +262,9 @@ public class NTNavLink_Tests : BunitContext {
 
         link.GetAttribute("class")!.Should().Contain("nt-nav-link-inline-text");
         link.GetAttribute("class")!.Should().NotContain("nt-nav-link-button-chrome");
-        style.Should().Contain("--nt-nav-link-fg:var(--tnt-color-primary)");
-        style.Should().Contain("--nt-nav-link-hover-fg:var(--tnt-color-secondary)");
-        style.Should().Contain("--nt-nav-link-visited-fg:var(--tnt-color-tertiary)");
+        style.Should().Contain("--nt-nav-link-fg:var(--nt-color-primary)");
+        style.Should().Contain("--nt-nav-link-hover-fg:var(--nt-color-secondary)");
+        style.Should().Contain("--nt-nav-link-visited-fg:var(--nt-color-tertiary)");
         cut.Markup.Should().NotContain("nt-button-ripple-host");
     }
 
@@ -272,7 +272,7 @@ public class NTNavLink_Tests : BunitContext {
     public void Button_Chrome_Variant_Does_Not_Render_Visited_Color_Override() {
         var cut = Render<NTNavLink>(parameters => parameters
             .Add(x => x.Variant, NTNavLinkVariant.Filled)
-            .Add(x => x.VisitedTextColor, TnTColor.Tertiary)
+            .Add(x => x.VisitedTextColor, NTColor.Tertiary)
             .Add(x => x.Label, "Home"));
 
         cut.Find("a").GetAttribute("style").Should().NotContain("--nt-nav-link-visited-fg");
@@ -292,7 +292,7 @@ public class NTNavLink_Tests : BunitContext {
     public void Text_Variant_With_Visible_BackgroundColor_Throws() {
         var render = () => Render<NTNavLink>(parameters => parameters
             .Add(x => x.Variant, NTNavLinkVariant.Text)
-            .Add(x => x.BackgroundColor, TnTColor.Primary)
+            .Add(x => x.BackgroundColor, NTColor.Primary)
             .Add(x => x.Label, "Invalid"));
 
         render.Should().Throw<InvalidOperationException>()
@@ -357,15 +357,15 @@ public class NTNavLink_Tests : BunitContext {
     [Fact]
     public void Explicit_Null_Overrides_Use_The_Variant_Defaults() {
         var cut = Render<NTNavLink>(parameters => parameters
-            .Add(x => x.BackgroundColor, (TnTColor?)null)
+            .Add(x => x.BackgroundColor, (NTColor?)null)
             .Add(x => x.Elevation, (NTElevation?)null)
-            .Add(x => x.TextColor, (TnTColor?)null)
+            .Add(x => x.TextColor, (NTColor?)null)
             .Add(x => x.Label, "Home"));
 
         var style = cut.Find("a").GetAttribute("style");
 
-        style.Should().Contain("--nt-nav-link-bg:var(--tnt-color-primary)");
-        style.Should().Contain("--nt-nav-link-fg:var(--tnt-color-on-primary)");
+        style.Should().Contain("--nt-nav-link-bg:var(--nt-color-primary)");
+        style.Should().Contain("--nt-nav-link-fg:var(--nt-color-on-primary)");
     }
 
     [Theory]
@@ -374,7 +374,7 @@ public class NTNavLink_Tests : BunitContext {
     public void Transparent_Button_Variants_Reject_Visible_Backgrounds(NTNavLinkVariant variant) {
         var render = () => Render<NTNavLink>(parameters => parameters
             .Add(x => x.Variant, variant)
-            .Add(x => x.BackgroundColor, TnTColor.Primary)
+            .Add(x => x.BackgroundColor, NTColor.Primary)
             .Add(x => x.Label, "Invalid"));
 
         render.Should().Throw<InvalidOperationException>()
@@ -382,10 +382,8 @@ public class NTNavLink_Tests : BunitContext {
     }
 
     [Theory]
-    [InlineData(NTNavLinkVariant.Elevated, TnTColor.None)]
-    [InlineData(NTNavLinkVariant.Filled, TnTColor.Transparent)]
-    [InlineData(NTNavLinkVariant.Tonal, TnTColor.None)]
-    public void Contained_Button_Variants_Reject_Invisible_Backgrounds(NTNavLinkVariant variant, TnTColor backgroundColor) {
+    [InlineData(NTNavLinkVariant.Filled, NTColor.Transparent)]
+    public void Contained_Button_Variants_Reject_Invisible_Backgrounds(NTNavLinkVariant variant, NTColor backgroundColor) {
         var render = () => Render<NTNavLink>(parameters => parameters
             .Add(x => x.Variant, variant)
             .Add(x => x.BackgroundColor, backgroundColor)
@@ -396,15 +394,11 @@ public class NTNavLink_Tests : BunitContext {
     }
 
     [Theory]
-    [InlineData("TextColor", TnTColor.None, NTNavLinkVariant.Filled)]
-    [InlineData("TextColor", TnTColor.Transparent, NTNavLinkVariant.Filled)]
-    [InlineData("HoverTextColor", TnTColor.None, NTNavLinkVariant.Filled)]
-    [InlineData("HoverTextColor", TnTColor.Transparent, NTNavLinkVariant.Filled)]
-    [InlineData("VisitedTextColor", TnTColor.None, NTNavLinkVariant.DefaultAnchor)]
-    [InlineData("VisitedTextColor", TnTColor.Transparent, NTNavLinkVariant.InlineText)]
-    [InlineData("ActiveTextColor", TnTColor.None, NTNavLinkVariant.Filled)]
-    [InlineData("ActiveTextColor", TnTColor.Transparent, NTNavLinkVariant.Filled)]
-    public void Invisible_Content_Color_Overrides_Are_Rejected(string parameterName, TnTColor color, NTNavLinkVariant variant) {
+    [InlineData("TextColor", NTColor.Transparent, NTNavLinkVariant.Filled)]
+    [InlineData("HoverTextColor", NTColor.Transparent, NTNavLinkVariant.Filled)]
+    [InlineData("VisitedTextColor", NTColor.Transparent, NTNavLinkVariant.InlineText)]
+    [InlineData("ActiveTextColor", NTColor.Transparent, NTNavLinkVariant.Filled)]
+    public void Invisible_Content_Color_Overrides_Are_Rejected(string parameterName, NTColor color, NTNavLinkVariant variant) {
         var render = () => Render<NTNavLink>(parameters => {
             parameters
                 .Add(x => x.Variant, variant)
@@ -434,14 +428,14 @@ public class NTNavLink_Tests : BunitContext {
     public void Text_Link_Chrome_Allows_A_Consumer_Background_Without_Button_Validation() {
         var cut = Render<NTNavLink>(parameters => parameters
             .Add(x => x.Variant, NTNavLinkVariant.DefaultAnchor)
-            .Add(x => x.BackgroundColor, TnTColor.Primary)
+            .Add(x => x.BackgroundColor, NTColor.Primary)
             .Add(x => x.Elevation, NTElevation.Low)
             .Add(x => x.Label, "Docs"));
 
         var link = cut.Find("a");
 
         link.ClassList.Should().NotContain("nt-nav-link-button-chrome");
-        link.GetAttribute("style").Should().Contain("--nt-nav-link-bg:var(--tnt-color-primary)");
+        link.GetAttribute("style").Should().Contain("--nt-nav-link-bg:var(--nt-color-primary)");
     }
 
     [Theory]

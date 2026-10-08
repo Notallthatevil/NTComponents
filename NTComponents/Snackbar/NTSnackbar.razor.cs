@@ -116,9 +116,9 @@ public partial class NTSnackbar {
         }
     }
 
-    private static void AppendColorProperty(StringBuilder builder, ref bool hasPreviousProperty, string name, TnTColor? value) {
+    private static void AppendColorProperty(StringBuilder builder, ref bool hasPreviousProperty, string name, NTColor? value) {
         if (value.HasValue) {
-            AppendStringProperty(builder, ref hasPreviousProperty, name, value.Value.ToCssTnTColorVariable());
+            AppendStringProperty(builder, ref hasPreviousProperty, name, value.Value.ToCssNTColorVariable());
         }
     }
 
@@ -157,7 +157,7 @@ public sealed class NTSnackbarQueueScriptOptions {
     /// <summary>
     ///     Gets or sets the action text color.
     /// </summary>
-    public TnTColor? ActionColor { get; set; }
+    public NTColor? ActionColor { get; set; }
 
     /// <summary>
     ///     Gets or sets the action label, when an action is available.
@@ -167,7 +167,7 @@ public sealed class NTSnackbarQueueScriptOptions {
     /// <summary>
     ///     Gets or sets the snackbar container background color.
     /// </summary>
-    public TnTColor? BackgroundColor { get; set; }
+    public NTColor? BackgroundColor { get; set; }
 
     /// <summary>
     ///     Gets or sets the host element id to target, when a specific host should receive the snackbar.
@@ -192,7 +192,7 @@ public sealed class NTSnackbarQueueScriptOptions {
     /// <summary>
     ///     Gets or sets the supporting text color.
     /// </summary>
-    public TnTColor? TextColor { get; set; }
+    public NTColor? TextColor { get; set; }
 
     /// <summary>
     ///     Gets or sets the timeout in seconds before auto-dismiss. Zero or less disables auto-dismiss.

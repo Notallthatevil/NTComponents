@@ -167,7 +167,7 @@ public class NTButton_Tests : BunitContext {
         var render = () => Render<NTButton>(parameters => parameters
             .Add(x => x.Label, "Invalid")
             .Add(x => x.Variant, NTButtonVariant.Text)
-            .Add(x => x.BackgroundColor, TnTColor.Primary));
+            .Add(x => x.BackgroundColor, NTColor.Primary));
 
         render.Should().Throw<InvalidOperationException>()
             .WithMessage("*Text buttons must use a transparent BackgroundColor*");
@@ -181,7 +181,7 @@ public class NTButton_Tests : BunitContext {
         var render = () => Render<NTButton>(parameters => parameters
             .Add(x => x.Label, "Invalid")
             .Add(x => x.Variant, variant)
-            .Add(x => x.BackgroundColor, TnTColor.Transparent));
+            .Add(x => x.BackgroundColor, NTColor.Transparent));
 
         render.Should().Throw<InvalidOperationException>()
             .WithMessage($"*{variant} buttons must use a visible container BackgroundColor*");
@@ -238,13 +238,13 @@ public class NTButton_Tests : BunitContext {
     public void Custom_Colors_Render_As_Css_Variables() {
         var cut = Render<NTButton>(parameters => parameters
             .Add(x => x.Label, "Styled")
-            .Add(x => x.BackgroundColor, TnTColor.SecondaryContainer)
-            .Add(x => x.TextColor, TnTColor.OnSecondaryContainer));
+            .Add(x => x.BackgroundColor, NTColor.SecondaryContainer)
+            .Add(x => x.TextColor, NTColor.OnSecondaryContainer));
 
         var style = cut.Find("button").GetAttribute("style");
 
-        style.Should().Contain("--nt-button-bg:var(--tnt-color-secondary-container)");
-        style.Should().Contain("--nt-button-fg:var(--tnt-color-on-secondary-container)");
+        style.Should().Contain("--nt-button-bg:var(--nt-color-secondary-container)");
+        style.Should().Contain("--nt-button-fg:var(--nt-color-on-secondary-container)");
     }
 
     [Fact]
@@ -257,8 +257,8 @@ public class NTButton_Tests : BunitContext {
         var style = button.GetAttribute("style");
 
         button.GetAttribute("class")!.Should().Contain("nt-button-outlined");
-        style.Should().Contain("--nt-button-bg:var(--tnt-color-transparent)");
-        style.Should().Contain("--nt-button-fg:var(--tnt-color-primary)");
+        style.Should().Contain("--nt-button-bg:var(--nt-color-transparent)");
+        style.Should().Contain("--nt-button-fg:var(--nt-color-primary)");
     }
 
     [Theory]
@@ -279,8 +279,8 @@ public class NTButton_Tests : BunitContext {
 
         var style = cut.Find("button").GetAttribute("style");
 
-        style.Should().Contain($"--nt-button-bg:var(--tnt-color-{expectedBackground})");
-        style.Should().Contain($"--nt-button-fg:var(--tnt-color-{expectedText})");
+        style.Should().Contain($"--nt-button-bg:var(--nt-color-{expectedBackground})");
+        style.Should().Contain($"--nt-button-fg:var(--nt-color-{expectedText})");
     }
 
     [Fact]
@@ -294,6 +294,6 @@ public class NTButton_Tests : BunitContext {
             .Add(x => x.Variant, NTButtonVariant.Text));
 
         rerender.Should().NotThrow();
-        cut.Find("button").GetAttribute("style").Should().Contain("--nt-button-bg:var(--tnt-color-transparent)");
+        cut.Find("button").GetAttribute("style").Should().Contain("--nt-button-bg:var(--nt-color-transparent)");
     }
 }

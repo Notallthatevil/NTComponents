@@ -121,7 +121,7 @@ public partial class DocumentationCuratedDemo {
         return value ?? fallback;
     }
 
-    private TnTColor? ColorValue(string parameterName) => Value<TnTColor?>(parameterName, null);
+    private NTColor? ColorValue(string parameterName) => Value<NTColor?>(parameterName, null);
 
     private static string? GetDefaultMarkupAttribute(string? componentName, string parameterName) => (componentName, parameterName) switch {
         ("NTDialog", "Id") => "Id=\"docs-example-dialog\"",

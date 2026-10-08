@@ -41,7 +41,7 @@ public sealed class NTCardConfigurationAnalyzer : DiagnosticAnalyzer {
         context.RegisterCompilationStartAction(static startContext => {
             var ntCardType = startContext.Compilation.GetTypeByMetadataName("NTComponents.NTCard");
             var cardVariantType = startContext.Compilation.GetTypeByMetadataName("NTComponents.NTCardVariant");
-            var colorType = startContext.Compilation.GetTypeByMetadataName("NTComponents.TnTColor");
+            var colorType = startContext.Compilation.GetTypeByMetadataName("NTComponents.NTColor") ?? startContext.Compilation.GetTypeByMetadataName("NTComponents.TnTColor");
 
             if (ntCardType is null || cardVariantType is null || colorType is null) {
                 return;

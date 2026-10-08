@@ -66,7 +66,7 @@ public interface INTSnackbarService
     /// <param name="backgroundColor">Snackbar container color.</param>
     /// <param name="textColor">Supporting text color.</param>
     /// <param name="actionColor">Action label color.</param>
-    Task ShowAsync(string message, string? actionLabel = null, Func<Task>? actionCallback = null, int? timeout = null, bool? showClose = null, TnTColor backgroundColor = TnTColor.InverseSurface, TnTColor textColor = TnTColor.InverseOnSurface, TnTColor actionColor = TnTColor.InversePrimary);
+    Task ShowAsync(string message, string? actionLabel = null, Func<Task>? actionCallback = null, int? timeout = null, bool? showClose = null, NTColor backgroundColor = NTColor.InverseSurface, NTColor textColor = NTColor.InverseOnSurface, NTColor actionColor = NTColor.InversePrimary);
 
     /// <summary>
     ///     Shows a snackbar with zero or more actions. By default, snackbars without actions auto-dismiss after 4 seconds, while
@@ -83,5 +83,5 @@ public interface INTSnackbarService
     /// <param name="backgroundColor">Snackbar container color.</param>
     /// <param name="textColor">Supporting text color.</param>
     /// <param name="actionColor">Action label color.</param>
-    Task ShowAsync(string message, IReadOnlyList<NTSnackbarAction> actions, int? timeout = null, bool? showClose = null, TnTColor backgroundColor = TnTColor.InverseSurface, TnTColor textColor = TnTColor.InverseOnSurface, TnTColor actionColor = TnTColor.InversePrimary);
+    Task ShowAsync(string message, IReadOnlyList<NTSnackbarAction> actions, int? timeout = null, bool? showClose = null, NTColor backgroundColor = NTColor.InverseSurface, NTColor textColor = NTColor.InverseOnSurface, NTColor actionColor = NTColor.InversePrimary);
 }

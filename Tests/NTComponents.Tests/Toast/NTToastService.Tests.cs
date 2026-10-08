@@ -62,9 +62,9 @@ public class NTToastService_Tests : BunitContext {
         openedToast.Message.Should().Be("Changes were stored.");
         openedToast.Timeout.Should().Be(4);
         openedToast.ShowClose.Should().BeTrue();
-        openedToast.BackgroundColor.Should().Be(TnTColor.SurfaceContainerHigh);
-        openedToast.TextColor.Should().Be(TnTColor.OnSurface);
-        openedToast.IconColor.Should().Be(TnTColor.Primary);
+        openedToast.BackgroundColor.Should().Be(NTColor.SurfaceContainerHigh);
+        openedToast.TextColor.Should().Be(NTColor.OnSurface);
+        openedToast.IconColor.Should().Be(NTColor.Primary);
         openedToast.Variant.Should().Be(NTToastVariant.Default);
 
         GetQueuedArgument<string>(1).Should().Be("Saved");
@@ -88,24 +88,24 @@ public class NTToastService_Tests : BunitContext {
         var service = CreateService();
 
         // Act
-        await service.ShowAsync("Custom", "Overrides", NTToastVariant.Warning, timeout: 9, showClose: false, icon: "star", backgroundColor: TnTColor.Primary, textColor: TnTColor.OnPrimary, iconColor: TnTColor.Secondary);
+        await service.ShowAsync("Custom", "Overrides", NTToastVariant.Warning, timeout: 9, showClose: false, icon: "star", backgroundColor: NTColor.Primary, textColor: NTColor.OnPrimary, iconColor: NTColor.Secondary);
 
         // Assert
         GetQueuedArgument<double>(4).Should().Be(9);
         GetQueuedArgument<bool>(5).Should().BeFalse();
         GetQueuedArgument<string>(6).Should().Be("star");
-        GetQueuedArgument<string>(7).Should().Be("var(--tnt-color-primary)");
-        GetQueuedArgument<string>(8).Should().Be("var(--tnt-color-on-primary)");
-        GetQueuedArgument<string>(9).Should().Be("var(--tnt-color-secondary)");
+        GetQueuedArgument<string>(7).Should().Be("var(--nt-color-primary)");
+        GetQueuedArgument<string>(8).Should().Be("var(--nt-color-on-primary)");
+        GetQueuedArgument<string>(9).Should().Be("var(--nt-color-secondary)");
         GetQueuedArgument<string>(3).Should().Be("warning");
     }
 
     [Theory]
-    [InlineData(NTToastVariant.Success, "var(--tnt-color-success-container)", "var(--tnt-color-on-success-container)", "var(--tnt-color-success)")]
-    [InlineData(NTToastVariant.Info, "var(--tnt-color-info-container)", "var(--tnt-color-on-info-container)", "var(--tnt-color-info)")]
-    [InlineData(NTToastVariant.Warning, "var(--tnt-color-warning-container)", "var(--tnt-color-on-warning-container)", "var(--tnt-color-warning)")]
-    [InlineData(NTToastVariant.Error, "var(--tnt-color-error-container)", "var(--tnt-color-on-error-container)", "var(--tnt-color-error)")]
-    [InlineData(NTToastVariant.Assert, "var(--tnt-color-assert-container)", "var(--tnt-color-on-assert-container)", "var(--tnt-color-assert)")]
+    [InlineData(NTToastVariant.Success, "var(--nt-color-success-container)", "var(--nt-color-on-success-container)", "var(--nt-color-success)")]
+    [InlineData(NTToastVariant.Info, "var(--nt-color-info-container)", "var(--nt-color-on-info-container)", "var(--nt-color-info)")]
+    [InlineData(NTToastVariant.Warning, "var(--nt-color-warning-container)", "var(--nt-color-on-warning-container)", "var(--nt-color-warning)")]
+    [InlineData(NTToastVariant.Error, "var(--nt-color-error-container)", "var(--nt-color-on-error-container)", "var(--nt-color-error)")]
+    [InlineData(NTToastVariant.Assert, "var(--nt-color-assert-container)", "var(--nt-color-on-assert-container)", "var(--nt-color-assert)")]
     public async Task ShowAsync_UsesVariantColors(NTToastVariant variant, string backgroundColor, string textColor, string iconColor) {
         // Arrange
         var service = CreateService();
@@ -114,9 +114,9 @@ public class NTToastService_Tests : BunitContext {
         await service.ShowAsync("Variant", variant: variant);
 
         // Assert
-        service.ActiveToasts[^1].BackgroundColor.ToCssTnTColorVariable().Should().Be(backgroundColor);
-        service.ActiveToasts[^1].TextColor.ToCssTnTColorVariable().Should().Be(textColor);
-        service.ActiveToasts[^1].IconColor.ToCssTnTColorVariable().Should().Be(iconColor);
+        service.ActiveToasts[^1].BackgroundColor.ToCssNTColorVariable().Should().Be(backgroundColor);
+        service.ActiveToasts[^1].TextColor.ToCssNTColorVariable().Should().Be(textColor);
+        service.ActiveToasts[^1].IconColor.ToCssNTColorVariable().Should().Be(iconColor);
         GetQueuedArgument<string>(7).Should().BeNull();
         GetQueuedArgument<string>(8).Should().BeNull();
         GetQueuedArgument<string>(9).Should().BeNull();

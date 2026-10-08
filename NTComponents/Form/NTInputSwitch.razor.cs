@@ -64,97 +64,97 @@ public partial class NTInputSwitch {
     ///     disabled state remains visually distinct from enabled selected and unselected states.
     /// </remarks>
     [Parameter]
-    public TnTColor? DisabledHandleColor { get; set; }
+    public NTColor? DisabledHandleColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for disabled handle icon color.
     /// </summary>
     [Parameter]
-    public TnTColor? DisabledIconColor { get; set; }
+    public NTColor? DisabledIconColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for disabled track color.
     /// </summary>
     [Parameter]
-    public TnTColor? DisabledTrackColor { get; set; }
+    public NTColor? DisabledTrackColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for error track, handle, and supporting text color.
     /// </summary>
     [Parameter]
-    public TnTColor? ErrorColor { get; set; }
+    public NTColor? ErrorColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for row icons.
     /// </summary>
     [Parameter]
-    public TnTColor? IconColor { get; set; }
+    public NTColor? IconColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for label text.
     /// </summary>
     [Parameter]
-    public TnTColor? LabelColor { get; set; }
+    public NTColor? LabelColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for selected handle color.
     /// </summary>
     [Parameter]
-    public TnTColor? SelectedHandleColor { get; set; }
+    public NTColor? SelectedHandleColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for selected handle icon color.
     /// </summary>
     [Parameter]
-    public TnTColor? SelectedIconColor { get; set; }
+    public NTColor? SelectedIconColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for selected state-layer color.
     /// </summary>
     [Parameter]
-    public TnTColor? SelectedStateLayerColor { get; set; }
+    public NTColor? SelectedStateLayerColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for selected track color.
     /// </summary>
     [Parameter]
-    public TnTColor? SelectedTrackColor { get; set; }
+    public NTColor? SelectedTrackColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for unselected handle color.
     /// </summary>
     [Parameter]
-    public TnTColor? UnselectedHandleColor { get; set; }
+    public NTColor? UnselectedHandleColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for unselected handle icon color.
     /// </summary>
     [Parameter]
-    public TnTColor? UnselectedIconColor { get; set; }
+    public NTColor? UnselectedIconColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for unselected track outline color.
     /// </summary>
     [Parameter]
-    public TnTColor? UnselectedOutlineColor { get; set; }
+    public NTColor? UnselectedOutlineColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for unselected track color.
     /// </summary>
     [Parameter]
-    public TnTColor? UnselectedTrackColor { get; set; }
+    public NTColor? UnselectedTrackColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for the unselected state-layer color.
     /// </summary>
     [Parameter]
-    public TnTColor? StateLayerColor { get; set; }
+    public NTColor? StateLayerColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for supporting text when not invalid.
     /// </summary>
     [Parameter]
-    public TnTColor? SupportingTextColor { get; set; }
+    public NTColor? SupportingTextColor { get; set; }
 
     /// <inheritdoc />
     protected override IEnumerable<string> ExplicitInputAttributeNames => SwitchExplicitInputAttributeNames;
@@ -169,22 +169,22 @@ public partial class NTInputSwitch {
     }
 
     private string? BuildElementStyle() => CssStyleBuilder.Create()
-        .AddVariable("nt-switch-disabled-handle-color", DisabledHandleColor.ToCssTnTColorVariable(), DisabledHandleColor.HasValue)
-        .AddVariable("nt-switch-disabled-icon-color", DisabledIconColor.ToCssTnTColorVariable(), DisabledIconColor.HasValue)
-        .AddVariable("nt-switch-disabled-track-color", DisabledTrackColor.ToCssTnTColorVariable(), DisabledTrackColor.HasValue)
-        .AddVariable("nt-switch-error-color", ErrorColor.ToCssTnTColorVariable(), ErrorColor.HasValue)
-        .AddVariable("nt-switch-icon-color", IconColor.ToCssTnTColorVariable(), IconColor.HasValue)
-        .AddVariable("nt-switch-label-color", LabelColor.ToCssTnTColorVariable(), LabelColor.HasValue)
-        .AddVariable("nt-switch-selected-handle-color", SelectedHandleColor.ToCssTnTColorVariable(), SelectedHandleColor.HasValue)
-        .AddVariable("nt-switch-selected-icon-color", SelectedIconColor.ToCssTnTColorVariable(), SelectedIconColor.HasValue)
-        .AddVariable("nt-switch-selected-state-layer-color", SelectedStateLayerColor.ToCssTnTColorVariable(), SelectedStateLayerColor.HasValue)
-        .AddVariable("nt-switch-selected-track-color", SelectedTrackColor.ToCssTnTColorVariable(), SelectedTrackColor.HasValue)
-        .AddVariable("nt-switch-state-layer-color", StateLayerColor.ToCssTnTColorVariable(), StateLayerColor.HasValue)
-        .AddVariable("nt-switch-supporting-text-color", SupportingTextColor.ToCssTnTColorVariable(), SupportingTextColor.HasValue)
-        .AddVariable("nt-switch-unselected-handle-color", UnselectedHandleColor.ToCssTnTColorVariable(), UnselectedHandleColor.HasValue)
-        .AddVariable("nt-switch-unselected-icon-color", UnselectedIconColor.ToCssTnTColorVariable(), UnselectedIconColor.HasValue)
-        .AddVariable("nt-switch-unselected-outline-color", UnselectedOutlineColor.ToCssTnTColorVariable(), UnselectedOutlineColor.HasValue)
-        .AddVariable("nt-switch-unselected-track-color", UnselectedTrackColor.ToCssTnTColorVariable(), UnselectedTrackColor.HasValue)
+        .AddVariable("nt-switch-disabled-handle-color", DisabledHandleColor.ToCssNTColorVariable(), DisabledHandleColor.HasValue)
+        .AddVariable("nt-switch-disabled-icon-color", DisabledIconColor.ToCssNTColorVariable(), DisabledIconColor.HasValue)
+        .AddVariable("nt-switch-disabled-track-color", DisabledTrackColor.ToCssNTColorVariable(), DisabledTrackColor.HasValue)
+        .AddVariable("nt-switch-error-color", ErrorColor.ToCssNTColorVariable(), ErrorColor.HasValue)
+        .AddVariable("nt-switch-icon-color", IconColor.ToCssNTColorVariable(), IconColor.HasValue)
+        .AddVariable("nt-switch-label-color", LabelColor.ToCssNTColorVariable(), LabelColor.HasValue)
+        .AddVariable("nt-switch-selected-handle-color", SelectedHandleColor.ToCssNTColorVariable(), SelectedHandleColor.HasValue)
+        .AddVariable("nt-switch-selected-icon-color", SelectedIconColor.ToCssNTColorVariable(), SelectedIconColor.HasValue)
+        .AddVariable("nt-switch-selected-state-layer-color", SelectedStateLayerColor.ToCssNTColorVariable(), SelectedStateLayerColor.HasValue)
+        .AddVariable("nt-switch-selected-track-color", SelectedTrackColor.ToCssNTColorVariable(), SelectedTrackColor.HasValue)
+        .AddVariable("nt-switch-state-layer-color", StateLayerColor.ToCssNTColorVariable(), StateLayerColor.HasValue)
+        .AddVariable("nt-switch-supporting-text-color", SupportingTextColor.ToCssNTColorVariable(), SupportingTextColor.HasValue)
+        .AddVariable("nt-switch-unselected-handle-color", UnselectedHandleColor.ToCssNTColorVariable(), UnselectedHandleColor.HasValue)
+        .AddVariable("nt-switch-unselected-icon-color", UnselectedIconColor.ToCssNTColorVariable(), UnselectedIconColor.HasValue)
+        .AddVariable("nt-switch-unselected-outline-color", UnselectedOutlineColor.ToCssNTColorVariable(), UnselectedOutlineColor.HasValue)
+        .AddVariable("nt-switch-unselected-track-color", UnselectedTrackColor.ToCssNTColorVariable(), UnselectedTrackColor.HasValue)
         .Build();
 
     private string BuildRootClass() {

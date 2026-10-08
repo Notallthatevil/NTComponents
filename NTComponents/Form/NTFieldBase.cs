@@ -33,7 +33,7 @@ public abstract class NTFieldBase<TValue> : NTFormControlBase<TValue> {
     ///     Gets or sets an optional override for the filled field container color.
     /// </summary>
     [Parameter]
-    public TnTColor? BackgroundColor { get; set; }
+    public NTColor? BackgroundColor { get; set; }
 
     /// <summary>
     /// Gets or sets the autocomplete attribute value. Defaults to <see cref="NTComponents.AutoComplete.Off"/> to make
@@ -46,7 +46,7 @@ public abstract class NTFieldBase<TValue> : NTFormControlBase<TValue> {
     ///     Gets or sets an optional override for the resting filled active indicator color.
     /// </summary>
     [Parameter]
-    public TnTColor? ActiveIndicatorColor { get; set; }
+    public NTColor? ActiveIndicatorColor { get; set; }
 
     /// <summary>
     ///     Gets or sets a callback invoked after binding.
@@ -58,37 +58,37 @@ public abstract class NTFieldBase<TValue> : NTFormControlBase<TValue> {
     ///     Gets or sets an optional override for the text cursor color.
     /// </summary>
     [Parameter]
-    public TnTColor? CaretColor { get; set; }
+    public NTColor? CaretColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for the disabled filled container color.
     /// </summary>
     [Parameter]
-    public TnTColor? DisabledContainerColor { get; set; }
+    public NTColor? DisabledContainerColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for disabled content, label, icon, supporting text, and counter color.
     /// </summary>
     [Parameter]
-    public TnTColor? DisabledContentColor { get; set; }
+    public NTColor? DisabledContentColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for the disabled outline color.
     /// </summary>
     [Parameter]
-    public TnTColor? DisabledOutlineColor { get; set; }
+    public NTColor? DisabledOutlineColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for error text, label, outline, indicator, and icon color.
     /// </summary>
     [Parameter]
-    public TnTColor? ErrorColor { get; set; }
+    public NTColor? ErrorColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for the text cursor color in the error state.
     /// </summary>
     [Parameter]
-    public TnTColor? ErrorCaretColor { get; set; }
+    public NTColor? ErrorCaretColor { get; set; }
 
     /// <summary>
     ///     Gets or sets the error icon shown when the field is invalid.
@@ -100,37 +100,37 @@ public abstract class NTFieldBase<TValue> : NTFormControlBase<TValue> {
     ///     Gets or sets an optional override for the focus label, outline, active indicator, and default caret color.
     /// </summary>
     [Parameter]
-    public TnTColor? FocusColor { get; set; }
+    public NTColor? FocusColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for the hovered filled active indicator color.
     /// </summary>
     [Parameter]
-    public TnTColor? HoverActiveIndicatorColor { get; set; }
+    public NTColor? HoverActiveIndicatorColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for the hovered outline color.
     /// </summary>
     [Parameter]
-    public TnTColor? HoverOutlineColor { get; set; }
+    public NTColor? HoverOutlineColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for leading and trailing icon color.
     /// </summary>
     [Parameter]
-    public TnTColor? IconColor { get; set; }
+    public NTColor? IconColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for the resting label color.
     /// </summary>
     [Parameter]
-    public TnTColor? LabelColor { get; set; }
+    public NTColor? LabelColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for the resting outlined border color.
     /// </summary>
     [Parameter]
-    public TnTColor? OutlineColor { get; set; }
+    public NTColor? OutlineColor { get; set; }
 
     /// <summary>
     ///     Gets or sets placeholder text.
@@ -142,7 +142,7 @@ public abstract class NTFieldBase<TValue> : NTFormControlBase<TValue> {
     ///     Gets or sets an optional override for visible placeholder text color.
     /// </summary>
     [Parameter]
-    public TnTColor? PlaceholderColor { get; set; }
+    public NTColor? PlaceholderColor { get; set; }
 
     /// <summary>
     ///     Gets or sets prefix text shown before the editable value.
@@ -154,19 +154,19 @@ public abstract class NTFieldBase<TValue> : NTFormControlBase<TValue> {
     ///     Gets or sets an optional override for prefix and suffix text color.
     /// </summary>
     [Parameter]
-    public TnTColor? PrefixSuffixColor { get; set; }
+    public NTColor? PrefixSuffixColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for the hover state-layer color.
     /// </summary>
     [Parameter]
-    public TnTColor? StateLayerColor { get; set; }
+    public NTColor? StateLayerColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for supporting text and counter color.
     /// </summary>
     [Parameter]
-    public TnTColor? SupportingTextColor { get; set; }
+    public NTColor? SupportingTextColor { get; set; }
 
     /// <summary>
     ///     Gets or sets suffix text shown after the editable value.
@@ -178,7 +178,7 @@ public abstract class NTFieldBase<TValue> : NTFormControlBase<TValue> {
     ///     Gets or sets an optional override for input text color.
     /// </summary>
     [Parameter]
-    public TnTColor? TextColor { get; set; }
+    public NTColor? TextColor { get; set; }
 
     /// <summary>
     ///     Gets additional attributes filtered for the concrete native control.
@@ -219,25 +219,25 @@ public abstract class NTFieldBase<TValue> : NTFormControlBase<TValue> {
     ///     Gets inline CSS variable overrides for the field.
     /// </summary>
     protected string? ElementStyle => CssStyleBuilder.Create()
-        .AddVariable("nt-input-active-indicator-color", ActiveIndicatorColor.ToCssTnTColorVariable(), ActiveIndicatorColor.HasValue)
-        .AddVariable("nt-input-caret-color", CaretColor.ToCssTnTColorVariable(), CaretColor.HasValue)
-        .AddVariable("nt-input-container-color", BackgroundColor.ToCssTnTColorVariable(), BackgroundColor.HasValue)
-        .AddVariable("nt-input-disabled-container-color", DisabledContainerColor.ToCssTnTColorVariable(), DisabledContainerColor.HasValue)
-        .AddVariable("nt-input-disabled-content-color", DisabledContentColor.ToCssTnTColorVariable(), DisabledContentColor.HasValue)
-        .AddVariable("nt-input-disabled-outline-color", DisabledOutlineColor.ToCssTnTColorVariable(), DisabledOutlineColor.HasValue)
-        .AddVariable("nt-input-error-caret-color", ErrorCaretColor.ToCssTnTColorVariable(), ErrorCaretColor.HasValue)
-        .AddVariable("nt-input-error-color", ErrorColor.ToCssTnTColorVariable(), ErrorColor.HasValue)
-        .AddVariable("nt-input-focus-color", FocusColor.ToCssTnTColorVariable(), FocusColor.HasValue)
-        .AddVariable("nt-input-hover-active-indicator-color", HoverActiveIndicatorColor.ToCssTnTColorVariable(), HoverActiveIndicatorColor.HasValue)
-        .AddVariable("nt-input-hover-outline-color", HoverOutlineColor.ToCssTnTColorVariable(), HoverOutlineColor.HasValue)
-        .AddVariable("nt-input-icon-color", IconColor.ToCssTnTColorVariable(), IconColor.HasValue)
-        .AddVariable("nt-input-label-color", LabelColor.ToCssTnTColorVariable(), LabelColor.HasValue)
-        .AddVariable("nt-input-outline-color", OutlineColor.ToCssTnTColorVariable(), OutlineColor.HasValue)
-        .AddVariable("nt-input-placeholder-color", PlaceholderColor.ToCssTnTColorVariable(), PlaceholderColor.HasValue)
-        .AddVariable("nt-input-prefix-suffix-color", PrefixSuffixColor.ToCssTnTColorVariable(), PrefixSuffixColor.HasValue)
-        .AddVariable("nt-input-state-layer-color", StateLayerColor.ToCssTnTColorVariable(), StateLayerColor.HasValue)
-        .AddVariable("nt-input-supporting-text-color", SupportingTextColor.ToCssTnTColorVariable(), SupportingTextColor.HasValue)
-        .AddVariable("nt-input-text-color", TextColor.ToCssTnTColorVariable(), TextColor.HasValue)
+        .AddVariable("nt-input-active-indicator-color", ActiveIndicatorColor.ToCssNTColorVariable(), ActiveIndicatorColor.HasValue)
+        .AddVariable("nt-input-caret-color", CaretColor.ToCssNTColorVariable(), CaretColor.HasValue)
+        .AddVariable("nt-input-container-color", BackgroundColor.ToCssNTColorVariable(), BackgroundColor.HasValue)
+        .AddVariable("nt-input-disabled-container-color", DisabledContainerColor.ToCssNTColorVariable(), DisabledContainerColor.HasValue)
+        .AddVariable("nt-input-disabled-content-color", DisabledContentColor.ToCssNTColorVariable(), DisabledContentColor.HasValue)
+        .AddVariable("nt-input-disabled-outline-color", DisabledOutlineColor.ToCssNTColorVariable(), DisabledOutlineColor.HasValue)
+        .AddVariable("nt-input-error-caret-color", ErrorCaretColor.ToCssNTColorVariable(), ErrorCaretColor.HasValue)
+        .AddVariable("nt-input-error-color", ErrorColor.ToCssNTColorVariable(), ErrorColor.HasValue)
+        .AddVariable("nt-input-focus-color", FocusColor.ToCssNTColorVariable(), FocusColor.HasValue)
+        .AddVariable("nt-input-hover-active-indicator-color", HoverActiveIndicatorColor.ToCssNTColorVariable(), HoverActiveIndicatorColor.HasValue)
+        .AddVariable("nt-input-hover-outline-color", HoverOutlineColor.ToCssNTColorVariable(), HoverOutlineColor.HasValue)
+        .AddVariable("nt-input-icon-color", IconColor.ToCssNTColorVariable(), IconColor.HasValue)
+        .AddVariable("nt-input-label-color", LabelColor.ToCssNTColorVariable(), LabelColor.HasValue)
+        .AddVariable("nt-input-outline-color", OutlineColor.ToCssNTColorVariable(), OutlineColor.HasValue)
+        .AddVariable("nt-input-placeholder-color", PlaceholderColor.ToCssNTColorVariable(), PlaceholderColor.HasValue)
+        .AddVariable("nt-input-prefix-suffix-color", PrefixSuffixColor.ToCssNTColorVariable(), PrefixSuffixColor.HasValue)
+        .AddVariable("nt-input-state-layer-color", StateLayerColor.ToCssNTColorVariable(), StateLayerColor.HasValue)
+        .AddVariable("nt-input-supporting-text-color", SupportingTextColor.ToCssNTColorVariable(), SupportingTextColor.HasValue)
+        .AddVariable("nt-input-text-color", TextColor.ToCssNTColorVariable(), TextColor.HasValue)
         .Build();
 
     /// <summary>

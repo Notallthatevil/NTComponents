@@ -127,7 +127,7 @@ public sealed class NTSplitButtonConfigurationAnalyzer : DiagnosticAnalyzer {
             var anchorItemType = startContext.Compilation.GetTypeByMetadataName("NTComponents.NTSplitButtonAnchorItem");
             var dividerItemType = startContext.Compilation.GetTypeByMetadataName("NTComponents.NTSplitButtonDividerItem");
             var buttonVariantType = startContext.Compilation.GetTypeByMetadataName("NTComponents.NTButtonVariant");
-            var colorType = startContext.Compilation.GetTypeByMetadataName("NTComponents.TnTColor");
+            var colorType = startContext.Compilation.GetTypeByMetadataName("NTComponents.NTColor") ?? startContext.Compilation.GetTypeByMetadataName("NTComponents.TnTColor");
             var elevationType = startContext.Compilation.GetTypeByMetadataName("NTComponents.NTElevation");
 
             if (splitButtonType is null

@@ -23,13 +23,13 @@ public partial class NTAccordionItem : NTComponentBase {
     ///     Optional content background override for this item.
     /// </summary>
     [Parameter]
-    public TnTColor? ContentColor { get; set; }
+    public NTColor? ContentColor { get; set; }
 
     /// <summary>
     ///     Optional content text color override for this item.
     /// </summary>
     [Parameter]
-    public TnTColor? ContentTextColor { get; set; }
+    public NTColor? ContentTextColor { get; set; }
 
     /// <summary>
     ///     When set, renders the item as a non-interactive static surface.
@@ -50,10 +50,10 @@ public partial class NTAccordionItem : NTComponentBase {
     /// <inheritdoc />
     public override string? ElementStyle => CssStyleBuilder.Create()
         .AddFromAdditionalAttributes(AdditionalAttributes)
-        .AddVariable("nt-accordion-header-color", HeaderColor.ToCssTnTColorVariable(), HeaderColor.HasValue)
-        .AddVariable("nt-accordion-header-text-color", HeaderTextColor.ToCssTnTColorVariable(), HeaderTextColor.HasValue)
-        .AddVariable("nt-accordion-content-color", ContentColor.ToCssTnTColorVariable(), ContentColor.HasValue)
-        .AddVariable("nt-accordion-content-text-color", ContentTextColor.ToCssTnTColorVariable(), ContentTextColor.HasValue)
+        .AddVariable("nt-accordion-header-color", HeaderColor.ToCssNTColorVariable(), HeaderColor.HasValue)
+        .AddVariable("nt-accordion-header-text-color", HeaderTextColor.ToCssNTColorVariable(), HeaderTextColor.HasValue)
+        .AddVariable("nt-accordion-content-color", ContentColor.ToCssNTColorVariable(), ContentColor.HasValue)
+        .AddVariable("nt-accordion-content-text-color", ContentTextColor.ToCssNTColorVariable(), ContentTextColor.HasValue)
         .Build();
 
     /// <summary>
@@ -75,13 +75,13 @@ public partial class NTAccordionItem : NTComponentBase {
     ///     Optional summary row background color override for this item.
     /// </summary>
     [Parameter]
-    public TnTColor? HeaderColor { get; set; }
+    public NTColor? HeaderColor { get; set; }
 
     /// <summary>
     ///     Optional summary row text color override for this item.
     /// </summary>
     [Parameter]
-    public TnTColor? HeaderTextColor { get; set; }
+    public NTColor? HeaderTextColor { get; set; }
 
     /// <summary>
     ///     Text rendered in the summary row when <see cref="HeaderContent" /> is not provided.

@@ -14,7 +14,7 @@ public class NTSkeleton_Tests : BunitContext {
         cls.Should().Contain("nt-skeleton-wave");
         cls.Should().Contain("nt-corner-radius-small");
         skeleton.GetAttribute("aria-hidden").Should().Be("true");
-        style.Should().Contain("--nt-skeleton-container-color:var(--tnt-color-surface-container-highest)");
+        style.Should().Contain("--nt-skeleton-container-color:var(--nt-color-surface-container-highest)");
         style.Should().NotContain("--nt-skeleton-highlight-color");
     }
 
@@ -64,15 +64,15 @@ public class NTSkeleton_Tests : BunitContext {
     [Fact]
     public void Colors_And_Size_Render_As_Css_Variables() {
         var cut = Render<NTSkeleton>(parameters => parameters
-            .Add(x => x.ContainerColor, TnTColor.PrimaryContainer)
-            .Add(x => x.HighlightColor, TnTColor.OnPrimaryContainer)
+            .Add(x => x.ContainerColor, NTColor.PrimaryContainer)
+            .Add(x => x.HighlightColor, NTColor.OnPrimaryContainer)
             .Add(x => x.Width, "12rem")
             .Add(x => x.Height, "3rem"));
 
         var style = cut.Find("div.nt-skeleton").GetAttribute("style")!;
 
-        style.Should().Contain("--nt-skeleton-container-color:var(--tnt-color-primary-container)");
-        style.Should().Contain("--nt-skeleton-highlight-color:var(--tnt-color-on-primary-container)");
+        style.Should().Contain("--nt-skeleton-container-color:var(--nt-color-primary-container)");
+        style.Should().Contain("--nt-skeleton-highlight-color:var(--nt-color-on-primary-container)");
         style.Should().Contain("--nt-skeleton-width:12rem");
         style.Should().Contain("--nt-skeleton-height:3rem");
     }

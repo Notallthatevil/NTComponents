@@ -36,19 +36,19 @@ public partial class NTBreadcrumb : IAsyncDisposable {
 
     /// <summary>Gets or sets the ancestor link text color. Defaults to the navigation link's primary color.</summary>
     [Parameter]
-    public TnTColor? TextColor { get; set; }
+    public NTColor? TextColor { get; set; }
 
     /// <summary>Gets or sets the current-page text color.</summary>
     [Parameter]
-    public TnTColor? CurrentTextColor { get; set; }
+    public NTColor? CurrentTextColor { get; set; }
 
     /// <summary>Gets or sets the current-page container color.</summary>
     [Parameter]
-    public TnTColor? CurrentBackgroundColor { get; set; }
+    public NTColor? CurrentBackgroundColor { get; set; }
 
     /// <summary>Gets or sets the separator color.</summary>
     [Parameter]
-    public TnTColor? SeparatorColor { get; set; }
+    public NTColor? SeparatorColor { get; set; }
 
     /// <summary>Gets or sets decorative content rendered between items. Null uses the default chevron.</summary>
     /// <remarks>Divider content is hidden from assistive technology and should not contain interactive elements.</remarks>
@@ -65,9 +65,9 @@ public partial class NTBreadcrumb : IAsyncDisposable {
     /// <inheritdoc />
     public override string? ElementStyle => CssStyleBuilder.Create()
         .AddFromAdditionalAttributes(AdditionalAttributes)
-        .AddVariable("nt-breadcrumb-current-fg", CurrentTextColor.ToCssTnTColorVariable(), CurrentTextColor.HasValue)
-        .AddVariable("nt-breadcrumb-current-bg", CurrentBackgroundColor.ToCssTnTColorVariable(), CurrentBackgroundColor.HasValue)
-        .AddVariable("nt-breadcrumb-separator", SeparatorColor.ToCssTnTColorVariable(), SeparatorColor.HasValue)
+        .AddVariable("nt-breadcrumb-current-fg", CurrentTextColor.ToCssNTColorVariable(), CurrentTextColor.HasValue)
+        .AddVariable("nt-breadcrumb-current-bg", CurrentBackgroundColor.ToCssNTColorVariable(), CurrentBackgroundColor.HasValue)
+        .AddVariable("nt-breadcrumb-separator", SeparatorColor.ToCssNTColorVariable(), SeparatorColor.HasValue)
         .Build();
 
     /// <inheritdoc />

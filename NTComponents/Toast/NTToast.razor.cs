@@ -185,9 +185,9 @@ public partial class NTToast {
         }
     }
 
-    private static void AppendColorProperty(StringBuilder builder, ref bool hasPreviousProperty, string name, TnTColor? value) {
+    private static void AppendColorProperty(StringBuilder builder, ref bool hasPreviousProperty, string name, NTColor? value) {
         if (value.HasValue) {
-            AppendStringProperty(builder, ref hasPreviousProperty, name, value.Value.ToCssTnTColorVariable());
+            AppendStringProperty(builder, ref hasPreviousProperty, name, value.Value.ToCssNTColorVariable());
         }
     }
 
@@ -259,7 +259,7 @@ public sealed class NTToastQueueScriptOptions {
     /// <summary>
     ///     Gets or sets the toast container color.
     /// </summary>
-    public TnTColor? BackgroundColor { get; set; }
+    public NTColor? BackgroundColor { get; set; }
 
     /// <summary>
     ///     Gets or sets the host element id to target, when a specific host should receive the toast.
@@ -274,7 +274,7 @@ public sealed class NTToastQueueScriptOptions {
     /// <summary>
     ///     Gets or sets the icon color.
     /// </summary>
-    public TnTColor? IconColor { get; set; }
+    public NTColor? IconColor { get; set; }
 
     /// <summary>
     ///     Gets or sets a caller-provided toast id. Explicit ids are used to prevent duplicate pending, queued, or active toasts.
@@ -294,7 +294,7 @@ public sealed class NTToastQueueScriptOptions {
     /// <summary>
     ///     Gets or sets the text color.
     /// </summary>
-    public TnTColor? TextColor { get; set; }
+    public NTColor? TextColor { get; set; }
 
     /// <summary>
     ///     Gets or sets the timeout in seconds before auto-dismiss. Zero or less disables auto-dismiss.

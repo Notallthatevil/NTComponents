@@ -24,13 +24,13 @@ public partial class NTNavLink {
     ///     Gets or sets an optional override for the active link container color.
     /// </summary>
     [Parameter]
-    public TnTColor? ActiveBackgroundColor { get; set; }
+    public NTColor? ActiveBackgroundColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for the active link content color.
     /// </summary>
     [Parameter]
-    public TnTColor? ActiveTextColor { get; set; }
+    public NTColor? ActiveTextColor { get; set; }
 
     /// <summary>
     ///     Gets or sets the optional autofocus attribute value.
@@ -42,7 +42,7 @@ public partial class NTNavLink {
     ///     Gets or sets an optional override for button-style link container color.
     /// </summary>
     [Parameter]
-    public TnTColor? BackgroundColor { get; set; }
+    public NTColor? BackgroundColor { get; set; }
 
     /// <summary>
     ///     Gets or sets the size of button-style link variants.
@@ -117,7 +117,7 @@ public partial class NTNavLink {
     ///     Gets or sets an optional hover color for default and inline text link variants.
     /// </summary>
     [Parameter]
-    public TnTColor? HoverTextColor { get; set; }
+    public NTColor? HoverTextColor { get; set; }
 
     /// <summary>
     ///     Gets or sets the visible text label rendered by the link.
@@ -147,7 +147,7 @@ public partial class NTNavLink {
     ///     Gets or sets an optional override for the link content color.
     /// </summary>
     [Parameter]
-    public TnTColor? TextColor { get; set; }
+    public NTColor? TextColor { get; set; }
 
     /// <summary>
     ///     Gets or sets the visual variant of the link.
@@ -159,7 +159,7 @@ public partial class NTNavLink {
     ///     Gets or sets an optional visited color for default and inline text link variants.
     /// </summary>
     [Parameter]
-    public TnTColor? VisitedTextColor { get; set; }
+    public NTColor? VisitedTextColor { get; set; }
 
     [Inject]
     private NavigationManager NavigationManager { get; set; } = default!;
@@ -242,12 +242,12 @@ public partial class NTNavLink {
     private string? BuildElementStyle() {
         return CssStyleBuilder.Create()
             .AddFromAdditionalAttributes(AdditionalAttributes)
-            .AddVariable("nt-nav-link-bg", BackgroundColor.ToCssTnTColorVariable(), BackgroundColor.HasValue)
-            .AddVariable("nt-nav-link-fg", TextColor.ToCssTnTColorVariable(), TextColor.HasValue)
-            .AddVariable("nt-nav-link-hover-fg", HoverTextColor.ToCssTnTColorVariable(), HoverTextColor.HasValue)
-            .AddVariable("nt-nav-link-visited-fg", VisitedTextColor.ToCssTnTColorVariable(), VisitedTextColor.HasValue && UsesTextLinkChrome)
-            .AddVariable("nt-nav-link-active-bg", ActiveBackgroundColor.ToCssTnTColorVariable(), ActiveBackgroundColor.HasValue)
-            .AddVariable("nt-nav-link-active-fg", ActiveTextColor.ToCssTnTColorVariable(), ActiveTextColor.HasValue)
+            .AddVariable("nt-nav-link-bg", BackgroundColor.ToCssNTColorVariable(), BackgroundColor.HasValue)
+            .AddVariable("nt-nav-link-fg", TextColor.ToCssNTColorVariable(), TextColor.HasValue)
+            .AddVariable("nt-nav-link-hover-fg", HoverTextColor.ToCssNTColorVariable(), HoverTextColor.HasValue)
+            .AddVariable("nt-nav-link-visited-fg", VisitedTextColor.ToCssNTColorVariable(), VisitedTextColor.HasValue && UsesTextLinkChrome)
+            .AddVariable("nt-nav-link-active-bg", ActiveBackgroundColor.ToCssNTColorVariable(), ActiveBackgroundColor.HasValue)
+            .AddVariable("nt-nav-link-active-fg", ActiveTextColor.ToCssNTColorVariable(), ActiveTextColor.HasValue)
             .Build();
     }
 
@@ -337,13 +337,13 @@ public partial class NTNavLink {
         return path.Length == 0 ? string.Empty : path;
     }
 
-    private TnTColor? GetDefaultBackgroundColor() {
+    private NTColor? GetDefaultBackgroundColor() {
         return Variant switch {
-            NTNavLinkVariant.Elevated => TnTColor.SurfaceContainerLow,
-            NTNavLinkVariant.Filled => TnTColor.Primary,
-            NTNavLinkVariant.Tonal => TnTColor.SecondaryContainer,
-            NTNavLinkVariant.Outlined => TnTColor.Transparent,
-            NTNavLinkVariant.Text => TnTColor.Transparent,
+            NTNavLinkVariant.Elevated => NTColor.SurfaceContainerLow,
+            NTNavLinkVariant.Filled => NTColor.Primary,
+            NTNavLinkVariant.Tonal => NTColor.SecondaryContainer,
+            NTNavLinkVariant.Outlined => NTColor.Transparent,
+            NTNavLinkVariant.Text => NTColor.Transparent,
             NTNavLinkVariant.DefaultAnchor => null,
             NTNavLinkVariant.InlineText => null,
             _ => throw new ArgumentOutOfRangeException(nameof(Variant), Variant, null)
@@ -359,15 +359,15 @@ public partial class NTNavLink {
         };
     }
 
-    private TnTColor? GetDefaultTextColor() {
+    private NTColor? GetDefaultTextColor() {
         return Variant switch {
-            NTNavLinkVariant.Elevated => TnTColor.Primary,
-            NTNavLinkVariant.Filled => TnTColor.OnPrimary,
-            NTNavLinkVariant.Tonal => TnTColor.OnSecondaryContainer,
-            NTNavLinkVariant.Outlined => TnTColor.Primary,
-            NTNavLinkVariant.Text => TnTColor.Primary,
+            NTNavLinkVariant.Elevated => NTColor.Primary,
+            NTNavLinkVariant.Filled => NTColor.OnPrimary,
+            NTNavLinkVariant.Tonal => NTColor.OnSecondaryContainer,
+            NTNavLinkVariant.Outlined => NTColor.Primary,
+            NTNavLinkVariant.Text => NTColor.Primary,
             NTNavLinkVariant.DefaultAnchor => null,
-            NTNavLinkVariant.InlineText => TnTColor.Primary,
+            NTNavLinkVariant.InlineText => NTColor.Primary,
             _ => throw new ArgumentOutOfRangeException(nameof(Variant), Variant, null)
         };
     }
@@ -378,14 +378,14 @@ public partial class NTNavLink {
         }
 
         if (Variant is NTNavLinkVariant.Text or NTNavLinkVariant.Outlined) {
-            if (BackgroundColor != TnTColor.Transparent) {
+            if (BackgroundColor != NTColor.Transparent) {
                 throw new InvalidOperationException($"{Variant} navigation links must use a transparent {nameof(BackgroundColor)}.");
             }
 
             return;
         }
 
-        if (BackgroundColor is TnTColor.None or TnTColor.Transparent) {
+        if (BackgroundColor is NTColor.Transparent) {
             throw new InvalidOperationException($"{Variant} navigation links must use a visible container {nameof(BackgroundColor)}.");
         }
     }
@@ -395,19 +395,19 @@ public partial class NTNavLink {
             ValidateBackgroundColorForVariant();
         }
 
-        if (TextColor is TnTColor.None or TnTColor.Transparent) {
+        if (TextColor is NTColor.Transparent) {
             throw new InvalidOperationException($"{nameof(TextColor)} must be a visible content color.");
         }
 
-        if (HoverTextColor is TnTColor.None or TnTColor.Transparent) {
+        if (HoverTextColor is NTColor.Transparent) {
             throw new InvalidOperationException($"{nameof(HoverTextColor)} must be a visible content color.");
         }
 
-        if (UsesTextLinkChrome && VisitedTextColor is (TnTColor.None or TnTColor.Transparent)) {
+        if (UsesTextLinkChrome && VisitedTextColor is (NTColor.Transparent)) {
             throw new InvalidOperationException($"{nameof(VisitedTextColor)} must be a visible content color.");
         }
 
-        if (ActiveTextColor is TnTColor.None or TnTColor.Transparent) {
+        if (ActiveTextColor is NTColor.Transparent) {
             throw new InvalidOperationException($"{nameof(ActiveTextColor)} must be a visible content color.");
         }
     }

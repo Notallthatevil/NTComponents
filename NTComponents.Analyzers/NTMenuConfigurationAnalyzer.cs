@@ -79,7 +79,7 @@ public sealed class NTMenuConfigurationAnalyzer : DiagnosticAnalyzer {
             var dividerItemType = startContext.Compilation.GetTypeByMetadataName("NTComponents.NTMenuDividerItem");
             var labelItemType = startContext.Compilation.GetTypeByMetadataName("NTComponents.NTMenuLabelItem");
             var subMenuItemType = startContext.Compilation.GetTypeByMetadataName("NTComponents.NTMenuSubMenuItem");
-            var colorType = startContext.Compilation.GetTypeByMetadataName("NTComponents.TnTColor");
+            var colorType = startContext.Compilation.GetTypeByMetadataName("NTComponents.NTColor") ?? startContext.Compilation.GetTypeByMetadataName("NTComponents.TnTColor");
 
             if (menuType is null
                 || contextMenuType is null

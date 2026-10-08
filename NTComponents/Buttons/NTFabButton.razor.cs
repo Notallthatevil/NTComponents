@@ -61,8 +61,8 @@ public partial class NTFabButton : NTButtonBase, INTBadgeable {
     /// <inheritdoc />
     public override string? ElementStyle => CssStyleBuilder.Create()
         .AddFromAdditionalAttributes(AdditionalAttributes)
-        .AddVariable("nt-fab-bg", BackgroundColor.ToCssTnTColorVariable(), BackgroundColor.HasValue)
-        .AddVariable("nt-fab-fg", TextColor.ToCssTnTColorVariable(), TextColor.HasValue)
+        .AddVariable("nt-fab-bg", BackgroundColor.ToCssNTColorVariable(), BackgroundColor.HasValue)
+        .AddVariable("nt-fab-fg", TextColor.ToCssNTColorVariable(), TextColor.HasValue)
         .Build();
 
     /// <summary>
@@ -108,7 +108,7 @@ public partial class NTFabButton : NTButtonBase, INTBadgeable {
     internal bool HasLabel => !string.IsNullOrWhiteSpace(Label);
 
     /// <inheritdoc />
-    protected override TnTColor EffectiveProgressColor => TextColor ?? TnTColor.OnPrimaryContainer;
+    protected override NTColor EffectiveProgressColor => TextColor ?? NTColor.OnPrimaryContainer;
 
     /// <inheritdoc />
     protected override Size EffectiveProgressSize => EffectiveButtonSize;
@@ -129,11 +129,11 @@ public partial class NTFabButton : NTButtonBase, INTBadgeable {
             throw new ArgumentException("NTFabButton Label must not contain line breaks.", nameof(Label));
         }
 
-        if (BackgroundColor is TnTColor.None or TnTColor.Transparent) {
+        if (BackgroundColor is NTColor.Transparent) {
             throw new InvalidOperationException($"{nameof(BackgroundColor)} must be a visible container color.");
         }
 
-        if (TextColor is TnTColor.None or TnTColor.Transparent) {
+        if (TextColor is NTColor.Transparent) {
             throw new InvalidOperationException($"{nameof(TextColor)} must be a visible content color.");
         }
 

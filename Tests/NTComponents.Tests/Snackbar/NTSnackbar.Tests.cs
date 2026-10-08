@@ -61,9 +61,9 @@ public class NTSnackbar_Tests : BunitContext {
             ActionLabel = "Undo",
             Timeout = 0,
             ShowClose = true,
-            BackgroundColor = TnTColor.InverseSurface,
-            TextColor = TnTColor.InverseOnSurface,
-            ActionColor = TnTColor.InversePrimary,
+            BackgroundColor = NTColor.InverseSurface,
+            TextColor = NTColor.InverseOnSurface,
+            ActionColor = NTColor.InversePrimary,
             Id = "photos-deleted",
             Host = "snackbar-host"
         }));
@@ -75,9 +75,9 @@ public class NTSnackbar_Tests : BunitContext {
         script.Should().Contain("actionLabel: \"Undo\"");
         script.Should().Contain("timeout: 0");
         script.Should().Contain("showClose: true");
-        script.Should().Contain("backgroundColor: \"var(--tnt-color-inverse-surface)\"");
-        script.Should().Contain("textColor: \"var(--tnt-color-inverse-on-surface)\"");
-        script.Should().Contain("actionColor: \"var(--tnt-color-inverse-primary)\"");
+        script.Should().Contain("backgroundColor: \"var(--nt-color-inverse-surface)\"");
+        script.Should().Contain("textColor: \"var(--nt-color-inverse-on-surface)\"");
+        script.Should().Contain("actionColor: \"var(--nt-color-inverse-primary)\"");
         script.Should().Contain("id: \"photos-deleted\"");
         script.Should().Contain("host: \"snackbar-host\"");
         script.Should().Contain("if (window.NTSnackbar?.queueSnackbar)");

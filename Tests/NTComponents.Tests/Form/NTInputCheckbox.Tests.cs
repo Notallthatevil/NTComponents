@@ -298,41 +298,41 @@ public class NTInputCheckbox_Tests : BunitContext {
     [Fact]
     public void Color_Overrides_Emit_Component_Css_Variables() {
         var cut = RenderCheckbox(configure: parameters => parameters
-            .Add(p => p.DisabledContainerColor, TnTColor.SurfaceContainerLow)
-            .Add(p => p.DisabledIconColor, TnTColor.Surface)
-            .Add(p => p.DisabledOutlineColor, TnTColor.OutlineVariant)
-            .Add(p => p.ErrorColor, TnTColor.Error)
-            .Add(p => p.ErrorIconColor, TnTColor.OnError)
-            .Add(p => p.FocusOutlineColor, TnTColor.Primary)
-            .Add(p => p.HoverOutlineColor, TnTColor.OnSurface)
-            .Add(p => p.IconColor, TnTColor.Tertiary)
-            .Add(p => p.LabelColor, TnTColor.Secondary)
-            .Add(p => p.OutlineColor, TnTColor.Outline)
-            .Add(p => p.PressedOutlineColor, TnTColor.Tertiary)
-            .Add(p => p.SelectedContainerColor, TnTColor.Primary)
-            .Add(p => p.SelectedIconColor, TnTColor.OnPrimary)
-            .Add(p => p.SelectedStateLayerColor, TnTColor.Primary)
-            .Add(p => p.StateLayerColor, TnTColor.OnSurface)
-            .Add(p => p.SupportingTextColor, TnTColor.OnSurfaceVariant));
+            .Add(p => p.DisabledContainerColor, NTColor.SurfaceContainerLow)
+            .Add(p => p.DisabledIconColor, NTColor.Surface)
+            .Add(p => p.DisabledOutlineColor, NTColor.OutlineVariant)
+            .Add(p => p.ErrorColor, NTColor.Error)
+            .Add(p => p.ErrorIconColor, NTColor.OnError)
+            .Add(p => p.FocusOutlineColor, NTColor.Primary)
+            .Add(p => p.HoverOutlineColor, NTColor.OnSurface)
+            .Add(p => p.IconColor, NTColor.Tertiary)
+            .Add(p => p.LabelColor, NTColor.Secondary)
+            .Add(p => p.OutlineColor, NTColor.Outline)
+            .Add(p => p.PressedOutlineColor, NTColor.Tertiary)
+            .Add(p => p.SelectedContainerColor, NTColor.Primary)
+            .Add(p => p.SelectedIconColor, NTColor.OnPrimary)
+            .Add(p => p.SelectedStateLayerColor, NTColor.Primary)
+            .Add(p => p.StateLayerColor, NTColor.OnSurface)
+            .Add(p => p.SupportingTextColor, NTColor.OnSurfaceVariant));
 
         var style = cut.Find(".nt-checkbox").GetAttribute("style");
 
-        style.Should().Contain("--nt-checkbox-disabled-container-color:var(--tnt-color-surface-container-low);");
-        style.Should().Contain("--nt-checkbox-disabled-icon-color:var(--tnt-color-surface);");
-        style.Should().Contain("--nt-checkbox-disabled-outline-color:var(--tnt-color-outline-variant);");
-        style.Should().Contain("--nt-checkbox-error-color:var(--tnt-color-error);");
-        style.Should().Contain("--nt-checkbox-error-icon-color:var(--tnt-color-on-error);");
-        style.Should().Contain("--nt-checkbox-focus-outline-color:var(--tnt-color-primary);");
-        style.Should().Contain("--nt-checkbox-hover-outline-color:var(--tnt-color-on-surface);");
-        style.Should().Contain("--nt-checkbox-icon-color:var(--tnt-color-tertiary);");
-        style.Should().Contain("--nt-checkbox-label-color:var(--tnt-color-secondary);");
-        style.Should().Contain("--nt-checkbox-outline-color:var(--tnt-color-outline);");
-        style.Should().Contain("--nt-checkbox-pressed-outline-color:var(--tnt-color-tertiary);");
-        style.Should().Contain("--nt-checkbox-selected-container-color:var(--tnt-color-primary);");
-        style.Should().Contain("--nt-checkbox-selected-icon-color:var(--tnt-color-on-primary);");
-        style.Should().Contain("--nt-checkbox-selected-state-layer-color:var(--tnt-color-primary);");
-        style.Should().Contain("--nt-checkbox-state-layer-color:var(--tnt-color-on-surface);");
-        style.Should().Contain("--nt-checkbox-supporting-text-color:var(--tnt-color-on-surface-variant);");
+        style.Should().Contain("--nt-checkbox-disabled-container-color:var(--nt-color-surface-container-low);");
+        style.Should().Contain("--nt-checkbox-disabled-icon-color:var(--nt-color-surface);");
+        style.Should().Contain("--nt-checkbox-disabled-outline-color:var(--nt-color-outline-variant);");
+        style.Should().Contain("--nt-checkbox-error-color:var(--nt-color-error);");
+        style.Should().Contain("--nt-checkbox-error-icon-color:var(--nt-color-on-error);");
+        style.Should().Contain("--nt-checkbox-focus-outline-color:var(--nt-color-primary);");
+        style.Should().Contain("--nt-checkbox-hover-outline-color:var(--nt-color-on-surface);");
+        style.Should().Contain("--nt-checkbox-icon-color:var(--nt-color-tertiary);");
+        style.Should().Contain("--nt-checkbox-label-color:var(--nt-color-secondary);");
+        style.Should().Contain("--nt-checkbox-outline-color:var(--nt-color-outline);");
+        style.Should().Contain("--nt-checkbox-pressed-outline-color:var(--nt-color-tertiary);");
+        style.Should().Contain("--nt-checkbox-selected-container-color:var(--nt-color-primary);");
+        style.Should().Contain("--nt-checkbox-selected-icon-color:var(--nt-color-on-primary);");
+        style.Should().Contain("--nt-checkbox-selected-state-layer-color:var(--nt-color-primary);");
+        style.Should().Contain("--nt-checkbox-state-layer-color:var(--nt-color-on-surface);");
+        style.Should().Contain("--nt-checkbox-supporting-text-color:var(--nt-color-on-surface-variant);");
     }
 
     [Fact]
@@ -340,38 +340,38 @@ public class NTInputCheckbox_Tests : BunitContext {
         var model = new TestModel();
 
         var cut = RenderCheckbox(model, parameters => parameters
-            .Add(p => p.SelectedContainerColor, TnTColor.Primary)
-            .Add(p => p.SelectedIconColor, TnTColor.OnPrimary));
+            .Add(p => p.SelectedContainerColor, NTColor.Primary)
+            .Add(p => p.SelectedIconColor, NTColor.OnPrimary));
 
-        cut.Find(".nt-checkbox").GetAttribute("style").Should().Contain("--nt-checkbox-selected-container-color:var(--tnt-color-primary);");
+        cut.Find(".nt-checkbox").GetAttribute("style").Should().Contain("--nt-checkbox-selected-container-color:var(--nt-color-primary);");
 
         cut.Render(parameters => {
             parameters.Add(p => p.Value, model.Enabled);
             parameters.Add(p => p.ValueChanged, EventCallback.Factory.Create<bool>(this, value => model.Enabled = value));
             parameters.Add(p => p.ValueExpression, () => model.Enabled);
-            parameters.Add(p => p.SelectedContainerColor, TnTColor.Secondary);
-            parameters.Add(p => p.SelectedIconColor, TnTColor.OnSecondary);
+            parameters.Add(p => p.SelectedContainerColor, NTColor.Secondary);
+            parameters.Add(p => p.SelectedIconColor, NTColor.OnSecondary);
         });
 
         var style = cut.Find(".nt-checkbox").GetAttribute("style");
-        style.Should().Contain("--nt-checkbox-selected-container-color:var(--tnt-color-secondary);");
-        style.Should().Contain("--nt-checkbox-selected-icon-color:var(--tnt-color-on-secondary);");
-        style.Should().NotContain("--nt-checkbox-selected-container-color:var(--tnt-color-primary);");
+        style.Should().Contain("--nt-checkbox-selected-container-color:var(--nt-color-secondary);");
+        style.Should().Contain("--nt-checkbox-selected-icon-color:var(--nt-color-on-secondary);");
+        style.Should().NotContain("--nt-checkbox-selected-container-color:var(--nt-color-primary);");
     }
 
     [Fact]
     public void Color_Override_Style_Clears_When_Parameter_Is_Null() {
         var model = new TestModel();
 
-        var cut = RenderCheckbox(model, parameters => parameters.Add(p => p.SelectedContainerColor, TnTColor.Primary));
+        var cut = RenderCheckbox(model, parameters => parameters.Add(p => p.SelectedContainerColor, NTColor.Primary));
 
-        cut.Find(".nt-checkbox").GetAttribute("style").Should().Contain("--nt-checkbox-selected-container-color:var(--tnt-color-primary);");
+        cut.Find(".nt-checkbox").GetAttribute("style").Should().Contain("--nt-checkbox-selected-container-color:var(--nt-color-primary);");
 
         cut.Render(parameters => {
             parameters.Add(p => p.Value, model.Enabled);
             parameters.Add(p => p.ValueChanged, EventCallback.Factory.Create<bool>(this, value => model.Enabled = value));
             parameters.Add(p => p.ValueExpression, () => model.Enabled);
-            parameters.Add(p => p.SelectedContainerColor, (TnTColor?)null);
+            parameters.Add(p => p.SelectedContainerColor, (NTColor?)null);
         });
 
         cut.Find(".nt-checkbox").HasAttribute("style").Should().BeFalse();

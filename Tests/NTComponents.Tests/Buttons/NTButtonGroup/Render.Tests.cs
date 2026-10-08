@@ -318,17 +318,17 @@ public sealed class Render_Tests : NTButtonGroupTestContext {
         // Act
         var cut = Render<NTButtonGroup<string>>(parameters => parameters
             .AddChildContent(RenderItems(items))
-            .Add(p => p.BackgroundColor, TnTColor.SecondaryContainer)
-            .Add(p => p.TextColor, TnTColor.OnSecondaryContainer)
-            .Add(p => p.SelectedBackgroundColor, TnTColor.Secondary)
-            .Add(p => p.SelectedTextColor, TnTColor.OnSecondary));
+            .Add(p => p.BackgroundColor, NTColor.SecondaryContainer)
+            .Add(p => p.TextColor, NTColor.OnSecondaryContainer)
+            .Add(p => p.SelectedBackgroundColor, NTColor.Secondary)
+            .Add(p => p.SelectedTextColor, NTColor.OnSecondary));
 
         // Assert
         var style = cut.Find("div.nt-button-group").GetAttribute("style")!;
-        style.Should().Contain("--nt-button-group-bg:var(--tnt-color-secondary-container)");
-        style.Should().Contain("--nt-button-group-fg:var(--tnt-color-on-secondary-container)");
-        style.Should().Contain("--nt-button-group-selected-bg:var(--tnt-color-secondary)");
-        style.Should().Contain("--nt-button-group-selected-fg:var(--tnt-color-on-secondary)");
+        style.Should().Contain("--nt-button-group-bg:var(--nt-color-secondary-container)");
+        style.Should().Contain("--nt-button-group-fg:var(--nt-color-on-secondary-container)");
+        style.Should().Contain("--nt-button-group-selected-bg:var(--nt-color-secondary)");
+        style.Should().Contain("--nt-button-group-selected-fg:var(--nt-color-on-secondary)");
     }
 
     private sealed class RequiredSelectionModel {

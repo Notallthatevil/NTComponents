@@ -66,13 +66,13 @@ public partial class NTLoader : NTDisposableComponentBase, INTPageScriptComponen
     ///     Color used by the moving indicator shape.
     /// </summary>
     [Parameter]
-    public TnTColor Color { get; set; } = TnTColor.Primary;
+    public NTColor Color { get; set; } = NTColor.Primary;
 
     /// <summary>
     ///     Container color used by the contained variant.
     /// </summary>
     [Parameter]
-    public TnTColor ContainerColor { get; set; } = TnTColor.PrimaryContainer;
+    public NTColor ContainerColor { get; set; } = NTColor.PrimaryContainer;
 
     /// <inheritdoc />
     public override string? ElementClass => CssClassBuilder.Create()
@@ -86,8 +86,8 @@ public partial class NTLoader : NTDisposableComponentBase, INTPageScriptComponen
     /// <inheritdoc />
     public override string? ElementStyle => CssStyleBuilder.Create()
         .AddFromAdditionalAttributes(AdditionalAttributes)
-        .AddVariable("nt-loader-indicator-color", Color.ToCssTnTColorVariable())
-        .AddVariable("nt-loader-container-color", ContainerColor.ToCssTnTColorVariable())
+        .AddVariable("nt-loader-indicator-color", Color.ToCssNTColorVariable())
+        .AddVariable("nt-loader-container-color", ContainerColor.ToCssNTColorVariable())
         .AddVariable("nt-loader-size", SizeValue!, !string.IsNullOrWhiteSpace(SizeValue))
         .Build();
 

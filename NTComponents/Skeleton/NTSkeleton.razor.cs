@@ -70,8 +70,8 @@ public partial class NTSkeleton : NTComponentBase {
     /// <inheritdoc />
     public override string? ElementStyle => CssStyleBuilder.Create()
         .AddFromAdditionalAttributes(AdditionalAttributes)
-        .AddVariable("nt-skeleton-container-color", ContainerColor.ToCssTnTColorVariable())
-        .AddVariable("nt-skeleton-highlight-color", HighlightColor.ToCssTnTColorVariable(), HighlightColor.HasValue)
+        .AddVariable("nt-skeleton-container-color", ContainerColor.ToCssNTColorVariable())
+        .AddVariable("nt-skeleton-highlight-color", HighlightColor.ToCssNTColorVariable(), HighlightColor.HasValue)
         .AddVariable("nt-skeleton-width", Width!, !string.IsNullOrWhiteSpace(Width))
         .AddVariable("nt-skeleton-height", Height!, !string.IsNullOrWhiteSpace(Height))
         .Build();
@@ -92,13 +92,13 @@ public partial class NTSkeleton : NTComponentBase {
     ///     Optional highlight color used by animated skeletons.
     /// </summary>
     [Parameter]
-    public TnTColor? HighlightColor { get; set; }
+    public NTColor? HighlightColor { get; set; }
 
     /// <summary>
     ///     Container color for the resting placeholder surface.
     /// </summary>
     [Parameter]
-    public TnTColor ContainerColor { get; set; } = TnTColor.SurfaceContainerHighest;
+    public NTColor ContainerColor { get; set; } = NTColor.SurfaceContainerHighest;
 
     /// <summary>
     ///     Shape used to mimic the loading content.

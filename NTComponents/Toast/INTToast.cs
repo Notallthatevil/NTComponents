@@ -9,7 +9,7 @@ public interface INTToast {
     /// <summary>
     ///     Gets the toast container color.
     /// </summary>
-    TnTColor BackgroundColor { get; }
+    NTColor BackgroundColor { get; }
 
     /// <summary>
     ///     Gets the icon name rendered at the start of the toast, when present.
@@ -19,7 +19,7 @@ public interface INTToast {
     /// <summary>
     ///     Gets the icon color.
     /// </summary>
-    TnTColor IconColor { get; }
+    NTColor IconColor { get; }
 
     /// <summary>
     ///     Gets the supporting message shown below the title.
@@ -34,7 +34,7 @@ public interface INTToast {
     /// <summary>
     ///     Gets the text color.
     /// </summary>
-    TnTColor TextColor { get; }
+    NTColor TextColor { get; }
 
     /// <summary>
     ///     Gets the timeout in seconds before auto-dismiss. Zero or less disables auto-dismiss.

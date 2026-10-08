@@ -68,11 +68,11 @@ public class NTLoader_Tests : BunitContext {
     public void Contained_Variant_Adds_Contained_Class_And_Color_Variable() {
         var cut = Render<NTLoader>(p => p
             .Add(c => c.Variant, NTLoaderVariant.Contained)
-            .Add(c => c.ContainerColor, TnTColor.SecondaryContainer));
+            .Add(c => c.ContainerColor, NTColor.SecondaryContainer));
         var loader = cut.Find(".nt-loader");
 
         loader.GetAttribute("class")!.Should().Contain("nt-loader-contained");
-        loader.GetAttribute("style")!.Should().Contain("--nt-loader-container-color:var(--tnt-color-secondary-container)");
+        loader.GetAttribute("style")!.Should().Contain("--nt-loader-container-color:var(--nt-color-secondary-container)");
     }
 
     [Fact]
@@ -141,10 +141,10 @@ public class NTLoader_Tests : BunitContext {
 
     [Fact]
     public void Indicator_Color_Sets_Css_Variable() {
-        var cut = Render<NTLoader>(p => p.Add(c => c.Color, TnTColor.Tertiary));
+        var cut = Render<NTLoader>(p => p.Add(c => c.Color, NTColor.Tertiary));
         var loader = cut.Find(".nt-loader");
 
-        loader.GetAttribute("style")!.Should().Contain("--nt-loader-indicator-color:var(--tnt-color-tertiary)");
+        loader.GetAttribute("style")!.Should().Contain("--nt-loader-indicator-color:var(--nt-color-tertiary)");
         loader.GetAttribute("style")!.Should().NotContain("--nt-shape-content-background");
     }
 

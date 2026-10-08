@@ -17,7 +17,7 @@ public class NTDivider_Tests : BunitContext {
         // Assert
         divider.GetAttribute("class")!.Should().Contain("custom-divider");
         divider.GetAttribute("style")!.Should().Contain("margin-block:8px");
-        divider.GetAttribute("style")!.Should().Contain("--nt-divider-color:var(--tnt-color-outline-variant)");
+        divider.GetAttribute("style")!.Should().Contain("--nt-divider-color:var(--nt-color-outline-variant)");
     }
 
     [Fact]
@@ -32,7 +32,7 @@ public class NTDivider_Tests : BunitContext {
         cls.Should().Contain("nt-divider-full-width");
         divider.GetAttribute("role").Should().Be("separator");
         divider.GetAttribute("aria-orientation").Should().Be("horizontal");
-        divider.GetAttribute("style")!.Should().Contain("--nt-divider-color:var(--tnt-color-outline-variant)");
+        divider.GetAttribute("style")!.Should().Contain("--nt-divider-color:var(--nt-color-outline-variant)");
     }
 
     [Fact]
@@ -64,10 +64,10 @@ public class NTDivider_Tests : BunitContext {
     [Fact]
     public void Color_Can_Be_Overridden() {
         // Act
-        var cut = Render<NTDivider>(p => p.Add(c => c.Color, TnTColor.Primary));
+        var cut = Render<NTDivider>(p => p.Add(c => c.Color, NTColor.Primary));
 
         // Assert
-        cut.Find("div.nt-divider").GetAttribute("style")!.Should().Contain("--nt-divider-color:var(--tnt-color-primary)");
+        cut.Find("div.nt-divider").GetAttribute("style")!.Should().Contain("--nt-divider-color:var(--nt-color-primary)");
     }
 
     [Fact]

@@ -54,6 +54,9 @@ public sealed class CssStyleBuilder {
     /// <returns>The current instance of <see cref="CssStyleBuilder" /> for chaining.</returns>
     public CssStyleBuilder AddBackgroundColor(TnTColor? color, bool enabled = true) => enabled && color.HasValue ? AddStyle("background-color", color?.ToCssTnTColorVariable()) : this;
 
+    /// <summary>Adds an NT theme background color.</summary>
+    public CssStyleBuilder AddBackgroundColor(NTColor color, bool enabled = true) => AddStyle("background-color", color.ToCssNTColorVariable(), enabled);
+
     /// <summary>
     ///     Adds a <c>color</c> (foreground) style using a theme color variable when provided.
     /// </summary>
@@ -61,6 +64,9 @@ public sealed class CssStyleBuilder {
     /// <param name="enabled">If false, the color will not be added.</param>
     /// <returns>The current instance of <see cref="CssStyleBuilder" /> for chaining.</returns>
     public CssStyleBuilder AddForegroundColor(TnTColor? color, bool enabled = true) => enabled && color.HasValue ? AddStyle("color", color?.ToCssTnTColorVariable()) : this;
+
+    /// <summary>Adds an NT theme foreground color.</summary>
+    public CssStyleBuilder AddForegroundColor(NTColor color, bool enabled = true) => AddStyle("color", color.ToCssNTColorVariable(), enabled);
 
     /// <summary>
     ///     Adds styles from an attributes dictionary if it contains a "style" key.
@@ -104,6 +110,9 @@ public sealed class CssStyleBuilder {
     /// <param name="enabled">If false, the variable will not be added.</param>
     /// <returns>The current instance of <see cref="CssStyleBuilder" /> for chaining.</returns>
     public CssStyleBuilder AddVariable(string varName, TnTColor color, bool enabled = true) => enabled ? AddStyle($"--{varName}", $"var(--tnt-color-{color.ToCssClassName()})") : this;
+
+    /// <summary>Adds a custom property referencing an NT theme color.</summary>
+    public CssStyleBuilder AddVariable(string varName, NTColor color, bool enabled = true) => AddStyle($"--{varName}", color.ToCssNTColorVariable(), enabled);
 
     /// <summary>
     ///     Builds the final CSS style string composed of any raw fragments and collected property/value pairs.

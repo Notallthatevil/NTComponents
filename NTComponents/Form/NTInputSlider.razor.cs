@@ -129,55 +129,55 @@ public partial class NTInputSlider<TNumber> where TNumber : struct, INumber<TNum
     ///     Gets or sets an optional override for active track color.
     /// </summary>
     [Parameter]
-    public TnTColor? ActiveTrackColor { get; set; }
+    public NTColor? ActiveTrackColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for disabled slider color.
     /// </summary>
     [Parameter]
-    public TnTColor? DisabledColor { get; set; }
+    public NTColor? DisabledColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for error color.
     /// </summary>
     [Parameter]
-    public TnTColor? ErrorColor { get; set; }
+    public NTColor? ErrorColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for focus color.
     /// </summary>
     [Parameter]
-    public TnTColor? FocusColor { get; set; }
+    public NTColor? FocusColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for handle color.
     /// </summary>
     [Parameter]
-    public TnTColor? HandleColor { get; set; }
+    public NTColor? HandleColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for inactive track color.
     /// </summary>
     [Parameter]
-    public TnTColor? InactiveTrackColor { get; set; }
+    public NTColor? InactiveTrackColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for label text color.
     /// </summary>
     [Parameter]
-    public TnTColor? LabelColor { get; set; }
+    public NTColor? LabelColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for state-layer color.
     /// </summary>
     [Parameter]
-    public TnTColor? StateLayerColor { get; set; }
+    public NTColor? StateLayerColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for supporting text color.
     /// </summary>
     [Parameter]
-    public TnTColor? SupportingTextColor { get; set; }
+    public NTColor? SupportingTextColor { get; set; }
 
     /// <summary>
     ///     Gets the effective maximum value.
@@ -387,15 +387,15 @@ public partial class NTInputSlider<TNumber> where TNumber : struct, INumber<TNum
         var endGap = GetActiveEndGap(endPercent);
 
         return CssStyleBuilder.Create()
-            .AddVariable("nt-slider-active-track-color", ActiveTrackColor.ToCssTnTColorVariable(), ActiveTrackColor.HasValue)
-            .AddVariable("nt-slider-disabled-color", DisabledColor.ToCssTnTColorVariable(), DisabledColor.HasValue)
-            .AddVariable("nt-slider-error-color", ErrorColor.ToCssTnTColorVariable(), ErrorColor.HasValue)
-            .AddVariable("nt-slider-focus-color", FocusColor.ToCssTnTColorVariable(), FocusColor.HasValue)
-            .AddVariable("nt-slider-handle-color", HandleColor.ToCssTnTColorVariable(), HandleColor.HasValue)
-            .AddVariable("nt-slider-inactive-track-color", InactiveTrackColor.ToCssTnTColorVariable(), InactiveTrackColor.HasValue)
-            .AddVariable("nt-slider-label-color", LabelColor.ToCssTnTColorVariable(), LabelColor.HasValue)
-            .AddVariable("nt-slider-state-layer-color", StateLayerColor.ToCssTnTColorVariable(), StateLayerColor.HasValue)
-            .AddVariable("nt-slider-supporting-text-color", SupportingTextColor.ToCssTnTColorVariable(), SupportingTextColor.HasValue)
+            .AddVariable("nt-slider-active-track-color", ActiveTrackColor.ToCssNTColorVariable(), ActiveTrackColor.HasValue)
+            .AddVariable("nt-slider-disabled-color", DisabledColor.ToCssNTColorVariable(), DisabledColor.HasValue)
+            .AddVariable("nt-slider-error-color", ErrorColor.ToCssNTColorVariable(), ErrorColor.HasValue)
+            .AddVariable("nt-slider-focus-color", FocusColor.ToCssNTColorVariable(), FocusColor.HasValue)
+            .AddVariable("nt-slider-handle-color", HandleColor.ToCssNTColorVariable(), HandleColor.HasValue)
+            .AddVariable("nt-slider-inactive-track-color", InactiveTrackColor.ToCssNTColorVariable(), InactiveTrackColor.HasValue)
+            .AddVariable("nt-slider-label-color", LabelColor.ToCssNTColorVariable(), LabelColor.HasValue)
+            .AddVariable("nt-slider-state-layer-color", StateLayerColor.ToCssNTColorVariable(), StateLayerColor.HasValue)
+            .AddVariable("nt-slider-supporting-text-color", SupportingTextColor.ToCssNTColorVariable(), SupportingTextColor.HasValue)
             .AddVariable("nt-slider-start-percent", FormatPercent(startPercent))
             .AddVariable("nt-slider-end-percent", FormatPercent(endPercent))
             .AddVariable("nt-slider-start-gap", startGap)

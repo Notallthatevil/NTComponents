@@ -74,97 +74,97 @@ public partial class NTInputCheckbox {
     ///     selected, unselected, error, focus, hover, pressed, and disabled states.
     /// </remarks>
     [Parameter]
-    public TnTColor? DisabledContainerColor { get; set; }
+    public NTColor? DisabledContainerColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for the disabled selected icon color.
     /// </summary>
     [Parameter]
-    public TnTColor? DisabledIconColor { get; set; }
+    public NTColor? DisabledIconColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for the disabled unselected outline color.
     /// </summary>
     [Parameter]
-    public TnTColor? DisabledOutlineColor { get; set; }
+    public NTColor? DisabledOutlineColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for error outline and selected container color.
     /// </summary>
     [Parameter]
-    public TnTColor? ErrorColor { get; set; }
+    public NTColor? ErrorColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for the selected error icon color.
     /// </summary>
     [Parameter]
-    public TnTColor? ErrorIconColor { get; set; }
+    public NTColor? ErrorIconColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for the focused unselected outline color.
     /// </summary>
     [Parameter]
-    public TnTColor? FocusOutlineColor { get; set; }
+    public NTColor? FocusOutlineColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for the hovered unselected outline color.
     /// </summary>
     [Parameter]
-    public TnTColor? HoverOutlineColor { get; set; }
+    public NTColor? HoverOutlineColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for label text color.
     /// </summary>
     [Parameter]
-    public TnTColor? LabelColor { get; set; }
+    public NTColor? LabelColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for leading and trailing icon color.
     /// </summary>
     [Parameter]
-    public TnTColor? IconColor { get; set; }
+    public NTColor? IconColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for the resting unselected outline color.
     /// </summary>
     [Parameter]
-    public TnTColor? OutlineColor { get; set; }
+    public NTColor? OutlineColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for the pressed unselected outline color.
     /// </summary>
     [Parameter]
-    public TnTColor? PressedOutlineColor { get; set; }
+    public NTColor? PressedOutlineColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for the selected container color.
     /// </summary>
     [Parameter]
-    public TnTColor? SelectedContainerColor { get; set; }
+    public NTColor? SelectedContainerColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for the selected icon color.
     /// </summary>
     [Parameter]
-    public TnTColor? SelectedIconColor { get; set; }
+    public NTColor? SelectedIconColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for the selected state-layer color.
     /// </summary>
     [Parameter]
-    public TnTColor? SelectedStateLayerColor { get; set; }
+    public NTColor? SelectedStateLayerColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for the unselected state-layer color.
     /// </summary>
     [Parameter]
-    public TnTColor? StateLayerColor { get; set; }
+    public NTColor? StateLayerColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for supporting and error text color when not invalid.
     /// </summary>
     [Parameter]
-    public TnTColor? SupportingTextColor { get; set; }
+    public NTColor? SupportingTextColor { get; set; }
 
     /// <inheritdoc />
     protected override IEnumerable<string> ExplicitInputAttributeNames => CheckboxExplicitInputAttributeNames;
@@ -195,22 +195,22 @@ public partial class NTInputCheckbox {
     }
 
     private string? BuildElementStyle() => CssStyleBuilder.Create()
-        .AddVariable("nt-checkbox-disabled-container-color", DisabledContainerColor.ToCssTnTColorVariable(), DisabledContainerColor.HasValue)
-        .AddVariable("nt-checkbox-disabled-icon-color", DisabledIconColor.ToCssTnTColorVariable(), DisabledIconColor.HasValue)
-        .AddVariable("nt-checkbox-disabled-outline-color", DisabledOutlineColor.ToCssTnTColorVariable(), DisabledOutlineColor.HasValue)
-        .AddVariable("nt-checkbox-error-color", ErrorColor.ToCssTnTColorVariable(), ErrorColor.HasValue)
-        .AddVariable("nt-checkbox-error-icon-color", ErrorIconColor.ToCssTnTColorVariable(), ErrorIconColor.HasValue)
-        .AddVariable("nt-checkbox-focus-outline-color", FocusOutlineColor.ToCssTnTColorVariable(), FocusOutlineColor.HasValue)
-        .AddVariable("nt-checkbox-hover-outline-color", HoverOutlineColor.ToCssTnTColorVariable(), HoverOutlineColor.HasValue)
-        .AddVariable("nt-checkbox-icon-color", IconColor.ToCssTnTColorVariable(), IconColor.HasValue)
-        .AddVariable("nt-checkbox-label-color", LabelColor.ToCssTnTColorVariable(), LabelColor.HasValue)
-        .AddVariable("nt-checkbox-outline-color", OutlineColor.ToCssTnTColorVariable(), OutlineColor.HasValue)
-        .AddVariable("nt-checkbox-pressed-outline-color", PressedOutlineColor.ToCssTnTColorVariable(), PressedOutlineColor.HasValue)
-        .AddVariable("nt-checkbox-selected-container-color", SelectedContainerColor.ToCssTnTColorVariable(), SelectedContainerColor.HasValue)
-        .AddVariable("nt-checkbox-selected-icon-color", SelectedIconColor.ToCssTnTColorVariable(), SelectedIconColor.HasValue)
-        .AddVariable("nt-checkbox-selected-state-layer-color", SelectedStateLayerColor.ToCssTnTColorVariable(), SelectedStateLayerColor.HasValue)
-        .AddVariable("nt-checkbox-state-layer-color", StateLayerColor.ToCssTnTColorVariable(), StateLayerColor.HasValue)
-        .AddVariable("nt-checkbox-supporting-text-color", SupportingTextColor.ToCssTnTColorVariable(), SupportingTextColor.HasValue)
+        .AddVariable("nt-checkbox-disabled-container-color", DisabledContainerColor.ToCssNTColorVariable(), DisabledContainerColor.HasValue)
+        .AddVariable("nt-checkbox-disabled-icon-color", DisabledIconColor.ToCssNTColorVariable(), DisabledIconColor.HasValue)
+        .AddVariable("nt-checkbox-disabled-outline-color", DisabledOutlineColor.ToCssNTColorVariable(), DisabledOutlineColor.HasValue)
+        .AddVariable("nt-checkbox-error-color", ErrorColor.ToCssNTColorVariable(), ErrorColor.HasValue)
+        .AddVariable("nt-checkbox-error-icon-color", ErrorIconColor.ToCssNTColorVariable(), ErrorIconColor.HasValue)
+        .AddVariable("nt-checkbox-focus-outline-color", FocusOutlineColor.ToCssNTColorVariable(), FocusOutlineColor.HasValue)
+        .AddVariable("nt-checkbox-hover-outline-color", HoverOutlineColor.ToCssNTColorVariable(), HoverOutlineColor.HasValue)
+        .AddVariable("nt-checkbox-icon-color", IconColor.ToCssNTColorVariable(), IconColor.HasValue)
+        .AddVariable("nt-checkbox-label-color", LabelColor.ToCssNTColorVariable(), LabelColor.HasValue)
+        .AddVariable("nt-checkbox-outline-color", OutlineColor.ToCssNTColorVariable(), OutlineColor.HasValue)
+        .AddVariable("nt-checkbox-pressed-outline-color", PressedOutlineColor.ToCssNTColorVariable(), PressedOutlineColor.HasValue)
+        .AddVariable("nt-checkbox-selected-container-color", SelectedContainerColor.ToCssNTColorVariable(), SelectedContainerColor.HasValue)
+        .AddVariable("nt-checkbox-selected-icon-color", SelectedIconColor.ToCssNTColorVariable(), SelectedIconColor.HasValue)
+        .AddVariable("nt-checkbox-selected-state-layer-color", SelectedStateLayerColor.ToCssNTColorVariable(), SelectedStateLayerColor.HasValue)
+        .AddVariable("nt-checkbox-state-layer-color", StateLayerColor.ToCssNTColorVariable(), StateLayerColor.HasValue)
+        .AddVariable("nt-checkbox-supporting-text-color", SupportingTextColor.ToCssNTColorVariable(), SupportingTextColor.HasValue)
         .Build();
 
     private string BuildRootClass() {

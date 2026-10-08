@@ -93,7 +93,7 @@ public sealed class NTFabButtonConfigurationAnalyzer : DiagnosticAnalyzer {
         context.EnableConcurrentExecution();
         context.RegisterCompilationStartAction(static startContext => {
             var fabButtonType = startContext.Compilation.GetTypeByMetadataName("NTComponents.NTFabButton");
-            var colorType = startContext.Compilation.GetTypeByMetadataName("NTComponents.TnTColor");
+            var colorType = startContext.Compilation.GetTypeByMetadataName("NTComponents.NTColor") ?? startContext.Compilation.GetTypeByMetadataName("NTComponents.TnTColor");
             var sizeType = startContext.Compilation.GetTypeByMetadataName("NTComponents.Size");
             var placementType = startContext.Compilation.GetTypeByMetadataName("NTComponents.NTFabButtonPlacement");
 

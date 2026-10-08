@@ -20,12 +20,12 @@ public interface INTSnackbar {
     /// <summary>
     ///     Gets the action text color.
     /// </summary>
-    TnTColor ActionColor { get; }
+    NTColor ActionColor { get; }
 
     /// <summary>
     ///     Gets the snackbar container background color.
     /// </summary>
-    TnTColor BackgroundColor { get; }
+    NTColor BackgroundColor { get; }
 
     /// <summary>
     ///     Gets a value indicating whether the snackbar is currently closing.
@@ -55,5 +55,5 @@ public interface INTSnackbar {
     /// <summary>
     ///     Gets the supporting text color.
     /// </summary>
-    TnTColor TextColor { get; }
+    NTColor TextColor { get; }
 }

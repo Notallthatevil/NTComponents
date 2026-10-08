@@ -17,7 +17,7 @@ else {
                 <Badges>
                     <CompatibilityTag Type="@_component.Type" />
                     @if (_component.Type.IsObsolete) {
-                        <NTTag Label="Obsolete" BackgroundColor="TnTColor.ErrorContainer" TextColor="TnTColor.OnErrorContainer" Elevation="0" />
+                        <NTTag Label="Obsolete" BackgroundColor="NTColor.ErrorContainer" TextColor="NTColor.OnErrorContainer" Elevation="0" />
                     }
                 </Badges>
                 <Actions>
@@ -102,7 +102,7 @@ else {
                                 <h3>@child.Type.Name</h3>
                                 <CompatibilityTag Type="@child.Type" />
                                 @if (child.Type.IsObsolete) {
-                                    <NTTag Label="Obsolete" BackgroundColor="TnTColor.ErrorContainer" TextColor="TnTColor.OnErrorContainer" Elevation="0" />
+                                    <NTTag Label="Obsolete" BackgroundColor="NTColor.ErrorContainer" TextColor="NTColor.OnErrorContainer" Elevation="0" />
                                 }
                             </div>
 

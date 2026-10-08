@@ -62,7 +62,7 @@ internal sealed class NTToastService(IJSRuntime _jsRuntime) : INTToastService, I
         _moduleLock.Dispose();
     }
 
-    public async Task ShowAsync(string title, string? message = null, NTToastVariant variant = NTToastVariant.Default, int? timeout = null, bool showClose = true, string? icon = null, TnTColor? backgroundColor = null, TnTColor? textColor = null, TnTColor? iconColor = null) {
+    public async Task ShowAsync(string title, string? message = null, NTToastVariant variant = NTToastVariant.Default, int? timeout = null, bool showClose = true, string? icon = null, NTColor? backgroundColor = null, NTColor? textColor = null, NTColor? iconColor = null) {
         var defaults = NTToastDefaults.ForVariant(variant);
         var toast = new NTToastImplementation {
             Id = TnTComponentIdentifier.NewId(),
@@ -89,9 +89,9 @@ internal sealed class NTToastService(IJSRuntime _jsRuntime) : INTToastService, I
                 toast.Timeout,
                 toast.ShowClose,
                 toast.Icon,
-                backgroundColor is not null ? toast.BackgroundColor.ToCssTnTColorVariable() : null,
-                textColor is not null ? toast.TextColor.ToCssTnTColorVariable() : null,
-                iconColor is not null ? toast.IconColor.ToCssTnTColorVariable() : null,
+                backgroundColor is not null ? toast.BackgroundColor.ToCssNTColorVariable() : null,
+                textColor is not null ? toast.TextColor.ToCssNTColorVariable() : null,
+                iconColor is not null ? toast.IconColor.ToCssNTColorVariable() : null,
                 DotNetReference,
                 _dotNetCloseMethod);
         }
@@ -191,27 +191,27 @@ internal sealed class NTToastService(IJSRuntime _jsRuntime) : INTToastService, I
     ///     Internal toast implementation stored by the toast service.
     /// </summary>
     internal sealed class NTToastImplementation : INTToast {
-        public TnTColor BackgroundColor { get; set; } = TnTColor.SurfaceContainerHigh;
+        public NTColor BackgroundColor { get; set; } = NTColor.SurfaceContainerHigh;
         public string? Icon { get; set; }
-        public TnTColor IconColor { get; set; } = TnTColor.Primary;
+        public NTColor IconColor { get; set; } = NTColor.Primary;
         public string Id { get; set; } = string.Empty;
         public string? Message { get; set; }
         public bool ShowClose { get; set; } = true;
-        public TnTColor TextColor { get; set; } = TnTColor.OnSurface;
+        public NTColor TextColor { get; set; } = NTColor.OnSurface;
         public double Timeout { get; set; } = 4;
         public string Title { get; set; } = string.Empty;
         public NTToastVariant Variant { get; set; } = NTToastVariant.Default;
     }
 
-    private readonly record struct NTToastDefaults(string? Icon, TnTColor BackgroundColor, TnTColor TextColor, TnTColor IconColor) {
+    private readonly record struct NTToastDefaults(string? Icon, NTColor BackgroundColor, NTColor TextColor, NTColor IconColor) {
         public static NTToastDefaults ForVariant(NTToastVariant variant) {
             return variant switch {
-                NTToastVariant.Success => new NTToastDefaults(MaterialIcon.CheckCircle, TnTColor.SuccessContainer, TnTColor.OnSuccessContainer, TnTColor.Success),
-                NTToastVariant.Info => new NTToastDefaults(MaterialIcon.Info, TnTColor.InfoContainer, TnTColor.OnInfoContainer, TnTColor.Info),
-                NTToastVariant.Warning => new NTToastDefaults(MaterialIcon.Warning, TnTColor.WarningContainer, TnTColor.OnWarningContainer, TnTColor.Warning),
-                NTToastVariant.Error => new NTToastDefaults(MaterialIcon.Error, TnTColor.ErrorContainer, TnTColor.OnErrorContainer, TnTColor.Error),
-                NTToastVariant.Assert => new NTToastDefaults(MaterialIcon.Rule, TnTColor.AssertContainer, TnTColor.OnAssertContainer, TnTColor.Assert),
-                _ => new NTToastDefaults(MaterialIcon.Info, TnTColor.SurfaceContainerHigh, TnTColor.OnSurface, TnTColor.Primary)
+                NTToastVariant.Success => new NTToastDefaults(MaterialIcon.CheckCircle, NTColor.SuccessContainer, NTColor.OnSuccessContainer, NTColor.Success),
+                NTToastVariant.Info => new NTToastDefaults(MaterialIcon.Info, NTColor.InfoContainer, NTColor.OnInfoContainer, NTColor.Info),
+                NTToastVariant.Warning => new NTToastDefaults(MaterialIcon.Warning, NTColor.WarningContainer, NTColor.OnWarningContainer, NTColor.Warning),
+                NTToastVariant.Error => new NTToastDefaults(MaterialIcon.Error, NTColor.ErrorContainer, NTColor.OnErrorContainer, NTColor.Error),
+                NTToastVariant.Assert => new NTToastDefaults(MaterialIcon.Rule, NTColor.AssertContainer, NTColor.OnAssertContainer, NTColor.Assert),
+                _ => new NTToastDefaults(MaterialIcon.Info, NTColor.SurfaceContainerHigh, NTColor.OnSurface, NTColor.Primary)
             };
         }
     }

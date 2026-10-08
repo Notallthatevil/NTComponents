@@ -191,7 +191,7 @@ public partial class NTTabView {
     ///     Gets or sets the active indicator color.
     /// </summary>
     [Parameter]
-    public TnTColor ActiveIndicatorColor { get; set; } = TnTColor.Primary;
+    public NTColor ActiveIndicatorColor { get; set; } = NTColor.Primary;
 
     internal void AddTab(NTTab tab) {
         if (!_tabs.Contains(tab)) {

@@ -264,8 +264,8 @@ public class NTIconButton_Tests : BunitContext {
 
         var style = cut.Find("button").GetAttribute("style");
 
-        style.Should().Contain("--nt-icon-button-bg:var(--tnt-color-transparent)");
-        style.Should().Contain("--nt-icon-button-fg:var(--tnt-color-on-surface-variant)");
+        style.Should().Contain("--nt-icon-button-bg:var(--nt-color-transparent)");
+        style.Should().Contain("--nt-icon-button-fg:var(--nt-color-on-surface-variant)");
     }
 
     [Theory]
@@ -287,8 +287,8 @@ public class NTIconButton_Tests : BunitContext {
 
         var style = cut.Find("button").GetAttribute("style");
 
-        style.Should().Contain($"--nt-icon-button-bg:var(--tnt-color-{expectedBackground})");
-        style.Should().Contain($"--nt-icon-button-fg:var(--tnt-color-{expectedText})");
+        style.Should().Contain($"--nt-icon-button-bg:var(--nt-color-{expectedBackground})");
+        style.Should().Contain($"--nt-icon-button-fg:var(--nt-color-{expectedText})");
     }
 
     [Fact]
@@ -297,13 +297,13 @@ public class NTIconButton_Tests : BunitContext {
             .Add(x => x.Icon, SampleIcon)
             .Add(x => x.AriaLabel, "Open menu")
             .Add(x => x.Variant, NTButtonVariant.Filled)
-            .Add(x => x.BackgroundColor, TnTColor.SecondaryContainer)
-            .Add(x => x.TextColor, TnTColor.OnSecondaryContainer));
+            .Add(x => x.BackgroundColor, NTColor.SecondaryContainer)
+            .Add(x => x.TextColor, NTColor.OnSecondaryContainer));
 
         var style = cut.Find("button").GetAttribute("style");
 
-        style.Should().Contain("--nt-icon-button-bg:var(--tnt-color-secondary-container)");
-        style.Should().Contain("--nt-icon-button-fg:var(--tnt-color-on-secondary-container)");
+        style.Should().Contain("--nt-icon-button-bg:var(--nt-color-secondary-container)");
+        style.Should().Contain("--nt-icon-button-fg:var(--nt-color-on-secondary-container)");
     }
 
     [Fact]
@@ -323,7 +323,7 @@ public class NTIconButton_Tests : BunitContext {
         var render = () => Render<NTIconButton>(parameters => parameters
             .Add(x => x.Icon, SampleIcon)
             .Add(x => x.AriaLabel, "Open menu")
-            .Add(x => x.BackgroundColor, TnTColor.Primary));
+            .Add(x => x.BackgroundColor, NTColor.Primary));
 
         render.Should().Throw<InvalidOperationException>()
             .WithMessage("*Text icon buttons must use a transparent BackgroundColor*");
@@ -335,7 +335,7 @@ public class NTIconButton_Tests : BunitContext {
             .Add(x => x.Icon, SampleIcon)
             .Add(x => x.AriaLabel, "Open menu")
             .Add(x => x.Variant, NTButtonVariant.Filled)
-            .Add(x => x.BackgroundColor, TnTColor.Transparent));
+            .Add(x => x.BackgroundColor, NTColor.Transparent));
 
         render.Should().Throw<InvalidOperationException>()
             .WithMessage("*Filled icon buttons must use a visible container BackgroundColor*");
@@ -349,7 +349,7 @@ public class NTIconButton_Tests : BunitContext {
             .Add(x => x.Variant, NTButtonVariant.Outlined)
             .Add(x => x.IsToggleButton, true)
             .Add(x => x.Selected, true)
-            .Add(x => x.BackgroundColor, TnTColor.Transparent));
+            .Add(x => x.BackgroundColor, NTColor.Transparent));
 
         render.Should().Throw<InvalidOperationException>()
             .WithMessage("*Outlined selected toggle icon buttons must use a visible container BackgroundColor*");
@@ -360,7 +360,7 @@ public class NTIconButton_Tests : BunitContext {
         var render = () => Render<NTIconButton>(parameters => parameters
             .Add(x => x.Icon, SampleIcon)
             .Add(x => x.AriaLabel, "Open menu")
-            .Add(x => x.TextColor, TnTColor.Transparent));
+            .Add(x => x.TextColor, NTColor.Transparent));
 
         render.Should().Throw<InvalidOperationException>()
             .WithMessage("*TextColor must be a visible icon color*");
@@ -426,7 +426,7 @@ public class NTIconButton_Tests : BunitContext {
             .Add(x => x.Variant, NTButtonVariant.Text));
 
         rerender.Should().NotThrow();
-        cut.Find("button").GetAttribute("style").Should().Contain("--nt-icon-button-bg:var(--tnt-color-transparent)");
+        cut.Find("button").GetAttribute("style").Should().Contain("--nt-icon-button-bg:var(--nt-color-transparent)");
     }
 
     [Fact]

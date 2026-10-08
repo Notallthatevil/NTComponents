@@ -73,9 +73,9 @@ internal sealed class NTSnackbarService(IJSRuntime _jsRuntime) : INTSnackbarServ
         Func<Task>? actionCallback = null,
         int? timeout = null,
         bool? showClose = null,
-        TnTColor backgroundColor = TnTColor.InverseSurface,
-        TnTColor textColor = TnTColor.InverseOnSurface,
-        TnTColor actionColor = TnTColor.InversePrimary
+        NTColor backgroundColor = NTColor.InverseSurface,
+        NTColor textColor = NTColor.InverseOnSurface,
+        NTColor actionColor = NTColor.InversePrimary
     ) {
         var hasAction = actionCallback is not null || !string.IsNullOrWhiteSpace(actionLabel);
         if (hasAction && (actionCallback is null || string.IsNullOrWhiteSpace(actionLabel))) {
@@ -97,9 +97,9 @@ internal sealed class NTSnackbarService(IJSRuntime _jsRuntime) : INTSnackbarServ
         IReadOnlyList<NTSnackbarAction> actions,
         int? timeout = null,
         bool? showClose = null,
-        TnTColor backgroundColor = TnTColor.InverseSurface,
-        TnTColor textColor = TnTColor.InverseOnSurface,
-        TnTColor actionColor = TnTColor.InversePrimary
+        NTColor backgroundColor = NTColor.InverseSurface,
+        NTColor textColor = NTColor.InverseOnSurface,
+        NTColor actionColor = NTColor.InversePrimary
     ) {
         ArgumentNullException.ThrowIfNull(actions);
         if (actions.Any(static action => action is null)) {
@@ -129,9 +129,9 @@ internal sealed class NTSnackbarService(IJSRuntime _jsRuntime) : INTSnackbarServ
                 snackbar.Actions.Select(static action => action.Label).ToArray(),
                 snackbar.Timeout,
                 snackbar.ShowClose,
-                snackbar.BackgroundColor.ToCssTnTColorVariable(),
-                snackbar.TextColor.ToCssTnTColorVariable(),
-                snackbar.ActionColor.ToCssTnTColorVariable(),
+                snackbar.BackgroundColor.ToCssNTColorVariable(),
+                snackbar.TextColor.ToCssNTColorVariable(),
+                snackbar.ActionColor.ToCssNTColorVariable(),
                 DotNetReference,
                 _dotNetActionMethod,
                 _dotNetCloseMethod);
@@ -225,14 +225,14 @@ internal sealed class NTSnackbarService(IJSRuntime _jsRuntime) : INTSnackbarServ
     internal sealed class NTSnackbarImplementation : INTSnackbar {
         public string? ActionLabel => Actions.FirstOrDefault()?.Label;
         public IReadOnlyList<NTSnackbarAction> Actions { get; set; } = [];
-        public TnTColor ActionColor { get; set; } = TnTColor.InversePrimary;
-        public TnTColor BackgroundColor { get; set; } = TnTColor.InverseSurface;
+        public NTColor ActionColor { get; set; } = NTColor.InversePrimary;
+        public NTColor BackgroundColor { get; set; } = NTColor.InverseSurface;
         public bool Closing => false;
         public bool HasAction => Actions.Count > 0;
         public string Id { get; set; } = string.Empty;
         public string Message { get; set; } = default!;
         public bool ShowClose { get; set; }
         public double Timeout { get; set; } = 4;
-        public TnTColor TextColor { get; set; } = TnTColor.InverseOnSurface;
+        public NTColor TextColor { get; set; } = NTColor.InverseOnSurface;
     }
 }

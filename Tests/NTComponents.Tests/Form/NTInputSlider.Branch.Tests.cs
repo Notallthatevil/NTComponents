@@ -295,38 +295,38 @@ public sealed class NTInputSlider_Branch_Tests : BunitContext {
     [Fact]
     public void Every_Color_Override_Is_Emitted_For_Both_Slider_Types() {
         Action<ComponentParameterCollectionBuilder<NTInputSlider<int>>> configureSlider = parameters => parameters
-            .Add(p => p.ActiveTrackColor, TnTColor.Primary)
-            .Add(p => p.DisabledColor, TnTColor.OnSurface)
-            .Add(p => p.ErrorColor, TnTColor.Error)
-            .Add(p => p.FocusColor, TnTColor.Secondary)
-            .Add(p => p.HandleColor, TnTColor.Tertiary)
-            .Add(p => p.InactiveTrackColor, TnTColor.SurfaceContainer)
-            .Add(p => p.LabelColor, TnTColor.OnSurfaceVariant)
-            .Add(p => p.StateLayerColor, TnTColor.PrimaryContainer)
-            .Add(p => p.SupportingTextColor, TnTColor.Outline);
+            .Add(p => p.ActiveTrackColor, NTColor.Primary)
+            .Add(p => p.DisabledColor, NTColor.OnSurface)
+            .Add(p => p.ErrorColor, NTColor.Error)
+            .Add(p => p.FocusColor, NTColor.Secondary)
+            .Add(p => p.HandleColor, NTColor.Tertiary)
+            .Add(p => p.InactiveTrackColor, NTColor.SurfaceContainer)
+            .Add(p => p.LabelColor, NTColor.OnSurfaceVariant)
+            .Add(p => p.StateLayerColor, NTColor.PrimaryContainer)
+            .Add(p => p.SupportingTextColor, NTColor.Outline);
         Action<ComponentParameterCollectionBuilder<NTInputRangeSlider<int>>> configureRange = parameters => parameters
-            .Add(p => p.ActiveTrackColor, TnTColor.Primary)
-            .Add(p => p.DisabledColor, TnTColor.OnSurface)
-            .Add(p => p.ErrorColor, TnTColor.Error)
-            .Add(p => p.FocusColor, TnTColor.Secondary)
-            .Add(p => p.HandleColor, TnTColor.Tertiary)
-            .Add(p => p.InactiveTrackColor, TnTColor.SurfaceContainer)
-            .Add(p => p.LabelColor, TnTColor.OnSurfaceVariant)
-            .Add(p => p.StateLayerColor, TnTColor.PrimaryContainer)
-            .Add(p => p.SupportingTextColor, TnTColor.Outline);
+            .Add(p => p.ActiveTrackColor, NTColor.Primary)
+            .Add(p => p.DisabledColor, NTColor.OnSurface)
+            .Add(p => p.ErrorColor, NTColor.Error)
+            .Add(p => p.FocusColor, NTColor.Secondary)
+            .Add(p => p.HandleColor, NTColor.Tertiary)
+            .Add(p => p.InactiveTrackColor, NTColor.SurfaceContainer)
+            .Add(p => p.LabelColor, NTColor.OnSurfaceVariant)
+            .Add(p => p.StateLayerColor, NTColor.PrimaryContainer)
+            .Add(p => p.SupportingTextColor, NTColor.Outline);
 
         var sliderStyle = RenderSlider(configure: configureSlider).Find(".nt-slider").GetAttribute("style");
         var rangeStyle = RenderRangeSlider(configure: configureRange).Find(".nt-slider").GetAttribute("style");
         var expectedVariables = new[] {
-            "--nt-slider-active-track-color:var(--tnt-color-primary);",
-            "--nt-slider-disabled-color:var(--tnt-color-on-surface);",
-            "--nt-slider-error-color:var(--tnt-color-error);",
-            "--nt-slider-focus-color:var(--tnt-color-secondary);",
-            "--nt-slider-handle-color:var(--tnt-color-tertiary);",
-            "--nt-slider-inactive-track-color:var(--tnt-color-surface-container);",
-            "--nt-slider-label-color:var(--tnt-color-on-surface-variant);",
-            "--nt-slider-state-layer-color:var(--tnt-color-primary-container);",
-            "--nt-slider-supporting-text-color:var(--tnt-color-outline);"
+            "--nt-slider-active-track-color:var(--nt-color-primary);",
+            "--nt-slider-disabled-color:var(--nt-color-on-surface);",
+            "--nt-slider-error-color:var(--nt-color-error);",
+            "--nt-slider-focus-color:var(--nt-color-secondary);",
+            "--nt-slider-handle-color:var(--nt-color-tertiary);",
+            "--nt-slider-inactive-track-color:var(--nt-color-surface-container);",
+            "--nt-slider-label-color:var(--nt-color-on-surface-variant);",
+            "--nt-slider-state-layer-color:var(--nt-color-primary-container);",
+            "--nt-slider-supporting-text-color:var(--nt-color-outline);"
         };
 
         foreach (var expectedVariable in expectedVariables) {

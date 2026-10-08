@@ -29,11 +29,11 @@ public class NTTooltip_Tests : BunitContext {
     public void BackgroundColor_CanBeCustomized() {
         // Arrange & Act
         var cut = RenderTooltip(parameters => parameters
-            .Add(p => p.BackgroundColor, TnTColor.Primary));
+            .Add(p => p.BackgroundColor, NTColor.Primary));
 
         // Assert
-        cut.Instance.BackgroundColor.Should().Be(TnTColor.Primary);
-        cut.Markup.Should().Contain("--nt-tooltip-background-color:var(--tnt-color-primary)");
+        cut.Instance.BackgroundColor.Should().Be(NTColor.Primary);
+        cut.Markup.Should().Contain("--nt-tooltip-background-color:var(--nt-color-primary)");
     }
 
     [Fact]
@@ -50,11 +50,11 @@ public class NTTooltip_Tests : BunitContext {
     public void TextColor_CanBeCustomized() {
         // Arrange & Act
         var cut = RenderTooltip(parameters => parameters
-            .Add(p => p.TextColor, TnTColor.OnPrimary));
+            .Add(p => p.TextColor, NTColor.OnPrimary));
 
         // Assert
-        cut.Instance.TextColor.Should().Be(TnTColor.OnPrimary);
-        cut.Markup.Should().Contain("--nt-tooltip-text-color:var(--tnt-color-on-primary)");
+        cut.Instance.TextColor.Should().Be(NTColor.OnPrimary);
+        cut.Markup.Should().Contain("--nt-tooltip-text-color:var(--nt-color-on-primary)");
     }
 
     [Fact]
@@ -72,11 +72,11 @@ public class NTTooltip_Tests : BunitContext {
     public void BorderColor_CanBeCustomized() {
         // Arrange & Act
         var cut = RenderTooltip(parameters => parameters
-            .Add(p => p.BorderColor, TnTColor.Primary));
+            .Add(p => p.BorderColor, NTColor.Primary));
 
         // Assert
-        cut.Instance.BorderColor.Should().Be(TnTColor.Primary);
-        cut.Markup.Should().Contain("--nt-tooltip-border-color:var(--tnt-color-primary)");
+        cut.Instance.BorderColor.Should().Be(NTColor.Primary);
+        cut.Markup.Should().Contain("--nt-tooltip-border-color:var(--nt-color-primary)");
         cut.Markup.Should().Contain("--nt-tooltip-border-width:1px");
     }
 

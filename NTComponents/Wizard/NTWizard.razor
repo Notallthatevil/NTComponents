@@ -74,7 +74,7 @@
             @if (HasPreviousEnterableStep) {
                 <NTButton Variant="NTButtonVariant.Outlined"
                           Label="Previous Step"
-                          TextColor="TnTColor.OnSurface"
+                          TextColor="NTColor.OnSurface"
                           LeadingIcon="@MaterialIcon.KeyboardArrowLeft"
                           OnClickCallback="@PreviousStepAsync"
                           Disabled="@PreviousButtonDisabled" />
@@ -82,13 +82,13 @@
             @if (CanSkipCurrentStep) {
                 <NTButton Variant="NTButtonVariant.Text"
                           Label="Skip"
-                          TextColor="TnTColor.OnSurface"
+                          TextColor="NTColor.OnSurface"
                           OnClickCallback="@(_ => SkipStepAsync())" />
             }
             @if (!HasNextEnterableStep) {
                 <NTButton Label="Submit"
-                          BackgroundColor="TnTColor.Success"
-                          TextColor="TnTColor.OnSuccess"
+                          BackgroundColor="NTColor.Success"
+                          TextColor="NTColor.OnSuccess"
                           class="@SubmitButtonInvalidClass"
                           OnClickCallback="@SubmitClickedAsync"
                           Disabled="@EffectiveSubmitButtonDisabled" />

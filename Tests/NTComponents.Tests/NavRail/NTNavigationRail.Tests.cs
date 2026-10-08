@@ -151,9 +151,9 @@ public class NTNavigationRail_Tests : BunitContext {
         rail.HasAttribute("data-permanent").Should().BeTrue();
         rail.GetAttribute("class")!.Should().Contain("nt-navigation-rail-collapsed");
         rail.GetAttribute("class")!.Should().Contain("nt-navigation-rail-with-divider");
-        rail.GetAttribute("style")!.Should().Contain("--nt-navigation-rail-container-color:var(--tnt-color-surface)");
-        rail.GetAttribute("style")!.Should().Contain("--nt-navigation-rail-divider-color:var(--tnt-color-outline-variant)");
-        rail.GetAttribute("style")!.Should().Contain("--nt-navigation-rail-indicator-color:var(--tnt-color-secondary-container)");
+        rail.GetAttribute("style")!.Should().Contain("--nt-navigation-rail-container-color:var(--nt-color-surface)");
+        rail.GetAttribute("style")!.Should().Contain("--nt-navigation-rail-divider-color:var(--nt-color-outline-variant)");
+        rail.GetAttribute("style")!.Should().Contain("--nt-navigation-rail-indicator-color:var(--nt-color-secondary-container)");
         cut.FindAll("nav.nt-navigation-rail > style").Should().BeEmpty();
         menu.GetAttribute("type").Should().Be("button");
         menu.HasAttribute("href").Should().BeFalse();
@@ -182,7 +182,7 @@ public class NTNavigationRail_Tests : BunitContext {
         cut.Find(".nt-navigation-rail-footer").TextContent.Should().Contain("Rail footer");
         headerIndex.Should().BeLessThan(itemsIndex);
         itemsIndex.Should().BeLessThan(footerIndex);
-        cut.Find("nav.nt-navigation-rail").GetAttribute("style")!.Should().Contain("--nt-navigation-rail-divider-color:var(--tnt-color-outline-variant)");
+        cut.Find("nav.nt-navigation-rail").GetAttribute("style")!.Should().Contain("--nt-navigation-rail-divider-color:var(--nt-color-outline-variant)");
     }
 
     [Fact]
@@ -190,7 +190,7 @@ public class NTNavigationRail_Tests : BunitContext {
         var cut = Render<NTNavigationRail>(parameters => parameters
             .Add(x => x.AriaLabel, "Primary")
             .Add(x => x.ShowDivider, false)
-            .Add(x => x.DividerColor, TnTColor.Primary)
+            .Add(x => x.DividerColor, NTColor.Primary)
             .AddChildContent<NTNavigationRailItem>(item => item
                 .Add(x => x.Label, "Home")
                 .Add(x => x.Href, "/home")));
@@ -329,24 +329,24 @@ public class NTNavigationRail_Tests : BunitContext {
         var cut = Render<NTNavigationRail>(parameters => parameters
             .Add(x => x.AriaLabel, "Primary")
             .Add(x => x.ShowDivider, true)
-            .Add(x => x.ContainerColor, TnTColor.SurfaceContainerHigh)
-            .Add(x => x.DividerColor, TnTColor.Primary)
-            .Add(x => x.IndicatorColor, TnTColor.TertiaryContainer)
-            .Add(x => x.ActiveColor, TnTColor.OnTertiaryContainer)
-            .Add(x => x.ScrimColor, TnTColor.Primary)
-            .Add(x => x.StateLayerColor, TnTColor.Tertiary)
+            .Add(x => x.ContainerColor, NTColor.SurfaceContainerHigh)
+            .Add(x => x.DividerColor, NTColor.Primary)
+            .Add(x => x.IndicatorColor, NTColor.TertiaryContainer)
+            .Add(x => x.ActiveColor, NTColor.OnTertiaryContainer)
+            .Add(x => x.ScrimColor, NTColor.Primary)
+            .Add(x => x.StateLayerColor, NTColor.Tertiary)
             .AddChildContent<NTNavigationRailItem>(item => item
                 .Add(x => x.Label, "Home")
                 .Add(x => x.Href, "/home")));
 
         var style = cut.Find("nav.nt-navigation-rail").GetAttribute("style");
 
-        style.Should().Contain("--nt-navigation-rail-container-color:var(--tnt-color-surface-container-high)");
-        style.Should().Contain("--nt-navigation-rail-divider-color:var(--tnt-color-primary)");
-        style.Should().Contain("--nt-navigation-rail-indicator-color:var(--tnt-color-tertiary-container)");
-        style.Should().Contain("--nt-navigation-rail-active-color:var(--tnt-color-on-tertiary-container)");
-        style.Should().Contain("--nt-navigation-rail-scrim-color:var(--tnt-color-primary)");
-        style.Should().Contain("--nt-navigation-rail-state-layer-color:var(--tnt-color-tertiary)");
+        style.Should().Contain("--nt-navigation-rail-container-color:var(--nt-color-surface-container-high)");
+        style.Should().Contain("--nt-navigation-rail-divider-color:var(--nt-color-primary)");
+        style.Should().Contain("--nt-navigation-rail-indicator-color:var(--nt-color-tertiary-container)");
+        style.Should().Contain("--nt-navigation-rail-active-color:var(--nt-color-on-tertiary-container)");
+        style.Should().Contain("--nt-navigation-rail-scrim-color:var(--nt-color-primary)");
+        style.Should().Contain("--nt-navigation-rail-state-layer-color:var(--nt-color-tertiary)");
     }
 
     [Fact]
@@ -361,7 +361,7 @@ public class NTNavigationRail_Tests : BunitContext {
 
         var rail = cut.Find("nav");
 
-        rail.GetAttribute("style")!.Should().Contain("--nt-navigation-rail-scrim-color:var(--tnt-color-scrim)");
+        rail.GetAttribute("style")!.Should().Contain("--nt-navigation-rail-scrim-color:var(--nt-color-scrim)");
         cut.FindAll(".nt-navigation-rail-scrim").Should().BeEmpty();
 
         var item = cut.Find(".nt-navigation-rail-item");

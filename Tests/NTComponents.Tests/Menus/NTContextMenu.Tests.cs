@@ -54,10 +54,10 @@ public class NTContextMenu_Tests : BunitContext {
             .Add(x => x.AriaLabel, "Row actions")
             .Add(x => x.Appearance, NTMenuAppearance.Compact)
             .Add(x => x.CloseOnContentClick, false)
-            .Add(x => x.ContainerColor, TnTColor.SecondaryContainer)
-            .Add(x => x.TextColor, TnTColor.OnSecondaryContainer)
-            .Add(x => x.SelectedContainerColor, TnTColor.TertiaryContainer)
-            .Add(x => x.SelectedTextColor, TnTColor.OnTertiaryContainer)
+            .Add(x => x.ContainerColor, NTColor.SecondaryContainer)
+            .Add(x => x.TextColor, NTColor.OnSecondaryContainer)
+            .Add(x => x.SelectedContainerColor, NTColor.TertiaryContainer)
+            .Add(x => x.SelectedTextColor, NTColor.OnTertiaryContainer)
             .Add(x => x.Elevation, NTElevation.High)
             .Add(x => x.TargetContent, builder => builder.AddContent(0, "Row"))
             .Add(x => x.MenuContent, builder => {
@@ -75,10 +75,10 @@ public class NTContextMenu_Tests : BunitContext {
         menu.GetAttribute("data-close-on-item-click").Should().Be("false");
         menu.GetAttribute("class").Should().Contain("nt-menu-compact");
         menu.GetAttribute("class").Should().Contain("nt-elevation-high");
-        style.Should().Contain("--nt-menu-container-color:var(--tnt-color-secondary-container)");
-        style.Should().Contain("--nt-menu-content-color:var(--tnt-color-on-secondary-container)");
-        style.Should().Contain("--nt-menu-selected-container-color:var(--tnt-color-tertiary-container)");
-        style.Should().Contain("--nt-menu-selected-content-color:var(--tnt-color-on-tertiary-container)");
+        style.Should().Contain("--nt-menu-container-color:var(--nt-color-secondary-container)");
+        style.Should().Contain("--nt-menu-content-color:var(--nt-color-on-secondary-container)");
+        style.Should().Contain("--nt-menu-selected-container-color:var(--nt-color-tertiary-container)");
+        style.Should().Contain("--nt-menu-selected-content-color:var(--nt-color-on-tertiary-container)");
         cut.Find("nt-menu > .nt-menu-surface > .nt-menu-content > .nt-menu-item").TextContent.Should().Contain("Rename");
     }
 

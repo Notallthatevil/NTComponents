@@ -73,97 +73,97 @@ public partial class NTInputRadioGroup<[DynamicallyAccessedMembers(DynamicallyAc
     ///     Gets or sets an optional override for the filled group container color.
     /// </summary>
     [Parameter]
-    public TnTColor? BackgroundColor { get; set; }
+    public NTColor? BackgroundColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for the resting filled active indicator color.
     /// </summary>
     [Parameter]
-    public TnTColor? ActiveIndicatorColor { get; set; }
+    public NTColor? ActiveIndicatorColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for disabled content and radio color.
     /// </summary>
     [Parameter]
-    public TnTColor? DisabledContentColor { get; set; }
+    public NTColor? DisabledContentColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for disabled filled container color.
     /// </summary>
     [Parameter]
-    public TnTColor? DisabledContainerColor { get; set; }
+    public NTColor? DisabledContainerColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for disabled outline color.
     /// </summary>
     [Parameter]
-    public TnTColor? DisabledOutlineColor { get; set; }
+    public NTColor? DisabledOutlineColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for error text, outline, indicator, and radio color.
     /// </summary>
     [Parameter]
-    public TnTColor? ErrorColor { get; set; }
+    public NTColor? ErrorColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for focused outline, active indicator, and selected radio color.
     /// </summary>
     [Parameter]
-    public TnTColor? FocusColor { get; set; }
+    public NTColor? FocusColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for the hovered filled active indicator color.
     /// </summary>
     [Parameter]
-    public TnTColor? HoverActiveIndicatorColor { get; set; }
+    public NTColor? HoverActiveIndicatorColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for the hovered outline color.
     /// </summary>
     [Parameter]
-    public TnTColor? HoverOutlineColor { get; set; }
+    public NTColor? HoverOutlineColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for label text color.
     /// </summary>
     [Parameter]
-    public TnTColor? LabelColor { get; set; }
+    public NTColor? LabelColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for the resting outlined border color.
     /// </summary>
     [Parameter]
-    public TnTColor? OutlineColor { get; set; }
+    public NTColor? OutlineColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for selected radio color.
     /// </summary>
     [Parameter]
-    public TnTColor? SelectedColor { get; set; }
+    public NTColor? SelectedColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for the selected radio state-layer color.
     /// </summary>
     [Parameter]
-    public TnTColor? SelectedStateLayerColor { get; set; }
+    public NTColor? SelectedStateLayerColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for the unselected radio state-layer color.
     /// </summary>
     [Parameter]
-    public TnTColor? StateLayerColor { get; set; }
+    public NTColor? StateLayerColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for supporting text color.
     /// </summary>
     [Parameter]
-    public TnTColor? SupportingTextColor { get; set; }
+    public NTColor? SupportingTextColor { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for unselected radio color.
     /// </summary>
     [Parameter]
-    public TnTColor? UnselectedColor { get; set; }
+    public NTColor? UnselectedColor { get; set; }
 
     /// <summary>
     ///     Gets the current effective appearance.
@@ -346,22 +346,22 @@ public partial class NTInputRadioGroup<[DynamicallyAccessedMembers(DynamicallyAc
     }
 
     private string? BuildElementStyle() => CssStyleBuilder.Create()
-        .AddVariable("nt-radio-active-indicator-color", ActiveIndicatorColor.ToCssTnTColorVariable(), ActiveIndicatorColor.HasValue)
-        .AddVariable("nt-radio-container-color", BackgroundColor.ToCssTnTColorVariable(), BackgroundColor.HasValue)
-        .AddVariable("nt-radio-disabled-container-color", DisabledContainerColor.ToCssTnTColorVariable(), DisabledContainerColor.HasValue)
-        .AddVariable("nt-radio-disabled-content-color", DisabledContentColor.ToCssTnTColorVariable(), DisabledContentColor.HasValue)
-        .AddVariable("nt-radio-disabled-outline-color", DisabledOutlineColor.ToCssTnTColorVariable(), DisabledOutlineColor.HasValue)
-        .AddVariable("nt-radio-error-color", ErrorColor.ToCssTnTColorVariable(), ErrorColor.HasValue)
-        .AddVariable("nt-radio-focus-color", FocusColor.ToCssTnTColorVariable(), FocusColor.HasValue)
-        .AddVariable("nt-radio-hover-active-indicator-color", HoverActiveIndicatorColor.ToCssTnTColorVariable(), HoverActiveIndicatorColor.HasValue)
-        .AddVariable("nt-radio-hover-outline-color", HoverOutlineColor.ToCssTnTColorVariable(), HoverOutlineColor.HasValue)
-        .AddVariable("nt-radio-label-color", LabelColor.ToCssTnTColorVariable(), LabelColor.HasValue)
-        .AddVariable("nt-radio-outline-color", OutlineColor.ToCssTnTColorVariable(), OutlineColor.HasValue)
-        .AddVariable("nt-radio-selected-color", SelectedColor.ToCssTnTColorVariable(), SelectedColor.HasValue)
-        .AddVariable("nt-radio-selected-state-layer-color", SelectedStateLayerColor.ToCssTnTColorVariable(), SelectedStateLayerColor.HasValue)
-        .AddVariable("nt-radio-state-layer-color", StateLayerColor.ToCssTnTColorVariable(), StateLayerColor.HasValue)
-        .AddVariable("nt-radio-supporting-text-color", SupportingTextColor.ToCssTnTColorVariable(), SupportingTextColor.HasValue)
-        .AddVariable("nt-radio-unselected-color", UnselectedColor.ToCssTnTColorVariable(), UnselectedColor.HasValue)
+        .AddVariable("nt-radio-active-indicator-color", ActiveIndicatorColor.ToCssNTColorVariable(), ActiveIndicatorColor.HasValue)
+        .AddVariable("nt-radio-container-color", BackgroundColor.ToCssNTColorVariable(), BackgroundColor.HasValue)
+        .AddVariable("nt-radio-disabled-container-color", DisabledContainerColor.ToCssNTColorVariable(), DisabledContainerColor.HasValue)
+        .AddVariable("nt-radio-disabled-content-color", DisabledContentColor.ToCssNTColorVariable(), DisabledContentColor.HasValue)
+        .AddVariable("nt-radio-disabled-outline-color", DisabledOutlineColor.ToCssNTColorVariable(), DisabledOutlineColor.HasValue)
+        .AddVariable("nt-radio-error-color", ErrorColor.ToCssNTColorVariable(), ErrorColor.HasValue)
+        .AddVariable("nt-radio-focus-color", FocusColor.ToCssNTColorVariable(), FocusColor.HasValue)
+        .AddVariable("nt-radio-hover-active-indicator-color", HoverActiveIndicatorColor.ToCssNTColorVariable(), HoverActiveIndicatorColor.HasValue)
+        .AddVariable("nt-radio-hover-outline-color", HoverOutlineColor.ToCssNTColorVariable(), HoverOutlineColor.HasValue)
+        .AddVariable("nt-radio-label-color", LabelColor.ToCssNTColorVariable(), LabelColor.HasValue)
+        .AddVariable("nt-radio-outline-color", OutlineColor.ToCssNTColorVariable(), OutlineColor.HasValue)
+        .AddVariable("nt-radio-selected-color", SelectedColor.ToCssNTColorVariable(), SelectedColor.HasValue)
+        .AddVariable("nt-radio-selected-state-layer-color", SelectedStateLayerColor.ToCssNTColorVariable(), SelectedStateLayerColor.HasValue)
+        .AddVariable("nt-radio-state-layer-color", StateLayerColor.ToCssNTColorVariable(), StateLayerColor.HasValue)
+        .AddVariable("nt-radio-supporting-text-color", SupportingTextColor.ToCssNTColorVariable(), SupportingTextColor.HasValue)
+        .AddVariable("nt-radio-unselected-color", UnselectedColor.ToCssNTColorVariable(), UnselectedColor.HasValue)
         .Build();
 
     private static bool TryConvertToBool<T>(string? value, out T result) {

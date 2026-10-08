@@ -62,7 +62,7 @@ public interface INTToastService {
     /// </param>
     /// <param name="textColor">Optional toast text color. When null, the variant text color is used.</param>
     /// <param name="iconColor">Optional icon color. When null, the variant icon color is used.</param>
-    Task ShowAsync(string title, string? message = null, NTToastVariant variant = NTToastVariant.Default, int? timeout = null, bool showClose = true, string? icon = null, TnTColor? backgroundColor = null, TnTColor? textColor = null, TnTColor? iconColor = null);
+    Task ShowAsync(string title, string? message = null, NTToastVariant variant = NTToastVariant.Default, int? timeout = null, bool showClose = true, string? icon = null, NTColor? backgroundColor = null, NTColor? textColor = null, NTColor? iconColor = null);
 }
 
 /// <summary>

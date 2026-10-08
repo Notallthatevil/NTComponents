@@ -152,20 +152,20 @@
     private NTCornerRadius cornerRadius = NTCornerRadius.Large;
     private NTSkeletonAnimation animation = NTSkeletonAnimation.Wave;
     private NTSkeletonShape shape = NTSkeletonShape.Rectangle;
-    private TnTColor containerColor = TnTColor.SurfaceContainerHighest;
-    private TnTColor highlightColor = TnTColor.SurfaceContainerLow;
+    private NTColor containerColor = NTColor.SurfaceContainerHighest;
+    private NTColor highlightColor = NTColor.SurfaceContainerLow;
 
-    private static readonly TnTColor[] ColorOptions = [
-        TnTColor.SurfaceContainerLow,
-        TnTColor.SurfaceContainer,
-        TnTColor.SurfaceContainerHigh,
-        TnTColor.SurfaceContainerHighest,
-        TnTColor.PrimaryContainer,
-        TnTColor.SecondaryContainer,
-        TnTColor.TertiaryContainer
+    private static readonly NTColor[] ColorOptions = [
+        NTColor.SurfaceContainerLow,
+        NTColor.SurfaceContainer,
+        NTColor.SurfaceContainerHigh,
+        NTColor.SurfaceContainerHighest,
+        NTColor.PrimaryContainer,
+        NTColor.SecondaryContainer,
+        NTColor.TertiaryContainer
     ];
 
-    private TnTColor? EffectiveHighlightColor => useHighlightColor ? highlightColor : null;
+    private NTColor? EffectiveHighlightColor => useHighlightColor ? highlightColor : null;
     private string? EffectiveWidth => useExplicitSize ? $"{widthRem}rem" : null;
     private string? EffectiveHeight => useExplicitSize && shape != NTSkeletonShape.Circle ? $"{heightPx}px" : null;
 

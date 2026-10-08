@@ -79,18 +79,18 @@
             "AOT toast message",
             NTToastVariant.Success,
             timeout: 0,
-            backgroundColor: TnTColor.PrimaryContainer,
-            textColor: TnTColor.OnPrimaryContainer,
-            iconColor: TnTColor.Primary);
+            backgroundColor: NTColor.PrimaryContainer,
+            textColor: NTColor.OnPrimaryContainer,
+            iconColor: NTColor.Primary);
 
         await SnackbarService.ShowAsync(
             "AOT snackbar message",
             "Undo",
             () => Task.CompletedTask,
             timeout: 0,
-            backgroundColor: TnTColor.SecondaryContainer,
-            textColor: TnTColor.OnSecondaryContainer,
-            actionColor: TnTColor.Tertiary);
+            backgroundColor: NTColor.SecondaryContainer,
+            textColor: NTColor.OnSecondaryContainer,
+            actionColor: NTColor.Tertiary);
     }
 
     private Task HandleButtonClickAsync(MouseEventArgs args) {

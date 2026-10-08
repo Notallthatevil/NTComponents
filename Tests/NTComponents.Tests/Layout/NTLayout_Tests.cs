@@ -190,37 +190,37 @@ public class NTLayout_Tests : BunitContext {
     [Fact]
     public void Explicit_Colors_Render_Component_Css_Variables() {
         var cut = Render<NTBody>(p => p
-            .Add(c => c.BackgroundColor, TnTColor.SurfaceContainerHigh)
-            .Add(c => c.TextColor, TnTColor.OnSurfaceVariant));
+            .Add(c => c.BackgroundColor, NTColor.SurfaceContainerHigh)
+            .Add(c => c.TextColor, NTColor.OnSurfaceVariant));
 
         var style = cut.Find("main.nt-body").GetAttribute("style")!;
 
-        style.Should().Contain("--nt-body-background-color:var(--tnt-color-surface-container-high)");
-        style.Should().Contain("--nt-body-text-color:var(--tnt-color-on-surface-variant)");
+        style.Should().Contain("--nt-body-background-color:var(--nt-color-surface-container-high)");
+        style.Should().Contain("--nt-body-text-color:var(--nt-color-on-surface-variant)");
     }
 
     [Fact]
     public void Header_Explicit_Colors_Render_Header_Css_Variables() {
         var cut = Render<NTHeader>(p => p
-            .Add(c => c.BackgroundColor, TnTColor.PrimaryContainer)
-            .Add(c => c.TextColor, TnTColor.OnPrimaryContainer));
+            .Add(c => c.BackgroundColor, NTColor.PrimaryContainer)
+            .Add(c => c.TextColor, NTColor.OnPrimaryContainer));
 
         var style = cut.Find("header.nt-header").GetAttribute("style")!;
 
-        style.Should().Contain("--nt-header-background-color:var(--tnt-color-primary-container)");
-        style.Should().Contain("--nt-header-text-color:var(--tnt-color-on-primary-container)");
+        style.Should().Contain("--nt-header-background-color:var(--nt-color-primary-container)");
+        style.Should().Contain("--nt-header-text-color:var(--nt-color-on-primary-container)");
     }
 
     [Fact]
     public void Footer_Explicit_Colors_Render_Footer_Css_Variables() {
         var cut = Render<NTFooter>(p => p
-            .Add(c => c.BackgroundColor, TnTColor.TertiaryContainer)
-            .Add(c => c.TextColor, TnTColor.OnTertiaryContainer));
+            .Add(c => c.BackgroundColor, NTColor.TertiaryContainer)
+            .Add(c => c.TextColor, NTColor.OnTertiaryContainer));
 
         var style = cut.Find("footer.nt-footer").GetAttribute("style")!;
 
-        style.Should().Contain("--nt-footer-background-color:var(--tnt-color-tertiary-container)");
-        style.Should().Contain("--nt-footer-text-color:var(--tnt-color-on-tertiary-container)");
+        style.Should().Contain("--nt-footer-background-color:var(--nt-color-tertiary-container)");
+        style.Should().Contain("--nt-footer-text-color:var(--nt-color-on-tertiary-container)");
     }
 
     [Fact]

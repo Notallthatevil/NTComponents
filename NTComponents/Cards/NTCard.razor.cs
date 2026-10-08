@@ -41,7 +41,7 @@ public partial class NTCard : NTComponentBase {
     ///     Override for the card container color.
     /// </summary>
     [Parameter]
-    public TnTColor? BackgroundColor { get; set; }
+    public NTColor? BackgroundColor { get; set; }
 
     /// <summary>
     ///     The content rendered inside the card.
@@ -74,7 +74,7 @@ public partial class NTCard : NTComponentBase {
     public override string? ElementStyle => CssStyleBuilder.Create()
         .AddFromAdditionalAttributes(AdditionalAttributes)
         .AddVariable("nt-card-background-color", EffectiveBackgroundColor)
-        .AddVariable("nt-card-content-color", EffectiveTextColor.ToCssTnTColorVariable(), EffectiveTextColor.HasValue)
+        .AddVariable("nt-card-content-color", EffectiveTextColor.ToCssNTColorVariable(), EffectiveTextColor.HasValue)
         .AddVariable("nt-card-outline-color", OutlineColor)
         .AddVariable("nt-card-state-layer-color", EffectiveStateLayerColor)
         .Build();
@@ -95,13 +95,13 @@ public partial class NTCard : NTComponentBase {
     ///     Override for the outline and focus-ring color.
     /// </summary>
     [Parameter]
-    public TnTColor OutlineColor { get; set; } = TnTColor.OutlineVariant;
+    public NTColor OutlineColor { get; set; } = NTColor.OutlineVariant;
 
     /// <summary>
     ///     Override for the card content color.
     /// </summary>
     [Parameter]
-    public TnTColor? TextColor { get; set; }
+    public NTColor? TextColor { get; set; }
 
     /// <summary>
     ///     Visual variant of the card.
@@ -109,22 +109,22 @@ public partial class NTCard : NTComponentBase {
     [Parameter]
     public NTCardVariant Variant { get; set; } = NTCardVariant.Filled;
 
-    private TnTColor EffectiveBackgroundColor {
+    private NTColor EffectiveBackgroundColor {
         get {
-            if (BackgroundColor.HasValue && (Variant == NTCardVariant.Outlined || BackgroundColor.Value != TnTColor.Transparent)) {
+            if (BackgroundColor.HasValue && (Variant == NTCardVariant.Outlined || BackgroundColor.Value != NTColor.Transparent)) {
                 return BackgroundColor.Value;
             }
 
             return Variant switch {
-                NTCardVariant.Elevated => TnTColor.SurfaceContainerLow,
-                NTCardVariant.Outlined => TnTColor.Transparent,
-                _ => TnTColor.SurfaceContainerHighest
+                NTCardVariant.Elevated => NTColor.SurfaceContainerLow,
+                NTCardVariant.Outlined => NTColor.Transparent,
+                _ => NTColor.SurfaceContainerHighest
             };
         }
     }
 
-    private TnTColor? EffectiveTextColor => TextColor ?? (Variant == NTCardVariant.Outlined ? null : TnTColor.OnSurface);
-    private TnTColor EffectiveStateLayerColor => TextColor ?? TnTColor.OnSurface;
+    private NTColor? EffectiveTextColor => TextColor ?? (Variant == NTCardVariant.Outlined ? null : NTColor.OnSurface);
+    private NTColor EffectiveStateLayerColor => TextColor ?? NTColor.OnSurface;
 
     private bool HasHrefAttribute => AdditionalAttributes?.TryGetValue("href", out var href) == true
         && !string.IsNullOrWhiteSpace(Convert.ToString(href));

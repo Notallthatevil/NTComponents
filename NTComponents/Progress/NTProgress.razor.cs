@@ -71,8 +71,8 @@ public partial class NTProgress : TnTDisposableComponentBase {
     /// <inheritdoc />
     public override string? ElementStyle => CssStyleBuilder.Create()
         .AddFromAdditionalAttributes(AdditionalAttributes)
-        .AddVariable("nt-progress-indicator-color", ProgressColor.ToCssTnTColorVariable())
-        .AddVariable("nt-progress-track-color", TrackColor.ToCssTnTColorVariable())
+        .AddVariable("nt-progress-indicator-color", ProgressColor.ToCssNTColorVariable())
+        .AddVariable("nt-progress-track-color", TrackColor.ToCssNTColorVariable())
         .AddVariable("nt-progress-active-angle", _effectiveProgressAngle, IsDeterminate)
         .AddVariable("nt-progress-active-value", _effectiveProgressPercentValue, IsDeterminate)
         .AddVariable("nt-progress-active-percentage", _effectiveProgressPercentage, IsDeterminate)
@@ -91,7 +91,7 @@ public partial class NTProgress : TnTDisposableComponentBase {
     ///     Color used by the active progress indicator.
     /// </summary>
     [Parameter]
-    public TnTColor ProgressColor { get; set; } = TnTColor.Primary;
+    public NTColor ProgressColor { get; set; } = NTColor.Primary;
 
     /// <summary>
     ///     Whether to render the progress indicator.
@@ -109,7 +109,7 @@ public partial class NTProgress : TnTDisposableComponentBase {
     ///     Color used by the inactive track.
     /// </summary>
     [Parameter]
-    public TnTColor TrackColor { get; set; } = TnTColor.SecondaryContainer;
+    public NTColor TrackColor { get; set; } = NTColor.SecondaryContainer;
 
     /// <summary>
     ///     Whether to show the inactive track. Set to <see langword="false" /> when placing a ring progress indicator inside a button.

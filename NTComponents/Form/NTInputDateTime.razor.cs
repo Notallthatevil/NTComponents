@@ -31,7 +31,7 @@ public partial class NTInputDateTime<DateTimeType> {
     private string _effectiveFormat = string.Empty;
     private TnTIcon? _filledPickerIcon;
     private string? _filledPickerIconName;
-    private TnTColor _filledPickerIconColor;
+    private int _filledPickerIconColor;
     private IconSize _filledPickerIconSize;
     private RenderFragment? _filledPickerIconTooltip;
     private TnTIcon _resolvedPickerTriggerIcon = MaterialIcon.CalendarMonth;
@@ -296,7 +296,7 @@ public partial class NTInputDateTime<DateTimeType> {
 
         if (_filledPickerIcon is not null
             && string.Equals(_filledPickerIconName, materialIcon.Icon, StringComparison.Ordinal)
-            && EqualityComparer<TnTColor>.Default.Equals(_filledPickerIconColor, materialIcon.Color)
+            && _filledPickerIconColor == (int)materialIcon.Color
             && _filledPickerIconSize == materialIcon.Size
             && ReferenceEquals(_filledPickerIconTooltip, materialIcon.Tooltip)) {
             return _filledPickerIcon;
@@ -309,7 +309,7 @@ public partial class NTInputDateTime<DateTimeType> {
             Tooltip = materialIcon.Tooltip
         };
         _filledPickerIconName = materialIcon.Icon;
-        _filledPickerIconColor = materialIcon.Color;
+        _filledPickerIconColor = (int)materialIcon.Color;
         _filledPickerIconSize = materialIcon.Size;
         _filledPickerIconTooltip = materialIcon.Tooltip;
         return _filledPickerIcon;

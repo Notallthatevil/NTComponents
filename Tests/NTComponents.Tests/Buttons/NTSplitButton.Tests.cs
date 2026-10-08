@@ -72,7 +72,7 @@ public class NTSplitButton_Tests : BunitContext {
         var render = () => Render<NTSplitButton>(parameters => parameters
             .Add(x => x.Label, "Invalid")
             .Add(x => x.Variant, variant)
-            .Add(x => x.BackgroundColor, TnTColor.Primary)
+            .Add(x => x.BackgroundColor, NTColor.Primary)
             .AddChildContent<NTMenuButtonItem>(item => item.Add(x => x.Label, "Save draft")));
 
         render.Should().Throw<InvalidOperationException>()
@@ -87,7 +87,7 @@ public class NTSplitButton_Tests : BunitContext {
         var render = () => Render<NTSplitButton>(parameters => parameters
             .Add(x => x.Label, "Invalid")
             .Add(x => x.Variant, variant)
-            .Add(x => x.BackgroundColor, TnTColor.Transparent)
+            .Add(x => x.BackgroundColor, NTColor.Transparent)
             .AddChildContent<NTMenuButtonItem>(item => item.Add(x => x.Label, "Save draft")));
 
         render.Should().Throw<InvalidOperationException>()
@@ -126,10 +126,10 @@ public class NTSplitButton_Tests : BunitContext {
             parameters.Add(x => x.Label, "Invalid");
 
             if (validateBackground) {
-                parameters.Add(x => x.MenuBackgroundColor, TnTColor.Transparent);
+                parameters.Add(x => x.MenuBackgroundColor, NTColor.Transparent);
             }
             else {
-                parameters.Add(x => x.MenuTextColor, TnTColor.Transparent);
+                parameters.Add(x => x.MenuTextColor, NTColor.Transparent);
             }
 
             parameters.AddChildContent<NTMenuButtonItem>(item => item.Add(x => x.Label, "Save draft"));
@@ -149,10 +149,10 @@ public class NTSplitButton_Tests : BunitContext {
             parameters.Add(x => x.Label, "Invalid");
 
             if (validateBackground) {
-                parameters.Add(x => x.MenuSelectedBackgroundColor, TnTColor.Transparent);
+                parameters.Add(x => x.MenuSelectedBackgroundColor, NTColor.Transparent);
             }
             else {
-                parameters.Add(x => x.MenuSelectedTextColor, TnTColor.Transparent);
+                parameters.Add(x => x.MenuSelectedTextColor, NTColor.Transparent);
             }
 
             parameters.AddChildContent<NTMenuButtonItem>(item => item.Add(x => x.Label, "Save draft"));
@@ -285,29 +285,29 @@ public class NTSplitButton_Tests : BunitContext {
         var host = cut.Find("nt-split-button");
 
         host.ClassList.Should().Contain(expectedClass);
-        host.GetAttribute("style").Should().Contain($"--nt-split-button-bg:var(--tnt-color-{expectedBackground})");
-        host.GetAttribute("style").Should().Contain($"--nt-split-button-fg:var(--tnt-color-{expectedText})");
+        host.GetAttribute("style").Should().Contain($"--nt-split-button-bg:var(--nt-color-{expectedBackground})");
+        host.GetAttribute("style").Should().Contain($"--nt-split-button-fg:var(--nt-color-{expectedText})");
     }
 
     [Fact]
     public void Explicit_Null_Overrides_Fall_Back_To_Default_Colors() {
         var cut = Render<NTSplitButton>(parameters => parameters
             .Add(x => x.Label, "Save")
-            .Add(x => x.BackgroundColor, (TnTColor?)null)
+            .Add(x => x.BackgroundColor, (NTColor?)null)
             .Add(x => x.Elevation, (NTElevation?)null)
-            .Add(x => x.TextColor, (TnTColor?)null)
-            .Add(x => x.MenuBackgroundColor, (TnTColor?)null)
-            .Add(x => x.MenuSelectedBackgroundColor, (TnTColor?)null)
-            .Add(x => x.MenuSelectedTextColor, (TnTColor?)null)
-            .Add(x => x.MenuTextColor, (TnTColor?)null)
+            .Add(x => x.TextColor, (NTColor?)null)
+            .Add(x => x.MenuBackgroundColor, (NTColor?)null)
+            .Add(x => x.MenuSelectedBackgroundColor, (NTColor?)null)
+            .Add(x => x.MenuSelectedTextColor, (NTColor?)null)
+            .Add(x => x.MenuTextColor, (NTColor?)null)
             .AddChildContent<NTMenuButtonItem>(item => item.Add(x => x.Label, "Save draft")));
 
         var hostStyle = cut.Find("nt-split-button").GetAttribute("style");
         var menuStyle = cut.Find(".nt-split-button-menu-panel").GetAttribute("style");
 
-        hostStyle.Should().Contain("--nt-split-button-bg:var(--tnt-color-primary)");
-        hostStyle.Should().Contain("--nt-split-button-fg:var(--tnt-color-on-primary)");
-        menuStyle.Should().Contain("--nt-menu-container-color:var(--tnt-color-surface-container-low)");
+        hostStyle.Should().Contain("--nt-split-button-bg:var(--nt-color-primary)");
+        hostStyle.Should().Contain("--nt-split-button-fg:var(--nt-color-on-primary)");
+        menuStyle.Should().Contain("--nt-menu-container-color:var(--nt-color-surface-container-low)");
     }
 
     [Fact]
@@ -358,9 +358,8 @@ public class NTSplitButton_Tests : BunitContext {
     }
 
     [Theory]
-    [InlineData(TnTColor.None)]
-    [InlineData(TnTColor.Transparent)]
-    public void Invisible_TextColor_Throws(TnTColor textColor) {
+    [InlineData(NTColor.Transparent)]
+    public void Invisible_TextColor_Throws(NTColor textColor) {
         var render = () => Render<NTSplitButton>(parameters => parameters
             .Add(x => x.Label, "Save")
             .Add(x => x.TextColor, textColor)

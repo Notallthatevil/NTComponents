@@ -167,8 +167,8 @@ public class NTFileUpload_Tests : BunitContext {
         cut.Find(".nt-file-upload-action").HasAttribute("disabled").Should().BeTrue();
 
         var progress = cut.Find(".nt-file-upload-progress .nt-progress");
-        progress.GetAttribute("style")!.Should().Contain("--nt-progress-indicator-color:var(--tnt-color-error)");
-        progress.GetAttribute("style")!.Should().Contain("--nt-progress-track-color:var(--tnt-color-error-container)");
+        progress.GetAttribute("style")!.Should().Contain("--nt-progress-indicator-color:var(--nt-color-error)");
+        progress.GetAttribute("style")!.Should().Contain("--nt-progress-track-color:var(--nt-color-error-container)");
         progress.GetAttribute("aria-valuenow").Should().Be("100");
 
         errorArgs.Should().NotBeNull();
