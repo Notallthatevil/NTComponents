@@ -162,6 +162,36 @@ public static class FabMenuFactory {
             "FabMenuFactory.cs");
     }
 
+    // Behavior source: AnalyzerReleases.Unshipped.md NTC1042.
+    [Theory]
+    [InlineData("Smallest", "Small")]
+    [InlineData("Largest", "Large")]
+    public async Task Reports_Remapped_NTSize_ButtonSize_At_The_Size_Value(string sizeName, string renderedSizeName) {
+        var source = $$"""
+using Microsoft.AspNetCore.Components.Rendering;
+
+public static class FabMenuFactory {
+    public static void Build(RenderTreeBuilder builder, object icon, string label, object childContent) {
+        builder.OpenComponent<global::NTComponents.NTFabMenu>(0);
+        builder.AddAttribute(1, "Icon", icon);
+        builder.AddAttribute(2, "AriaLabel", label);
+        builder.AddAttribute(3, "ChildContent", childContent);
+        builder.AddAttribute(4, "ButtonSize", global::NTComponents.NTSize.{{sizeName}});
+        builder.CloseComponent();
+    }
+}
+""" + SupportTypes;
+
+        var diagnostic = Assert.Single(await GetDiagnosticsAsync(("FabMenuFactory.cs", source), ("NTSize.cs", NTSizeType)));
+
+        AssertDiagnostic(
+            diagnostic,
+            NTFabMenuConfigurationAnalyzer.UnsupportedSizeDiagnosticId,
+            $"NTFabMenu does not support ButtonSize '{sizeName}' and will render with '{renderedSizeName}'",
+            $"global::NTComponents.NTSize.{sizeName}",
+            "FabMenuFactory.cs");
+    }
+
     // Behavior source: AnalyzerReleases.Unshipped.md NTC1043.
     [Fact]
     public async Task Reports_Undefined_Placement_At_The_Placement_Value() {
@@ -610,6 +640,8 @@ public static class GeneratedFabMenu {
             .WithAnalyzers([new NTFabMenuConfigurationAnalyzer()])
             .GetAnalyzerDiagnosticsAsync();
     }
+
+    private const string NTSizeType = "namespace NTComponents { public enum NTSize { Smallest, Small, Medium, Large, Largest } }";
 
     private const string SupportTypes = """
 

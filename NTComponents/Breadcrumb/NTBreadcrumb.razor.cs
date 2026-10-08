@@ -32,7 +32,7 @@ public partial class NTBreadcrumb : IAsyncDisposable {
 
     /// <summary>Gets or sets the size of the links and current-page label.</summary>
     [Parameter]
-    public Size Size { get; set; } = Size.Small;
+    public NTSize Size { get; set; } = NTSize.Small;
 
     /// <summary>Gets or sets the ancestor link text color. Defaults to the navigation link's primary color.</summary>
     [Parameter]

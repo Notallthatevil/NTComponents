@@ -43,10 +43,10 @@
         <h2>NTButton</h2>
         @foreach (var variant in ButtonVariants) {
             <div class="badges-demo-group" aria-label="@($"{variant} buttons")">
-                <NTButton Label="Updates" Variant="@variant" ButtonSize="Size.XS" ShowBadge="true" BadgeAriaLabel="New updates" />
+                <NTButton Label="Updates" Variant="@variant" ButtonSize="NTSize.Smallest" ShowBadge="true" BadgeAriaLabel="New updates" />
                 <NTButton Label="Inbox" LeadingIcon="@MaterialIcon.Mail" Variant="@variant" ShowBadge="@HasCount" BadgeContent="@CountText" BadgeAriaLabel="@CountAriaLabel" />
-                <NTButton Label="Square" Variant="@variant" Shape="ButtonShape.Square" ButtonSize="Size.Medium" ShowBadge="@HasCount" BadgeContent="@CountText" BadgeAriaLabel="@CountAriaLabel" />
-                <NTButton Label="Large" Variant="@variant" ButtonSize="Size.Large" ShowBadge="true" BadgeContent="5" BadgeAriaLabel="5 pending" />
+                <NTButton Label="Square" Variant="@variant" Shape="ButtonShape.Square" ButtonSize="NTSize.Medium" ShowBadge="@HasCount" BadgeContent="@CountText" BadgeAriaLabel="@CountAriaLabel" />
+                <NTButton Label="Large" Variant="@variant" ButtonSize="NTSize.Large" ShowBadge="true" BadgeContent="5" BadgeAriaLabel="5 pending" />
             </div>
         }
     </section>
@@ -56,7 +56,7 @@
         @foreach (var shape in ButtonShapes) {
             <div class="badges-demo-group" aria-label="@($"{shape} buttons")">
                 @foreach (var size in ButtonSizes) {
-                    <NTButton Label="@shape.ToString()" Variant="NTButtonVariant.Filled" Shape="@shape" ButtonSize="@size" ShowBadge="true" BadgeContent="@(size == Size.XS ? null : CountText)" BadgeAriaLabel="@CountAriaLabel" />
+                    <NTButton Label="@shape.ToString()" Variant="NTButtonVariant.Filled" Shape="@shape" ButtonSize="@size" ShowBadge="true" BadgeContent="@(size == NTSize.Smallest ? null : CountText)" BadgeAriaLabel="@CountAriaLabel" />
                 }
             </div>
         }
@@ -69,9 +69,9 @@
     <section class="badges-demo-section">
         <h2>NTFabButton</h2>
         <div class="badges-demo-group" aria-label="FAB buttons">
-            <NTFabButton Icon="@MaterialIcon.Edit" AriaLabel="Compose" ButtonSize="Size.Small" ShowBadge="true" BadgeAriaLabel="Unsent draft" />
-            <NTFabButton Icon="@MaterialIcon.Edit" AriaLabel="Compose" ButtonSize="Size.Medium" ShowBadge="@HasCount" BadgeContent="@CountText" BadgeAriaLabel="@CountAriaLabel" />
-            <NTFabButton Icon="@MaterialIcon.Edit" AriaLabel="Compose" ButtonSize="Size.Large" ShowBadge="true" BadgeContent="2" BadgeAriaLabel="2 drafts" />
+            <NTFabButton Icon="@MaterialIcon.Edit" AriaLabel="Compose" ButtonSize="NTSize.Small" ShowBadge="true" BadgeAriaLabel="Unsent draft" />
+            <NTFabButton Icon="@MaterialIcon.Edit" AriaLabel="Compose" ButtonSize="NTSize.Medium" ShowBadge="@HasCount" BadgeContent="@CountText" BadgeAriaLabel="@CountAriaLabel" />
+            <NTFabButton Icon="@MaterialIcon.Edit" AriaLabel="Compose" ButtonSize="NTSize.Large" ShowBadge="true" BadgeContent="2" BadgeAriaLabel="2 drafts" />
             <NTFabButton Icon="@MaterialIcon.Edit" Label="Compose" ShowBadge="@HasCount" BadgeContent="@CountText" BadgeAriaLabel="@CountAriaLabel" />
         </div>
     </section>
@@ -171,8 +171,8 @@
     private const string MenuButtonId = "badges-demo-menu-button";
     private const string MenuId = "badges-demo-menu";
     private static readonly NTButtonVariant[] ButtonVariants = Enum.GetValues<NTButtonVariant>();
-    private static readonly Size[] IconButtonSizes = [Size.XS, Size.Small, Size.Medium, Size.Large, Size.XL];
-    private static readonly Size[] ButtonSizes = IconButtonSizes;
+    private static readonly NTSize[] IconButtonSizes = [NTSize.Smallest, NTSize.Small, NTSize.Medium, NTSize.Large, NTSize.Largest];
+    private static readonly NTSize[] ButtonSizes = IconButtonSizes;
     private static readonly ButtonShape[] ButtonShapes = Enum.GetValues<ButtonShape>();
 
     private int _count = 3;

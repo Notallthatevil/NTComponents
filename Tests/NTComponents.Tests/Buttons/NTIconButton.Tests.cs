@@ -383,7 +383,7 @@ public class NTIconButton_Tests : BunitContext {
         var cut = Render<NTIconButton>(parameters => parameters
             .Add(x => x.Icon, SampleIcon)
             .Add(x => x.AriaLabel, "Open menu")
-            .Add(x => x.ButtonSize, Size.Largest)
+            .Add(x => x.ButtonSize, NTSize.Largest)
             .Add(x => x.Width, NTIconButtonAppearance.Wide)
             .Add(x => x.Shape, ButtonShape.Square));
 

@@ -221,7 +221,7 @@ public class NTButton_Tests : BunitContext {
     public void Smallest_Size_Adds_Size_Class() {
         var cut = Render<NTButton>(parameters => parameters
             .Add(x => x.Label, "XS")
-            .Add(x => x.ButtonSize, Size.Smallest));
+            .Add(x => x.ButtonSize, NTSize.Smallest));
 
         cut.Find("button").GetAttribute("class")!.Should().Contain("tnt-size-xs");
     }

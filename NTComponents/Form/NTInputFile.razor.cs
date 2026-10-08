@@ -237,13 +237,13 @@ public partial class NTInputFile : IAsyncDisposable {
     ///     Gets or sets the native file-selector button size.
     /// </summary>
     [Parameter]
-    public Size InputButtonSize { get; set; } = Size.Small;
+    public NTSize InputButtonSize { get; set; } = NTSize.Small;
 
     /// <summary>
     ///     Gets or sets the upload button size. When not set, size follows the effective form appearance.
     /// </summary>
     [Parameter]
-    public Size? UploadButtonSize { get; set; }
+    public NTSize? UploadButtonSize { get; set; }
 
     /// <summary>
     ///     Gets or sets the upload button background color.
@@ -263,11 +263,11 @@ public partial class NTInputFile : IAsyncDisposable {
 
     private NTColor EffectiveUploadButtonTextColor => UploadButtonTextColor ?? (UploadButtonAppearance == ButtonAppearance.Outlined ? EffectiveUploadButtonBackgroundColor : OnTintColor);
 
-    private Size EffectiveUploadButtonSize => UploadButtonSize ?? EffectiveAppearance switch {
-        FormAppearance.Outlined or FormAppearance.Filled => Size.Small,
-        FormAppearance.OutlinedCompact or FormAppearance.FilledCompact => Size.XS,
-        FormAppearance.OutlinedXS or FormAppearance.FilledXS => Size.XS,
-        _ => Size.Medium
+    private NTSize EffectiveUploadButtonSize => UploadButtonSize ?? EffectiveAppearance switch {
+        FormAppearance.Outlined or FormAppearance.Filled => NTSize.Small,
+        FormAppearance.OutlinedCompact or FormAppearance.FilledCompact => NTSize.Smallest,
+        FormAppearance.OutlinedXS or FormAppearance.FilledXS => NTSize.Smallest,
+        _ => NTSize.Medium
     };
 
     /// <summary>
@@ -859,30 +859,30 @@ public partial class NTInputFile : IAsyncDisposable {
         return appearanceClass;
     }
 
-    private static string GetSelectorButtonHeight(Size size) => size switch {
-        Size.Smallest or Size.XS => "32px",
-        Size.Small => "40px",
-        Size.Medium => "56px",
-        Size.Large => "96px",
-        Size.Largest or Size.XL => "136px",
+    private static string GetSelectorButtonHeight(NTSize size) => size switch {
+        NTSize.Smallest => "32px",
+        NTSize.Small => "40px",
+        NTSize.Medium => "56px",
+        NTSize.Large => "96px",
+        NTSize.Largest => "136px",
         _ => "40px"
     };
 
-    private static string GetSelectorButtonPaddingX(Size size) => size switch {
-        Size.Smallest or Size.XS => "12px",
-        Size.Small => "16px",
-        Size.Medium => "24px",
-        Size.Large => "48px",
-        Size.Largest or Size.XL => "64px",
+    private static string GetSelectorButtonPaddingX(NTSize size) => size switch {
+        NTSize.Smallest => "12px",
+        NTSize.Small => "16px",
+        NTSize.Medium => "24px",
+        NTSize.Large => "48px",
+        NTSize.Largest => "64px",
         _ => "16px"
     };
 
-    private static string GetSelectorButtonBorderRadius(Size size) => size switch {
-        Size.Smallest or Size.XS => "32px / 100%",
-        Size.Small => "40px / 100%",
-        Size.Medium => "56px / 100%",
-        Size.Large => "96px / 100%",
-        Size.Largest or Size.XL => "136px / 100%",
+    private static string GetSelectorButtonBorderRadius(NTSize size) => size switch {
+        NTSize.Smallest => "32px / 100%",
+        NTSize.Small => "40px / 100%",
+        NTSize.Medium => "56px / 100%",
+        NTSize.Large => "96px / 100%",
+        NTSize.Largest => "136px / 100%",
         _ => "40px / 100%"
     };
 

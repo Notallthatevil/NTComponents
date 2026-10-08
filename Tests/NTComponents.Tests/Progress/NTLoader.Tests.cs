@@ -180,12 +180,12 @@ public class NTLoader_Tests : BunitContext {
     }
 
     [Theory]
-    [InlineData(Size.Smallest, "tnt-size-xs")]
-    [InlineData(Size.Small, "tnt-size-s")]
-    [InlineData(Size.Medium, "tnt-size-m")]
-    [InlineData(Size.Large, "tnt-size-l")]
-    [InlineData(Size.Largest, "tnt-size-xl")]
-    public void Size_Adds_Correct_Size_Class(Size size, string expectedClass) {
+    [InlineData(NTSize.Smallest, "tnt-size-xs")]
+    [InlineData(NTSize.Small, "tnt-size-s")]
+    [InlineData(NTSize.Medium, "tnt-size-m")]
+    [InlineData(NTSize.Large, "tnt-size-l")]
+    [InlineData(NTSize.Largest, "tnt-size-xl")]
+    public void Size_Adds_Correct_Size_Class(NTSize size, string expectedClass) {
         var cut = Render<NTLoader>(p => p.Add(c => c.Size, size));
 
         cut.Find(".nt-loader").GetAttribute("class")!.Should().Contain(expectedClass);

@@ -142,7 +142,7 @@ public class NTProgress_Tests : BunitContext {
     public void Large_Linear_Wave_Progress_Keeps_Three_Dp_Amplitude() {
         var cut = Render<NTProgress>(p => p
             .Add(c => c.Variant, NTProgressVariant.LinearWave)
-            .Add(c => c.Size, Size.Largest)
+            .Add(c => c.Size, NTSize.Largest)
             .Add(c => c.Value, 50));
 
         var wave = cut.Find(".nt-progress-sine-wave-svg");
@@ -372,12 +372,12 @@ public class NTProgress_Tests : BunitContext {
     }
 
     [Theory]
-    [InlineData(Size.Smallest, "tnt-size-xs")]
-    [InlineData(Size.Small, "tnt-size-s")]
-    [InlineData(Size.Medium, "tnt-size-m")]
-    [InlineData(Size.Large, "tnt-size-l")]
-    [InlineData(Size.Largest, "tnt-size-xl")]
-    public void Size_Adds_Correct_Size_Class(Size size, string expectedClass) {
+    [InlineData(NTSize.Smallest, "tnt-size-xs")]
+    [InlineData(NTSize.Small, "tnt-size-s")]
+    [InlineData(NTSize.Medium, "tnt-size-m")]
+    [InlineData(NTSize.Large, "tnt-size-l")]
+    [InlineData(NTSize.Largest, "tnt-size-xl")]
+    public void Size_Adds_Correct_Size_Class(NTSize size, string expectedClass) {
         var cut = Render<NTProgress>(p => p.Add(c => c.Size, size));
         var progress = cut.Find(".nt-progress");
 

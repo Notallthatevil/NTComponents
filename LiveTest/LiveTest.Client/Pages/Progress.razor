@@ -51,7 +51,7 @@
         <label style="display:grid; gap:.35rem;">
             Size
             <select @bind="size">
-                @foreach (var option in Enum.GetValues<Size>()) {
+                @foreach (var option in Enum.GetValues<NTSize>()) {
                     <option value="@option">@option</option>
                 }
             </select>
@@ -108,7 +108,7 @@
     <div style="display:grid; gap:1rem;">
         <h4 style="margin:0;">Button progress</h4>
         <button style="display:inline-flex; inline-size:max-content; min-inline-size:8rem; align-items:center; justify-content:center; gap:.75rem; padding:.625rem 1rem; border:0; border-radius:999px; color:var(--tnt-color-on-primary); background:var(--tnt-color-primary);">
-            <NTProgress Variant="NTProgressVariant.Ring" Size="Size.Smallest" ProgressColor="NTColor.OnPrimary" TrackVisible="false" AriaLabel="Saving changes" />
+            <NTProgress Variant="NTProgressVariant.Ring" Size="NTSize.Smallest" ProgressColor="NTColor.OnPrimary" TrackVisible="false" AriaLabel="Saving changes" />
             Saving
         </button>
     </div>
@@ -121,7 +121,7 @@
     private bool trackVisible = true;
     private int progressValue = 45;
     private NTProgressVariant variant = NTProgressVariant.Linear;
-    private Size size = Size.Medium;
+    private NTSize size = NTSize.Medium;
     private NTColor indicatorColor = NTColor.Primary;
     private NTColor trackColor = NTColor.SecondaryContainer;
 

@@ -45,7 +45,7 @@ public partial class NTSplitButton {
     ///     Gets or sets the size of both split button segments.
     /// </summary>
     [Parameter]
-    public Size ButtonSize { get; set; } = Size.Small;
+    public NTSize ButtonSize { get; set; } = NTSize.Small;
 
     /// <summary>
     ///     Gets or sets the menu content rendered when the trailing segment is expanded.

@@ -168,7 +168,7 @@ public sealed class Render_Tests : NTButtonGroupTestContext {
         // Act
         var cut = Render<NTButtonGroup<string>>(parameters => parameters
             .AddChildContent(RenderItems(items))
-            .Add(p => p.ButtonSize, Size.Large));
+            .Add(p => p.ButtonSize, NTSize.Large));
         var container = cut.Find("div.nt-button-group");
 
         // Assert

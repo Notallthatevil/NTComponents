@@ -29,12 +29,12 @@ public class NTBreadcrumb_Tests : BunitContext {
     }
 
     [Theory]
-    [InlineData(Size.Smallest, "xs")]
-    [InlineData(Size.Small, "s")]
-    [InlineData(Size.Medium, "m")]
-    [InlineData(Size.Large, "l")]
-    [InlineData(Size.Largest, "xl")]
-    public void Size_AppliesToSharedNavigationLinksAndCurrentPage(Size size, string suffix) {
+    [InlineData(NTSize.Smallest, "xs")]
+    [InlineData(NTSize.Small, "s")]
+    [InlineData(NTSize.Medium, "m")]
+    [InlineData(NTSize.Large, "l")]
+    [InlineData(NTSize.Largest, "xl")]
+    public void Size_AppliesToSharedNavigationLinksAndCurrentPage(NTSize size, string suffix) {
         Services.GetRequiredService<NavigationManager>().NavigateTo("/catalog/product");
         var cut = Render<NTBreadcrumb>(p => p.Add(c => c.Size, size));
 

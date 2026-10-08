@@ -76,7 +76,7 @@
 <h2>Sizes</h2>
 <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-block:16px 32px;">
 	@foreach (var size in ButtonSizes) {
-		<NTButton Label="@GetSizeLabel(size)"
+		<NTButton Label="@size.ToString()"
 		          Variant="@SelectedVariant"
 		          ButtonSize="@size"
 		          Shape="@Shape"
@@ -143,7 +143,7 @@
 	private static readonly NTButtonVariant[] ButtonVariants = Enum.GetValues<NTButtonVariant>();
 	private static readonly ButtonShape[] ButtonShapes = Enum.GetValues<ButtonShape>();
 	private static readonly NTProgressVariant[] ProgressVariants = Enum.GetValues<NTProgressVariant>();
-	private static readonly Size[] ButtonSizes = [Size.Smallest, Size.Small, Size.Medium, Size.Large, Size.Largest];
+	private static readonly NTSize[] ButtonSizes = [NTSize.Smallest, NTSize.Small, NTSize.Medium, NTSize.Large, NTSize.Largest];
 
 	private NTButtonVariant SelectedVariant { get; set; } = NTButtonVariant.Filled;
 	private ButtonShape Shape { get; set; } = ButtonShape.Round;
@@ -155,7 +155,4 @@
 	private int ProgressValue { get; set; } = 42;
 	private int? EffectiveProgressValue => UseDeterminateProgress ? ProgressValue : null;
 	private TnTIcon? CurrentLeadingIcon => ShowLeadingIcon ? MaterialIcon.CloudySnowing : null;
-
-	private static string GetSizeLabel(Size size)
-		=> size == Size.Smallest ? "Smallest" : size.ToString();
 }

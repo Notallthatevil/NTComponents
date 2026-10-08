@@ -110,6 +110,28 @@ public static class FabButtonFactory {
     }
 
     [Fact]
+    public async Task Reports_Unsupported_NTSize_ButtonSize() {
+        const string source = """
+using Microsoft.AspNetCore.Components.Rendering;
+
+public static class FabButtonFactory {
+    public static void Build(RenderTreeBuilder builder) {
+        builder.OpenComponent<global::NTComponents.NTFabButton>(0);
+        builder.AddAttribute(1, "Icon", new global::NTComponents.TnTIcon());
+        builder.AddAttribute(2, "AriaLabel", "Create item");
+        builder.AddAttribute(3, "ButtonSize", global::NTComponents.NTSize.Largest);
+        builder.CloseComponent();
+    }
+}
+""" + SupportTypes;
+
+        var diagnostic = Assert.Single(await GetDiagnosticsAsync(("FabButtonFactory.cs", source), ("NTSize.cs", NTSizeType)));
+
+        Assert.Equal(NTFabButtonConfigurationAnalyzer.UnsupportedSizeDiagnosticId, diagnostic.Id);
+        Assert.Equal("NTFabButton does not support ButtonSize 'Largest' and will render with 'Large'", diagnostic.GetMessage());
+    }
+
+    [Fact]
     public async Task Reports_Invalid_NonGeneric_Component_With_Generated_Parameters() {
         const string source = """
 using Microsoft.AspNetCore.Components.Rendering;
@@ -279,6 +301,8 @@ public static class FabButtonFactory {
             .WithAnalyzers([analyzer])
             .GetAnalyzerDiagnosticsAsync();
     }
+
+    private const string NTSizeType = "namespace NTComponents { public enum NTSize { Smallest, Small, Medium, Large, Largest } }";
 
     private const string SupportTypes = """
 

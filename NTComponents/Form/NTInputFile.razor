@@ -24,7 +24,7 @@
 		@if (ShowUploadButton && RendererInfo.IsInteractive) {
 			<span class="nt-input-file-upload-button" @onclick:preventDefault="true" @onclick:stopPropagation="true">
 				<TnTButton Appearance="@UploadButtonAppearance"
-						   ButtonSize="@EffectiveUploadButtonSize"
+						   ButtonSize="@((Size)EffectiveUploadButtonSize)"
 						   Type="ButtonType.Button"
 						   Disabled="@UploadButtonDisabled"
 						   BackgroundColor="@EffectiveUploadButtonBackgroundColor.ToLegacyColor()"

@@ -137,7 +137,7 @@ public partial class NTLoader : NTDisposableComponentBase, INTPageScriptComponen
     ///     Token size for the loading indicator.
     /// </summary>
     [Parameter]
-    public Size Size { get; set; } = Size.Medium;
+    public NTSize Size { get; set; } = NTSize.Medium;
 
     /// <summary>
     ///     Optional CSS size value for the shape loader.

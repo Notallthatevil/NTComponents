@@ -43,7 +43,7 @@
         <label style="display:grid; gap:.35rem;">
             Size
             <select @bind="size" disabled="@useCustomSize">
-                @foreach (var option in Enum.GetValues<Size>()) {
+                @foreach (var option in Enum.GetValues<NTSize>()) {
                     <option value="@option">@option</option>
                 }
             </select>
@@ -86,11 +86,11 @@
     <div style="display:grid; gap:1rem;">
         <h4 style="margin:0;">Sizes</h4>
         <div style="display:flex; gap:1.5rem; align-items:center; flex-wrap:wrap;">
-            <NTLoader Size="Size.Smallest" AriaLabel="Smallest shape loader" />
-            <NTLoader Size="Size.Small" Color="NTColor.Secondary" AriaLabel="Small shape loader" />
-            <NTLoader Size="Size.Medium" Color="NTColor.Primary" AriaLabel="Medium shape loader" />
-            <NTLoader Size="Size.Large" Color="NTColor.Tertiary" AriaLabel="Large shape loader" />
-            <NTLoader Size="Size.Largest" Color="NTColor.Success" AriaLabel="Largest shape loader" />
+            <NTLoader Size="NTSize.Smallest" AriaLabel="Smallest shape loader" />
+            <NTLoader Size="NTSize.Small" Color="NTColor.Secondary" AriaLabel="Small shape loader" />
+            <NTLoader Size="NTSize.Medium" Color="NTColor.Primary" AriaLabel="Medium shape loader" />
+            <NTLoader Size="NTSize.Large" Color="NTColor.Tertiary" AriaLabel="Large shape loader" />
+            <NTLoader Size="NTSize.Largest" Color="NTColor.Success" AriaLabel="Largest shape loader" />
         </div>
     </div>
 
@@ -111,7 +111,7 @@
     private int animationDuration = 1250;
     private int customSize = 72;
     private NTLoaderVariant variant = NTLoaderVariant.Uncontained;
-    private Size size = Size.Medium;
+    private NTSize size = NTSize.Medium;
     private NTColor indicatorColor = NTColor.Primary;
     private NTColor containerColor = NTColor.PrimaryContainer;
 

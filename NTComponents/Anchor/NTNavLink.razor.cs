@@ -48,7 +48,7 @@ public partial class NTNavLink {
     ///     Gets or sets the size of button-style link variants.
     /// </summary>
     [Parameter]
-    public Size ButtonSize { get; set; } = Size.Small;
+    public NTSize ButtonSize { get; set; } = NTSize.Small;
 
     /// <summary>
     ///     Gets or sets whether the link is disabled. Disabled links remove their <c>href</c> attribute, render <c>aria-disabled</c>, and leave the tab order.

@@ -198,12 +198,12 @@ public class NTFabMenu_Tests : BunitContext {
     }
 
     [Theory]
-    [InlineData(Size.Smallest, "tnt-size-s")]
-    [InlineData(Size.Small, "tnt-size-s")]
-    [InlineData(Size.Medium, "tnt-size-m")]
-    [InlineData(Size.Large, "tnt-size-l")]
-    [InlineData(Size.Largest, "tnt-size-l")]
-    public void ButtonSize_Uses_Supported_Fab_Size(Size suppliedSize, string expectedClass) {
+    [InlineData(NTSize.Smallest, "tnt-size-s")]
+    [InlineData(NTSize.Small, "tnt-size-s")]
+    [InlineData(NTSize.Medium, "tnt-size-m")]
+    [InlineData(NTSize.Large, "tnt-size-l")]
+    [InlineData(NTSize.Largest, "tnt-size-l")]
+    public void ButtonSize_Uses_Supported_Fab_Size(NTSize suppliedSize, string expectedClass) {
         var cut = Render<NTFabMenu>(parameters => parameters
             .Add(x => x.Icon, SampleIcon)
             .Add(x => x.AriaLabel, "Create options")
@@ -355,7 +355,7 @@ public class NTFabMenu_Tests : BunitContext {
         var cut = Render<NTFabMenu>(parameters => parameters
             .Add(x => x.Icon, SampleIcon)
             .Add(x => x.AriaLabel, "Create options")
-            .Add(x => x.ButtonSize, (Size)999)
+            .Add(x => x.ButtonSize, (NTSize)999)
             .AddChildContent<NTFabMenuButtonItem>(item => item.Add(x => x.Label, "Draft"))
             .AddChildContent<NTFabMenuButtonItem>(item => item.Add(x => x.Label, "Import")));
 

@@ -57,7 +57,7 @@ public partial class NTButtonGroup<TObjectType> : NTComponentBase {
     /// for expressive emphasis, but should be used sparingly and only when the hierarchy remains obvious.
     /// </remarks>
     [Parameter]
-    public Size ButtonSize { get; set; } = Size.Small;
+    public NTSize ButtonSize { get; set; } = NTSize.Small;
 
     /// <summary>
     /// The child content that defines the group items.

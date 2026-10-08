@@ -47,7 +47,7 @@ public partial class NTFabMenu {
     ///     Gets or sets the source FAB size.
     /// </summary>
     [Parameter]
-    public Size ButtonSize { get; set; } = Size.Small;
+    public NTSize ButtonSize { get; set; } = NTSize.Small;
 
     /// <summary>
     ///     Gets or sets the menu content rendered when the FAB is expanded.
@@ -197,13 +197,13 @@ public partial class NTFabMenu {
     [Parameter]
     public NTColor? TextColor { get; set; }
 
-    internal Size EffectiveButtonSize => ButtonSize switch {
-        Size.Smallest => Size.Small,
-        Size.Small => Size.Small,
-        Size.Medium => Size.Medium,
-        Size.Large => Size.Large,
-        Size.Largest => Size.Large,
-        _ => Size.Small
+    internal NTSize EffectiveButtonSize => ButtonSize switch {
+        NTSize.Smallest => NTSize.Small,
+        NTSize.Small => NTSize.Small,
+        NTSize.Medium => NTSize.Medium,
+        NTSize.Large => NTSize.Large,
+        NTSize.Largest => NTSize.Large,
+        _ => NTSize.Small
     };
 
     private string CloseOnMenuContentClickAttribute => CloseOnMenuContentClick ? "true" : "false";
@@ -260,10 +260,10 @@ public partial class NTFabMenu {
             throw new InvalidOperationException($"{nameof(MenuItemTextColor)} must be a visible color.");
         }
 
-        if (ButtonSize is Size.Smallest) {
-            Debug.WriteLine($"{nameof(NTFabMenu)} does not support {nameof(Size.Smallest)}. Rendering with {nameof(Size.Small)}.");
-        } else if (ButtonSize is Size.Largest) {
-            Debug.WriteLine($"{nameof(NTFabMenu)} does not support {nameof(Size.Largest)}. Rendering with {nameof(Size.Large)}.");
+        if (ButtonSize is NTSize.Smallest) {
+            Debug.WriteLine($"{nameof(NTFabMenu)} does not support {nameof(NTSize.Smallest)}. Rendering with {nameof(NTSize.Small)}.");
+        } else if (ButtonSize is NTSize.Largest) {
+            Debug.WriteLine($"{nameof(NTFabMenu)} does not support {nameof(NTSize.Largest)}. Rendering with {nameof(NTSize.Large)}.");
         }
     }
 

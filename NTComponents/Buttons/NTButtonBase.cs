@@ -22,7 +22,7 @@ public abstract class NTButtonBase : NTComponentBase {
     ///     Gets or sets the size of the button.
     /// </summary>
     [Parameter]
-    public virtual Size ButtonSize { get; set; } = Size.Small;
+    public virtual NTSize ButtonSize { get; set; } = NTSize.Small;
 
     /// <summary>
     ///     Gets or sets whether the button is disabled.
@@ -103,7 +103,7 @@ public abstract class NTButtonBase : NTComponentBase {
     /// <summary>
     ///     Gets the progress indicator size.
     /// </summary>
-    protected virtual Size EffectiveProgressSize => ButtonSize;
+    protected virtual NTSize EffectiveProgressSize => ButtonSize;
 
     /// <summary>
     ///     Renders the shared button progress indicator.

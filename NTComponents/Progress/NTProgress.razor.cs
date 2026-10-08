@@ -103,7 +103,7 @@ public partial class NTProgress : TnTDisposableComponentBase {
     ///     Token size for the progress indicator.
     /// </summary>
     [Parameter]
-    public Size Size { get; set; } = Size.Medium;
+    public NTSize Size { get; set; } = NTSize.Medium;
 
     /// <summary>
     ///     Color used by the inactive track.
@@ -168,8 +168,8 @@ public partial class NTProgress : TnTDisposableComponentBase {
     private double EffectiveLinearSineWaveHeight => EffectiveLinearThickness + (LinearSineWaveAmplitude * 2.0);
     private double EffectiveLinearThickness
         => Size switch {
-            Size.Large => 6.0,
-            Size.Largest => 8.0,
+            NTSize.Large => 6.0,
+            NTSize.Largest => 8.0,
             _ => 4.0
         };
 

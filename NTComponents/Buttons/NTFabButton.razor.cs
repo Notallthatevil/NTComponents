@@ -41,9 +41,9 @@ public partial class NTFabButton : NTButtonBase, INTBadgeable {
     /// <summary>
     ///     Gets or sets the size of the FAB.
     /// </summary>
-    /// <remarks>Supports <see cref="Size.Small" />, <see cref="Size.Medium" />, and <see cref="Size.Large" />. Unsupported enum values map to the nearest supported Material FAB size.</remarks>
+    /// <remarks>Supports <see cref="NTSize.Small" />, <see cref="NTSize.Medium" />, and <see cref="NTSize.Large" />. Unsupported enum values map to the nearest supported Material FAB size.</remarks>
     [Parameter]
-    public override Size ButtonSize { get; set; } = Size.Small;
+    public override NTSize ButtonSize { get; set; } = NTSize.Small;
 
     /// <inheritdoc />
     public override string? ElementClass => CssClassBuilder.Create()
@@ -94,13 +94,13 @@ public partial class NTFabButton : NTButtonBase, INTBadgeable {
 
     internal string? EffectiveAriaLabel => string.IsNullOrWhiteSpace(AriaLabel) ? null : AriaLabel;
 
-    internal Size EffectiveButtonSize => ButtonSize switch {
-        Size.Smallest => Size.Small,
-        Size.Small => Size.Small,
-        Size.Medium => Size.Medium,
-        Size.Large => Size.Large,
-        Size.Largest => Size.Large,
-        _ => Size.Medium
+    internal NTSize EffectiveButtonSize => ButtonSize switch {
+        NTSize.Smallest => NTSize.Small,
+        NTSize.Small => NTSize.Small,
+        NTSize.Medium => NTSize.Medium,
+        NTSize.Large => NTSize.Large,
+        NTSize.Largest => NTSize.Large,
+        _ => NTSize.Medium
     };
 
     private string BadgeId => $"{ComponentIdentifier}-badge";
@@ -111,7 +111,7 @@ public partial class NTFabButton : NTButtonBase, INTBadgeable {
     protected override NTColor EffectiveProgressColor => TextColor ?? NTColor.OnPrimaryContainer;
 
     /// <inheritdoc />
-    protected override Size EffectiveProgressSize => EffectiveButtonSize;
+    protected override NTSize EffectiveProgressSize => EffectiveButtonSize;
 
     /// <inheritdoc />
     protected override void OnParametersSet() {
@@ -150,13 +150,13 @@ public partial class NTFabButton : NTButtonBase, INTBadgeable {
     };
 
     private void WarnForUnsupportedSize() {
-        if (ButtonSize is Size.Smallest) {
-            Debug.WriteLine($"{nameof(NTFabButton)} does not support {nameof(Size.Smallest)}. Rendering with {nameof(Size.Small)}.");
+        if (ButtonSize is NTSize.Smallest) {
+            Debug.WriteLine($"{nameof(NTFabButton)} does not support {nameof(NTSize.Smallest)}. Rendering with {nameof(NTSize.Small)}.");
             return;
         }
 
-        if (ButtonSize is Size.Largest) {
-            Debug.WriteLine($"{nameof(NTFabButton)} does not support {nameof(Size.Largest)}. Rendering with {nameof(Size.Large)}.");
+        if (ButtonSize is NTSize.Largest) {
+            Debug.WriteLine($"{nameof(NTFabButton)} does not support {nameof(NTSize.Largest)}. Rendering with {nameof(NTSize.Large)}.");
         }
     }
 }

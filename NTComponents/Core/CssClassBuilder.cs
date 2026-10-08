@@ -131,6 +131,11 @@ public sealed class CssClassBuilder {
         return AddClass($"tnt-size-{sizeSuffix}", size is not null);
     }
 
+    /// <summary>Adds a CSS class for an NT size.</summary>
+    /// <param name="size">The size to use.</param>
+    /// <returns>The current instance of <see cref="CssClassBuilder" />.</returns>
+    public CssClassBuilder AddSize(NTSize size) => AddSize((Size?)size);
+
     /// <summary>
     ///     Adds a CSS class for text alignment.
     /// </summary>
