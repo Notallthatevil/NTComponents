@@ -5,10 +5,12 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\NTComponents.Analyzers\NTComponents.Analyzers.csproj" />
+    <ProjectReference Include="..\..\NTComponents.Analyzers.CodeFixes\NTComponents.Analyzers.CodeFixes.csproj" />
   </ItemGroup>
 
   <ItemGroup>

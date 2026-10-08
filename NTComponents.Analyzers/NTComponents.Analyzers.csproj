@@ -33,6 +33,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\NTComponents.Analyzers.CodeFixes\NTComponents.Analyzers.CodeFixes.csproj" ReferenceOutputAssembly="false" />
+    <None Include="..\NTComponents.Analyzers.CodeFixes\bin\$(Configuration)\netstandard2.0\NTComponents.Analyzers.CodeFixes.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     <None Include="$(OutputPath)$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     <None Include="README.md" Pack="true" PackagePath="\" />
     <None Include="..\Logo.png" Pack="true" PackagePath="\" />

@@ -40,6 +40,7 @@
   <Project Path="LiveTest/LiveTest.Client/LiveTest.Client.csproj" />
   <Project Path="LiveTest/LiveTest/LiveTest.csproj" />
   <Project Path="NTComponents.Analyzers/NTComponents.Analyzers.csproj" />
+  <Project Path="NTComponents.Analyzers.CodeFixes/NTComponents.Analyzers.CodeFixes.csproj" />
   <Project Path="NTComponents.CodeDocumentation.Generator/NTComponents.CodeDocumentation.Generator.csproj" />
   <Project Path="NTComponents.AspNetCore/NTComponents.AspNetCore.csproj" />
   <Project Path="NTComponents.Extensions/NTComponents.Extensions.csproj" />

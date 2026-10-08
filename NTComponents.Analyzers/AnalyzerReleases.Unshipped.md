@@ -79,3 +79,6 @@ NTC1073 | Usage | Warning | NTCarouselItem AspectRatio must be finite and remain
 NTC1074 | Usage | Warning | NTCarousel Appearance must be a defined CarouselAppearance value.
 NTC1075 | Usage | Warning | NTDataGrid PersistenceKey requires PersistPrerenderedItems.
 NTC1076 | Usage | Warning | NTDataGrid persistence requires a non-empty PersistenceKey.
+NTC1077 | Migration | Warning | Replace TnTColor with NTColor. Fix All supported.
+NTC1078 | Migration | Warning | None, Black, and White require a deliberate replacement because NTColor omits them.
+NTC1079 | Migration | Warning | Replace ToCssTnTColorVariable with ToCssNTColorVariable. Fix All supported.

@@ -12,6 +12,7 @@ $archive = [System.IO.Compression.ZipFile]::OpenRead($resolvedPackagePath)
 try {
     $requiredEntries = @(
         'analyzers/dotnet/cs/NTComponents.Analyzers.dll',
+        'analyzers/dotnet/cs/NTComponents.Analyzers.CodeFixes.dll',
         'README.md',
         'Logo.png'
     )
@@ -82,6 +83,7 @@ using Microsoft.AspNetCore.Components.Rendering;
 using NTComponents;
 
 public static class ButtonFactory {
+    public static object LegacyColor => TnTColor.Primary;
     public static void Build(RenderTreeBuilder builder) {
         builder.OpenComponent<NTButton>(0);
         builder.CloseComponent();
@@ -103,10 +105,12 @@ namespace NTComponents {
     public sealed class NTButton { }
     public enum NTButtonVariant { Elevated, Filled, Tonal, Outlined, Text }
     public enum TnTColor { None, Transparent, Primary, OnPrimary, SecondaryContainer, OnSecondaryContainer, SurfaceContainerLow, InverseSurface }
+    public enum NTColor { Transparent, Primary, OnPrimary, SecondaryContainer, OnSecondaryContainer, SurfaceContainerLow, InverseSurface }
     public enum NTElevation { None, Lowest, Low, Medium, High, Highest }
 }
 
 public static class ButtonFactory {
+    public static object LegacyColor => NTComponents.TnTColor.Primary;
     public static void Build(Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder builder) {
         builder.OpenComponent<NTComponents.NTButton>(0);
         builder.CloseComponent();
@@ -132,11 +136,20 @@ public static class ButtonFactory {
     if ($buildText -notmatch '\bNTC1008\b') {
         throw "Analyzer package consumer build did not report NTC1008:`n$buildText"
     }
+    if ($buildText -notmatch '\bNTC1077\b') {
+        throw "Analyzer package consumer build did not report NTC1077:`n$buildText"
+    }
 
-    Write-Host "Verified $packageId $packageVersion and observed NTC1008 in a consumer build."
+    Write-Host "Verified $packageId $packageVersion, packaged code fixes, and observed NTC1008 and NTC1077 in a consumer build."
 }
 finally {
     if (Test-Path -LiteralPath $temporaryDirectory) {
+        $resolvedTemporaryDirectory = (Resolve-Path -LiteralPath $temporaryDirectory).Path
+        $expectedTemporaryDirectory = [System.IO.Path]::GetFullPath($temporaryDirectory)
+        $temporaryRoot = [System.IO.Path]::GetFullPath([System.IO.Path]::GetTempPath()).TrimEnd([System.IO.Path]::DirectorySeparatorChar) + [System.IO.Path]::DirectorySeparatorChar
+        if ($resolvedTemporaryDirectory -ne $expectedTemporaryDirectory -or -not $resolvedTemporaryDirectory.StartsWith($temporaryRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
+            throw "Refusing to remove an unexpected temporary directory '$resolvedTemporaryDirectory'."
+        }
         Remove-Item -LiteralPath $temporaryDirectory -Recurse -Force
     }
 }
