@@ -97,20 +97,20 @@
         _claims = points;
     }
 
-    private static TnTColor ClaimsColor(BubbleColorContext<BubbleClaimPoint> context)
+    private static NTColor ClaimsColor(BubbleColorContext<BubbleClaimPoint> context)
     {
         if (context.Depth == 0)
         {
             return context.Key switch
             {
-                "Atlas Logistics" => TnTColor.Primary,
-                "Beacon Farms" => TnTColor.Secondary,
-                "Crescent Steel" => TnTColor.Tertiary,
-                "Delta Transport" => TnTColor.Success,
-                "Evergreen Foods" => TnTColor.Warning,
-                "Frontier Health" => TnTColor.Error,
-                "Granite Tech" => TnTColor.PrimaryFixed,
-                _ => TnTColor.SecondaryFixed
+                "Atlas Logistics" => NTColor.Primary,
+                "Beacon Farms" => NTColor.Secondary,
+                "Crescent Steel" => NTColor.Tertiary,
+                "Delta Transport" => NTColor.Success,
+                "Evergreen Foods" => NTColor.Warning,
+                "Frontier Health" => NTColor.Error,
+                "Granite Tech" => NTColor.PrimaryFixed,
+                _ => NTColor.SecondaryFixed
             };
         }
 
@@ -118,11 +118,11 @@
         {
             return context.Key switch
             {
-                "3632" => TnTColor.PrimaryContainer,
-                "5606" => TnTColor.SecondaryContainer,
-                "8017" => TnTColor.TertiaryContainer,
-                "8742" => TnTColor.InversePrimary,
-                _ => TnTColor.SurfaceTint
+                "3632" => NTColor.PrimaryContainer,
+                "5606" => NTColor.SecondaryContainer,
+                "8017" => NTColor.TertiaryContainer,
+                "8742" => NTColor.InversePrimary,
+                _ => NTColor.SurfaceTint
             };
         }
 
@@ -130,19 +130,19 @@
         {
             return context.Value switch
             {
-                > 12000m => TnTColor.ErrorContainer,
-                > 8500m => TnTColor.Warning,
-                > 6000m => TnTColor.PrimaryFixedDim,
+                > 12000m => NTColor.ErrorContainer,
+                > 8500m => NTColor.Warning,
+                > 6000m => NTColor.PrimaryFixedDim,
                 _ => context.Key switch
                 {
-                    "Medical" => TnTColor.ErrorContainer,
-                    "Indemnity" => TnTColor.PrimaryFixed,
-                    "Expense" => TnTColor.SecondaryFixed,
-                    _ => TnTColor.TertiaryFixed
+                    "Medical" => NTColor.ErrorContainer,
+                    "Indemnity" => NTColor.PrimaryFixed,
+                    "Expense" => NTColor.SecondaryFixed,
+                    _ => NTColor.TertiaryFixed
                 }
             };
         }
 
-        return TnTColor.Primary;
+        return NTColor.Primary;
     }
 }

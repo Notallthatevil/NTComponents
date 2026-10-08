@@ -46,7 +46,7 @@
                                 <NTYAxisOptions ValueSelector="@(p => p.Y)" Title="Value" />
 
                                 <NTLineSeries TData="CartesianPoint" Data="@_basicData" Title="Series A" XValue="@(p => p.X)"
-                                              YValueSelector="@(p => p.Y)" Color="TnTColor.Primary" PointStyle="PointStyle.Filled"
+                                              YValueSelector="@(p => p.Y)" Color="NTColor.Primary" PointStyle="PointStyle.Filled"
                                               PointSize="8" />
 
                                 <NTComponents.Charts.Core.NTTooltip />
@@ -66,12 +66,12 @@
                                 <NTYAxisOptions ValueSelector="@(p => p.Y)" Title="Value" />
 
                                 <NTLineSeries TData="CartesianPoint" Data="@_seriesA" Title="Straight" XValue="@(p => p.X)"
-                                              YValueSelector="@(p => p.Y)" Color="TnTColor.Primary"
+                                              YValueSelector="@(p => p.Y)" Color="NTColor.Primary"
                                               Interpolation="LineInterpolation.Straight" LineStyle="LineStyle.Solid"
                                               PointStyle="PointStyle.Filled" />
 
                                 <NTLineSeries TData="CartesianPoint" Data="@_seriesB" Title="Smoothed Dashed"
-                                              XValue="@(p => p.X)" YValueSelector="@(p => p.Y)" Color="TnTColor.Secondary"
+                                              XValue="@(p => p.X)" YValueSelector="@(p => p.Y)" Color="NTColor.Secondary"
                                               Interpolation="LineInterpolation.Smoothed" LineStyle="LineStyle.Dashed"
                                               PointStyle="PointStyle.Outlined" PointShape="PointShape.Diamond" />
 
@@ -92,7 +92,7 @@
                                 <NTYAxisOptions ValueSelector="@(p => p.Value)" Title="Amount" LabelFormat="{0:N0}" />
 
                                 <NTLineSeries TData="TimePoint" Data="@_timeSeries" Title="Daily" XValue="@(p => p.Time)"
-                                              YValueSelector="@(p => p.Value)" Color="TnTColor.Tertiary"
+                                              YValueSelector="@(p => p.Value)" Color="NTColor.Tertiary"
                                               Interactions="@(ChartInteractions.XPan | ChartInteractions.YPan | ChartInteractions.XZoom | ChartInteractions.YZoom)"
                                               Interpolation="LineInterpolation.Curved" PointStyle="PointStyle.Filled" PointSize="6" />
 
@@ -126,7 +126,7 @@
                                 <NTLineSeries TData="TimePoint" Data="@_timeLodRaw" Title="Claims"
                                               XValue="@(p => p.Time)" YValueSelector="@(p => p.Value)"
                                               AggregationMode="@_timeLodAggregationMode"
-                                              Color="TnTColor.Info"
+                                              Color="NTColor.Info"
                                               Interactions="@(ChartInteractions.All)"
                                               Interpolation="LineInterpolation.Straight"
                                               PointStyle="PointStyle.Filled" PointSize="5" />
@@ -152,7 +152,7 @@
                                 <NTYAxisOptions ValueSelector="@(p => p.Y)" Title="Y" />
 
                                 <NTLineSeries TData="CartesianPoint" Data="@_interactiveData" Title="Zoomable"
-                                              XValue="@(p => p.X)" YValueSelector="@(p => p.Y)" Color="TnTColor.Success"
+                                              XValue="@(p => p.X)" YValueSelector="@(p => p.Y)" Color="NTColor.Success"
                                               Interactions="@(ChartInteractions.XPan | ChartInteractions.YPan | ChartInteractions.XZoom | ChartInteractions.YZoom)"
                                               PointStyle="PointStyle.None" StrokeWidth="2.5f" />
 
@@ -175,7 +175,7 @@
                                 <NTYAxisOptions ValueSelector="@(p => p.Y)" Title="Y" />
 
                                 <NTLineSeries TData="CartesianPoint" Data="@_annotationDemoData" Title="Series"
-                                              XValue="@(p => p.X)" YValueSelector="@(p => p.Y)" Color="TnTColor.Primary"
+                                              XValue="@(p => p.X)" YValueSelector="@(p => p.Y)" Color="NTColor.Primary"
                                               PointStyle="PointStyle.None" StrokeWidth="2.5f" />
 
                                 <NTComponents.Charts.Core.NTTooltip />
@@ -298,7 +298,7 @@
                 Type = NTChartAnnotationType.YLine,
                 Y = 80m,
                 Label = "Target 80",
-                StrokeColor = TnTColor.Warning,
+                StrokeColor = NTColor.Warning,
                 DashLength = 5f,
                 Opacity = 0.9f
             },
@@ -307,8 +307,8 @@
                 X = 40d,
                 X2 = 80d,
                 Label = "Focus Window",
-                StrokeColor = TnTColor.Info,
-                FillColor = TnTColor.Info,
+                StrokeColor = NTColor.Info,
+                FillColor = NTColor.Info,
                 Opacity = 0.35f
             },
             new NTChartAnnotation {
@@ -316,8 +316,8 @@
                 X = peak.X,
                 Y = peak.Y,
                 Label = "Peak",
-                StrokeColor = TnTColor.Error,
-                FillColor = TnTColor.Error,
+                StrokeColor = NTColor.Error,
+                FillColor = NTColor.Error,
                 MarkerSize = 4f
             },
             new NTChartAnnotation {
@@ -325,9 +325,9 @@
                 X = 160d,
                 Y = 34m,
                 Label = "Drag + wheel to inspect",
-                StrokeColor = TnTColor.SurfaceVariant,
-                FillColor = TnTColor.SurfaceVariant,
-                TextColor = TnTColor.OnSurfaceVariant,
+                StrokeColor = NTColor.SurfaceVariant,
+                FillColor = NTColor.SurfaceVariant,
+                TextColor = NTColor.OnSurfaceVariant,
                 Opacity = 0.9f
             }
         ];
@@ -347,7 +347,7 @@
                 Type = NTChartAnnotationType.XLine,
                 X = 24d,
                 Label = "X Line",
-                StrokeColor = TnTColor.Secondary,
+                StrokeColor = NTColor.Secondary,
                 DashLength = 4f
             },
             new NTChartAnnotation {
@@ -355,15 +355,15 @@
                 X = 40d,
                 X2 = 62d,
                 Label = "X Range",
-                StrokeColor = TnTColor.Info,
-                FillColor = TnTColor.Info,
+                StrokeColor = NTColor.Info,
+                FillColor = NTColor.Info,
                 Opacity = 0.3f
             },
             new NTChartAnnotation {
                 Type = NTChartAnnotationType.YLine,
                 Y = 70m,
                 Label = "Y Line",
-                StrokeColor = TnTColor.Warning,
+                StrokeColor = NTColor.Warning,
                 DashLength = 5f
             },
             new NTChartAnnotation {
@@ -371,8 +371,8 @@
                 Y = 42m,
                 Y2 = 52m,
                 Label = "Y Range",
-                StrokeColor = TnTColor.Tertiary,
-                FillColor = TnTColor.Tertiary,
+                StrokeColor = NTColor.Tertiary,
+                FillColor = NTColor.Tertiary,
                 Opacity = 0.28f
             },
             new NTChartAnnotation {
@@ -380,8 +380,8 @@
                 X = peak.X,
                 Y = peak.Y,
                 Label = "Point",
-                StrokeColor = TnTColor.Error,
-                FillColor = TnTColor.Error,
+                StrokeColor = NTColor.Error,
+                FillColor = NTColor.Error,
                 MarkerSize = 4.5f
             },
             new NTChartAnnotation {
@@ -389,16 +389,16 @@
                 X = 95d,
                 Y = 31m,
                 Label = "Text annotation",
-                StrokeColor = TnTColor.SurfaceVariant,
-                FillColor = TnTColor.SurfaceVariant,
-                TextColor = TnTColor.OnSurfaceVariant,
+                StrokeColor = NTColor.SurfaceVariant,
+                FillColor = NTColor.SurfaceVariant,
+                TextColor = NTColor.OnSurfaceVariant,
                 Opacity = 0.95f
             },
             new NTChartAnnotation {
                 Type = NTChartAnnotationType.Custom,
                 X = 112d,
                 Y = 80m,
-                StrokeColor = TnTColor.Success,
+                StrokeColor = NTColor.Success,
                 Opacity = 0.95f,
                 CustomRenderer = RenderDiamondCustomAnnotation
             }

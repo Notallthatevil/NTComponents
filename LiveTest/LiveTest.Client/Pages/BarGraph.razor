@@ -42,7 +42,7 @@
                                      Title="Revenue"
                                      XValue="@(p => p.Category)"
                                      YValueSelector="@(p => p.Value)"
-                                     Color="TnTColor.Primary"
+                                     Color="NTColor.Primary"
                                      CornerRadius="5"
                                      DataLabelFormat="{0:N0}" />
 
@@ -66,7 +66,7 @@
                                      Title="Counts"
                                      XValue="@(p => p.Category)"
                                      YValueSelector="@(p => p.Value)"
-                                     Color="TnTColor.Secondary"
+                                     Color="NTColor.Secondary"
                                      CornerRadius="4"
                                      DataLabelFormat="{0:N0}" />
 
@@ -91,7 +91,7 @@
                                      XValue="@(p => p.Category)"
                                      YValueSelector="@(p => p.Plan)"
                                      Orientation="@_multiOrientation"
-                                     Color="TnTColor.Primary"
+                                     Color="NTColor.Primary"
                                      CornerRadius="3"
                                      DataLabelFormat="{0:N0}" />
 
@@ -101,7 +101,7 @@
                                      XValue="@(p => p.Category)"
                                      YValueSelector="@(p => p.Actual)"
                                      Orientation="@_multiOrientation"
-                                     Color="TnTColor.Secondary"
+                                     Color="NTColor.Secondary"
                                      CornerRadius="3"
                                      DataLabelFormat="{0:N0}" />
 
@@ -111,7 +111,7 @@
                                      XValue="@(p => p.Category)"
                                      YValueSelector="@(p => p.Forecast)"
                                      Orientation="@_multiOrientation"
-                                     Color="TnTColor.Tertiary"
+                                     Color="NTColor.Tertiary"
                                      CornerRadius="3"
                                      DataLabelFormat="{0:N0}" />
 
@@ -136,7 +136,7 @@
                                      XValue="@(p => p.Category)"
                                      YValueSelector="@(p => p.Value)"
                                      Orientation="NTChartOrientation.Horizontal"
-                                     Color="TnTColor.Primary"
+                                     Color="NTColor.Primary"
                                      CornerRadius="4"
                                      DataLabelFormat="{0:N0}" />
 
@@ -160,7 +160,7 @@
                                      Title="Delta"
                                      XValue="@(p => p.Category)"
                                      YValueSelector="@(p => p.Value)"
-                                     Color="TnTColor.Tertiary"
+                                     Color="NTColor.Tertiary"
                                      CornerRadius="4"
                                      DataLabelFormat="{0:N0}" />
 
@@ -210,7 +210,7 @@
                                      Title="Units"
                                      XValue="@(p => p.Category)"
                                      YValueSelector="@(p => p.Units)"
-                                     Color="TnTColor.Primary"
+                                     Color="NTColor.Primary"
                                      CornerRadius="4"
                                      DataLabelFormat="{0:N0}" />
 
@@ -219,7 +219,7 @@
                                       Title="Target"
                                       XValue="@(p => p.Category)"
                                       YValueSelector="@(p => p.Target)"
-                                      Color="TnTColor.Secondary"
+                                      Color="NTColor.Secondary"
                                       Interpolation="LineInterpolation.Smoothed"
                                       PointStyle="PointStyle.Filled"
                                       PointSize="6" />
@@ -245,7 +245,7 @@
                                      Title="Revenue"
                                      XValue="@(p => p.Category)"
                                      YValueSelector="@(p => p.Revenue)"
-                                     Color="TnTColor.Tertiary"
+                                     Color="NTColor.Tertiary"
                                      CornerRadius="4"
                                      DataLabelFormat="{0:N0}" />
 
@@ -255,7 +255,7 @@
                                       XValue="@(p => p.Category)"
                                       YValueSelector="@(p => p.ConversionPct)"
                                       UseSecondaryYAxis="true"
-                                      Color="TnTColor.Secondary"
+                                      Color="NTColor.Secondary"
                                       Interpolation="LineInterpolation.Straight"
                                       PointStyle="PointStyle.Outlined"
                                       PointShape="PointShape.Circle"
@@ -405,13 +405,13 @@
         new NTBarSegment { Label = "8742", Value = row.Cc8742 }
     ];
 
-    private static TnTColor GetClassCodeColor(NTBarSegmentColorContext<ClaimSegmentBar> context) {
+    private static NTColor GetClassCodeColor(NTBarSegmentColorContext<ClaimSegmentBar> context) {
         return context.SegmentLabel switch {
-            "3632" => TnTColor.Primary,
-            "5606" => TnTColor.Secondary,
-            "8017" => TnTColor.Tertiary,
-            "8742" => TnTColor.Warning,
-            _ => TnTColor.PrimaryFixed
+            "3632" => NTColor.Primary,
+            "5606" => NTColor.Secondary,
+            "8017" => NTColor.Tertiary,
+            "8742" => NTColor.Warning,
+            _ => NTColor.PrimaryFixed
         };
     }
 }

@@ -46,7 +46,7 @@
                     <div class="card p-3 shadow-sm">
                         <h5 class="mb-2">Multiple Treemap Series + Independent Color Schemes</h5>
                         <p class="text-muted mb-2">Two datasets render together. Drill into either series to focus it. Each
-                            series uses its own <code>Func&lt;TreeMapColorContext&lt;TData&gt;, TnTColor&gt;</code>.</p>
+                            series uses its own <code>Func&lt;TreeMapColorContext&lt;TData&gt;, NTColor&gt;</code>.</p>
                             <div style="height: 500px;">
                                 <NTChart TData="ClaimPoint" TitleOptions="@new("Regional Claims")" EnableHardwareAcceleration="true"
                                          DebugView="true">
@@ -166,18 +166,18 @@
         _southClaims = claims.Where(c => c.Region == "South").ToList();
     }
 
-    private static TnTColor ClaimsColor(TreeMapColorContext<ClaimPoint> context)
+    private static NTColor ClaimsColor(TreeMapColorContext<ClaimPoint> context)
     {
         if (context.Depth == 0)
         {
             return context.Key switch
             {
-                "Atlas Logistics" => TnTColor.Primary,
-                "Beacon Farms" => TnTColor.Secondary,
-                "Crescent Steel" => TnTColor.Tertiary,
-                "Delta Transport" => TnTColor.Success,
-                "Evergreen Foods" => TnTColor.Warning,
-                _ => TnTColor.Error
+                "Atlas Logistics" => NTColor.Primary,
+                "Beacon Farms" => NTColor.Secondary,
+                "Crescent Steel" => NTColor.Tertiary,
+                "Delta Transport" => NTColor.Success,
+                "Evergreen Foods" => NTColor.Warning,
+                _ => NTColor.Error
             };
         }
 
@@ -185,39 +185,39 @@
         {
             return context.Key switch
             {
-                "3632" => TnTColor.PrimaryContainer,
-                "5606" => TnTColor.SecondaryContainer,
-                "8017" => TnTColor.TertiaryContainer,
-                "8742" => TnTColor.SurfaceTint,
-                _ => TnTColor.InversePrimary
+                "3632" => NTColor.PrimaryContainer,
+                "5606" => NTColor.SecondaryContainer,
+                "8017" => NTColor.TertiaryContainer,
+                "8742" => NTColor.SurfaceTint,
+                _ => NTColor.InversePrimary
             };
         }
 
         return context.Key switch
         {
-            "Medical" => TnTColor.ErrorContainer,
-            "Indemnity" => TnTColor.PrimaryFixed,
-            _ => TnTColor.SecondaryFixed
+            "Medical" => NTColor.ErrorContainer,
+            "Indemnity" => NTColor.PrimaryFixed,
+            _ => NTColor.SecondaryFixed
         };
     }
 
-    private static TnTColor NorthRegionColor(TreeMapColorContext<ClaimPoint> context)
+    private static NTColor NorthRegionColor(TreeMapColorContext<ClaimPoint> context)
     {
         if (context.Depth == 0)
         {
-            return TnTColor.Primary;
+            return NTColor.Primary;
         }
 
-        return context.Depth == 1 ? TnTColor.PrimaryContainer : TnTColor.PrimaryFixed;
+        return context.Depth == 1 ? NTColor.PrimaryContainer : NTColor.PrimaryFixed;
     }
 
-    private static TnTColor SouthRegionColor(TreeMapColorContext<ClaimPoint> context)
+    private static NTColor SouthRegionColor(TreeMapColorContext<ClaimPoint> context)
     {
         if (context.Depth == 0)
         {
-            return TnTColor.Tertiary;
+            return NTColor.Tertiary;
         }
 
-        return context.Depth == 1 ? TnTColor.TertiaryContainer : TnTColor.TertiaryFixed;
+        return context.Depth == 1 ? NTColor.TertiaryContainer : NTColor.TertiaryFixed;
     }
 }
