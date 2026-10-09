@@ -211,7 +211,9 @@ function applyPreview(): void {
     throw new Error(`Unsupported preview scheme: ${previewState.fileName}.`);
   }
 
-  const properties = generateThemeFile(previewState.request, definition).properties;
+  // Root compatibility aliases do not resolve again when legacy tokens change inside the preview.
+  const properties = Object.fromEntries(Object.entries(generateThemeFile(previewState.request, definition).properties)
+    .flatMap(([name, value]) => [[name, value], [name.replace("--tnt-color-", "--nt-color-"), value]]));
   const targetStyle = previewState.target.style;
   if (!originalPreviewProperties) {
     originalPreviewProperties = new Map(Object.keys(properties).map((name) => [name, targetStyle.getPropertyValue(name)]));
