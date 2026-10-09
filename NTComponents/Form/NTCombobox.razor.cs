@@ -184,6 +184,7 @@ public partial class NTCombobox<TValue> : IAsyncDisposable {
                 }
             }
             finally {
+                ((IDisposable)this).Dispose();
                 _jsModule = null;
                 _dotNetObjectRef?.Dispose();
                 _dotNetObjectRef = null;

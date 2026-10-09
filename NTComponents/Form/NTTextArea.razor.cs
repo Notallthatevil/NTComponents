@@ -183,9 +183,9 @@ public partial class NTTextArea : INTPageScriptComponent<NTTextArea> {
                 await DisposeJsModuleAsync();
                 DotNetObjectRef?.Dispose();
                 DotNetObjectRef = null;
-                base.Dispose(disposing: true);
             }
             finally {
+                ((IDisposable)this).Dispose();
                 GC.SuppressFinalize(this);
             }
         }

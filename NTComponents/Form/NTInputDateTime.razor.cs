@@ -164,7 +164,7 @@ public partial class NTInputDateTime<DateTimeType> {
     }
 
     /// <inheritdoc />
-    protected override bool ShouldRender() => !_preserveNativeEditingBuffer;
+    protected override bool ShouldRender() => !_preserveNativeEditingBuffer && base.ShouldRender();
 
     /// <inheritdoc />
     protected override bool TryParseValueFromString(string? value, [MaybeNullWhen(false)] out DateTimeType result, [NotNullWhen(false)] out string? validationErrorMessage) {

@@ -3,7 +3,7 @@
 @using Microsoft.AspNetCore.Components.Rendering
 @using NTComponents.Interfaces
 @typeparam TInputType
-@inherits InputBase<TInputType>
+@inherits NTValidationInputBase<TInputType>
 @implements ITnTComponentBase
 <div class="tnt-input-container" style="@ElementStyle">
 	<label class="@ElementClass" title="@ElementTitle" lang="@ElementLang" id="@ElementId" >

@@ -208,6 +208,7 @@ public partial class NTTypeahead<TItem> : IAsyncDisposable {
                 await CancelSearchAsync(dispose: true);
             }
             finally {
+                ((IDisposable)this).Dispose();
                 var module = _jsModule;
                 _jsModule = null;
                 if (module is not null) {

@@ -180,6 +180,7 @@ public partial class NTInputSelect<[DynamicallyAccessedMembers(DynamicallyAccess
                 await DisposeAsyncInternal().ConfigureAwait(false);
             }
             finally {
+                ((IDisposable)this).Dispose();
                 GC.SuppressFinalize(this);
             }
         }

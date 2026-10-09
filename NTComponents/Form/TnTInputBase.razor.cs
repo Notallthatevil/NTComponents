@@ -146,7 +146,7 @@ public enum InputType {
 ///     Base class for TnT input components.
 /// </summary>
 /// <typeparam name="TInputType">The type of the input value.</typeparam>
-public abstract partial class TnTInputBase<TInputType> : InputBase<TInputType>, ITnTComponentBase {
+public abstract partial class TnTInputBase<TInputType> : NTValidationInputBase<TInputType>, ITnTComponentBase {
 
     /// <summary>
     ///     Gets or sets the appearance of the form.

@@ -17,7 +17,7 @@ namespace NTComponents;
     RenderCompatibility = NTComponentRenderCompatibility.SsrCompatible,
     CompatibilitySummary = "Renders native form markup that works with static SSR and form posts.",
     CompatibilityDetails = "The native control can participate in static SSR and normal form posts. Blazor binding callbacks and live validation updates require interactivity or a subsequent render.")]
-public abstract class NTBooleanInputBase : NTFormControlBase<bool>, IDisposable {
+public abstract class NTBooleanInputBase : NTFormControlBase<bool> {
     /// <summary>
     ///     Gets the native input attributes owned by all boolean inputs.
     /// </summary>
@@ -39,7 +39,7 @@ public abstract class NTBooleanInputBase : NTFormControlBase<bool>, IDisposable 
     ];
 
     private bool _hasValidatedRequired;
-    private bool _requiredValidationMessageVisible;
+    private string? _requiredValidationMessage;
     private EditContext? _validationEditContext;
     private ValidationMessageStore? _requiredValidationMessages;
     /// <summary>
@@ -94,7 +94,19 @@ public abstract class NTBooleanInputBase : NTFormControlBase<bool>, IDisposable 
     protected override bool HasRequiredSupportingText => Required;
 
     /// <inheritdoc />
-    public void Dispose() => DetachValidationEditContext();
+    public void Dispose() => ((IDisposable)this).Dispose();
+
+    /// <inheritdoc />
+    protected override void Dispose(bool disposing) {
+        try {
+            if (disposing) {
+                DetachValidationEditContext();
+            }
+        }
+        finally {
+            base.Dispose(disposing);
+        }
+    }
 
     /// <inheritdoc />
     protected override void OnParametersSet() {
@@ -102,12 +114,12 @@ public abstract class NTBooleanInputBase : NTFormControlBase<bool>, IDisposable 
         AttachValidationEditContext();
         InputAttributes = BuildInputAttributes();
 
-        if (!Required && _requiredValidationMessageVisible) {
+        if (!Required && _requiredValidationMessage is not null) {
             ClearRequiredValidation();
             _hasValidatedRequired = false;
         }
         else if (_hasValidatedRequired) {
-            ValidateRequired(notifyValidationStateChanged: false);
+            ValidateRequired();
         }
     }
 
@@ -149,9 +161,9 @@ public abstract class NTBooleanInputBase : NTFormControlBase<bool>, IDisposable 
             return;
         }
 
-        var shouldNotify = _requiredValidationMessageVisible;
+        var shouldNotify = _requiredValidationMessage is not null;
         _requiredValidationMessages?.Clear(FieldIdentifier);
-        _requiredValidationMessageVisible = false;
+        _requiredValidationMessage = null;
         _hasValidatedRequired = false;
         _validationEditContext.OnValidationRequested -= OnValidationRequested;
         _validationEditContext.OnFieldChanged -= OnFieldChanged;
@@ -164,12 +176,16 @@ public abstract class NTBooleanInputBase : NTFormControlBase<bool>, IDisposable 
     }
 
     private void OnValidationRequested(object? sender, ValidationRequestedEventArgs args) {
+        if (!Required) {
+            return;
+        }
+
         _hasValidatedRequired = true;
         ValidateRequired();
     }
 
     private void OnFieldChanged(object? sender, FieldChangedEventArgs args) {
-        if (!args.FieldIdentifier.Equals(FieldIdentifier)) {
+        if (!Required || !args.FieldIdentifier.Equals(FieldIdentifier)) {
             return;
         }
 
@@ -178,23 +194,29 @@ public abstract class NTBooleanInputBase : NTFormControlBase<bool>, IDisposable 
     }
 
     private void ClearRequiredValidation() {
+        if (_requiredValidationMessage is null) {
+            return;
+        }
+
         _requiredValidationMessages?.Clear(FieldIdentifier);
-        _requiredValidationMessageVisible = false;
+        _requiredValidationMessage = null;
         EditContext?.NotifyValidationStateChanged();
     }
 
-    private void ValidateRequired(bool notifyValidationStateChanged = true) {
+    private void ValidateRequired() {
+        var message = Required && !CurrentValue ? RequiredErrorText : null;
+        if (string.Equals(_requiredValidationMessage, message, StringComparison.Ordinal)) {
+            return;
+        }
+
         _requiredValidationMessages?.Clear(FieldIdentifier);
-        _requiredValidationMessageVisible = false;
+        _requiredValidationMessage = message;
 
-        if (Required && !CurrentValue) {
-            _requiredValidationMessages?.Add(FieldIdentifier, RequiredErrorText);
-            _requiredValidationMessageVisible = true;
+        if (message is not null) {
+            _requiredValidationMessages?.Add(FieldIdentifier, message);
         }
 
-        if (notifyValidationStateChanged) {
-            EditContext?.NotifyValidationStateChanged();
-        }
+        EditContext?.NotifyValidationStateChanged();
     }
 
     private IReadOnlyDictionary<string, object?>? BuildInputAttributes() => BuildFilteredAttributes(ExplicitInputAttributeNames);

@@ -22,7 +22,7 @@ namespace NTComponents;
     RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
     CompatibilitySummary = "Renders useful static HTML and adds Blazor behavior when interactive.",
     CompatibilityDetails = "Static SSR preserves the rendered markup and native browser behavior. EventCallback handlers, bound state updates, and live validation require an interactive render mode.")]
-public abstract class NTFormControlBaseCore<TValue> : InputBase<TValue> {
+public abstract class NTFormControlBaseCore<TValue> : NTValidationInputBase<TValue> {
     private string _generatedInputId = "nt-form-control-field";
     private string? _resolvedElementName;
 

@@ -23,7 +23,7 @@ namespace NTComponents;
     RenderCompatibility = NTComponentRenderCompatibility.SsrCompatible,
     CompatibilitySummary = "Renders native form markup that works with static SSR and form posts.",
     CompatibilityDetails = "The native control can participate in static SSR and normal form posts. Blazor binding callbacks and live validation updates require interactivity or a subsequent render.")]
-public partial class NTInputRadioGroup<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TValue> : IDisposable {
+public partial class NTInputRadioGroup<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TValue> {
     private static readonly HashSet<string> GroupExplicitAttributeNames = new(StringComparer.OrdinalIgnoreCase) {
         "id",
         "class",
@@ -212,8 +212,15 @@ public partial class NTInputRadioGroup<[DynamicallyAccessedMembers(DynamicallyAc
     protected override bool HasRequiredSupportingText => IsRequired;
 
     /// <inheritdoc />
-    public void Dispose() {
-        _registeredRadios.Clear();
+    public void Dispose() => ((IDisposable)this).Dispose();
+
+    /// <inheritdoc />
+    protected override void Dispose(bool disposing) {
+        if (disposing) {
+            _registeredRadios.Clear();
+        }
+
+        base.Dispose(disposing);
     }
 
     /// <inheritdoc />
