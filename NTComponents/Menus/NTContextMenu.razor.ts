@@ -4,6 +4,8 @@ interface PointMenuElement extends HTMLElement {
     openAt?: (clientX: number, clientY: number, sourceElement?: Element | null) => void;
 }
 
+let activeMenu: PointMenuElement | null = null;
+
 declare global {
     interface HTMLElementTagNameMap {
         'nt-context-menu': NTContextMenu;
@@ -21,6 +23,25 @@ export class NTContextMenu extends HTMLElement {
     private menu: PointMenuElement | null = null;
     private suppressNativeUntil = 0;
     private target: HTMLElement | null = null;
+
+    private readonly onDocumentClick = (event: MouseEvent): void => {
+        if (event.target instanceof Node && !this.menu?.contains(event.target)) {
+            this.menu?.hidePopover();
+        }
+    };
+
+    private readonly onDocumentKeyDown = (event: KeyboardEvent): void => {
+        if (event.key === 'Escape' && this.menu?.matches(':popover-open')) {
+            event.preventDefault();
+            this.menu.hidePopover();
+        }
+    };
+
+    private readonly onMenuToggle = (): void => {
+        if (!this.menu?.matches(':popover-open')) {
+            this.removeDismissListeners();
+        }
+    };
 
     private readonly onClick = (event: MouseEvent): void => {
         if (this.shouldSuppressNativeEvent()) {
@@ -69,6 +90,8 @@ export class NTContextMenu extends HTMLElement {
         this.cancelLongPress();
         this.removeTargetListeners();
         this.removeTransientListeners();
+        this.removeDismissListeners();
+        this.menu?.removeEventListener('toggle', this.onMenuToggle);
         this.menu = null;
     }
 
@@ -82,7 +105,12 @@ export class NTContextMenu extends HTMLElement {
             this.addTargetListeners();
         }
 
-        this.menu = menu;
+        if (menu !== this.menu) {
+            this.removeDismissListeners();
+            this.menu?.removeEventListener('toggle', this.onMenuToggle);
+            this.menu = menu;
+            this.menu?.addEventListener('toggle', this.onMenuToggle);
+        }
     }
 
     private addTargetListeners(): void {
@@ -190,7 +218,22 @@ export class NTContextMenu extends HTMLElement {
 
     private openAt(clientX: number, clientY: number, sourceElement: Maybe<Element>): void {
         const menu = this.menu ?? this.getMenu();
+        if (activeMenu !== menu) {
+            activeMenu?.hidePopover();
+        }
+        activeMenu = menu;
         menu?.openAt?.(clientX, clientY, sourceElement ?? this.target);
+        // A contextmenu can fire before pointerup, which light-dismisses auto popovers.
+        document.addEventListener('click', this.onDocumentClick);
+        document.addEventListener('keydown', this.onDocumentKeyDown);
+    }
+
+    private removeDismissListeners(): void {
+        if (activeMenu === this.menu) {
+            activeMenu = null;
+        }
+        document.removeEventListener('click', this.onDocumentClick);
+        document.removeEventListener('keydown', this.onDocumentKeyDown);
     }
 
     private removeTargetListeners(): void {

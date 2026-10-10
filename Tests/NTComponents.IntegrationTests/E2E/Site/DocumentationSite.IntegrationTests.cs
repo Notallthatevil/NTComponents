@@ -876,9 +876,23 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
         var demo = _page.Locator(".docs-curated-demo");
         var trigger = demo.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Right-click or long-press for actions", Exact = true });
         await trigger.ClickAsync(new LocatorClickOptions { Button = MouseButton.Right });
+        var menu = demo.Locator("nt-menu:popover-open");
+        await menu.WaitForAsync();
+        // The surface's clip-path animates independently of the menu item's bounds.
+        await menu.EvaluateAsync("menu => Promise.allSettled(menu.getAnimations({ subtree: true }).map(animation => animation.finished))");
         await demo.GetByRole(AriaRole.Menuitem, new LocatorGetByRoleOptions { Name = "Archive example", Exact = true }).ClickAsync();
         await Assertions.Expect(demo.Locator("output")).ToHaveTextAsync("Example archived");
+        await Assertions.Expect(demo.Locator(":popover-open")).ToHaveCountAsync(0);
+        await trigger.ClickAsync(new LocatorClickOptions { Button = MouseButton.Right });
+        await menu.WaitForAsync();
+        await _page.Keyboard.PressAsync("Escape");
+        await Assertions.Expect(demo.Locator(":popover-open")).ToHaveCountAsync(0);
+        await trigger.ClickAsync(new LocatorClickOptions { Button = MouseButton.Right });
+        await menu.WaitForAsync();
+        await demo.Locator("output").ClickAsync();
+        await Assertions.Expect(demo.Locator(":popover-open")).ToHaveCountAsync(0);
         await _page.Locator("#docs-sandbox-ntcontextmenu-disabled").CheckAsync();
+        await Assertions.Expect(demo.Locator("nt-context-menu")).ToHaveAttributeAsync("data-disabled", "true");
         await trigger.ClickAsync(new LocatorClickOptions { Button = MouseButton.Right });
         await Assertions.Expect(demo.Locator(":popover-open")).ToHaveCountAsync(0);
         _browserDiagnostics.Should().BeEmpty();

@@ -413,12 +413,11 @@ public partial class NTTypeahead<TItem> : IAsyncDisposable {
         _resetResultsAfterParametersSet = true;
     }
 
-    private async Task OnInputAsync(ChangeEventArgs args) {
+    private async Task OnInputAsync(string? searchText) {
         if (FieldDisabled || FieldReadOnly) {
             return;
         }
 
-        var searchText = args.Value?.ToString();
         if (string.Equals(searchText, _searchText, StringComparison.Ordinal) && (_searchCancellationTokenSource is not null || _items.Count > 0)) {
             return;
         }

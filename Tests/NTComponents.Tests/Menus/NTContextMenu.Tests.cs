@@ -72,6 +72,7 @@ public class NTContextMenu_Tests : BunitContext {
 
         contextMenu.GetAttribute("data-menu-id").Should().Be(menu.GetAttribute("id"));
         menu.GetAttribute("aria-label").Should().Be("Row actions");
+        menu.GetAttribute("popover").Should().Be("manual");
         menu.GetAttribute("data-close-on-item-click").Should().Be("false");
         menu.GetAttribute("class").Should().Contain("nt-menu-compact");
         menu.GetAttribute("class").Should().Contain("nt-elevation-high");

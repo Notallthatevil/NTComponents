@@ -85,6 +85,8 @@ public class NTDataGridVirtualized_IntegrationTests : IAsyncLifetime {
         await _page.Locator("input[type='number']").FillAsync("0");
         await _page.WaitForFunctionAsync(HasCustomerRowScript, 1, new PageWaitForFunctionOptions { Timeout = 10000 });
 
+        // Rows can render before the virtualizer applies the spacer heights.
+        await _page.WaitForFunctionAsync("() => { const element = document.querySelector('.nt-data-grid-scroll'); return element && element.scrollHeight - element.clientHeight >= 5600; }");
         await scrollContainer.EvaluateAsync("element => { element.scrollTop = 5600; element.dispatchEvent(new Event('scroll')); }");
         await _page.WaitForFunctionAsync("() => history.state?.__ntVirtualizeScrollPositions?.['ntdg-scroll'] > 0");
         var expectedScrollTop = await scrollContainer.EvaluateAsync<int>("element => element.scrollTop");

@@ -24,13 +24,13 @@ function pointerEvent(type, values) {
    return event;
 }
 
-function createContextMenu({ disabled = false, longPressDelay = 500 } = {}) {
+function createContextMenu({ disabled = false, longPressDelay = 500, menuId = 'menu' } = {}) {
    onLoad(null);
 
    const contextMenu = document.createElement('nt-context-menu');
    contextMenu.dataset.disabled = disabled ? 'true' : 'false';
    contextMenu.dataset.longPressDelay = String(longPressDelay);
-   contextMenu.dataset.menuId = 'menu';
+   contextMenu.dataset.menuId = menuId;
 
    const target = document.createElement('span');
    target.className = 'nt-context-menu-target';
@@ -45,8 +45,10 @@ function createContextMenu({ disabled = false, longPressDelay = 500 } = {}) {
    }));
 
    const menu = document.createElement('nt-menu');
-   menu.id = 'menu';
+   menu.id = menuId;
    menu.openAt = jest.fn();
+   menu.hidePopover = jest.fn();
+   menu.matches = jest.fn(() => false);
 
    contextMenu.append(target, menu);
    document.body.append(contextMenu);
@@ -129,6 +131,61 @@ describe('NTContextMenu custom element', () => {
       }));
 
       expect(menu.openAt).toHaveBeenCalledWith(40, 130, target);
+   });
+
+   test('outside click dismisses the menu while clicks inside its content do not', () => {
+      const { menu, target } = createContextMenu();
+      target.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+
+      menu.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      expect(menu.hidePopover).not.toHaveBeenCalled();
+
+      document.body.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      expect(menu.hidePopover).toHaveBeenCalledTimes(1);
+   });
+
+   test('opening another context menu dismisses the previous one', () => {
+      const first = createContextMenu({ menuId: 'first-menu' });
+      const second = createContextMenu({ menuId: 'second-menu' });
+      first.target.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+      expect(first.menu.hidePopover).not.toHaveBeenCalled();
+
+      second.target.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+      expect(first.menu.hidePopover).toHaveBeenCalledTimes(1);
+      expect(second.menu.hidePopover).not.toHaveBeenCalled();
+   });
+
+   test('Escape dismisses an open menu even after focus leaves its content', () => {
+      const { menu, target } = createContextMenu();
+      target.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+      menu.matches.mockReturnValue(true);
+
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+      expect(menu.hidePopover).not.toHaveBeenCalled();
+      const escape = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+      document.dispatchEvent(escape);
+      expect(menu.hidePopover).toHaveBeenCalledTimes(1);
+      expect(escape.defaultPrevented).toBe(true);
+   });
+
+   test('closing or disconnecting the menu removes its document dismissal listeners', () => {
+      const { contextMenu, menu, target } = createContextMenu();
+      target.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+      document.body.click();
+      expect(menu.hidePopover).toHaveBeenCalledTimes(1);
+      menu.hidePopover.mockClear();
+
+      target.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+      menu.dispatchEvent(new Event('toggle'));
+      document.body.click();
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      expect(menu.hidePopover).not.toHaveBeenCalled();
+
+      target.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+      contextMenu.remove();
+      document.body.click();
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      expect(menu.hidePopover).not.toHaveBeenCalled();
    });
 
    test('shift f10 opens at the focused target lower-left corner', () => {
