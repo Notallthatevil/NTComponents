@@ -137,7 +137,9 @@ describe('NTContextMenu custom element', () => {
       const { menu, target } = createContextMenu();
       target.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
 
-      menu.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      const contentButton = document.createElement('button');
+      menu.append(contentButton);
+      contentButton.click();
       expect(menu.hidePopover).not.toHaveBeenCalled();
 
       document.body.dispatchEvent(new MouseEvent('click', { bubbles: true }));
