@@ -665,6 +665,7 @@
             "NTSplitButton" => BuildMenuItems(),
             "NTTabView" => BuildTabs(),
             "NTLayout" => BuildLayoutContent(),
+            "NTLazyLoader" => builder => builder.AddMarkupContent(0, "<p data-docs-lazy-content>Rendered once this example was visible.</p>"),
             "NTWizard" => BuildWizardSteps(),
             _ => BuildTextChildContent(parameter)
         };

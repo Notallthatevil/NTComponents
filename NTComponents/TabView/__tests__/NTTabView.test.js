@@ -264,6 +264,35 @@ describe('NTTabView page-script module', () => {
     expect(specs.scrollIntoView).toHaveBeenCalledWith({ behavior: 'auto', block: 'nearest', inline: 'nearest' });
   });
 
+  // Regression: a tab view below the fold must not scroll the page to its tab strip on first load.
+  test.each(['', '?details=specs'])('initial load does not scroll the selected tab into view (query "%s")', query => {
+    const tabView = createTabView();
+    tabView.dataset.ntTabUpdateQuery = 'false';
+    window.history.replaceState(null, '', `${originalLocation.split('?')[0]}${query}`);
+    const tabs = Array.from(tabView.querySelectorAll('[role="tab"]'));
+    tabs.forEach(tab => { tab.scrollIntoView = jest.fn(); });
+
+    onLoad(document.querySelector('tnt-page-script'));
+
+    tabs.forEach(tab => expect(tab.scrollIntoView).not.toHaveBeenCalled());
+    expect(tabView.querySelector(`#tab-${query ? 'specs' : 'overview'}`).getAttribute('aria-selected')).toBe('true');
+    expect(window.scrollY).toBe(0);
+  });
+
+  test.each([
+    ['click', (tabView, specs) => specs.click()],
+    ['ArrowRight', tabView => tabView.querySelector('#tab-overview').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }))]
+  ])('%s scrolls the target tab into view within the tab strip', (_, act) => {
+    const tabView = createTabView();
+    onLoad(tabView);
+    const specs = tabView.querySelector('#tab-specs');
+    specs.scrollIntoView = jest.fn();
+
+    act(tabView, specs);
+
+    expect(specs.scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+  });
+
   test('updates preserve current selection instead of reapplying query value', () => {
     const tabView = createTabView();
     window.history.replaceState(null, '', `${originalLocation.split('?')[0]}?details=specs`);

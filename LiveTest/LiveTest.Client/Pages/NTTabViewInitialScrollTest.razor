@@ -1,0 +1,21 @@
+@page "/nt-tab-view-initial-scroll-test"
+@rendermode InteractiveServer
+@using NTComponents
+
+<h1>NTTabView initial scroll test</h1>
+<div style="height: 200vh;">Content above the tab view.</div>
+
+<div style="width: 240px;">
+    <NTTabView data-testid="below-fold-tab-view" Name="section" SelectedValue="section-1" UpdateQueryString="false">
+        @for (var i = 1; i <= 8; i++) {
+            var section = i;
+            <NTTab Label="@($"Section {section}")" Value="@($"section-{section}")">
+                Section @section content.
+            </NTTab>
+        }
+    </NTTabView>
+</div>
+
+@if (RendererInfo.IsInteractive) {
+    <output data-testid="interactive-renderer">@RendererInfo.Name</output>
+}

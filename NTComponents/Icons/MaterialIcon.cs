@@ -27,6 +27,7 @@ public sealed partial class MaterialIcon : TnTIcon {
     public override string? ElementStyle => CssStyleBuilder.Create()
         .AddFromAdditionalAttributes(AdditionalAttributes)
         .AddStyle("font-variation-settings", "'FILL' 1", Appearance == IconAppearance.Filled)
+        .AddStyle("color", Color.ToCssTnTColorVariable(), Color is not TnTColor.OnSurface and not TnTColor.None)
         .Build();
 
     /// <summary>

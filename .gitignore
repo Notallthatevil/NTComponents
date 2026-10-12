@@ -427,6 +427,7 @@ coverlet.runsettings
 /NTComponents/Form/TnTInputFile.razor.js
 /NTComponents/Grid/TnTDataGrid.razor.js
 /NTComponents/LazyLoader/TnTLazyLoad.razor.js
+/NTComponents/LazyLoader/NTLazyLoader.razor.js
 /NTComponents/TabView/TnTTabView.razor.js
 /NTComponents/Theming/TnTThemeToggle.razor.js
 /NTComponents/Tooltip/NTTooltip.razor.js

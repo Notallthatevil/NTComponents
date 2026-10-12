@@ -95,7 +95,7 @@ public abstract class TnTIcon : TnTComponentBase {
     /// <summary>
     ///     Gets or sets the color of the icon.
     /// </summary>
-    /// <remarks>Uses the TnTColor system to define the icon's color. Defaults to OnSurface.</remarks>
+    /// <remarks>Uses the TnTColor system to define the icon's color. Defaults to OnSurface; OnSurface and None inherit the surrounding text color.</remarks>
     [Parameter]
     public TnTColor Color { get; set; } = TnTColor.OnSurface;
 
