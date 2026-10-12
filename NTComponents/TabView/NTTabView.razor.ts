@@ -182,7 +182,7 @@ function selectInitialTab(tabView: NTTabViewElement, useQueryString: boolean): v
     const selectedTab = queryTab ?? getSelectedTab(tabView);
 
     if (selectedTab) {
-        selectTab(tabView, selectedTab, false, useQueryString);
+        selectTab(tabView, selectedTab, false, false);
     } else {
         scheduleIndicatorUpdate(tabView);
     }

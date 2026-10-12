@@ -17,8 +17,8 @@ namespace NTComponents.IntegrationTests.Site;
 ///     Browser-level coverage for every generated NTComponents.Site component page and sandbox.
 /// </summary>
 public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
-    private const int ExpectedComponentTypeCount = 90;
-    private const int ExpectedRootRouteCount = 64;
+    private const int ExpectedComponentTypeCount = 91;
+    private const int ExpectedRootRouteCount = 65;
     private static readonly string[] ExpectedDependentComponentNames = [
         "NTAccordionItem",
         "NTAutocompleteOption",
@@ -1007,6 +1007,8 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
         var expectedSelector = route switch {
             "/components/ntheaddependencies" => "[data-docs-demo-component='NTPageScript']",
             "/components/ntbrowsertimezone" => "input[data-nt-browser-time-zone]",
+            // The placeholder is replaced by the content once the browser reports it visible.
+            "/components/ntlazyloader" => "[data-docs-lazy-content]",
             "/components/ntform" => "form",
             "/components/ntinputcheckbox" or "/components/ntinputswitch" => "input[type=checkbox]",
             "/components/ntinputradiogroup" => "input[type=radio]",

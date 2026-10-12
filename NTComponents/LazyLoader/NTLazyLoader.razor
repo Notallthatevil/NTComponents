@@ -1,0 +1,16 @@
+@namespace NTComponents
+@using NTComponents.Core
+@inherits NTPageScriptComponent<NTLazyLoader>
+
+@if (_shown) {
+    @ChildContent
+}
+else if (IsStatic) {
+    @* Static SSR never becomes interactive, so the content ships inert inside a template and the page script shows it once visible. *@
+    <div class="nt-lazy-loader" data-nt-lazy-loader aria-hidden="true"><template>@ChildContent</template></div>
+    <NTPageScript Src="@JsModulePath" />
+}
+else {
+    @* The browser watches this placeholder and asks for the content once it is visible. *@
+    <div class="nt-lazy-loader" @ref="Element" aria-hidden="true"></div>
+}

@@ -216,12 +216,31 @@ public class MaterialIcon_Tests : BunitContext {
     }
 
     [Fact]
-    public void Render_WithColor_DoesNotAddColorClass() {
+    public void Render_WithColor_AppliesForegroundColorStyle() {
         // Arrange & Act
-        var cut = Render<MaterialIcon>(p => p.Add(c => c.Color, TnTColor.Primary).Add(c => c.Icon, "heart"));
+        var cut = Render<MaterialIcon>(p => p.Add(c => c.Color, TnTColor.Primary).Add(c => c.Appearance, IconAppearance.Filled).Add(c => c.Icon, "heart"));
 
-        // Assert MaterialIcon doesn't add color-specific classes, only through base class styling
-        cut.Find("span").GetAttribute("class")!.Should().NotContain("primary");
+        // Assert
+        var style = cut.Find("span").GetAttribute("style")!;
+        style.Should().Contain("color:var(--tnt-color-primary)");
+        style.Should().Contain("font-variation-settings:'FILL' 1");
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData(TnTColor.OnSurface)]
+    [InlineData(TnTColor.None)]
+    public void Render_WithDefaultOrNoneColor_InheritsTextColor(TnTColor? color) {
+        // Arrange & Act
+        var cut = Render<MaterialIcon>(p => {
+            p.Add(c => c.Icon, "heart");
+            if (color is not null) {
+                p.Add(c => c.Color, color.Value);
+            }
+        });
+
+        // Assert
+        cut.Find("span").GetAttribute("style").Should().BeNull();
     }
 
     [Fact]
