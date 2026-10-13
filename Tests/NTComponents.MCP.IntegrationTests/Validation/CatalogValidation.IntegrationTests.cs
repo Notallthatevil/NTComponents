@@ -314,6 +314,32 @@ public class CatalogValidation_Tests {
         page.GetProperty("nextOffset").GetInt32().Should().Be(10);
     }
 
+    /// <summary>Behavior source: MCP clients validate structuredContent against each tool's advertised outputSchema, so compact responses that omit optional fields must still satisfy it.</summary>
+    [Fact]
+    public async Task McpToolResults_SatisfyAdvertisedOutputSchemas() {
+        await using var factory = new McpWebAppFactory();
+        await using var client = await CreateMcpClientAsync(factory);
+        var schemas = (await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken)).ToDictionary(tool => tool.Name, tool => tool.ProtocolTool.OutputSchema!.Value);
+        var calls = new[] {
+            (Tool: "get_nt_catalog_overview", Arguments: new Dictionary<string, object?>()),
+            (Tool: "list_nt_components", Arguments: new Dictionary<string, object?>()),
+            (Tool: "list_nt_reference_types", Arguments: new Dictionary<string, object?>()),
+            (Tool: "get_nt_component", Arguments: new Dictionary<string, object?> { ["name"] = "NTButton" }),
+            (Tool: "get_nt_component", Arguments: new Dictionary<string, object?> { ["name"] = "NTMissingComponent" }),
+            (Tool: "get_nt_component_members", Arguments: new Dictionary<string, object?> { ["name"] = "NTButton", ["limit"] = 50 }),
+            (Tool: "get_nt_reference_type", Arguments: new Dictionary<string, object?> { ["name"] = "NTButtonVariant", ["limit"] = 50 }),
+            (Tool: "search_ntcomponents", Arguments: new Dictionary<string, object?> { ["query"] = "dialog" }),
+            (Tool: "search_ntcomponents", Arguments: new Dictionary<string, object?> { ["query"] = "accoridon" }),
+        };
+
+        foreach (var (tool, arguments) in calls) {
+            var result = await client.CallToolAsync(tool, arguments, cancellationToken: TestContext.Current.CancellationToken);
+
+            result.IsError.Should().NotBeTrue();
+            AssertRequiredPropertiesPresent(schemas[tool], schemas[tool], result.StructuredContent!.Value, tool);
+        }
+    }
+
     /// <summary>Behavior source: MCP resources make the catalog and individual component/reference documentation directly addressable.</summary>
     [Fact]
     public async Task McpResources_AdvertiseAndReadCatalogDocumentation() {
@@ -371,6 +397,34 @@ public class CatalogValidation_Tests {
     private static void AssertOpenApiAllowedKinds(JsonElement operation) {
         var kind = operation.GetProperty("parameters").EnumerateArray().Single(parameter => parameter.GetProperty("name").GetString() == "kind");
         kind.GetProperty("schema").GetProperty("enum").EnumerateArray().Select(value => value.GetString()).Should().Equal("Enum", "Helper");
+    }
+
+    private static void AssertRequiredPropertiesPresent(JsonElement root, JsonElement schema, JsonElement instance, string path) {
+        if (schema.TryGetProperty("$ref", out var reference)) {
+            schema = reference.GetString()!.Split('/').Skip(1).Aggregate(root, (node, segment) => node.GetProperty(segment.Replace("~1", "/").Replace("~0", "~")));
+        }
+
+        if (instance.ValueKind == JsonValueKind.Array && schema.TryGetProperty("items", out var items)) {
+            foreach (var item in instance.EnumerateArray()) {
+                AssertRequiredPropertiesPresent(root, items, item, $"{path}[]");
+            }
+        }
+
+        if (instance.ValueKind != JsonValueKind.Object) {
+            return;
+        }
+
+        if (schema.TryGetProperty("required", out var required)) {
+            foreach (var name in required.EnumerateArray().Select(value => value.GetString()!)) {
+                instance.TryGetProperty(name, out _).Should().BeTrue($"{path}.{name} is listed as required by the output schema");
+            }
+        }
+
+        if (schema.TryGetProperty("properties", out var properties)) {
+            foreach (var property in instance.EnumerateObject().Where(property => properties.TryGetProperty(property.Name, out _))) {
+                AssertRequiredPropertiesPresent(root, properties.GetProperty(property.Name), property.Value, $"{path}.{property.Name}");
+            }
+        }
     }
 
     private static string GetErrorText(CallToolResult result) => string.Join("\n", result.Content.OfType<TextContentBlock>().Select(content => content.Text));

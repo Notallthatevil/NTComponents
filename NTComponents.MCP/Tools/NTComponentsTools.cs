@@ -115,21 +115,21 @@ public sealed class NTComponentsTools(NTComponentsCatalog _catalog) {
         component.Name,
         component.Summary,
         component.RenderCompatibility,
+        component.RazorUsage,
+        component.Parameters.Count,
+        component.Methods.Count,
+        component.DocumentationUrl,
+        $"ntcomponents://components/{component.Name}",
         TrueOrNull(component.IsObsolete),
         NullIfEmpty(component.ObsoleteMessage),
         NullIfEmpty(component.Parameters.Where(parameter => parameter.IsRequired).Select(parameter => new RequiredParameterSummary(parameter.Name, parameter.Type, parameter.Summary)).ToArray()),
         NullIfEmpty(component.UsageGuidelines),
-        component.RazorUsage,
         NullIfEmpty(component.RelatedTypes.Select(reference => reference.Name).ToArray()),
-        NullIfEmpty(component.RelatedComponents.Select(relatedComponent => relatedComponent.Name).ToArray()),
-        component.Parameters.Count,
-        component.Methods.Count,
-        component.DocumentationUrl,
-        $"ntcomponents://components/{component.Name}");
+        NullIfEmpty(component.RelatedComponents.Select(relatedComponent => relatedComponent.Name).ToArray()));
 
-    private static McpComponentSummary ToMcpSummary(ComponentSummary component) => new(component.Name, component.Folder, component.Summary, component.RenderCompatibility, TrueOrNull(component.IsObsolete), NullIfEmpty(component.RequiredParameters), component.DocumentationUrl);
+    private static McpComponentSummary ToMcpSummary(ComponentSummary component) => new(component.Name, component.Folder, component.Summary, component.RenderCompatibility, component.DocumentationUrl, TrueOrNull(component.IsObsolete), NullIfEmpty(component.RequiredParameters));
 
-    private static McpReferenceSummary ToMcpSummary(ReferenceSummary reference) => new(reference.Name, reference.Kind, reference.Summary, TrueOrNull(reference.IsObsolete), reference.Scope, reference.DocumentationUrl);
+    private static McpReferenceSummary ToMcpSummary(ReferenceSummary reference) => new(reference.Name, reference.Kind, reference.Summary, reference.Scope, reference.DocumentationUrl, TrueOrNull(reference.IsObsolete));
 
     private static McpDocumentationSearchResult ToMcpSummary(DocumentationSearchResult result) => new(result.Name, result.Category, result.Summary, result.DocumentationUrl);
 

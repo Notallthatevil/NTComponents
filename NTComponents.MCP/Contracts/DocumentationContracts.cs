@@ -21,7 +21,7 @@ public sealed record CatalogOverview(
 
 public sealed record CatalogPage<T>(IReadOnlyList<T> Items, int TotalCount, int Offset, int Limit, bool HasMore, int? NextOffset);
 
-public sealed record McpPage<T>(IReadOnlyList<T> Items, int TotalCount, [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] int? NextOffset);
+public sealed record McpPage<T>(IReadOnlyList<T> Items, int TotalCount, [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] int? NextOffset = null);
 
 public sealed record ComponentSummary(string Name, string FullName, string Folder, string Summary, string RenderCompatibility, bool IsObsolete, IReadOnlyList<string> RequiredParameters, string DocumentationUrl);
 
@@ -30,25 +30,25 @@ public sealed record McpComponentSummary(
     string Folder,
     string Summary,
     string RenderCompatibility,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] bool? IsObsolete,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<string>? RequiredParameters,
-    string DocumentationUrl);
+    string DocumentationUrl,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] bool? IsObsolete = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<string>? RequiredParameters = null);
 
 public sealed record ComponentUsageSummary(
     string Name,
     string Summary,
     string RenderCompatibility,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] bool? IsObsolete,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? ObsoleteMessage,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<RequiredParameterSummary>? RequiredParameters,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<string>? UsageGuidelines,
     string RazorUsage,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<string>? RelatedTypes,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<string>? RelatedComponents,
     int ParameterCount,
     int MethodCount,
     string DocumentationUrl,
-    string ResourceUri);
+    string ResourceUri,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] bool? IsObsolete = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? ObsoleteMessage = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<RequiredParameterSummary>? RequiredParameters = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<string>? UsageGuidelines = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<string>? RelatedTypes = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<string>? RelatedComponents = null);
 
 public sealed record RequiredParameterSummary(string Name, string Type, string Summary);
 
@@ -57,11 +57,11 @@ public sealed record ComponentMemberSummary(
     string Kind,
     string Declaration,
     string Summary,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] bool? IsRequired,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] bool? IsInherited,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] bool? IsObsolete,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? DefaultValue,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Category);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] bool? IsRequired = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] bool? IsInherited = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] bool? IsObsolete = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? DefaultValue = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Category = null);
 
 public sealed record ComponentDetails(
     string Name,
@@ -119,22 +119,22 @@ public sealed record MemberDetails(string Name, string Signature, string Summary
 
 public sealed record ReferenceSummary(string Name, string FullName, string Kind, string Summary, bool IsObsolete, IReadOnlyList<string> UsedByComponents, string Scope, string DocumentationUrl);
 
-public sealed record McpReferenceSummary(string Name, string Kind, string Summary, [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] bool? IsObsolete, string Scope, string DocumentationUrl);
+public sealed record McpReferenceSummary(string Name, string Kind, string Summary, string Scope, string DocumentationUrl, [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] bool? IsObsolete = null);
 
 public sealed record ReferenceUsageSummary(
     string Name,
     string Kind,
     string Summary,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Remarks,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] bool? IsObsolete,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? ObsoleteMessage,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<string>? UsedByComponents,
     string Scope,
     string DocumentationUrl,
     string ResourceUri,
-    McpPage<ReferenceMemberSummary> Members);
+    McpPage<ReferenceMemberSummary> Members,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Remarks = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] bool? IsObsolete = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? ObsoleteMessage = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<string>? UsedByComponents = null);
 
-public sealed record ReferenceMemberSummary(string Name, string Kind, string Declaration, string Summary, [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] bool? IsObsolete);
+public sealed record ReferenceMemberSummary(string Name, string Kind, string Declaration, string Summary, [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] bool? IsObsolete = null);
 
 public sealed record ReferenceDetails(
     string Name,
@@ -163,9 +163,9 @@ public sealed record DocumentationSearchPage(IReadOnlyList<DocumentationSearchRe
 
 public sealed record McpDocumentationSearchResult(string Name, string Category, string Summary, string DocumentationUrl);
 
-public sealed record McpDocumentationSearchPage(IReadOnlyList<McpDocumentationSearchResult> Items, int TotalCount, [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] int? NextOffset, [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? DidYouMean);
+public sealed record McpDocumentationSearchPage(IReadOnlyList<McpDocumentationSearchResult> Items, int TotalCount, [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] int? NextOffset = null, [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? DidYouMean = null);
 
-public sealed record LookupResult<T>(bool Found, [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] T? Value, [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Error) where T : class {
+public sealed record LookupResult<T>(bool Found, [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] T? Value = null, [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Error = null) where T : class {
     public static LookupResult<T> Success(T value) => new(true, value, null);
 
     public static LookupResult<T> Missing(string error) => new(false, null, error);

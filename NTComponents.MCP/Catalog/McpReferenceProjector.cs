@@ -23,14 +23,14 @@ internal static class McpReferenceProjector {
             reference.Name,
             reference.Kind,
             reference.Summary,
-            NullIfEmpty(reference.Remarks),
-            TrueOrNull(reference.IsObsolete),
-            NullIfEmpty(reference.ObsoleteMessage),
-            NullIfEmpty(reference.UsedByComponents),
             reference.Scope,
             reference.DocumentationUrl,
             $"ntcomponents://references/{reference.Name}",
-            new(items, members.Length, nextOffset < members.Length ? (int)nextOffset : null));
+            new(items, members.Length, nextOffset < members.Length ? (int)nextOffset : null),
+            NullIfEmpty(reference.Remarks),
+            TrueOrNull(reference.IsObsolete),
+            NullIfEmpty(reference.ObsoleteMessage),
+            NullIfEmpty(reference.UsedByComponents));
     }
 
     private static bool Matches(object detail, string query) => detail switch {
