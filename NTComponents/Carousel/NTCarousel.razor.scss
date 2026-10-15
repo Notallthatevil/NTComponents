@@ -12,17 +12,19 @@
     @include typescale.nt-body-large;
 
     .nt-carousel-autoplay-control {
-        min-block-size: 48px;
-        padding-inline: 16px;
+        min-block-size: 40px;
+        margin: 8px 16px;
+        padding-inline: 24px;
         border: 0;
         border-radius: corners.$nt-corner-radius-extra-large;
-        color: colors.$nt-color-primary;
-        background: transparent;
-        font: inherit;
+        color: colors.$nt-color-on-secondary-container;
+        background: colors.$nt-color-secondary-container;
         cursor: pointer;
 
+        @include typescale.nt-label-large;
+
         &:hover {
-            background: color-mix(in srgb, colors.$nt-color-primary 8%, transparent);
+            background: color-mix(in srgb, colors.$nt-color-on-secondary-container 8%, colors.$nt-color-secondary-container);
         }
 
         &:focus-visible {

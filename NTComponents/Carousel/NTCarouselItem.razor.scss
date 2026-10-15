@@ -72,7 +72,7 @@ nt-carousel-item {
         flex-direction: column;
         justify-content: flex-end;
         inset-block: 0;
-        inset-inline-start: calc((var(--nt-carousel-mask-width, 100%) - var(--nt-carousel-item-width, 100%)) / 2);
+        inset-inline-start: 0;
         inline-size: var(--nt-carousel-item-width, 100%);
         block-size: 100%;
         min-inline-size: 0;
