@@ -134,7 +134,9 @@ $nt-button-group-sizes: (
         color: var(--nt-button-group-fg, #{colors.$nt-color-on-secondary-container});
         cursor: pointer;
         display: inline-flex;
+        font: inherit;
         justify-content: center;
+        letter-spacing: inherit;
         margin: 0;
         min-inline-size: 48px;
         outline: none;
@@ -246,7 +248,9 @@ $nt-button-group-sizes: (
             border-color: colors.$nt-color-outline;
         }
 
+        // Restate the selected container: the transparent rule above has equal specificity and would otherwise win.
         &[aria-pressed='true']::after {
+            background: var(--nt-button-group-selected-bg, #{colors.$nt-color-inverse-surface});
             border-color: transparent;
         }
     }

@@ -179,7 +179,7 @@ $nt-icon-button-sizes: (
         content: '';
     }
 
-    &.nt-icon-button-outlined::after {
+    &.nt-icon-button-outlined:not(.nt-icon-button-selected)::after {
         background: transparent;
         border-color: colors.$nt-color-outline;
     }

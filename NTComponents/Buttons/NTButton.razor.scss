@@ -24,7 +24,7 @@
         content: '';
     }
 
-    &.nt-button-outlined::after {
+    &.nt-button-outlined:not(.nt-button-selected)::after {
         background: transparent;
         border-color: colors.$nt-color-outline;
     }
