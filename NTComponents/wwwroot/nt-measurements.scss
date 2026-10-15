@@ -1,5 +1,6 @@
-@use 'sass:map';
+﻿@use 'sass:map';
 @use '../Styles/_Variables/_typescale.scss' as typescale;
+@use '../Styles/_Variables/_elevation.scss' as elevation;
 
 $nt-corner-radii: (
     none: 0px,
@@ -51,6 +52,11 @@ $nt-corner-radii: (
 body {
     padding: 0;
     margin: 0;
+}
+
+// Page-script loaders only register client behavior; they must never take layout space, such as a grid cell beside a field.
+tnt-page-script {
+    display: none;
 }
 
 .tnt-display-large {
@@ -238,23 +244,23 @@ body {
 }
 
 .nt-elevation-lowest {
-    box-shadow: 0px 1px 1px 0px var(--nt-color-shadow);
+    box-shadow: map.get(elevation.$nt-elevation-shadows, 1);
 }
 
 .nt-elevation-low {
-    box-shadow: 0px 2px 3px 0px var(--nt-color-shadow);
+    box-shadow: map.get(elevation.$nt-elevation-shadows, 2);
 }
 
 .nt-elevation-medium {
-    box-shadow: 0px 4px 6px 0px var(--nt-color-shadow);
+    box-shadow: map.get(elevation.$nt-elevation-shadows, 3);
 }
 
 .nt-elevation-high {
-    box-shadow: 0px 6px 8px 0px var(--nt-color-shadow);
+    box-shadow: map.get(elevation.$nt-elevation-shadows, 4);
 }
 
 .nt-elevation-highest {
-    box-shadow: 0px 8px 12px 0px var(--nt-color-shadow);
+    box-shadow: map.get(elevation.$nt-elevation-shadows, 5);
 }
 
 @each $corner-radius, $value in $nt-corner-radii {
