@@ -22,7 +22,7 @@ describe('NTCombobox browser behavior', () => {
         });
     });
 
-    function createFixture({ dotNetRef = null, options = defaultOptions, searchable = true, selected = [] } = {}) {
+    function createFixture({ dotNetRef = null, interactive = true, options = defaultOptions, searchable = true, selected = [] } = {}) {
         const root = document.createElement('div');
         root.className = 'nt-input nt-combobox';
 
@@ -68,7 +68,7 @@ describe('NTCombobox browser behavior', () => {
             invokeMethodAsync: jest.fn(() => Promise.resolve()),
         };
 
-        onLoad(input, effectiveDotNetRef);
+        onLoad(input, interactive ? effectiveDotNetRef : null);
         return { dotNetRef: effectiveDotNetRef, empty, input, menu, root };
     }
 
@@ -186,8 +186,12 @@ describe('NTCombobox browser behavior', () => {
         expect(input.value).toBe('Design');
     });
 
-    test('toggles selected values and updates hidden form inputs', async () => {
+    test('interactive selection notifies .NET and leaves Blazor-owned hidden inputs untouched', async () => {
         const { dotNetRef, input, root } = createFixture();
+        const hiddenContainer = root.querySelector('[data-nt-combobox-hidden-container="true"]');
+        const blazorHiddenInput = document.createElement('input');
+        blazorHiddenInput.type = 'hidden';
+        hiddenContainer.appendChild(blazorHiddenInput);
         input.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 
         root.querySelector('[data-nt-combobox-value="design"]').dispatchEvent(new MouseEvent('click', { bubbles: true }));
@@ -195,15 +199,24 @@ describe('NTCombobox browser behavior', () => {
 
         expect(input.value).toBe('Design');
         expect(root.querySelector('[data-nt-combobox-value="design"]').getAttribute('aria-selected')).toBe('true');
-        expect(root.querySelector('[data-nt-combobox-hidden-container="true"] input').value).toBe('design');
         expect(dotNetRef.invokeMethodAsync).toHaveBeenLastCalledWith('NotifyComboboxSelectionChanged', ['design']);
+        expect(hiddenContainer.children).toHaveLength(1);
+        expect(hiddenContainer.firstElementChild).toBe(blazorHiddenInput);
+    });
+
+    test('static selection toggles values and updates hidden form inputs', () => {
+        const { input, root } = createFixture({ interactive: false });
+        input.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 
         root.querySelector('[data-nt-combobox-value="design"]').dispatchEvent(new MouseEvent('click', { bubbles: true }));
-        await Promise.resolve();
+
+        expect(input.value).toBe('Design');
+        expect(root.querySelector('[data-nt-combobox-hidden-container="true"] input').value).toBe('design');
+
+        root.querySelector('[data-nt-combobox-value="design"]').dispatchEvent(new MouseEvent('click', { bubbles: true }));
 
         expect(input.value).toBe('');
         expect(root.querySelectorAll('[data-nt-combobox-hidden-container="true"] input')).toHaveLength(0);
-        expect(dotNetRef.invokeMethodAsync).toHaveBeenLastCalledWith('NotifyComboboxSelectionChanged', []);
     });
 
     test('selection resets the internal filter to an empty string', async () => {

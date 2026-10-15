@@ -173,6 +173,10 @@ $nt-menu-field-disabled-opacity: 0.38;
         ::deep .nt-combobox-option-trailing {
             grid-column: 3;
             justify-self: end;
+
+            &[hidden] {
+                display: none;
+            }
         }
 
         ::deep .nt-combobox-option-content {

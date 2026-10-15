@@ -205,7 +205,8 @@ function getDisplayText(state: ComboboxState): string {
 
 function updateHiddenInputs(state: ComboboxState): void {
     const name = state.input.dataset.ntComboboxName;
-    if (!state.hiddenContainer || !name) {
+    // Interactive renders own the hidden inputs; replacing Blazor-managed nodes breaks later DOM diffs.
+    if (!state.hiddenContainer || !name || state.dotNetRef) {
         return;
     }
 
