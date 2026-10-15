@@ -61,8 +61,8 @@
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'net11.0'">
-		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" VersionOverride="11.0.0-rc.1.26425.128" PrivateAssets="all" />
-		<PackageReference Include="Microsoft.AspNetCore.Components.Authorization" VersionOverride="11.0.0-rc.1.26425.128" PrivateAssets="all" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" VersionOverride="11.0.0-rc.2.26504.105" PrivateAssets="all" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.Authorization" VersionOverride="11.0.0-rc.2.26504.105" PrivateAssets="all" />
 	</ItemGroup>
 
 	<ItemGroup>

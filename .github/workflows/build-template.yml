@@ -29,7 +29,7 @@ jobs:
             8.0.x
             9.0.x
             10.0.x
-            11.0.100-rc.1.26425.128
+            11.0.100-rc.2.26504.105
 
       - name: Setup Node.js
         uses: actions/setup-node@v7
@@ -107,7 +107,7 @@ jobs:
             8.0.x
             9.0.x
             10.0.x
-            11.0.100-rc.1.26425.128
+            11.0.100-rc.2.26504.105
 
       - name: Setup Node.js
         uses: actions/setup-node@v7
@@ -176,7 +176,7 @@ jobs:
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: 11.0.100-rc.1.26425.128
+          dotnet-version: 11.0.100-rc.2.26504.105
 
       - name: Install dotnet-coverage
         run: dotnet tool install --global dotnet-coverage
