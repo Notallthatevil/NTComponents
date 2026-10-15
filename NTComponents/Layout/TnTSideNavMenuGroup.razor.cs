@@ -69,7 +69,7 @@ public partial class TnTSideNavMenuGroup {
     /// </summary>
     /// <value>The icon to display, or <c>null</c> if no icon should be shown.</value>
     [Parameter]
-    public TnTIcon? Icon { get; set; }
+    public NTIcon? Icon { get; set; }
 
     /// <summary>
     ///     Gets or sets the text label for the navigation group.

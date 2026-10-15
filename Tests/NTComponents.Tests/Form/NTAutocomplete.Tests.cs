@@ -22,7 +22,7 @@ public class NTAutocomplete_Tests : BunitContext {
         module.SetupVoid("onDispose", _ => true).SetVoidResult();
     }
 
-    private sealed record AutocompleteOption(string Value, string Label, string? SupportingText = null, bool Disabled = false, TnTIcon? LeadingIcon = null);
+    private sealed record AutocompleteOption(string Value, string Label, string? SupportingText = null, bool Disabled = false, NTIcon? LeadingIcon = null);
 
     private sealed class RequiredModel {
         [Required]
@@ -148,7 +148,7 @@ public class NTAutocomplete_Tests : BunitContext {
         var label = "Austin";
         var supportingText = "Capital";
         var value = "AUS";
-        TnTIcon? leadingIcon = null;
+        NTIcon? leadingIcon = null;
         var model = new TestModel();
         RenderFragment options = builder => {
             builder.OpenComponent<NTAutocompleteOptionGroup>(0);

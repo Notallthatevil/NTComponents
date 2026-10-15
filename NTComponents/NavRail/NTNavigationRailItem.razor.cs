@@ -23,7 +23,7 @@ public partial class NTNavigationRailItem : NTComponentBase, INTBadgeable {
     ///     Optional active icon. When omitted for a selected Material icon, the icon is rendered with the rail's selected filled-symbol class.
     /// </summary>
     [Parameter]
-    public TnTIcon? ActiveIcon { get; set; }
+    public NTIcon? ActiveIcon { get; set; }
 
     /// <summary>
     ///     Optional active icon fragment. Used only when <see cref="ActiveIcon" /> is not supplied.
@@ -82,7 +82,7 @@ public partial class NTNavigationRailItem : NTComponentBase, INTBadgeable {
     ///     Icon shown for the destination.
     /// </summary>
     [Parameter]
-    public TnTIcon? Icon { get; set; }
+    public NTIcon? Icon { get; set; }
 
     /// <summary>
     ///     Icon fragment shown when <see cref="Icon" /> is not supplied.
@@ -137,7 +137,7 @@ public partial class NTNavigationRailItem : NTComponentBase, INTBadgeable {
     private string? EffectiveElementLang => ElementLang ?? TryGetStringAttribute("lang");
     private string? EffectiveElementTitle => ElementTitle ?? TryGetStringAttribute("title");
     private string? EffectiveIconClass => _isSelected && EffectiveIcon is MaterialIcon ? "nt-nav-rail-selected-icon" : null;
-    private TnTIcon? EffectiveIcon => _isSelected && ActiveIcon is not null
+    private NTIcon? EffectiveIcon => _isSelected && ActiveIcon is not null
         ? GetSelectedMaterialIcon(ActiveIcon)
         : _isSelected && ActiveIconContent is not null
             ? null
@@ -228,7 +228,7 @@ public partial class NTNavigationRailItem : NTComponentBase, INTBadgeable {
 
     private bool IsUnderBaseUri(Uri uri) => uri.AbsoluteUri.StartsWith(NavigationManager.BaseUri, StringComparison.OrdinalIgnoreCase);
 
-    private static TnTIcon? GetSelectedMaterialIcon(TnTIcon? icon) => icon is MaterialIcon materialIcon
+    private static NTIcon? GetSelectedMaterialIcon(NTIcon? icon) => icon is MaterialIcon materialIcon
         ? new MaterialIcon(materialIcon.Icon) {
             Appearance = materialIcon.Appearance,
             Color = materialIcon.Color,

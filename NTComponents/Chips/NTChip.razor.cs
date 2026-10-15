@@ -187,7 +187,7 @@ public partial class NTChip : NTComponentBase, INTBadgeable {
     ///     Gets or sets an optional leading icon or avatar.
     /// </summary>
     [Parameter]
-    public TnTIcon? LeadingIcon { get; set; }
+    public NTIcon? LeadingIcon { get; set; }
 
     /// <summary>
     ///     Gets or sets whether menu item clicks should close the dropdown menu.
@@ -329,7 +329,7 @@ public partial class NTChip : NTComponentBase, INTBadgeable {
     ///     Gets or sets an optional trailing icon.
     /// </summary>
     [Parameter]
-    public TnTIcon? TrailingIcon { get; set; }
+    public NTIcon? TrailingIcon { get; set; }
 
     /// <summary>
     ///     Gets or sets the native button type for action chips.
@@ -359,8 +359,8 @@ public partial class NTChip : NTComponentBase, INTBadgeable {
     private NTElevation EffectiveElevation => Elevation ?? (EffectiveAppearance == NTChipAppearance.Elevated ? NTElevation.Lowest : NTElevation.None);
     private string? EffectiveHref => Disabled ? null : Href;
     private string EffectiveMenuAriaLabel => string.IsNullOrWhiteSpace(MenuAriaLabel) ? $"{Label} options" : MenuAriaLabel;
-    private TnTIcon? EffectiveLeadingIcon => IsSelectedLeadingIcon ? MaterialIcon.Check : LeadingIcon;
-    private TnTIcon? EffectiveTrailingIcon => HasMenu && TrailingIcon is null ? MaterialIcon.ArrowDropDown : TrailingIcon;
+    private NTIcon? EffectiveLeadingIcon => IsSelectedLeadingIcon ? MaterialIcon.Check : LeadingIcon;
+    private NTIcon? EffectiveTrailingIcon => HasMenu && TrailingIcon is null ? MaterialIcon.ArrowDropDown : TrailingIcon;
     private string EffectiveRemoveAriaLabel => string.IsNullOrWhiteSpace(RemoveAriaLabel) ? $"Remove {Label}" : RemoveAriaLabel;
     private bool EffectiveSelectable => !HasMenu && (Selectable ?? Variant == NTChipVariant.Filter);
     private bool CurrentSelected => _selectedWasProvided ? Selected : _selected;

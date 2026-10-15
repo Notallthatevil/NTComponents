@@ -84,7 +84,7 @@ public partial class TnTChip
     ///     The start icon of the chip.
     /// </summary>
     [Parameter]
-    public TnTIcon? StartIcon { get; set; }
+    public NTIcon? StartIcon { get; set; }
 
     /// <summary>
     ///     Optional secondary text displayed below the label. Rendered in a smaller font within the same chip height.

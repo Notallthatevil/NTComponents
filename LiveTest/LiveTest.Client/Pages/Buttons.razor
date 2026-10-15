@@ -154,5 +154,5 @@
 	private bool UseDeterminateProgress { get; set; }
 	private int ProgressValue { get; set; } = 42;
 	private int? EffectiveProgressValue => UseDeterminateProgress ? ProgressValue : null;
-	private TnTIcon? CurrentLeadingIcon => ShowLeadingIcon ? MaterialIcon.CloudySnowing : null;
+	private NTIcon? CurrentLeadingIcon => ShowLeadingIcon ? MaterialIcon.CloudySnowing : null;
 }

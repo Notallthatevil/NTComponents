@@ -69,7 +69,7 @@ public partial class NTInputSlider<TNumber> where TNumber : struct, INumber<TNum
     ///     Gets or sets the optional icon rendered inside the track for supported Material 3 slider configurations.
     /// </summary>
     [Parameter]
-    public TnTIcon? InsetIcon { get; set; }
+    public NTIcon? InsetIcon { get; set; }
 
     /// <summary>
     ///     Gets or sets the maximum slider value. Defaults to 100.

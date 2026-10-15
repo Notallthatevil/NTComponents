@@ -3,9 +3,9 @@ using NTComponents.Core;
 namespace NTComponents.Tests.Icons;
 
 /// <summary>
-///     Test implementation of TnTIcon for testing purposes.
+///     Test implementation of NTIcon for testing purposes.
 /// </summary>
-internal sealed class TestIcon : TnTIcon {
+internal sealed class TestIcon : NTIcon {
 
     public override string? ElementClass => CssClassBuilder.Create()
         .AddFromAdditionalAttributes(AdditionalAttributes)
@@ -22,7 +22,7 @@ internal sealed class TestIcon : TnTIcon {
 
     public override string? ElementStyle => CssStyleBuilder.Create()
         .AddFromAdditionalAttributes(AdditionalAttributes)
-        .AddVariable("test-icon-color", Color, Color != TnTColor.OnSurface)
+        .AddVariable("test-icon-color", Color.ToCssNTColorVariable(), Color.HasValue)
         .Build();
 
     public TestIcon() {
@@ -32,7 +32,7 @@ internal sealed class TestIcon : TnTIcon {
     }
 }
 
-public class TnTIcon_Tests : BunitContext {
+public class NTIcon_Tests : BunitContext {
 
     [Fact]
     public void Constructor_Parameterless_InitializesWithDefaults() {
@@ -41,7 +41,7 @@ public class TnTIcon_Tests : BunitContext {
 
         // Assert
         icon.Appearance.Should().Be(IconAppearance.Default);
-        icon.Color.Should().Be(TnTColor.OnSurface);
+        icon.Color.Should().BeNull();
         icon.Size.Should().Be(IconSize.Medium);
         icon.Icon.Should().Be(default(string));
     }
@@ -225,16 +225,16 @@ public class TnTIcon_Tests : BunitContext {
     [Fact]
     public void Render_WithColor_AddsColorVariable() {
         // Arrange & Act
-        var cut = Render<TestIcon>(p => p.Add(c => c.Color, TnTColor.Primary).Add(c => c.Icon, "heart"));
+        var cut = Render<TestIcon>(p => p.Add(c => c.Color, NTColor.Primary).Add(c => c.Icon, "heart"));
 
         // Assert
-        cut.Find("span").GetAttribute("style")!.Should().Contain("--test-icon-color:var(--tnt-color-primary)");
+        cut.Find("span").GetAttribute("style")!.Should().Contain("--test-icon-color:var(--nt-color-primary)");
     }
 
     [Fact]
-    public void Render_WithDefaultColor_DoesNotAddColorVariable() {
+    public void Render_WithoutColor_DoesNotAddColorVariable() {
         // Arrange & Act
-        var cut = Render<TestIcon>(p => p.Add(c => c.Color, TnTColor.OnSurface).Add(c => c.Icon, "menu"));
+        var cut = Render<TestIcon>(p => p.Add(c => c.Icon, "menu"));
 
         // Assert
         var style = cut.Find("span").GetAttribute("style");

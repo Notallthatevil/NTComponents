@@ -53,7 +53,7 @@ public class NTMenuSubMenuItem : Microsoft.AspNetCore.Components.IComponent, INT
 
     /// <inheritdoc />
     [Parameter]
-    public TnTIcon? Icon { get; set; }
+    public NTIcon? Icon { get; set; }
 
     /// <inheritdoc />
     public bool IsActionable => true;
@@ -78,7 +78,7 @@ public class NTMenuSubMenuItem : Microsoft.AspNetCore.Components.IComponent, INT
     private string ButtonId => $"{_componentId}-button";
     private string ButtonStyle => $"anchor-name: {AnchorName};";
     private string SubMenuId => $"{_componentId}-menu";
-    private static TnTIcon TrailingIcon => MaterialIcon.ChevronRight;
+    private static NTIcon TrailingIcon => MaterialIcon.ChevronRight;
 
     /// <inheritdoc />
     public void Attach(RenderHandle renderHandle) { }
@@ -165,6 +165,6 @@ public class NTMenuSubMenuItem : Microsoft.AspNetCore.Components.IComponent, INT
         return Task.CompletedTask;
     }
 
-    private bool RenderedStateChanged(string? previousAriaLabel, bool previousDisabled, TnTIcon? previousIcon, string previousLabel, bool previousSelected) =>
+    private bool RenderedStateChanged(string? previousAriaLabel, bool previousDisabled, NTIcon? previousIcon, string previousLabel, bool previousSelected) =>
         previousAriaLabel != AriaLabel || previousDisabled != Disabled || !NTMenu.IconStateEquals(previousIcon, Icon) || previousLabel != Label || previousSelected != Selected;
 }

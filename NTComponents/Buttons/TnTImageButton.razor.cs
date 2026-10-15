@@ -74,7 +74,7 @@ public partial class TnTImageButton {
     ///     The icon to be rendered inside the button.
     /// </summary>
     [Parameter, EditorRequired]
-    public TnTIcon Icon { get; set; } = default!;
+    public NTIcon Icon { get; set; } = default!;
 
     /// <summary>
     ///     The appearance of the image button, which can be Round, Wide, or Narrow.

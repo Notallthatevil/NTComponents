@@ -88,7 +88,7 @@ public partial class TnTSideNavLink {
     ///     The icon to show at the start of the link.
     /// </summary>
     [Parameter]
-    public TnTIcon? Icon { get; set; }
+    public NTIcon? Icon { get; set; }
 
     /// <inheritdoc />
     [Parameter]

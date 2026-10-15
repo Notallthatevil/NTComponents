@@ -170,7 +170,7 @@ public partial class NTNavigationRail {
     ///     Optional menu icon override for the default menu affordance.
     /// </summary>
     [Parameter]
-    public TnTIcon? MenuIcon { get; set; }
+    public NTIcon? MenuIcon { get; set; }
 
     /// <summary>
     ///     Opens the navigation rail by default on initial load for medium and larger screens only.
@@ -182,7 +182,7 @@ public partial class NTNavigationRail {
     ///     Optional expanded-state menu icon override for the default menu affordance.
     /// </summary>
     [Parameter]
-    public TnTIcon? MenuIconWhenExpanded { get; set; }
+    public NTIcon? MenuIconWhenExpanded { get; set; }
 
     /// <summary>
     ///     Whether the optional divider should be rendered on the content-adjacent edge.
@@ -198,9 +198,9 @@ public partial class NTNavigationRail {
 
     internal string EffectiveElementId => _effectiveElementId;
     internal string ExternalMenuButtonId => _externalMenuButtonId;
-    internal TnTIcon EffectiveCollapsedMenuIcon => MenuIcon ?? MaterialIcon.Menu;
-    internal TnTIcon EffectiveExpandedMenuIcon => MenuIconWhenExpanded ?? MenuIcon ?? MaterialIcon.MenuOpen;
-    internal TnTIcon EffectiveMenuIcon => IsExpanded ? EffectiveExpandedMenuIcon : EffectiveCollapsedMenuIcon;
+    internal NTIcon EffectiveCollapsedMenuIcon => MenuIcon ?? MaterialIcon.Menu;
+    internal NTIcon EffectiveExpandedMenuIcon => MenuIconWhenExpanded ?? MenuIcon ?? MaterialIcon.MenuOpen;
+    internal NTIcon EffectiveMenuIcon => IsExpanded ? EffectiveExpandedMenuIcon : EffectiveCollapsedMenuIcon;
     internal string ExternalMenuButtonClass => _externalMenuButtonClass;
     internal bool IsExpanded => OpenByDefault;
     internal string? IsExpandedText => _isExpandedText;

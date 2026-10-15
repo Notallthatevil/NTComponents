@@ -12,7 +12,7 @@ public abstract class TnTWizardStepBase : ComponentBase, IDisposable {
     ///     The icon associated with the wizard step.
     /// </summary>
     [Parameter]
-    public TnTIcon? Icon { get; set; }
+    public NTIcon? Icon { get; set; }
 
     /// <summary>
     ///     The subtitle of the wizard step.

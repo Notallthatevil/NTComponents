@@ -94,7 +94,7 @@ public abstract class NTFieldBase<TValue> : NTFormControlBase<TValue> {
     ///     Gets or sets the error icon shown when the field is invalid.
     /// </summary>
     [Parameter]
-    public TnTIcon? ErrorIcon { get; set; } = MaterialIcon.Error;
+    public NTIcon? ErrorIcon { get; set; } = MaterialIcon.Error;
 
     /// <summary>
     ///     Gets or sets an optional override for the focus label, outline, active indicator, and default caret color.
@@ -404,7 +404,7 @@ public abstract class NTFieldBase<TValue> : NTFormControlBase<TValue> {
         /// <summary>
         ///     Gets the icon.
         /// </summary>
-        public TnTIcon? Icon { get; init; }
+        public NTIcon? Icon { get; init; }
 
         /// <summary>
         ///     Gets the CSS class.

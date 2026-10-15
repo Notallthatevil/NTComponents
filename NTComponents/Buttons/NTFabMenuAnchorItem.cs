@@ -40,7 +40,7 @@ public sealed partial class NTFabMenuAnchorItem : Microsoft.AspNetCore.Component
 
     /// <inheritdoc />
     [Parameter]
-    public TnTIcon? Icon { get; set; }
+    public NTIcon? Icon { get; set; }
 
     /// <inheritdoc />
     [Parameter]

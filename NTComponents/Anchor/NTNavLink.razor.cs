@@ -129,7 +129,7 @@ public partial class NTNavLink {
     ///     Gets or sets an optional leading icon rendered before the label.
     /// </summary>
     [Parameter]
-    public TnTIcon? LeadingIcon { get; set; }
+    public NTIcon? LeadingIcon { get; set; }
 
     /// <summary>
     ///     Gets or sets the base resting shape for button-style link variants.

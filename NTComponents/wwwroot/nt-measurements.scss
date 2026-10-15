@@ -284,3 +284,20 @@ body {
     border: 2px solid transparent;
     border-radius: 9999px;
 }
+
+// Caller-supplied SVG icons follow container font-size and color the same way Material Symbols glyphs do.
+.nt-svg-icon {
+    display: inline-block;
+    fill: currentColor;
+    flex-shrink: 0;
+    font-size: 24px;
+    height: 1em;
+    line-height: 1;
+    width: 1em;
+
+    > svg {
+        display: block;
+        height: 100%;
+        width: 100%;
+    }
+}

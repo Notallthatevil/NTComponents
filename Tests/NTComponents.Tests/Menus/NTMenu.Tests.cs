@@ -289,21 +289,21 @@ public class NTMenu_Tests : BunitContext {
             .WithMessage("*NTMenuLabelItem requires a non-empty Label*");
     }
 
-    private static bool RenderedStateChanged(NTMenuButtonItem item, TnTIcon? previousIcon, string previousLabel) {
+    private static bool RenderedStateChanged(NTMenuButtonItem item, NTIcon? previousIcon, string previousLabel) {
         var method = typeof(NTMenuButtonItem).GetMethod("RenderedStateChanged", BindingFlags.Instance | BindingFlags.NonPublic);
 
         method.Should().NotBeNull();
         return (bool)method!.Invoke(item, [item.AriaLabel, item.Disabled, previousIcon, previousLabel, item.Selected])!;
     }
 
-    private static bool RenderedStateChanged(NTMenuAnchorItem item, TnTIcon? previousIcon, string previousLabel, string previousHref) {
+    private static bool RenderedStateChanged(NTMenuAnchorItem item, NTIcon? previousIcon, string previousLabel, string previousHref) {
         var method = typeof(NTMenuAnchorItem).GetMethod("RenderedStateChanged", BindingFlags.Instance | BindingFlags.NonPublic);
 
         method.Should().NotBeNull();
         return (bool)method!.Invoke(item, [item.AriaLabel, item.Disabled, previousHref, previousIcon, previousLabel, item.Selected, item.Target])!;
     }
 
-    private static bool RenderedStateChanged(NTMenuSubMenuItem item, TnTIcon? previousIcon, string previousLabel) {
+    private static bool RenderedStateChanged(NTMenuSubMenuItem item, NTIcon? previousIcon, string previousLabel) {
         var method = typeof(NTMenuSubMenuItem).GetMethod("RenderedStateChanged", BindingFlags.Instance | BindingFlags.NonPublic);
 
         method.Should().NotBeNull();

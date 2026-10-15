@@ -264,7 +264,7 @@ public abstract partial class TnTInputBase<TInputType> : NTValidationInputBase<T
     ///     Gets or sets the end icon of the input.
     /// </summary>
     [Parameter]
-    public TnTIcon? EndIcon { get; set; }
+    public NTIcon? EndIcon { get; set; }
 
     /// <summary>
     ///     The color used for the error state of the input.
@@ -310,7 +310,7 @@ public abstract partial class TnTInputBase<TInputType> : NTValidationInputBase<T
     ///     Gets or sets the start icon of the input.
     /// </summary>
     [Parameter]
-    public TnTIcon? StartIcon { get; set; }
+    public NTIcon? StartIcon { get; set; }
 
     /// <summary>
     ///     Text that provides additional information about the input, such as usage instructions or validation hints.
@@ -344,7 +344,7 @@ public abstract partial class TnTInputBase<TInputType> : NTValidationInputBase<T
     ///     The icon displayed alongside the tooltip text.
     /// </summary>
     [Parameter]
-    public TnTIcon TooltipIcon { get; set; } = MaterialIcon.Help;
+    public NTIcon TooltipIcon { get; set; } = MaterialIcon.Help;
 
     /// <inheritdoc />
     public abstract InputType Type { get; }

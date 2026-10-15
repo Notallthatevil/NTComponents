@@ -158,7 +158,7 @@ public partial class TnTTypeahead<TItem> {
     ///     Gets or sets the icon displayed in the tooltip.
     /// </summary>
     [Parameter]
-    public TnTIcon TooltipIcon { get; set; } = MaterialIcon.Help;
+    public NTIcon TooltipIcon { get; set; } = MaterialIcon.Help;
 
     /// <summary>
     ///     The current value of the input box.

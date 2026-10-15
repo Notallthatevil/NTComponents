@@ -100,7 +100,7 @@ public partial class NTIconButton : NTButtonBase, INTBadgeable {
     ///     This value is required. For toggle buttons, bind <see cref="Selected" /> and provide a different icon value from the parent when selected and unselected states need different symbols.
     /// </remarks>
     [Parameter, EditorRequired]
-    public TnTIcon Icon { get; set; } = default!;
+    public NTIcon Icon { get; set; } = default!;
 
     /// <summary>
     ///     Gets or sets whether this icon button behaves as a toggle button.

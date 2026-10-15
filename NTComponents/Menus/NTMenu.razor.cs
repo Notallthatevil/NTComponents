@@ -244,7 +244,7 @@ public partial class NTMenu {
         await item.OnClickCallback.InvokeAsync(args);
     }
 
-    internal static bool IconStateEquals(TnTIcon? previousIcon, TnTIcon? currentIcon) {
+    internal static bool IconStateEquals(NTIcon? previousIcon, NTIcon? currentIcon) {
         if (ReferenceEquals(previousIcon, currentIcon)) {
             return true;
         }
@@ -282,7 +282,7 @@ public partial class NTMenu {
         }
     }
 
-    internal RenderFragment RenderMenuItemContent(INTMenuItem item, TnTIcon? trailingIcon = null) => builder => {
+    internal RenderFragment RenderMenuItemContent(INTMenuItem item, NTIcon? trailingIcon = null) => builder => {
         builder.AddContent(0, ButtonRipple);
 
         if (item.Icon is not null) {

@@ -104,7 +104,7 @@ public abstract class NTButtonGroupTestContext : BunitContext {
         /// <summary>
         ///     Optional icon rendered before the label.
         /// </summary>
-        public TnTIcon? Icon { get; init; }
+        public NTIcon? Icon { get; init; }
 
         /// <summary>
         ///     Controls whether the item is disabled.

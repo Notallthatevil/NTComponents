@@ -48,7 +48,7 @@ public partial class TnTSideNavToggle {
     ///     The icon to be displayed in the toggle button.
     /// </summary>
     [Parameter]
-    public TnTIcon Icon { get; set; } = MaterialIcon.Menu;
+    public NTIcon Icon { get; set; } = MaterialIcon.Menu;
 
     ///<summary>
     /// The color of the toggle icon.

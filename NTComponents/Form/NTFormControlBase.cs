@@ -508,11 +508,11 @@ public abstract class NTFormControlBase<TValue> : NTFormControlBaseCore<TValue> 
     ///     Gets or sets the icon shown before the control content.
     /// </summary>
     [Parameter]
-    public TnTIcon? LeadingIcon { get; set; }
+    public NTIcon? LeadingIcon { get; set; }
 
     /// <summary>
     ///     Gets or sets the icon shown after the control content.
     /// </summary>
     [Parameter]
-    public TnTIcon? TrailingIcon { get; set; }
+    public NTIcon? TrailingIcon { get; set; }
 }

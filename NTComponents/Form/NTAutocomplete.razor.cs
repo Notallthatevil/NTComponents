@@ -337,7 +337,7 @@ public partial class NTAutocomplete : IAsyncDisposable {
         return builder.ToString();
     }
 
-    private static void AppendOptionJson(StringBuilder builder, string? id, string cssClass, string value, string label, string? supportingText, bool disabled, bool selected, bool isCustom, string? customFormat, TnTIcon? leadingIcon, string? group) {
+    private static void AppendOptionJson(StringBuilder builder, string? id, string cssClass, string value, string label, string? supportingText, bool disabled, bool selected, bool isCustom, string? customFormat, NTIcon? leadingIcon, string? group) {
         builder.Append('{');
         if (id is not null) {
             AppendJsonProperty(builder, "id", id);
@@ -451,7 +451,7 @@ public sealed class NTAutocompleteOption : ComponentBase, IDisposable {
     private bool _lastDisabled;
     private bool _lastGroupDisabled;
     private NTAutocompleteOptionGroup? _lastGroup;
-    private TnTIcon? _lastLeadingIcon;
+    private NTIcon? _lastLeadingIcon;
     private string? _lastGroupLabel;
     private string? _lastLabel;
     private string? _lastSupportingText;
@@ -480,7 +480,7 @@ public sealed class NTAutocompleteOption : ComponentBase, IDisposable {
     ///     and does not require callers to provide a check icon.
     /// </remarks>
     [Parameter]
-    public TnTIcon? LeadingIcon { get; set; }
+    public NTIcon? LeadingIcon { get; set; }
 
     /// <summary>
     ///     Gets or sets optional supporting text shown below the label.

@@ -85,7 +85,7 @@ public partial class NTInputFile : IAsyncDisposable {
     ///     Gets or sets the icon displayed at the end of the input.
     /// </summary>
     [Parameter]
-    public TnTIcon? EndIcon { get; set; }
+    public NTIcon? EndIcon { get; set; }
 
     /// <summary>
     ///     Indicates whether the picker is disabled.
@@ -103,7 +103,7 @@ public partial class NTInputFile : IAsyncDisposable {
     ///     Gets or sets the icon displayed at the start of the input.
     /// </summary>
     [Parameter]
-    public TnTIcon? StartIcon { get; set; }
+    public NTIcon? StartIcon { get; set; }
 
     /// <summary>
     ///     Maximum number of files allowed in a selection.
@@ -219,7 +219,7 @@ public partial class NTInputFile : IAsyncDisposable {
     ///     The icon displayed alongside the tooltip text.
     /// </summary>
     [Parameter]
-    public TnTIcon TooltipIcon { get; set; } = MaterialIcon.Help;
+    public NTIcon TooltipIcon { get; set; } = MaterialIcon.Help;
 
     /// <summary>
     ///     Gets or sets the text color for the input.

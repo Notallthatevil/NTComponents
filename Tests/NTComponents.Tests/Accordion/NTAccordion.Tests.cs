@@ -158,7 +158,7 @@ public class NTAccordion_Tests : BunitContext {
 
     [Fact]
     public void Item_Supports_HeaderContent_SupportingText_And_LeadingIcon() {
-        TnTIcon leadingIcon = MaterialIcon.Info;
+        NTIcon leadingIcon = MaterialIcon.Info;
 
         var cut = Render<NTAccordion>(p => p.AddChildContent(builder => {
             builder.OpenComponent<NTAccordionItem>(0);

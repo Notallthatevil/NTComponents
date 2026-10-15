@@ -47,7 +47,7 @@ public class NTMenuButtonItem : Microsoft.AspNetCore.Components.IComponent, INTM
 
     /// <inheritdoc />
     [Parameter]
-    public TnTIcon? Icon { get; set; }
+    public NTIcon? Icon { get; set; }
 
     /// <inheritdoc />
     public bool IsActionable => true;
@@ -140,6 +140,6 @@ public class NTMenuButtonItem : Microsoft.AspNetCore.Components.IComponent, INTM
         return Task.CompletedTask;
     }
 
-    private bool RenderedStateChanged(string? previousAriaLabel, bool previousDisabled, TnTIcon? previousIcon, string previousLabel, bool previousSelected) =>
+    private bool RenderedStateChanged(string? previousAriaLabel, bool previousDisabled, NTIcon? previousIcon, string previousLabel, bool previousSelected) =>
         previousAriaLabel != AriaLabel || previousDisabled != Disabled || !NTMenu.IconStateEquals(previousIcon, Icon) || previousLabel != Label || previousSelected != Selected;
 }

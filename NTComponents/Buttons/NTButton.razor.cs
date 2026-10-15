@@ -82,7 +82,7 @@ public partial class NTButton : NTButtonBase, INTBadgeable {
     ///     Gets or sets an optional leading icon rendered before the label.
     /// </summary>
     [Parameter]
-    public TnTIcon? LeadingIcon { get; set; }
+    public NTIcon? LeadingIcon { get; set; }
 
     /// <summary>
     ///     Gets or sets whether the toggle button is currently selected.

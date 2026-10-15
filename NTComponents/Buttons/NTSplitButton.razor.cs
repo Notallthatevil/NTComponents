@@ -133,7 +133,7 @@ public partial class NTSplitButton {
     ///     Gets or sets an optional icon rendered before the leading action label.
     /// </summary>
     [Parameter]
-    public TnTIcon? LeadingIcon { get; set; }
+    public NTIcon? LeadingIcon { get; set; }
 
     /// <summary>
     ///     Gets or sets an optional override for the menu panel container color.
@@ -227,7 +227,7 @@ public partial class NTSplitButton {
     private string MenuId => $"{StableElementId}-menu";
     private string? MenuPopoverTarget => IsMenuButtonDisabled ? null : MenuId;
     private string StableElementId => string.IsNullOrWhiteSpace(ElementId) ? ComponentIdentifier : ElementId;
-    private static TnTIcon MenuIcon => MaterialIcon.ArrowDropDown;
+    private static NTIcon MenuIcon => MaterialIcon.ArrowDropDown;
 
     private static readonly RenderFragment ButtonRipple = NTRipple.RenderHost();
     private bool _backgroundColorWasProvided;

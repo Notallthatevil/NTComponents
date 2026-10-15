@@ -57,7 +57,7 @@ public partial class NTNavigationRailGroup : NTComponentBase {
     ///     Icon shown in the group trigger.
     /// </summary>
     [Parameter]
-    public TnTIcon? Icon { get; set; }
+    public NTIcon? Icon { get; set; }
 
     /// <summary>
     ///     Icon fragment shown when <see cref="Icon" /> is not supplied.

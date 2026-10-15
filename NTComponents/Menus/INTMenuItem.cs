@@ -25,7 +25,7 @@ public interface INTMenuItem {
     /// <summary>
     ///     Optional icon rendered before the label.
     /// </summary>
-    TnTIcon? Icon { get; }
+    NTIcon? Icon { get; }
 
     /// <summary>
     ///     Gets whether the item can be selected or activated by the user.

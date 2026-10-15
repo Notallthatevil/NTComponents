@@ -29,7 +29,7 @@ public class NTMenuDividerItem : Microsoft.AspNetCore.Components.IComponent, INT
     public bool Disabled => true;
 
     /// <inheritdoc />
-    public TnTIcon? Icon => null;
+    public NTIcon? Icon => null;
 
     /// <summary>
     ///     Gets or sets whether the divider should align with list item content instead of spanning the full menu width.

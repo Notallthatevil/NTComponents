@@ -9,7 +9,7 @@ public class MaterialIcon_Tests : BunitContext {
 
         // Assert
         icon.Appearance.Should().Be(IconAppearance.Default);
-        icon.Color.Should().Be(TnTColor.OnSurface);
+        icon.Color.Should().BeNull();
         icon.Size.Should().Be(IconSize.Medium);
     }
 
@@ -218,29 +218,40 @@ public class MaterialIcon_Tests : BunitContext {
     [Fact]
     public void Render_WithColor_AppliesForegroundColorStyle() {
         // Arrange & Act
-        var cut = Render<MaterialIcon>(p => p.Add(c => c.Color, TnTColor.Primary).Add(c => c.Appearance, IconAppearance.Filled).Add(c => c.Icon, "heart"));
+        var cut = Render<MaterialIcon>(p => p.Add(c => c.Color, NTColor.Primary).Add(c => c.Appearance, IconAppearance.Filled).Add(c => c.Icon, "heart"));
 
         // Assert
         var style = cut.Find("span").GetAttribute("style")!;
-        style.Should().Contain("color:var(--tnt-color-primary)");
+        style.Should().Contain("color:var(--nt-color-primary)");
         style.Should().Contain("font-variation-settings:'FILL' 1");
     }
 
-    [Theory]
-    [InlineData(null)]
-    [InlineData(TnTColor.OnSurface)]
-    [InlineData(TnTColor.None)]
-    public void Render_WithDefaultOrNoneColor_InheritsTextColor(TnTColor? color) {
+    [Fact]
+    public void Render_WithoutColor_InheritsTextColor() {
         // Arrange & Act
-        var cut = Render<MaterialIcon>(p => {
-            p.Add(c => c.Icon, "heart");
-            if (color is not null) {
-                p.Add(c => c.Color, color.Value);
-            }
-        });
+        var cut = Render<MaterialIcon>(p => p.Add(c => c.Icon, "heart"));
 
         // Assert
         cut.Find("span").GetAttribute("style").Should().BeNull();
+    }
+
+    [Fact]
+    public void Render_WithOnSurfaceColor_AppliesExplicitColor() {
+        // Arrange & Act
+        var cut = Render<MaterialIcon>(p => p.Add(c => c.Icon, "heart").Add(c => c.Color, NTColor.OnSurface));
+
+        // Assert
+        cut.Find("span").GetAttribute("style")!.Should().Contain("color:var(--nt-color-on-surface)");
+    }
+
+    [Fact]
+    public void MaterialIcon_RemainsAssignableToLegacyAndNewIconBases() {
+        // Arrange & Act
+        var icon = MaterialIcon.Home;
+
+        // Assert
+        icon.Should().BeAssignableTo<TnTIcon>().And.BeAssignableTo<NTIcon>();
+        icon.Icon.Should().Be("home");
     }
 
     [Fact]

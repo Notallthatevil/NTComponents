@@ -75,7 +75,7 @@ public partial class NTFabButton : NTButtonBase, INTBadgeable {
     ///     Gets or sets the action icon rendered inside the FAB.
     /// </summary>
     [Parameter, EditorRequired]
-    public TnTIcon Icon { get; set; } = default!;
+    public NTIcon Icon { get; set; } = default!;
 
     /// <summary>
     ///     Gets or sets the optional visible label. When supplied, the FAB renders as an extended FAB.

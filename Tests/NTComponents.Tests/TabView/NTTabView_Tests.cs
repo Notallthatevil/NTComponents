@@ -439,7 +439,7 @@ public class NTTabView_Tests : BunitContext {
 
     [Fact]
     public void IconAddedAndRemoved_RefreshesHeader() {
-        TnTIcon? icon = null;
+        NTIcon? icon = null;
         var cut = RenderIconTab(() => icon);
         cut.FindAll(".nt-tab-view-icon").Should().BeEmpty();
 
@@ -468,7 +468,7 @@ public class NTTabView_Tests : BunitContext {
         });
     }
 
-    private IRenderedComponent<NTTabView> RenderIconTab(Func<TnTIcon?> icon, Func<string>? label = null) {
+    private IRenderedComponent<NTTabView> RenderIconTab(Func<NTIcon?> icon, Func<string>? label = null) {
         var renders = 0;
         var cut = Render<NTTabView>(parameters => parameters.Add(p => p.SelectedValue, "preview").AddChildContent(builder => {
             (++renders).Should().BeLessThan(30, "tab rendering must settle");

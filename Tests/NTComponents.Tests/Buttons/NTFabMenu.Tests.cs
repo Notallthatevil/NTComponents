@@ -6,7 +6,7 @@ using RippleTestingUtility = NTComponents.Tests.TestingUtility.TestingUtility;
 namespace NTComponents.Tests.Buttons;
 
 public class NTFabMenu_Tests : BunitContext {
-    private static TnTIcon SampleIcon => MaterialIcon.Add;
+    private static NTIcon SampleIcon => MaterialIcon.Add;
 
     public NTFabMenu_Tests() {
         RippleTestingUtility.SetupRippleEffectModule(this);
@@ -390,16 +390,16 @@ public class NTFabMenu_Tests : BunitContext {
 
         protected override void BuildRenderTree(RenderTreeBuilder builder) {
             builder.OpenComponent<NTFabMenu>(0);
-            builder.AddAttribute(1, nameof(NTFabMenu.Icon), (object)(TnTIcon)MaterialIcon.Add);
+            builder.AddAttribute(1, nameof(NTFabMenu.Icon), (object)(NTIcon)MaterialIcon.Add);
             builder.AddAttribute(2, nameof(NTFabMenu.AriaLabel), "Create options");
             builder.AddAttribute(3, nameof(NTFabMenu.ChildContent), (RenderFragment)(childBuilder => {
                 childBuilder.OpenComponent<NTFabMenuButtonItem>(0);
-                childBuilder.AddAttribute(1, nameof(NTFabMenuButtonItem.Icon), (object)(TnTIcon)MaterialIcon.Edit);
+                childBuilder.AddAttribute(1, nameof(NTFabMenuButtonItem.Icon), (object)(NTIcon)MaterialIcon.Edit);
                 childBuilder.AddAttribute(2, nameof(NTFabMenuButtonItem.Label), _draftLabel);
                 childBuilder.CloseComponent();
 
                 childBuilder.OpenComponent<NTFabMenuButtonItem>(10);
-                childBuilder.AddAttribute(11, nameof(NTFabMenuButtonItem.Icon), (object)(TnTIcon)MaterialIcon.Upload);
+                childBuilder.AddAttribute(11, nameof(NTFabMenuButtonItem.Icon), (object)(NTIcon)MaterialIcon.Upload);
                 childBuilder.AddAttribute(12, nameof(NTFabMenuButtonItem.Label), "Import");
                 childBuilder.CloseComponent();
             }));
@@ -412,16 +412,16 @@ public class NTFabMenu_Tests : BunitContext {
 
         protected override void BuildRenderTree(RenderTreeBuilder builder) {
             builder.OpenComponent<NTFabMenu>(0);
-            builder.AddAttribute(1, nameof(NTFabMenu.Icon), (object)(TnTIcon)MaterialIcon.Add);
+            builder.AddAttribute(1, nameof(NTFabMenu.Icon), (object)(NTIcon)MaterialIcon.Add);
             builder.AddAttribute(2, nameof(NTFabMenu.AriaLabel), "Create options");
             builder.AddAttribute(3, nameof(NTFabMenu.ChildContent), (RenderFragment)(childBuilder => {
                 childBuilder.OpenComponent<NTFabMenuButtonItem>(0);
-                childBuilder.AddAttribute(1, nameof(NTFabMenuButtonItem.Icon), (object)(TnTIcon)MaterialIcon.Edit);
+                childBuilder.AddAttribute(1, nameof(NTFabMenuButtonItem.Icon), (object)(NTIcon)MaterialIcon.Edit);
                 childBuilder.AddAttribute(2, nameof(NTFabMenuButtonItem.Label), "Draft");
                 childBuilder.CloseComponent();
 
                 childBuilder.OpenComponent<NTFabMenuButtonItem>(10);
-                childBuilder.AddAttribute(11, nameof(NTFabMenuButtonItem.Icon), (object)(TnTIcon)MaterialIcon.Upload);
+                childBuilder.AddAttribute(11, nameof(NTFabMenuButtonItem.Icon), (object)(NTIcon)MaterialIcon.Upload);
                 childBuilder.AddAttribute(12, nameof(NTFabMenuButtonItem.Label), "Import");
                 childBuilder.CloseComponent();
             }));
@@ -433,17 +433,17 @@ public class NTFabMenu_Tests : BunitContext {
 
         protected override void BuildRenderTree(RenderTreeBuilder builder) {
             builder.OpenComponent<NTFabMenu>(0);
-            builder.AddAttribute(1, nameof(NTFabMenu.Icon), (object)(TnTIcon)MaterialIcon.Add);
+            builder.AddAttribute(1, nameof(NTFabMenu.Icon), (object)(NTIcon)MaterialIcon.Add);
             builder.AddAttribute(2, nameof(NTFabMenu.AriaLabel), "Create options");
             builder.AddAttribute(3, nameof(NTFabMenu.ChildContent), (RenderFragment)(childBuilder => {
                 childBuilder.OpenComponent<NTFabMenuButtonItem>(0);
-                childBuilder.AddAttribute(1, nameof(NTFabMenuButtonItem.Icon), (object)(TnTIcon)MaterialIcon.Edit);
+                childBuilder.AddAttribute(1, nameof(NTFabMenuButtonItem.Icon), (object)(NTIcon)MaterialIcon.Edit);
                 childBuilder.AddAttribute(2, nameof(NTFabMenuButtonItem.Label), "Draft");
                 childBuilder.AddAttribute(3, "onclick", "window.createDraft()");
                 childBuilder.CloseComponent();
 
                 childBuilder.OpenComponent<NTFabMenuButtonItem>(10);
-                childBuilder.AddAttribute(11, nameof(NTFabMenuButtonItem.Icon), (object)(TnTIcon)MaterialIcon.Upload);
+                childBuilder.AddAttribute(11, nameof(NTFabMenuButtonItem.Icon), (object)(NTIcon)MaterialIcon.Upload);
                 childBuilder.AddAttribute(12, nameof(NTFabMenuButtonItem.Label), "Import");
                 childBuilder.CloseComponent();
             }));
@@ -463,7 +463,7 @@ public class NTFabMenu_Tests : BunitContext {
 
     private static void RenderItemCount(RenderTreeBuilder builder, int count) {
         builder.OpenComponent<NTFabMenu>(0);
-        builder.AddAttribute(1, nameof(NTFabMenu.Icon), (object)(TnTIcon)MaterialIcon.Add);
+        builder.AddAttribute(1, nameof(NTFabMenu.Icon), (object)(NTIcon)MaterialIcon.Add);
         builder.AddAttribute(2, nameof(NTFabMenu.AriaLabel), "Create options");
         builder.AddAttribute(3, nameof(NTFabMenu.ChildContent), (RenderFragment)(childBuilder => {
             for (var i = 0; i < count; i++) {
@@ -475,7 +475,7 @@ public class NTFabMenu_Tests : BunitContext {
 
     private static void RenderItem(RenderTreeBuilder builder, string label) {
         builder.OpenComponent<NTFabMenuButtonItem>(0);
-        builder.AddAttribute(1, nameof(NTFabMenuButtonItem.Icon), (object)(TnTIcon)MaterialIcon.Add);
+        builder.AddAttribute(1, nameof(NTFabMenuButtonItem.Icon), (object)(NTIcon)MaterialIcon.Add);
         builder.AddAttribute(2, nameof(NTFabMenuButtonItem.Label), label);
         builder.CloseComponent();
     }

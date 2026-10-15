@@ -29,7 +29,7 @@ public class NTMenuLabelItem : Microsoft.AspNetCore.Components.IComponent, INTMe
     public bool Disabled => true;
 
     /// <inheritdoc />
-    public TnTIcon? Icon => null;
+    public NTIcon? Icon => null;
 
     /// <inheritdoc />
     public bool IsActionable => false;

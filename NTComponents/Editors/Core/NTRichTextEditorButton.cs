@@ -38,7 +38,7 @@ public interface INTRichTextEditorButton {
     /// <summary>
     ///     Gets the optional icon rendered inside the toolbar item.
     /// </summary>
-    TnTIcon? Icon { get; }
+    NTIcon? Icon { get; }
 
     /// <summary>
     ///     Gets the optional text rendered inside the toolbar item.
@@ -67,7 +67,7 @@ public sealed class NTRichTextEditorButton : INTRichTextEditorButton {
     /// <param name="value">The optional command value used by the action.</param>
     /// <param name="shortcut">The optional keyboard shortcut shown for the toolbar item.</param>
     /// <param name="cssClass">Optional additional CSS classes applied to the toolbar item.</param>
-    public NTRichTextEditorButton(string action, string title, string? ariaLabel = null, TnTIcon? icon = null, string? text = null, string? value = null, string? shortcut = null, string? cssClass = null) {
+    public NTRichTextEditorButton(string action, string title, string? ariaLabel = null, NTIcon? icon = null, string? text = null, string? value = null, string? shortcut = null, string? cssClass = null) {
         ArgumentException.ThrowIfNullOrWhiteSpace(action);
         ArgumentException.ThrowIfNullOrWhiteSpace(title);
         if (icon is null && string.IsNullOrWhiteSpace(text)) {
@@ -103,7 +103,7 @@ public sealed class NTRichTextEditorButton : INTRichTextEditorButton {
     public string AriaLabel { get; }
 
     /// <inheritdoc />
-    public TnTIcon? Icon { get; }
+    public NTIcon? Icon { get; }
 
     /// <inheritdoc />
     public string? Text { get; }
@@ -142,7 +142,7 @@ public sealed class NTRichTextEditorButtonDivider : INTRichTextEditorButton {
     public string? AriaLabel => null;
 
     /// <inheritdoc />
-    public TnTIcon? Icon => null;
+    public NTIcon? Icon => null;
 
     /// <inheritdoc />
     public string? Text => null;

@@ -89,7 +89,7 @@ public partial class NTRichTextEditor : INTPageScriptComponent<NTRichTextEditor>
     /// Gets or sets the legacy end icon alias. Prefer <see cref="NTFormControlBase{TValue}.TrailingIcon" /> for new code.
     /// </summary>
     [Parameter]
-    public TnTIcon? EndIcon { get; set; }
+    public NTIcon? EndIcon { get; set; }
 
     /// <summary>
     /// Gets or sets the legacy character-counter alias. Prefer <see cref="NTInputBase{TValue}.ShowCharacterCounter" /> for new code.
@@ -101,7 +101,7 @@ public partial class NTRichTextEditor : INTPageScriptComponent<NTRichTextEditor>
     /// Gets or sets the legacy start icon alias. Prefer <see cref="NTFormControlBase{TValue}.LeadingIcon" /> for new code.
     /// </summary>
     [Parameter]
-    public TnTIcon? StartIcon { get; set; }
+    public NTIcon? StartIcon { get; set; }
 
     /// <summary>
     /// Gets or sets tooltip content for compatibility with the legacy form field API.
@@ -113,7 +113,7 @@ public partial class NTRichTextEditor : INTPageScriptComponent<NTRichTextEditor>
     /// Gets or sets the tooltip icon for compatibility with the legacy form field API.
     /// </summary>
     [Parameter]
-    public TnTIcon TooltipIcon { get; set; } = MaterialIcon.Help;
+    public NTIcon TooltipIcon { get; set; } = MaterialIcon.Help;
 
     private MarkupString _markupValue;
 

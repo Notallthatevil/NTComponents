@@ -382,7 +382,7 @@ public sealed class NTComboboxOption<TValue> {
     /// <remarks>
     ///     Icons should reinforce recognition and should not be the only way to distinguish options.
     /// </remarks>
-    public TnTIcon? LeadingIcon { get; set; }
+    public NTIcon? LeadingIcon { get; set; }
 
     /// <summary>
     ///     Gets or sets optional supporting text shown below the label.

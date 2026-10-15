@@ -25,7 +25,7 @@ public interface IFabMenuItem {
     /// <summary>
     ///     Icon rendered before the label.
     /// </summary>
-    TnTIcon? Icon { get; }
+    NTIcon? Icon { get; }
 
     /// <summary>
     ///     Visible menu item text.

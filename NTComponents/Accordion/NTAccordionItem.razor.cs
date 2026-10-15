@@ -93,7 +93,7 @@ public partial class NTAccordionItem : NTComponentBase {
     ///     Optional leading Material icon shown before the label.
     /// </summary>
     [Parameter]
-    public TnTIcon? LeadingIcon { get; set; }
+    public NTIcon? LeadingIcon { get; set; }
 
     /// <summary>
     ///     Initial native open state for the item.

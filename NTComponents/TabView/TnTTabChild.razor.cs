@@ -44,7 +44,7 @@ public partial class TnTTabChild {
     ///     Gets or sets the icon to be displayed in the tab header.
     /// </summary>
     [Parameter]
-    public TnTIcon? Icon { get; set; }
+    public NTIcon? Icon { get; set; }
 
     /// <summary>
     ///     Gets or sets the label for the tab.

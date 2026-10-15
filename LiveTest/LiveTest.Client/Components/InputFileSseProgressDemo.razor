@@ -45,10 +45,10 @@
     public string? SupportingText { get; set; } = "Select a file and click Upload.";
 
     [Parameter]
-    public TnTIcon? StartIcon { get; set; } = new MaterialIcon { Icon = MaterialIcon.SavedSearch };
+    public NTIcon? StartIcon { get; set; } = new MaterialIcon { Icon = MaterialIcon.SavedSearch };
 
     [Parameter]
-    public TnTIcon? EndIcon { get; set; } = new MaterialIcon { Icon = MaterialIcon.QrCode };
+    public NTIcon? EndIcon { get; set; } = new MaterialIcon { Icon = MaterialIcon.QrCode };
 
     [Parameter]
     public RenderFragment? Tooltip { get; set; } = b => b.AddContent(0, "Uploads the selected file and streams server progress over SSE.");

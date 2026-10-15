@@ -29,12 +29,12 @@ public partial class NTInputDateTime<DateTimeType> {
     private bool _metadataMonthOnly;
     private bool _metadataResolved;
     private string _effectiveFormat = string.Empty;
-    private TnTIcon? _filledPickerIcon;
+    private NTIcon? _filledPickerIcon;
     private string? _filledPickerIconName;
-    private int _filledPickerIconColor;
+    private NTColor? _filledPickerIconColor;
     private IconSize _filledPickerIconSize;
     private RenderFragment? _filledPickerIconTooltip;
-    private TnTIcon _resolvedPickerTriggerIcon = MaterialIcon.CalendarMonth;
+    private NTIcon _resolvedPickerTriggerIcon = MaterialIcon.CalendarMonth;
     private string _pickerClass = string.Empty;
     private string _pickerHeadlineId = string.Empty;
     private string _pickerId = string.Empty;
@@ -70,7 +70,7 @@ public partial class NTInputDateTime<DateTimeType> {
     ///     Gets or sets the icon used by the custom picker trigger.
     /// </summary>
     [Parameter]
-    public TnTIcon? PickerTriggerIcon { get; set; }
+    public NTIcon? PickerTriggerIcon { get; set; }
 
     /// <summary>
     ///     Gets the resolved legacy input type.
@@ -288,7 +288,7 @@ public partial class NTInputDateTime<DateTimeType> {
         throw new InvalidOperationException($"The type '{typeof(DateTimeType)}' is not a supported DateTime type.");
     }
 
-    private TnTIcon ResolvePickerTriggerIcon() {
+    private NTIcon ResolvePickerTriggerIcon() {
         var pickerIcon = PickerTriggerIcon ?? _metadata.DefaultPickerIcon;
         if (pickerIcon is not MaterialIcon materialIcon) {
             return pickerIcon;
@@ -296,7 +296,7 @@ public partial class NTInputDateTime<DateTimeType> {
 
         if (_filledPickerIcon is not null
             && string.Equals(_filledPickerIconName, materialIcon.Icon, StringComparison.Ordinal)
-            && _filledPickerIconColor == (int)materialIcon.Color
+            && _filledPickerIconColor == materialIcon.Color
             && _filledPickerIconSize == materialIcon.Size
             && ReferenceEquals(_filledPickerIconTooltip, materialIcon.Tooltip)) {
             return _filledPickerIcon;
@@ -309,12 +309,12 @@ public partial class NTInputDateTime<DateTimeType> {
             Tooltip = materialIcon.Tooltip
         };
         _filledPickerIconName = materialIcon.Icon;
-        _filledPickerIconColor = (int)materialIcon.Color;
+        _filledPickerIconColor = materialIcon.Color;
         _filledPickerIconSize = materialIcon.Size;
         _filledPickerIconTooltip = materialIcon.Tooltip;
         return _filledPickerIcon;
     }
 
-    private sealed record DateTimeInputMetadata(InputType Type, string DefaultFormat, string PickerMode, string PickerHeadline, string PickerSupportingLabel, string PickerTriggerAriaLabel, TnTIcon DefaultPickerIcon);
+    private sealed record DateTimeInputMetadata(InputType Type, string DefaultFormat, string PickerMode, string PickerHeadline, string PickerSupportingLabel, string PickerTriggerAriaLabel, NTIcon DefaultPickerIcon);
 
 }

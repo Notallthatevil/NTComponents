@@ -197,7 +197,7 @@ public class NTBadgeHosts_Tests : BunitContext {
             .Add(x => x.AriaLabel, "Primary")
             .AddChildContent(item));
 
-    private static RenderFragment Tab(string label, TnTIcon? icon, bool showBadge, string? badgeContent) => builder => {
+    private static RenderFragment Tab(string label, NTIcon? icon, bool showBadge, string? badgeContent) => builder => {
         builder.OpenComponent<NTTab>(0);
         builder.AddAttribute(1, nameof(NTTab.Label), label);
         builder.AddAttribute(2, nameof(NTTab.Icon), (object?)icon);

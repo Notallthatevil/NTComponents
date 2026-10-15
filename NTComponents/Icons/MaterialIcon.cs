@@ -27,14 +27,14 @@ public sealed partial class MaterialIcon : TnTIcon {
     public override string? ElementStyle => CssStyleBuilder.Create()
         .AddFromAdditionalAttributes(AdditionalAttributes)
         .AddStyle("font-variation-settings", "'FILL' 1", Appearance == IconAppearance.Filled)
-        .AddStyle("color", Color.ToCssTnTColorVariable(), Color is not TnTColor.OnSurface and not TnTColor.None)
+        .AddStyle("color", Color.ToCssNTColorVariable(), Color.HasValue)
         .Build();
 
     /// <summary>
     /// Base constructor for MaterialIcon.
     /// </summary>
     public MaterialIcon() { }
-    internal MaterialIcon(string icon) : base(icon) { }
+    internal MaterialIcon(string icon) => Icon = icon;
 
     /// <summary>
     /// Implicit conversion from string to MaterialIcon.

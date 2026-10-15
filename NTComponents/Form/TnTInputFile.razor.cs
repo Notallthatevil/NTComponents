@@ -131,7 +131,7 @@ public partial class TnTInputFile {
     ///     Gets or sets the icon displayed at the end of the input.
     /// </summary>
     [Parameter]
-    public TnTIcon? EndIcon { get; set; }
+    public NTIcon? EndIcon { get; set; }
 
     /// <summary>
     ///     Gets or sets the error color for the input.
@@ -260,7 +260,7 @@ public partial class TnTInputFile {
     ///     Gets or sets the icon displayed at the start of the input.
     /// </summary>
     [Parameter]
-    public TnTIcon? StartIcon { get; set; }
+    public NTIcon? StartIcon { get; set; }
 
     /// <summary>
     ///     Text that provides additional information about the input, such as usage instructions or validation hints.
@@ -290,7 +290,7 @@ public partial class TnTInputFile {
     ///     The icon displayed alongside the tooltip text.
     /// </summary>
     [Parameter]
-    public TnTIcon TooltipIcon { get; set; } = MaterialIcon.Help;
+    public NTIcon TooltipIcon { get; set; } = MaterialIcon.Help;
 
     /// <summary>
     ///     The resource string displayed before loading starts.

@@ -73,7 +73,7 @@ public partial class NTInputRadio<[DynamicallyAccessedMembers(DynamicallyAccesse
     ///     Gets or sets an icon before the radio control.
     /// </summary>
     [Parameter]
-    public TnTIcon? LeadingIcon { get; set; }
+    public NTIcon? LeadingIcon { get; set; }
 
     /// <summary>
     ///     Gets or sets whether this option is read-only.
@@ -91,7 +91,7 @@ public partial class NTInputRadio<[DynamicallyAccessedMembers(DynamicallyAccesse
     ///     Gets or sets an icon after the option label.
     /// </summary>
     [Parameter]
-    public TnTIcon? TrailingIcon { get; set; }
+    public NTIcon? TrailingIcon { get; set; }
 
     /// <summary>
     ///     Gets or sets the option value.

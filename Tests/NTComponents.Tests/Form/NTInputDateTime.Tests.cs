@@ -5,7 +5,7 @@ namespace NTComponents.Tests.Form;
 
 public class NTInputDateTime_Tests : BunitContext {
 
-    private sealed class TestIcon : TnTIcon {
+    private sealed class TestIcon : NTIcon {
         public TestIcon(string icon) => Icon = icon;
 
         public override string? ElementClass => $"test-picker-icon {AdditionalClass}";
@@ -294,7 +294,7 @@ public class NTInputDateTime_Tests : BunitContext {
         cut.Find(".tnt-dtp-trigger-icon").GetAttribute("style").Should().Contain("'FILL' 1");
     }
 
-    // Behavior source: PickerTriggerIcon accepts any TnTIcon and is rendered as the custom picker's trigger icon.
+    // Behavior source: PickerTriggerIcon accepts any NTIcon and is rendered as the custom picker's trigger icon.
     [Fact]
     public void Custom_NonMaterial_Picker_Icon_Is_Rendered() {
         var cut = RenderDateTime(configure: parameters => parameters

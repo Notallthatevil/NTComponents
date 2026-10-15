@@ -128,7 +128,7 @@ public partial class NTFabMenu {
     ///     Gets or sets the icon rendered in the closed FAB.
     /// </summary>
     [Parameter, EditorRequired]
-    public TnTIcon Icon { get; set; } = default!;
+    public NTIcon Icon { get; set; } = default!;
 
     /// <inheritdoc />
     public override string? JsModulePath => "./_content/NTComponents/Buttons/NTFabMenu.razor.js";
@@ -219,7 +219,7 @@ public partial class NTFabMenu {
         .AddElevation(Elevation)
         .Build();
     private string ToggleButtonStyle => $"anchor-name: {MenuAnchorName};";
-    private static TnTIcon CloseIcon => MaterialIcon.Close;
+    private static NTIcon CloseIcon => MaterialIcon.Close;
 
     private static readonly RenderFragment ButtonRipple = NTRipple.RenderHost();
     private readonly List<IFabMenuItem> _menuItems = [];

@@ -5,7 +5,7 @@ using RippleTestingUtility = NTComponents.Tests.TestingUtility.TestingUtility;
 namespace NTComponents.Tests.Buttons;
 
 public class NTFabButton_Tests : BunitContext {
-    private static TnTIcon SampleIcon => MaterialIcon.Add;
+    private static NTIcon SampleIcon => MaterialIcon.Add;
 
     public NTFabButton_Tests() => RippleTestingUtility.SetupRippleEffectModule(this);
 

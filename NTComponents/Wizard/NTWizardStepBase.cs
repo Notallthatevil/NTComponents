@@ -16,7 +16,7 @@ public abstract class NTWizardStepBase : ComponentBase, IDisposable {
     ///     The icon associated with the wizard step.
     /// </summary>
     [Parameter]
-    public TnTIcon? Icon { get; set; }
+    public NTIcon? Icon { get; set; }
 
     /// <summary>
     ///     Gets or sets whether this step is already complete.

@@ -74,7 +74,7 @@ public partial class NTTab : INTBadgeable {
     ///     Gets or sets the icon displayed above or beside the tab label.
     /// </summary>
     [Parameter]
-    public TnTIcon? Icon { get; set; }
+    public NTIcon? Icon { get; set; }
 
     /// <summary>
     ///     Gets or sets the visible tab label.

@@ -1426,23 +1426,23 @@
 
     private string? CheckboxLabel => _showLabel ? "Accept terms" : null;
     private string? CheckboxSupportingText => _showSupportingText ? "Required only when checkbox required is enabled" : null;
-    private TnTIcon? CheckboxLeadingIcon => _showLeadingIcon ? MaterialIcon.VerifiedUser : null;
-    private TnTIcon? CheckboxTrailingIcon => _showTrailingIcon ? MaterialIcon.Info : null;
-    private TnTIcon? RadioLeadingIcon => _showLeadingIcon ? MaterialIcon.AlternateEmail : null;
-    private TnTIcon? RadioTrailingIcon => _showTrailingIcon ? MaterialIcon.Info : null;
+    private NTIcon? CheckboxLeadingIcon => _showLeadingIcon ? MaterialIcon.VerifiedUser : null;
+    private NTIcon? CheckboxTrailingIcon => _showTrailingIcon ? MaterialIcon.Info : null;
+    private NTIcon? RadioLeadingIcon => _showLeadingIcon ? MaterialIcon.AlternateEmail : null;
+    private NTIcon? RadioTrailingIcon => _showTrailingIcon ? MaterialIcon.Info : null;
     private string? RadioGroupLabel => _showLabel ? "Contact method" : null;
     private string? RadioGroupSupportingText => _showSupportingText ? "Press 1-3 to select; arrow keys highlight and Space selects." : null;
     private string? SwitchLabel => _showLabel ? "Notifications" : null;
     private string? SwitchSupportingText => _showSupportingText ? "Applies immediately" : null;
-    private TnTIcon? SwitchLeadingIcon => _showLeadingIcon ? MaterialIcon.Notifications : null;
-    private TnTIcon? SwitchTrailingIcon => _showTrailingIcon ? MaterialIcon.Info : null;
+    private NTIcon? SwitchLeadingIcon => _showLeadingIcon ? MaterialIcon.Notifications : null;
+    private NTIcon? SwitchTrailingIcon => _showTrailingIcon ? MaterialIcon.Info : null;
     private string? BudgetRangeLabel => _showLabel ? "Budget range" : null;
     private string? BudgetRangeSupportingText => _showSupportingText ? "Range slider with two native handles" : null;
     private string? BrightnessSliderLabel => _showLabel ? "Brightness" : null;
     private string? BrightnessSliderSupportingText => _showSupportingText ? "Vertical slider demo" : null;
-    private TnTIcon? DateTrailingIcon => _showTrailingIcon ? MaterialIcon.CalendarMonth : null;
-    private TnTIcon? LeadingIcon => _showLeadingIcon ? MaterialIcon.Person : null;
-    private TnTIcon? TrailingIcon => _showTrailingIcon ? MaterialIcon.Search : null;
+    private NTIcon? DateTrailingIcon => _showTrailingIcon ? MaterialIcon.CalendarMonth : null;
+    private NTIcon? LeadingIcon => _showLeadingIcon ? MaterialIcon.Person : null;
+    private NTIcon? TrailingIcon => _showTrailingIcon ? MaterialIcon.Search : null;
     private string? DateLabel => _showLabel ? "Start date" : null;
     private string? DateTimeLabel => _showLabel ? "Appointment" : null;
     private string? EmailLabel => _showLabel ? "Email" : null;
@@ -1451,16 +1451,16 @@
     private string? Label => _showLabel ? "Name" : null;
     private string? MonthLabel => _showLabel ? "Start month" : null;
     private string? PhoneLabel => _showLabel ? "Phone" : null;
-    private TnTIcon? PhoneLeadingIcon => _showLeadingIcon ? MaterialIcon.Phone : null;
+    private NTIcon? PhoneLeadingIcon => _showLeadingIcon ? MaterialIcon.Phone : null;
     private string? PhonePlaceholder => _showPlaceholder ? _phoneMask.Replace("#", "0", StringComparison.Ordinal) : null;
     private string? PhonePrefixText => _showPrefix ? "tel:" : null;
     private string? PhoneSupportingText => _showSupportingText ? $"Mask: {_phoneMask}" : null;
     private string? Placeholder => _showPlaceholder ? "Placeholder" : null;
     private string? PrefixText => _showPrefix ? "#" : null;
-    private TnTIcon? NotesLeadingIcon => _showLeadingIcon ? MaterialIcon.Notes : null;
+    private NTIcon? NotesLeadingIcon => _showLeadingIcon ? MaterialIcon.Notes : null;
     private string? NotesLabel => _showLabel ? "Notes" : null;
     private string? NotesSupportingText => _showSupportingText ? "Multiline textarea field" : null;
-    private TnTIcon? FileLeadingIcon => _showLeadingIcon ? MaterialIcon.AttachFile : null;
+    private NTIcon? FileLeadingIcon => _showLeadingIcon ? MaterialIcon.AttachFile : null;
     private string? FileLabel => _showLabel ? "Attachments" : null;
     private string? FileSupportingText => _showSupportingText ? "Static form post and interactive stream upload demo" : null;
     private string? PriceLabel => _showLabel ? "Price" : null;
@@ -1469,14 +1469,14 @@
     private string? StatusLabel => _showLabel ? "Status" : null;
     private string? ApprovalLabel => _showLabel ? "Approval" : null;
     private string? PriorityLabel => _showLabel ? "Priority" : null;
-    private TnTIcon? StatusLeadingIcon => _showLeadingIcon ? MaterialIcon.ListAlt : null;
+    private NTIcon? StatusLeadingIcon => _showLeadingIcon ? MaterialIcon.ListAlt : null;
     private string? StatusSupportingText => _showSupportingText ? "Native select with option and optgroup children" : null;
     private string? ApprovalSupportingText => _showSupportingText ? "Nullable bool select" : null;
     private string? PrioritySupportingText => _showSupportingText ? "Nullable enum select" : null;
-    private TnTIcon? TagsLeadingIcon => _showLeadingIcon ? MaterialIcon.Label : null;
+    private NTIcon? TagsLeadingIcon => _showLeadingIcon ? MaterialIcon.Label : null;
     private string? TagsLabel => _showLabel ? "Tags" : null;
     private string? TagsSupportingText => _showSupportingText ? "Multi-select combobox; click items to toggle them" : null;
-    private TnTIcon? CityLeadingIcon => _showLeadingIcon ? MaterialIcon.LocationCity : null;
+    private NTIcon? CityLeadingIcon => _showLeadingIcon ? MaterialIcon.LocationCity : null;
     private string? CityLabel => _showLabel ? "City" : null;
     private string? CitySupportingText => _showSupportingText ? "Local autocomplete suggestions filtered in the browser" : null;
     private string? SuffixText => _showSuffix ? "suffix" : null;
@@ -1484,7 +1484,7 @@
     private string? TimeLabel => _showLabel ? "Start time" : null;
     private string? TemperatureSliderLabel => _showLabel ? "Temperature offset" : null;
     private string? TemperatureSliderSupportingText => _showSupportingText ? "Centered slider from -50 to 50" : null;
-    private TnTIcon? VolumeSliderInsetIcon => _showSliderInsetIcon ? MaterialIcon.VolumeDown : null;
+    private NTIcon? VolumeSliderInsetIcon => _showSliderInsetIcon ? MaterialIcon.VolumeDown : null;
     private string? VolumeSliderLabel => _showLabel ? "Volume" : null;
     private string? VolumeSliderSupportingText => _showSupportingText ? "Standard slider with stops and immediate binding" : null;
 
@@ -1619,7 +1619,7 @@
         }
     ];
 
-    private sealed record AutocompleteCityOption(string Value, string Label, string? SupportingText = null, bool Disabled = false, TnTIcon? LeadingIcon = null);
+    private sealed record AutocompleteCityOption(string Value, string Label, string? SupportingText = null, bool Disabled = false, NTIcon? LeadingIcon = null);
 
     private static readonly IReadOnlyList<AutocompleteCityOption> CityOptions = [
         new("Austin", "Austin", "Texas"),

@@ -48,7 +48,7 @@ public partial class TnTInputRadio<[DynamicallyAccessedMembers(DynamicallyAccess
     ///     Gets or sets the icon displayed at the end of the radio input.
     /// </summary>
     [Parameter]
-    public TnTIcon? EndIcon { get; set; }
+    public NTIcon? EndIcon { get; set; }
 
     /// <summary>
     ///     Gets or sets the label for the radio input.
@@ -76,7 +76,7 @@ public partial class TnTInputRadio<[DynamicallyAccessedMembers(DynamicallyAccess
     ///     Gets or sets the icon displayed at the start of the radio input.
     /// </summary>
     [Parameter]
-    public TnTIcon? StartIcon { get; set; }
+    public NTIcon? StartIcon { get; set; }
 
     /// <inheritdoc />
     [Parameter]

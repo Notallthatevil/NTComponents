@@ -129,10 +129,10 @@ public partial class NTWindow : NTComponentBase {
     };
     private string DraggableValue => Draggable.ToString().ToLowerInvariant();
     private string FullscreenAriaLabel => FullscreenButtonAriaLabel ?? (State == NTWindowState.Fullscreen ? $"Restore {Title}" : $"Show {Title} fullscreen");
-    private TnTIcon FullscreenIcon => State == NTWindowState.Fullscreen ? MaterialIcon.FullscreenExit : MaterialIcon.Fullscreen;
+    private NTIcon FullscreenIcon => State == NTWindowState.Fullscreen ? MaterialIcon.FullscreenExit : MaterialIcon.Fullscreen;
     private string FullscreenPressed => (State == NTWindowState.Fullscreen).ToString().ToLowerInvariant();
     private string MinimizeAriaLabel => MinimizeButtonAriaLabel ?? (State == NTWindowState.Minimized ? $"Restore {Title}" : $"Minimize {Title}");
-    private TnTIcon MinimizeIcon => State == NTWindowState.Minimized ? MaterialIcon.KeyboardArrowUp : MaterialIcon.Minimize;
+    private NTIcon MinimizeIcon => State == NTWindowState.Minimized ? MaterialIcon.KeyboardArrowUp : MaterialIcon.Minimize;
     private string StateValue => State.ToString().ToLowerInvariant();
     private string TitleId => $"{ComponentIdentifier}-title";
 
