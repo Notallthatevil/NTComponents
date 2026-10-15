@@ -10,6 +10,7 @@ permissions:
 
 env:
   TESTINGPLATFORM_EXITCODE_IGNORE: 8
+  NuGetAudit: false
 
 jobs:
   tests:

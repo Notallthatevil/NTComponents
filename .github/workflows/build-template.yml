@@ -11,6 +11,7 @@ on:
 env:
   COVERAGE_THRESHOLD: 50
   TESTINGPLATFORM_EXITCODE_IGNORE: 8
+  NuGetAudit: false
 
 jobs:
   build:

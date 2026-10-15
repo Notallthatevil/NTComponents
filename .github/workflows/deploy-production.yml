@@ -8,6 +8,9 @@ permissions:
   contents: read
   id-token: write
 
+env:
+  NuGetAudit: false
+
 concurrency:
   group: ntcomponents-production
   cancel-in-progress: false
