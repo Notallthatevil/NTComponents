@@ -52,9 +52,9 @@ public class NTRichTextEditor_Tests : BunitContext {
     public void PageScript_RenderFragment_Is_Included() {
         var cut = RenderEditor();
 
-        var pageScripts = cut.FindAll("tnt-page-script");
-        pageScripts.Should().HaveCount(1);
-        pageScripts.Select(script => script.GetAttribute("src")).Should().Equal("./_content/NTComponents/Editors/NTRichTextEditor.razor.js");
+        var pageScripts = cut.FindAll("tnt-page-script").Select(script => script.GetAttribute("src")).ToList();
+        pageScripts.Should().ContainSingle(src => src == "./_content/NTComponents/Editors/NTRichTextEditor.razor.js");
+        pageScripts.Where(src => src != "./_content/NTComponents/Editors/NTRichTextEditor.razor.js").Should().OnlyContain(src => src == "./_content/NTComponents/Form/NTInputColor.razor.js", "the color fields in the tool panels add only their own module");
     }
 
     [Fact]
@@ -91,11 +91,11 @@ public class NTRichTextEditor_Tests : BunitContext {
         cut.Find("[data-tool-command='table']").Should().NotBeNull();
         cut.Find("[data-role='table-columns']").GetAttribute("type").Should().Be("number");
         cut.Find("[data-role='table-rows']").GetAttribute("type").Should().Be("number");
-        cut.Find("[data-role='table-border-color']").GetAttribute("type").Should().Be("color");
+        cut.Find("[data-role='table-border-color']").GetAttribute("type").Should().Be("text");
         cut.Find("[data-role='table-caption']").GetAttribute("type").Should().Be("text");
         cut.Find("[data-role='text-color-editor']").Should().NotBeNull();
         cut.Find("[data-tool-command='textColor']").Should().NotBeNull();
-        cut.Find("[data-role='text-color-value']").GetAttribute("type").Should().Be("color");
+        cut.Find("[data-role='text-color-value']").GetAttribute("type").Should().Be("text");
         cut.Find("[data-role='link-editor']").Should().NotBeNull();
         cut.Find("[data-tool-command='link']").Should().NotBeNull();
         cut.Find("[data-role='link-url']").GetAttribute("type").Should().Be("url");
@@ -623,7 +623,7 @@ public class NTRichTextEditor_Tests : BunitContext {
         public string? Title { get; init; }
         public string? Shortcut { get; init; }
         public string? AriaLabel { get; init; }
-        public TnTIcon? Icon { get; init; }
+        public NTIcon? Icon { get; init; }
         public string? Text { get; init; }
         public string? CssClass { get; init; }
     }

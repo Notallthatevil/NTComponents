@@ -1,4 +1,39 @@
 @namespace NTComponents
 @inherits NTInputBase<string?>
 
-@base.BuildRenderTree
+<div class="@RootClass" style="@RootStyle" data-nt-input-color="true" data-show-alpha="@ShowAlphaAttribute">
+    @base.BuildRenderTree
+
+    <button type="button"
+            class="nt-input-color-trigger"
+            aria-label="Open color picker"
+            aria-haspopup="dialog"
+            aria-expanded="false"
+            aria-controls="@PopoverId"
+            disabled="@IsPickerDisabled"
+            data-nt-input-color-trigger="true">
+        @(MaterialIcon.Colorize.Render("nt-input-color-trigger-icon"))
+    </button>
+
+    <div id="@PopoverId"
+         class="nt-input-color-popover"
+         popover="auto"
+         role="dialog"
+         aria-label="Color picker"
+         data-nt-input-color-popover="true">
+        <NTColorPicker Value="@PickerValue"
+                       ShowAlpha="ShowAlpha"
+                       Disabled="IsPickerDisabled"
+                       data-nt-color-embedded="true" />
+        <div class="nt-input-color-actions">
+            <NTButton Variant="NTButtonVariant.Text" Label="Cancel" Disabled="IsPickerDisabled" data-nt-input-color-action="cancel" />
+            <NTButton Variant="NTButtonVariant.Text" Label="OK" Disabled="IsPickerDisabled" data-nt-input-color-action="confirm" />
+        </div>
+    </div>
+
+    <NTPageScript Src="@JsModulePath" />
+</div>
+
+@code {
+    private RenderFragment SwatchFragment => @<span class="nt-input-color-swatch" style="@SwatchStyle" data-nt-input-color-swatch="true"></span>;
+}

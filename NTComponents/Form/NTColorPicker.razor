@@ -1,0 +1,68 @@
+@namespace NTComponents
+@using NTComponents.Core
+@inherits NTPageScriptComponent<NTColorPicker>
+
+<div @attributes="AdditionalAttributes"
+     id="@ElementId"
+     class="@ElementClass"
+     style="@ElementStyle"
+     title="@ElementTitle"
+     lang="@ElementLang"
+     role="group"
+     aria-label="@AriaLabel"
+     data-nt-color-picker="true"
+     data-value="@Value"
+     data-show-alpha="@ShowAlphaAttribute"
+     data-disabled="@DisabledAttribute"
+     @ref="Element">
+    <div class="nt-color-area" role="slider" tabindex="@AreaTabIndex" aria-label="Saturation and brightness" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="Saturation 0%, brightness 0%" aria-disabled="@DisabledAttribute" data-nt-color-area="true">
+        <span class="nt-color-area-thumb" aria-hidden="true"></span>
+    </div>
+
+    <div class="nt-color-controls">
+        <div class="nt-color-sliders">
+            <input type="range" class="nt-color-slider nt-color-hue" min="0" max="360" step="1" value="0" aria-label="Hue" disabled="@Disabled" data-nt-color-hue="true" />
+            @if (ShowAlpha) {
+                <input type="range" class="nt-color-slider nt-color-alpha" min="0" max="100" step="1" value="100" aria-label="Opacity" disabled="@Disabled" data-nt-color-alpha="true" />
+            }
+        </div>
+        <span class="nt-color-preview" aria-hidden="true"><span class="nt-color-preview-fill"></span></span>
+    </div>
+
+    <div class="nt-color-formats" role="group" aria-label="Color format">
+        <button type="button" class="nt-color-format" aria-pressed="true" disabled="@Disabled" data-nt-color-format="hex">Hex</button>
+        <button type="button" class="nt-color-format" aria-pressed="false" disabled="@Disabled" data-nt-color-format="rgb">RGB</button>
+        <button type="button" class="nt-color-format" aria-pressed="false" disabled="@Disabled" data-nt-color-format="hsl">HSL</button>
+    </div>
+
+    <div class="nt-color-fields" data-nt-color-fields="hex">
+        <label class="nt-color-field nt-color-field-hex" data-nt-color-fieldset="hex">
+            <span class="nt-color-field-label">Hex</span>
+            <input type="text" class="nt-color-field-input" maxlength="9" spellcheck="false" autocomplete="off" disabled="@Disabled" data-nt-color-field="hex" />
+        </label>
+        @foreach (var channel in RgbChannels) {
+            <label class="nt-color-field" data-nt-color-fieldset="rgb">
+                <span class="nt-color-field-label">@channel.Label</span>
+                <input type="text" inputmode="numeric" class="nt-color-field-input" maxlength="3" spellcheck="false" autocomplete="off" disabled="@Disabled" data-nt-color-field="@channel.Key" />
+            </label>
+        }
+        @foreach (var channel in HslChannels) {
+            <label class="nt-color-field" data-nt-color-fieldset="hsl">
+                <span class="nt-color-field-label">@channel.Label</span>
+                <input type="text" inputmode="numeric" class="nt-color-field-input" maxlength="3" spellcheck="false" autocomplete="off" disabled="@Disabled" data-nt-color-field="@channel.Key" />
+            </label>
+        }
+        @if (ShowAlpha) {
+            <label class="nt-color-field nt-color-field-alpha" data-nt-color-fieldset="rgb hsl">
+                <span class="nt-color-field-label">A</span>
+                <input type="text" inputmode="numeric" class="nt-color-field-input" maxlength="3" spellcheck="false" autocomplete="off" disabled="@Disabled" data-nt-color-field="a" />
+            </label>
+        }
+    </div>
+
+    <input type="hidden" name="@Name" value="@Value" disabled="@Disabled" data-nt-color-value="true" @onchange="OnValueChangedAsync" />
+</div>
+
+@if (!IsEmbedded) {
+    @PageScript
+}

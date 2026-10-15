@@ -42,6 +42,12 @@
                     </span>
                 }
 
+                @if (LeadingContent is not null) {
+                    <span class="nt-input-leading nt-input-leading-content" aria-hidden="true">
+                        @LeadingContent
+                    </span>
+                }
+
                 @if (!string.IsNullOrWhiteSpace(PrefixText)) {
                     <span class="nt-input-prefix" id="@PrefixId">@PrefixText</span>
                 }
@@ -107,7 +113,7 @@
                disabled="@FieldDisabled"
                required="@IsRequired"
                minlength="@_minLength"
-               maxlength="@_maxLength"
+               maxlength="@NativeMaxLength"
                min="@_minValue"
                max="@_maxValue"
                placeholder="@EffectivePlaceholder"

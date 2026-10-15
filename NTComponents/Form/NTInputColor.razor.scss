@@ -1,0 +1,131 @@
+@use 'sass:map';
+@use '../Styles/_Variables/_colors.scss' as colors;
+@use '../Styles/_Variables/_corner-radius.scss' as corners;
+@use '../Styles/_Variables/_elevation.scss' as elevation;
+@use '../Styles/_Variables/_motion.scss' as motion;
+@use '../Buttons/buttonFocusRing' as focus;
+
+$nt-input-color-motion: motion.$nt-motion-duration-short_3 motion.$nt-motion-easing-standard;
+$nt-input-color-touch-target: 40px;
+$nt-input-color-swatch-size: 20px;
+$nt-input-color-checker-size: 8px;
+$nt-input-color-popover-gap: 4px;
+$nt-input-color-popover-edge: 8px;
+$nt-input-color-trigger-top-comfortable: 28px;
+$nt-input-color-trigger-top-standard: 21px;
+$nt-input-color-trigger-top-dense: 14px;
+$nt-input-color-checkerboard: conic-gradient(colors.$nt-color-outline-variant 25%, colors.$nt-color-surface-container-lowest 0 50%, colors.$nt-color-outline-variant 0 75%, colors.$nt-color-surface-container-lowest 0) 0 0 / #{$nt-input-color-checker-size} #{$nt-input-color-checker-size};
+
+// Last resort when the popover fits neither below nor above the field: pin it to the bottom of the viewport.
+@position-try --nt-input-color-viewport {
+    top: auto;
+    bottom: #{$nt-input-color-popover-edge};
+    left: anchor(left);
+}
+
+.nt-input-color {
+    position: relative;
+    width: 100%;
+    min-width: 0;
+
+    ::deep .nt-input {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    ::deep .nt-input-container-overflow {
+        anchor-name: var(--nt-input-color-anchor);
+    }
+
+    ::deep .nt-input-field {
+        padding-inline-end: 48px;
+    }
+
+    ::deep .nt-input-control {
+        font-variant-numeric: tabular-nums;
+    }
+
+    .nt-input-color-swatch {
+        box-sizing: border-box;
+        display: block;
+        width: $nt-input-color-swatch-size;
+        height: $nt-input-color-swatch-size;
+        border-radius: corners.$nt-corner-radius-full;
+        background: linear-gradient(var(--nt-input-color-swatch, transparent), var(--nt-input-color-swatch, transparent)), $nt-input-color-checkerboard;
+        outline: 1px solid colors.$nt-color-outline;
+        outline-offset: -1px;
+    }
+
+    .nt-input-color-trigger {
+        position: absolute;
+        inset-block-start: $nt-input-color-trigger-top-standard;
+        inset-inline-end: 10px;
+        z-index: 3;
+        display: inline-grid;
+        place-items: center;
+        width: $nt-input-color-touch-target;
+        height: $nt-input-color-touch-target;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        border-radius: corners.$nt-corner-radius-full;
+        background-color: transparent;
+        color: var(--nt-input-icon-color, #{colors.$nt-color-on-surface-variant});
+        cursor: pointer;
+        transform: translateY(-50%);
+        transition: background-color $nt-input-color-motion, color $nt-input-color-motion;
+
+        &:hover {
+            background-color: color-mix(in srgb, colors.$nt-color-on-surface 8%, transparent);
+            color: colors.$nt-color-on-surface;
+        }
+
+        &:focus-visible {
+            @include focus.nt-button-focus-ring;
+        }
+
+        &:disabled {
+            cursor: default;
+            opacity: 0.38;
+        }
+    }
+
+    &.nt-input-color-comfortable .nt-input-color-trigger {
+        inset-block-start: $nt-input-color-trigger-top-comfortable;
+    }
+
+    &.nt-input-color-dense .nt-input-color-trigger {
+        inset-block-start: $nt-input-color-trigger-top-dense;
+    }
+
+    .nt-input-color-trigger-icon {
+        pointer-events: none;
+    }
+
+    .nt-input-color-popover {
+        position-anchor: var(--nt-input-color-anchor);
+        position: fixed;
+        inset: auto;
+        top: calc(anchor(bottom) + #{$nt-input-color-popover-gap});
+        left: anchor(left);
+        position-try-fallbacks: flip-block, flip-inline, flip-block flip-inline, --nt-input-color-viewport;
+        box-sizing: border-box;
+        max-width: calc(100vw - #{$nt-input-color-popover-edge * 2});
+        max-height: calc(100dvh - #{$nt-input-color-popover-edge * 2});
+        margin: 0;
+        padding: 0;
+        overflow: auto;
+        border: 0;
+        border-radius: corners.$nt-corner-radius-large;
+        background: colors.$nt-color-surface-container-high;
+        color: colors.$nt-color-on-surface;
+        box-shadow: map.get(elevation.$nt-elevation-shadows, 3);
+    }
+
+    .nt-input-color-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        padding: 0 16px 16px;
+    }
+}

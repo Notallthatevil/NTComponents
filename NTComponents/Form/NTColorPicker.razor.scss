@@ -1,0 +1,281 @@
+@use '../Styles/_Variables/_colors.scss' as colors;
+@use '../Styles/_Variables/_corner-radius.scss' as corners;
+@use '../Styles/_Variables/_motion.scss' as motion;
+@use '../Styles/_Variables/_typescale.scss' as typescale;
+@use '../Buttons/buttonFocusRing' as focus;
+
+$nt-color-picker-width: 296px;
+$nt-color-picker-padding: 16px;
+$nt-color-picker-gap: 12px;
+$nt-color-picker-area-height: 168px;
+$nt-color-picker-thumb-size: 20px;
+$nt-color-picker-thumb-ring: 3px;
+$nt-color-picker-thumb-ring-color: #fff;
+$nt-color-picker-track-height: 12px;
+$nt-color-picker-control-height: 40px;
+$nt-color-picker-checker-size: 8px;
+$nt-color-picker-disabled-opacity: 0.38;
+$nt-color-picker-transition: motion.$nt-motion-duration-short_3 motion.$nt-motion-easing-standard;
+$nt-color-picker-hue-track: linear-gradient(to right, hsl(0 100% 50%), hsl(60 100% 50%), hsl(120 100% 50%), hsl(180 100% 50%), hsl(240 100% 50%), hsl(300 100% 50%), hsl(360 100% 50%));
+$nt-color-picker-checkerboard: conic-gradient(colors.$nt-color-outline-variant 25%, colors.$nt-color-surface-container-lowest 0 50%, colors.$nt-color-outline-variant 0 75%, colors.$nt-color-surface-container-lowest 0) 0 0 / #{$nt-color-picker-checker-size} #{$nt-color-picker-checker-size};
+
+@mixin nt-color-picker-thumb($fill) {
+    box-sizing: border-box;
+    width: $nt-color-picker-thumb-size;
+    height: $nt-color-picker-thumb-size;
+    border: $nt-color-picker-thumb-ring solid $nt-color-picker-thumb-ring-color;
+    border-radius: corners.$nt-corner-radius-full;
+    background: $fill;
+    outline: 1px solid colors.$nt-color-outline;
+}
+
+@mixin nt-color-picker-slider-track($track) {
+    &::-webkit-slider-runnable-track {
+        height: $nt-color-picker-track-height;
+        border-radius: $nt-color-picker-track-height * 0.5;
+        background: $track;
+    }
+
+    &::-moz-range-track {
+        height: $nt-color-picker-track-height;
+        border-radius: $nt-color-picker-track-height * 0.5;
+        background: $track;
+    }
+}
+
+.nt-color-picker {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: $nt-color-picker-gap;
+    width: $nt-color-picker-width;
+    max-width: 100%;
+    padding: $nt-color-picker-padding;
+    border-radius: corners.$nt-corner-radius-large;
+    background: colors.$nt-color-surface-container-high;
+    color: colors.$nt-color-on-surface;
+
+    &[data-nt-color-embedded='true'] {
+        border-radius: 0;
+        background: transparent;
+    }
+
+    &.nt-color-picker-disabled {
+        opacity: $nt-color-picker-disabled-opacity;
+        pointer-events: none;
+    }
+
+    .nt-color-area {
+        position: relative;
+        flex: none;
+        height: $nt-color-picker-area-height;
+        border-radius: corners.$nt-corner-radius-medium;
+        background: linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, var(--nt-color-picker-hue, #f00));
+        cursor: crosshair;
+        touch-action: none;
+        user-select: none;
+
+        &:focus-visible {
+            @include focus.nt-button-focus-ring;
+            outline-offset: 2px;
+        }
+    }
+
+    .nt-color-area-thumb {
+        @include nt-color-picker-thumb(var(--nt-color-picker-solid, #000));
+
+        position: absolute;
+        left: var(--nt-color-area-x, 0%);
+        top: var(--nt-color-area-y, 100%);
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+    }
+
+    .nt-color-controls {
+        display: flex;
+        align-items: center;
+        gap: $nt-color-picker-gap;
+    }
+
+    .nt-color-sliders {
+        display: flex;
+        flex: 1 1 auto;
+        flex-direction: column;
+        gap: $nt-color-picker-gap;
+        min-width: 0;
+    }
+
+    .nt-color-slider {
+        -webkit-appearance: none;
+        appearance: none;
+        box-sizing: border-box;
+        width: 100%;
+        height: $nt-color-picker-thumb-size;
+        margin: 0;
+        background: transparent;
+        cursor: pointer;
+
+        &::-webkit-slider-thumb {
+            @include nt-color-picker-thumb(var(--nt-color-picker-hue, #f00));
+
+            -webkit-appearance: none;
+            margin-top: ($nt-color-picker-track-height - $nt-color-picker-thumb-size) * 0.5;
+        }
+
+        &::-moz-range-thumb {
+            @include nt-color-picker-thumb(var(--nt-color-picker-hue, #f00));
+        }
+
+        &:focus-visible {
+            outline: none;
+
+            &::-webkit-slider-thumb {
+                @include focus.nt-button-focus-ring;
+                outline-offset: 2px;
+            }
+
+            &::-moz-range-thumb {
+                @include focus.nt-button-focus-ring;
+                outline-offset: 2px;
+            }
+        }
+    }
+
+    .nt-color-hue {
+        @include nt-color-picker-slider-track($nt-color-picker-hue-track);
+    }
+
+    .nt-color-alpha {
+        @include nt-color-picker-slider-track((linear-gradient(to right, transparent, var(--nt-color-picker-solid, #000)), $nt-color-picker-checkerboard));
+
+        &::-webkit-slider-thumb {
+            background: var(--nt-color-picker-color, #000);
+        }
+
+        &::-moz-range-thumb {
+            background: var(--nt-color-picker-color, #000);
+        }
+    }
+
+    .nt-color-preview {
+        flex: none;
+        width: $nt-color-picker-control-height;
+        height: $nt-color-picker-control-height;
+        overflow: hidden;
+        border-radius: corners.$nt-corner-radius-full;
+        background: $nt-color-picker-checkerboard;
+        outline: 1px solid colors.$nt-color-outline-variant;
+        outline-offset: -1px;
+    }
+
+    .nt-color-preview-fill {
+        display: block;
+        width: 100%;
+        height: 100%;
+        background: var(--nt-color-picker-color, #000);
+    }
+
+    .nt-color-formats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        overflow: hidden;
+        height: $nt-color-picker-control-height;
+        border: 1px solid colors.$nt-color-outline;
+        border-radius: $nt-color-picker-control-height * 0.5;
+    }
+
+    .nt-color-format {
+        @include typescale.nt-label-large;
+
+        min-width: 0;
+        margin: 0;
+        padding: 0 12px;
+        border: 0;
+        border-inline-start: 1px solid colors.$nt-color-outline;
+        border-radius: 0;
+        background: transparent;
+        color: colors.$nt-color-on-surface;
+        cursor: pointer;
+        transition: background-color $nt-color-picker-transition, color $nt-color-picker-transition;
+
+        &:first-child {
+            border-inline-start: 0;
+        }
+
+        &:hover {
+            background: color-mix(in srgb, colors.$nt-color-on-surface 8%, transparent);
+        }
+
+        &[aria-pressed='true'] {
+            background: colors.$nt-color-secondary-container;
+            color: colors.$nt-color-on-secondary-container;
+
+            &:hover {
+                background: color-mix(in srgb, colors.$nt-color-on-secondary-container 8%, colors.$nt-color-secondary-container);
+            }
+        }
+
+        &:focus-visible {
+            @include focus.nt-button-focus-ring;
+            outline-offset: -$nt-color-picker-thumb-ring;
+        }
+    }
+
+    .nt-color-fields {
+        display: flex;
+        gap: 8px;
+    }
+
+    .nt-color-field {
+        display: flex;
+        flex: 1 1 0;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 0;
+
+        &[hidden] {
+            display: none;
+        }
+    }
+
+    .nt-color-field-label {
+        @include typescale.nt-label-medium;
+
+        color: colors.$nt-color-on-surface-variant;
+    }
+
+    .nt-color-field-input {
+        @include typescale.nt-body-medium;
+
+        box-sizing: border-box;
+        width: 100%;
+        height: $nt-color-picker-control-height;
+        margin: 0;
+        padding: 0 8px;
+        border: 1px solid colors.$nt-color-outline;
+        border-radius: corners.$nt-corner-radius-extra-small;
+        background: transparent;
+        color: colors.$nt-color-on-surface;
+        text-align: center;
+
+        &:hover {
+            border-color: colors.$nt-color-on-surface;
+        }
+
+        &:focus {
+            border-color: colors.$nt-color-primary;
+            outline: 1px solid colors.$nt-color-primary;
+            outline-offset: 0;
+        }
+    }
+
+    .nt-color-field-hex .nt-color-field-input {
+        text-align: start;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nt-color-picker .nt-color-format {
+        transition: none;
+    }
+}

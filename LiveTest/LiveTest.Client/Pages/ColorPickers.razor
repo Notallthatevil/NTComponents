@@ -1,0 +1,30 @@
+@page "/color-pickers"
+@rendermode InteractiveAuto
+@using NTComponents
+
+<main>
+    <h1>Color pickers</h1>
+    <p>NTInputColor opens an NTColorPicker popover from the trailing button. Try the Hex, RGB, and HSL entry, the opacity slider, and opening a field near the bottom of the window.</p>
+
+    <NTForm Model="_model" class="color-picker-demo">
+        <NTInputColor Label="Brand color" @bind-Value="_model.Brand" />
+        <NTInputColor Label="Overlay color" ShowAlpha="true" Appearance="NTFormAppearance.Filled" @bind-Value="_model.Overlay" />
+        <NTInputColor Label="Locked color" Disabled="true" @bind-Value="_model.Locked" />
+    </NTForm>
+    <p>Brand: <output>@_model.Brand</output>, overlay: <output>@_model.Overlay</output></p>
+
+    <h2>NTColorPicker</h2>
+    <NTColorPicker AriaLabel="Accent color" ShowAlpha="true" @bind-Value="_accent" />
+    <p>Accent: <output>@_accent</output></p>
+</main>
+
+@code {
+    private readonly ColorModel _model = new() { Brand = "#6750a4", Overlay = "#6750a480", Locked = "#0b6e4f" };
+    private string? _accent = "#0b6e4f";
+
+    private sealed class ColorModel {
+        public string? Brand { get; set; }
+        public string? Overlay { get; set; }
+        public string? Locked { get; set; }
+    }
+}

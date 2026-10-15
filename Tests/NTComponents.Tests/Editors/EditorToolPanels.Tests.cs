@@ -39,7 +39,7 @@ public class EditorToolPanels_Tests : BunitContext {
         cut.Find("[data-role='table-columns']").GetAttribute("max").Should().Be("8");
         cut.Find("[data-role='table-rows']").GetAttribute("type").Should().Be("number");
         cut.Find("[data-role='table-rows']").GetAttribute("max").Should().Be("12");
-        cut.Find("[data-role='table-border-color']").GetAttribute("type").Should().Be("color");
+        cut.Find("[data-role='table-border-color']").GetAttribute("type").Should().Be("text");
         cut.Find("[data-role='table-apply']").TextContent.Should().Contain("Apply table");
         cut.Find("[data-role='table-cancel']").TextContent.Should().Contain("Cancel");
         AssertToolInputsAreNotSubmitted(cut);
@@ -59,7 +59,7 @@ public class EditorToolPanels_Tests : BunitContext {
 
         cut.Find("[data-tool-command='textColor']").GetAttribute("role").Should().Be("group");
         cut.Find("[data-tool-command='textColor']").GetAttribute("aria-label").Should().Be("Text color settings");
-        cut.Find("[data-role='text-color-value']").GetAttribute("type").Should().Be("color");
+        cut.Find("[data-role='text-color-value']").GetAttribute("type").Should().Be("text");
         cut.Find("[data-role='text-color-apply']").TextContent.Should().Contain("Apply color");
         cut.Find("[data-role='text-color-cancel']").TextContent.Should().Contain("Cancel");
         AssertToolInputsAreNotSubmitted(cut);

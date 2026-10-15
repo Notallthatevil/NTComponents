@@ -68,6 +68,16 @@ public abstract partial class NTInputBase<TValue> : NTFieldBase<TValue> {
     public bool ShowCharacterCounter { get; set; } = true;
 
     /// <summary>
+    ///     Gets custom content rendered after the leading icon, such as a color swatch.
+    /// </summary>
+    protected virtual RenderFragment? LeadingContent => null;
+
+    /// <summary>
+    ///     Gets the native maximum length rendered on the input element.
+    /// </summary>
+    protected virtual int? NativeMaxLength => _maxLength;
+
+    /// <summary>
     ///     Gets the native input type.
     /// </summary>
     protected virtual InputType InputTypeAttribute => InputType.Text;
