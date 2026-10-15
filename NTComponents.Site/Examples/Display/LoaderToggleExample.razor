@@ -1,0 +1,10 @@
+<div class="docs-row">
+    <NTLoader Show="_loading" AriaLabel="Syncing contacts" />
+    <span>@(_loading ? "Syncing contacts..." : "Contacts are up to date.")</span>
+</div>
+<NTButton Label="@(_loading ? "Stop" : "Sync again")" OnClickCallback="@(() => _loading = !_loading)" />
+<p>Loading: <output>@(_loading ? "yes" : "no")</output></p>
+
+@code {
+    private bool _loading = true;
+}

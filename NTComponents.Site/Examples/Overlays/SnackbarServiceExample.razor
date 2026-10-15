@@ -1,0 +1,21 @@
+@using NTComponents.Snackbar
+@inject INTSnackbarService SnackbarService
+
+<div class="docs-row">
+    <NTButton Label="Show snackbar" OnClickCallback="ShowMessage" />
+    <NTButton Label="Show with undo" OnClickCallback="ShowUndo" />
+</div>
+<p>Last action: <output>@_status</output></p>
+
+<NTSnackbar Position="NTSnackbarPosition.BottomCenter" />
+
+@code {
+    private string _status = "None";
+
+    private Task ShowMessage() => SnackbarService.ShowAsync("Changes saved", timeout: 6);
+
+    private Task ShowUndo() => SnackbarService.ShowAsync("Conversation archived", "Undo", () => {
+        _status = "Archive undone";
+        return Task.CompletedTask;
+    }, timeout: 8, showClose: true);
+}

@@ -1,0 +1,8 @@
+<NTFormFieldGridView class="docs-fill" MaxColumns="1">
+    <NTInputCurrency Label="Price" BindOnInput="true" @bind-Value="_price" />
+</NTFormFieldGridView>
+<p>Price: <output>@_price</output></p>
+
+@code {
+    private decimal? _price = 1249.99m;
+}

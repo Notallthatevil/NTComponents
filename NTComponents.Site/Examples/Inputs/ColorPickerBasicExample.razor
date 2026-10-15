@@ -1,0 +1,8 @@
+<div class="docs-fill">
+    <NTColorPicker AriaLabel="Brand color" @bind-Value="_color" />
+</div>
+<p>Selected: <output>@_color</output></p>
+
+@code {
+    private string? _color = "#6750a4";
+}

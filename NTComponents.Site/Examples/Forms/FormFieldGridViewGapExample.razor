@@ -1,0 +1,19 @@
+<NTForm Model="_profile" class="docs-fill">
+    <NTFormFieldGridView MaxColumns="2" ColumnGap="32px" RowGap="24px">
+        <NTInputText Label="Display name" @bind-Value="_profile.DisplayName" />
+        <NTInputText Label="Username" @bind-Value="_profile.Username" />
+        <NTInputText Label="Location" @bind-Value="_profile.Location" />
+        <NTInputText Label="Website" @bind-Value="_profile.Website" />
+    </NTFormFieldGridView>
+</NTForm>
+
+@code {
+    private readonly ProfileModel _profile = new();
+
+    private sealed class ProfileModel {
+        public string DisplayName { get; set; } = "Grace Hopper";
+        public string Username { get; set; } = "amazinggrace";
+        public string Location { get; set; } = "Arlington, VA";
+        public string Website { get; set; } = "https://example.com/grace";
+    }
+}

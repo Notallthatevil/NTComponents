@@ -1,3 +1,6 @@
+@use '../../NTComponents/Styles/_Variables/_typescale.scss' as typescale;
+@use '../../NTComponents/Styles/_Variables/_corner-radius.scss' as corner;
+
 .docs-topbar {
     align-items: center;
     display: flex;
@@ -8,15 +11,15 @@
 
 .docs-brand {
     align-items: center;
-    color: var(--tnt-color-primary);
+    @include typescale.nt-title-medium-emphasized;
+    color: var(--nt-color-primary);
     display: inline-flex;
-    font-weight: 700;
-    gap: 0.625rem;
+    gap: 0.5rem;
     text-decoration: none;
 
     &:focus-visible {
-        border-radius: var(--tnt-corner-radius-small);
-        outline: 2px solid var(--tnt-color-primary);
+        border-radius: corner.$nt-corner-radius-small;
+        outline: 2px solid var(--nt-color-primary);
         outline-offset: 2px;
     }
 
@@ -27,13 +30,14 @@
 }
 
 .docs-topbar-subtitle {
-    color: var(--tnt-color-on-surface-variant);
+    @include typescale.nt-body-medium;
+    color: var(--nt-color-on-surface-variant);
 }
 
 .docs-github-link {
     align-items: center;
-    border-radius: var(--tnt-corner-radius-large);
-    color: var(--tnt-color-on-surface-variant);
+    border-radius: corner.$nt-corner-radius-large;
+    color: var(--nt-color-on-surface-variant);
     display: inline-flex;
     height: 2.5rem;
     justify-content: center;
@@ -41,12 +45,12 @@
     width: 2.5rem;
 
     &:hover {
-        background: var(--tnt-color-surface-container-highest);
-        color: var(--tnt-color-on-surface);
+        background: var(--nt-color-surface-container-highest);
+        color: var(--nt-color-on-surface);
     }
 
     &:focus-visible {
-        outline: 2px solid var(--tnt-color-primary);
+        outline: 2px solid var(--nt-color-primary);
         outline-offset: 2px;
     }
 
@@ -62,28 +66,17 @@
     width: 100%;
 }
 
-.docs-rail-brand {
-    align-items: center;
-    background: var(--tnt-color-primary-container);
-    border-radius: var(--tnt-corner-radius-large);
-    color: var(--tnt-color-on-primary-container);
-    display: inline-flex;
-    font-weight: 700;
-    height: 2.75rem;
-    justify-content: center;
-    width: 2.75rem;
-}
-
 @media (max-width: 720px) {
     .docs-topbar {
         padding: 0 1rem;
     }
 
     .docs-topbar-subtitle {
+    @include typescale.nt-body-medium;
         display: none;
     }
 
     .docs-content {
-        padding: 1rem 0.875rem 2rem;
+        padding: 1rem 1rem 2rem;
     }
 }

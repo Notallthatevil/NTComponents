@@ -1,0 +1,14 @@
+<div class="docs-row">
+    <NTChip Label="@_sort" Variant="NTChipVariant.Filter" LeadingIcon="MaterialIcon.Tune" MenuAriaLabel="Sort order">
+        <MenuContent>
+            <NTMenuButtonItem Label="Newest first" OnClickCallback="@(() => _sort = "Newest first")" />
+            <NTMenuButtonItem Label="Oldest first" OnClickCallback="@(() => _sort = "Oldest first")" />
+            <NTMenuButtonItem Label="Most popular" OnClickCallback="@(() => _sort = "Most popular")" />
+        </MenuContent>
+    </NTChip>
+</div>
+<p>Sort order: <output>@_sort</output></p>
+
+@code {
+    private string _sort = "Newest first";
+}

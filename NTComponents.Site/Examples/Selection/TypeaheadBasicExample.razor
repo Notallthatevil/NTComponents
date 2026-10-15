@@ -1,0 +1,21 @@
+<NTTypeahead TItem="Customer" @bind-Value="_customer" ItemsLookupFunc="SearchAsync" ItemTextSelector="@(c => c.Name)" Label="Customer" Placeholder="Search customers" SupportingText="Type at least one character." />
+<p>Selected: <output>@(_customer?.Name ?? "none")</output></p>
+
+@code {
+    private Customer? _customer;
+
+    private static readonly Customer[] _customers = [
+        new("Ada Lovelace", "ada@example.com", "Engineering"),
+        new("Grace Hopper", "grace@example.com", "Platform"),
+        new("Katherine Johnson", "katherine@example.com", "Analytics"),
+        new("Mary Jackson", "mary@example.com", "Operations"),
+        new("Dorothy Vaughan", "dorothy@example.com", "Research")
+    ];
+
+    private async Task<IEnumerable<Customer>> SearchAsync(string? search, CancellationToken cancellationToken) {
+        await Task.Delay(150, cancellationToken);
+        return _customers.Where(c => c.Name.Contains(search ?? string.Empty, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private sealed record Customer(string Name, string Email, string Region);
+}

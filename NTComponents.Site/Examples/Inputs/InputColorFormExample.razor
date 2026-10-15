@@ -1,0 +1,26 @@
+<NTForm Model="_theme" OnValidSubmit="Save" class="docs-fill">
+    <DataAnnotationsValidator />
+    <NTFormSectionView MaxColumns="1">
+        <NTInputColor Label="Accent color" SupportingText="Used for buttons and links." @bind-Value="_theme.Accent" />
+        <NTInputColor Label="Background color" @bind-Value="_theme.Background" />
+        <div class="docs-row">
+            <NTButton Type="ButtonType.Submit" Label="Save theme" />
+        </div>
+    </NTFormSectionView>
+</NTForm>
+<p>Saved: <output>@_saved</output></p>
+
+@code {
+    private readonly ThemeSettings _theme = new() { Accent = "#6750a4", Background = "#fffbfe" };
+    private string _saved = "Nothing saved";
+
+    private void Save() => _saved = $"{_theme.Accent} on {_theme.Background}";
+
+    private sealed class ThemeSettings {
+        [System.ComponentModel.DataAnnotations.Required]
+        public string? Accent { get; set; }
+
+        [System.ComponentModel.DataAnnotations.Required]
+        public string? Background { get; set; }
+    }
+}

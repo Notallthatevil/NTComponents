@@ -1,0 +1,6 @@
+<NTInputSlider TNumber="int" @bind-Value="_volume" Label="Volume" Min="0" Max="100" Step="5" ShowValueIndicator="true" SupportingText="Drag the handle or use the arrow keys." />
+<p>Volume: <output>@_volume</output></p>
+
+@code {
+    private int _volume = 40;
+}

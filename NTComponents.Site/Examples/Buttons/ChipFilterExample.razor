@@ -1,0 +1,28 @@
+<div class="docs-row">
+    <NTChip Label="Unread" Variant="NTChipVariant.Filter" @bind-Selected="_unread" />
+    <NTChip Label="Starred" Variant="NTChipVariant.Filter" @bind-Selected="_starred" />
+    <NTChip Label="Has attachments" Variant="NTChipVariant.Filter" LeadingIcon="MaterialIcon.Attachment" @bind-Selected="_attachments" />
+</div>
+<p>Active filters: <output>@Summary</output></p>
+
+@code {
+    private bool _unread = true;
+    private bool _starred;
+    private bool _attachments;
+
+    private string Summary {
+        get {
+            var active = new List<string>();
+            if (_unread) {
+                active.Add("unread");
+            }
+            if (_starred) {
+                active.Add("starred");
+            }
+            if (_attachments) {
+                active.Add("attachments");
+            }
+            return active.Count == 0 ? "none" : string.Join(", ", active);
+        }
+    }
+}

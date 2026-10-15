@@ -1,0 +1,8 @@
+<NTFormFieldGridView class="docs-fill" MaxColumns="1">
+    <NTBrowserTimeZone @bind-Value="_timeZone" />
+</NTFormFieldGridView>
+<p>Your time zone: <output>@(_timeZone ?? "Detecting")</output></p>
+
+@code {
+    private string? _timeZone;
+}

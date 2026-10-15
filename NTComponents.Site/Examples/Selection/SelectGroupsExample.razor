@@ -1,0 +1,17 @@
+<NTSelect TValue="string" @bind-Value="_status" Label="Ticket status">
+    <option value="">Choose a status</option>
+    <optgroup label="Active work">
+        <option value="new">New</option>
+        <option value="in-progress">In progress</option>
+        <option value="in-review">In review</option>
+    </optgroup>
+    <optgroup label="Closed work">
+        <option value="complete">Complete</option>
+        <option value="archived">Archived</option>
+    </optgroup>
+</NTSelect>
+<p>Status: <output>@_status</output></p>
+
+@code {
+    private string? _status = "";
+}

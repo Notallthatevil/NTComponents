@@ -1,0 +1,42 @@
+@namespace NTComponents.Site.Components
+@inject IJSRuntime JSRuntime
+
+@* A code snippet with an optional file name and a copy button. *@
+<figure class="docs-code-block">
+    <figcaption class="docs-code-header">
+        <span class="docs-code-title">@Title</span>
+        <span class="docs-code-status" role="status">@(_copied ? "Copied" : null)</span>
+        <NTIconButton Icon="@(_copied ? MaterialIcon.Check : MaterialIcon.ContentCopy)"
+                      AriaLabel="@($"Copy {Title ?? "code"}")"
+                      ElementTitle="Copy"
+                      OnClickCallback="CopyAsync" />
+    </figcaption>
+    <pre class="docs-code"><code>@Code</code></pre>
+</figure>
+
+@code {
+    private bool _copied;
+
+    /// <summary>The snippet to show and copy.</summary>
+    [Parameter, EditorRequired]
+    public string Code { get; set; } = string.Empty;
+
+    /// <summary>The file or language the snippet belongs to, such as <c>Program.cs</c>.</summary>
+    [Parameter]
+    public string? Title { get; set; }
+
+    private async Task CopyAsync() {
+        try {
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", Code);
+        }
+        catch (JSException) {
+            // Clipboard access can be denied; the snippet stays selectable.
+            return;
+        }
+
+        _copied = true;
+        StateHasChanged();
+        await Task.Delay(TimeSpan.FromSeconds(2));
+        _copied = false;
+    }
+}

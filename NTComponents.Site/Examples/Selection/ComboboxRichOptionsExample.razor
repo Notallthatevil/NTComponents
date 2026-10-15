@@ -1,0 +1,13 @@
+<NTCombobox TValue="string" @bind-Value="_tags" Items="_options" Label="Tags" Placeholder="Filter tags" LeadingIcon="MaterialIcon.Label" />
+<p>Tags: <output>@(_tags.Count == 0 ? "none" : string.Join(", ", _tags))</output></p>
+
+@code {
+    private IReadOnlyList<string> _tags = [];
+
+    private readonly IReadOnlyList<NTComboboxOption<string>> _options = [
+        new("design", "Design") { LeadingIcon = MaterialIcon.Palette, SupportingText = "Visual and interaction work" },
+        new("engineering", "Engineering") { LeadingIcon = MaterialIcon.Engineering, SupportingText = "Code and infrastructure" },
+        new("research", "Research") { SupportingText = "Interviews and studies" },
+        new("legal", "Legal review") { SupportingText = "Unavailable this quarter", Disabled = true }
+    ];
+}

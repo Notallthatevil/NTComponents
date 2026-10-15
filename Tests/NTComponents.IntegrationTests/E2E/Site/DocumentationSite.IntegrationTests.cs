@@ -14,11 +14,11 @@ using System.Text;
 namespace NTComponents.IntegrationTests.Site;
 
 /// <summary>
-///     Browser-level coverage for every generated NTComponents.Site component page and sandbox.
+///     Browser-level coverage for every NTComponents.Site component page and its examples.
 /// </summary>
 public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
-    private const int ExpectedComponentTypeCount = 91;
-    private const int ExpectedRootRouteCount = 65;
+    private const int ExpectedComponentTypeCount = 93;
+    private const int ExpectedRootRouteCount = 67;
     private static readonly string[] ExpectedDependentComponentNames = [
         "NTAccordionItem",
         "NTAutocompleteOption",
@@ -47,7 +47,6 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
         "NTWizardFormStep",
         "NTWizardStep"
     ];
-    private static readonly string[] GeneratedSampleSymbols = ["SampleOptions", "SampleItems", "SampleEvents", "LookupItemsAsync", "_sampleValue", "_sampleModel", "_wizardModel"];
     private readonly ConcurrentQueue<BrowserDiagnostic> _browserDiagnostics = new();
     private WebApplication? _application;
     private IBrowser? _browser;
@@ -121,7 +120,7 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
     }
 
     [Fact]
-    public async Task GeneratedComponentRoutes_RenderWorkingPreviewAndRazor_AndRepresentEveryPublicComponent() {
+    public async Task ComponentRoutes_RenderExamplesWithSource_AndRepresentEveryPublicComponent() {
         ArgumentNullException.ThrowIfNull(_page);
 
         // Arrange
@@ -136,7 +135,7 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
         var indexedRoutes = await _page.Locator("a[href^='/components/']").EvaluateAllAsync<string[]>(
             "links => links.map(link => link.getAttribute('href')).filter(Boolean)");
         var routes = indexedRoutes.Distinct(StringComparer.Ordinal).OrderBy(route => route, StringComparer.Ordinal).ToArray();
-        routes.Should().HaveCount(ExpectedRootRouteCount, "the generated component index should link to exactly the expected root component pages");
+        routes.Should().HaveCount(ExpectedRootRouteCount, "the component index should link to exactly the expected root component pages");
 
         var exportedComponentTypes = typeof(NTButton).Assembly.ExportedTypes
             .Where(type => !type.IsAbstract && type.Name.StartsWith("NT", StringComparison.Ordinal) && typeof(IComponent).IsAssignableFrom(type))
@@ -148,11 +147,10 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
         expectedComponentNames.Should().HaveCount(ExpectedComponentTypeCount, "the browser coverage contract should be updated intentionally when the public NT component surface changes");
         var expectedDependentComponentNames = ExpectedDependentComponentNames.Intersect(expectedComponentNames, StringComparer.Ordinal).ToHashSet(StringComparer.Ordinal);
         var expectedRootComponentNames = expectedComponentNames.Except(expectedDependentComponentNames, StringComparer.Ordinal).ToHashSet(StringComparer.Ordinal);
-        expectedRootComponentNames.Should().HaveCount(ExpectedRootRouteCount, "every current exported component should be classified as either a root route or a composed dependent demo");
+        expectedRootComponentNames.Should().HaveCount(ExpectedRootRouteCount, "every current exported component should be classified as either a root route or a composed dependent");
 
         var failures = new List<string>();
         var rootComponentNames = new List<string>();
-        var demoComponentNames = new HashSet<string>(StringComparer.Ordinal);
 
         // Act
         foreach (var route in routes) {
@@ -171,70 +169,38 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
                 failures.Add($"{route}: root heading {rootComponentName} belongs at {expectedRoute}.");
             }
 
-            var sandbox = _page.Locator(".docs-sandbox");
-            if (await sandbox.CountAsync() != 1) {
-                failures.Add($"{route}: expected exactly one sandbox.");
+            var examples = _page.Locator("#examples .docs-example");
+            if (!await TryWaitForAttachedAsync(examples.First)) {
+                failures.Add($"{route}: no .docs-example rendered.");
                 continue;
             }
 
             await WaitForRenderAsync(_page);
-
-            var routeDemoComponentNames = (await sandbox.Locator("[data-docs-demo-component]").EvaluateAllAsync<string[]>(
-                    "elements => elements.map(element => element.getAttribute('data-docs-demo-component')).filter(Boolean)"))
-                .Select(RemoveGenericArity)
-                .ToHashSet(StringComparer.Ordinal);
-            demoComponentNames.UnionWith(routeDemoComponentNames);
-            if (!routeDemoComponentNames.Contains(rootComponentName)) {
-                failures.Add($"{route}: root component {rootComponentName} did not render a concrete data-docs-demo-component marker.");
+            var failedExamples = await _page.Locator(".docs-example-failure").AllInnerTextsAsync();
+            if (failedExamples.Count > 0) {
+                failures.Add($"{route}: failing examples: {string.Join(" | ", failedExamples)}");
             }
 
-            var unsupportedMessages = await sandbox.Locator(":scope > .docs-callout").AllInnerTextsAsync();
-            if (unsupportedMessages.Count > 0) {
-                failures.Add($"{route}: unsupported sandbox: {string.Join(" | ", unsupportedMessages)}");
+            var exampleCount = await examples.CountAsync();
+            var sources = await _page.Locator(".docs-example-code code").EvaluateAllAsync<string[]>("codes => codes.map(code => code.textContent ?? '')");
+            if (sources.Length != exampleCount || sources.Any(string.IsNullOrWhiteSpace)) {
+                failures.Add($"{route}: every example needs non-empty Razor source ({sources.Length} sources for {exampleCount} examples).");
             }
 
-            var preview = sandbox.Locator(".docs-sandbox-preview");
-            if (!await TryWaitForVisibleAsync(preview)) {
-                failures.Add($"{route}: Preview mode did not render.");
-            }
-            else {
-                await ValidatePreviewAsync(failures, route, sandbox);
-            }
-
-            var controls = sandbox.Locator(".docs-sandbox-controls input:not([type='hidden']), .docs-sandbox-controls select, .docs-sandbox-controls textarea");
-            await ValidateControlLayoutAsync(failures, route, sandbox);
-            var controlChange = await TryChangeFirstControlAsync(controls, _page);
-
-            var razorButton = sandbox.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Razor", Exact = true });
-            await razorButton.ClickAsync();
-            await WaitForRenderAsync(_page);
-            var generatedMarkup = sandbox.Locator(".docs-code-group pre code");
-            if (!await TryWaitForVisibleAsync(generatedMarkup) || string.IsNullOrWhiteSpace(await generatedMarkup.InnerTextAsync())) {
-                failures.Add($"{route}: Razor mode did not render nonempty generated markup.");
-            }
-            else if (controlChange is not null) {
-                var markup = await generatedMarkup.InnerTextAsync();
-                if (!markup.Contains(controlChange.Value, StringComparison.Ordinal) || controlChange.RequirePropertyName && !markup.Contains(controlChange.PropertyName, StringComparison.Ordinal)) {
-                    failures.Add($"{route}: changing {controlChange.PropertyName} to '{controlChange.Value}' was not reflected in generated Razor.");
-                }
-
-                ValidateGeneratedRazor(failures, route, markup);
-            }
-            else {
-                ValidateGeneratedRazor(failures, route, await generatedMarkup.InnerTextAsync());
+            var expectedNavigation = new List<string> { "Overview", "Examples" };
+            expectedNavigation.AddRange(await examples.Locator(":scope > h3").AllInnerTextsAsync());
+            expectedNavigation.Add("API");
+            if (await _page.Locator("#dependent-components").CountAsync() > 0) {
+                expectedNavigation.Add("Dependent components");
             }
 
-            var previewButton = sandbox.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Preview", Exact = true });
-            await previewButton.ClickAsync();
-            await WaitForRenderAsync(_page);
-            if (!await TryWaitForVisibleAsync(preview)) {
-                failures.Add($"{route}: Preview mode was not restored after viewing Razor markup.");
+            try {
+                await Assertions.Expect(_page.Locator(".nt-container-view-quick-nav-list a:not(.docs-example-preview a)")).ToHaveTextAsync([.. expectedNavigation]);
             }
-            else {
-                await ValidatePreviewAsync(failures, route, sandbox);
+            catch (PlaywrightException exception) {
+                failures.Add($"{route}: On this page should list only {string.Join(", ", expectedNavigation)}. {FirstLine(exception.Message)}");
             }
 
-            await WaitForRenderAsync(_page);
             await _page.SetViewportSizeAsync(390, 844);
             await WaitForRenderAsync(_page);
             var mobileOverflow = await _page.EvaluateAsync<int>("Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) - innerWidth");
@@ -263,27 +229,12 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
             failures.Add($"Expected root component pages missing from the component index: {string.Join(", ", missingRootComponentNames)}");
         }
 
-        var unexpectedDemoComponentNames = demoComponentNames.Except(expectedComponentNames, StringComparer.Ordinal).OrderBy(name => name, StringComparer.Ordinal).ToArray();
-        if (unexpectedDemoComponentNames.Length > 0) {
-            failures.Add($"Unexpected concrete demo markers: {string.Join(", ", unexpectedDemoComponentNames)}");
-        }
-
-        var missingComponentNames = expectedComponentNames.Except(demoComponentNames, StringComparer.Ordinal).OrderBy(name => name, StringComparer.Ordinal).ToArray();
-        if (missingComponentNames.Length > 0) {
-            failures.Add($"Components missing concrete data-docs-demo-component markers: {string.Join(", ", missingComponentNames)}");
-        }
-
-        var missingDependentDemoComponentNames = expectedDependentComponentNames.Except(demoComponentNames, StringComparer.Ordinal).OrderBy(name => name, StringComparer.Ordinal).ToArray();
-        if (missingDependentDemoComponentNames.Length > 0) {
-            failures.Add($"Dependent component APIs without concrete demos: {string.Join(", ", missingDependentDemoComponentNames)}");
-        }
-
         // Assert
-        failures.Should().BeEmpty("every generated documentation component and sandbox should work in a real browser:\n{0}", string.Join("\n", failures.Distinct(StringComparer.Ordinal)));
+        failures.Should().BeEmpty("every component page should render working examples in a real browser:\n{0}", string.Join("\n", failures.Distinct(StringComparer.Ordinal)));
     }
 
     [Fact]
-    public async Task MaterialThemeCreator_GeneratesSixSchemes_UpdatesThePreviewLive_WithoutRecoloringTheSite() {
+    public async Task MaterialThemeCreator_GeneratesSixSchemes_AndRecolorsTheSiteOnlyAfterEdits() {
         ArgumentNullException.ThrowIfNull(_page);
         await _page.GotoAsync($"{_baseUrl}/", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
         await _page.Locator(".docs-home").WaitForAsync();
@@ -323,11 +274,13 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
         var previewHeading = preview.GetByRole(AriaRole.Heading, new LocatorGetByRoleOptions { Name = "See the theme in NTComponents", Exact = true });
         await _page.WaitForFunctionAsync("expected => getComputedStyle(document.querySelector('[data-testid=theme-preview] .nt-button-filled'), '::after').backgroundColor === expected", "rgb(101, 85, 143)");
         (await previewHeading.EvaluateAsync<string>("element => getComputedStyle(element).color")).Should().Be("rgb(101, 85, 143)");
-        (await RootColorAsync("--tnt-color-primary")).Should().Be(originalPrimary, "the generated theme should be scoped to the preview");
+        (await RootColorAsync("--tnt-color-primary")).Should().Be(originalPrimary, "opening the theme creator must not recolor the site");
         await _page.Locator("#theme-style").SelectOptionAsync("vibrant");
         await _page.WaitForFunctionAsync("expected => getComputedStyle(document.querySelector('[data-testid=theme-preview] .nt-button-filled'), '::after').backgroundColor === expected", "rgb(111, 25, 255)");
+        await WaitForRootColorAsync("--nt-color-primary", "rgb(111, 25, 255)");
         await _page.Locator("#theme-style").SelectOptionAsync("tonal-spot");
         await _page.WaitForFunctionAsync("expected => getComputedStyle(document.querySelector('[data-testid=theme-preview] .nt-button-filled'), '::after').backgroundColor === expected", "rgb(101, 85, 143)");
+        await WaitForRootColorAsync("--nt-color-primary", "rgb(101, 85, 143)");
 
         await _page.Locator(".theme-advanced summary").ClickAsync();
         (await _page.Locator(".theme-advanced input[type='checkbox']").CountAsync()).Should().Be(0);
@@ -338,7 +291,10 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
             (Id: "neutral-variant", Color: "#5b5f6a", Token: "--tnt-color-outline"),
             (Id: "error", Color: "#9f2030", Token: "--tnt-color-error")
         };
+        // Role pickers show the rendered role color. Surface pickers show their palette's key color, because surface tones are near white or black.
+        string[] surfacePalettes = ["neutral", "neutral-variant"];
         var paletteDisplays = paletteOverrides
+            .Where(palette => !surfacePalettes.Contains(palette.Id))
             .Select(palette => (palette.Id, palette.Token))
             .Prepend((Id: "primary", Token: "--tnt-color-primary"))
             .ToArray();
@@ -351,19 +307,28 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
             var previousValue = await preview.EvaluateAsync<string>("(element, token) => element.style.getPropertyValue(token)", palette.Token);
             var picker = _page.Locator($"#theme-palette-{palette.Id}");
             await Assertions.Expect(picker).ToBeEnabledAsync();
+            // While the color dialog is open (input without change), the preview updates but never moves the picker being dragged.
             await picker.EvaluateAsync(
                 """
                 (element, color) => {
                     element.value = color;
                     element.dispatchEvent(new Event('input', { bubbles: true }));
-                    element.dispatchEvent(new Event('change', { bubbles: true }));
                 }
                 """,
                 palette.Color);
             await _page.WaitForFunctionAsync(
                 "args => document.querySelector('[data-testid=theme-preview]').style.getPropertyValue(args.token) !== args.previousValue",
                 new { token = palette.Token, previousValue });
-            await WaitForPalettePickerToMatchPreviewAsync(palette.Id, palette.Token);
+            await WaitForRenderAsync(_page);
+            await Assertions.Expect(picker).ToHaveValueAsync(palette.Color);
+            await picker.EvaluateAsync("element => element.dispatchEvent(new Event('change', { bubbles: true }))");
+            if (surfacePalettes.Contains(palette.Id)) {
+                // A palette seeded from a color keeps that color as its key color.
+                await Assertions.Expect(picker).ToHaveValueAsync(palette.Color);
+            }
+            else {
+                await WaitForPalettePickerToMatchPreviewAsync(palette.Id, palette.Token);
+            }
             overriddenProperties[palette.Token] = await preview.EvaluateAsync<string>("(element, token) => element.style.getPropertyValue(token)", palette.Token);
         }
 
@@ -384,7 +349,9 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
         (await previewHeading.EvaluateAsync<string>("element => getComputedStyle(element).color")).Should().Be("rgb(0, 104, 116)", "the preview heading should consume the live primary theme variable");
         await Assertions.Expect(primaryPicker.Locator("xpath=..").Locator("[data-theme-color-output]")).ToHaveTextAsync("#006874");
         (await downloadLink.GetAttributeAsync("download")).Should().Be("ntcomponents-theme-6750a4.zip", "live input should not rebuild the ZIP");
-        (await RootColorAsync("--tnt-color-primary")).Should().Be(originalPrimary);
+        await WaitForRootColorAsync("--nt-color-primary", "rgb(0, 104, 116)");
+        await _page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Restore site theme", Exact = true }).ClickAsync();
+        await WaitForRootColorAsync("--tnt-color-primary", originalPrimary);
 
         await primaryPicker.EvaluateAsync("element => element.dispatchEvent(new Event('change', { bubbles: true }))");
         await Assertions.Expect(downloadLink).ToHaveAttributeAsync("download", "ntcomponents-theme-006874.zip");
@@ -439,7 +406,8 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
         (await preview.EvaluateAsync<string>("element => getComputedStyle(element).backgroundColor")).Should().NotBe(lightSurface);
         (await previewButton.EvaluateAsync<string>("element => getComputedStyle(element, '::after').backgroundColor"))
             .Should().NotBe(lightPrimary, "the representative NTButton should consume the selected dark preview token");
-        (await RootColorAsync("--tnt-color-primary")).Should().Be(originalPrimary);
+        // The site follows its own light theme with the edited colors, independent of the preview's mode.
+        await WaitForRootColorAsync("--nt-color-primary", lightPrimary);
 
         var downloadUrl = await downloadLink.GetAttributeAsync("href");
         downloadUrl.Should().StartWith("data:application/zip;base64,");
@@ -451,7 +419,8 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
 
         await _page.Locator("a[href='/']").First.ClickAsync();
         await _page.WaitForURLAsync($"{_baseUrl}/");
-        (await RootColorAsync("--tnt-color-primary")).Should().Be(originalPrimary);
+        // The edited colors stay applied across in-app navigation until a reload or "Restore site theme".
+        await WaitForRootColorAsync("--nt-color-primary", lightPrimary);
         _browserDiagnostics.Where(diagnostic => string.Equals(diagnostic.Route, _activeRoute, StringComparison.Ordinal)).Should().BeEmpty();
     }
 
@@ -538,7 +507,7 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
         await navigation.GetByRole(AriaRole.Link, new LocatorGetByRoleOptions { Name = "Getting started", Exact = true }).ClickAsync();
         await _page.WaitForURLAsync("**/getting-started");
         await Assertions.Expect(_page.Locator("main h1")).ToHaveTextAsync("Getting started");
-        (await _page.Locator("main h2").CountAsync()).Should().Be(8);
+        (await _page.Locator("main h2").CountAsync()).Should().Be(9);
         var guideCode = string.Join("\n", await _page.Locator("main pre code").AllTextContentsAsync());
         guideCode.Should().Contain("dotnet add package NTComponents").And.Contain("builder.Services.AddNTServices();")
             .And.Contain("<NTHeadDependencies />").And.Contain("<HeadContent>").And.Contain("<NTToast />")
@@ -562,7 +531,7 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
     [Fact]
     public async Task HeaderThemeSelector_ChangesAndPersistsTheme_AndFitsMobile() {
         ArgumentNullException.ThrowIfNull(_page);
-        await OpenComponentDemoAsync("ntbutton");
+        await OpenComponentPageAsync("ntbutton");
         var selector = _page.Locator(".docs-topbar nt-theme-toggle select");
         await Assertions.Expect(selector).ToBeVisibleAsync();
         (await selector.Locator("option").AllTextContentsAsync()).Should().Equal("Light", "Dark", "System");
@@ -599,522 +568,336 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
     }
 
     [Fact]
-    public async Task DemoControls_ArePrioritizedGroupedAndHeightContained() {
-        ArgumentNullException.ThrowIfNull(_page);
-
-        await OpenComponentDemoAsync("ntbutton");
-        var groupNames = await _page.Locator(".docs-control-group").EvaluateAllAsync<string[]>("groups => groups.map(group => group.dataset.docsControlGroup)");
-        groupNames.Should().Equal("Content", "Appearance", "Behavior", "Accessibility");
-        var buttonControls = await _page.Locator("[data-docs-control-name]").EvaluateAllAsync<string[]>("rows => rows.map(row => row.dataset.docsControlName)");
-        buttonControls.Should().Equal("Label", "BadgeContent", "Variant", "LeadingIcon", "Shape", "Elevation", "IsToggleButton", "Selected", "ShowBadge", "BadgeAriaLabel");
-        (await _page.Locator("#docs-sandbox-ntbutton-label").InputValueAsync()).Should().Be("Save changes");
-
-        await OpenComponentDemoAsync("ntbuttongroup");
-        var scrollState = await _page.Locator(".docs-sandbox-controls").EvaluateAsync<ControlScrollState>(
-            "element => ({ overflowY: getComputedStyle(element).overflowY, clientHeight: element.clientHeight, scrollHeight: element.scrollHeight })");
-        scrollState.OverflowY.Should().Be("auto");
-        scrollState.ScrollHeight.Should().BeGreaterThan(scrollState.ClientHeight);
-
-        await OpenComponentDemoAsync("ntdialog");
-        var dialogControls = await _page.Locator("[data-docs-control-name]").EvaluateAllAsync<string[]>("rows => rows.map(row => row.dataset.docsControlName)");
-        dialogControls.Should().StartWith("Title", "SupportingText", "ButtonSpacing", "Elevation");
-        dialogControls.Should().Contain("ShowCloseButton", "curated compositions should retain their relevant editable settings");
-    }
-
-    [Fact]
     public async Task AccordionDemo_LimitToOneExpanded_KeepsSingleItemOpen() {
-        ArgumentNullException.ThrowIfNull(_page);
+        var example = await OpenExampleAsync("ntaccordion", "AccordionLimitToOneExample");
 
-        await OpenComponentDemoAsync("ntaccordion");
-        await _page.Locator("#docs-sandbox-ntaccordion-limittooneexpanded").CheckAsync();
-
-        var items = _page.Locator(".docs-generated-example details.nt-accordion-item");
-        (await items.EvaluateAllAsync<string?[]>("items => items.map(item => item.getAttribute('name'))")).Should().OnlyContain(name => name == "docs-accordion-example");
+        var items = example.Locator("details.nt-accordion-item");
+        (await items.EvaluateAllAsync<string?[]>("items => items.map(item => item.getAttribute('name'))")).Should().OnlyContain(name => name == "faq-single");
+        (await items.EvaluateAllAsync<bool[]>("items => items.map(item => item.open)")).Should().Equal(true, false, false);
 
         await items.Nth(1).Locator("summary").ClickAsync();
-        (await items.EvaluateAllAsync<bool[]>("items => items.map(item => item.open)")).Should().Equal(false, true);
+        await Assertions.Expect(items.Nth(1)).ToHaveAttributeAsync("open", "");
+        (await items.EvaluateAllAsync<bool[]>("items => items.map(item => item.open)")).Should().Equal(false, true, false);
+
+        await items.Nth(2).Locator("summary").ClickAsync();
+        await Assertions.Expect(items.Nth(2)).ToHaveAttributeAsync("open", "");
+        (await items.EvaluateAllAsync<bool[]>("items => items.map(item => item.open)")).Should().Equal(false, false, true);
+        _browserDiagnostics.Should().BeEmpty();
     }
 
     [Fact]
-    public async Task CuratedComponentDemos_RespondToUserInteraction() {
-        ArgumentNullException.ThrowIfNull(_page);
+    public async Task DialogDemos_OpenAndCloseWithTheChosenResult() {
+        var example = await OpenExampleAsync("ntdialog", "DialogBasicExample");
+        var dialog = _page!.Locator("dialog#dialog-basic-example[open]");
+        var result = example.Locator("output");
+        await Assertions.Expect(result).ToHaveTextAsync("Not opened");
 
-        await OpenComponentDemoAsync("ntbutton");
-        await _page.Locator("#docs-sandbox-ntbutton-elevation").SelectOptionAsync(new SelectOptionValue { Label = "Lowest" });
-        await WaitForRenderAsync(_page);
-        (await _page.Locator(".docs-generated-example .docs-callout").CountAsync()).Should().Be(0, "coordinated button controls should preserve a valid preview");
-        await _page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Razor", Exact = true }).ClickAsync();
-        var buttonMarkup = await _page.Locator(".docs-code-group pre code").InnerTextAsync();
-        buttonMarkup.Should().Contain("Variant=\"Elevated\"").And.Contain("Elevation=\"Lowest\"");
-
-        await OpenComponentDemoAsync("ntdialog");
-        await _page.Locator("#docs-sandbox-ntdialog-title").FillAsync("Schedule review");
-        await _page.Locator("#docs-sandbox-ntdialog-title").PressAsync("Tab");
-        await _page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Open example dialog", Exact = true }).ClickAsync();
-        var dialog = _page.Locator("dialog#docs-example-dialog[open]");
-        await dialog.WaitForAsync();
-        await dialog.GetByRole(AriaRole.Heading, new LocatorGetByRoleOptions { Name = "Schedule review", Exact = true }).WaitForAsync();
+        await example.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Review changes", Exact = true }).ClickAsync();
+        await dialog.GetByRole(AriaRole.Heading, new LocatorGetByRoleOptions { Name = "Publish settings update?", Exact = true }).WaitForAsync();
         await dialog.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Cancel", Exact = true }).ClickAsync();
-        await _page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Razor", Exact = true }).ClickAsync();
-        (await _page.Locator(".docs-code-group pre code").InnerTextAsync()).Should().Contain("Title=\"Schedule review\"");
+        await Assertions.Expect(dialog).ToHaveCountAsync(0);
+        await Assertions.Expect(result).ToHaveTextAsync("cancel");
 
-        await OpenComponentDemoAsync("ntmenu");
-        await _page.Locator("#docs-sandbox-ntmenu-appearance").SelectOptionAsync(new SelectOptionValue { Label = "Compact" });
-        await _page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Open example menu", Exact = true }).ClickAsync();
-        await _page.Locator("#docs-example-menu.nt-menu-compact:popover-open").WaitForAsync();
-        await _page.GetByText("Edit", new PageGetByTextOptions { Exact = true }).WaitForAsync();
+        await example.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Review changes", Exact = true }).ClickAsync();
+        await dialog.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Confirm", Exact = true }).ClickAsync();
+        await Assertions.Expect(dialog).ToHaveCountAsync(0);
+        await Assertions.Expect(result).ToHaveTextAsync("confirm");
 
-        await OpenComponentDemoAsync("ntsnackbar");
-        await _page.Locator("#docs-sandbox-ntsnackbar-position").SelectOptionAsync(new SelectOptionValue { Label = "TopLeftCorner" });
-        await _page.Locator(".nt-snackbar-container.nt-snackbar-top-left-corner").WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Attached });
-        await _page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Show example snackbar", Exact = true }).ClickAsync();
-        await _page.GetByText("Changes saved", new PageGetByTextOptions { Exact = true }).WaitForAsync();
-
-        await OpenComponentDemoAsync("nttoast");
-        await _page.Locator("#docs-sandbox-nttoast-position").SelectOptionAsync(new SelectOptionValue { Label = "TopLeftCorner" });
-        await _page.Locator(".nt-toast-container.nt-toast-top-left-corner").WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Attached });
-        await _page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Show example toast", Exact = true }).ClickAsync();
-        await _page.GetByText("Your changes were saved.", new PageGetByTextOptions { Exact = true }).WaitForAsync();
-
-        await OpenComponentDemoAsync("nttooltip");
-        await _page.Locator("#docs-sandbox-nttooltip-showdelay").FillAsync("0");
-        await _page.Locator("#docs-sandbox-nttooltip-showdelay").PressAsync("Tab");
-        await _page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Hover or focus for help", Exact = true }).FocusAsync();
-        await _page.GetByRole(AriaRole.Tooltip).WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible });
-
-        await OpenComponentDemoAsync("ntvirtualize");
-        await _page.Locator("#docs-sandbox-ntvirtualize-itemsize").FillAsync("40");
-        await _page.Locator("#docs-sandbox-ntvirtualize-itemsize").PressAsync("Tab");
-        var virtualize = _page.Locator(".docs-curated-demo .virtualize");
-        await virtualize.EvaluateAsync("element => element.scrollTop = 0");
-        await virtualize.Locator(".virtualize-item").First.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Attached, Timeout = 5_000 });
-        var initialItems = await virtualize.Locator(".virtualize-item").AllInnerTextsAsync();
-        initialItems.Should().Contain("Item 1", "the virtualized demo should begin at the top; rendered items: {0}", string.Join(", ", initialItems));
-        await virtualize.EvaluateAsync("element => element.scrollTop = element.scrollHeight");
-        await _page.GetByText("Item 100", new PageGetByTextOptions { Exact = true }).WaitForAsync();
-
-        _browserDiagnostics.Should().BeEmpty("curated interactions should not produce browser errors");
-    }
-
-    [Theory]
-    [InlineData("ntbutton", "label", "", "Label")]
-    [InlineData("ntcarousel", "autoplayinterval", "0", "AutoPlayInterval")]
-    [InlineData("ntvirtualize", "itemsize", "0", "ItemSize")]
-    [InlineData("ntvirtualize", "overscancount", "1.5", "OverscanCount requires a whole number")]
-    [InlineData("nttooltip", "showdelay", "999999999999", "ShowDelay is outside the supported range")]
-    public async Task InvalidDemoOptions_ShowSpecificError_AndRecoverAfterCorrection(string slug, string parameter, string invalidValue, string expectedError) {
-        ArgumentNullException.ThrowIfNull(_page);
-        await OpenComponentDemoAsync(slug);
-        var control = _page.Locator($"#docs-sandbox-{slug}-{parameter}");
-        var originalValue = await control.InputValueAsync();
-        await control.FillAsync(invalidValue);
-        await control.PressAsync("Tab");
-        var alert = _page.Locator(".docs-generated-example [role='alert']");
-        await Assertions.Expect(alert).ToContainTextAsync(expectedError);
-        await Assertions.Expect(_page.Locator(".docs-sandbox-controls")).ToBeVisibleAsync();
-
-        await control.FillAsync(originalValue);
-        await control.PressAsync("Tab");
-        await Assertions.Expect(alert).ToHaveCountAsync(0);
-        var failures = new List<string>();
-        await ValidatePreviewAsync(failures, _activeRoute, _page.Locator(".docs-sandbox"));
-        failures.Should().BeEmpty();
-        _browserDiagnostics.Should().BeEmpty("an invalid demo option must be contained in its preview");
+        var dismiss = Example("DialogDismissExample");
+        await dismiss.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Open reminder", Exact = true }).ClickAsync();
+        await _page.Locator("dialog#dialog-dismiss-example[open]").WaitForAsync();
+        await _page.Keyboard.PressAsync("Escape");
+        await Assertions.Expect(_page.Locator("dialog#dialog-dismiss-example[open]")).ToHaveCountAsync(0);
+        await Assertions.Expect(dismiss.Locator("output")).ToHaveTextAsync("1");
+        _browserDiagnostics.Should().BeEmpty();
     }
 
     [Fact]
-    public async Task IncompatibleDemoOptions_ReportTheContract_AndResetToWorkingDefaults() {
-        ArgumentNullException.ThrowIfNull(_page);
-        await OpenComponentDemoAsync("ntbutton");
-        await _page.Locator("#docs-sandbox-ntbutton-variant").SelectOptionAsync(new SelectOptionValue { Label = "Text" });
-        await _page.Locator("#docs-sandbox-ntbutton-istogglebutton").CheckAsync();
-        var alert = _page.Locator(".docs-generated-example [role='alert']");
-        await Assertions.Expect(alert).ToContainTextAsync("Text buttons do not support toggle behavior");
-        await alert.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Reset example", Exact = true }).ClickAsync();
-        await Assertions.Expect(alert).ToHaveCountAsync(0);
-        await Assertions.Expect(_page.Locator("#docs-sandbox-ntbutton-istogglebutton")).Not.ToBeCheckedAsync();
-        await Assertions.Expect(_page.Locator(".docs-generated-example button").First).ToHaveTextAsync("Save changes");
+    public async Task MenuDemo_TriggerOpensTheMenu_AndChoosingAnItemUpdatesTheOutput() {
+        var example = await OpenExampleAsync("ntmenu", "MenuBasicExample");
 
-        await OpenComponentDemoAsync("ntdatagrid");
-        await _page.Locator("#docs-sandbox-ntdatagrid-virtualize").CheckAsync();
-        await _page.Locator("#docs-sandbox-ntdatagrid-showpagination").CheckAsync();
-        await Assertions.Expect(alert).ToContainTextAsync("does not support using Virtualize and ShowPagination together");
-        await _page.Locator("#docs-sandbox-ntdatagrid-showpagination").UncheckAsync();
-        await Assertions.Expect(alert).ToHaveCountAsync(0);
-        await Assertions.Expect(_page.Locator(".docs-generated-example")).ToContainTextAsync("Alpha");
+        await example.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Document actions", Exact = true }).ClickAsync();
+        await _page!.Locator("#menu-basic-example:popover-open").WaitForAsync();
+        await Assertions.Expect(_page.GetByRole(AriaRole.Menuitem, new PageGetByRoleOptions { Name = "Rename", Exact = true })).ToBeVisibleAsync();
+        await Assertions.Expect(_page.GetByRole(AriaRole.Menuitem, new PageGetByRoleOptions { Name = "Duplicate", Exact = true })).ToBeVisibleAsync();
+        await _page.GetByRole(AriaRole.Menuitem, new PageGetByRoleOptions { Name = "Duplicate", Exact = true }).ClickAsync();
+        await Assertions.Expect(example.Locator("output")).ToHaveTextAsync("Duplicate");
+        _browserDiagnostics.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task SnackbarAndToastDemos_ShowTheirMessage() {
+        var snackbar = await OpenExampleAsync("ntsnackbar", "SnackbarServiceExample");
+        await snackbar.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Show snackbar", Exact = true }).ClickAsync();
+        await _page!.GetByText("Changes saved", new PageGetByTextOptions { Exact = true }).WaitForAsync();
+
+        var toast = await OpenExampleAsync("nttoast", "ToastServiceExample");
+        await toast.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Show toast", Exact = true }).ClickAsync();
+        await _page.GetByText("Your profile changes were saved.", new PageGetByTextOptions { Exact = true }).WaitForAsync();
+        _browserDiagnostics.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task TooltipDemo_FocusingTheTargetShowsTheTooltip() {
+        var example = await OpenExampleAsync("nttooltip", "TooltipBasicExample");
+
+        await example.Locator("button").FocusAsync();
+        await Assertions.Expect(example.GetByRole(AriaRole.Tooltip)).ToBeVisibleAsync();
+        await Assertions.Expect(example.GetByRole(AriaRole.Tooltip)).ToHaveTextAsync("Move this conversation to the archive");
+        _browserDiagnostics.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task VirtualizeDemo_StartsAtTheTop_AndScrollingReachesTheLastItem() {
+        var example = await OpenExampleAsync("ntvirtualize", "VirtualizeBasicExample");
+        var scroller = example.Locator("div[style*='overflow']");
+        await example.GetByText("Item 1", new LocatorGetByTextOptions { Exact = true }).WaitForAsync();
+        await scroller.EvaluateAsync("element => element.scrollTop = element.scrollHeight");
+        await example.GetByText("Item 100", new LocatorGetByTextOptions { Exact = true }).WaitForAsync();
         _browserDiagnostics.Should().BeEmpty();
     }
 
     [Theory]
-    [InlineData("ntinputtext", "Grace Hopper")]
-    [InlineData("nttextArea", "An edited message")]
-    [InlineData("ntinputnumeric", "42")]
-    public async Task InputDemo_EditsUpdateTheBoundValue_AndSurviveOptionAndModeChanges(string slug, string value) {
-        ArgumentNullException.ThrowIfNull(_page);
-        slug = slug.ToLowerInvariant();
-        await OpenComponentDemoAsync(slug);
-        var input = _page.Locator(".docs-generated-example input:not([type=hidden]), .docs-generated-example textarea").First;
-        await input.FillAsync(value);
-        await input.PressAsync("Tab");
-        var output = _page.Locator("output[aria-label='Current value']");
-        await Assertions.Expect(output).ToHaveTextAsync(value);
+    [InlineData("ntinputtext", "InputTextBasicExample", "Full name", "Grace Hopper")]
+    [InlineData("nttextarea", "TextAreaBasicExample", "Notes", "An edited message")]
+    [InlineData("ntinputnumeric", "InputNumericBasicExample", "Quantity", "42")]
+    public async Task InputDemo_EditsUpdateTheVisibleOutput(string slug, string exampleName, string label, string value) {
+        var example = await OpenExampleAsync(slug, exampleName);
 
-        var label = _page.Locator($"#docs-sandbox-{slug}-label");
-        await label.FillAsync("Edited label");
-        await label.PressAsync("Tab");
+        var input = example.GetByLabel(label);
+        await input.FillAsync(value);
+        await Assertions.Expect(example.Locator("output").Last).ToHaveTextAsync(value);
         await Assertions.Expect(input).ToHaveValueAsync(value);
-        await _page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Razor", Exact = true }).ClickAsync();
-        await _page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Preview", Exact = true }).ClickAsync();
-        await Assertions.Expect(input).ToHaveValueAsync(value);
-        await Assertions.Expect(output).ToHaveTextAsync(value);
         _browserDiagnostics.Should().BeEmpty();
     }
 
     [Fact]
     public async Task SelectionAndSliderDemos_UpdateTheirBoundOutput() {
-        ArgumentNullException.ThrowIfNull(_page);
-        foreach (var slug in new[] { "ntinputcheckbox", "ntinputswitch" }) {
-            await OpenComponentDemoAsync(slug);
-            await _page.Locator(".docs-generated-example input[type=checkbox]").UncheckAsync();
-            await Assertions.Expect(_page.Locator("output[aria-label='Current value']")).ToHaveTextAsync("False");
-        }
+        var checkbox = await OpenExampleAsync("ntinputcheckbox", "InputCheckboxBasicExample");
+        await checkbox.Locator("input[type=checkbox]").CheckAsync();
+        await Assertions.Expect(checkbox.Locator("output")).ToHaveTextAsync("True");
 
-        await OpenComponentDemoAsync("ntinputradiogroup");
-        await _page.Locator(".docs-generated-example input[type=radio]").Nth(1).CheckAsync();
-        await Assertions.Expect(_page.Locator("output[aria-label='Current value']")).ToHaveTextAsync("two");
+        var toggle = await OpenExampleAsync("ntinputswitch", "InputSwitchBasicExample");
+        await Assertions.Expect(toggle.Locator("output")).ToHaveTextAsync("On");
+        await toggle.Locator("input[type=checkbox]").UncheckAsync();
+        await Assertions.Expect(toggle.Locator("output")).ToHaveTextAsync("Off");
 
-        await OpenComponentDemoAsync("ntselect");
-        await _page.Locator(".docs-generated-example select").SelectOptionAsync("two");
-        await Assertions.Expect(_page.Locator("output[aria-label='Current value']")).ToHaveTextAsync("two");
+        var radios = await OpenExampleAsync("ntinputradiogroup", "RadioGroupBasicExample");
+        await radios.Locator("input[type=radio]").Nth(1).CheckAsync();
+        await Assertions.Expect(radios.Locator("output")).ToHaveTextAsync("sms");
 
-        await OpenComponentDemoAsync("ntcombobox");
-        await _page.Locator(".docs-generated-example input[role=combobox]").ClickAsync();
-        await _page.Locator(".docs-generated-example [role=option]").Filter(new LocatorFilterOptions { HasText = "Two" }).ClickAsync();
-        await Assertions.Expect(_page.Locator("output[aria-label='Current value']")).ToHaveTextAsync("one, two");
+        var select = await OpenExampleAsync("ntselect", "SelectBasicExample");
+        await select.Locator("select").SelectOptionAsync("de");
+        await Assertions.Expect(select.Locator("output")).ToHaveTextAsync("de");
 
-        await OpenComponentDemoAsync("ntinputslider");
-        var slider = _page.Locator(".docs-generated-example input[type=range]");
-        await slider.PressAsync("Home");
-        await slider.PressAsync("ArrowRight");
-        await Assertions.Expect(_page.Locator("output[aria-label='Current value']")).ToHaveTextAsync("1");
+        var combobox = await OpenExampleAsync("ntcombobox", "ComboboxBasicExample");
+        await Assertions.Expect(combobox.Locator("output")).ToHaveTextAsync("editor");
+        await combobox.Locator("input[role=combobox]").ClickAsync();
+        await combobox.GetByRole(AriaRole.Option).Filter(new LocatorFilterOptions { HasText = "Reviewer" }).ClickAsync();
+        await Assertions.Expect(combobox.Locator("output")).ToHaveTextAsync("editor, reviewer");
 
-        await OpenComponentDemoAsync("ntinputcolor");
-        await _page.Locator(".docs-generated-example input[type=color]").EvaluateAsync("input => { input.value = '#123456'; input.dispatchEvent(new Event('change', { bubbles: true })); }");
-        await Assertions.Expect(_page.Locator("output[aria-label='Current value']")).ToHaveTextAsync("#123456");
+        var slider = await OpenExampleAsync("ntinputslider", "SliderBasicExample");
+        var range = slider.Locator("input[type=range]");
+        await range.PressAsync("Home");
+        await range.PressAsync("ArrowRight");
+        await Assertions.Expect(slider.Locator("p output")).ToHaveTextAsync("5");
+
+        var color = await OpenExampleAsync("ntinputcolor", "InputColorBasicExample");
+        var colorField = color.Locator("input[data-nt-input-color-input]");
+        await colorField.FillAsync("#123456");
+        await colorField.PressAsync("Tab");
+        await Assertions.Expect(color.Locator("output")).ToHaveTextAsync("#123456");
+        await color.GetByRole(AriaRole.Button, new() { Name = "Open color picker" }).ClickAsync();
+        var pickerHex = color.Locator("[data-nt-color-field=hex]");
+        await pickerHex.FillAsync("#ABCDEF");
+        await pickerHex.PressAsync("Enter");
+        await Assertions.Expect(colorField).ToHaveValueAsync("#abcdef");
+        await Assertions.Expect(color.Locator("output")).ToHaveTextAsync("#123456");
+        await color.GetByRole(AriaRole.Button, new() { Name = "OK" }).ClickAsync();
+        await Assertions.Expect(color.Locator("output")).ToHaveTextAsync("#abcdef");
         _browserDiagnostics.Should().BeEmpty();
     }
 
     [Fact]
     public async Task TabWizardAndButtonGroupDemos_NavigateToTheSelectedContent() {
-        ArgumentNullException.ThrowIfNull(_page);
-        await OpenComponentDemoAsync("nttabview");
-        var demo = _page.Locator(".docs-generated-example");
-        await demo.GetByRole(AriaRole.Tab, new LocatorGetByRoleOptions { Name = "Details", Exact = true }).ClickAsync();
-        await Assertions.Expect(demo.GetByRole(AriaRole.Tabpanel)).ToHaveTextAsync("Details content");
+        var tabs = await OpenExampleAsync("nttabview", "TabViewBasicExample");
+        await tabs.GetByRole(AriaRole.Tab, new LocatorGetByRoleOptions { Name = "Details", Exact = true }).ClickAsync();
+        await Assertions.Expect(tabs.GetByRole(AriaRole.Tabpanel)).ToContainTextAsync("Billing contact");
 
-        await OpenComponentDemoAsync("ntwizard");
-        await demo.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Next Step", Exact = true }).ClickAsync();
-        await Assertions.Expect(demo.GetByRole(AriaRole.Tabpanel)).ToContainTextAsync("Second step content");
-        await demo.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Previous Step", Exact = true }).ClickAsync();
-        await Assertions.Expect(demo.GetByRole(AriaRole.Tabpanel)).ToContainTextAsync("First step content");
+        var wizard = await OpenExampleAsync("ntwizard", "WizardBasicExample");
+        await wizard.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Next Step", Exact = true }).ClickAsync();
+        await Assertions.Expect(wizard.GetByRole(AriaRole.Tabpanel)).ToContainTextAsync("Second step content");
+        await wizard.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Previous Step", Exact = true }).ClickAsync();
+        await Assertions.Expect(wizard.GetByRole(AriaRole.Tabpanel)).ToContainTextAsync("First step content");
 
-        await OpenComponentDemoAsync("ntbuttongroup");
-        var two = demo.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Two", Exact = true });
-        await two.ClickAsync();
-        await Assertions.Expect(two).ToHaveAttributeAsync("aria-pressed", "true");
-        await Assertions.Expect(_page.Locator("#docs-sandbox-ntbuttongroup-selectedkey")).ToHaveValueAsync("two");
+        var group = await OpenExampleAsync("ntbuttongroup", "ButtonGroupSelectionExample");
+        var quarterly = group.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Quarterly", Exact = true });
+        await quarterly.ClickAsync();
+        await Assertions.Expect(quarterly).ToHaveAttributeAsync("aria-pressed", "true");
+        await Assertions.Expect(group.Locator("output")).ToHaveTextAsync("quarterly");
         _browserDiagnostics.Should().BeEmpty();
     }
 
     [Fact]
-    public async Task FormDemo_ValidatesAndSubmitsEditedValues_AndAppliesFormOptions() {
-        ArgumentNullException.ThrowIfNull(_page);
-        await OpenComponentDemoAsync("ntform");
-        var demo = _page.Locator(".docs-curated-demo");
-        var name = demo.GetByRole(AriaRole.Textbox, new LocatorGetByRoleOptions { NameRegex = new System.Text.RegularExpressions.Regex("^Name\\b") });
-        var email = demo.GetByRole(AriaRole.Textbox, new LocatorGetByRoleOptions { NameRegex = new System.Text.RegularExpressions.Regex("^Email\\b") });
+    public async Task FormDemo_ValidatesAndSubmitsEditedValues_AndAppliesDisabledAndReadOnly() {
+        var example = await OpenExampleAsync("ntform", "FormValidationExample");
+        var name = example.GetByRole(AriaRole.Textbox, new LocatorGetByRoleOptions { NameRegex = new System.Text.RegularExpressions.Regex("^Name\\b") });
+        var email = example.GetByRole(AriaRole.Textbox, new LocatorGetByRoleOptions { NameRegex = new System.Text.RegularExpressions.Regex("^Email\\b") });
+        var submit = example.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Submit example form", Exact = true });
+        var result = example.Locator("output[aria-label='Form result']");
+
         await name.FillAsync("");
-        await demo.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Submit example form", Exact = true }).ClickAsync();
-        await Assertions.Expect(demo).ToContainTextAsync("The Name field is required.");
-        await Assertions.Expect(demo.Locator("output")).ToBeEmptyAsync();
+        await submit.ClickAsync();
+        await Assertions.Expect(example).ToContainTextAsync("The Name field is required.");
+        await Assertions.Expect(result).ToBeEmptyAsync();
 
         await name.FillAsync("Grace Hopper");
         await email.FillAsync("grace@example.com");
-        await demo.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Submit example form", Exact = true }).ClickAsync();
-        await Assertions.Expect(demo.Locator("output")).ToHaveTextAsync("Submitted Grace Hopper (grace@example.com).");
-        await _page.Locator("#docs-sandbox-ntform-disabled").CheckAsync();
-        await Assertions.Expect(name).ToBeDisabledAsync();
-        await _page.Locator("#docs-sandbox-ntform-disabled").UncheckAsync();
-        await Assertions.Expect(name).ToBeEnabledAsync();
-        await Assertions.Expect(name).ToHaveValueAsync("Grace Hopper");
+        await submit.ClickAsync();
+        await Assertions.Expect(result).ToHaveTextAsync("Submitted Grace Hopper (grace@example.com).");
+
+        var states = Example("FormDisabledReadOnlyExample");
+        // The input's title (the model property name) takes precedence over its label text in the accessible name.
+        var account = states.GetByRole(AriaRole.Textbox, new LocatorGetByRoleOptions { Name = "Name", Exact = true });
+        await Assertions.Expect(account).ToBeEditableAsync(new LocatorAssertionsToBeEditableOptions { Editable = false });
+        await states.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Toggle read-only", Exact = true }).ClickAsync();
+        await Assertions.Expect(account).ToBeEditableAsync();
+        await states.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Toggle disabled", Exact = true }).ClickAsync();
+        await Assertions.Expect(account).ToBeDisabledAsync();
+        await states.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Toggle disabled", Exact = true }).ClickAsync();
+        await Assertions.Expect(account).ToBeEnabledAsync();
+        await Assertions.Expect(account).ToHaveValueAsync("Northwind Traders");
         _browserDiagnostics.Should().BeEmpty();
     }
 
     [Fact]
     public async Task FileUploadDemo_ReadsTheSelectedBytes_AndRejectsOversizedFiles() {
-        ArgumentNullException.ThrowIfNull(_page);
-        await OpenComponentDemoAsync("ntfileupload");
-        var demo = _page.Locator(".docs-curated-demo");
-        var fileInput = demo.Locator("input[type=file]");
-        await fileInput.SetInputFilesAsync(new FilePayload { Name = "hello.txt", MimeType = "text/plain", Buffer = Encoding.UTF8.GetBytes("hello") });
-        await demo.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Upload", Exact = true }).ClickAsync();
-        await Assertions.Expect(demo.Locator("output")).ToHaveTextAsync("Read hello.txt: 5 bytes.");
-        await Assertions.Expect(demo).ToContainTextAsync("Complete");
+        var read = await OpenExampleAsync("ntfileupload", "FileUploadReadExample");
+        await read.Locator("input[type=file]").SetInputFilesAsync(new FilePayload { Name = "hello.txt", MimeType = "text/plain", Buffer = Encoding.UTF8.GetBytes("hello") });
+        await read.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Upload", Exact = true }).ClickAsync();
+        await Assertions.Expect(read.Locator("output[aria-label='Upload result']")).ToHaveTextAsync("Read hello.txt: 5 bytes.");
 
-        await _page.Locator("#docs-sandbox-ntfileupload-maximumfilesize").FillAsync("4");
-        await _page.Locator("#docs-sandbox-ntfileupload-maximumfilesize").PressAsync("Tab");
-        await fileInput.SetInputFilesAsync(new FilePayload { Name = "oversized.txt", MimeType = "text/plain", Buffer = Encoding.UTF8.GetBytes("hello") });
-        await Assertions.Expect(demo).ToContainTextAsync("Too large");
-        await Assertions.Expect(demo.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Upload", Exact = true })).ToBeDisabledAsync();
+        var limits = Example("FileUploadLimitsExample");
+        await limits.Locator("input[type=file]").SetInputFilesAsync(new FilePayload { Name = "big.txt", MimeType = "text/plain", Buffer = new byte[2048] });
+        await Assertions.Expect(limits.Locator("output[aria-label='Upload message']")).Not.ToBeEmptyAsync();
+        await Assertions.Expect(limits.Locator("output[aria-label='Upload message']")).Not.ToContainTextAsync("Uploaded");
+        await Assertions.Expect(limits.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Upload", Exact = true })).ToBeDisabledAsync();
         _browserDiagnostics.Should().BeEmpty();
     }
 
     [Fact]
-    public async Task ContextMenuDemo_InvokesTheAction_AndHonorsDisabled() {
-        ArgumentNullException.ThrowIfNull(_page);
-        await OpenComponentDemoAsync("ntcontextmenu");
-        var demo = _page.Locator(".docs-curated-demo");
-        var trigger = demo.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Right-click or long-press for actions", Exact = true });
+    public async Task ContextMenuDemo_InvokesTheAction_ClosesOnEscapeAndOutsideClick_AndHonorsDisabled() {
+        var example = await OpenExampleAsync("ntcontextmenu", "ContextMenuBasicExample");
+        var trigger = example.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Right-click or long-press report.pdf", Exact = true });
+        var output = example.Locator("output[aria-label='Context action result']");
+        var menu = example.Locator("nt-menu:popover-open");
+
         await trigger.ClickAsync(new LocatorClickOptions { Button = MouseButton.Right });
-        var menu = demo.Locator("nt-menu:popover-open");
         await menu.WaitForAsync();
         // The surface's clip-path animates independently of the menu item's bounds.
         await menu.EvaluateAsync("menu => Promise.allSettled(menu.getAnimations({ subtree: true }).map(animation => animation.finished))");
-        await demo.GetByRole(AriaRole.Menuitem, new LocatorGetByRoleOptions { Name = "Archive example", Exact = true }).ClickAsync();
-        await Assertions.Expect(demo.Locator("output")).ToHaveTextAsync("Example archived");
-        await Assertions.Expect(demo.Locator(":popover-open")).ToHaveCountAsync(0);
+        await example.GetByRole(AriaRole.Menuitem, new LocatorGetByRoleOptions { Name = "Archive", Exact = true }).ClickAsync();
+        await Assertions.Expect(output).ToHaveTextAsync("Archived report.pdf");
+        await Assertions.Expect(example.Locator(":popover-open")).ToHaveCountAsync(0);
+
         await trigger.ClickAsync(new LocatorClickOptions { Button = MouseButton.Right });
         await menu.WaitForAsync();
-        await _page.Keyboard.PressAsync("Escape");
-        await Assertions.Expect(demo.Locator(":popover-open")).ToHaveCountAsync(0);
+        await _page!.Keyboard.PressAsync("Escape");
+        await Assertions.Expect(example.Locator(":popover-open")).ToHaveCountAsync(0);
+
         await trigger.ClickAsync(new LocatorClickOptions { Button = MouseButton.Right });
         await menu.WaitForAsync();
-        await demo.Locator("output").ClickAsync();
-        await Assertions.Expect(demo.Locator(":popover-open")).ToHaveCountAsync(0);
-        await _page.Locator("#docs-sandbox-ntcontextmenu-disabled").CheckAsync();
-        await Assertions.Expect(demo.Locator("nt-context-menu")).ToHaveAttributeAsync("data-disabled", "true");
-        await trigger.ClickAsync(new LocatorClickOptions { Button = MouseButton.Right });
-        await Assertions.Expect(demo.Locator(":popover-open")).ToHaveCountAsync(0);
+        await output.ClickAsync();
+        await Assertions.Expect(example.Locator(":popover-open")).ToHaveCountAsync(0);
+
+        var disabled = Example("ContextMenuDisabledExample");
+        await Assertions.Expect(disabled.Locator("nt-context-menu")).ToHaveAttributeAsync("data-disabled", "true");
+        var lockedTrigger = disabled.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Locked: menu unavailable", Exact = true });
+        await lockedTrigger.ClickAsync(new LocatorClickOptions { Button = MouseButton.Right });
+        await Assertions.Expect(disabled.Locator(":popover-open")).ToHaveCountAsync(0);
+
+        await disabled.GetByLabel("Lock this file").UncheckAsync();
+        var unlockedTrigger = disabled.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Right-click for actions", Exact = true });
+        await unlockedTrigger.ClickAsync(new LocatorClickOptions { Button = MouseButton.Right });
+        await disabled.Locator("nt-menu:popover-open").WaitForAsync();
         _browserDiagnostics.Should().BeEmpty();
     }
 
     [Fact]
-    public async Task WindowHostDemo_OpensClosesAndReopensManagedContent() {
-        ArgumentNullException.ThrowIfNull(_page);
-        await OpenComponentDemoAsync("ntwindowhost");
-        var demo = _page.Locator(".docs-curated-demo");
-        var open = demo.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Open managed window", Exact = true });
+    public async Task WindowHostDemo_OpensClosesAndReopensManagedContent_AndReleasesItOnNavigation() {
+        var example = await OpenExampleAsync("ntwindowhost", "WindowHostServiceExample");
+        var open = example.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Open managed window", Exact = true });
+        var window = example.Locator(".nt-window");
+        var count = example.Locator("output");
+
         await open.ClickAsync();
-        var window = demo.Locator(".nt-window");
         await Assertions.Expect(window).ToContainTextAsync("This window is rendered by NTWindowHost.");
+        await Assertions.Expect(count).ToHaveTextAsync("1");
         await window.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions { Name = "Close Managed project notes", Exact = true }).ClickAsync();
         await Assertions.Expect(window).ToHaveCountAsync(0);
         await open.ClickAsync();
         await Assertions.Expect(window).ToHaveCountAsync(1);
-        await _page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Razor", Exact = true }).ClickAsync();
-        await _page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Preview", Exact = true }).ClickAsync();
-        await Assertions.Expect(window).ToHaveCountAsync(0, new LocatorAssertionsToHaveCountOptions { Timeout = 5_000 });
-        _browserDiagnostics.Should().BeEmpty("preview disposal must release its managed windows");
+
+        await _page!.Locator("a[href='/components/ntbutton']").First.EvaluateAsync("link => link.click()");
+        await _page.WaitForURLAsync("**/components/ntbutton");
+        await Assertions.Expect(_page.Locator(".nt-window")).ToHaveCountAsync(0);
+
+        await _page.GoBackAsync();
+        example = Example("WindowHostServiceExample");
+        await example.WaitForAsync();
+        await Assertions.Expect(example.Locator("output")).ToHaveTextAsync("0", new LocatorAssertionsToHaveTextOptions { Timeout = 5_000 });
+        _browserDiagnostics.Should().BeEmpty("navigating away must release the managed windows");
     }
 
     [Fact]
     public async Task LayoutDemos_RenderRealPanesCardsFieldsAndDocumentNavigation() {
-        ArgumentNullException.ThrowIfNull(_page);
-        await OpenComponentDemoAsync("ntmultipaneview");
-        await Assertions.Expect(_page.Locator(".docs-generated-example .nt-multi-pane-view > .nt-card")).ToHaveCountAsync(3);
-        await _page.Locator("#docs-sandbox-ntmultipaneview-panecount").FillAsync("3");
-        await _page.Locator("#docs-sandbox-ntmultipaneview-panecount").PressAsync("Tab");
-        await Assertions.Expect(_page.Locator(".docs-generated-example .nt-multi-pane-view")).ToHaveClassAsync(new System.Text.RegularExpressions.Regex("nt-multi-pane-view-3-panes"));
+        var dashboard = await OpenExampleAsync("ntmultipaneview", "MultiPaneViewDashboardExample");
+        await Assertions.Expect(dashboard.Locator(".nt-multi-pane-view > .nt-card")).ToHaveCountAsync(3);
 
-        await OpenComponentDemoAsync("ntfeedview");
-        await Assertions.Expect(_page.Locator(".docs-generated-example .nt-feed-view > .nt-card")).ToHaveCountAsync(6);
+        var feed = await OpenExampleAsync("ntfeedview", "FeedViewCardsExample");
+        await Assertions.Expect(feed.Locator(".nt-feed-view > .nt-card")).ToHaveCountAsync(6);
 
-        foreach (var slug in new[] { "ntformfieldgridview", "ntformsectionview", "ntformfieldlayoutspan" }) {
-            await OpenComponentDemoAsync(slug);
-            var fields = _page.Locator(".docs-generated-example input:not([type=hidden])");
-            await Assertions.Expect(fields).ToHaveCountAsync(2);
+        foreach (var (slug, name, expectedFields) in new[] { ("ntformfieldgridview", "FormFieldGridViewContactExample", 6), ("ntformsectionview", "FormSectionViewBasicExample", 4), ("ntformfieldlayoutspan", "FormFieldLayoutSpanShippingExample", 4) }) {
+            var form = await OpenExampleAsync(slug, name);
+            var fields = form.Locator("input:not([type=hidden])");
+            await Assertions.Expect(fields).ToHaveCountAsync(expectedFields);
             await fields.First.FillAsync("Edited field");
             await fields.First.PressAsync("Tab");
             await Assertions.Expect(fields.First).ToHaveValueAsync("Edited field");
         }
 
-        await OpenComponentDemoAsync("ntcontainerview");
-        var view = _page.Locator(".docs-generated-example .nt-container-view");
+        var document = await OpenExampleAsync("ntcontainerview", "ContainerViewDocumentExample");
+        var view = document.Locator(".nt-container-view");
         await Assertions.Expect(view.Locator(".nt-container-view-content h2")).ToHaveCountAsync(3);
-        await _page.Locator("#docs-sandbox-ntcontainerview-enableonthispagenavigation").CheckAsync();
         await Assertions.Expect(view.Locator(".nt-container-view-quick-nav-list a")).ToHaveCountAsync(3);
         _browserDiagnostics.Should().BeEmpty();
     }
 
-    [Fact]
-    public async Task ClearingOptionalDemoValues_RestoresAutomaticSpan_AndRemovesTheIcon() {
-        ArgumentNullException.ThrowIfNull(_page);
-        await OpenComponentDemoAsync("ntformfieldlayoutspan");
-        var columns = _page.Locator("#docs-sandbox-ntformfieldlayoutspan-smallcolumns");
-        await Assertions.Expect(columns).ToHaveValueAsync("");
-        await columns.FillAsync("4");
-        await columns.PressAsync("Tab");
-        var span = _page.Locator(".docs-generated-example .nt-form-field-layout-span");
-        await _page.WaitForFunctionAsync("getComputedStyle(document.querySelector('.docs-generated-example .nt-form-field-layout-span')).getPropertyValue('--nt-form-field-layout-span-small').trim() === '4'");
-        await columns.FillAsync("");
-        await columns.PressAsync("Tab");
-        (await span.EvaluateAsync<string>("element => element.style.getPropertyValue('--nt-form-field-layout-span-small')")).Should().BeEmpty();
-        await _page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Razor", Exact = true }).ClickAsync();
-        await Assertions.Expect(_page.Locator(".docs-code-group pre code")).ToContainTextAsync("SmallColumns=\"@null\"");
+    private ILocator Example(string exampleTypeName) => _page!.Locator($"[data-docs-example='{exampleTypeName}']");
 
-        await OpenComponentDemoAsync("ntbutton");
-        var icon = _page.Locator("#docs-sandbox-ntbutton-leadingicon");
-        await icon.SelectOptionAsync(new SelectOptionValue { Label = "MaterialIcon.Add" });
-        await Assertions.Expect(_page.Locator(".docs-generated-example .nt-button-icon")).ToHaveCountAsync(1);
-        await icon.SelectOptionAsync(new SelectOptionValue { Label = "None" });
-        await Assertions.Expect(_page.Locator(".docs-generated-example .nt-button-icon")).ToHaveCountAsync(0);
-        _browserDiagnostics.Should().BeEmpty();
+    private async Task<ILocator> OpenExampleAsync(string slug, string exampleTypeName) {
+        await OpenComponentPageAsync(slug);
+        var example = Example(exampleTypeName);
+        await example.WaitForAsync();
+        await Assertions.Expect(example.Locator(".docs-example-failure")).ToHaveCountAsync(0);
+        return example;
     }
 
-    private async Task OpenComponentDemoAsync(string slug) {
+    private async Task OpenComponentPageAsync(string slug) {
         ArgumentNullException.ThrowIfNull(_page);
         _activeRoute = $"/components/{slug}";
         await _page.GotoAsync($"{_baseUrl}{_activeRoute}", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
-        await _page.Locator(".docs-sandbox-preview").WaitForAsync();
-        await Assertions.Expect(_page.Locator(".docs-generated-example [role='alert']")).ToHaveCountAsync(0);
+        await _page.Locator(".docs-example-preview").First.WaitForAsync();
+        await Assertions.Expect(_page.Locator(".docs-example-failure")).ToHaveCountAsync(0);
     }
 
-    private static async Task ValidateControlLayoutAsync(ICollection<string> failures, string route, ILocator sandbox) {
-        var groupNames = await sandbox.Locator(".docs-control-group").EvaluateAllAsync<string[]>("groups => groups.map(group => group.dataset.docsControlGroup)");
-        var expectedGroupOrder = new[] { "Content", "Appearance", "Behavior", "Accessibility", "Advanced" };
-        var sortedGroupNames = groupNames.OrderBy(name => Array.IndexOf(expectedGroupOrder, name), Comparer<int>.Default).ToArray();
-        if (!groupNames.SequenceEqual(sortedGroupNames, StringComparer.Ordinal)) {
-            failures.Add($"{route}: control groups were not ordered from common content settings through advanced settings: {string.Join(", ", groupNames)}.");
+    private static async Task<bool> TryWaitForAttachedAsync(ILocator locator) {
+        try {
+            await locator.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Attached, Timeout = 5_000 });
+            return true;
         }
-
-        if (groupNames.Distinct(StringComparer.Ordinal).Count() != groupNames.Length) {
-            failures.Add($"{route}: rendered duplicate control groups: {string.Join(", ", groupNames)}.");
-        }
-
-        var ungroupedControlCount = await sandbox.Locator(".docs-sandbox-controls > .docs-control-row").CountAsync();
-        if (ungroupedControlCount > 0) {
-            failures.Add($"{route}: rendered {ungroupedControlCount} controls outside a semantic group.");
-        }
-    }
-
-    private static async Task ValidatePreviewAsync(ICollection<string> failures, string route, ILocator sandbox) {
-        var errors = await sandbox.Locator(".docs-generated-example [role='alert']").AllInnerTextsAsync();
-        if (errors.Count > 0) {
-            failures.Add($"{route}: default preview failed: {string.Join(" | ", errors)}");
-            return;
-        }
-        var generatedExample = sandbox.Locator(".docs-generated-example");
-        var expectedSelector = route switch {
-            "/components/ntheaddependencies" => "[data-docs-demo-component='NTPageScript']",
-            "/components/ntbrowsertimezone" => "input[data-nt-browser-time-zone]",
-            // The placeholder is replaced by the content once the browser reports it visible.
-            "/components/ntlazyloader" => "[data-docs-lazy-content]",
-            "/components/ntform" => "form",
-            "/components/ntinputcheckbox" or "/components/ntinputswitch" => "input[type=checkbox]",
-            "/components/ntinputradiogroup" => "input[type=radio]",
-            "/components/ntinputslider" or "/components/ntinputrangeslider" => "input[type=range]",
-            "/components/ntinputcolor" => "input[type=color]",
-            "/components/ntinputnumeric" => "input[type=number]",
-            "/components/ntinputcurrency" or "/components/ntinputtext" or "/components/ntinputdatetime" => ".nt-input-control",
-            "/components/ntselect" => "select",
-            "/components/nttextarea" => "textarea",
-            "/components/ntautocomplete" or "/components/ntcombobox" or "/components/nttypeahead" => "input[role=combobox]",
-            "/components/ntfileupload" => "input[type=file]",
-            "/components/ntrichtexteditor" => "[contenteditable=true]",
-            "/components/ntsnackbar" => ".nt-snackbar-container",
-            "/components/nttoast" => ".nt-toast-container",
-            "/components/ntthemetoggle" => "nt-theme-toggle",
-            "/components/ntvirtualize" => ".virtualize-item",
-            _ => string.Empty
-        };
-        // Most roots use a kebab-case component class. Resolve these explicitly so a marker alone cannot prove rendering.
-        if (expectedSelector.Length == 0) {
-            var name = (await sandbox.Locator("[data-docs-demo-component]").First.GetAttributeAsync("data-docs-demo-component"))![2..];
-            expectedSelector = ".nt-" + System.Text.RegularExpressions.Regex.Replace(name, "(?<=[a-z0-9])(?=[A-Z])", "-").ToLowerInvariant();
-        }
-        if (!await TryWaitForAttachedAsync(generatedExample.Locator(expectedSelector).First)) {
-            failures.Add($"{route}: expected component output '{expectedSelector}' was missing.");
-        }
-        var messages = (await generatedExample.Locator(".docs-callout").AllInnerTextsAsync())
-            .Where(message => message.Contains("requires additional sample data", StringComparison.OrdinalIgnoreCase))
-            .ToArray();
-        if (messages.Length > 0) {
-            failures.Add($"{route}: Preview rendered the ErrorBoundary fallback: {string.Join(" | ", messages)}");
-        }
-
-        var previewText = (await generatedExample.InnerTextAsync()).Trim();
-        if (previewText.Contains("No step provided", StringComparison.OrdinalIgnoreCase)) {
-            failures.Add($"{route}: Preview rendered the invalid placeholder 'No step provided'.");
-        }
-
-        var hasVerifiedOutput = await generatedExample.EvaluateAsync<bool>(
-            """
-            element => element.querySelector('[data-docs-preview-verified="true"]') !== null
-                || element.innerText.trim().length > 0
-                || Array.from(element.querySelectorAll('*')).some(candidate => {
-                    if (['SCRIPT', 'STYLE', 'LINK', 'META'].includes(candidate.tagName)) {
-                        return false;
-                    }
-
-                    const style = getComputedStyle(candidate);
-                    const rect = candidate.getBoundingClientRect();
-                    return style.display !== 'none' && style.visibility !== 'hidden' && (rect.width > 0 || rect.height > 0);
-                })
-            """);
-        if (!hasVerifiedOutput) {
-            var isHiddenResponsivePreview = route == "/components/ntresponsive" && await generatedExample.EvaluateAsync<bool>(
-                """
-                element => {
-                    const responsive = element.querySelector('.nt-responsive');
-                    return responsive?.textContent?.trim().length > 0
-                        && responsive.hasAttribute('data-nt-breakpoint')
-                        && responsive.hasAttribute('data-nt-breakpoint-direction')
-                        && responsive.hasAttribute('data-nt-breakpoint-visibility')
-                        && getComputedStyle(responsive).display === 'none';
-                }
-                """);
-            if (!isHiddenResponsivePreview) {
-                failures.Add($"{route}: Preview was blank and did not expose data-docs-preview-verified='true' for a successful nonvisual demo.");
-            }
-        }
-    }
-
-    private static void ValidateGeneratedRazor(ICollection<string> failures, string route, string markup) {
-        foreach (var symbol in GeneratedSampleSymbols.Where(symbol => markup.Contains(symbol, StringComparison.Ordinal))) {
-            if (!HasCodeDeclaration(markup, symbol)) {
-                failures.Add($"{route}: generated Razor references {symbol} without declaring it in an @code block.");
-            }
-        }
-
-        if (string.Equals(route, "/components/ntlayout", StringComparison.Ordinal)) {
-            RequireGeneratedMarkup(failures, route, markup, "<NTHeader", "<NTBody", "<NTFooter");
-        }
-        else if (string.Equals(route, "/components/ntsplitbutton", StringComparison.Ordinal)) {
-            RequireGeneratedMarkup(failures, route, markup, "<NTMenuLabelItem", "<NTMenuButtonItem", "<NTMenuAnchorItem");
-        }
-        else if (string.Equals(route, "/components/ntscheduler", StringComparison.Ordinal)) {
-            RequireGeneratedMarkup(failures, route, markup, "NTComponents.Scheduler.TnTEvent");
-        }
-    }
-
-    private static bool HasCodeDeclaration(string markup, string symbol) {
-        var codeIndex = markup.IndexOf("@code", StringComparison.Ordinal);
-        if (codeIndex < 0) {
+        catch (TimeoutException) {
             return false;
-        }
-
-        return markup[codeIndex..].ReplaceLineEndings("\n").Split('\n', StringSplitOptions.TrimEntries)
-            .Any(line => line.Contains(symbol, StringComparison.Ordinal)
-                && (line.StartsWith("private ", StringComparison.Ordinal)
-                    || line.StartsWith("protected ", StringComparison.Ordinal)
-                    || line.StartsWith("internal ", StringComparison.Ordinal)
-                    || line.StartsWith("public ", StringComparison.Ordinal)));
-    }
-
-    private static void RequireGeneratedMarkup(ICollection<string> failures, string route, string markup, params string[] requiredFragments) {
-        var missingFragments = requiredFragments.Where(fragment => !markup.Contains(fragment, StringComparison.Ordinal)).ToArray();
-        if (missingFragments.Length > 0) {
-            failures.Add($"{route}: generated Razor omitted composed markup: {string.Join(", ", missingFragments)}");
         }
     }
 
@@ -1142,6 +925,18 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
           --md-extended-color-success-on-color-container: rgb(4 5 6);
         }
         """;
+
+    private Task WaitForRootColorAsync(string propertyName, string expected) => _page!.WaitForFunctionAsync(
+        """
+        ([name, expected]) => {
+            const probe = document.createElement('span');
+            probe.style.color = `var(${name})`;
+            document.body.append(probe);
+            const color = getComputedStyle(probe).color;
+            probe.remove();
+            return color === expected;
+        }
+        """, new[] { propertyName, expected });
 
     private async Task<string> RootColorAsync(string propertyName) {
         ArgumentNullException.ThrowIfNull(_page);
@@ -1178,137 +973,9 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
         return arityIndex < 0 ? name : name[..arityIndex];
     }
 
-    private static async Task<ControlChange?> TryChangeFirstControlAsync(ILocator controls, IPage page) {
-        for (var index = 0; index < await controls.CountAsync(); index++) {
-            var control = controls.Nth(index);
-            if (!await control.IsVisibleAsync() || !await control.IsEnabledAsync()) {
-                continue;
-            }
-
-            var propertyName = (await control.EvaluateAsync<string?>(
-                "element => element.closest('.docs-control-row')?.querySelector('.nt-input-label, .nt-checkbox-label-text, .nt-switch-label-text')?.textContent?.trim() ?? null"))?.TrimEnd('*').Trim();
-            if (string.IsNullOrWhiteSpace(propertyName)) {
-                continue;
-            }
-            var tagName = await control.EvaluateAsync<string>("element => element.tagName");
-            if (string.Equals(tagName, "SELECT", StringComparison.Ordinal)) {
-                var options = await control.Locator("option").EvaluateAllAsync<SelectOption[]>(
-                    "options => options.map(option => ({ value: option.value, label: option.textContent?.trim() ?? option.value, selected: option.selected }))");
-                var replacement = options.FirstOrDefault(option => !option.Selected && !string.Equals(option.Label, "None", StringComparison.Ordinal))
-                    ?? options.FirstOrDefault(option => !option.Selected);
-                if (replacement is null) {
-                    continue;
-                }
-
-                await control.SelectOptionAsync(new SelectOptionValue { Value = replacement.Value });
-                await WaitForRenderAsync(page);
-                return new(propertyName, replacement.Label, true);
-            }
-
-            var inputType = string.Equals(tagName, "INPUT", StringComparison.Ordinal)
-                ? await control.GetAttributeAsync("type") ?? "text"
-                : "text";
-            if (string.Equals(inputType, "checkbox", StringComparison.OrdinalIgnoreCase)) {
-                var changedValue = !await control.IsCheckedAsync();
-                await control.SetCheckedAsync(changedValue);
-                await WaitForRenderAsync(page);
-                return new(propertyName, changedValue.ToString().ToLowerInvariant(), true);
-            }
-
-            if (string.Equals(inputType, "file", StringComparison.OrdinalIgnoreCase)) {
-                continue;
-            }
-
-            var currentValue = await control.InputValueAsync();
-            var changedText = await GetSafeChangedControlValueAsync(control, inputType, propertyName, currentValue);
-            if (string.Equals(currentValue, changedText, StringComparison.Ordinal)) {
-                continue;
-            }
-
-            await control.FillAsync(changedText);
-            await control.PressAsync("Tab");
-            await WaitForRenderAsync(page);
-            return new(propertyName, changedText, !string.Equals(propertyName, "ChildContent", StringComparison.Ordinal));
-        }
-
-        return null;
-    }
-
-    private static async Task<string> GetSafeChangedControlValueAsync(ILocator control, string inputType, string propertyName, string currentValue) => inputType.ToLowerInvariant() switch {
-        "color" => currentValue == "#123456" ? "#654321" : "#123456",
-        "date" => currentValue == "2030-01-02" ? "2030-01-03" : "2030-01-02",
-        "datetime-local" => currentValue == "2030-01-02T12:34" ? "2030-01-03T12:34" : "2030-01-02T12:34",
-        "email" => currentValue == "browser-verification@example.com" ? "browser-verification-2@example.com" : "browser-verification@example.com",
-        "month" => currentValue == "2030-01" ? "2030-02" : "2030-01",
-        "number" or "range" => await control.EvaluateAsync<string>(
-            """
-            element => {
-                const current = Number(element.value) || 0;
-                const minimum = element.min === '' ? Number.NEGATIVE_INFINITY : Number(element.min);
-                const maximum = element.max === '' ? Number.POSITIVE_INFINITY : Number(element.max);
-                const step = element.step === '' || element.step === 'any' ? 1 : Number(element.step);
-                const increased = current + step;
-                return String(increased <= maximum ? increased : Math.max(minimum, current - step));
-            }
-            """),
-        "time" => currentValue == "12:34" ? "13:34" : "12:34",
-        "url" => currentValue == "https://example.com/browser-verification" ? "https://example.com/browser-verification-2" : "https://example.com/browser-verification",
-        _ => GetSafeChangedText(propertyName)
-    };
-
-    private static string GetSafeChangedText(string propertyName) => propertyName switch {
-        "Accept" => ".txt",
-        "AnchorName" => "--docs-browser-verification",
-        "CultureCode" => "en-US",
-        "ElementId" => "docs-browser-verification",
-        "Src" => "/js/docs.js?browser-verification=1",
-        _ when propertyName.EndsWith("Css", StringComparison.Ordinal) => "/css/app.css?browser-verification=1",
-        _ when propertyName.EndsWith("Gap", StringComparison.Ordinal) => "1rem",
-        _ when propertyName.EndsWith("Width", StringComparison.Ordinal) => "12rem",
-        _ => "Browser verification"
-    };
-
-    private static async Task<bool> TryWaitForVisibleAsync(ILocator locator) {
-        try {
-            await locator.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 2000 });
-            return true;
-        }
-        catch (TimeoutException) {
-            return false;
-        }
-    }
-
-    private static async Task<bool> TryWaitForAttachedAsync(ILocator locator) {
-        try {
-            await locator.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Attached, Timeout = 5_000 });
-            return true;
-        }
-        catch (TimeoutException) {
-            return false;
-        }
-    }
-
     private static Task WaitForRenderAsync(IPage page) => page.EvaluateAsync(
         "() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))");
 
     private sealed record BrowserDiagnostic(string Route, string Kind, string Message);
-
-    private sealed class ControlScrollState {
-        public string OverflowY { get; set; } = string.Empty;
-
-        public int ClientHeight { get; set; }
-
-        public int ScrollHeight { get; set; }
-    }
-
-    private sealed record ControlChange(string PropertyName, string Value, bool RequirePropertyName);
-
-    private sealed class SelectOption {
-        public string Label { get; set; } = string.Empty;
-
-        public bool Selected { get; set; }
-
-        public string Value { get; set; } = string.Empty;
-    }
 }
 #endif

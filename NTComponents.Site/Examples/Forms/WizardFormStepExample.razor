@@ -1,0 +1,48 @@
+@using System.ComponentModel.DataAnnotations
+
+<NTWizard Title="Create account" OnSubmitCallback="Finish" class="docs-fill" style="block-size: 24rem;">
+    <NTWizardFormStep Title="Account" Model="_account">
+        <ChildContent Context="editContext">
+            <NTFormFieldGridView MaxColumns="2">
+                <NTInputText Label="Email" InputType="TextInputType.Email" @bind-Value="_account.Email" />
+                <NTInputText Label="Display name" @bind-Value="_account.DisplayName" />
+            </NTFormFieldGridView>
+        </ChildContent>
+    </NTWizardFormStep>
+    <NTWizardFormStep Title="Shipping" Model="_shipping">
+        <ChildContent Context="editContext">
+            <NTFormFieldGridView MaxColumns="2">
+                <NTInputText Label="Street" @bind-Value="_shipping.Street" />
+                <NTInputText Label="City" @bind-Value="_shipping.City" />
+            </NTFormFieldGridView>
+        </ChildContent>
+    </NTWizardFormStep>
+    <NTWizardStep Title="Done">
+        <p>Review complete for @_account.DisplayName.</p>
+    </NTWizardStep>
+</NTWizard>
+<output>@_result</output>
+
+@code {
+    private readonly AccountModel _account = new();
+    private readonly ShippingModel _shipping = new();
+    private string? _result;
+
+    private void Finish() => _result = $"Account created for {_account.Email}.";
+
+    private sealed class AccountModel {
+        [Required, EmailAddress]
+        public string? Email { get; set; } = "ada@example.com";
+
+        [Required]
+        public string? DisplayName { get; set; } = "Ada";
+    }
+
+    private sealed class ShippingModel {
+        [Required]
+        public string? Street { get; set; } = "1 Analytical Way";
+
+        [Required]
+        public string? City { get; set; } = "London";
+    }
+}

@@ -1,0 +1,23 @@
+<NTForm Model="_contact" class="docs-fill">
+    <NTFormFieldGridView>
+        <NTInputText Label="First name" @bind-Value="_contact.FirstName" />
+        <NTInputText Label="Last name" @bind-Value="_contact.LastName" />
+        <NTInputText Label="Email" InputType="TextInputType.Email" @bind-Value="_contact.Email" />
+        <NTInputText Label="Company" @bind-Value="_contact.Company" />
+        <NTInputText Label="Job title" @bind-Value="_contact.JobTitle" />
+        <NTInputText Label="City" @bind-Value="_contact.City" />
+    </NTFormFieldGridView>
+</NTForm>
+
+@code {
+    private readonly ContactModel _contact = new();
+
+    private sealed class ContactModel {
+        public string FirstName { get; set; } = "Ada";
+        public string LastName { get; set; } = "Lovelace";
+        public string Email { get; set; } = "ada@example.com";
+        public string Company { get; set; } = "Analytical Engines Ltd";
+        public string JobTitle { get; set; } = "Mathematician";
+        public string City { get; set; } = "London";
+    }
+}

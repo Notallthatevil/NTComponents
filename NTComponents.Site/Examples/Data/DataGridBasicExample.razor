@@ -1,0 +1,17 @@
+<NTDataGrid TItem="Order" Items="_orders" Caption="Recent orders" class="docs-fill">
+    <NTPropertyColumn TItem="Order" TValue="int" Title="Order" Property="order => order.Id" InitialSortDirection="SortDirection.Ascending" />
+    <NTPropertyColumn TItem="Order" TValue="string" Title="Customer" Property="order => order.Customer" />
+    <NTPropertyColumn TItem="Order" TValue="DateTime" Title="Placed" Property="order => order.Placed" Format="MMM d, yyyy" />
+    <NTPropertyColumn TItem="Order" TValue="decimal" Title="Total" Property="order => order.Total" Format="C" TextAlign="TextAlign.Right" HeaderTextAlign="TextAlign.Right" />
+</NTDataGrid>
+
+@code {
+    private readonly IQueryable<Order> _orders = new Order[] {
+        new(1001, "Ada Lovelace", new DateTime(2026, 3, 2), 129.50m),
+        new(1002, "Grace Hopper", new DateTime(2026, 3, 4), 42.00m),
+        new(1003, "Alan Turing", new DateTime(2026, 3, 9), 310.25m),
+        new(1004, "Katherine Johnson", new DateTime(2026, 3, 11), 87.75m)
+    }.AsQueryable();
+
+    private sealed record Order(int Id, string Customer, DateTime Placed, decimal Total);
+}

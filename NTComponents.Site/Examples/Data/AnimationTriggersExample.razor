@@ -1,0 +1,14 @@
+<NTAnimation Trigger="NTAnimationTrigger.Render" Animation="NTAnimationType.SlideInFromTop">
+    <NTCard Variant="NTCardVariant.Outlined">Render trigger: animates as soon as it is rendered, for above-the-fold content.</NTCard>
+</NTAnimation>
+
+<NTButton Label="@(_shown ? "Hide" : "Show")" Variant="NTButtonVariant.Tonal" OnClickCallback="Toggle" />
+<NTAnimation Trigger="NTAnimationTrigger.Manual" Shown="_shown" Animation="NTAnimationType.ScaleIn">
+    <NTCard Variant="NTCardVariant.Outlined">Manual trigger: Shown controls visibility. Hidden content keeps its space and is inert.</NTCard>
+</NTAnimation>
+
+@code {
+    private bool _shown = true;
+
+    private void Toggle() => _shown = !_shown;
+}

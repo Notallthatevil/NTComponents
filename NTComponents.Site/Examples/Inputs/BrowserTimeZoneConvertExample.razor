@@ -1,0 +1,22 @@
+<NTFormFieldGridView class="docs-fill" MaxColumns="1">
+    <NTBrowserTimeZone Value="_timeZone" ValueChanged="OnTimeZoneChanged" FallbackValue="UTC" />
+</NTFormFieldGridView>
+<p>Webinar starts (UTC): <output>@_startsUtc.ToString("ddd MMM d, h:mm tt")</output></p>
+<p>Webinar starts (your time): <output>@_local</output></p>
+
+@code {
+    private readonly DateTimeOffset _startsUtc = new(2026, 11, 12, 17, 0, 0, TimeSpan.Zero);
+    private string? _timeZone;
+    private string _local = "Detecting time zone";
+
+    private void OnTimeZoneChanged(string? timeZone) {
+        _timeZone = timeZone;
+        try {
+            var zone = TimeZoneInfo.FindSystemTimeZoneById(timeZone ?? "UTC");
+            _local = $"{TimeZoneInfo.ConvertTime(_startsUtc, zone):ddd MMM d, h:mm tt} ({timeZone})";
+        }
+        catch (TimeZoneNotFoundException) {
+            _local = $"{_startsUtc:ddd MMM d, h:mm tt} (UTC)";
+        }
+    }
+}

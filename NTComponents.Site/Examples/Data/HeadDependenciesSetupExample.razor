@@ -1,0 +1,13 @@
+<p>This component belongs in the head of App.razor. It is not rendered here because this site already includes it.</p>
+<pre class="docs-code"><code>@HeadSnippet</code></pre>
+
+@code {
+    private const string HeadSnippet = """
+        <head>
+            <meta charset="utf-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1" />
+            <NTHeadDependencies />
+            <HeadOutlet />
+        </head>
+        """;
+}

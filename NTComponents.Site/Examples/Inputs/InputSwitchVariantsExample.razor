@@ -1,0 +1,9 @@
+<NTInputSwitch Label="Dark mode" ShowHandleIcon="true" @bind-Value="_dark" />
+<NTInputSwitch Label="Label before the switch" Variant="NTSwitchVariant.Trailing" @bind-Value="_trailing" />
+<NTInputSwitch Label="Airplane mode" SupportingText="Turns off all wireless radios." @bind-Value="_airplane" />
+
+@code {
+    private bool _dark;
+    private bool _trailing = true;
+    private bool _airplane;
+}

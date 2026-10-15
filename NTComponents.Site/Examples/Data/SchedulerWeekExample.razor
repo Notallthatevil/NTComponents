@@ -1,0 +1,19 @@
+@using NTComponents.Scheduler
+
+<NTScheduler TEventType="TnTEvent" Events="_events" View="NTSchedulerView.Week" StartViewOn="DayOfWeek.Monday" HourRowHeight="48" AriaLabel="Team calendar" class="docs-fill" style="block-size: 36rem;" />
+
+@code {
+    private readonly List<TnTEvent> _events = CreateEvents();
+
+    private static List<TnTEvent> CreateEvents() {
+        var monday = DateTime.Today.AddDays(-(((int)DateTime.Today.DayOfWeek + 6) % 7));
+        DateTimeOffset At(int day, int hour, int minute = 0) => new(monday.AddDays(day).AddHours(hour).AddMinutes(minute));
+        return [
+            new TnTEvent { Title = "Sprint planning", EventStart = At(0, 9), EventEnd = At(0, 10, 30) },
+            new TnTEvent { Title = "Design review", EventStart = At(1, 13), EventEnd = At(1, 14) },
+            new TnTEvent { Title = "1:1 with Grace", EventStart = At(2, 11), EventEnd = At(2, 11, 30) },
+            new TnTEvent { Title = "Release freeze", EventStart = At(3, 0), EventEnd = At(4, 0), IsAllDay = true },
+            new TnTEvent { Title = "Demo day", EventStart = At(4, 15), EventEnd = At(4, 16, 30) }
+        ];
+    }
+}

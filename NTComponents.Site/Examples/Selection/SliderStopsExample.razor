@@ -1,0 +1,8 @@
+<NTInputSlider TNumber="int" @bind-Value="_quality" Label="Export quality" Min="0" Max="100" Step="10" ShowStops="true" StopCount="11" ShowValueIndicator="true" />
+<NTInputSlider TNumber="int" @bind-Value="_offset" Label="Temperature offset" Min="-10" Max="10" Variant="NTSliderVariant.Centered" ShowStops="true" StopCount="5" />
+<p>Quality: <output>@_quality</output>, offset: <output>@_offset</output></p>
+
+@code {
+    private int _quality = 70;
+    private int _offset;
+}

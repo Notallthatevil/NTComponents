@@ -1,0 +1,8 @@
+<NTFormFieldGridView class="docs-fill" MaxColumns="1">
+    <NTInputNumeric TNumber="int" Label="Quantity" BindOnInput="true" @bind-Value="_quantity" />
+</NTFormFieldGridView>
+<p>Quantity: <output>@_quantity</output></p>
+
+@code {
+    private int? _quantity = 3;
+}

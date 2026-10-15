@@ -1,0 +1,9 @@
+<NTFormFieldGridView class="docs-fill" MaxColumns="2">
+    <NTTextArea Label="Shipping instructions" ReadOnly="true" @bind-Value="_readOnly" />
+    <NTTextArea Label="Archived comment" Disabled="true" @bind-Value="_disabled" />
+</NTFormFieldGridView>
+
+@code {
+    private string? _readOnly = "Leave the package at the side door.";
+    private string? _disabled = "Resolved by support on March 3.";
+}

@@ -1,0 +1,31 @@
+<NTForm Model="_booking" class="docs-fill">
+    <NTFormFieldGridView MaxColumns="4">
+        <NTFormFieldLayoutSpan Span="NTFormFieldSpan.TwoThirds">
+            <NTInputText Label="Guest name" @bind-Value="_booking.Guest" />
+        </NTFormFieldLayoutSpan>
+        <NTFormFieldLayoutSpan Span="NTFormFieldSpan.OneThird">
+            <NTInputText Label="Room" @bind-Value="_booking.Room" />
+        </NTFormFieldLayoutSpan>
+        <NTFormFieldLayoutSpan Span="NTFormFieldSpan.Half">
+            <NTInputText Label="Arrival" @bind-Value="_booking.Arrival" />
+        </NTFormFieldLayoutSpan>
+        <NTFormFieldLayoutSpan Span="NTFormFieldSpan.Half">
+            <NTInputText Label="Departure" @bind-Value="_booking.Departure" />
+        </NTFormFieldLayoutSpan>
+        <NTFormFieldLayoutSpan Span="NTFormFieldSpan.Full">
+            <NTInputText Label="Special requests" @bind-Value="_booking.Requests" />
+        </NTFormFieldLayoutSpan>
+    </NTFormFieldGridView>
+</NTForm>
+
+@code {
+    private readonly BookingModel _booking = new();
+
+    private sealed class BookingModel {
+        public string Guest { get; set; } = "Katherine Johnson";
+        public string Room { get; set; } = "412";
+        public string Arrival { get; set; } = "2026-03-14";
+        public string Departure { get; set; } = "2026-03-18";
+        public string Requests { get; set; } = "Late check-in, quiet room";
+    }
+}

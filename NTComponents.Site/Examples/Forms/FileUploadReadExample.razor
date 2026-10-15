@@ -1,0 +1,15 @@
+<p>Choose a file to read it locally and see its byte count.</p>
+<NTFileUpload @bind-Value="_files" Label="Attachment" ChooseButtonText="Choose file" OnUploadFile="ReadFileAsync" class="docs-fill" />
+<output aria-label="Upload result">@_result</output>
+
+@code {
+    private IReadOnlyList<Microsoft.AspNetCore.Components.Forms.IBrowserFile>? _files;
+    private string? _result;
+
+    private async Task ReadFileAsync(NTFileUploadEventArgs args) {
+        if (args.Stream is not null) {
+            await args.Stream.CopyToAsync(Stream.Null);
+            _result = $"Read {args.Name}: {args.Size} bytes.";
+        }
+    }
+}

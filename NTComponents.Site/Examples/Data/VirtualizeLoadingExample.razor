@@ -1,0 +1,21 @@
+@using NTComponents.Virtualization
+
+<div class="docs-fill" style="block-size: 15rem; overflow: auto; border: 1px solid var(--nt-color-outline-variant); border-radius: var(--nt-sys-shape-corner-medium);">
+    <NTVirtualize TItem="string" ItemsProvider="LoadOrdersAsync" ItemSize="56">
+        <ItemTemplate Context="order">
+            <div class="nt-body-large" style="block-size: 56px; display: flex; align-items: center; box-sizing: border-box; padding-inline: 16px; border-block-end: 1px solid var(--nt-color-outline-variant);">@order</div>
+        </ItemTemplate>
+        <LoadingTemplate Context="placeholder">
+            <div class="nt-body-large" style="block-size: 56px; color: var(--nt-color-on-surface-variant); display: flex; align-items: center; box-sizing: border-box; padding-inline: 16px; border-block-end: 1px solid var(--nt-color-outline-variant);">Loading order...</div>
+        </LoadingTemplate>
+    </NTVirtualize>
+</div>
+
+@code {
+    private static async ValueTask<TnTItemsProviderResult<string>> LoadOrdersAsync(NTVirtualizeItemsProviderRequest<string> request) {
+        await Task.Delay(300, request.CancellationToken);
+        var count = request.Count ?? 20;
+        var orders = Enumerable.Range(request.StartIndex, count).Where(index => index < 200).Select(index => $"Order #{1000 + index}").ToArray();
+        return new TnTItemsProviderResult<string>(orders, 200);
+    }
+}

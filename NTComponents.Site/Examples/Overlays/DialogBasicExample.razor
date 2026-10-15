@@ -1,0 +1,26 @@
+<NTButton Label="Review changes" OnClickCallback="OpenAsync" />
+<p>Result: <output>@_result</output></p>
+
+<NTDialog @ref="_dialog"
+          Id="dialog-basic-example"
+          Title="Publish settings update?"
+          SupportingText="The new notification settings apply to all 14 members of the Design team."
+          OnClosed="HandleClosed">
+    <Buttons>
+        <button type="button" class="nt-dialog-button" command="request-close" commandfor="dialog-basic-example" value="cancel">Cancel</button>
+        <button type="button" class="nt-dialog-button" command="request-close" commandfor="dialog-basic-example" value="confirm">Confirm</button>
+    </Buttons>
+</NTDialog>
+
+@code {
+    private NTDialog? _dialog;
+    private string _result = "Not opened";
+
+    private async Task OpenAsync() {
+        if (_dialog is not null) {
+            await _dialog.OpenAsync();
+        }
+    }
+
+    private void HandleClosed(NTDialogEventArgs args) => _result = args.ReturnValue ?? "dismissed";
+}

@@ -1,0 +1,21 @@
+<NTForm Model="_model" OnValidSubmit="Submit" class="docs-fill">
+    <DataAnnotationsValidator />
+    <NTFormSectionView MaxColumns="1">
+        <NTInputCheckbox Label="I accept the terms of service" Required="true" RequiredErrorText="You must accept the terms to continue." @bind-Value="_model.AcceptedTerms" />
+        <div class="docs-row">
+            <NTButton Type="ButtonType.Submit" Label="Continue" />
+        </div>
+    </NTFormSectionView>
+</NTForm>
+<p>Status: <output>@_status</output></p>
+
+@code {
+    private readonly Agreement _model = new();
+    private string _status = "Waiting";
+
+    private void Submit() => _status = "Terms accepted";
+
+    private sealed class Agreement {
+        public bool AcceptedTerms { get; set; }
+    }
+}

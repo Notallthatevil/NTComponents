@@ -1,0 +1,21 @@
+<NTMultiPaneView class="docs-fill" PaneCount="3">
+    @foreach (var metric in _metrics) {
+        <NTCard>
+            <div style="display: grid; gap: 8px; padding: 16px;">
+                <h5 class="nt-title-medium" style="margin: 0;">@metric.Title</h5>
+                <p class="nt-headline-medium" style="margin: 0;">@metric.Value</p>
+                <p class="nt-body-medium" style="margin: 0;">@metric.Note</p>
+            </div>
+        </NTCard>
+    }
+</NTMultiPaneView>
+
+@code {
+    private sealed record Metric(string Title, string Value, string Note);
+
+    private readonly Metric[] _metrics = [
+        new("Revenue", "$48,200", "Up 8% from last week"),
+        new("Orders", "1,284", "112 awaiting shipment"),
+        new("Returns", "2.1%", "Down 0.4 points")
+    ];
+}

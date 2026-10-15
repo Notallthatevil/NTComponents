@@ -1,0 +1,24 @@
+@using System.ComponentModel.DataAnnotations
+
+<NTForm Model="_signup" ShowRequiredSupportingText="true" RequiredSupportingText="Required to create your account" class="docs-fill">
+    <DataAnnotationsValidator />
+    <NTFormFieldGridView MaxColumns="2">
+        <NTInputText Label="Full name" @bind-Value="_signup.FullName" />
+        <NTInputText Label="Work email" InputType="TextInputType.Email" @bind-Value="_signup.Email" />
+        <NTInputText Label="Referral code (optional)" @bind-Value="_signup.ReferralCode" />
+    </NTFormFieldGridView>
+</NTForm>
+
+@code {
+    private readonly SignupModel _signup = new();
+
+    private sealed class SignupModel {
+        [Required]
+        public string? FullName { get; set; }
+
+        [Required, EmailAddress]
+        public string? Email { get; set; }
+
+        public string? ReferralCode { get; set; }
+    }
+}

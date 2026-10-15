@@ -1,0 +1,13 @@
+<NTInputRangeSlider TNumber="double" @bind-Value="_price" Label="Price" Min="0" Max="500" Step="10" Size="NTSliderSize.Medium" BindOnInput="false" BindAfter="OnChanged" ShowValueIndicator="true" />
+<NTInputRangeSlider TNumber="int" @bind-Value="_age" Label="Age (disabled)" Min="0" Max="100" Disabled="true" />
+<p>Price: <output>@_price.Start - @_price.End</output>, applied <output>@_applied</output> times</p>
+
+@code {
+    private NTSliderRange<double> _price = new(50, 250);
+    private int _applied;
+    private NTSliderRange<int> _age = new(20, 60);
+
+    private void OnChanged(NTSliderRange<double> range) {
+        _applied++;
+    }
+}

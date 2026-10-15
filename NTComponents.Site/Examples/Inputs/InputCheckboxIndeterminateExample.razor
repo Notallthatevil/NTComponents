@@ -1,0 +1,18 @@
+<NTInputCheckbox Label="Select all toppings" Indeterminate="@(_pepperoni != _mushrooms)" Value="AllSelected" ValueChanged="SetAll" ValueExpression="() => AllSelected" />
+<div class="docs-row" style="padding-inline-start: 32px">
+    <NTInputCheckbox Label="Pepperoni" @bind-Value="_pepperoni" />
+    <NTInputCheckbox Label="Mushrooms" @bind-Value="_mushrooms" />
+</div>
+<p>Selected: <output>@(_pepperoni ? "Pepperoni " : "")@(_mushrooms ? "Mushrooms" : "")</output></p>
+
+@code {
+    private bool _pepperoni = true;
+    private bool _mushrooms;
+
+    private bool AllSelected => _pepperoni && _mushrooms;
+
+    private void SetAll(bool value) {
+        _pepperoni = value;
+        _mushrooms = value;
+    }
+}

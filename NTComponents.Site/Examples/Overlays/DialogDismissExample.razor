@@ -1,0 +1,27 @@
+<NTButton Label="Open reminder" OnClickCallback="OpenAsync" />
+<p>Closed <output>@_closeCount</output> times.</p>
+
+<NTDialog @ref="_dialog"
+          Id="dialog-dismiss-example"
+          Title="Storage almost full"
+          SupportingText="You have used 9.4 GB of your 10 GB plan. Click outside, press Escape, or use the close button to dismiss."
+          ShowCloseButton="true"
+          CloseOnBackdrop="true"
+          CloseOnEscape="true"
+          OnClosed="_ => _closeCount++">
+    <Icon><MaterialIcon Icon="@MaterialIcon.Storage" /></Icon>
+    <Buttons>
+        <button type="button" class="nt-dialog-button" command="request-close" commandfor="dialog-dismiss-example" value="later">Remind me later</button>
+    </Buttons>
+</NTDialog>
+
+@code {
+    private NTDialog? _dialog;
+    private int _closeCount;
+
+    private async Task OpenAsync() {
+        if (_dialog is not null) {
+            await _dialog.OpenAsync();
+        }
+    }
+}

@@ -1,0 +1,28 @@
+<div class="docs-row">
+    <NTButton Label="Outlined" Variant="NTButtonVariant.Outlined" OnClickCallback="_ => _appearance = NTFormAppearance.Outlined" />
+    <NTButton Label="Filled" Variant="NTButtonVariant.Outlined" OnClickCallback="_ => _appearance = NTFormAppearance.Filled" />
+    <NTButton Label="Comfortable" Variant="NTButtonVariant.Text" OnClickCallback="_ => _density = NTFormDensity.Comfortable" />
+    <NTButton Label="Standard" Variant="NTButtonVariant.Text" OnClickCallback="_ => _density = NTFormDensity.Standard" />
+    <NTButton Label="Dense" Variant="NTButtonVariant.Text" OnClickCallback="_ => _density = NTFormDensity.Dense" />
+</div>
+<p>Appearance: <output>@_appearance</output>, density: <output>@_density</output></p>
+
+<NTForm Model="_address" Appearance="_appearance" Density="_density" class="docs-fill">
+    <NTFormFieldGridView MaxColumns="2">
+        <NTInputText Label="Recipient" @bind-Value="_address.Recipient" />
+        <NTInputText Label="Street" @bind-Value="_address.Street" />
+        <NTInputText Label="City" @bind-Value="_address.City" />
+    </NTFormFieldGridView>
+</NTForm>
+
+@code {
+    private readonly AddressModel _address = new();
+    private NTFormAppearance _appearance = NTFormAppearance.Outlined;
+    private NTFormDensity _density = NTFormDensity.Standard;
+
+    private sealed class AddressModel {
+        public string Recipient { get; set; } = "Grace Hopper";
+        public string Street { get; set; } = "1 Navy Way";
+        public string City { get; set; } = "Arlington";
+    }
+}

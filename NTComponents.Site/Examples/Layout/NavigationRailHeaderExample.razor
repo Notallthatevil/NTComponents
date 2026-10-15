@@ -1,0 +1,22 @@
+<div class="docs-fill" style="display: flex; block-size: 26rem; position: relative; overflow: hidden;">
+    <NTNavigationRail AriaLabel="Mail navigation" HideRailOnXSScreens="false" style="block-size: 100%; min-block-size: 0; max-block-size: 100%;">
+        <Header>
+            <span class="nt-title-medium" style="padding: 8px;">Mail</span>
+        </Header>
+        <Fab>
+            <NTFabButton Icon="MaterialIcon.Edit" AriaLabel="Compose message" />
+        </Fab>
+        <ChildContent>
+            <NTNavigationRailItem Label="Inbox" Href="#inbox" Icon="MaterialIcon.Inbox" Selected="true" />
+            <NTNavigationRailItem Label="Sent" Href="#sent" Icon="MaterialIcon.Send" />
+            <NTNavigationRailItem Label="Trash" Href="#trash" Icon="MaterialIcon.Delete" />
+        </ChildContent>
+        <Footer>
+            <NTNavigationRailItem Label="Help" Href="#help" Icon="MaterialIcon.Help" />
+        </Footer>
+    </NTNavigationRail>
+    <div style="display: grid; align-content: start; gap: 8px; padding: 16px;">
+        <h4 class="nt-title-large" style="margin: 0;">Inbox</h4>
+        <p style="margin: 0;">You have no new messages.</p>
+    </div>
+</div>

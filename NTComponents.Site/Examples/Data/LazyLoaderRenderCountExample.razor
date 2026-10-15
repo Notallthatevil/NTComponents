@@ -1,0 +1,15 @@
+<div class="docs-fill" style="block-size: 12rem; overflow: auto; box-sizing: border-box; padding: 16px; border: 1px solid var(--nt-color-outline-variant); border-radius: var(--nt-sys-shape-corner-medium);">
+    <p>Scroll to the bottom to load the order history.</p>
+    <div style="block-size: 14rem;"></div>
+    <NTLazyLoader>
+        <ul>
+            @foreach (var order in _orders) {
+                <li>@order</li>
+            }
+        </ul>
+    </NTLazyLoader>
+</div>
+
+@code {
+    private readonly string[] _orders = ["Order #1001 - shipped", "Order #1002 - delivered", "Order #1003 - processing"];
+}

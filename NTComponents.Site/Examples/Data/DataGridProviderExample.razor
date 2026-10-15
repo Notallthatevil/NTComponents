@@ -1,0 +1,29 @@
+<NTDataGrid TItem="Order" ItemsProvider="LoadOrdersAsync" Caption="Orders loaded on demand" ShowPagination="true" PageSize="5" QueryParameterPrefix="docs-provider" class="docs-fill">
+    <NTPropertyColumn TItem="Order" TValue="int" Title="Order" Property="order => order.Id" />
+    <NTPropertyColumn TItem="Order" TValue="decimal" Title="Total" Property="order => order.Total" Format="C" />
+</NTDataGrid>
+
+@code {
+    private static readonly Order[] AllOrders = Enumerable.Range(1, 30)
+        .Select(index => new Order(1000 + index, index * 9.99m))
+        .ToArray();
+
+    // A real provider would query a database or API for the requested sort and window.
+    private static async ValueTask<NTItemsProviderResult<Order>> LoadOrdersAsync(NTDataGridItemsProviderRequest<Order> request) {
+        await Task.Delay(100, request.CancellationToken);
+        IEnumerable<Order> orders = AllOrders;
+        foreach (var sort in request.Sorts.Reverse()) {
+            orders = (sort.PropertyName, sort.Direction) switch {
+                (nameof(Order.Total), SortDirection.Descending) => orders.OrderByDescending(order => order.Total),
+                (nameof(Order.Total), _) => orders.OrderBy(order => order.Total),
+                (_, SortDirection.Descending) => orders.OrderByDescending(order => order.Id),
+                _ => orders.OrderBy(order => order.Id)
+            };
+        }
+
+        var page = orders.Skip(request.StartIndex).Take(request.Count ?? AllOrders.Length).ToArray();
+        return new NTItemsProviderResult<Order>(page, AllOrders.Length);
+    }
+
+    private sealed record Order(int Id, decimal Total);
+}

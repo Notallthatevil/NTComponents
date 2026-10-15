@@ -9,6 +9,8 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 builder.Services.AddNTServices();
+// The documentation site is WebAssembly-only, so every log belongs to the person viewing it and the debug console can stay enabled for everyone.
+builder.Services.AddNTDebugConsole(options => options.AllowAll());
 builder.Services.AddSingleton<DocumentationCatalog>();
 
 await builder.Build().RunAsync();

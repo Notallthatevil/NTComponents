@@ -1,0 +1,10 @@
+<NTSplitButton Label="Save" LeadingIcon="MaterialIcon.Save" OnClickCallback="@(() => _action = "Saved")">
+    <NTMenuButtonItem Label="Save as copy" Icon="MaterialIcon.ContentCopy" OnClickCallback="@(() => _action = "Saved as copy")" />
+    <NTMenuButtonItem Label="Save and close" Icon="MaterialIcon.Check" OnClickCallback="@(() => _action = "Saved and closed")" />
+    <NTMenuButtonItem Label="Export as PDF" Icon="MaterialIcon.Download" OnClickCallback="@(() => _action = "Exported")" />
+</NTSplitButton>
+<p>Last action: <output>@_action</output></p>
+
+@code {
+    private string _action = "none";
+}

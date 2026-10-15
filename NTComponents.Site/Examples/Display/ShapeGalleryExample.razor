@@ -1,0 +1,8 @@
+<div class="docs-row">
+    @foreach (var shape in Enum.GetValues<NTShapeType>()) {
+        <div style="display: grid; gap: 8px; justify-items: center;">
+            <NTShape Shape="shape" style="width: 72px; height: 72px; --nt-shape-content-background: var(--nt-color-primary);" />
+            <div class="nt-label-medium">@shape</div>
+        </div>
+    }
+</div>

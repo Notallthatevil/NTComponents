@@ -1,0 +1,18 @@
+<div class="docs-fill">
+    @foreach (var task in _tasks) {
+        <div class="docs-row" style="justify-content: space-between; padding: 4px 0;">
+            <span>@task.Title</span>
+            <NTTag Label="@task.Status" BackgroundColor="@task.Background" TextColor="@task.Text" />
+        </div>
+    }
+</div>
+
+@code {
+    private record WorkItem(string Title, string Status, NTColor Background, NTColor Text);
+
+    private readonly WorkItem[] _tasks = [
+        new("Migrate billing database", "In progress", NTColor.PrimaryContainer, NTColor.OnPrimaryContainer),
+        new("Fix login redirect", "Done", NTColor.SuccessContainer, NTColor.OnSuccessContainer),
+        new("Renew TLS certificate", "Overdue", NTColor.ErrorContainer, NTColor.OnErrorContainer)
+    ];
+}

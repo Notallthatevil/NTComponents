@@ -1,0 +1,27 @@
+<NTCarousel class="docs-fill" AriaLabel="Recipes" ItemHeight="160">
+    @for (var i = 0; i < _recipes.Length; i++) {
+        var recipe = _recipes[i];
+        var role = _roles[i % _roles.Length];
+        <NTCarouselItem AriaLabel="@recipe.Name" OnClickCallback="@(() => _opened = recipe.Name)">
+            <MediaContent>
+                <div style="width: 100%; height: 100%; background: var(--nt-color-@role-container);"></div>
+            </MediaContent>
+            <ChildContent>
+                <div class="nt-title-medium" style="padding: 16px; color: var(--nt-color-on-@role-container); white-space: nowrap;">@recipe.Name</div>
+            </ChildContent>
+        </NTCarouselItem>
+    }
+</NTCarousel>
+<p>Opened recipe: <output>@_opened</output></p>
+
+@code {
+    private record Recipe(string Name);
+
+    private static readonly string[] _roles = ["primary", "secondary", "tertiary"];
+
+    private string _opened = "none";
+
+    private readonly Recipe[] _recipes = [
+        new("Shakshuka"), new("Pad thai"), new("Minestrone"), new("Banh mi"), new("Dal tadka"), new("Ramen")
+    ];
+}

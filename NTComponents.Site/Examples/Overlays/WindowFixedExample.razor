@@ -1,0 +1,11 @@
+<NTButton Label="Open inspector" OnClickCallback="() => _open = true" />
+<p>Closed <output>@_closeCount</output> times.</p>
+
+<NTWindow Title="Inspector" @bind-Open="_open" Draggable="false" OnClosed="() => _closeCount++">
+    <p>Selected layer: Header / Logo (128 x 32)</p>
+</NTWindow>
+
+@code {
+    private bool _open;
+    private int _closeCount;
+}

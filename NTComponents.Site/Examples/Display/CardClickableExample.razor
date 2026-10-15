@@ -1,0 +1,15 @@
+<div class="docs-row">
+    <NTCard Variant="NTCardVariant.Elevated" OnClickCallback="@(() => _selected = "Starter")" style="padding: 16px; width: 200px;">
+        <div class="nt-title-medium">Starter plan</div>
+        <p class="nt-body-medium">9 USD per month</p>
+    </NTCard>
+    <NTCard Variant="NTCardVariant.Outlined" OnClickCallback="@(() => _selected = "Team")" style="padding: 16px; width: 200px;">
+        <div class="nt-title-medium">Team plan</div>
+        <p class="nt-body-medium">29 USD per month</p>
+    </NTCard>
+</div>
+<p>Selected plan: <output>@_selected</output></p>
+
+@code {
+    private string _selected = "none";
+}

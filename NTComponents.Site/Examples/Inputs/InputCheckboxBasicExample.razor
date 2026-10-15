@@ -1,0 +1,6 @@
+<NTInputCheckbox Label="Subscribe to the newsletter" @bind-Value="_subscribed" />
+<p>Subscribed: <output>@_subscribed</output></p>
+
+@code {
+    private bool _subscribed;
+}

@@ -1,0 +1,16 @@
+<NTCard Variant="NTCardVariant.Outlined" style="width: 320px;">
+    <div style="padding: 16px;">
+        <div class="nt-title-medium">Quarterly report</div>
+        <p class="nt-body-medium">Revenue grew 12% over the previous quarter, driven by new subscriptions.</p>
+    </div>
+    <NTDivider />
+    <div class="docs-row" style="padding: 8px 16px;">
+        <NTButton Label="Download" Variant="NTButtonVariant.Text" OnClickCallback="@(() => _action = "Downloaded")" />
+        <NTButton Label="Share" Variant="NTButtonVariant.Text" OnClickCallback="@(() => _action = "Shared")" />
+    </div>
+</NTCard>
+<p>Last action: <output>@_action</output></p>
+
+@code {
+    private string _action = "none";
+}

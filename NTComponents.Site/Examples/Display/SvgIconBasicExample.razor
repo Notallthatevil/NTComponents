@@ -1,0 +1,12 @@
+<div class="docs-row">
+    <NTSVGIcon Icon="@Triangle" ElementTitle="Warning" />
+    <NTSVGIcon Icon="@Triangle" Color="NTColor.Error" style="font-size: 40px;" />
+    <NTSVGIcon Icon="@Circle" ElementTitle="Stroke-only icon" />
+    <NTSVGIcon Icon="@TwoTone" ElementTitle="Multicolor icon" style="font-size: 40px;" />
+</div>
+
+@code {
+    private const string Triangle = """<svg viewBox="0 0 24 24"><path d="M12 2 1 21h22L12 2Zm1 15h-2v-2h2v2Zm0-4h-2V9h2v4Z"/></svg>""";
+    private const string Circle = """<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg>""";
+    private const string TwoTone = """<svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="4" fill="#4285F4"/><circle cx="12" cy="12" r="5" fill="#FBBC05"/></svg>""";
+}

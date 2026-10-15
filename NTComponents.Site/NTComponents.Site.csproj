@@ -33,6 +33,11 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<!-- Each example shows its own source, so example files are embedded by file name. -->
+		<EmbeddedResource Include="Examples\**\*.razor" Exclude="Examples\**\_Imports.razor" LogicalName="%(Filename)%(Extension)" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<None Include="compilerconfig.json" />
 		<None Include="sasscompiler.json" />
 		<ServiceWorker Include="wwwroot\service-worker.js" PublishedContent="wwwroot\service-worker.published.js" />

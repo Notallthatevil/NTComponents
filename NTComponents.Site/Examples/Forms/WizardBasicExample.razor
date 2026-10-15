@@ -1,0 +1,18 @@
+<NTWizard Title="Set up your workspace" OnSubmitCallback="Finish" class="docs-fill" style="block-size: 24rem;">
+    <NTWizardStep Title="Workspace" SubTitle="Name it">
+        <p>First step content: choose a name for the Contoso Analytics workspace.</p>
+    </NTWizardStep>
+    <NTWizardStep Title="Members" SubTitle="Invite your team">
+        <p>Second step content: invite teammates by email.</p>
+    </NTWizardStep>
+    <NTWizardStep Title="Review" SubTitle="Confirm">
+        <p>Third step content: review the settings and submit.</p>
+    </NTWizardStep>
+</NTWizard>
+<output>@_result</output>
+
+@code {
+    private string? _result;
+
+    private void Finish() => _result = "Workspace created.";
+}

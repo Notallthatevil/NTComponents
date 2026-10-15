@@ -1,0 +1,18 @@
+<NTCombobox TValue="int" @bind-Value="_teamIds" Items="_teams" Label="Assign teams" BindAfter="OnChanged" />
+<p>Team ids: <output>@string.Join(", ", _teamIds)</output>, changes: <output>@_changes</output></p>
+
+@code {
+    private IReadOnlyList<int> _teamIds = [];
+    private int _changes;
+
+    private readonly IReadOnlyList<NTComboboxOption<int>> _teams = [
+        new(101, "Platform"),
+        new(102, "Growth"),
+        new(103, "Payments"),
+        new(104, "Support")
+    ];
+
+    private void OnChanged(IReadOnlyList<int>? ids) {
+        _changes++;
+    }
+}

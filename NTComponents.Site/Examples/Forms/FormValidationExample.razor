@@ -1,0 +1,33 @@
+@using System.ComponentModel.DataAnnotations
+
+<NTForm Model="_contact" OnValidSubmit="Submit" class="docs-fill">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <NTFormFieldGridView MaxColumns="2">
+        <NTInputText Label="Name" @bind-Value="_contact.Name" />
+        <NTInputText Label="Email" InputType="TextInputType.Email" @bind-Value="_contact.Email" />
+        <NTFormFieldLayoutSpan Span="NTFormFieldSpan.Full">
+            <div class="docs-row">
+                <NTButton Type="ButtonType.Submit" Label="Submit example form" Variant="NTButtonVariant.Filled" />
+            </div>
+        </NTFormFieldLayoutSpan>
+        <NTFormFieldLayoutSpan Span="NTFormFieldSpan.Full">
+            <output aria-label="Form result">@_result</output>
+        </NTFormFieldLayoutSpan>
+    </NTFormFieldGridView>
+</NTForm>
+
+@code {
+    private readonly ContactModel _contact = new();
+    private string? _result;
+
+    private void Submit() => _result = $"Submitted {_contact.Name} ({_contact.Email}).";
+
+    private sealed class ContactModel {
+        [Required]
+        public string Name { get; set; } = "Ada Lovelace";
+
+        [Required, EmailAddress]
+        public string Email { get; set; } = "ada@example.com";
+    }
+}

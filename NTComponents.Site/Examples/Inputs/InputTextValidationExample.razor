@@ -1,0 +1,29 @@
+<NTForm Model="_model" OnValidSubmit="Submit" Appearance="NTFormAppearance.Outlined" class="docs-fill">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <NTFormSectionView MaxColumns="1">
+        <NTInputText Label="Name" @bind-Value="_model.Name" />
+        <NTInputText Label="Email" InputType="TextInputType.Email" @bind-Value="_model.Email" />
+        <div class="docs-row">
+            <NTButton Type="ButtonType.Submit" Label="Create account" />
+        </div>
+    </NTFormSectionView>
+</NTForm>
+<p>Result: <output>@_result</output></p>
+
+@code {
+    private readonly SignUp _model = new();
+    private string _result = "Not submitted";
+
+    private void Submit() => _result = $"Created account for {_model.Name} ({_model.Email})";
+
+    private sealed class SignUp {
+        [System.ComponentModel.DataAnnotations.Required]
+        [System.ComponentModel.DataAnnotations.StringLength(40, MinimumLength = 2)]
+        public string? Name { get; set; }
+
+        [System.ComponentModel.DataAnnotations.Required]
+        [System.ComponentModel.DataAnnotations.EmailAddress]
+        public string? Email { get; set; }
+    }
+}

@@ -1,0 +1,6 @@
+<NTInputRangeSlider TNumber="int" @bind-Value="_hours" Label="Working hours" Min="0" Max="24" Step="1" ShowStops="true" StopCount="25" SupportingText="Choose the start and end hour." />
+<p>Hours: <output>@_hours.Start:00 to @_hours.End:00</output></p>
+
+@code {
+    private NTSliderRange<int> _hours = new(9, 17);
+}

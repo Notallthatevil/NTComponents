@@ -1,0 +1,15 @@
+<NTCombobox TValue="string" @bind-Value="_disabledMarkets" Items="_options" Label="Disabled" Disabled="true" />
+<NTCombobox TValue="string" @bind-Value="_readOnlyMarkets" Items="_options" Label="Read-only" ReadOnly="true" />
+<NTCombobox TValue="string" @bind-Value="_requiredMarkets" Items="_options" Label="Markets" ErrorText="Choose at least one market." />
+
+@code {
+    private IReadOnlyList<string> _disabledMarkets = ["ca"];
+    private IReadOnlyList<string> _readOnlyMarkets = ["ca"];
+    private IReadOnlyList<string> _requiredMarkets = [];
+
+    private readonly IReadOnlyList<NTComboboxOption<string>> _options = [
+        new("ca", "Canada"),
+        new("de", "Germany"),
+        new("jp", "Japan")
+    ];
+}

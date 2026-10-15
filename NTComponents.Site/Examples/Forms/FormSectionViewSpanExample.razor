@@ -1,0 +1,27 @@
+<NTForm Model="_shipping" class="docs-fill">
+    <NTFormSectionView Heading="Delivery address" Description="Street spans the row while state and ZIP stay compact." MaxColumns="3">
+        <NTFormFieldLayoutSpan Span="NTFormFieldSpan.Full">
+            <NTInputText Label="Street" @bind-Value="_shipping.Street" />
+        </NTFormFieldLayoutSpan>
+        <NTFormFieldLayoutSpan SmallColumns="12" MediumColumns="4" LargeColumns="6">
+            <NTInputText Label="City" @bind-Value="_shipping.City" />
+        </NTFormFieldLayoutSpan>
+        <NTFormFieldLayoutSpan Span="NTFormFieldSpan.Compact">
+            <NTInputText Label="State" @bind-Value="_shipping.State" />
+        </NTFormFieldLayoutSpan>
+        <NTFormFieldLayoutSpan Span="NTFormFieldSpan.Compact">
+            <NTInputText Label="ZIP" @bind-Value="_shipping.Zip" />
+        </NTFormFieldLayoutSpan>
+    </NTFormSectionView>
+</NTForm>
+
+@code {
+    private readonly ShippingModel _shipping = new();
+
+    private sealed class ShippingModel {
+        public string Street { get; set; } = "350 Fifth Avenue";
+        public string City { get; set; } = "New York";
+        public string State { get; set; } = "NY";
+        public string Zip { get; set; } = "10118";
+    }
+}

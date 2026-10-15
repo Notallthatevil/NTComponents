@@ -1,0 +1,10 @@
+<div class="docs-row" style="min-height: 280px;">
+    <NTInputSlider TNumber="int" @bind-Value="_brightness" Label="Brightness" Orientation="NTSliderOrientation.Vertical" Min="0" Max="100" ShowValueIndicator="true" />
+    <NTInputSlider TNumber="int" @bind-Value="_contrast" Label="Contrast" Orientation="NTSliderOrientation.Vertical" Min="0" Max="100" BindOnInput="false" />
+</div>
+<p>Brightness: <output>@_brightness</output>, contrast: <output>@_contrast</output></p>
+
+@code {
+    private int _brightness = 65;
+    private int _contrast = 50;
+}

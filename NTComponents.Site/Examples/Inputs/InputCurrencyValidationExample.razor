@@ -1,0 +1,23 @@
+<NTForm Model="_model" OnValidSubmit="Submit" class="docs-fill">
+    <DataAnnotationsValidator />
+    <NTFormSectionView MaxColumns="1">
+        <NTInputCurrency Label="Donation" SupportingText="Minimum 5.00." @bind-Value="_model.Amount" />
+        <div class="docs-row">
+            <NTButton Type="ButtonType.Submit" Label="Donate" />
+        </div>
+    </NTFormSectionView>
+</NTForm>
+<p>Status: <output>@_status</output></p>
+
+@code {
+    private readonly Donation _model = new();
+    private string _status = "Waiting";
+
+    private void Submit() => _status = $"Thank you for {_model.Amount:C}";
+
+    private sealed class Donation {
+        [System.ComponentModel.DataAnnotations.Required]
+        [System.ComponentModel.DataAnnotations.Range(5.0, 10000.0)]
+        public decimal? Amount { get; set; }
+    }
+}

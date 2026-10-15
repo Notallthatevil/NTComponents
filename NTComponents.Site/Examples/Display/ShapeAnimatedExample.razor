@@ -1,0 +1,12 @@
+<NTShape Shape="_shape" AnimateShapeChanges="true" TransitionDuration="NTMotionDuration.Ms500" style="width: 96px; height: 96px; --nt-shape-content-background: var(--nt-color-tertiary);" />
+<div class="docs-row">
+    <NTButton Label="Circle" OnClickCallback="@(() => _shape = NTShapeType.Circle)" />
+    <NTButton Label="Hexagon" OnClickCallback="@(() => _shape = NTShapeType.Hexagon)" />
+    <NTButton Label="Triangle" OnClickCallback="@(() => _shape = NTShapeType.Triangle)" />
+    <NTButton Label="Cookie" OnClickCallback="@(() => _shape = NTShapeType.TwelveSidedCookie)" />
+</div>
+<p>Current shape: <output>@_shape</output></p>
+
+@code {
+    private NTShapeType _shape = NTShapeType.Circle;
+}

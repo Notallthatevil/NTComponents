@@ -1,0 +1,23 @@
+<NTForm Model="_model" OnValidSubmit="Submit" class="docs-fill">
+    <DataAnnotationsValidator />
+    <NTFormSectionView MaxColumns="1">
+        <NTInputNumeric TNumber="int" Label="Seats" SupportingText="Between 1 and 50." @bind-Value="_model.Seats" />
+        <div class="docs-row">
+            <NTButton Type="ButtonType.Submit" Label="Reserve seats" />
+        </div>
+    </NTFormSectionView>
+</NTForm>
+<p>Status: <output>@_status</output></p>
+
+@code {
+    private readonly Reservation _model = new();
+    private string _status = "Waiting";
+
+    private void Submit() => _status = $"Reserved {_model.Seats} seats";
+
+    private sealed class Reservation {
+        [System.ComponentModel.DataAnnotations.Required]
+        [System.ComponentModel.DataAnnotations.Range(1, 50)]
+        public int? Seats { get; set; }
+    }
+}

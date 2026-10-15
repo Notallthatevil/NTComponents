@@ -1,0 +1,18 @@
+<NTSelect TValue="string" @bind-Value="_disabledPlan" Label="Plan (disabled)" Disabled="true">
+    <option value="free">Free</option>
+    <option value="plus">Plus</option>
+</NTSelect>
+<NTSelect TValue="string" @bind-Value="_readOnlyPlan" Label="Plan (read-only)" ReadOnly="true">
+    <option value="free">Free</option>
+    <option value="plus">Plus</option>
+</NTSelect>
+<NTSelect TValue="string" @bind-Value="_invalidPlan" Label="Plan (error)" ErrorText="Choose a paid plan to continue.">
+    <option value="free">Free</option>
+    <option value="plus">Plus</option>
+</NTSelect>
+
+@code {
+    private string? _disabledPlan = "plus";
+    private string? _readOnlyPlan = "plus";
+    private string? _invalidPlan = "free";
+}

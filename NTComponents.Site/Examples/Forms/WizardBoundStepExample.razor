@@ -1,0 +1,21 @@
+<div class="docs-row">
+    <NTButton Label="Jump to Payment" Variant="NTButtonVariant.Outlined" OnClickCallback="_ => _step = 2" />
+    <NTButton Label="Back to Cart" Variant="NTButtonVariant.Outlined" OnClickCallback="_ => _step = 0" />
+</div>
+<p>Active step: <output>@(_step + 1)</output></p>
+
+<NTWizard @bind-ActiveStepIndex="_step" NavigationMode="NTWizardNavigationMode.Free" LayoutDirection="LayoutDirection.Horizontal" class="docs-fill">
+    <NTWizardStep Title="Cart">
+        <p>3 items, $42.50.</p>
+    </NTWizardStep>
+    <NTWizardStep Title="Shipping">
+        <p>Standard delivery, 3 to 5 days.</p>
+    </NTWizardStep>
+    <NTWizardStep Title="Payment">
+        <p>Pay with card ending 4242.</p>
+    </NTWizardStep>
+</NTWizard>
+
+@code {
+    private int _step;
+}

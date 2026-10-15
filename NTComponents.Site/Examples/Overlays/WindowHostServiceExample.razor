@@ -1,0 +1,35 @@
+@implements IDisposable
+@inject INTWindowService WindowService
+
+<div class="docs-row">
+    <NTButton Label="Open managed window" OnClickCallback="OpenWindow" />
+    <NTButton Label="Minimize" Disabled="@(_window is null)" OnClickCallback="Minimize" />
+    <NTButton Label="Close" Disabled="@(_window is null)" OnClickCallback="CloseWindow" />
+</div>
+<p>Open windows: <output>@WindowService.Windows.Count</output></p>
+
+<NTWindowHost AriaLabel="Project windows" />
+
+@code {
+    private INTWindow? _window;
+
+    private void OpenWindow() {
+        CloseWindow();
+        _window = WindowService.Open("Managed project notes", builder => builder.AddContent(0, "This window is rendered by NTWindowHost."));
+    }
+
+    private void Minimize() {
+        if (_window is not null) {
+            WindowService.SetState(_window, NTWindowState.Minimized);
+        }
+    }
+
+    private void CloseWindow() {
+        if (_window is not null) {
+            WindowService.Close(_window);
+            _window = null;
+        }
+    }
+
+    public void Dispose() => CloseWindow();
+}

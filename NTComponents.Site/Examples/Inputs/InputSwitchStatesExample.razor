@@ -1,0 +1,7 @@
+<NTInputSwitch Label="Managed by your administrator" Disabled="true" @bind-Value="_locked" />
+<NTInputSwitch Label="Read-only preference" ReadOnly="true" @bind-Value="_readOnly" />
+
+@code {
+    private bool _locked = true;
+    private bool _readOnly;
+}

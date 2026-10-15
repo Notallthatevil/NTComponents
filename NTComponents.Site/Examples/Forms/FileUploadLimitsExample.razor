@@ -1,0 +1,21 @@
+<NTFileUpload @bind-Value="_files"
+              Label="Profile photo"
+              Accept="image/*,.txt"
+              MaximumFileSize="1024"
+              SupportingText="Files up to 1 KB."
+              OnUploadFile="ReadFileAsync"
+              OnFileError="args => _message = args.ErrorMessage"
+              class="docs-fill" />
+<output aria-label="Upload message">@_message</output>
+
+@code {
+    private IReadOnlyList<Microsoft.AspNetCore.Components.Forms.IBrowserFile>? _files;
+    private string? _message;
+
+    private async Task ReadFileAsync(NTFileUploadEventArgs args) {
+        if (args.Stream is not null) {
+            await args.Stream.CopyToAsync(Stream.Null);
+            _message = $"Uploaded {args.Name}.";
+        }
+    }
+}

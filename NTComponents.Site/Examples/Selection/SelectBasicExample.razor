@@ -1,0 +1,12 @@
+<NTSelect TValue="string" @bind-Value="_country" Label="Country" SupportingText="Uses the native browser picker.">
+    <option value="">Choose a country</option>
+    <option value="ca">Canada</option>
+    <option value="de">Germany</option>
+    <option value="jp">Japan</option>
+    <option value="us">United States</option>
+</NTSelect>
+<p>Selected country code: <output>@_country</output></p>
+
+@code {
+    private string? _country = "";
+}

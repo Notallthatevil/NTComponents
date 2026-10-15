@@ -1,0 +1,11 @@
+<NTFormFieldGridView class="docs-fill" MaxColumns="3">
+    <NTInputNumeric TNumber="decimal" Label="Weight" SuffixText="kg" @bind-Value="_weight" />
+    <NTInputNumeric TNumber="int" Label="Discount" SuffixText="%" LeadingIcon="MaterialIcon.Edit" @bind-Value="_discount" />
+    <NTInputNumeric TNumber="double" Label="Temperature" SuffixText="C" Appearance="NTFormAppearance.Filled" @bind-Value="_temperature" />
+</NTFormFieldGridView>
+
+@code {
+    private decimal? _weight = 72.5m;
+    private int? _discount = 15;
+    private double? _temperature = 21.5;
+}

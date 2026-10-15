@@ -1,0 +1,9 @@
+<NTFormFieldGridView class="docs-fill" MaxColumns="2">
+    <NTTextArea Label="Auto-grow (2 to 6 lines)" MinVisibleLines="2" MaxVisibleLines="6" @bind-Value="_grow" />
+    <NTTextArea Label="Fixed height" AutoGrow="false" MinVisibleLines="4" @bind-Value="_fixed" />
+</NTFormFieldGridView>
+
+@code {
+    private string? _grow = "Type here and the field grows with your text.\nIt stops at six lines and then scrolls.";
+    private string? _fixed = "This field stays four lines tall.";
+}

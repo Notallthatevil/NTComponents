@@ -1,0 +1,17 @@
+<div class="docs-fill" style="display: grid; gap: 8px;">
+    @if (_loading) {
+        <NTSkeleton Width="50%" Height="24px" />
+        <NTSkeleton Width="90%" />
+        <NTSkeleton Width="80%" />
+    }
+    else {
+        <div class="nt-title-medium">Weekly summary</div>
+        <p>You closed 14 tickets and shipped 3 releases this week.</p>
+    }
+</div>
+<NTButton Label="@(_loading ? "Finish loading" : "Reload")" OnClickCallback="@(() => _loading = !_loading)" />
+<p>State: <output>@(_loading ? "loading" : "loaded")</output></p>
+
+@code {
+    private bool _loading = true;
+}

@@ -1,0 +1,13 @@
+<NTDataGrid TItem="Order" Items="_orders" Caption="Striped, compact rows" Appearance="NTDataGridAppearance.Striped" Density="NTDataGridDensity.Compact" class="docs-fill">
+    <NTPropertyColumn TItem="Order" TValue="int" Title="Order" Property="order => order.Id" />
+    <NTPropertyColumn TItem="Order" TValue="string" Title="Customer" Property="order => order.Customer" />
+    <NTPropertyColumn TItem="Order" TValue="decimal" Title="Total" Property="order => order.Total" Format="C" TextAlign="TextAlign.Right" HeaderTextAlign="TextAlign.Right" />
+</NTDataGrid>
+
+@code {
+    private readonly IQueryable<Order> _orders = Enumerable.Range(1, 6)
+        .Select(index => new Order(1000 + index, $"Customer {index}", index * 24.5m))
+        .AsQueryable();
+
+    private sealed record Order(int Id, string Customer, decimal Total);
+}

@@ -1,0 +1,21 @@
+@using NTComponents.Snackbar
+@using NTComponents.Toast
+@inject INTToastService ToastService
+@inject INTSnackbarService SnackbarService
+
+<div class="docs-row">
+    <NTButton Label="Show toast" OnClickCallback="ShowToast" />
+    <NTButton Label="Show error toast" Variant="NTButtonVariant.Tonal" OnClickCallback="ShowError" />
+    <NTButton Label="Show snackbar" Variant="NTButtonVariant.Outlined" OnClickCallback="ShowSnackbar" />
+</div>
+
+<NTToast Position="NTToastPosition.TopRightCorner" />
+<NTSnackbar Position="NTSnackbarPosition.CenterTop" />
+
+@code {
+    private Task ShowToast() => ToastService.ShowSuccessAsync("Profile saved", "Your shipping address was updated.", timeout: 4);
+
+    private Task ShowError() => ToastService.ShowErrorAsync("Upload failed", "invoice-2024.pdf is larger than 10 MB.", timeout: 4);
+
+    private Task ShowSnackbar() => SnackbarService.ShowAsync("Message archived");
+}

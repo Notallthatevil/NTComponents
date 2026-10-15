@@ -1,0 +1,20 @@
+<div class="docs-row">
+    <NTButton Label="Open window" OnClickCallback="Show" />
+    <NTButton Label="Minimize" OnClickCallback="() => _state = NTWindowState.Minimized" />
+    <NTButton Label="Fullscreen" OnClickCallback="() => _state = NTWindowState.Fullscreen" />
+</div>
+<p>State: <output>@_state</output></p>
+
+<NTWindow Title="Build log" @bind-Open="_open" @bind-State="_state" DockPosition="NTWindowDockPosition.BottomLeft">
+    <p>Build 482 finished in 2m 14s with 0 warnings.</p>
+</NTWindow>
+
+@code {
+    private bool _open;
+    private NTWindowState _state = NTWindowState.Normal;
+
+    private void Show() {
+        _state = NTWindowState.Normal;
+        _open = true;
+    }
+}

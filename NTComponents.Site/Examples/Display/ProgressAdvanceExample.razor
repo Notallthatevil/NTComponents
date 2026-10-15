@@ -1,0 +1,15 @@
+<div class="docs-fill">
+    <NTProgress Value="_value" AriaLabel="Import progress" />
+</div>
+<div class="docs-row">
+    <NTProgress Variant="NTProgressVariant.Ring" Value="_value" AriaLabel="Import progress ring" />
+    <NTButton Label="Advance 20%" OnClickCallback="Advance" />
+    <NTButton Label="Reset" Variant="NTButtonVariant.Outlined" OnClickCallback="@(() => _value = 0)" />
+</div>
+<p>Progress: <output>@_value</output>%</p>
+
+@code {
+    private double _value;
+
+    private void Advance() => _value = Math.Min(100, _value + 20);
+}

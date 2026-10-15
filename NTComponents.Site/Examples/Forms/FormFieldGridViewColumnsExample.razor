@@ -1,0 +1,27 @@
+<div class="docs-row">
+    <NTButton Label="1 column" Variant="NTButtonVariant.Outlined" OnClickCallback="_ => _columns = 1" />
+    <NTButton Label="2 columns" Variant="NTButtonVariant.Outlined" OnClickCallback="_ => _columns = 2" />
+    <NTButton Label="4 columns" Variant="NTButtonVariant.Outlined" OnClickCallback="_ => _columns = 4" />
+</div>
+<p>MaxColumns: <output>@_columns</output></p>
+
+<NTForm Model="_order" class="docs-fill">
+    <NTFormFieldGridView MaxColumns="_columns">
+        <NTInputText Label="Order number" @bind-Value="_order.Number" />
+        <NTInputText Label="Customer" @bind-Value="_order.Customer" />
+        <NTInputText Label="Carrier" @bind-Value="_order.Carrier" />
+        <NTInputText Label="Tracking number" @bind-Value="_order.Tracking" />
+    </NTFormFieldGridView>
+</NTForm>
+
+@code {
+    private readonly OrderModel _order = new();
+    private int _columns = 2;
+
+    private sealed class OrderModel {
+        public string Number { get; set; } = "SO-10482";
+        public string Customer { get; set; } = "Contoso Ltd";
+        public string Carrier { get; set; } = "Parcel Express";
+        public string Tracking { get; set; } = "PX-9921-4408";
+    }
+}

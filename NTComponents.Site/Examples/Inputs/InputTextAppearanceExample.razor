@@ -1,0 +1,17 @@
+<NTFormFieldGridView class="docs-fill" MaxColumns="2">
+    <NTInputText Label="Filled" Appearance="NTFormAppearance.Filled" @bind-Value="_filled" />
+    <NTInputText Label="Outlined" Appearance="NTFormAppearance.Outlined" @bind-Value="_outlined" />
+</NTFormFieldGridView>
+<NTFormFieldGridView class="docs-fill" MaxColumns="3">
+    <NTInputText Label="Comfortable" Density="NTFormDensity.Comfortable" @bind-Value="_comfortable" />
+    <NTInputText Label="Standard" Density="NTFormDensity.Standard" @bind-Value="_standard" />
+    <NTInputText Label="Dense" Density="NTFormDensity.Dense" @bind-Value="_dense" />
+</NTFormFieldGridView>
+
+@code {
+    private string? _filled = "Springfield";
+    private string? _outlined = "Springfield";
+    private string? _comfortable = "Maple Street";
+    private string? _standard = "Maple Street";
+    private string? _dense = "Maple Street";
+}

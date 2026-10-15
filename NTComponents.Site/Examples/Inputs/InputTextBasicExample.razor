@@ -1,0 +1,8 @@
+<NTFormFieldGridView class="docs-fill" MaxColumns="1">
+    <NTInputText Label="Full name" Placeholder="Jordan Rivera" SupportingText="As it appears on your ID." BindOnInput="true" @bind-Value="_name" />
+</NTFormFieldGridView>
+<p>Hello, <output>@_name</output></p>
+
+@code {
+    private string? _name;
+}

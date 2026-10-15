@@ -1,0 +1,24 @@
+<NTCarousel class="docs-fill" AriaLabel="Featured destinations" ItemHeight="200">
+    @for (var i = 0; i < _places.Length; i++) {
+        var place = _places[i];
+        var role = _roles[i % _roles.Length];
+        <NTCarouselItem AriaLabel="@place.Name">
+            <MediaContent>
+                <div style="width: 100%; height: 100%; background: var(--nt-color-@role-container);"></div>
+            </MediaContent>
+            <ChildContent>
+                <div class="nt-title-medium" style="padding: 16px; color: var(--nt-color-on-@role-container); white-space: nowrap;">@place.Name</div>
+            </ChildContent>
+        </NTCarouselItem>
+    }
+</NTCarousel>
+
+@code {
+    private record Place(string Name);
+
+    private static readonly string[] _roles = ["primary", "secondary", "tertiary"];
+
+    private readonly Place[] _places = [
+        new("Lisbon"), new("Kyoto"), new("Reykjavik"), new("Marrakech"), new("Vancouver"), new("Cape Town")
+    ];
+}

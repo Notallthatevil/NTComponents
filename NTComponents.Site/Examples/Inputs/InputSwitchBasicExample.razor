@@ -1,0 +1,6 @@
+<NTInputSwitch Label="Enable notifications" @bind-Value="_enabled" />
+<p>Notifications: <output>@(_enabled ? "On" : "Off")</output></p>
+
+@code {
+    private bool _enabled = true;
+}

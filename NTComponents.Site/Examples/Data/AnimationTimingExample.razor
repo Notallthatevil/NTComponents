@@ -1,0 +1,9 @@
+<NTAnimation class="docs-row" Animation="NTAnimationType.SlideInFromBottom" EnterDuration="NTMotionDuration.Ms500" EnterEasing="NTMotionEasing.Emphasized" Stagger="TimeSpan.FromMilliseconds(150)">
+    @foreach (var feature in _features) {
+        <NTCard Variant="NTCardVariant.Outlined">@feature</NTCard>
+    }
+</NTAnimation>
+
+@code {
+    private readonly string[] _features = ["Fast search", "Shared folders", "Offline mode"];
+}

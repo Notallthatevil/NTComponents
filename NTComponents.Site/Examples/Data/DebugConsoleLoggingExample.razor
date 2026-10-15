@@ -1,0 +1,32 @@
+@using Microsoft.Extensions.Logging
+@inject ILogger<DebugConsoleLoggingExample> Logger
+
+<div class="docs-row">
+    <NTButton Label="Log information" OnClickCallback="LogInformation" />
+    <NTButton Label="Log warning" Variant="NTButtonVariant.Tonal" OnClickCallback="LogWarning" />
+    <NTButton Label="Log error" Variant="NTButtonVariant.Outlined" OnClickCallback="LogError" />
+    <NTButton Label="Log 50 entries" Variant="NTButtonVariant.Text" OnClickCallback="LogBurst" />
+</div>
+
+@code {
+    private int _orderId = 1040;
+
+    private void LogInformation() => Logger.LogInformation("Loaded order {OrderId} in {Elapsed} ms", ++_orderId, 84);
+
+    private void LogWarning() => Logger.LogWarning("Shipping quote for order {OrderId} took {Elapsed} ms", _orderId, 2310);
+
+    private void LogError() {
+        try {
+            throw new InvalidOperationException("The payment provider declined the card ending 4242.");
+        }
+        catch (InvalidOperationException exception) {
+            Logger.LogError(exception, "Checkout failed for order {OrderId}", _orderId);
+        }
+    }
+
+    private void LogBurst() {
+        for (var i = 1; i <= 50; i++) {
+            Logger.LogInformation("Synced inventory item {Item} of 50", i);
+        }
+    }
+}

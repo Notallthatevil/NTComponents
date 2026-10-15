@@ -1,0 +1,11 @@
+<NTFormFieldGridView class="docs-fill" MaxColumns="3">
+    <NTInputText Label="Username" PrefixText="@@" LeadingIcon="MaterialIcon.Person" @bind-Value="_username" />
+    <NTInputText Label="Subdomain" SuffixText=".example.com" @bind-Value="_subdomain" />
+    <NTInputText Label="Bio" SupportingText="Up to 40 characters." ShowCharacterCounter="true" maxlength="40" @bind-Value="_bio" />
+</NTFormFieldGridView>
+
+@code {
+    private string? _username = "jrivera";
+    private string? _subdomain = "acme";
+    private string? _bio;
+}

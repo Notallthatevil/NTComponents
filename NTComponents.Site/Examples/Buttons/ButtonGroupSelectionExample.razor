@@ -1,0 +1,10 @@
+<NTButtonGroup TObjectType="string" AriaLabel="Billing period" @bind-SelectedKey="_period">
+    <NTButtonGroupItem Key="@("monthly")" Label="Monthly" />
+    <NTButtonGroupItem Key="@("quarterly")" Label="Quarterly" />
+    <NTButtonGroupItem Key="@("yearly")" Label="Yearly" />
+</NTButtonGroup>
+<p>Billing period: <output>@(_period ?? "none")</output></p>
+
+@code {
+    private string? _period = "monthly";
+}

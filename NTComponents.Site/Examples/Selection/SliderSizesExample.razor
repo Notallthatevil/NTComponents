@@ -1,0 +1,11 @@
+<NTInputSlider TNumber="int" @bind-Value="_extraSmall" Label="Extra small" Size="NTSliderSize.ExtraSmall" Min="0" Max="100" />
+<NTInputSlider TNumber="int" @bind-Value="_small" Label="Small" Size="NTSliderSize.Small" Min="0" Max="100" />
+<NTInputSlider TNumber="int" @bind-Value="_medium" Label="Medium with icon" Size="NTSliderSize.Medium" InsetIcon="MaterialIcon.Label" Min="0" Max="100" />
+<NTInputSlider TNumber="int" @bind-Value="_large" Label="Large with icon" Size="NTSliderSize.Large" InsetIcon="MaterialIcon.Label" Min="0" Max="100" />
+
+@code {
+    private int _extraSmall = 30;
+    private int _small = 40;
+    private int _medium = 50;
+    private int _large = 60;
+}

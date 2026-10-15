@@ -1,0 +1,9 @@
+<NTInputCheckbox Label="Label after the box" Variant="NTInputCheckboxVariant.Leading" @bind-Value="_leading" />
+<NTInputCheckbox Label="Label before the box" Variant="NTInputCheckboxVariant.Trailing" @bind-Value="_trailing" />
+<NTInputCheckbox Label="Supporting text below" SupportingText="Applies to all projects." @bind-Value="_support" />
+
+@code {
+    private bool _leading = true;
+    private bool _trailing = true;
+    private bool _support;
+}

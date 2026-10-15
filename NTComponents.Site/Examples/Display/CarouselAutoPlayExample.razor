@@ -1,0 +1,27 @@
+<NTCarousel class="docs-fill" AriaLabel="Promotions" Appearance="CarouselAppearance.Hero" AutoPlayInterval="4" ItemHeight="180" OnIndexChanged="@(index => _index = index)">
+    @for (var i = 0; i < _promos.Length; i++) {
+        var promo = _promos[i];
+        var role = _roles[i % _roles.Length];
+        <NTCarouselItem AriaLabel="@promo.Title">
+            <MediaContent>
+                <div style="width: 100%; height: 100%; background: var(--nt-color-@role-container);"></div>
+            </MediaContent>
+            <ChildContent>
+                <div class="nt-title-medium" style="padding: 16px; color: var(--nt-color-on-@role-container); white-space: nowrap;">@promo.Title</div>
+            </ChildContent>
+        </NTCarouselItem>
+    }
+</NTCarousel>
+<p>Current index: <output>@_index</output></p>
+
+@code {
+    private record Promo(string Title);
+
+    private static readonly string[] _roles = ["primary", "secondary", "tertiary"];
+
+    private int _index;
+
+    private readonly Promo[] _promos = [
+        new("Spring sale"), new("Free shipping"), new("New arrivals"), new("Gift cards")
+    ];
+}

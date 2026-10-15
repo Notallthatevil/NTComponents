@@ -1,0 +1,25 @@
+<NTFeedView class="docs-fill" MinItemWidth="200px">
+    @foreach (var photo in _photos) {
+        <NTCard Variant="NTCardVariant.Outlined">
+            <div style="display: grid; gap: 4px; padding: 16px;">
+                <h5 class="nt-title-medium" style="margin: 0;">@photo.Title</h5>
+                <p class="nt-body-medium" style="margin: 0;">@photo.Place</p>
+            </div>
+        </NTCard>
+    }
+</NTFeedView>
+
+@code {
+    private sealed record Photo(string Title, string Place);
+
+    private readonly Photo[] _photos = [
+        new("Sunrise ridge", "Glacier National Park"),
+        new("Harbor lights", "Lisbon"),
+        new("Desert bloom", "Joshua Tree"),
+        new("Rainy market", "Hanoi"),
+        new("Night train", "Kyoto"),
+        new("Salt flats", "Uyuni"),
+        new("Fjord morning", "Geiranger"),
+        new("Old town roofs", "Prague")
+    ];
+}

@@ -1,0 +1,24 @@
+<NTCarousel class="docs-fill" AriaLabel="Recent albums" Appearance="CarouselAppearance.Uncontained" PreferredItemWidth="160" ItemHeight="160" EnableSnapping="true">
+    @for (var i = 0; i < _albums.Length; i++) {
+        var album = _albums[i];
+        var role = _roles[i % _roles.Length];
+        <NTCarouselItem AriaLabel="@album.Title">
+            <MediaContent>
+                <div style="width: 100%; height: 100%; background: var(--nt-color-@role-container);"></div>
+            </MediaContent>
+            <ChildContent>
+                <div class="nt-title-medium" style="padding: 16px; color: var(--nt-color-on-@role-container); white-space: nowrap;">@album.Title</div>
+            </ChildContent>
+        </NTCarouselItem>
+    }
+</NTCarousel>
+
+@code {
+    private record Album(string Title);
+
+    private static readonly string[] _roles = ["primary", "secondary", "tertiary"];
+
+    private readonly Album[] _albums = [
+        new("Blue Hour"), new("Night Drive"), new("Paper Boats"), new("Slow Burn"), new("Open Fields"), new("Static")
+    ];
+}

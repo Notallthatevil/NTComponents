@@ -1,0 +1,10 @@
+<NTButtonGroup TObjectType="string" AriaLabel="View mode" DisplayType="NTButtonGroupDisplayType.Connected" Variant="NTButtonVariant.Outlined" SelectionRequired="true" @bind-SelectedKey="_view">
+    <NTButtonGroupItem Key="@("list")" Label="List" Icon="MaterialIcon.Description" />
+    <NTButtonGroupItem Key="@("board")" Label="Board" Icon="MaterialIcon.Dashboard" />
+    <NTButtonGroupItem Key="@("calendar")" Label="Calendar" Icon="MaterialIcon.Event" />
+</NTButtonGroup>
+<p>Showing the <output>@_view</output> view</p>
+
+@code {
+    private string? _view = "list";
+}

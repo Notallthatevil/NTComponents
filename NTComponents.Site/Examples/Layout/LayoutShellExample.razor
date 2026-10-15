@@ -1,0 +1,31 @@
+<div class="docs-fill" style="block-size: 24rem; position: relative; overflow: hidden;">
+    <NTLayout style="block-size: 100%; min-block-size: 0;">
+        <NTHeader>
+            <h4 class="nt-title-large" style="margin: 0; padding: 16px;">Northwind Orders</h4>
+        </NTHeader>
+        <NTBody>
+            <div style="display: grid; gap: 8px; padding: 16px;">
+                <h5 class="nt-title-medium" style="margin: 0;">Recent orders</h5>
+                @foreach (var order in _orders) {
+                    <p style="margin: 0;">@order</p>
+                }
+            </div>
+        </NTBody>
+        <NTFooter>
+            <p class="nt-body-medium" style="margin: 0; padding: 12px 16px;">42 orders this week</p>
+        </NTFooter>
+    </NTLayout>
+</div>
+
+@code {
+    private readonly string[] _orders = [
+        "#1042 - Contoso Ltd - Shipped",
+        "#1043 - Fabrikam Inc - Packing",
+        "#1044 - Adventure Works - Awaiting payment",
+        "#1045 - Tailspin Toys - Shipped",
+        "#1046 - Wingtip Toys - Packing",
+        "#1047 - Litware - Shipped",
+        "#1048 - Proseware - Awaiting payment",
+        "#1049 - Lucerne Publishing - Shipped"
+    ];
+}

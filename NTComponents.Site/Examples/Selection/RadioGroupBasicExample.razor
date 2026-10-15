@@ -1,0 +1,10 @@
+<NTInputRadioGroup TValue="string" @bind-Value="_method" Label="Contact method">
+    <NTInputRadio TValue="string" Value="@("email")" Label="Email" />
+    <NTInputRadio TValue="string" Value="@("sms")" Label="SMS" />
+    <NTInputRadio TValue="string" Value="@("phone")" Label="Phone call" />
+</NTInputRadioGroup>
+<p>Contact method: <output>@_method</output></p>
+
+@code {
+    private string? _method = "email";
+}

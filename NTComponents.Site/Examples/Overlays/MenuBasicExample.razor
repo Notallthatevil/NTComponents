@@ -1,0 +1,22 @@
+<NTButton ElementId="menu-basic-example-trigger"
+          Label="Document actions"
+          LeadingIcon="MaterialIcon.Menu"
+          style="anchor-name: --menu-basic-example-anchor;"
+          popovertarget="menu-basic-example"
+          popovertargetaction="toggle" />
+<p>Last action: <output>@_action</output></p>
+
+<NTMenu ElementId="menu-basic-example"
+        AnchorName="--menu-basic-example-anchor"
+        AnchorSelector="#menu-basic-example-trigger"
+        AriaLabel="Document actions">
+    <NTMenuLabelItem Label="Actions" />
+    <NTMenuButtonItem Label="Rename" Icon="MaterialIcon.Edit" OnClickCallback='_ => _action = "Rename"' />
+    <NTMenuButtonItem Label="Duplicate" Icon="MaterialIcon.ContentCopy" OnClickCallback='_ => _action = "Duplicate"' />
+    <NTMenuDividerItem />
+    <NTMenuAnchorItem Label="View details" Icon="MaterialIcon.Info" Href="#menu-basic-example-trigger" />
+</NTMenu>
+
+@code {
+    private string _action = "None";
+}

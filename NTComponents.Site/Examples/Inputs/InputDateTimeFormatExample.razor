@@ -1,0 +1,10 @@
+<NTFormFieldGridView class="docs-fill" MaxColumns="2">
+    <NTInputDateTime DateTimeType="DateOnly?" Label="Expiration" MonthOnly="true" EnableCustomPicker="true" @bind-Value="_expiration" />
+    <NTInputDateTime DateTimeType="DateOnly?" Label="Due date" Format="yyyy-MM-dd" @bind-Value="_due" />
+</NTFormFieldGridView>
+<p>Expiration: <output>@_expiration</output></p>
+
+@code {
+    private DateOnly? _expiration = new DateOnly(2028, 9, 1);
+    private DateOnly? _due = new DateOnly(2026, 11, 30);
+}

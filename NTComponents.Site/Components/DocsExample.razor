@@ -1,0 +1,21 @@
+@typeparam TExample where TExample : IComponent
+@implements IDisposable
+
+<section class="docs-example" id="@Id">
+    <h3>@Title</h3>
+    @if (!string.IsNullOrWhiteSpace(Description)) {
+        <p>@Description</p>
+    }
+    <div class="docs-example-preview" data-docs-example="@typeof(TExample).Name" data-nt-nav-exclude @ref="_preview">
+        <ErrorBoundary>
+            <ChildContent>@RenderExample</ChildContent>
+            <ErrorContent Context="exception">
+                <div class="docs-callout docs-callout-error docs-example-failure" role="alert">This example failed to render: @exception.GetBaseException().Message</div>
+            </ErrorContent>
+        </ErrorBoundary>
+    </div>
+    <details class="docs-example-code">
+        <summary>Razor</summary>
+        <pre class="docs-code"><code>@Source</code></pre>
+    </details>
+</section>

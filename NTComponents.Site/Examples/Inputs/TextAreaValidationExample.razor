@@ -1,0 +1,23 @@
+<NTForm Model="_model" OnValidSubmit="Submit" class="docs-fill">
+    <DataAnnotationsValidator />
+    <NTFormSectionView MaxColumns="1">
+        <NTTextArea Label="Feedback" SupportingText="At least 10 characters." @bind-Value="_model.Feedback" />
+        <div class="docs-row">
+            <NTButton Type="ButtonType.Submit" Label="Send feedback" />
+        </div>
+    </NTFormSectionView>
+</NTForm>
+<p>Status: <output>@_status</output></p>
+
+@code {
+    private readonly FeedbackModel _model = new();
+    private string _status = "Waiting";
+
+    private void Submit() => _status = $"Sent {_model.Feedback!.Length} characters";
+
+    private sealed class FeedbackModel {
+        [System.ComponentModel.DataAnnotations.Required]
+        [System.ComponentModel.DataAnnotations.MinLength(10)]
+        public string? Feedback { get; set; }
+    }
+}

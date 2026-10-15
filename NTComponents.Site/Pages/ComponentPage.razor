@@ -1,6 +1,8 @@
 @page "/components/{Slug}"
 @inject DocumentationCatalog Catalog
 
+<PageTitle>@(_component?.Type.Name ?? "Component not found") | NTComponents</PageTitle>
+
 @if (_component is null) {
     <main class="docs-page">
         <h1>Component not found</h1>
@@ -25,14 +27,14 @@ else {
                 </Actions>
             </DocumentationPageHeader>
 
-            <section class="docs-section" id="overview">
+            <section class="docs-section docs-overview-section" id="overview">
                 <h2>Overview</h2>
                 <div class="docs-overview">
                     <div class="docs-overview-copy">
                         <DocumentationText XmlDocumentation="@_component.Type.XmlDocumentation" ElementName="summary" Fallback="@_component.Type.Summary" CssClass="docs-overview-summary" />
                         <DocumentationText XmlDocumentation="@_component.Type.XmlDocumentation" ElementName="remarks" Fallback="@_component.Type.Remarks" CssClass="docs-overview-remarks" />
                     </div>
-                    @if (!string.IsNullOrWhiteSpace(_component.Type.CompatibilitySummary) || _component.Type.IsObsolete) {
+                    @if (!string.IsNullOrWhiteSpace(_component.Type.CompatibilitySummary) || _component.Type.IsObsolete || _component.DependentComponents.Count > 0) {
                         <div class="docs-overview-asides">
                             @if (!string.IsNullOrWhiteSpace(_component.Type.CompatibilitySummary)) {
                                 <div class="docs-callout">
@@ -50,39 +52,39 @@ else {
                                     <p>@_component.Type.ObsoleteMessage</p>
                                 </div>
                             }
-                        </div>
-                    }
-                    @if (_component.DependentComponents.Count > 0) {
-                        <div class="docs-callout docs-dependent-callout">
-                            <span class="docs-callout-label">Composed with</span>
-                            <div class="docs-dependent-list">
-                                @foreach (var child in _component.DependentComponents) {
-                                    <a class="docs-inline-link" href="@($"#{child.Slug}")"><code>@child.Type.Name</code></a>
-                                }
-                            </div>
+                            @if (_component.DependentComponents.Count > 0) {
+                                <div class="docs-callout">
+                                    <span class="docs-callout-label">Composed with</span>
+                                    <div class="docs-dependent-list">
+                                        @foreach (var child in _component.DependentComponents) {
+                                            <a class="docs-inline-link" href="@($"#{child.Slug}")"><code>@child.Type.Name</code></a>
+                                        }
+                                    </div>
+                                </div>
+                            }
                         </div>
                     }
                 </div>
             </section>
 
-            <section class="docs-section" id="sandbox">
-                <h2>Sandbox</h2>
-                <DocumentationSandbox Component="@_component" />
+            <section class="docs-section docs-examples" id="examples">
+                <h2>Examples</h2>
+                @_component.Examples
             </section>
 
             <section class="docs-section" id="api">
                 <h2>API</h2>
 
-                <h3>Direct properties and fields</h3>
+                <h3 data-nt-nav-exclude>Direct properties and fields</h3>
                 <MemberTable Properties="@_component.MemberGroups.DirectProperties" Fields="@_component.MemberGroups.DirectFields" />
 
-                <h3>Inherited properties and fields</h3>
+                <h3 data-nt-nav-exclude>Inherited properties and fields</h3>
                 @if (_component.MemberGroups.InheritedProperties.Count == 0 && _component.MemberGroups.InheritedFields.Count == 0) {
                     <p class="docs-muted">No documented public or protected inherited members.</p>
                 }
                 else {
-                    @foreach (var declaringType in InheritedDeclaringTypes) {
-                        <section class="docs-inherited-group" id="@DocumentationCatalog.CreateSlug(declaringType)">
+                    @foreach (var declaringType in GetInheritedDeclaringTypes(_component)) {
+                        <section class="docs-inherited-group" id="@DocumentationCatalog.CreateSlug(declaringType)" data-nt-nav-exclude>
                             <h4>@ShortTypeName(declaringType)</h4>
                             <MemberTable Properties="@_component.MemberGroups.InheritedProperties.Where(member => member.DeclaringTypeFullName == declaringType).ToArray()"
                                          Fields="@_component.MemberGroups.InheritedFields.Where(member => member.DeclaringTypeFullName == declaringType).ToArray()" />
@@ -99,14 +101,14 @@ else {
                     @foreach (var child in _component.DependentComponents) {
                         <section class="docs-dependent-component" id="@child.Slug">
                             <div class="docs-card-title-row">
-                                <h3>@child.Type.Name</h3>
+                                <h3 data-nt-nav-exclude>@child.Type.Name</h3>
                                 <CompatibilityTag Type="@child.Type" />
                                 @if (child.Type.IsObsolete) {
                                     <NTTag Label="Obsolete" BackgroundColor="NTColor.ErrorContainer" TextColor="NTColor.OnErrorContainer" Elevation="0" />
                                 }
                             </div>
 
-                            <div class="docs-overview docs-overview-single">
+                            <div class="docs-overview">
                                 <div class="docs-overview-copy">
                                     <DocumentationText XmlDocumentation="@child.Type.XmlDocumentation" ElementName="summary" Fallback="@child.Type.Summary" CssClass="docs-overview-summary" />
                                     <DocumentationText XmlDocumentation="@child.Type.XmlDocumentation" ElementName="remarks" Fallback="@child.Type.Remarks" CssClass="docs-overview-remarks" />
@@ -134,7 +136,7 @@ else {
                                 </div>
                             }
 
-                            <div class="docs-dependent-api">
+                            <div class="docs-dependent-api" data-nt-nav-exclude>
                                 <h4>Direct properties and fields</h4>
                                 <MemberTable Properties="@child.MemberGroups.DirectProperties" Fields="@child.MemberGroups.DirectFields" AnchorPrefix="@child.Slug" />
 
@@ -166,11 +168,6 @@ else {
 
     [Parameter]
     public string? Slug { get; set; }
-
-    private IEnumerable<string> InheritedDeclaringTypes =>
-        _component is null
-            ? []
-            : GetInheritedDeclaringTypes(_component);
 
     protected override void OnParametersSet() {
         _component = Catalog.GetComponent(Slug);

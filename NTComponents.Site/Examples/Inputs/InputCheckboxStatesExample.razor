@@ -1,0 +1,7 @@
+<NTInputCheckbox Label="Always on (disabled)" Disabled="true" @bind-Value="_disabledOn" />
+<NTInputCheckbox Label="Read-only setting" ReadOnly="true" @bind-Value="_readOnly" />
+
+@code {
+    private bool _disabledOn = true;
+    private bool _readOnly = true;
+}

@@ -1,0 +1,16 @@
+<NTAutocomplete @bind-Value="_airport" Label="Airport" LeadingIcon="MaterialIcon.Label">
+    <NTAutocompleteOptionGroup Label="United States">
+        <NTAutocompleteOption Value="JFK" Label="New York (JFK)" SupportingText="John F. Kennedy International" />
+        <NTAutocompleteOption Value="SFO" Label="San Francisco (SFO)" SupportingText="San Francisco International" />
+    </NTAutocompleteOptionGroup>
+    <NTAutocompleteOptionGroup Label="Europe">
+        <NTAutocompleteOption Value="LHR" Label="London (LHR)" SupportingText="Heathrow" />
+        <NTAutocompleteOption Value="CDG" Label="Paris (CDG)" SupportingText="Charles de Gaulle" />
+        <NTAutocompleteOption Value="FRA" Label="Frankfurt (FRA)" Disabled="true" />
+    </NTAutocompleteOptionGroup>
+</NTAutocomplete>
+<p>Airport code: <output>@_airport</output></p>
+
+@code {
+    private string _airport = string.Empty;
+}

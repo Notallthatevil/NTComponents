@@ -1,0 +1,27 @@
+<NTForm Model="_checkout" class="docs-fill">
+    <NTFormFieldGridView MaxColumns="1">
+        <NTFormFieldLayoutSpan Span="NTFormFieldSpan.Full">
+            <NTFormSectionView Heading="Contact" Description="We use this to send your receipt.">
+                <NTInputText Label="Full name" @bind-Value="_checkout.Name" />
+                <NTInputText Label="Email" InputType="TextInputType.Email" @bind-Value="_checkout.Email" />
+            </NTFormSectionView>
+        </NTFormFieldLayoutSpan>
+        <NTFormFieldLayoutSpan Span="NTFormFieldSpan.Full">
+            <NTFormSectionView Heading="Shipping" Description="Where the order should go.">
+                <NTInputText Label="Street" @bind-Value="_checkout.Street" />
+                <NTInputText Label="City" @bind-Value="_checkout.City" />
+            </NTFormSectionView>
+        </NTFormFieldLayoutSpan>
+    </NTFormFieldGridView>
+</NTForm>
+
+@code {
+    private readonly CheckoutModel _checkout = new();
+
+    private sealed class CheckoutModel {
+        public string Name { get; set; } = "Alan Turing";
+        public string Email { get; set; } = "alan@example.com";
+        public string Street { get; set; } = "12 Hut Lane";
+        public string City { get; set; } = "Bletchley";
+    }
+}

@@ -1,0 +1,14 @@
+<NTContextMenu AriaLabel="File actions">
+    <TargetContent>
+        <button type="button" class="nt-body-medium" style="display: block; padding: 16px; border: 1px dashed var(--nt-color-outline); border-radius: var(--nt-sys-shape-corner-medium); background: var(--nt-color-surface-container-low); color: var(--nt-color-on-surface); font: inherit; cursor: context-menu;">Right-click or long-press report.pdf</button>
+    </TargetContent>
+    <MenuContent>
+        <NTMenuButtonItem Label="Archive" Icon="MaterialIcon.Archive" OnClickCallback='_ => _result = "Archived report.pdf"' />
+        <NTMenuButtonItem Label="Copy link" Icon="MaterialIcon.ContentCopy" OnClickCallback='_ => _result = "Link copied"' />
+    </MenuContent>
+</NTContextMenu>
+<output aria-label="Context action result">@_result</output>
+
+@code {
+    private string _result = "No action chosen";
+}

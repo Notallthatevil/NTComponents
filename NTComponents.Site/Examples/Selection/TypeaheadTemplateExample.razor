@@ -1,0 +1,46 @@
+<NTTypeahead TItem="Customer"
+             @bind-Value="_customer"
+             @bind-SearchText="_search"
+             ItemsLookupFunc="SearchAsync"
+             ItemTextSelector="@(c => c.Name)"
+             ItemSupportingTextSelector="@(c => c.Email + " - " + c.Region)"
+             ItemSelectedCallback="OnSelected"
+             ShowClearButton="true"
+             MinimumSearchLength="2"
+             DebounceMilliseconds="200"
+             MaxResults="5"
+             Label="Customer"
+             Placeholder="Search by name, email or region"
+             EmptyText="No customers match" />
+<p>Selected: <output>@(_customer?.Name ?? "none")</output>, search text: <output>@_search</output>, picks: <output>@_picks</output></p>
+
+@code {
+    private Customer? _customer;
+    private string? _search;
+    private int _picks;
+
+    private static readonly Customer[] _customers = [
+        new("Ada Lovelace", "ada@example.com", "Engineering"),
+        new("Grace Hopper", "grace@example.com", "Platform"),
+        new("Katherine Johnson", "katherine@example.com", "Analytics"),
+        new("Mary Jackson", "mary@example.com", "Operations"),
+        new("Dorothy Vaughan", "dorothy@example.com", "Research"),
+        new("Margaret Hamilton", "margaret@example.com", "Infrastructure")
+    ];
+
+    private async Task<IEnumerable<Customer>> SearchAsync(string? search, CancellationToken cancellationToken) {
+        await Task.Delay(150, cancellationToken);
+        var term = search ?? string.Empty;
+        return _customers.Where(c => c.Name.Contains(term, StringComparison.OrdinalIgnoreCase)
+            || c.Email.Contains(term, StringComparison.OrdinalIgnoreCase)
+            || c.Region.Contains(term, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private void OnSelected(Customer? customer) {
+        if (customer is not null) {
+            _picks++;
+        }
+    }
+
+    private sealed record Customer(string Name, string Email, string Region);
+}

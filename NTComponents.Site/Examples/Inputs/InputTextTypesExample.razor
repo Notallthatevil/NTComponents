@@ -1,0 +1,18 @@
+<NTFormFieldGridView class="docs-fill" MaxColumns="2">
+    <NTInputText Label="Email" InputType="TextInputType.Email" LeadingIcon="MaterialIcon.Mail" @bind-Value="_email" />
+    <NTInputText Label="Password" InputType="TextInputType.Password" LeadingIcon="MaterialIcon.Lock" @bind-Value="_password" />
+</NTFormFieldGridView>
+<NTFormFieldGridView class="docs-fill" MaxColumns="3">
+    <NTInputText Label="Phone" InputType="TextInputType.Tel" PhoneMask="(###) ###-####" LeadingIcon="MaterialIcon.Phone" BindOnInput="true" @bind-Value="_phone" />
+    <NTInputText Label="Website" InputType="TextInputType.Url" Placeholder="https://example.com" @bind-Value="_website" />
+    <NTInputText Label="Search" InputType="TextInputType.Search" LeadingIcon="MaterialIcon.Search" @bind-Value="_search" />
+</NTFormFieldGridView>
+<p>Phone: <output>@_phone</output></p>
+
+@code {
+    private string? _email = "jordan@example.com";
+    private string? _password;
+    private string? _phone;
+    private string? _website;
+    private string? _search;
+}

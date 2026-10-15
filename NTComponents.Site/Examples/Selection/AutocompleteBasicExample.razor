@@ -1,0 +1,12 @@
+<NTAutocomplete @bind-Value="_city" Label="City" Placeholder="Start typing" SupportingText="Suggestions filter as you type.">
+    <NTAutocompleteOption Value="Amsterdam" />
+    <NTAutocompleteOption Value="Berlin" />
+    <NTAutocompleteOption Value="Chicago" />
+    <NTAutocompleteOption Value="Denver" />
+    <NTAutocompleteOption Value="Edinburgh" />
+</NTAutocomplete>
+<p>City: <output>@_city</output></p>
+
+@code {
+    private string _city = string.Empty;
+}

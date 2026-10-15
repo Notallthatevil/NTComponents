@@ -1,0 +1,19 @@
+<div class="docs-fill">
+    @foreach (var contact in _contacts) {
+        <div style="padding: 8px 16px;">
+            <div class="nt-title-small">@contact.Name</div>
+            <div class="nt-body-medium">@contact.Role</div>
+        </div>
+        @if (contact != _contacts[^1]) {
+            <NTDivider Variant="NTDividerVariant.Inset" Color="NTColor.Outline" />
+        }
+    }
+</div>
+
+@code {
+    private record Contact(string Name, string Role);
+
+    private readonly Contact[] _contacts = [
+        new("Amara Okafor", "Product designer"), new("Diego Fernandez", "Backend engineer"), new("Mei Tanaka", "Support lead")
+    ];
+}

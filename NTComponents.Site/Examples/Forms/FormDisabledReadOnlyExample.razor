@@ -1,0 +1,23 @@
+<div class="docs-row">
+    <NTButton Label="Toggle disabled" Variant="NTButtonVariant.Outlined" OnClickCallback="_ => _disabled = !_disabled" />
+    <NTButton Label="Toggle read-only" Variant="NTButtonVariant.Outlined" OnClickCallback="_ => _readOnly = !_readOnly" />
+</div>
+<p>Disabled: <output>@_disabled</output>, read-only: <output>@_readOnly</output></p>
+
+<NTForm Model="_account" Disabled="_disabled" ReadOnly="_readOnly" class="docs-fill">
+    <NTFormFieldGridView MaxColumns="2">
+        <NTInputText Label="Account name" @bind-Value="_account.Name" />
+        <NTInputText Label="Billing email" InputType="TextInputType.Email" @bind-Value="_account.BillingEmail" />
+    </NTFormFieldGridView>
+</NTForm>
+
+@code {
+    private readonly AccountModel _account = new();
+    private bool _disabled;
+    private bool _readOnly = true;
+
+    private sealed class AccountModel {
+        public string Name { get; set; } = "Northwind Traders";
+        public string BillingEmail { get; set; } = "billing@northwind.example";
+    }
+}

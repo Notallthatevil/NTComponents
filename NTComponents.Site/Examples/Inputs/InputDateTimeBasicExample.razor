@@ -1,0 +1,14 @@
+<NTFormFieldGridView class="docs-fill" MaxColumns="3">
+    <NTInputDateTime DateTimeType="DateTime?" Label="Appointment" @bind-Value="_appointment" />
+    <NTInputDateTime DateTimeType="DateOnly?" Label="Birthday" @bind-Value="_birthday" />
+    <NTInputDateTime DateTimeType="TimeOnly?" Label="Reminder" @bind-Value="_reminder" />
+</NTFormFieldGridView>
+<p>Appointment: <output>@_appointment</output></p>
+<p>Birthday: <output>@_birthday</output></p>
+<p>Reminder: <output>@_reminder</output></p>
+
+@code {
+    private DateTime? _appointment = new DateTime(2026, 11, 4, 14, 30, 0);
+    private DateOnly? _birthday = new DateOnly(1990, 6, 15);
+    private TimeOnly? _reminder = new TimeOnly(8, 45);
+}

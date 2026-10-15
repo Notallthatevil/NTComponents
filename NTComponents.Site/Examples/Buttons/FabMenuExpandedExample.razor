@@ -1,0 +1,13 @@
+<div class="docs-row">
+    <NTButton Label="@(_expanded ? "Close menu" : "Open menu")" Variant="NTButtonVariant.Outlined" OnClickCallback="@(() => _expanded = !_expanded)" />
+</div>
+<NTFabMenu Icon="MaterialIcon.Share" AriaLabel="Share this page" Placement="NTFabButtonPlacement.Inline" @bind-Expanded="_expanded">
+    <NTFabMenuButtonItem Label="Email" Icon="MaterialIcon.Mail" />
+    <NTFabMenuButtonItem Label="Message" Icon="MaterialIcon.Chat" />
+    <NTFabMenuAnchorItem Label="Open in new tab" Icon="MaterialIcon.Send" Href="/components" Target="_blank" />
+</NTFabMenu>
+<p>Menu is <output>@(_expanded ? "open" : "closed")</output></p>
+
+@code {
+    private bool _expanded;
+}

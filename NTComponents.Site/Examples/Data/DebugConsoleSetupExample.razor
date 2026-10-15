@@ -1,0 +1,24 @@
+<p>The registration and layout markup, shown as code because this site already includes the console.</p>
+<pre class="docs-code"><code>@Snippet</code></pre>
+
+@code {
+    private const string Snippet = """
+        // WebAssembly: the whole app is one user's session, so every log belongs to the viewer.
+        builder.Services.AddNTDebugConsole(options => options.AllowAll());
+
+        // Blazor Server (NTComponents.AspNetCore): each circuit sees only its own logs.
+        builder.Services.AddNTDebugConsoleForServer(options => {
+            options.Authorize = state => state.User.IsInRole("Developer");
+            options.MinimumLevel = LogLevel.Debug;
+            options.Redact = entry => entry.Category.StartsWith("Payments", StringComparison.Ordinal) ? null : entry;
+        });
+
+        @* MainLayout.razor: once, collapsed by default. Ctrl+` shows and hides it. *@
+        <NTDebugConsole />
+
+        /* app.css: keep content clear of the console. */
+        main {
+            padding-block-end: var(--nt-debug-console-inset, 0px);
+        }
+        """;
+}

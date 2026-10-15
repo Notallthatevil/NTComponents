@@ -1,0 +1,23 @@
+<NTFeedView class="docs-fill">
+    @foreach (var story in _stories) {
+        <NTCard>
+            <div style="display: grid; gap: 8px; padding: 16px;">
+                <h5 class="nt-title-medium" style="margin: 0;">@story.Title</h5>
+                <p style="margin: 0;">@story.Summary</p>
+            </div>
+        </NTCard>
+    }
+</NTFeedView>
+
+@code {
+    private sealed record Story(string Title, string Summary);
+
+    private readonly Story[] _stories = [
+        new("Harvest festival opens", "Thousands gather downtown for the annual fall celebration."),
+        new("New bike lanes approved", "The council voted to add 12 miles of protected lanes."),
+        new("Library extends hours", "Branches will stay open until 9 PM on weekdays."),
+        new("Local team wins final", "A late goal sealed the championship on Saturday."),
+        new("Farmers market returns", "Over 60 vendors are expected for the opening weekend."),
+        new("Bridge repairs finish early", "Traffic resumes on Monday after two months of work.")
+    ];
+}

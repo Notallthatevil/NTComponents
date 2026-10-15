@@ -1,0 +1,11 @@
+<div class="docs-row">
+    <NTButton Label="Save changes" OnClickCallback="Save" />
+    <NTButton Label="Unavailable" Disabled="true" />
+</div>
+<p>Saved <output>@_saveCount</output> times.</p>
+
+@code {
+    private int _saveCount;
+
+    private void Save() => _saveCount++;
+}

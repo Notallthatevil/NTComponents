@@ -1,6 +1,8 @@
 @page "/reference/{Kind}/{Slug}"
 @inject DocumentationCatalog Catalog
 
+<PageTitle>@(_reference?.Type.Name ?? "Reference not found") | NTComponents</PageTitle>
+
 @if (_reference is null) {
     <main class="docs-page">
         <h1>Reference type not found</h1>
@@ -24,7 +26,7 @@ else {
 
             <section class="docs-section" id="overview">
                 <h2>Overview</h2>
-                <div class="docs-overview docs-overview-single">
+                <div class="docs-overview">
                     <div class="docs-overview-copy">
                         <DocumentationText XmlDocumentation="@_reference.Type.XmlDocumentation" ElementName="summary" Fallback="@_reference.Type.Summary" CssClass="docs-overview-summary" />
                         <DocumentationText XmlDocumentation="@_reference.Type.XmlDocumentation" ElementName="remarks" Fallback="@_reference.Type.Remarks" CssClass="docs-overview-remarks" />

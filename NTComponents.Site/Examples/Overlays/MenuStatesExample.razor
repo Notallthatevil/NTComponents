@@ -1,0 +1,24 @@
+<NTButton ElementId="menu-states-example-trigger"
+          Label="Sort and filter"
+          LeadingIcon="MaterialIcon.Sort"
+          style="anchor-name: --menu-states-example-anchor;"
+          popovertarget="menu-states-example"
+          popovertargetaction="toggle" />
+<p>Sorted by: <output>@_sort</output></p>
+
+<NTMenu ElementId="menu-states-example"
+        AnchorName="--menu-states-example-anchor"
+        AnchorSelector="#menu-states-example-trigger"
+        Appearance="NTMenuAppearance.Compact"
+        AriaLabel="Sort options">
+    <NTMenuLabelItem Label="Sort by" />
+    <NTMenuButtonItem Label="Name" Selected="@(_sort == "Name")" OnClickCallback='_ => _sort = "Name"' />
+    <NTMenuButtonItem Label="Date modified" Selected="@(_sort == "Date modified")" OnClickCallback='_ => _sort = "Date modified"' />
+    <NTMenuButtonItem Label="Size" Disabled="true" />
+    <NTMenuDividerItem Inset="true" />
+    <NTMenuButtonItem Label="Shared with me" ShowBadge="true" BadgeContent="3" BadgeAriaLabel="3 new items" />
+</NTMenu>
+
+@code {
+    private string _sort = "Name";
+}

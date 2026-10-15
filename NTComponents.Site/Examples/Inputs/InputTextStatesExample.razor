@@ -1,0 +1,11 @@
+<NTFormFieldGridView class="docs-fill" MaxColumns="3">
+    <NTInputText Label="Account ID" ReadOnly="true" @bind-Value="_accountId" />
+    <NTInputText Label="Region" Disabled="true" @bind-Value="_region" />
+    <NTInputText Label="Display name" ErrorText="That display name is already taken." @bind-Value="_displayName" />
+</NTFormFieldGridView>
+
+@code {
+    private string? _accountId = "ACCT-48213";
+    private string? _region = "us-east-1";
+    private string? _displayName = "jrivera";
+}

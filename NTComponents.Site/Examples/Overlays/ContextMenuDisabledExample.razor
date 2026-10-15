@@ -1,0 +1,16 @@
+<NTInputSwitch Label="Lock this file" @bind-Value="_locked" />
+
+<NTContextMenu AriaLabel="Locked file actions" Disabled="_locked">
+    <TargetContent>
+        <button type="button" class="nt-body-medium" style="display: block; padding: 16px; border: 1px dashed var(--nt-color-outline); border-radius: var(--nt-sys-shape-corner-medium); background: var(--nt-color-surface-container-low); color: var(--nt-color-on-surface); font: inherit; cursor: context-menu;">@(_locked ? "Locked: menu unavailable" : "Right-click for actions")</button>
+    </TargetContent>
+    <MenuContent>
+        <NTMenuButtonItem Label="Rename" Icon="MaterialIcon.Edit" OnClickCallback='_ => _result = "Rename chosen"' />
+    </MenuContent>
+</NTContextMenu>
+<output aria-label="Context action result">@_result</output>
+
+@code {
+    private bool _locked = true;
+    private string _result = "No action chosen";
+}

@@ -1,0 +1,10 @@
+<NTButton Label="@(_open ? "Hide notes" : "Show notes")" OnClickCallback="() => _open = !_open" />
+<p>Window is <output>@(_open ? "open" : "closed")</output></p>
+
+<NTWindow Title="Meeting notes" @bind-Open="_open">
+    <p>Review the launch checklist with Priya before Friday.</p>
+</NTWindow>
+
+@code {
+    private bool _open;
+}

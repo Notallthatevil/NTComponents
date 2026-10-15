@@ -1,0 +1,24 @@
+<NTFileUpload @bind-Value="_files"
+              Label="Receipts"
+              Multiple="true"
+              MaximumFileCount="3"
+              Accept=".pdf,.png,.jpg"
+              AutoUpload="true"
+              ShowUploadButton="false"
+              OnUploadFile="CountFileAsync"
+              OnCompleted="Completed"
+              class="docs-fill" />
+<output aria-label="Upload summary">@_summary</output>
+
+@code {
+    private IReadOnlyList<Microsoft.AspNetCore.Components.Forms.IBrowserFile>? _files;
+    private string? _summary;
+
+    private void Completed(IReadOnlyList<NTFileUploadEventArgs> files) => _summary = $"Uploaded {files.Count} file(s).";
+
+    private async Task CountFileAsync(NTFileUploadEventArgs args) {
+        if (args.Stream is not null) {
+            await args.Stream.CopyToAsync(Stream.Null);
+        }
+    }
+}

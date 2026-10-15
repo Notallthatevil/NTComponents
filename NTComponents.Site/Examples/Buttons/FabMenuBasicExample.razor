@@ -1,0 +1,10 @@
+<NTFabMenu Icon="MaterialIcon.Add" AriaLabel="Create new item" Placement="NTFabButtonPlacement.Inline">
+    <NTFabMenuButtonItem Label="New note" Icon="MaterialIcon.Description" OnClickCallback="@(() => _created = "note")" />
+    <NTFabMenuButtonItem Label="New folder" Icon="MaterialIcon.Folder" OnClickCallback="@(() => _created = "folder")" />
+    <NTFabMenuButtonItem Label="Upload file" Icon="MaterialIcon.Upload" OnClickCallback="@(() => _created = "upload")" />
+</NTFabMenu>
+<p>Last created: <output>@_created</output></p>
+
+@code {
+    private string _created = "nothing yet";
+}

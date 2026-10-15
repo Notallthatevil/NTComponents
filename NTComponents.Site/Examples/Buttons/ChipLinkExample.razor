@@ -1,0 +1,9 @@
+<div class="docs-row">
+    <NTChip Label="Mark as read" LeadingIcon="MaterialIcon.Check" OnClickCallback="@(() => _count++)" />
+    <NTChip Label="Browse components" Variant="NTChipVariant.Suggestion" Href="/components" />
+</div>
+<p>Marked as read: <output>@_count</output> times</p>
+
+@code {
+    private int _count;
+}

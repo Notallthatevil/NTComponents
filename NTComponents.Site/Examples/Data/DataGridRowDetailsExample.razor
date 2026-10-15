@@ -1,0 +1,22 @@
+<NTDataGrid TItem="Order" Items="_orders" Caption="Orders with line items" RowKey="order => order.Id" class="docs-fill">
+    <ChildContent>
+        <NTPropertyColumn TItem="Order" TValue="int" Title="Order" Property="order => order.Id" />
+        <NTPropertyColumn TItem="Order" TValue="string" Title="Customer" Property="order => order.Customer" />
+    </ChildContent>
+    <RowDetailTemplate Context="order">
+        <ul>
+            @foreach (var line in order.Lines) {
+                <li>@line</li>
+            }
+        </ul>
+    </RowDetailTemplate>
+</NTDataGrid>
+
+@code {
+    private readonly IQueryable<Order> _orders = new Order[] {
+        new(1001, "Ada Lovelace", ["Analytical engine manual", "Punch cards (x200)"]),
+        new(1002, "Grace Hopper", ["Compiler handbook"])
+    }.AsQueryable();
+
+    private sealed record Order(int Id, string Customer, string[] Lines);
+}

@@ -1,0 +1,10 @@
+<NTFabMenu Icon="MaterialIcon.Settings" AriaLabel="Quick navigation" Placement="NTFabButtonPlacement.Inline">
+    <NTFabMenuAnchorItem Label="Home" Icon="MaterialIcon.Home" Href="/" />
+    <NTFabMenuAnchorItem Label="Components" Icon="MaterialIcon.Dashboard" Href="/components" />
+    <NTFabMenuButtonItem Label="Copy link" Icon="MaterialIcon.ContentCopy" OnClickCallback="@(() => _copied = true)" />
+</NTFabMenu>
+<p>Link copied: <output>@(_copied ? "yes" : "no")</output></p>
+
+@code {
+    private bool _copied;
+}

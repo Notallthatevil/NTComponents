@@ -1,0 +1,27 @@
+<NTForm Model="_address" class="docs-fill">
+    <NTFormFieldGridView>
+        <NTFormFieldLayoutSpan Span="NTFormFieldSpan.Full">
+            <NTInputText Label="Street address" @bind-Value="_address.Street" />
+        </NTFormFieldLayoutSpan>
+        <NTFormFieldLayoutSpan SmallColumns="12" MediumColumns="4" LargeColumns="6">
+            <NTInputText Label="City" @bind-Value="_address.City" />
+        </NTFormFieldLayoutSpan>
+        <NTFormFieldLayoutSpan Span="NTFormFieldSpan.Compact">
+            <NTInputText Label="State" @bind-Value="_address.State" />
+        </NTFormFieldLayoutSpan>
+        <NTFormFieldLayoutSpan Span="NTFormFieldSpan.Compact">
+            <NTInputText Label="ZIP code" @bind-Value="_address.Zip" />
+        </NTFormFieldLayoutSpan>
+    </NTFormFieldGridView>
+</NTForm>
+
+@code {
+    private readonly AddressModel _address = new();
+
+    private sealed class AddressModel {
+        public string Street { get; set; } = "1600 Pennsylvania Ave NW";
+        public string City { get; set; } = "Washington";
+        public string State { get; set; } = "DC";
+        public string Zip { get; set; } = "20500";
+    }
+}

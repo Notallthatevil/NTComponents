@@ -1,0 +1,25 @@
+@using Microsoft.Extensions.Logging
+@implements IDisposable
+@inject INTDebugConsole DebugConsole
+
+<div class="docs-row">
+    <NTButton Label="Add to cart" OnClickCallback="AddToCart" />
+    <NTButton Label="Apply coupon" Variant="NTButtonVariant.Tonal" OnClickCallback="ApplyCoupon" />
+    <NTButton Label="Clear console" Variant="NTButtonVariant.Outlined" OnClickCallback="DebugConsole.Clear" />
+</div>
+<p>Entries in the console: <output>@DebugConsole.Entries.Count</output></p>
+
+@code {
+    private int _items;
+
+    // Changed fires for every entry from any source, so the count stays current while other examples log.
+    protected override void OnInitialized() => DebugConsole.Changed += OnConsoleChanged;
+
+    public void Dispose() => DebugConsole.Changed -= OnConsoleChanged;
+
+    private void OnConsoleChanged() => _ = InvokeAsync(StateHasChanged);
+
+    private void AddToCart() => DebugConsole.Write(LogLevel.Information, $"Added a travel mug to the cart ({++_items} in cart)", "Checkout");
+
+    private void ApplyCoupon() => DebugConsole.Write(LogLevel.Warning, "Coupon SPRING24 expired on 31 May", "Checkout");
+}

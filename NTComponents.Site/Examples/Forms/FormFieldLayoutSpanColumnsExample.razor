@@ -1,0 +1,19 @@
+<NTForm Model="_part" class="docs-fill">
+    <NTFormFieldGridView>
+        <NTFormFieldLayoutSpan SmallColumns="12" MediumColumns="8" LargeColumns="9">
+            <NTInputText Label="Part description" @bind-Value="_part.Description" />
+        </NTFormFieldLayoutSpan>
+        <NTFormFieldLayoutSpan SmallColumns="12" MediumColumns="4" LargeColumns="3">
+            <NTInputText Label="SKU" @bind-Value="_part.Sku" />
+        </NTFormFieldLayoutSpan>
+    </NTFormFieldGridView>
+</NTForm>
+
+@code {
+    private readonly PartModel _part = new();
+
+    private sealed class PartModel {
+        public string Description { get; set; } = "Stainless hex bolt, M8 x 40 mm";
+        public string Sku { get; set; } = "HB-M8-40";
+    }
+}

@@ -1,0 +1,13 @@
+<NTCombobox TValue="string" @bind-Value="_roles" Items="_options" Label="Roles" Placeholder="Choose roles" SupportingText="Select one or more roles." />
+<p>Roles: <output>@string.Join(", ", _roles)</output></p>
+
+@code {
+    private IReadOnlyList<string> _roles = ["editor"];
+
+    private readonly IReadOnlyList<NTComboboxOption<string>> _options = [
+        new("admin", "Administrator"),
+        new("editor", "Editor"),
+        new("reviewer", "Reviewer"),
+        new("viewer", "Viewer")
+    ];
+}

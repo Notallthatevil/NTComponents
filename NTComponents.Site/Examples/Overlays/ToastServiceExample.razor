@@ -1,0 +1,18 @@
+@using NTComponents.Toast
+@inject INTToastService ToastService
+
+<div class="docs-row">
+    <NTButton Label="Show toast" OnClickCallback="ShowSaved" />
+    <NTButton Label="Warning" OnClickCallback="ShowWarning" />
+    <NTButton Label="Error" OnClickCallback="ShowError" />
+</div>
+
+<NTToast Position="NTToastPosition.BottomRightCorner" />
+
+@code {
+    private Task ShowSaved() => ToastService.ShowSuccessAsync("Saved", "Your profile changes were saved.", timeout: 6);
+
+    private Task ShowWarning() => ToastService.ShowWarningAsync("Low storage", "Only 600 MB remain on your plan.", timeout: 6);
+
+    private Task ShowError() => ToastService.ShowErrorAsync("Upload failed", "invoice-2024.pdf could not be uploaded.", timeout: 6);
+}

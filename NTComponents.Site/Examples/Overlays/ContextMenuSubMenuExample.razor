@@ -1,0 +1,19 @@
+<NTContextMenu AriaLabel="Photo actions" LongPressDelay="400">
+    <TargetContent>
+        <button type="button" class="nt-body-medium" style="display: block; padding: 16px; border: 1px dashed var(--nt-color-outline); border-radius: var(--nt-sys-shape-corner-medium); background: var(--nt-color-surface-container-low); color: var(--nt-color-on-surface); font: inherit; cursor: context-menu;">Right-click or long-press holiday.jpg</button>
+    </TargetContent>
+    <MenuContent>
+        <NTMenuButtonItem Label="Open" Icon="MaterialIcon.Folder" OnClickCallback='_ => _result = "Opened holiday.jpg"' />
+        <NTMenuSubMenuItem Label="Share" Icon="MaterialIcon.Share">
+            <NTMenuButtonItem Label="Email" Icon="MaterialIcon.Mail" OnClickCallback='_ => _result = "Shared by email"' />
+            <NTMenuAnchorItem Label="Open sharing page" Href="https://example.com/share" Target="_blank" />
+        </NTMenuSubMenuItem>
+        <NTMenuDividerItem />
+        <NTMenuButtonItem Label="Delete" Icon="MaterialIcon.Delete" OnClickCallback='_ => _result = "Deleted holiday.jpg"' />
+    </MenuContent>
+</NTContextMenu>
+<output aria-label="Context action result">@_result</output>
+
+@code {
+    private string _result = "No action chosen";
+}

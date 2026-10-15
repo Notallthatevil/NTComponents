@@ -1,0 +1,21 @@
+@using NTComponents.Virtualization
+
+<div class="docs-fill" style="block-size: 15rem; overflow: auto; border: 1px solid var(--nt-color-outline-variant); border-radius: var(--nt-sys-shape-corner-medium);">
+    <NTVirtualize TItem="string" ItemsProvider="LoadContactsAsync" ItemSize="56">
+        <ItemTemplate Context="contact">
+            <div class="nt-body-large" style="block-size: 56px; display: flex; align-items: center; box-sizing: border-box; padding-inline: 16px; border-block-end: 1px solid var(--nt-color-outline-variant);">@contact</div>
+        </ItemTemplate>
+        <EmptyTemplate>
+            <p class="nt-body-medium">No contacts match your search.</p>
+        </EmptyTemplate>
+    </NTVirtualize>
+</div>
+
+@code {
+    private static readonly string[] Contacts = ["Ada Lovelace", "Grace Hopper", "Alan Turing", "Katherine Johnson", "Margaret Hamilton", "Dennis Ritchie", "Barbara Liskov", "Edsger Dijkstra"];
+
+    private static ValueTask<TnTItemsProviderResult<string>> LoadContactsAsync(NTVirtualizeItemsProviderRequest<string> request) {
+        var count = request.Count ?? 20;
+        return ValueTask.FromResult(new TnTItemsProviderResult<string>(Contacts.Skip(request.StartIndex).Take(count).ToArray(), Contacts.Length));
+    }
+}

@@ -1,0 +1,34 @@
+@using System.ComponentModel.DataAnnotations
+
+<NTForm Model="_post" OnValidSubmit="Publish" class="docs-fill">
+    <DataAnnotationsValidator />
+    <NTFormFieldGridView MaxColumns="2">
+        <NTInputText Label="Title" @bind-Value="_post.Title" />
+        <NTFormFieldLayoutSpan Span="NTFormFieldSpan.Full">
+            <NTRichTextEditor @bind-Value="_post.Body" Label="Body" SupportingText="Write the announcement." />
+        </NTFormFieldLayoutSpan>
+        <NTFormFieldLayoutSpan Span="NTFormFieldSpan.Full">
+            <div class="docs-row">
+                <NTButton Type="ButtonType.Submit" Label="Publish" Variant="NTButtonVariant.Filled" />
+            </div>
+        </NTFormFieldLayoutSpan>
+        <NTFormFieldLayoutSpan Span="NTFormFieldSpan.Full">
+            <output>@_status</output>
+        </NTFormFieldLayoutSpan>
+    </NTFormFieldGridView>
+</NTForm>
+
+@code {
+    private readonly PostModel _post = new();
+    private string? _status;
+
+    private void Publish() => _status = $"Published \"{_post.Title}\".";
+
+    private sealed class PostModel {
+        [Required]
+        public string? Title { get; set; } = "Release 2.4 is out";
+
+        [Required]
+        public string? Body { get; set; } = "<p>Version 2.4 adds <em>faster</em> sync.</p>";
+    }
+}

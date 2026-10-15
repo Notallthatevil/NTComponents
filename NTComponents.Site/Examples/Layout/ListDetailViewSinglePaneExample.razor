@@ -1,0 +1,43 @@
+<div class="docs-fill" style="block-size: 20rem; position: relative; overflow: hidden;">
+    <NTListDetailView FullHeight="true" Mode="NTListDetailViewMode.SinglePane" ListPaneLabel="Messages" DetailPaneLabel="Message">
+        <List>
+            <ul style="list-style: none; margin: 0; padding: 0;">
+                @for (var i = 0; i < _messages.Length; i++) {
+                    var index = i;
+                    <li>
+                        <a href="#message-@index" style="display: grid; gap: 4px; padding: 12px 16px; color: inherit; text-decoration: none;" data-nt-list-detail-trigger="@index">
+                            <span class="nt-title-medium">@_messages[index].Subject</span>
+                            <span class="nt-body-medium">@_messages[index].From</span>
+                        </a>
+                    </li>
+                }
+            </ul>
+        </List>
+        <DetailHeader>
+            <NTButton Label="Back to messages" Variant="NTButtonVariant.Text" data-nt-list-detail-back />
+        </DetailHeader>
+        <Detail>
+            @for (var i = 0; i < _messages.Length; i++) {
+                var index = i;
+                <div style="display: grid; gap: 8px; padding: 16px;" data-nt-list-detail-panel="@index" hidden>
+                    <h4 class="nt-title-large" style="margin: 0;">@_messages[index].Subject</h4>
+                    <p style="margin: 0;">From @_messages[index].From</p>
+                    <p style="margin: 0;">@_messages[index].Body</p>
+                </div>
+            }
+        </Detail>
+        <EmptyDetail>
+            <p style="margin: 0; padding: 16px;">Select a message to read it.</p>
+        </EmptyDetail>
+    </NTListDetailView>
+</div>
+
+@code {
+    private sealed record Message(string Subject, string From, string Body);
+
+    private readonly Message[] _messages = [
+        new("Quarterly planning", "Dana Whitfield", "Please add your team goals to the shared document by Friday."),
+        new("Invoice 2043", "Accounts payable", "Your invoice has been approved and will be paid within five days."),
+        new("Team offsite", "Chris Okafor", "The offsite is confirmed for the second week of November.")
+    ];
+}

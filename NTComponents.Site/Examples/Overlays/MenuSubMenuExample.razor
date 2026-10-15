@@ -1,0 +1,24 @@
+<NTButton ElementId="menu-submenu-example-trigger"
+          Label="File"
+          style="anchor-name: --menu-submenu-example-anchor;"
+          popovertarget="menu-submenu-example"
+          popovertargetaction="toggle" />
+<p>Last action: <output>@_action</output></p>
+
+<NTMenu ElementId="menu-submenu-example"
+        AnchorName="--menu-submenu-example-anchor"
+        AnchorSelector="#menu-submenu-example-trigger"
+        AriaLabel="File menu">
+    <NTMenuButtonItem Label="New document" Icon="MaterialIcon.Add" OnClickCallback='_ => _action = "New document"' />
+    <NTMenuSubMenuItem Label="Export" Icon="MaterialIcon.Download">
+        <NTMenuLabelItem Label="Format" />
+        <NTMenuButtonItem Label="PDF" OnClickCallback='_ => _action = "Export PDF"' />
+        <NTMenuButtonItem Label="Markdown" OnClickCallback='_ => _action = "Export Markdown"' />
+    </NTMenuSubMenuItem>
+    <NTMenuDividerItem />
+    <NTMenuAnchorItem Label="Help center" Icon="MaterialIcon.OpenInNew" Href="https://example.com/help" Target="_blank" />
+</NTMenu>
+
+@code {
+    private string _action = "None";
+}

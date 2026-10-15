@@ -4,54 +4,54 @@
 <NTLayout>
     <NTNavigationRail AriaLabel="Documentation navigation" OpenByDefault="true" >
         <NTNavigationRailItem Label="Home" Href="/" Match="NavLinkMatch.All" Icon="MaterialIcon.Home" />
-        <NTNavigationRailItem Label="Getting started" Href="/getting-started" Match="NavLinkMatch.All" Icon="MaterialIcon.Article" />
+        <NTNavigationRailItem Label="Getting started" Href="/getting-started" Match="NavLinkMatch.All" Icon="MaterialIcon.RocketLaunch" />
         <NTNavigationRailItem Label="Theme creator" Href="/tools/material-theme" Match="NavLinkMatch.All" Icon="MaterialIcon.Palette" />
-        <NTNavigationRailGroup Label="Components" Icon="MaterialIcon.Category">
-            <NTNavigationRailItem Label="All components" Href="/components" Match="NavLinkMatch.All" Icon="MaterialIcon.Category" />
+        <NTNavigationRailGroup Label="Components" Icon="MaterialIcon.Widgets">
+            <NTNavigationRailItem Label="All components" Href="/components" Match="NavLinkMatch.All" Icon="MaterialIcon.GridView" />
             @foreach (var group in Catalog.ComponentGroups) {
                 var components = group.ToArray();
                 if (components.Length == 1) {
                     var component = components[0];
-                    <NTNavigationRailItem Label="@component.Type.Name" Href="@($"/components/{component.Slug}")" Icon="MaterialIcon.Article" />
+                    <NTNavigationRailItem Label="@component.Type.Name" Href="@($"/components/{component.Slug}")" Icon="@NavigationIcons.For(component.Type.Name)" />
                 }
                 else {
-                    <NTNavigationRailGroup Label="@group.Key" Icon="MaterialIcon.Folder">
+                    <NTNavigationRailGroup Label="@group.Key" Icon="@NavigationIcons.For(group.Key)">
                         @foreach (var component in components) {
-                            <NTNavigationRailItem Label="@component.Type.Name" Href="@($"/components/{component.Slug}")" Icon="MaterialIcon.Article" />
+                            <NTNavigationRailItem Label="@component.Type.Name" Href="@($"/components/{component.Slug}")" Icon="@NavigationIcons.For(component.Type.Name)" />
                         }
                     </NTNavigationRailGroup>
                 }
             }
         </NTNavigationRailGroup>
         <NTNavigationRailGroup Label="Enums" Icon="MaterialIcon.DataObject">
-            <NTNavigationRailItem Label="All enums" Href="/reference/enums" Match="NavLinkMatch.All" Icon="MaterialIcon.DataObject" />
+            <NTNavigationRailItem Label="All enums" Href="/reference/enums" Match="NavLinkMatch.All" Icon="MaterialIcon.ViewList" />
             @foreach (var group in Catalog.EnumGroups) {
                 var references = group.ToArray();
                 if (references.Length == 1) {
                     var reference = references[0];
-                    <NTNavigationRailItem Label="@reference.Type.Name" Href="@($"/reference/enums/{reference.Slug}")" Icon="MaterialIcon.Article" />
+                    <NTNavigationRailItem Label="@reference.Type.Name" Href="@($"/reference/enums/{reference.Slug}")" Icon="@NavigationIcons.For(group.Key)" />
                 }
                 else {
-                    <NTNavigationRailGroup Label="@group.Key" Icon="MaterialIcon.Folder">
+                    <NTNavigationRailGroup Label="@group.Key" Icon="@NavigationIcons.For(group.Key)">
                         @foreach (var reference in references) {
-                            <NTNavigationRailItem Label="@reference.Type.Name" Href="@($"/reference/enums/{reference.Slug}")" Icon="MaterialIcon.Article" />
+                            <NTNavigationRailItem Label="@reference.Type.Name" Href="@($"/reference/enums/{reference.Slug}")" Icon="@NavigationIcons.For(group.Key)" />
                         }
                     </NTNavigationRailGroup>
                 }
             }
         </NTNavigationRailGroup>
         <NTNavigationRailGroup Label="Constants" Icon="MaterialIcon.Tag">
-            <NTNavigationRailItem Label="All constants" Href="/reference/constants" Match="NavLinkMatch.All" Icon="MaterialIcon.Tag" />
+            <NTNavigationRailItem Label="All constants" Href="/reference/constants" Match="NavLinkMatch.All" Icon="MaterialIcon.List" />
             @foreach (var group in Catalog.ConstantGroups) {
                 var references = group.ToArray();
                 if (references.Length == 1) {
                     var reference = references[0];
-                    <NTNavigationRailItem Label="@reference.Type.Name" Href="@($"/reference/constants/{reference.Slug}")" Icon="MaterialIcon.Article" />
+                    <NTNavigationRailItem Label="@reference.Type.Name" Href="@($"/reference/constants/{reference.Slug}")" Icon="@NavigationIcons.For(group.Key)" />
                 }
                 else {
-                    <NTNavigationRailGroup Label="@group.Key" Icon="MaterialIcon.Folder">
+                    <NTNavigationRailGroup Label="@group.Key" Icon="@NavigationIcons.For(group.Key)">
                         @foreach (var reference in references) {
-                            <NTNavigationRailItem Label="@reference.Type.Name" Href="@($"/reference/constants/{reference.Slug}")" Icon="MaterialIcon.Article" />
+                            <NTNavigationRailItem Label="@reference.Type.Name" Href="@($"/reference/constants/{reference.Slug}")" Icon="@NavigationIcons.For(group.Key)" />
                         }
                     </NTNavigationRailGroup>
                 }
@@ -80,4 +80,6 @@
         </div>
     </NTBody>
 </NTLayout>
+
+<NTDebugConsole />
 

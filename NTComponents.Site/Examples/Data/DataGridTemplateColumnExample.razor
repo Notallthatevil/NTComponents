@@ -1,0 +1,22 @@
+<NTDataGrid TItem="Order" Items="_orders" Caption="Orders awaiting review" OnRowClicked="Select" class="docs-fill">
+    <NTPropertyColumn TItem="Order" TValue="string" Title="Customer" Property="order => order.Customer" />
+    <NTPropertyColumn TItem="Order" TValue="decimal" Title="Total" Property="order => order.Total" Format="C" />
+    <NTTemplateColumn TItem="Order" Title="Status">
+        <NTTag Label="@(context.Paid ? "Paid" : "Unpaid")" />
+    </NTTemplateColumn>
+</NTDataGrid>
+<p>Selected: <output>@(_selected?.Customer ?? "none")</output></p>
+
+@code {
+    private Order? _selected;
+
+    private readonly IQueryable<Order> _orders = new Order[] {
+        new("Ada Lovelace", 129.50m, true),
+        new("Grace Hopper", 42.00m, false),
+        new("Alan Turing", 310.25m, true)
+    }.AsQueryable();
+
+    private void Select(Order order) => _selected = order;
+
+    private sealed record Order(string Customer, decimal Total, bool Paid);
+}

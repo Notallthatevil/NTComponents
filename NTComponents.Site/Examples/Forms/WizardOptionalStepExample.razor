@@ -1,0 +1,20 @@
+<NTWizard Title="Publish a recipe" OnStepSkipped="Skipped" OnSubmitCallback="Finish" class="docs-fill" style="block-size: 24rem;">
+    <NTWizardStep Title="Basics">
+        <p>Recipe: Lemon tart, serves 8.</p>
+    </NTWizardStep>
+    <NTWizardStep Title="Photos" SubTitle="Optional" Optional="true">
+        <p>Add photos of the finished tart, or skip this step.</p>
+    </NTWizardStep>
+    <NTWizardStep Title="Publish">
+        <p>Ready to publish.</p>
+    </NTWizardStep>
+</NTWizard>
+<output>@_status</output>
+
+@code {
+    private string? _status;
+
+    private void Skipped(int index) => _status = $"Skipped step {index + 1}.";
+
+    private void Finish() => _status = "Recipe published.";
+}

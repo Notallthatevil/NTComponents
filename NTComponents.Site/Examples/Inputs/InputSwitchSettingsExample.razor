@@ -1,0 +1,13 @@
+<NTInputSwitch Label="Email alerts" @bind-Value="_email" BindAfter="OnChanged" />
+<NTInputSwitch Label="Push alerts" @bind-Value="_push" BindAfter="OnChanged" />
+<NTInputSwitch Label="Weekly digest" @bind-Value="_digest" BindAfter="OnChanged" />
+<p>Changes saved: <output>@_changes</output></p>
+
+@code {
+    private bool _email = true;
+    private bool _push;
+    private bool _digest = true;
+    private int _changes;
+
+    private void OnChanged(bool value) => _changes++;
+}

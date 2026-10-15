@@ -1,0 +1,27 @@
+<NTCombobox TValue="string" @bind-Value="_countries" Items="_options" Label="Countries" Searchable="true" EmptyText="No matching countries" SelectedTextSeparator=" / " />
+<NTCombobox TValue="string" @bind-Value="_sizes" Items="_sizeOptions" Label="Sizes" Searchable="false" />
+<p>Countries: <output>@string.Join(", ", _countries)</output></p>
+
+@code {
+    private IReadOnlyList<string> _countries = [];
+    private IReadOnlyList<string> _sizes = [];
+
+    private readonly IReadOnlyList<NTComboboxOption<string>> _sizeOptions = [
+        new("s", "Small"),
+        new("m", "Medium"),
+        new("l", "Large")
+    ];
+
+    private readonly IReadOnlyList<NTComboboxOption<string>> _options = [
+        new("ar", "Argentina"),
+        new("au", "Australia"),
+        new("br", "Brazil"),
+        new("ca", "Canada"),
+        new("de", "Germany"),
+        new("in", "India"),
+        new("jp", "Japan"),
+        new("mx", "Mexico"),
+        new("no", "Norway"),
+        new("us", "United States")
+    ];
+}

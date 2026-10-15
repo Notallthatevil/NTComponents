@@ -1,0 +1,12 @@
+<NTFormFieldGridView class="docs-fill" MaxColumns="3">
+    <NTInputCurrency Label="US dollars" CultureCode="en-US" CurrencyCode="USD" @bind-Value="_usd" />
+    <NTInputCurrency Label="Euros" CultureCode="de-DE" CurrencyCode="EUR" @bind-Value="_eur" />
+    <NTInputCurrency Label="Yen" CultureCode="ja-JP" CurrencyCode="JPY" @bind-Value="_jpy" />
+</NTFormFieldGridView>
+<p>USD <output>@_usd</output>, EUR <output>@_eur</output>, JPY <output>@_jpy</output></p>
+
+@code {
+    private decimal? _usd = 2500.50m;
+    private decimal? _eur = 2500.50m;
+    private decimal? _jpy = 380000m;
+}
