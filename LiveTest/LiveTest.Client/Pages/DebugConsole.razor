@@ -1,0 +1,71 @@
+@page "/debug-console"
+@rendermode InteractiveAuto
+@using Microsoft.Extensions.Logging
+@using NTComponents
+@inject INTDebugConsole Console
+@inject ILogger<DebugConsole> Logger
+@inject INTToastService ToastService
+
+<main>
+    <h1>Debug console</h1>
+    <p>
+        This page runs with InteractiveAuto: the first visit uses a Blazor Server circuit, which shows only this circuit's logs, and later visits run on WebAssembly.
+        Open the page in two browsers to check that one circuit's entries never appear in the other. Ctrl+` shows and hides the console; expanded, drag its handle (or focus it and use the arrow keys) to resize it.
+    </p>
+    <p>Running on <output>@RendererInfo.Name</output>, console enabled: <output>@Console.IsEnabled</output>, entries: <output>@Console.Entries.Count</output></p>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 12px;">
+        <NTButton Label="Write app message" OnClickCallback="WriteMessage" />
+        <NTButton Label="Log information" Variant="NTButtonVariant.Tonal" OnClickCallback="LogInformation" />
+        <NTButton Label="Log warning" Variant="NTButtonVariant.Tonal" OnClickCallback="LogWarning" />
+        <NTButton Label="Log error with exception" Variant="NTButtonVariant.Outlined" OnClickCallback="LogError" />
+        <NTButton Label="Log 200 entries" Variant="NTButtonVariant.Outlined" OnClickCallback="LogBurst" />
+        <NTButton Label="Log after an await" Variant="NTButtonVariant.Text" OnClickCallback="LogAfterAwaitAsync" />
+        <NTButton Label="Log with suppressed flow (not captured)" Variant="NTButtonVariant.Text" OnClickCallback="LogWithSuppressedFlow" />
+        <NTButton Label="Show toast" Variant="NTButtonVariant.Text" OnClickCallback="ShowToastAsync" />
+    </div>
+
+    <NTToast />
+    <NTDebugConsole @bind-Visible="_visible" @bind-Expanded="_expanded" />
+    <p>Visible: <output>@_visible</output>, expanded: <output>@_expanded</output></p>
+</main>
+
+@code {
+    private bool _expanded;
+    private int _step;
+    private bool _visible = true;
+
+    private void LogBurst() {
+        for (var i = 1; i <= 200; i++) {
+            Logger.LogInformation("Burst entry {Entry} of 200", i);
+        }
+    }
+
+    private void LogError() {
+        try {
+            throw new InvalidOperationException("The payment provider declined the card.");
+        }
+        catch (InvalidOperationException exception) {
+            Logger.LogError(exception, "Checkout failed at step {Step}", _step);
+        }
+    }
+
+    private async Task LogAfterAwaitAsync() {
+        await Task.Delay(500).ConfigureAwait(false);
+        Logger.LogInformation("Logged on the thread pool after an await");
+    }
+
+    private void LogInformation() => Logger.LogInformation("Loaded step {Step}", ++_step);
+
+    private void LogWarning() => Logger.LogWarning("Step {Step} took {Elapsed} ms", _step, 2400);
+
+    private void LogWithSuppressedFlow() {
+        using (ExecutionContext.SuppressFlow()) {
+            _ = Task.Run(() => Logger.LogWarning("This background log does not belong to a circuit"));
+        }
+    }
+
+    private Task ShowToastAsync() => ToastService.ShowInfoAsync("Toast shown", "Mirrored into the debug console.");
+
+    private void WriteMessage() => Console.Write(LogLevel.Information, $"User pressed step {++_step}", "LiveTest");
+}

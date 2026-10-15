@@ -10,5 +10,7 @@ builder.Services.AddScoped(sp =>
     });
 
 builder.Services.AddNTServices();
+// WebAssembly runs one user's session, so all captured logs belong to the viewer.
+builder.Services.AddNTDebugConsole(options => options.AllowAll());
 
 await builder.Build().RunAsync();

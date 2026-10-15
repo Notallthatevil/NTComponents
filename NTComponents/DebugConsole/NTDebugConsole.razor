@@ -1,0 +1,133 @@
+@namespace NTComponents
+@using Microsoft.Extensions.Logging
+@using NTComponents.Core
+@using NTComponents.DebugConsole
+@inherits NTDisposableComponentBase
+
+@if (IsShown) {
+    var entries = DebugConsole.Entries;
+    var errorCount = entries.Count(entry => entry.Level is LogLevel.Error or LogLevel.Critical);
+    var warningCount = entries.Count(entry => entry.Level == LogLevel.Warning);
+    <section @attributes="AdditionalAttributes"
+             class="@ElementClass"
+             style="@ElementStyle"
+             id="@ElementId"
+             title="@ElementTitle"
+             lang="@ElementLang"
+             aria-label="Debug console"
+             data-nt-debug-console
+             @ref="Element">
+        @if (Expanded) {
+            @* The browser module sizes the sheet when this handle is dragged or moved with the arrow keys, and sets its aria-value attributes. *@
+            <div class="nt-debug-console-resize"
+                 role="separator"
+                 aria-orientation="horizontal"
+                 aria-label="Resize debug console"
+                 aria-controls="@PanelId"
+                 tabindex="0"
+                 title="Drag to resize. Double-click to reset."
+                 data-nt-debug-console-resize></div>
+        }
+        <div class="nt-debug-console-bar">
+            <span class="nt-debug-console-icon" aria-hidden="true">@MaterialIcon.Terminal.Render(suppressTitle: true)</span>
+            <span class="nt-debug-console-title">Debug console</span>
+            <span class="nt-debug-console-counts">
+                <span class="nt-debug-console-count nt-debug-console-count-error" title="Errors">
+                    <span aria-hidden="true">@MaterialIcon.Error.Render(suppressTitle: true)</span>
+                    <span>@errorCount</span>
+                    <span class="nt-debug-console-visually-hidden">@(errorCount == 1 ? "error" : "errors")</span>
+                </span>
+                <span class="nt-debug-console-count nt-debug-console-count-warning" title="Warnings">
+                    <span aria-hidden="true">@MaterialIcon.Warning.Render(suppressTitle: true)</span>
+                    <span>@warningCount</span>
+                    <span class="nt-debug-console-visually-hidden">@(warningCount == 1 ? "warning" : "warnings")</span>
+                </span>
+                <span class="nt-debug-console-count" title="Entries">
+                    <span aria-hidden="true">@MaterialIcon.FormatListBulleted.Render(suppressTitle: true)</span>
+                    <span>@entries.Count</span>
+                    <span class="nt-debug-console-visually-hidden">@(entries.Count == 1 ? "entry" : "entries")</span>
+                </span>
+            </span>
+            <span class="nt-debug-console-bar-actions">
+                <NTIconButton Icon="@(Expanded ? MaterialIcon.ExpandMore : MaterialIcon.ExpandLess)"
+                              AriaLabel="@(Expanded ? "Collapse debug console" : "Expand debug console")"
+                              ElementTitle="@(Expanded ? "Collapse" : "Expand")"
+                              aria-expanded="@(Expanded ? "true" : "false")"
+                              aria-controls="@(Expanded ? PanelId : null)"
+                              OnClickCallback="ToggleExpandedAsync" />
+            </span>
+        </div>
+
+        @if (Expanded) {
+            UpdateKeys(entries);
+            var visible = VisibleEntries(entries);
+            var rendered = visible.Count > MaxRenderedEntries ? visible.GetRange(visible.Count - MaxRenderedEntries, MaxRenderedEntries) : visible;
+            var renderedKeys = new HashSet<long>();
+            <div class="nt-debug-console-panel" id="@PanelId">
+                <div class="nt-debug-console-toolbar">
+                    <div class="nt-debug-console-filters" role="group" aria-label="Levels">
+                        <NTChip Variant="NTChipVariant.Filter" Label="Errors" @bind-Selected="_showErrors" />
+                        <NTChip Variant="NTChipVariant.Filter" Label="Warnings" @bind-Selected="_showWarnings" />
+                        <NTChip Variant="NTChipVariant.Filter" Label="Info" AriaLabel="Information" @bind-Selected="_showInformation" />
+                        <NTChip Variant="NTChipVariant.Filter" Label="Debug" AriaLabel="Debug and trace" @bind-Selected="_showDebug" />
+                    </div>
+                    <div class="nt-debug-console-search">
+                        <NTInputText Label="Search"
+                                     InputType="TextInputType.Search"
+                                     Appearance="NTFormAppearance.Outlined"
+                                     Density="NTFormDensity.Dense"
+                                     BindOnInput="true"
+                                     SubmitValue="false"
+                                     @bind-Value="_search" />
+                    </div>
+                    <div class="nt-debug-console-actions">
+                        <span class="nt-debug-console-status" role="status">@_status</span>
+                        <NTIconButton Icon="MaterialIcon.DeleteSweep" AriaLabel="Clear entries" ElementTitle="Clear" OnClickCallback="ClearAsync" />
+                        <NTIconButton Icon="MaterialIcon.ContentCopy" AriaLabel="Copy visible entries" ElementTitle="Copy visible entries" OnClickCallback="CopyAsync" />
+                        <NTIconButton Icon="MaterialIcon.Download" AriaLabel="Download visible entries as JSON" ElementTitle="Download JSON" OnClickCallback="DownloadAsync" />
+                    </div>
+                </div>
+
+                <div class="nt-debug-console-body">
+                    <div class="nt-debug-console-list" role="log" aria-live="polite" aria-label="Log entries" tabindex="0" data-nt-debug-console-list>
+                        @foreach (var entry in rendered) {
+                            var key = GetKey(entry);
+                            if (!renderedKeys.Add(key)) {
+                                continue;
+                            }
+                            <div @key="key" class="nt-debug-console-entry @LevelClass(entry.Level)" data-seq="@key">
+                                <time class="nt-debug-console-time" datetime="@entry.Timestamp.ToString("O")">@FormatTime(entry.Timestamp)</time>
+                                <span class="nt-debug-console-level">@FormatLevel(entry.Level)</span>
+                                <span class="nt-debug-console-origin">
+                                    @* Mirrored toasts and snackbars already name their source in the label, so their category is not repeated. *@
+                                    @if (entry.Source is NTDebugConsoleEntrySource.Log or NTDebugConsoleEntrySource.App) {
+                                        <span class="nt-debug-console-category" title="@entry.Category">@ShortCategory(entry.Category)</span>
+                                    }
+                                    @if (entry.Source != NTDebugConsoleEntrySource.Log) {
+                                        <span class="nt-debug-console-source" title="@entry.Category">@entry.Source</span>
+                                    }
+                                </span>
+                                <span class="nt-debug-console-message">@entry.Message</span>
+                                @if (entry.Exception is not null) {
+                                    <details class="nt-debug-console-exception">
+                                        <summary>Exception</summary>
+                                        <pre>@entry.Exception</pre>
+                                    </details>
+                                }
+                            </div>
+                        }
+                    </div>
+                    @if (visible.Count == 0) {
+                        <p class="nt-debug-console-empty">@(entries.Count == 0 ? "No entries yet." : "No entries match the filters.")</p>
+                    }
+                    @* The browser module shows this button and sets its text when entries arrive while the list is scrolled up. *@
+                    <button type="button" class="nt-debug-console-jump nt-elevation-low" hidden data-nt-debug-console-jump></button>
+                </div>
+
+                @if (visible.Count > MaxRenderedEntries) {
+                    <p class="nt-debug-console-cap">Showing the newest @MaxRenderedEntries of @visible.Count matching entries. Copy or Download includes all of them.</p>
+                }
+            </div>
+        }
+    </section>
+}

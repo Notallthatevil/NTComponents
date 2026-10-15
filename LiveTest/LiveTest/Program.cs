@@ -14,6 +14,8 @@ using Microsoft.Net.Http.Headers;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddLogging();
 builder.Services.AddNTServices();
+// LiveTest is a local development host, so everyone may use the debug console. Production apps should set Authorize to a rule such as a developer role.
+builder.Services.AddNTDebugConsoleForServer(options => options.AllowAll());
 builder.Services.AddScoped(sp => {
     var navigationManager = sp.GetRequiredService<NavigationManager>();
     return new HttpClient {

@@ -1,0 +1,417 @@
+@use '../Styles/_Variables/_colors.scss' as colors;
+@use '../Styles/_Variables/_corner-radius.scss' as corners;
+@use '../Styles/_Variables/_motion.scss' as motion;
+@use '../Styles/_Variables/_typescale.scss' as typescale;
+@use '../Buttons/buttonFocusRing' as focus;
+
+$nt-debug-console-z-index: 999;
+$nt-debug-console-bar-height: 48px;
+$nt-debug-console-sheet-height: 40vh;
+$nt-debug-console-sheet-min-height: 320px;
+$nt-debug-console-sheet-top-gap: 64px;
+$nt-debug-console-padding: 16px;
+$nt-debug-console-gap: 8px;
+$nt-debug-console-count-icon-size: 18px;
+$nt-debug-console-origin-width: 20ch;
+$nt-debug-console-compact-sheet-height: 60vh;
+$nt-debug-console-search-width: 320px;
+$nt-debug-console-search-min-width: 160px;
+$nt-debug-console-jump-height: 32px;
+$nt-debug-console-compact-width: 599px;
+$nt-debug-console-state-hover: 8%;
+$nt-debug-console-handle-area-height: 16px;
+$nt-debug-console-handle-width: 32px;
+$nt-debug-console-handle-height: 4px;
+$nt-debug-console-handle-opacity: 0.4;
+$nt-debug-console-font-mono: ui-monospace, 'Cascadia Mono', Consolas, 'Liberation Mono', monospace;
+$nt-debug-console-transition: motion.$nt-motion-duration-medium_1 motion.$nt-motion-easing-emphasized-decelerate;
+
+@mixin nt-debug-console-focus-ring {
+    &:focus-visible {
+        @include focus.nt-button-focus-ring;
+    }
+}
+
+.nt-debug-console {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    inset-inline: 0;
+    inset-block-end: 0;
+    z-index: $nt-debug-console-z-index;
+    // The hairline keeps the bar distinct from the page in dark themes, where the elevation shadow is barely visible.
+    border-block-start: 1px solid colors.$nt-color-outline-variant;
+    border-start-start-radius: corners.$nt-corner-radius-large;
+    border-start-end-radius: corners.$nt-corner-radius-large;
+    background: colors.$nt-color-surface-container-low;
+    color: colors.$nt-color-on-surface;
+
+    &.nt-debug-console-expanded {
+        block-size: max(#{$nt-debug-console-sheet-height}, #{$nt-debug-console-sheet-min-height});
+        max-block-size: calc(100dvh - #{$nt-debug-console-sheet-top-gap});
+        border-start-start-radius: corners.$nt-corner-radius-extra-large;
+        border-start-end-radius: corners.$nt-corner-radius-extra-large;
+        animation: nt-debug-console-rise $nt-debug-console-transition;
+    }
+
+    // The M3 bottom sheet drag handle; the whole strip is the hit area.
+    .nt-debug-console-resize {
+        position: relative;
+        flex: none;
+        block-size: $nt-debug-console-handle-area-height;
+        border-start-start-radius: inherit;
+        border-start-end-radius: inherit;
+        cursor: ns-resize;
+        touch-action: none;
+        @include nt-debug-console-focus-ring;
+
+        &::before {
+            content: '';
+            position: absolute;
+            inset-block-start: calc((#{$nt-debug-console-handle-area-height} - #{$nt-debug-console-handle-height}) / 2);
+            inset-inline-start: calc(50% - #{$nt-debug-console-handle-width} / 2);
+            inline-size: $nt-debug-console-handle-width;
+            block-size: $nt-debug-console-handle-height;
+            border-radius: calc(#{$nt-debug-console-handle-height} / 2);
+            background: colors.$nt-color-on-surface-variant;
+            opacity: $nt-debug-console-handle-opacity;
+        }
+
+        &:hover::before,
+        &:active::before {
+            opacity: 1;
+        }
+    }
+
+    .nt-debug-console-bar {
+        display: flex;
+        flex: none;
+        align-items: center;
+        gap: $nt-debug-console-gap;
+        min-block-size: $nt-debug-console-bar-height;
+        padding-inline: $nt-debug-console-padding $nt-debug-console-gap;
+    }
+
+    .nt-debug-console-icon {
+        display: inline-flex;
+
+        .tnt-icon {
+            color: colors.$nt-color-on-surface-variant;
+        }
+    }
+
+    .nt-debug-console-title {
+        @include typescale.nt-title-small;
+        white-space: nowrap;
+    }
+
+    .nt-debug-console-counts {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        min-inline-size: 0;
+        margin-inline-start: $nt-debug-console-gap;
+        @include typescale.nt-label-medium;
+        color: colors.$nt-color-on-surface-variant;
+    }
+
+    .nt-debug-console-count {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        white-space: nowrap;
+
+        .tnt-icon {
+            font-size: $nt-debug-console-count-icon-size;
+            color: inherit;
+        }
+
+        &.nt-debug-console-count-error {
+            .tnt-icon {
+                color: colors.$nt-color-error;
+            }
+        }
+
+        &.nt-debug-console-count-warning {
+            .tnt-icon {
+                color: colors.$nt-color-warning;
+            }
+        }
+    }
+
+    .nt-debug-console-bar-actions {
+        display: inline-flex;
+        align-items: center;
+        margin-inline-start: auto;
+    }
+
+    .nt-debug-console-panel {
+        display: flex;
+        flex: 1 1 auto;
+        flex-direction: column;
+        min-block-size: 0;
+    }
+
+    .nt-debug-console-toolbar {
+        display: flex;
+        flex: none;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: $nt-debug-console-gap 12px;
+        padding: 0 $nt-debug-console-padding $nt-debug-console-gap;
+    }
+
+    .nt-debug-console-filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: $nt-debug-console-gap;
+    }
+
+    .nt-debug-console-search {
+        flex: 1 1 $nt-debug-console-search-min-width;
+        min-inline-size: $nt-debug-console-search-min-width;
+        max-inline-size: $nt-debug-console-search-width;
+    }
+
+    .nt-debug-console-actions {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-inline-start: auto;
+    }
+
+    .nt-debug-console-status {
+        @include typescale.nt-label-medium;
+        color: colors.$nt-color-on-surface-variant;
+        white-space: nowrap;
+
+        &:empty {
+            display: none;
+        }
+    }
+
+    .nt-debug-console-body {
+        position: relative;
+        display: flex;
+        flex: 1 1 auto;
+        flex-direction: column;
+        min-block-size: 0;
+        margin: 0 $nt-debug-console-gap $nt-debug-console-gap;
+    }
+
+    .nt-debug-console-list {
+        flex: 1 1 auto;
+        min-block-size: 0;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        border-radius: corners.$nt-corner-radius-medium;
+        background: colors.$nt-color-surface-container-lowest;
+        @include typescale.nt-body-small;
+        @include nt-debug-console-focus-ring;
+    }
+
+    .nt-debug-console-entry {
+        display: grid;
+        grid-template-columns: max-content max-content $nt-debug-console-origin-width minmax(0, 1fr);
+        align-items: baseline;
+        gap: 4px $nt-debug-console-gap;
+        padding: 4px $nt-debug-console-gap;
+        border-block-end: 1px solid colors.$nt-color-outline-variant;
+    }
+
+    .nt-debug-console-time,
+    .nt-debug-console-message,
+    .nt-debug-console-exception pre {
+        font-family: $nt-debug-console-font-mono;
+    }
+
+    .nt-debug-console-time {
+        color: colors.$nt-color-on-surface-variant;
+        white-space: nowrap;
+    }
+
+    .nt-debug-console-level {
+        flex: none;
+        box-sizing: border-box;
+        min-inline-size: 48px;
+        padding: 0 4px;
+        border-radius: corners.$nt-corner-radius-extra-small;
+        @include typescale.nt-label-small;
+        text-align: center;
+    }
+
+    .nt-debug-console-level-error .nt-debug-console-level {
+        background: colors.$nt-color-error-container;
+        color: colors.$nt-color-on-error-container;
+    }
+
+    .nt-debug-console-level-warning .nt-debug-console-level {
+        background: colors.$nt-color-warning-container;
+        color: colors.$nt-color-on-warning-container;
+    }
+
+    .nt-debug-console-level-info .nt-debug-console-level {
+        background: colors.$nt-color-info-container;
+        color: colors.$nt-color-on-info-container;
+    }
+
+    .nt-debug-console-level-debug .nt-debug-console-level {
+        background: colors.$nt-color-surface-container-highest;
+        color: colors.$nt-color-on-surface-variant;
+    }
+
+    .nt-debug-console-origin {
+        display: flex;
+        align-items: baseline;
+        gap: 4px;
+        min-inline-size: 0;
+    }
+
+    .nt-debug-console-category {
+        overflow: hidden;
+        color: colors.$nt-color-on-surface-variant;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .nt-debug-console-source {
+        flex: none;
+        padding: 0 4px;
+        border: 1px solid colors.$nt-color-outline-variant;
+        border-radius: corners.$nt-corner-radius-extra-small;
+        @include typescale.nt-label-small;
+        color: colors.$nt-color-secondary;
+    }
+
+    .nt-debug-console-message {
+        min-inline-size: 0;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+    }
+
+    .nt-debug-console-exception {
+        grid-column: 1 / -1;
+        min-inline-size: 0;
+
+        summary {
+            inline-size: fit-content;
+            border-radius: corners.$nt-corner-radius-extra-small;
+            @include typescale.nt-label-medium;
+            color: colors.$nt-color-error;
+            cursor: pointer;
+            @include nt-debug-console-focus-ring;
+        }
+
+        pre {
+            overflow-x: auto;
+            margin: 4px 0 0;
+            padding: $nt-debug-console-gap;
+            border-radius: corners.$nt-corner-radius-small;
+            background: colors.$nt-color-surface-container;
+            white-space: pre;
+        }
+    }
+
+    .nt-debug-console-empty {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0;
+        @include typescale.nt-body-medium;
+        color: colors.$nt-color-on-surface-variant;
+        pointer-events: none;
+    }
+
+    .nt-debug-console-jump {
+        position: absolute;
+        inset-block-end: 12px;
+        inset-inline-start: 50%;
+        block-size: $nt-debug-console-jump-height;
+        padding: 0 $nt-debug-console-padding;
+        border: 0;
+        border-radius: corners.$nt-corner-radius-full;
+        background: colors.$nt-color-secondary-container;
+        color: colors.$nt-color-on-secondary-container;
+        @include typescale.nt-label-large;
+        transform: translateX(-50%);
+        cursor: pointer;
+        @include nt-debug-console-focus-ring;
+
+        &:hover {
+            background: color-mix(in srgb, #{colors.$nt-color-on-secondary-container} #{$nt-debug-console-state-hover}, #{colors.$nt-color-secondary-container});
+        }
+
+        &[hidden] {
+            display: none;
+        }
+    }
+
+    .nt-debug-console-cap {
+        flex: none;
+        margin: 0;
+        padding: 0 $nt-debug-console-padding $nt-debug-console-gap;
+        @include typescale.nt-label-small;
+        color: colors.$nt-color-on-surface-variant;
+    }
+
+    .nt-debug-console-visually-hidden {
+        position: absolute;
+        overflow: hidden;
+        inline-size: 1px;
+        block-size: 1px;
+        margin: -1px;
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
+
+    // Phones get a taller sheet, one scrolling row of filters, and the message on its own line.
+    @media (max-width: $nt-debug-console-compact-width) {
+        &.nt-debug-console-expanded {
+            block-size: max(#{$nt-debug-console-compact-sheet-height}, #{$nt-debug-console-sheet-min-height});
+        }
+
+        .nt-debug-console-title {
+            display: none;
+        }
+
+        .nt-debug-console-counts {
+            margin-inline-start: 0;
+        }
+
+        .nt-debug-console-filters {
+            flex: 1 0 100%;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            padding-block: 4px;
+            scrollbar-width: none;
+
+            ::deep > * {
+                flex: none;
+            }
+        }
+
+        .nt-debug-console-entry {
+            grid-template-columns: max-content max-content minmax(0, 1fr);
+        }
+
+        .nt-debug-console-message {
+            grid-column: 1 / -1;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        &.nt-debug-console-expanded {
+            animation: none;
+        }
+    }
+}
+
+@keyframes nt-debug-console-rise {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+}
