@@ -28,7 +28,7 @@ public class NTTypeahead_IntegrationTests : IAsyncLifetime {
         _page.PageError += (_, error) => errors.Add(error);
         _page.Console += (_, message) => {
             if (message.Type == "error") {
-                errors.Add(message.Text);
+                errors.Add($"{message.Text} ({message.Location})");
             }
         };
         await NavigateToTypeaheadDemoAsync();

@@ -427,15 +427,8 @@ public class NTRichTextEditor_IntegrationTests : IAsyncLifetime {
     private async Task ExpectStatusAsync(string testId, string expectedText) {
         ArgumentNullException.ThrowIfNull(_page);
 
-        await _page.WaitForFunctionAsync(
-            """
-            ([testId, expectedText]) => {
-                const mode = testId.replace('rich-text-editor-', '');
-                return document.querySelector(`[data-testid="${mode}-status"]`)?.textContent?.includes(expectedText);
-            }
-            """,
-            new[] { testId, expectedText },
-            new PageWaitForFunctionOptions { Timeout = 10000 });
+        var mode = testId.Replace("rich-text-editor-", "", StringComparison.Ordinal);
+        await Assertions.Expect(_page.GetByTestId($"{mode}-status")).ToContainTextAsync(expectedText, new LocatorAssertionsToContainTextOptions { Timeout = 10000 });
     }
 
     public sealed record ToolbarControlCase(string Command, string? Value = null, string InitialHtml = "<p>Text</p>", string SelectionText = "Text", string? ExpectedValue = null, string? ExpectedPanelRole = null, string? PreparedValue = null, bool PrepareUndoRedo = false, bool PrepareRedo = false);

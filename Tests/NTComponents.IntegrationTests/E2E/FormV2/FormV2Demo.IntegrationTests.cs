@@ -65,9 +65,12 @@ public class FormV2Demo_IntegrationTests : IAsyncLifetime {
             new { InputKind = "DateTime", FieldName = "Appointment" }
         }) {
             await dateType.SelectOptionAsync(dateCase.InputKind);
+            var input = _page.Locator($"input[title='{dateCase.FieldName}']");
+            await Assertions.Expect(input).ToBeVisibleAsync();
             await _page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Reset values", Exact = true }).ClickAsync();
+            await Assertions.Expect(input).ToHaveValueAsync("");
             await submitButton.ClickAsync();
-            await _page.Locator($"input[title='{dateCase.FieldName}'][aria-invalid='true']").WaitForAsync();
+            await Assertions.Expect(input).ToHaveAttributeAsync("aria-invalid", "true");
         }
     }
 }

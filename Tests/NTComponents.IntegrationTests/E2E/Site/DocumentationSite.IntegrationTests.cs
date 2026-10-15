@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
@@ -17,8 +18,8 @@ namespace NTComponents.IntegrationTests.Site;
 ///     Browser-level coverage for every NTComponents.Site component page and its examples.
 /// </summary>
 public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
-    private const int ExpectedComponentTypeCount = 93;
-    private const int ExpectedRootRouteCount = 67;
+    private const int ExpectedComponentTypeCount = 94;
+    private const int ExpectedRootRouteCount = 68;
     private static readonly string[] ExpectedDependentComponentNames = [
         "NTAccordionItem",
         "NTAutocompleteOption",
@@ -80,6 +81,7 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
 
         _application = builder.Build();
         _application.UseStaticFiles();
+        _application.MapGet("/_framework/dotnet-browser-tools/hot-reload-settings.json", () => Results.Json(new { hotReload = false }));
         _application.MapStaticAssets(staticWebAssetsEndpoints);
         _application.MapFallbackToFile("index.html");
         await _application.StartAsync();
@@ -96,7 +98,7 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
         _page = await _context.NewPageAsync();
         _page.Console += (_, message) => {
             if (string.Equals(message.Type, "error", StringComparison.Ordinal)) {
-                _browserDiagnostics.Enqueue(new(_activeRoute, "console", message.Text));
+                _browserDiagnostics.Enqueue(new(_activeRoute, "console", $"{message.Text} ({message.Location})"));
             }
         };
         _page.PageError += (_, error) => _browserDiagnostics.Enqueue(new(_activeRoute, "pageerror", error));

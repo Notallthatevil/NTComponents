@@ -245,16 +245,6 @@ public class MaterialIcon_Tests : BunitContext {
     }
 
     [Fact]
-    public void MaterialIcon_RemainsAssignableToLegacyAndNewIconBases() {
-        // Arrange & Act
-        var icon = MaterialIcon.Home;
-
-        // Assert
-        icon.Should().BeAssignableTo<TnTIcon>().And.BeAssignableTo<NTIcon>();
-        icon.Icon.Should().Be("home");
-    }
-
-    [Fact]
     public void Render_WithDefaultParameters_RendersSpanWithMaterialIconClasses() {
         // Arrange & Act
         var cut = Render<MaterialIcon>(p => p.Add(c => c.Icon, "search"));

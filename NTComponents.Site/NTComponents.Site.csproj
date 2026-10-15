@@ -25,6 +25,10 @@
 		<ProjectReference Include="..\Submodules\NTComponents.Charts\NTComponents.Charts\NTComponents.Charts.csproj" />
 	</ItemGroup>
 
+	<ItemGroup Condition="'$(TargetFramework)' == 'net11.0'">
+		<PackageReference Include="Microsoft.AspNetCore.Components.Authorization" />
+	</ItemGroup>
+
 	<ItemGroup>
 		<!-- Each example shows its own source, so example files are embedded by file name. -->
 		<EmbeddedResource Include="Examples\**\*.razor" Exclude="Examples\**\_Imports.razor" LogicalName="%(Filename)%(Extension)" />

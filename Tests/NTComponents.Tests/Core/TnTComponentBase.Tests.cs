@@ -81,7 +81,7 @@ public class NTComponentBaseTests : BunitContext {
     /// <summary>
     ///     Minimal concrete implementation for testing <see cref="NTComponentBase" />.
     /// </summary>
-    private class TestComponent : TnTComponentBase {
+    private class TestComponent : NTComponentBase {
         public override string? ElementClass => "test-class";
         public override string? ElementStyle => "color:red;";
 

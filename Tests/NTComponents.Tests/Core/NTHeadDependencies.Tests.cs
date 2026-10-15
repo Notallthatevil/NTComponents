@@ -210,13 +210,4 @@ public class NTHeadDependencies_Tests : BunitContext {
         cut.Find("#nt-measurement-tokens").TextContent.Should().Be(".app-shell{--tnt-header-height:72.5px;--tnt-footer-height:48px;--tnt-side-nav-width:300px;}");
     }
 
-    [Fact]
-    public void TnTHeadDependencies_RendersThrough_NTHeadDependencies() {
-#pragma warning disable CS0618
-        var cut = Render<TnTHeadDependencies>();
-#pragma warning restore CS0618
-
-        cut.Markup.Should().Contain("id=\"nt-theme-config\"");
-        cut.Find("#nt-measurement-tokens").TextContent.Should().Be(":root{--tnt-header-height:64px;--tnt-footer-height:64px;--tnt-side-nav-width:256px;}");
-    }
 }

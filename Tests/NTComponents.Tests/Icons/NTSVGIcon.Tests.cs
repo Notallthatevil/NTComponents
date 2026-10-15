@@ -1,7 +1,18 @@
+using Microsoft.Extensions.DependencyInjection;
+
 namespace NTComponents.Tests.Icons;
 
 public class NTSVGIcon_Tests : BunitContext {
     private const string Svg = """<svg viewBox="0 0 24 24" width="48" height="48"><path d="M12 2 2 22h20z"/></svg>""";
+
+    [Fact]
+    public void Activation_WithoutConstructorArguments_CreatesComponent() {
+        var factory = ActivatorUtilities.CreateFactory(typeof(NTSVGIcon), Type.EmptyTypes);
+
+        var icon = factory(Services, null);
+
+        icon.Should().BeOfType<NTSVGIcon>();
+    }
 
     [Fact]
     public void Constructor_WithSvg_SetsIconAndIsNTIcon() {

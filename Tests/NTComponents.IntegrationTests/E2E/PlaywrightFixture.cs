@@ -39,6 +39,8 @@ public class PlaywrightFixture : IAsyncLifetime {
     public async ValueTask InitializeAsync() {
         _resources = await SharedResources.Value;
         Context = await _resources.Browser.NewContextAsync();
+        // The test host has no dotnet-watch provider for the SDK's Debug-build initializer.
+        await Context.RouteAsync("**/_framework/dotnet-browser-tools/hot-reload-settings.json", route => route.FulfillAsync(new() { ContentType = "application/json", Body = "{\"hotReload\":false}" }));
         Page = await Context.NewPageAsync();
     }
 

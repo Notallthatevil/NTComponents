@@ -11,15 +11,6 @@ public class NTValidationInputBase_Tests : BunitContext {
         public string? Other { get; set; }
     }
 
-    private sealed class CountingLegacySelect : NTInputSelect<string?> {
-        public int OwnRenderCount { get; private set; }
-
-        protected override void BuildRenderTree(RenderTreeBuilder builder) {
-            OwnRenderCount++;
-            base.BuildRenderTree(builder);
-        }
-    }
-
     private sealed class LocalStateInput : NTInputText {
         private string _status = "Ready";
 
@@ -83,39 +74,6 @@ public class NTValidationInputBase_Tests : BunitContext {
         await VerifyMessageRendering<NTAutocomplete, string?>("Original");
         await VerifyMessageRendering<NTTypeahead<string>, string?>("Original");
         await VerifyMessageRendering<NTFileUpload, IReadOnlyList<IBrowserFile>?>([]);
-    }
-
-    [Fact]
-    public async Task ValidationChanged_LegacySelect_RendersOnlyForItsOwnMessageChanges() {
-        var model = new Model<string?> { Value = "Original" };
-        var editContext = new EditContext(model);
-        var messages = new ValidationMessageStore(editContext);
-        var field = new FieldIdentifier(model, nameof(model.Value));
-        var cut = RenderInput<CountingLegacySelect, string?>(model, editContext);
-        var renderCount = cut.Instance.OwnRenderCount;
-
-        await cut.InvokeAsync(() => {
-            messages.Add(new FieldIdentifier(model, nameof(model.Other)), "Unrelated error");
-            editContext.NotifyValidationStateChanged();
-        });
-        cut.Instance.OwnRenderCount.Should().Be(renderCount);
-
-        await cut.InvokeAsync(() => {
-            messages.Add(field, "Own error");
-            editContext.NotifyValidationStateChanged();
-        });
-        cut.Instance.OwnRenderCount.Should().Be(renderCount + 1);
-        cut.Find(".tnt-validation-message").TextContent.Should().Be("Own error");
-
-        await cut.InvokeAsync(editContext.NotifyValidationStateChanged);
-        cut.Instance.OwnRenderCount.Should().Be(renderCount + 1);
-
-        await cut.InvokeAsync(() => {
-            messages.Clear(field);
-            editContext.NotifyValidationStateChanged();
-        });
-        cut.Instance.OwnRenderCount.Should().Be(renderCount + 2);
-        cut.FindAll(".tnt-validation-message:not([hidden])").Should().BeEmpty();
     }
 
     [Fact]
@@ -193,7 +151,6 @@ public class NTValidationInputBase_Tests : BunitContext {
         await VerifyDisposedSubscriptions<NTCombobox<string>, IReadOnlyList<string>>([]);
         await VerifyDisposedSubscriptions<NTAutocomplete, string?>("Original");
         await VerifyDisposedSubscriptions<NTTypeahead<string>, string?>("Original");
-        await VerifyDisposedSubscriptions<NTInputSelect<string?>, string?>("Original");
     }
 
     [Fact]

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components.Rendering;
+using Microsoft.Extensions.DependencyInjection;
 using NTComponents.CodeDocumentation;
 using NTComponents.Core;
 
@@ -41,6 +42,7 @@ public sealed class NTSVGIcon : NTIcon {
     /// <summary>
     ///     Initializes a new instance of the <see cref="NTSVGIcon" /> class.
     /// </summary>
+    [ActivatorUtilitiesConstructor]
     public NTSVGIcon() { }
 
     /// <summary>
