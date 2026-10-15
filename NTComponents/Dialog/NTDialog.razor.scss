@@ -22,6 +22,7 @@ $nt-dialog-action-button-height: 40px;
 $nt-dialog-action-button-inline-padding: 12px;
 $nt-dialog-icon-button-size: 48px;
 $nt-dialog-icon-button-offset: -12px;
+$nt-dialog-icon-button-inset: 12px;
 $nt-dialog-enter-duration: motion.$nt-motion-duration-medium_4;
 $nt-dialog-enter-easing: motion.$nt-motion-easing-emphasized-decelerate;
 $nt-dialog-exit-duration: motion.$nt-motion-duration-short_4;
@@ -94,6 +95,13 @@ $nt-dialog-static-scrim-spread: 100vmax;
 
         .nt-dialog-header {
             grid-template-columns: minmax(0, 1fr);
+        }
+
+        .nt-dialog-icon-button {
+            inset-block-start: $nt-dialog-icon-button-inset;
+            inset-inline-end: $nt-dialog-icon-button-inset;
+            margin: 0;
+            position: absolute;
         }
 
         .nt-dialog-title {
