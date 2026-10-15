@@ -1,10 +1,12 @@
 @page "/tools/material-theme"
 @implements IAsyncDisposable
 
+<PageTitle>Material theme | NTComponents</PageTitle>
+
 <main class="docs-page theme-converter">
     <DocumentationPageHeader Kicker="Tools"
                              Title="Material 3 theme creator"
-                             Description="Create complete Material 3 color schemes with Google's Material Color Utilities, preview them live in NTComponents, and download the finished theme files."
+                             Description="Create complete Material 3 color schemes with Google's Material Color Utilities, preview them live in NTComponents, and download the finished theme files. Your colors also recolor this whole site until you reload the page or restore the site theme."
                              Meta="Six light, dark, and contrast schemes ready for wwwroot/Themes" />
 
     <section class="theme-workflow" aria-labelledby="theme-create-heading">
@@ -13,7 +15,7 @@
                 <span class="theme-step">Create</span>
                 <h2 id="theme-create-heading">Choose your colors</h2>
             </div>
-            <p>Color drags update the focused preview immediately. Finishing a selection regenerates all six downloadable schemes.</p>
+            <p>Color drags update the focused preview and the whole site immediately; the site follows your light, dark, and contrast choice from the header. Finishing a selection regenerates all six downloadable schemes.</p>
         </div>
 
         <div id="material-theme-creator" class="theme-creator-grid">
@@ -42,7 +44,7 @@
 
                 <details class="theme-advanced">
                     <summary>Override role palettes</summary>
-                    <p>Each picker reflects the role color currently rendered in the preview. Changing one uses your selection to seed an override, then shows the accessible tone Material renders from it.</p>
+                    <p>Primary, Secondary, Tertiary, and Error show the role color rendered in the preview. Surface and Surface variant show their palette's key color, since their surface tones are close to white or black. Changing a picker uses your selection to seed an override.</p>
                     <div class="theme-palette-grid">
                         @foreach (var palette in _corePalettes) {
                             <MaterialThemeColorPicker ElementId="@($"theme-palette-{palette.Key}")"
@@ -87,6 +89,7 @@
                                Variant="NTNavLinkVariant.Filled"
                                AdditionalAttributes="@GeneratedDownloadAttributes" />
                     <NTButton Label="Reset colors" Variant="NTButtonVariant.Outlined" OnClickCallback="ResetCreatorAsync" />
+                    <NTButton Label="Restore site theme" Variant="NTButtonVariant.Text" OnClickCallback="RestoreSiteThemeAsync" />
                 </div>
             </div>
 
@@ -185,7 +188,7 @@
 
         <div class="theme-guide-callout">
             <strong>Custom palette overrides always win</strong>
-            <p>After you edit a role palette, your selection is reapplied as that palette's seed after any source, style, mode, contrast, harmonization, or extended-color change. The picker then reflects the accessible role tone Material renders from that seed. Surface controls the neutral palette; Surface variant controls outlines and quieter surface content.</p>
+            <p>After you edit a role palette, your selection is reapplied as that palette's seed after any source, style, mode, contrast, harmonization, or extended-color change. Once you close the color dialog, a role picker shows the accessible tone Material renders from that seed, and a surface picker shows the palette's key color. Surface controls the neutral palette; Surface variant controls outlines and quieter surface content.</p>
         </div>
 
         <div class="theme-guide-group">

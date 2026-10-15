@@ -155,6 +155,12 @@ public partial class MaterialThemeConverter {
         await GenerateThemeAsync();
     }
 
+    private async Task RestoreSiteThemeAsync(MouseEventArgs _) {
+        if (_themeCreatorModule is not null) {
+            await _themeCreatorModule.InvokeVoidAsync("resetSiteTheme");
+        }
+    }
+
     private async Task ResetCreatorAsync(MouseEventArgs _) {
         _creator.Reset();
         _corePalettes.ForEach(color => color.Reset());

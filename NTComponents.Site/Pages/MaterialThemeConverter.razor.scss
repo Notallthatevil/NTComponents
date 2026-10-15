@@ -1,3 +1,6 @@
+@use '../../NTComponents/Styles/_Variables/_typescale.scss' as typescale;
+@use '../../NTComponents/Styles/_Variables/_corner-radius.scss' as corner;
+
 .theme-converter {
     .theme-workflow {
         display: grid;
@@ -5,7 +8,7 @@
     }
 
     .theme-import {
-        border-block-start: 1px solid var(--tnt-color-outline-variant);
+        border-block-start: 1px solid var(--nt-color-outline-variant);
         margin-block-start: 32px;
         padding-block-start: 40px;
     }
@@ -27,17 +30,15 @@
         }
 
         p {
-            color: var(--tnt-color-on-surface-variant);
+            color: var(--nt-color-on-surface-variant);
             max-width: 560px;
         }
     }
 
     .theme-step,
     .theme-preview-eyebrow {
-        color: var(--tnt-color-primary);
-        font-size: 12px;
-        font-weight: 700;
-        letter-spacing: 1px;
+        @include typescale.nt-label-medium;
+        color: var(--nt-color-primary);
         text-transform: uppercase;
     }
 
@@ -50,15 +51,15 @@
 
     .theme-controls,
     .theme-preview {
-        border: 1px solid var(--tnt-color-outline-variant);
-        border-radius: var(--tnt-corner-radius-extra-large);
+        border: 1px solid var(--nt-color-outline-variant);
+        border-radius: corner.$nt-corner-radius-extra-large;
         display: grid;
         gap: 24px;
         padding: 24px;
     }
 
     .theme-controls {
-        background: var(--tnt-color-surface-container-low);
+        background: var(--nt-color-surface-container-low);
     }
 
     .theme-control-grid,
@@ -69,45 +70,45 @@
     }
 
     .theme-style-note {
-        background: var(--tnt-color-secondary-container);
-        border-radius: var(--tnt-corner-radius-medium);
-        color: var(--tnt-color-on-secondary-container);
+        background: var(--nt-color-secondary-container);
+        border-radius: corner.$nt-corner-radius-medium;
+        color: var(--nt-color-on-secondary-container);
         display: grid;
         gap: 4px;
         padding: 12px 16px;
 
         span {
-            font-size: 14px;
+            @include typescale.nt-body-medium;
         }
     }
 
     .theme-advanced {
-        border-block: 1px solid var(--tnt-color-outline-variant);
+        border-block: 1px solid var(--nt-color-outline-variant);
         padding-block: 16px;
 
         summary {
+            @include typescale.nt-title-small;
             cursor: pointer;
-            font-weight: 700;
         }
 
         > p {
-            color: var(--tnt-color-on-surface-variant);
+            color: var(--nt-color-on-surface-variant);
             margin: 8px 0 16px;
         }
     }
 
     .theme-checkbox {
         align-items: center;
-        color: var(--tnt-color-on-surface);
+        color: var(--nt-color-on-surface);
         cursor: pointer;
         display: inline-flex;
         gap: 8px;
         min-height: 40px;
 
         input {
-            accent-color: var(--tnt-color-primary);
-            height: 18px;
-            width: 18px;
+            accent-color: var(--nt-color-primary);
+            height: 20px;
+            width: 20px;
         }
     }
 
@@ -123,13 +124,13 @@
         }
 
         p {
-            color: var(--tnt-color-on-surface-variant);
-            font-size: 14px;
+            @include typescale.nt-body-medium;
+            color: var(--nt-color-on-surface-variant);
         }
     }
 
     .theme-preview {
-        background: var(--tnt-color-surface);
+        background: var(--nt-color-surface);
         position: sticky;
         top: 16px;
     }
@@ -141,7 +142,7 @@
         justify-content: space-between;
 
         h2 {
-            color: var(--tnt-color-primary);
+            color: var(--nt-color-primary);
             margin: 4px 0 0;
         }
     }
@@ -160,7 +161,7 @@
 
     .theme-swatch {
         background: var(--theme-swatch);
-        border-radius: var(--tnt-corner-radius-medium);
+        border-radius: corner.$nt-corner-radius-medium;
         color: var(--theme-swatch-text);
         display: grid;
         gap: 20px;
@@ -168,12 +169,12 @@
         padding: 12px;
 
         span {
-            font-weight: 700;
+            @include typescale.nt-label-large;
         }
 
         code {
+            @include typescale.nt-label-small;
             color: inherit;
-            font-size: 11px;
             overflow-wrap: anywhere;
         }
     }
@@ -189,7 +190,7 @@
         }
 
         p {
-            color: var(--tnt-color-on-surface-variant);
+            color: var(--nt-color-on-surface-variant);
             margin-block-start: 4px;
         }
     }
@@ -204,29 +205,28 @@
     }
 
     .theme-status {
-        border-radius: var(--tnt-corner-radius-full);
-        font-size: 13px;
-        font-weight: 700;
-        padding: 6px 12px;
+        border-radius: corner.$nt-corner-radius-full;
+        @include typescale.nt-label-large;
+        padding: 4px 12px;
 
         &.theme-status-success {
-            background: var(--tnt-color-success-container);
-            color: var(--tnt-color-on-success-container);
+            background: var(--nt-color-success-container);
+            color: var(--nt-color-on-success-container);
         }
 
         &.theme-status-info {
-            background: var(--tnt-color-info-container);
-            color: var(--tnt-color-on-info-container);
+            background: var(--nt-color-info-container);
+            color: var(--nt-color-on-info-container);
         }
 
         &.theme-status-warning {
-            background: var(--tnt-color-warning-container);
-            color: var(--tnt-color-on-warning-container);
+            background: var(--nt-color-warning-container);
+            color: var(--nt-color-on-warning-container);
         }
 
         &.theme-status-assert {
-            background: var(--tnt-color-assert-container);
-            color: var(--tnt-color-on-assert-container);
+            background: var(--nt-color-assert-container);
+            color: var(--nt-color-on-assert-container);
         }
     }
 
@@ -236,16 +236,16 @@
         gap: 8px;
 
         code {
-            background: var(--tnt-color-surface-container-highest);
-            border-radius: var(--tnt-corner-radius-small);
-            color: var(--tnt-color-on-surface);
+            background: var(--nt-color-surface-container-highest);
+            border-radius: corner.$nt-corner-radius-small;
+            color: var(--nt-color-on-surface);
             padding: 4px 8px;
         }
     }
 
     .theme-message {
         align-items: center;
-        border-radius: var(--tnt-corner-radius-medium);
+        border-radius: corner.$nt-corner-radius-medium;
         display: flex;
         flex-wrap: wrap;
         gap: 16px;
@@ -259,32 +259,32 @@
         }
 
         code {
-            font-weight: 700;
+            @include typescale.nt-label-large;
         }
     }
 
     .theme-error {
-        background: var(--tnt-color-error-container);
-        color: var(--tnt-color-on-error-container);
+        background: var(--nt-color-error-container);
+        color: var(--nt-color-on-error-container);
     }
 
     .theme-success {
-        background: var(--tnt-color-secondary-container);
-        color: var(--tnt-color-on-secondary-container);
+        background: var(--nt-color-secondary-container);
+        color: var(--nt-color-on-secondary-container);
     }
 
     .theme-output {
-        border: 1px solid var(--tnt-color-outline-variant);
-        border-radius: var(--tnt-corner-radius-large);
+        border: 1px solid var(--nt-color-outline-variant);
+        border-radius: corner.$nt-corner-radius-large;
         overflow: hidden;
 
         details + details {
-            border-block-start: 1px solid var(--tnt-color-outline-variant);
+            border-block-start: 1px solid var(--nt-color-outline-variant);
         }
 
         summary {
             align-items: center;
-            background: var(--tnt-color-surface-container-low);
+            background: var(--nt-color-surface-container-low);
             cursor: pointer;
             display: flex;
             gap: 12px;
@@ -292,14 +292,14 @@
             padding: 12px 16px;
 
             span {
-                color: var(--tnt-color-on-surface-variant);
-                font-size: 14px;
+                @include typescale.nt-body-medium;
+                color: var(--nt-color-on-surface-variant);
             }
         }
 
         pre {
-            background: var(--tnt-color-surface-container-lowest);
-            color: var(--tnt-color-on-surface);
+            background: var(--nt-color-surface-container-lowest);
+            color: var(--nt-color-on-surface);
             margin: 0;
             max-height: 480px;
             overflow: auto;
@@ -308,7 +308,7 @@
     }
 
     .theme-usage {
-        border-block-start: 1px solid var(--tnt-color-outline-variant);
+        border-block-start: 1px solid var(--nt-color-outline-variant);
         margin-block-start: 40px;
         padding-block-start: 40px;
     }
@@ -322,16 +322,16 @@
         padding: 0;
 
         li {
-            background: var(--tnt-color-surface-container-low);
-            border-radius: var(--tnt-corner-radius-large);
+            background: var(--nt-color-surface-container-low);
+            border-radius: corner.$nt-corner-radius-large;
             padding: 16px;
         }
     }
 
     .theme-guide-callout {
-        background: var(--tnt-color-primary-container);
-        border-radius: var(--tnt-corner-radius-large);
-        color: var(--tnt-color-on-primary-container);
+        background: var(--nt-color-primary-container);
+        border-radius: corner.$nt-corner-radius-large;
+        color: var(--nt-color-on-primary-container);
         display: grid;
         gap: 4px;
         padding: 16px 20px;
@@ -358,8 +358,8 @@
 
     .theme-style-card,
     .theme-role-card {
-        border: 1px solid var(--tnt-color-outline-variant);
-        border-radius: var(--tnt-corner-radius-large);
+        border: 1px solid var(--nt-color-outline-variant);
+        border-radius: corner.$nt-corner-radius-large;
         display: grid;
         gap: 8px;
         padding: 16px;
@@ -370,21 +370,21 @@
         }
 
         span {
-            color: var(--tnt-color-on-surface-variant);
-            font-size: 14px;
+            @include typescale.nt-body-medium;
+            color: var(--nt-color-on-surface-variant);
         }
     }
 
     .theme-style-card {
-        background: var(--tnt-color-surface-container-lowest);
+        background: var(--nt-color-surface-container-lowest);
 
         &.selected {
-            background: var(--tnt-color-secondary-container);
-            border-color: var(--tnt-color-secondary);
-            color: var(--tnt-color-on-secondary-container);
+            background: var(--nt-color-secondary-container);
+            border-color: var(--nt-color-secondary);
+            color: var(--nt-color-on-secondary-container);
 
             span {
-                color: var(--tnt-color-on-secondary-container);
+                color: var(--nt-color-on-secondary-container);
             }
         }
     }
@@ -396,7 +396,7 @@
     }
 
     .theme-role-card {
-        background: var(--tnt-color-surface-container-low);
+        background: var(--nt-color-surface-container-low);
 
         > div {
             align-items: start;
@@ -412,8 +412,8 @@
     }
 
     .theme-contrast-guide {
-        background: var(--tnt-color-tertiary-container);
-        color: var(--tnt-color-on-tertiary-container);
+        background: var(--nt-color-tertiary-container);
+        color: var(--nt-color-on-tertiary-container);
     }
 }
 

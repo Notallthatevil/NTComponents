@@ -7,6 +7,7 @@ import {
   argbFromHex,
   blueFromArgb,
   greenFromArgb,
+  hexFromArgb,
   redFromArgb,
 } from "@material/material-color-utilities";
 
@@ -32,6 +33,11 @@ interface GeneratedThemeFile {
 
 interface PreviewState {
   animationFrame?: number;
+  // Set once the user edits a color, so merely opening the page never recolors the site.
+  applyToSite: boolean;
+  changeHandler: (event: Event) => void;
+  // The picker whose native color dialog is open. The preview leaves its value alone, so the dialog does not jump while the user drags.
+  editing?: HTMLInputElement;
   fileName?: string;
   inputHandler: (event: Event) => void;
   request?: ThemeGenerationRequest;
@@ -73,17 +79,25 @@ const schemeDefinitions = [
   { name: "dark-hc.css", isDark: true, contrastLevel: 1 },
 ] as const;
 
+// Role palettes show the role color rendered in the preview.
 const palettePreviewRoles: Record<string, string> = {
   error: "--tnt-color-error",
-  neutral: "--tnt-color-surface",
-  "neutral-variant": "--tnt-color-outline",
   primary: "--tnt-color-primary",
   secondary: "--tnt-color-secondary",
   tertiary: "--tnt-color-tertiary",
 };
 
+// Surface tones are close to white or black, which hides the chosen tint and makes a poor starting point in the color dialog, so the
+// surface palettes show their key color instead.
+const paletteKeyColors = {
+  neutral: "neutralPalette",
+  "neutral-variant": "neutralVariantPalette",
+} as const;
+
 let previewState: PreviewState | undefined;
 let originalPreviewProperties: Map<string, string> | undefined;
+// The creator's colors also recolor the whole site for this page session; a hard reload or resetSiteTheme removes them.
+let siteTheme: { request: ThemeGenerationRequest; style: HTMLStyleElement; observer: MutationObserver } | undefined;
 
 export function generateTheme(request: ThemeGenerationRequest): GeneratedThemeFile[] {
   return schemeDefinitions.map((definition) => generateThemeFile(request, definition));
@@ -108,11 +122,21 @@ export function initializeThemePreview(rootId: string, targetId: string): void {
       return;
     }
 
+    previewState.editing = input;
     updateRequestColor(previewState.request, input.dataset.themeColorKey, input.value);
+    previewState.applyToSite = true;
     schedulePreview();
   };
+  // A color input raises change when its dialog closes; from then on the picker follows the preview again.
+  const changeHandler = (event: Event): void => {
+    if (previewState && event.target === previewState.editing) {
+      previewState.editing = undefined;
+      schedulePreview();
+    }
+  };
   root.addEventListener("input", inputHandler);
-  previewState = { inputHandler, root, target };
+  root.addEventListener("change", changeHandler);
+  previewState = { applyToSite: false, changeHandler, inputHandler, root, target };
 }
 
 export function updateThemePreview(request: ThemeGenerationRequest, fileName: string): void {
@@ -120,6 +144,8 @@ export function updateThemePreview(request: ThemeGenerationRequest, fileName: st
     throw new Error("The Material theme preview has not been initialized.");
   }
 
+  // The first update is the page's initial generation; later ones come from the user's edits.
+  previewState.applyToSite ||= previewState.request !== undefined;
   previewState.request = cloneRequest(request);
   previewState.fileName = fileName;
   applyPreview();
@@ -143,13 +169,13 @@ export function clearThemePreview(): void {
     cancelAnimationFrame(previewState.animationFrame);
   }
   previewState.root.removeEventListener("input", previewState.inputHandler);
+  previewState.root.removeEventListener("change", previewState.changeHandler);
   restorePreviewProperties(previewState.target);
   previewState = undefined;
 }
 
-function generateThemeFile(request: ThemeGenerationRequest, definition: typeof schemeDefinitions[number]): GeneratedThemeFile {
-  const sourceArgb = parseColor(request.primary, "primary");
-  const sourceColorHct = Hct.fromInt(sourceArgb);
+function createScheme(request: ThemeGenerationRequest, definition: typeof schemeDefinitions[number]): DynamicScheme {
+  const sourceColorHct = Hct.fromInt(parseColor(request.primary, "primary"));
   const variant = variants[request.variant];
   if (variant === undefined) {
     throw new Error(`Unsupported theme style: ${request.variant}.`);
@@ -164,13 +190,17 @@ function generateThemeFile(request: ThemeGenerationRequest, definition: typeof s
     ...optionalPalette("errorPalette", request.error),
   };
 
-  const scheme = new DynamicScheme({
+  return new DynamicScheme({
     sourceColorHct,
     variant,
     contrastLevel: definition.contrastLevel,
     isDark: definition.isDark,
     ...paletteOverrides,
   });
+}
+
+function generateThemeFile(request: ThemeGenerationRequest, definition: typeof schemeDefinitions[number], scheme = createScheme(request, definition)): GeneratedThemeFile {
+  const sourceArgb = scheme.sourceColorArgb;
   const properties: Record<string, string> = {};
 
   for (const role of systemColorRoles) {
@@ -211,9 +241,8 @@ function applyPreview(): void {
     throw new Error(`Unsupported preview scheme: ${previewState.fileName}.`);
   }
 
-  // Root compatibility aliases do not resolve again when legacy tokens change inside the preview.
-  const properties = Object.fromEntries(Object.entries(generateThemeFile(previewState.request, definition).properties)
-    .flatMap(([name, value]) => [[name, value], [name.replace("--tnt-color-", "--nt-color-"), value]]));
+  const scheme = createScheme(previewState.request, definition);
+  const properties = withNtAliases(generateThemeFile(previewState.request, definition, scheme).properties);
   const targetStyle = previewState.target.style;
   if (!originalPreviewProperties) {
     originalPreviewProperties = new Map(Object.keys(properties).map((name) => [name, targetStyle.getPropertyValue(name)]));
@@ -222,7 +251,54 @@ function applyPreview(): void {
   for (const [name, value] of Object.entries(properties)) {
     targetStyle.setProperty(name, value);
   }
-  syncPalettePickerDisplays(properties);
+  syncPalettePickerDisplays(properties, scheme);
+  if (previewState.applyToSite) {
+    setSiteTheme(previewState.request);
+  }
+}
+
+// Root compatibility aliases do not resolve again when legacy tokens change, so both names are written.
+function withNtAliases(properties: Record<string, string>): Record<string, string> {
+  return Object.fromEntries(Object.entries(properties)
+    .flatMap(([name, value]) => [[name, value], [name.replace("--tnt-color-", "--nt-color-"), value]]));
+}
+
+function setSiteTheme(request: ThemeGenerationRequest): void {
+  if (!siteTheme) {
+    const style = document.createElement("style");
+    style.id = "docs-site-theme";
+    document.head.appendChild(style);
+    // Follow the header's light/dark and contrast choice, which swaps the active theme stylesheet.
+    const observer = new MutationObserver(renderSiteTheme);
+    observer.observe(document.head, { subtree: true, childList: true, attributes: true, attributeFilter: ["href", "data-nt-theme-loaded"] });
+    siteTheme = { request, style, observer };
+  }
+
+  siteTheme.request = request;
+  renderSiteTheme();
+}
+
+function renderSiteTheme(): void {
+  if (!siteTheme) {
+    return;
+  }
+
+  const href = document.querySelector('link[data-nt-theme][data-nt-theme-loaded="true"]')?.getAttribute("href") ?? "";
+  const activeFile = href.split("?")[0].split("/").pop();
+  const definition = schemeDefinitions.find((candidate) => candidate.name === activeFile) ?? schemeDefinitions[0];
+  const properties = withNtAliases(generateThemeFile(siteTheme.request, definition).properties);
+  // The doubled :root outranks the theme stylesheets regardless of load order.
+  const css = `:root:root{${Object.entries(properties).map(([name, value]) => `${name}:${value}`).join(";")}}`;
+  // Only write on change: the head observer would otherwise re-trigger on this element's own update.
+  if (siteTheme.style.textContent !== css) {
+    siteTheme.style.textContent = css;
+  }
+}
+
+export function resetSiteTheme(): void {
+  siteTheme?.observer.disconnect();
+  siteTheme?.style.remove();
+  siteTheme = undefined;
 }
 
 function restorePreviewProperties(target: HTMLElement): void {
@@ -289,14 +365,19 @@ function updatePickerDisplay(input: HTMLInputElement): void {
   }
 }
 
-function syncPalettePickerDisplays(properties: Record<string, string>): void {
+function syncPalettePickerDisplays(properties: Record<string, string>, scheme: DynamicScheme): void {
   if (!previewState) {
     return;
   }
 
   for (const input of previewState.root.querySelectorAll<HTMLInputElement>('input[type="color"][data-theme-color-key^="palette."]')) {
-    const palette = input.dataset.themeColorKey?.slice("palette.".length);
-    const color = palette ? toHex(properties[palettePreviewRoles[palette]]) : undefined;
+    if (input === previewState.editing) {
+      continue;
+    }
+
+    const palette = input.dataset.themeColorKey?.slice("palette.".length) ?? "";
+    const keyPalette = paletteKeyColors[palette as keyof typeof paletteKeyColors];
+    const color = keyPalette ? hexFromArgb(scheme[keyPalette].keyColor.toInt()) : toHex(properties[palettePreviewRoles[palette]]);
     if (color) {
       input.value = color;
       updatePickerDisplay(input);
