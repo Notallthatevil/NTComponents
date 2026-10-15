@@ -165,6 +165,32 @@ describe('NTWindow module', () => {
       expect(element.dataset.ntWindowDragging).toBeUndefined();
    });
 
+   test('a window rendered after the page script loaded can still be raised and dragged', () => {
+      // An interactive render can open a window long after the page script ran onLoad, so nothing initialized it.
+      const { element } = createWindow({ initialize: false });
+      Object.defineProperty(window, 'innerWidth', { configurable: true, value: 800 });
+      Object.defineProperty(window, 'innerHeight', { configurable: true, value: 600 });
+      element.getBoundingClientRect = jest.fn(() => ({ bottom: 320, height: 200, left: 100, right: 400, toJSON: () => ({}), top: 120, width: 300, x: 100, y: 120 }));
+
+      element.querySelector('.nt-window-title').dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 150, clientY: 150 }));
+      window.dispatchEvent(new MouseEvent('pointermove', { clientX: 250, clientY: 200 }));
+      window.dispatchEvent(new MouseEvent('pointerup'));
+
+      expect(element.style.left).toBe('200px');
+      expect(element.style.top).toBe('170px');
+      expect(Number(element.style.zIndex)).toBeGreaterThan(1100);
+   });
+
+   test('pressing a window control or the content does not start a drag', () => {
+      const { element } = createWindow({ initialize: false });
+
+      element.querySelector('[data-nt-window-action="minimize"]').dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, button: 0 }));
+      element.querySelector('.nt-window-content').dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, button: 0 }));
+
+      expect(element.dataset.ntWindowDragging).toBeUndefined();
+      expect(element.style.left).toBe('');
+   });
+
    test('disposing a removed page-script marker cleans up an active drag', () => {
       const { element, pageScript } = createWindow();
       Object.defineProperty(window, 'innerWidth', { configurable: true, value: 800 });

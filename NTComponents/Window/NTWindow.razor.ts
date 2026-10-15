@@ -39,6 +39,7 @@ const closeAnimationDuration = 200;
 const dockedWindowGap = 8;
 const minimizedWindowHeight = 48;
 const openTriggerSelector = '[data-nt-window-open]';
+const dragHandleSelector = '[data-nt-window-drag-handle="true"]';
 const windowSelector = '[data-nt-window="true"]';
 let topWindowZIndex = 1100;
 
@@ -361,9 +362,6 @@ function initializeWindow(element: NTWindowElement): boolean {
     const runtimeState = getRuntimeState(element);
     const signal = runtimeState.abortController.signal;
     element.addEventListener('click', event => handleClick(element, event), { signal });
-    element.addEventListener('pointerdown', () => bringToFront(element), { signal });
-    element.querySelector<HTMLElement>('[data-nt-window-drag-handle="true"]')
-        ?.addEventListener('pointerdown', event => beginDrag(element, event), { signal });
     updateControlState(element, visualState);
     return true;
 }
@@ -414,6 +412,22 @@ window.NTWindow = {
     openWindow,
     setWindowState
 };
+
+// One delegated listener raises and drags every window, including windows rendered after the page script loaded, such as one an interactive
+// render opens later. Capturing it means content that stops the event cannot block raising the window.
+document.addEventListener('pointerdown', event => {
+    const target = event.target instanceof Element ? event.target : null;
+    const element = target?.closest<NTWindowElement>(windowSelector);
+    if (!target || !element) {
+        return;
+    }
+
+    initializeWindow(element);
+    bringToFront(element);
+    if (target.closest(dragHandleSelector)?.closest(windowSelector) === element) {
+        beginDrag(element, event);
+    }
+}, { capture: true });
 
 document.addEventListener('click', event => {
     const trigger = event.target instanceof Element
