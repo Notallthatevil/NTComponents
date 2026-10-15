@@ -1,0 +1,37 @@
+@using NTComponents
+@rendermode InteractiveAuto
+
+@* Interactive island: Manual trigger and OnEntered need a live circuit; the rest of the demo page stays static SSR. *@
+<section class="surface" aria-labelledby="animation-events-title" data-testid="animation-events" data-interactive="@_interactive">
+    <h2 id="animation-events-title">Manual and events</h2>
+    <NTButton data-testid="animation-manual-toggle" Label="@(_manualShown ? "Hide" : "Show")" OnClickCallback="ToggleManual" />
+    <NTAnimation data-testid="animation-manual" Trigger="NTAnimationTrigger.Manual" Shown="_manualShown" Animation="NTAnimationType.FadeThrough">
+        <div class="sample">
+            <h3>Manual</h3>
+            <p class="muted">Visibility is controlled by the Shown parameter.</p>
+        </div>
+    </NTAnimation>
+    <NTAnimation data-testid="animation-entered" Animation="NTAnimationType.FadeIn" OnEntered="OnEntered">
+        <div class="sample">
+            <h3>OnEntered</h3>
+            <p class="muted" data-testid="animation-entered-count">Entered count: @_enteredCount</p>
+        </div>
+    </NTAnimation>
+</section>
+
+@code {
+    private int _enteredCount;
+    private bool _interactive;
+    private bool _manualShown = true;
+
+    protected override void OnAfterRender(bool firstRender) {
+        if (firstRender) {
+            _interactive = true;
+            StateHasChanged();
+        }
+    }
+
+    private void OnEntered() => _enteredCount++;
+
+    private void ToggleManual() => _manualShown = !_manualShown;
+}

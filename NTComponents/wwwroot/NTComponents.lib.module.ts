@@ -130,7 +130,7 @@ function enhanceAutocompleteInputs() {
 }
 
 function enhanceAnimationWrappers() {
-    if (!document.querySelector('[data-nt-animation="true"]')) {
+    if (!document.querySelector('[data-nt-animation-trigger="visible"]')) {
         return;
     }
 

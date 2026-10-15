@@ -64,10 +64,12 @@
 </style>
 
 <div class="animation-demo">
-    <div class="header">
-        <h1>NTAnimation</h1>
-        <p class="muted">Static-rendered viewport animations using Material 3 duration and easing tokens.</p>
-    </div>
+    <NTAnimation Trigger="NTAnimationTrigger.Render" Animation="NTAnimationType.SlideInFromTop" data-testid="animation-render-header">
+        <div class="header">
+            <h1>NTAnimation</h1>
+            <p class="muted">Viewport animations using Material 3 duration and easing tokens.</p>
+        </div>
+    </NTAnimation>
 
     <section class="surface" aria-labelledby="animation-enter-title">
         <h2 id="animation-enter-title">Enter Motion</h2>
@@ -92,8 +94,7 @@
                 <NTAnimation @key="sample.Title"
                              data-testid="@sample.TestId"
                              Animation="@sample.Animation"
-                             AnimateOut="true"
-                             Once="false"
+                             Repeat="NTAnimationRepeat.Reverse"
                              EnterDuration="NTMotionDuration.Ms400"
                              ExitDuration="NTMotionDuration.Ms200"
                              EnterEasing="NTMotionEasing.EmphasizedDecelerate"
@@ -107,6 +108,48 @@
             }
         </div>
     </section>
+
+    <section class="surface" aria-labelledby="animation-patterns-title">
+        <h2 id="animation-patterns-title">Patterns</h2>
+        <div class="grid">
+            @foreach (var sample in PatternSamples) {
+                <NTAnimation @key="sample.Title" data-testid="@sample.TestId" Animation="@sample.Animation">
+                    <div class="sample">
+                        <h3>@sample.Title</h3>
+                        <p class="muted">@sample.Description</p>
+                    </div>
+                </NTAnimation>
+            }
+        </div>
+    </section>
+
+    <div class="spacer">Scroll to trigger the next group</div>
+
+    <section class="surface" aria-labelledby="animation-stagger-title">
+        <h2 id="animation-stagger-title">Stagger</h2>
+        <NTAnimation data-testid="animation-stagger" Tag="NTAnimationTag.UnorderedList" Animation="NTAnimationType.SlideInFromBottom" Stagger="TimeSpan.FromMilliseconds(100)">
+            <li class="sample">First</li>
+            <li class="sample">Second</li>
+            <li class="sample">Third</li>
+            <li class="sample">Fourth</li>
+        </NTAnimation>
+    </section>
+
+    <div class="spacer">Scroll to trigger the next group</div>
+
+    <section class="surface" aria-labelledby="animation-replay-title">
+        <h2 id="animation-replay-title">Replay</h2>
+        <NTAnimation data-testid="animation-replay" Repeat="NTAnimationRepeat.Replay" Animation="NTAnimationType.ScaleIn">
+            <div class="sample">
+                <h3>Replay</h3>
+                <p class="muted">Resets once fully off-screen and plays again on re-entry.</p>
+            </div>
+        </NTAnimation>
+    </section>
+
+    <div class="spacer">Scroll to trigger the next group</div>
+
+    <LiveTest.Client.Components.AnimationInteractiveDemo />
 </div>
 
 @code {
@@ -122,6 +165,14 @@
         new("animation-fade-out", "Fade out", "Leaves the viewport with a short exit transition.", NTAnimationType.FadeIn, NTMotionDuration.Ms400, NTMotionEasing.EmphasizedDecelerate),
         new("animation-slide-out-down", "Slide out down", "Returns to its offset when it exits the viewport.", NTAnimationType.SlideInFromBottom, NTMotionDuration.Ms400, NTMotionEasing.EmphasizedDecelerate),
         new("animation-slide-out-right", "Slide out right", "Keeps a directional relationship while leaving.", NTAnimationType.SlideInFromRight, NTMotionDuration.Ms400, NTMotionEasing.EmphasizedDecelerate)
+    ];
+
+    private static readonly AnimationSample[] PatternSamples = [
+        new("animation-scale-in", "Scale in", "Grows from a smaller size.", NTAnimationType.ScaleIn, NTMotionDuration.Ms400, NTMotionEasing.EmphasizedDecelerate),
+        new("animation-fade-through", "Fade through", "Content swaps with a scale and late fade.", NTAnimationType.FadeThrough, NTMotionDuration.Ms400, NTMotionEasing.EmphasizedDecelerate),
+        new("animation-shared-axis-x", "Shared axis X", "Horizontal sibling transition.", NTAnimationType.SharedAxisX, NTMotionDuration.Ms400, NTMotionEasing.EmphasizedDecelerate),
+        new("animation-shared-axis-y", "Shared axis Y", "Vertical sibling transition.", NTAnimationType.SharedAxisY, NTMotionDuration.Ms400, NTMotionEasing.EmphasizedDecelerate),
+        new("animation-shared-axis-z", "Shared axis Z", "Depth transition.", NTAnimationType.SharedAxisZ, NTMotionDuration.Ms400, NTMotionEasing.EmphasizedDecelerate)
     ];
 
     private sealed record AnimationSample(string TestId, string Title, string Description, NTAnimationType Animation, NTMotionDuration Duration, NTMotionEasing Easing);

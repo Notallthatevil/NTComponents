@@ -18,7 +18,7 @@ namespace NTComponents;
 ///         As a practical default, Material 3 pairs <see cref="Emphasized" /> with 500ms for transitions that begin and end on screen, <see cref="EmphasizedDecelerate" /> with 400ms for entering
 ///         transitions, and <see cref="EmphasizedAccelerate" /> with 200ms for permanent exits. The equivalent standard pairings are 300ms, 250ms, and 200ms.
 ///     </para>
-///     <para>On the web, the Material 3 spec does not define a standalone CSS curve for emphasized easing, so <see cref="Emphasized" /> falls back to the standard curve.</para>
+///     <para>On the web, the Material 3 spec does not define a standalone CSS curve for emphasized easing, so <see cref="Emphasized" /> falls back to the standard curve. <see cref="NTAnimation" /> uses a CSS <c>linear()</c> approximation of the emphasized path where the browser supports it.</para>
 /// </remarks>
 public enum NTMotionEasing {
 

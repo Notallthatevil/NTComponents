@@ -1,61 +1,189 @@
 @use '../Styles/_Variables/_motion.scss' as motion;
 
-$nt-animation-enter-duration: var(--nt-animation-enter-duration, #{motion.$nt-motion-duration-medium_4});
-$nt-animation-exit-duration: var(--nt-animation-exit-duration, #{motion.$nt-motion-duration-short_4});
-$nt-animation-enter-easing: var(--nt-animation-enter-easing, #{motion.$nt-motion-easing-emphasized-decelerate});
-$nt-animation-exit-easing: var(--nt-animation-exit-easing, #{motion.$nt-motion-easing-emphasized-accelerate});
-$nt-animation-delay: var(--nt-animation-delay, 0ms);
-$nt-animation-distance: var(--nt-animation-distance, 24px);
+// Material 3 emphasized easing is a two-segment path that cubic-bezier() cannot express; linear() approximates it within 0.004.
+$emphasized-path: linear(0, 0.015 4.25%, 0.056 8%, 0.117 11%, 0.19 13.25%, 0.259 14.75%, 0.341 16%, 0.5 17.75%, 0.586 19%, 0.656 20.5%, 0.726 22.75%, 0.79 26%, 0.85 31%, 0.906 38.75%, 0.953 50.75%, 0.987 69.75%, 1);
+
+$easings: (
+    'emphasized': motion.$nt-motion-easing-emphasized,
+    'emphasized-decelerate': motion.$nt-motion-easing-emphasized-decelerate,
+    'emphasized-accelerate': motion.$nt-motion-easing-emphasized-accelerate,
+    'standard': motion.$nt-motion-easing-standard,
+    'standard-decelerate': motion.$nt-motion-easing-standard-decelerate,
+    'standard-accelerate': motion.$nt-motion-easing-standard-accelerate
+);
+
+$slide-distance: var(--nt-animation-distance, 24px);
+$axis-distance: var(--nt-animation-distance, 30px);
+$delay: calc(var(--nt-animation-delay) + var(--nt-animation-index) * var(--nt-animation-stagger));
+$stagger-limit: 20;
+
+// The elements that move: the wrapper itself, or each direct child when staggering (children belong to the caller, hence ::deep).
+@mixin targets {
+    &:not(.nt-animation-stagger),
+    &.nt-animation-stagger ::deep > * {
+        @content;
+    }
+}
+
+// Reduced motion keeps a short fade but drops movement, delay, and stagger.
+@mixin hidden-look {
+    opacity: 0;
+
+    @media (prefers-reduced-motion: no-preference) {
+        transform: var(--nt-animation-from);
+    }
+}
+
+@mixin transition($duration, $easing, $fade-duration, $fade-delay, $delay) {
+    transition: opacity motion.$nt-motion-duration-short_2 linear;
+
+    @media (prefers-reduced-motion: no-preference) {
+        transition-property: opacity, transform;
+        transition-duration: $fade-duration, $duration;
+        transition-delay: $fade-delay, $delay;
+        transition-timing-function: $easing;
+    }
+}
 
 .nt-animation {
-    --nt-animation-enter-opacity: 1;
-    --nt-animation-exit-opacity: 0;
-    --nt-animation-enter-transform: translate3d(0, 0, 0);
-    --nt-animation-exit-transform: translate3d(0, 0, 0);
+    // Parameter-driven values; declared here so nested wrappers do not inherit a parent's overrides.
+    --nt-animation-enter-duration: #{motion.$nt-motion-duration-medium_4};
+    --nt-animation-exit-duration: #{motion.$nt-motion-duration-short_4};
+    --nt-animation-enter-easing: #{motion.$nt-motion-easing-emphasized-decelerate};
+    --nt-animation-exit-easing: #{motion.$nt-motion-easing-emphasized-accelerate};
+    --nt-animation-delay: 0ms;
+    --nt-animation-stagger: 0ms;
+    --nt-animation-index: 0;
+    // Set by the Animation preset: the hidden transform, and the share of the duration the fade uses (late on enter, early on exit).
+    --nt-animation-from: none;
+    --nt-animation-enter-fade: 1;
+    --nt-animation-exit-fade: 1;
 
-    display: block;
-    opacity: var(--nt-animation-enter-opacity);
-    transform: var(--nt-animation-enter-transform);
-    will-change: auto;
+    @each $name, $value in $easings {
+        &.nt-animation-enter-#{$name} {
+            --nt-animation-enter-easing: #{$value};
+        }
+
+        &.nt-animation-exit-#{$name} {
+            --nt-animation-exit-easing: #{$value};
+        }
+    }
+
+    @supports (transition-timing-function: linear(0, 1)) {
+        &.nt-animation-enter-emphasized {
+            --nt-animation-enter-easing: #{$emphasized-path};
+        }
+
+        &.nt-animation-exit-emphasized {
+            --nt-animation-exit-easing: #{$emphasized-path};
+        }
+    }
 
     &.nt-animation-slide-in-from-top {
-        --nt-animation-exit-transform: translate3d(0, calc(#{$nt-animation-distance} * -1), 0);
+        --nt-animation-from: translateY(calc(#{$slide-distance} * -1));
     }
 
     &.nt-animation-slide-in-from-bottom {
-        --nt-animation-exit-transform: translate3d(0, #{$nt-animation-distance}, 0);
+        --nt-animation-from: translateY(#{$slide-distance});
     }
 
-    &.nt-animation-slide-in-from-left {
-        --nt-animation-exit-transform: translate3d(calc(#{$nt-animation-distance} * -1), 0, 0);
+    &.nt-animation-slide-in-from-left,
+    &.nt-animation-slide-in-from-start,
+    &.nt-animation-slide-in-from-end:dir(rtl) {
+        --nt-animation-from: translateX(calc(#{$slide-distance} * -1));
     }
 
-    &.nt-animation-slide-in-from-right {
-        --nt-animation-exit-transform: translate3d(#{$nt-animation-distance}, 0, 0);
+    &.nt-animation-slide-in-from-right,
+    &.nt-animation-slide-in-from-end,
+    &.nt-animation-slide-in-from-start:dir(rtl) {
+        --nt-animation-from: translateX(#{$slide-distance});
     }
 
-    &.nt-animation-enhanced {
-        opacity: var(--nt-animation-exit-opacity);
-        transform: var(--nt-animation-exit-transform);
-        transition-delay: $nt-animation-delay;
-        transition-duration: $nt-animation-exit-duration;
-        transition-property: opacity, transform;
-        transition-timing-function: $nt-animation-exit-easing;
-        will-change: opacity, transform;
+    &.nt-animation-scale-in {
+        --nt-animation-from: scale(0.8);
     }
 
-    &.nt-animation-visible {
-        opacity: var(--nt-animation-enter-opacity);
-        transform: var(--nt-animation-enter-transform);
-        transition-duration: $nt-animation-enter-duration;
-        transition-timing-function: $nt-animation-enter-easing;
+    &.nt-animation-fade-through,
+    &.nt-animation-shared-axis-x,
+    &.nt-animation-shared-axis-y,
+    &.nt-animation-shared-axis-z {
+        --nt-animation-enter-fade: 0.7;
+        --nt-animation-exit-fade: 0.3;
     }
 
-    @media (prefers-reduced-motion: reduce) {
-        &.nt-animation-enhanced,
-        &.nt-animation-visible {
-            transform: none;
-            transition-duration: motion.$nt-motion-duration-short_2;
+    &.nt-animation-fade-through {
+        --nt-animation-from: scale(0.92);
+    }
+
+    &.nt-animation-shared-axis-x {
+        --nt-animation-from: translateX(#{$axis-distance});
+
+        &:dir(rtl) {
+            --nt-animation-from: translateX(calc(#{$axis-distance} * -1));
+        }
+    }
+
+    &.nt-animation-shared-axis-y {
+        --nt-animation-from: translateY(#{$axis-distance});
+    }
+
+    &.nt-animation-shared-axis-z {
+        --nt-animation-from: scale(0.8);
+    }
+
+    &.nt-animation-stagger ::deep > * {
+        @for $i from 2 through $stagger-limit {
+            &:nth-child(#{$i}) {
+                --nt-animation-index: #{$i - 1};
+            }
+        }
+
+        &:nth-child(n + #{$stagger-limit + 1}) {
+            --nt-animation-index: #{$stagger-limit};
+        }
+    }
+}
+
+// State styles apply only on screen, so print always shows the content. Focus inside hidden content reveals it.
+@media screen {
+    .nt-animation[data-nt-animation-trigger="render"],
+    .nt-animation[data-nt-animation-trigger][data-nt-animation-state="visible"] {
+        @include targets {
+            $duration: var(--nt-animation-enter-duration);
+            @include transition($duration, var(--nt-animation-enter-easing), calc(#{$duration} * var(--nt-animation-enter-fade)), calc(#{$delay} + #{$duration} * (1 - var(--nt-animation-enter-fade))), $delay);
+        }
+    }
+
+    .nt-animation[data-nt-animation-trigger="render"] {
+        @include targets {
+            @starting-style {
+                opacity: 0;
+            }
+        }
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+        .nt-animation[data-nt-animation-trigger="render"] {
+            @include targets {
+                @starting-style {
+                    transform: var(--nt-animation-from);
+                }
+            }
+        }
+    }
+
+    .nt-animation[data-nt-animation-trigger]:is([data-nt-animation-state="hidden"], [data-nt-animation-state="reset"]):not(:focus-within) {
+        @include targets {
+            $duration: var(--nt-animation-exit-duration);
+            @include hidden-look;
+            @include transition($duration, var(--nt-animation-exit-easing), calc(#{$duration} * var(--nt-animation-exit-fade)), 0ms, 0ms);
+        }
+    }
+
+    // Same specificity as the hidden rule above, so it wins by order.
+    .nt-animation[data-nt-animation-trigger][data-nt-animation-state="reset"]:not(:focus-within) {
+        @include targets {
+            transition: none;
         }
     }
 }

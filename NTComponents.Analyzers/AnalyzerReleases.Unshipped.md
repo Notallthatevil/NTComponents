@@ -82,3 +82,6 @@ NTC1076 | Usage | Warning | NTDataGrid persistence requires a non-empty Persiste
 NTC1077 | Migration | Warning | Replace TnTColor with NTColor. Fix All supported.
 NTC1078 | Migration | Warning | None, Black, and White require a deliberate replacement because NTColor omits them.
 NTC1079 | Migration | Warning | Replace ToCssTnTColorVariable with ToCssNTColorVariable. Fix All supported.
+NTC1080 | Usage | Warning | NTAnimation Shown only applies when Trigger is Manual.
+NTC1081 | Usage | Warning | NTAnimation Repeat, Threshold, RootMargin, OnEntered and OnExited only apply when Trigger is Visible.
+NTC1082 | Usage | Warning | NTAnimation Threshold must be between 0 and 1.

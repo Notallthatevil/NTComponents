@@ -1,20 +1,27 @@
 @namespace NTComponents
 @using NTComponents.Core
-@inherits NTComponentBase
+@inherits NTPageScriptComponent<NTAnimation>
 
-<div @attributes="AdditionalAttributes"
-     class="@ElementClass"
-     style="@ElementStyle"
-     id="@ElementId"
-     lang="@ElementLang"
-     title="@ElementTitle"
-     data-nt-animation="true"
-     data-nt-animation-animate-out="@AnimateOut.ToString().ToLowerInvariant()"
-     data-nt-animation-once="@Once.ToString().ToLowerInvariant()"
-     data-nt-animation-threshold="@ThresholdValue"
-     data-nt-animation-root-margin="@RootMargin"
-     @ref="Element">
-    @ChildContent
-</div>
-
-<NTPageScript Src="@JsModulePath" />
+@switch (Tag) {
+    case NTAnimationTag.Section:
+        <section @attributes="WrapperAttributes" @ref="Element">@ChildContent</section>
+        break;
+    case NTAnimationTag.Article:
+        <article @attributes="WrapperAttributes" @ref="Element">@ChildContent</article>
+        break;
+    case NTAnimationTag.UnorderedList:
+        <ul @attributes="WrapperAttributes" @ref="Element">@ChildContent</ul>
+        break;
+    case NTAnimationTag.OrderedList:
+        <ol @attributes="WrapperAttributes" @ref="Element">@ChildContent</ol>
+        break;
+    case NTAnimationTag.ListItem:
+        <li @attributes="WrapperAttributes" @ref="Element">@ChildContent</li>
+        break;
+    default:
+        <div @attributes="WrapperAttributes" @ref="Element">@ChildContent</div>
+        break;
+}
+@if (UsesObserver) {
+    @PageScript
+}
