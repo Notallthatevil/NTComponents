@@ -390,13 +390,14 @@
 
         const pending = findAvailableThemeSlot(current);
         resetThemeLink(pending);
-        pending.rel = 'preload';
+        // Set the href before rel so the browser never sees a preload link without a URL.
+        pending.href = href;
         pending.as = 'style';
+        pending.rel = 'preload';
         pending.setAttribute('data-nt-theme-pending', 'true');
         pending.setAttribute('data-nt-theme-loaded', 'false');
         pending.setAttribute('data-tnt-theme-loaded', 'false');
         pending.setAttribute('data-permanent', pending.id);
-        pending.href = href;
         current.after(pending);
 
         const promotePending = (status: NTThemeLinkStatus): HTMLLinkElement => {
