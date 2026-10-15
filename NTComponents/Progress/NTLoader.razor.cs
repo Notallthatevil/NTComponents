@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using NTComponents.Core;
@@ -22,8 +22,8 @@ namespace NTComponents;
 ///         JavaScript module after the page reaches the browser. In a static SSR page with scripts disabled, users still receive the accessible loading indicator but not the shape morphing enhancement.
 ///     </para>
 ///     <para>
-///         Keep <see cref="AnimationDuration" /> at or above the minimum duration and provide at least two shapes when overriding <see cref="Shapes" /> for an animated loader. A single-shape animated
-///         sequence has no visible morphing.
+///         Each step morphs to a randomly chosen shape from <see cref="Shapes" />, never repeating the current one. Keep <see cref="AnimationDuration" /> at or above the minimum duration and
+///         provide at least two shapes when overriding <see cref="Shapes" /> for an animated loader. A single shape has no visible morphing.
 ///     </para>
 /// </remarks>
 [NTDocumentation(
@@ -107,22 +107,23 @@ public partial class NTLoader : NTDisposableComponentBase, INTPageScriptComponen
     protected IJSRuntime JSRuntime { get; private set; } = default!;
 
     /// <summary>
-    ///     Shape sequence used by the single morphing indicator mark.
+    ///     Shapes the single morphing indicator mark chooses from.
     /// </summary>
     /// <remarks>
-    ///     Leave this unset to use the Material shape sequence. When overriding it for an animated loader, provide at least two shapes so the loader can visibly morph.
+    ///     The first shape renders initially, including in static SSR; each later step picks another shape from the list at random. Leave this unset to use every
+    ///     <see cref="NTShapeType" />, starting with <see cref="NTShapeType.SoftBurst" />. When overriding it for an animated loader, provide at least two shapes so the loader can visibly morph.
     /// </remarks>
     [Parameter]
     public IReadOnlyList<NTShapeType>? Shapes { get; set; }
 
     /// <summary>
-    ///     Duration used when morphing from one sequence step to the next.
+    ///     Duration used when morphing from one shape to the next.
     /// </summary>
     [Parameter]
     public NTMotionDuration ShapeTransitionDuration { get; set; } = NTMotionDuration.Ms700;
 
     /// <summary>
-    ///     Easing used when morphing from one sequence step to the next. The default <see cref="NTMotionEasing.Emphasized" /> uses the Material loading indicator spring; other values override it.
+    ///     Easing used when morphing from one shape to the next. The default <see cref="NTMotionEasing.Emphasized" /> uses the Material loading indicator spring; other values override it.
     /// </summary>
     [Parameter]
     public NTMotionEasing ShapeTransitionEasing { get; set; } = NTMotionEasing.Emphasized;
@@ -166,15 +167,8 @@ public partial class NTLoader : NTDisposableComponentBase, INTPageScriptComponen
     private const int MinimumAnimationDurationMilliseconds = 400;
     private const int ShapeStepIntervalMilliseconds = 650;
 
-    private static readonly NTShapeType[] _defaultShapes = [
-        NTShapeType.SoftBurst,
-        NTShapeType.NineSidedCookie,
-        NTShapeType.Pentagon,
-        NTShapeType.Pill,
-        NTShapeType.Sunny,
-        NTShapeType.FourSidedCookie,
-        NTShapeType.Oval
-    ];
+    // Every shape, starting with the Material loading indicator's soft burst; later steps are chosen at random.
+    private static readonly NTShapeType[] _defaultShapes = [NTShapeType.SoftBurst, .. Enum.GetValues<NTShapeType>().Where(shape => shape != NTShapeType.SoftBurst)];
 
     /// <inheritdoc />
     protected override void OnParametersSet() {

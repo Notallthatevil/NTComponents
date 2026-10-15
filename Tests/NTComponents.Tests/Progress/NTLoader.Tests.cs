@@ -1,3 +1,4 @@
+﻿using System.Globalization;
 using NTComponents;
 using NTComponents.Interfaces;
 using Microsoft.AspNetCore.Components;
@@ -112,12 +113,13 @@ public class NTLoader_Tests : BunitContext {
     }
 
     [Fact]
-    public void Default_Sequence_Uses_Material_Loading_Indicator_Shapes() {
+    public void Default_Shapes_IncludeEveryShape_StartingWithSoftBurst() {
         var cut = Render<NTLoader>();
-        var expectedShapes = new[] { NTShapeType.SoftBurst, NTShapeType.NineSidedCookie, NTShapeType.Pentagon, NTShapeType.Pill, NTShapeType.Sunny, NTShapeType.FourSidedCookie, NTShapeType.Oval };
 
-        cut.Find(".nt-loader").GetAttribute("data-shape-sequence").Should().Be(string.Join(' ', expectedShapes.Select(shape => (int)shape)));
-        cut.Find("nt-shape").GetAttribute("data-shape").Should().Be(((int)NTShapeType.SoftBurst).ToString());
+        var sequence = cut.Find(".nt-loader").GetAttribute("data-shape-sequence")!.Split(' ').Select(value => (NTShapeType)int.Parse(value, CultureInfo.InvariantCulture)).ToArray();
+
+        sequence.Should().StartWith(NTShapeType.SoftBurst).And.OnlyHaveUniqueItems().And.BeEquivalentTo(Enum.GetValues<NTShapeType>());
+        cut.Find("nt-shape").GetAttribute("data-shape").Should().Be(((int)NTShapeType.SoftBurst).ToString(CultureInfo.InvariantCulture));
     }
 
     [Fact]

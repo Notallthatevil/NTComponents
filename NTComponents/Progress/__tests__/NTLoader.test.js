@@ -80,7 +80,8 @@ describe('NTLoader runtime', () => {
         onchange: null
       }))
     })
-
+    // Random 0 always picks the next shape in the list, which keeps cycle assertions deterministic.
+    jest.spyOn(Math, 'random').mockReturnValue(0)
   })
 
   afterEach(() => {
@@ -265,6 +266,32 @@ describe('NTLoader runtime', () => {
     expect(shape.querySelector('path').getAttribute('d')).toBe(finalPath)
     expect(shape.style.rotate).toBe('')
     expect(jest.getTimerCount()).toBe(0)
+  })
+
+  test('each cycle picks a random shape from the list', () => {
+    const { loader, shape } = createLoaderElement()
+    Math.random.mockReturnValue(0.99)
+
+    onUpdate(loader)
+    expect(shape.dataset.shape).toBe('3')
+
+    jest.advanceTimersByTime(1000)
+    expect(shape.dataset.shape).toBe('2')
+  })
+
+  test('random cycles never repeat the current shape', () => {
+    Math.random.mockRestore()
+    const { loader, shape } = createLoaderElement({ sequence: '1 2 3 4', interval: '650' })
+    onUpdate(loader)
+
+    const shown = [shape.dataset.shape]
+    for (let cycle = 0; cycle < 40; cycle++) {
+      jest.advanceTimersByTime(650)
+      shown.push(shape.dataset.shape)
+    }
+
+    expect(shown.every((value, index) => index === 0 || value !== shown[index - 1])).toBe(true)
+    expect(new Set(shown).size).toBeGreaterThan(2)
   })
 
   test('a short cycle can morph back to the initial shape before earlier transitions settle', () => {

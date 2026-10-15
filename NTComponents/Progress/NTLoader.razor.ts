@@ -2,8 +2,8 @@ import { animateShape, onDispose as disposeShape, onUpdate as updateShape } from
 
 interface NTLoaderState {
     animation?: Animation;
+    currentShapeIndex: number;
     intervalId?: number;
-    nextShapeIndex: number;
     rotation: number;
     rotationTarget: number;
     restartKey?: string;
@@ -19,7 +19,7 @@ let globalSyncScheduled = false;
 
 function getState(element: NTLoaderElement): NTLoaderState {
     element.__ntLoaderState ??= {
-        nextShapeIndex: 1,
+        currentShapeIndex: 0,
         rotation: 0,
         rotationTarget: 0
     };
@@ -86,6 +86,12 @@ function shouldAnimate(element: NTLoaderElement, sequence: number[]): boolean {
     return element.dataset.animate === 'true' && sequence.length > 1 && !prefersReducedMotion();
 }
 
+// Picks a random shape other than the current one, so every step visibly morphs.
+function pickNextShapeIndex(currentIndex: number, length: number): number {
+    const offset = 1 + Math.floor(Math.random() * (length - 1));
+    return (currentIndex + offset) % length;
+}
+
 function applyShape(shapeElement: HTMLElement, shape: number): void {
     shapeElement.dataset.shape = shape.toString();
     updateShape(shapeElement);
@@ -150,7 +156,7 @@ function start(element: NTLoaderElement, sequence: number[], intervalMs: number,
     }
 
     stop(element);
-    state.nextShapeIndex = 1;
+    state.currentShapeIndex = 0;
     applyShape(shapeElement, sequence[0]);
     startSpinAnimation(state, shapeElement, intervalMs);
 
@@ -162,7 +168,8 @@ function start(element: NTLoaderElement, sequence: number[], intervalMs: number,
             return;
         }
 
-        const nextShape = sequence[state.nextShapeIndex % sequence.length];
+        state.currentShapeIndex = pickNextShapeIndex(state.currentShapeIndex, sequence.length);
+        const nextShape = sequence[state.currentShapeIndex];
         if (state.rotationTarget >= 360) {
             state.rotation -= 360;
             state.rotationTarget -= 360;
@@ -177,7 +184,6 @@ function start(element: NTLoaderElement, sequence: number[], intervalMs: number,
             // Individual rotate composes with the uninterrupted linear transform.
             currentShapeElement.style.rotate = `${state.rotation}deg`;
         }, currentShapeElement.dataset.transitionEasing === '0' ? springProgress : undefined);
-        state.nextShapeIndex = (state.nextShapeIndex + 1) % sequence.length;
     };
 
     runCycle();
