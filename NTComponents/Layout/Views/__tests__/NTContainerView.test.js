@@ -94,6 +94,21 @@ describe('NTContainerView quick navigation runtime', () => {
     expect(links.map(link => link.getAttribute('href'))).toEqual(['#docs-introduction', '#public', '#final']);
   });
 
+  test('excludes headings inside a marked region unless a heading opts back in', () => {
+    const view = setContainerMarkup(`
+      <h2 id="examples">Examples</h2>
+      <div data-nt-nav-exclude>
+        <h3 id="demo-heading">Quarterly report</h3>
+        <h3 id="kept" data-nt-nav-exclude="false">Kept heading</h3>
+      </div>
+      <h2 id="api">API</h2>`);
+
+    onLoad(view);
+
+    const links = Array.from(view.querySelectorAll('.nt-container-view-quick-nav-list a'));
+    expect(links.map(link => link.textContent)).toEqual(['Examples', 'Kept heading', 'API']);
+  });
+
   test('updates links when heading navigation attributes change', async () => {
     const view = setContainerMarkup('<h2 id="details">Details</h2>');
     const heading = view.querySelector('#details');

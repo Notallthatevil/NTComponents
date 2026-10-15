@@ -162,8 +162,14 @@ function getHeadings(view: HTMLElement, quickNav: HTMLElement): HTMLElement[] {
     return Array.from(view.querySelectorAll<HTMLElement>(headingSelector))
         .filter(heading => !quickNav.contains(heading))
         .filter(heading => heading.closest(containerViewSelector) === view)
-        .filter(heading => !heading.hasAttribute(navExcludeAttribute) || heading.getAttribute(navExcludeAttribute)?.trim().toLowerCase() === 'false')
+        .filter(heading => !isExcludedFromNav(view, heading))
         .filter(heading => getHeadingText(heading).length > 0);
+}
+
+// The nearest marked element wins, so a whole region can be excluded and a heading inside it can opt back in with "false".
+function isExcludedFromNav(view: HTMLElement, heading: HTMLElement): boolean {
+    const marker = heading.closest<HTMLElement>(`[${navExcludeAttribute}]`);
+    return marker !== null && view.contains(marker) && marker.getAttribute(navExcludeAttribute)?.trim().toLowerCase() !== 'false';
 }
 
 function getHeadingEntries(view: HTMLElement, quickNav: HTMLElement): HeadingEntry[] {

@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Components;
+﻿using Microsoft.AspNetCore.Components;
 using NTComponents.Core;
 
 using NTComponents.CodeDocumentation;
@@ -15,11 +15,13 @@ namespace NTComponents;
 /// inside the container. </para> <para> Do not use this view to create cards, panels, or visual surfaces. It controls
 /// only horizontal placement and width.</para>
 /// <para>The "On this page" navigation finds headings (<c>h1</c> through <c>h6</c>) in the container. Set
-/// <c>data-nt-nav-label</c> on a heading to change its navigation link text, or <c>data-nt-nav-exclude</c> to omit
-/// its link. A value of <c>false</c> includes the heading when the exclusion attribute is bound conditionally.</para>
+/// <c>data-nt-nav-label</c> on a heading to change its navigation link text, or <c>data-nt-nav-exclude</c> on a heading
+/// or any element containing headings to omit their links. The nearest element with the attribute wins, and a value of
+/// <c>false</c> includes the heading, so a heading inside an excluded region can opt back in.</para>
 /// <code>
 /// &lt;h2 data-nt-nav-label="Summary"&gt;Overview and scope&lt;/h2&gt;
 /// &lt;h2 data-nt-nav-exclude&gt;Internal details&lt;/h2&gt;
+/// &lt;aside data-nt-nav-exclude&gt;&lt;h3&gt;Related links&lt;/h3&gt;&lt;/aside&gt;
 /// </code>
 /// </remarks>
 [NTDocumentation(
@@ -40,7 +42,7 @@ public partial class NTContainerView {
     /// <summary>
     ///     Whether the container should render and hydrate the generated "On this page" navigation.
     /// </summary>
-    /// <remarks>Headings can set <c>data-nt-nav-label</c> to override their link text or <c>data-nt-nav-exclude</c> to omit the link.</remarks>
+    /// <remarks>Headings can set <c>data-nt-nav-label</c> to override their link text. <c>data-nt-nav-exclude</c> on a heading or a containing element omits the links.</remarks>
     [Parameter]
     public bool EnableOnThisPageNavigation { get; set; } = true;
 
