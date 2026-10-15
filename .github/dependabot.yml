@@ -2,6 +2,7 @@
 version: 2
 
 updates:
+  # Package versions are centralized in /Directory.Packages.props, which this entry updates for every project.
   - package-ecosystem: "nuget"
     directory: "/"
     schedule:
@@ -12,22 +13,10 @@ updates:
     ignore:
       - dependency-name: "Microsoft.AspNetCore.Components.WebAssembly"
     exclude-paths:
-      # The library has its own package policy below; submodules own their dependencies.
+      # The library pins its published ASP.NET Core dependency floors with VersionOverride, raised only for security
+      # fixes; submodules own their dependencies.
       - "NTComponents/NTComponents.csproj"
       - "Submodules/**"
-    commit-message:
-      prefix: "chore"
-      include: "scope"
-
-  - package-ecosystem: "nuget"
-    directory: "/NTComponents"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "06:00"
-      timezone: "America/Denver"
-    ignore:
-      - dependency-name: "Microsoft.AspNetCore.Components.WebAssembly"
     commit-message:
       prefix: "chore"
       include: "scope"

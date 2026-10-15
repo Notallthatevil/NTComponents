@@ -12,16 +12,8 @@
         <ProjectReference Include="..\LiveTest.Client\LiveTest.Client.csproj" />
     </ItemGroup>
 
-	<ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
-		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="9.0.21" />
-	</ItemGroup>
-
-	<ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
-		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.12" />
-	</ItemGroup>
-
-	<ItemGroup Condition="'$(TargetFramework)' == 'net11.0'">
-		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="11.0.0-rc.1.26425.128" />
+	<ItemGroup>
+		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" />
 	</ItemGroup>
     <ItemGroup>
       <Folder Include="wwwroot\Themes\" />
