@@ -70,7 +70,7 @@ public partial class NTFormFieldLayoutSpan : NTComponentBase {
         _elementClass = CssClassBuilder.Create()
             .AddFromAdditionalAttributes(AdditionalAttributes)
             .AddClass("nt-form-field-layout-span")
-            .AddClass($"nt-form-field-layout-span-{Span.ToCssClassName()}")
+            .AddClass(GetSpanClass(Span))
             .Build();
 
         _elementStyle = CssStyleBuilder.Create()
@@ -83,39 +83,20 @@ public partial class NTFormFieldLayoutSpan : NTComponentBase {
         BuildElementAttributes();
     }
 
-    private void BuildElementAttributes() {
-        _elementAttributes.Clear();
-        if (AdditionalAttributes is not null) {
-            foreach (var (attributeName, attributeValue) in AdditionalAttributes) {
-                _elementAttributes[attributeName] = attributeValue;
-            }
-        }
+    private void BuildElementAttributes() => NTFormElementAttributes.Build(_elementAttributes, AdditionalAttributes, _elementClass!, _elementStyle, AutoFocus, ElementId, ElementLang, ElementTitle);
 
-        _elementAttributes["class"] = _elementClass!;
-        if (!string.IsNullOrWhiteSpace(_elementStyle)) {
-            _elementAttributes["style"] = _elementStyle!;
-        }
-        else {
-            _elementAttributes.Remove("style");
-        }
-
-        if (AutoFocus == true) {
-            _elementAttributes["autofocus"] = true;
-        }
-
-        SetAttribute("id", ElementId);
-        SetAttribute("lang", ElementLang);
-        SetAttribute("title", ElementTitle);
-    }
-
-    private void SetAttribute(string attributeName, string? value) {
-        if (value is null) {
-            _elementAttributes.Remove(attributeName);
-            return;
-        }
-
-        _elementAttributes[attributeName] = value;
-    }
+    private static string GetSpanClass(NTFormFieldSpan span) =>
+        span switch {
+            NTFormFieldSpan.Auto => "nt-form-field-layout-span-auto",
+            NTFormFieldSpan.Compact => "nt-form-field-layout-span-compact",
+            NTFormFieldSpan.OneQuarter => "nt-form-field-layout-span-one-quarter",
+            NTFormFieldSpan.OneThird => "nt-form-field-layout-span-one-third",
+            NTFormFieldSpan.Half => "nt-form-field-layout-span-half",
+            NTFormFieldSpan.TwoThirds => "nt-form-field-layout-span-two-thirds",
+            NTFormFieldSpan.ThreeQuarters => "nt-form-field-layout-span-three-quarters",
+            NTFormFieldSpan.Full => "nt-form-field-layout-span-full",
+            _ => $"nt-form-field-layout-span-{span.ToString().ToLowerInvariant()}"
+        };
 
     private static int? ResolveColumns(int? explicitColumns, int? presetColumns) =>
         explicitColumns.HasValue ? NormalizeColumns(explicitColumns.Value) : presetColumns;
@@ -180,15 +161,4 @@ public enum NTFormFieldSpan {
     ///     Uses the full row at every width.
     /// </summary>
     Full
-}
-
-internal static class NTFormFieldSpanExtensions {
-    public static string ToCssClassName(this NTFormFieldSpan span) =>
-        span switch {
-            NTFormFieldSpan.OneQuarter => "one-quarter",
-            NTFormFieldSpan.OneThird => "one-third",
-            NTFormFieldSpan.TwoThirds => "two-thirds",
-            NTFormFieldSpan.ThreeQuarters => "three-quarters",
-            _ => span.ToString().ToLowerInvariant()
-        };
 }

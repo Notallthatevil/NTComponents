@@ -72,6 +72,17 @@ $nt-input-textarea-filled-label-space-comfortable: 28px;
 $nt-input-textarea-filled-label-space-standard: 20px;
 $nt-input-textarea-filled-label-space-dense: 14px;
 
+// The label floats when the control is focused, has a value or placeholder, or was autofilled. $mods are the extra root classes the rule applies to.
+@mixin nt-input-floated($mods: '') {
+    &#{$mods}:not(.nt-input-no-label):has(.nt-input-control:focus),
+    &#{$mods}:not(.nt-input-no-label):has(.nt-input-control:not(:placeholder-shown)),
+    &#{$mods}:not(.nt-input-no-label):has(.nt-input-control:-webkit-autofill),
+    &#{$mods}.nt-input-has-value:not(.nt-input-no-label),
+    &#{$mods}.nt-input-has-placeholder:not(.nt-input-no-label) {
+        @content;
+    }
+}
+
 @mixin nt-input-textarea-adornment-offset($offset) {
     .nt-input-leading,
     .nt-input-trailing,
@@ -510,27 +521,15 @@ $nt-input-textarea-filled-label-space-dense: 14px;
             @include nt-input-textarea-adornment-offset($nt-input-textarea-content-offset-dense);
         }
 
-        &.nt-input-filled.nt-input-standard:not(.nt-input-no-label):has(.nt-input-control:focus),
-        &.nt-input-filled.nt-input-standard:not(.nt-input-no-label):has(.nt-input-control:not(:placeholder-shown)),
-        &.nt-input-filled.nt-input-standard:not(.nt-input-no-label):has(.nt-input-control:-webkit-autofill),
-        &.nt-input-filled.nt-input-standard.nt-input-has-value:not(.nt-input-no-label),
-        &.nt-input-filled.nt-input-standard.nt-input-has-placeholder:not(.nt-input-no-label) {
+        @include nt-input-floated('.nt-input-filled.nt-input-standard') {
             @include nt-input-textarea-adornment-offset($nt-input-textarea-filled-label-space-standard);
         }
 
-        &.nt-input-filled.nt-input-comfortable:not(.nt-input-no-label):has(.nt-input-control:focus),
-        &.nt-input-filled.nt-input-comfortable:not(.nt-input-no-label):has(.nt-input-control:not(:placeholder-shown)),
-        &.nt-input-filled.nt-input-comfortable:not(.nt-input-no-label):has(.nt-input-control:-webkit-autofill),
-        &.nt-input-filled.nt-input-comfortable.nt-input-has-value:not(.nt-input-no-label),
-        &.nt-input-filled.nt-input-comfortable.nt-input-has-placeholder:not(.nt-input-no-label) {
+        @include nt-input-floated('.nt-input-filled.nt-input-comfortable') {
             @include nt-input-textarea-adornment-offset($nt-input-textarea-filled-label-space-comfortable);
         }
 
-        &.nt-input-filled.nt-input-dense:not(.nt-input-no-label):has(.nt-input-control:focus),
-        &.nt-input-filled.nt-input-dense:not(.nt-input-no-label):has(.nt-input-control:not(:placeholder-shown)),
-        &.nt-input-filled.nt-input-dense:not(.nt-input-no-label):has(.nt-input-control:-webkit-autofill),
-        &.nt-input-filled.nt-input-dense.nt-input-has-value:not(.nt-input-no-label),
-        &.nt-input-filled.nt-input-dense.nt-input-has-placeholder:not(.nt-input-no-label) {
+        @include nt-input-floated('.nt-input-filled.nt-input-dense') {
             @include nt-input-textarea-adornment-offset($nt-input-textarea-filled-label-space-dense);
         }
     }
@@ -611,11 +610,7 @@ $nt-input-textarea-filled-label-space-dense: 14px;
         }
     }
 
-    &:not(.nt-input-no-label):has(.nt-input-control:focus),
-    &:not(.nt-input-no-label):has(.nt-input-control:not(:placeholder-shown)),
-    &:not(.nt-input-no-label):has(.nt-input-control:-webkit-autofill),
-    &.nt-input-has-value:not(.nt-input-no-label),
-    &.nt-input-has-placeholder:not(.nt-input-no-label) {
+    @include nt-input-floated() {
         .nt-input-label {
             @include typescale.nt-body-small;
 
@@ -633,21 +628,13 @@ $nt-input-textarea-filled-label-space-dense: 14px;
         }
     }
 
-    &.nt-input-filled:not(.nt-input-no-label):has(.nt-input-control:focus),
-    &.nt-input-filled:not(.nt-input-no-label):has(.nt-input-control:not(:placeholder-shown)),
-    &.nt-input-filled:not(.nt-input-no-label):has(.nt-input-control:-webkit-autofill),
-    &.nt-input-filled.nt-input-has-value:not(.nt-input-no-label),
-    &.nt-input-filled.nt-input-has-placeholder:not(.nt-input-no-label) {
+    @include nt-input-floated('.nt-input-filled') {
         .nt-input-control {
             padding-block-start: $nt-input-filled-control-padding-start;
         }
     }
 
-    &.nt-input-filled.nt-input-comfortable:not(.nt-input-no-label):has(.nt-input-control:focus),
-    &.nt-input-filled.nt-input-comfortable:not(.nt-input-no-label):has(.nt-input-control:not(:placeholder-shown)),
-    &.nt-input-filled.nt-input-comfortable:not(.nt-input-no-label):has(.nt-input-control:-webkit-autofill),
-    &.nt-input-filled.nt-input-comfortable.nt-input-has-value:not(.nt-input-no-label),
-    &.nt-input-filled.nt-input-comfortable.nt-input-has-placeholder:not(.nt-input-no-label) {
+    @include nt-input-floated('.nt-input-filled.nt-input-comfortable') {
         .nt-input-label {
             inset-block-start: $nt-input-filled-label-top-comfortable;
         }
@@ -657,11 +644,7 @@ $nt-input-textarea-filled-label-space-dense: 14px;
         }
     }
 
-    &.nt-input-filled.nt-input-standard:not(.nt-input-no-label):has(.nt-input-control:focus),
-    &.nt-input-filled.nt-input-standard:not(.nt-input-no-label):has(.nt-input-control:not(:placeholder-shown)),
-    &.nt-input-filled.nt-input-standard:not(.nt-input-no-label):has(.nt-input-control:-webkit-autofill),
-    &.nt-input-filled.nt-input-standard.nt-input-has-value:not(.nt-input-no-label),
-    &.nt-input-filled.nt-input-standard.nt-input-has-placeholder:not(.nt-input-no-label) {
+    @include nt-input-floated('.nt-input-filled.nt-input-standard') {
         .nt-input-label {
             inset-block-start: $nt-input-filled-label-top-standard;
         }
@@ -671,11 +654,7 @@ $nt-input-textarea-filled-label-space-dense: 14px;
         }
     }
 
-    &.nt-input-filled.nt-input-dense:not(.nt-input-no-label):has(.nt-input-control:focus),
-    &.nt-input-filled.nt-input-dense:not(.nt-input-no-label):has(.nt-input-control:not(:placeholder-shown)),
-    &.nt-input-filled.nt-input-dense:not(.nt-input-no-label):has(.nt-input-control:-webkit-autofill),
-    &.nt-input-filled.nt-input-dense.nt-input-has-value:not(.nt-input-no-label),
-    &.nt-input-filled.nt-input-dense.nt-input-has-placeholder:not(.nt-input-no-label) {
+    @include nt-input-floated('.nt-input-filled.nt-input-dense') {
         .nt-input-label {
             inset-block-start: $nt-input-filled-label-top-dense;
         }
@@ -685,11 +664,7 @@ $nt-input-textarea-filled-label-space-dense: 14px;
         }
     }
 
-    &.nt-input-outlined:not(.nt-input-no-label):has(.nt-input-control:focus),
-    &.nt-input-outlined:not(.nt-input-no-label):has(.nt-input-control:not(:placeholder-shown)),
-    &.nt-input-outlined:not(.nt-input-no-label):has(.nt-input-control:-webkit-autofill),
-    &.nt-input-outlined.nt-input-has-value:not(.nt-input-no-label),
-    &.nt-input-outlined.nt-input-has-placeholder:not(.nt-input-no-label) {
+    @include nt-input-floated('.nt-input-outlined') {
         .nt-input-control-container {
             position: static;
         }

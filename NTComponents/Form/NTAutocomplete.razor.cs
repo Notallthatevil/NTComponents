@@ -81,12 +81,14 @@ public partial class NTAutocomplete : IAsyncDisposable {
         "oninput"
     };
 
-    private readonly List<NTAutocompleteOption> _optionChildren = [];
+    private readonly HashSet<NTAutocompleteOption> _optionChildren = [];
     private readonly NTDisposalState _disposalState = new();
-    private DotNetObjectReference<NTAutocomplete>? _dotNetObjectRef;
-    private IJSObjectReference? _jsModule;
+    private NTMenuFieldInterop<NTAutocomplete>? _interop;
     private bool _hasRendered;
     private bool _optionChildrenChangedBeforeFirstRender;
+    private string? _customOptionJson;
+    private string? _customOptionJsonFormat;
+    private bool _customOptionJsonDisabled;
 
     /// <summary>
     ///     Gets or sets a value indicating whether users can submit values that are not declared as child <see cref="NTAutocompleteOption" /> entries.
@@ -155,8 +157,21 @@ public partial class NTAutocomplete : IAsyncDisposable {
         }
     }
 
-    private string AutocompleteCustomOptionJson => BuildCustomOptionJson(EffectiveCustomValueOptionFormat, FieldDisabled || FieldReadOnly);
-    private string EffectiveCustomValueOptionFormat => CustomValueOptionFormat ?? "Use \"{0}\"";
+    private string AutocompleteCustomOptionJson {
+        get {
+            var format = CustomValueOptionFormat ?? "Use \"{0}\"";
+            var disabled = FieldDisabled || FieldReadOnly;
+            if (_customOptionJson is null || _customOptionJsonDisabled != disabled || !string.Equals(_customOptionJsonFormat, format, StringComparison.Ordinal)) {
+                _customOptionJson = BuildCustomOptionJson(format, disabled);
+                _customOptionJsonDisabled = disabled;
+                _customOptionJsonFormat = format;
+            }
+
+            return _customOptionJson;
+        }
+    }
+
+    private NTMenuFieldInterop<NTAutocomplete> Interop => _interop ??= new(this, JsModulePath, _disposalState, true, true);
 
     [Inject]
     private IJSRuntime JSRuntime { get; set; } = default!;
@@ -168,21 +183,10 @@ public partial class NTAutocomplete : IAsyncDisposable {
     public async ValueTask DisposeAsync() {
         if (_disposalState.TryBegin()) {
             try {
-                if (_jsModule is not null) {
-                    try {
-                        await _jsModule.InvokeVoidAsync("onDispose", Element, _dotNetObjectRef).ConfigureAwait(false);
-                        await _jsModule.DisposeAsync().ConfigureAwait(false);
-                    }
-                    catch (JSDisconnectedException) {
-                        // JS runtime was disconnected, safe to ignore during disposal.
-                    }
-                }
+                await Interop.ReleaseAsync(Element).ConfigureAwait(false);
             }
             finally {
                 ((IDisposable)this).Dispose();
-                _jsModule = null;
-                _dotNetObjectRef?.Dispose();
-                _dotNetObjectRef = null;
                 GC.SuppressFinalize(this);
             }
         }
@@ -215,10 +219,7 @@ public partial class NTAutocomplete : IAsyncDisposable {
     }
 
     internal void AddOptionChild(NTAutocompleteOption optionChild) {
-        if (!_optionChildren.Contains(optionChild)) {
-            _optionChildren.Add(optionChild);
-        }
-
+        _optionChildren.Add(optionChild);
         RequestOptionChildrenRefresh();
     }
 
@@ -256,45 +257,13 @@ public partial class NTAutocomplete : IAsyncDisposable {
     protected override string? FormatValueAsString(string? value) => value;
 
     /// <inheritdoc />
+    [SuppressMessage("Reliability", "NTBA0003:Lifecycle method should use meaningful exception handling or owner ErrorBoundary coverage", Justification = "JS interop failures are handled by NTMenuFieldInterop.")]
     protected override async Task OnAfterRenderAsync(bool firstRender) {
         await base.OnAfterRenderAsync(firstRender);
         var refreshAfterInitialOptionRegistration = !_hasRendered && _optionChildrenChangedBeforeFirstRender;
         _hasRendered = true;
 
-        if (!_disposalState.HasStarted) {
-            try {
-                _dotNetObjectRef ??= DotNetObjectReference.Create(this);
-                if (firstRender) {
-                    var importedModule = await JSRuntime.ImportIsolatedJs(this, JsModulePath);
-                    if (!_disposalState.HasStarted && _dotNetObjectRef is not null) {
-                        _jsModule = importedModule;
-                        await importedModule.InvokeVoidAsync("onLoad", Element, _dotNetObjectRef);
-                    }
-                    else {
-                        await importedModule.DisposeAsync();
-                    }
-                }
-                else if (!_disposalState.HasStarted && _jsModule is not null && _dotNetObjectRef is not null) {
-                    await _jsModule.InvokeVoidAsync("onUpdate", Element, _dotNetObjectRef);
-                }
-            }
-            catch (JSDisconnectedException) {
-                // JS runtime was disconnected, safe to ignore during render.
-            }
-            catch (JSException) {
-                // Enhancement failed. Keep the native input usable instead of failing the interactive circuit.
-                var module = _jsModule;
-                _jsModule = null;
-                if (module is not null) {
-                    try {
-                        await module.DisposeAsync();
-                    }
-                    catch (JSDisconnectedException) {
-                        // JS runtime was disconnected while releasing the failed enhancement.
-                    }
-                }
-            }
-        }
+        await Interop.AfterRenderAsync(JSRuntime, Element, firstRender);
 
         if (refreshAfterInitialOptionRegistration && !_disposalState.HasStarted) {
             _optionChildrenChangedBeforeFirstRender = false;
@@ -330,10 +299,11 @@ public partial class NTAutocomplete : IAsyncDisposable {
         return builder.ToString();
     }
 
-    internal string BuildOptionJson(NTAutocompleteOption option) {
-        var selected = string.Equals(option.Value, CurrentValueAsString, StringComparison.Ordinal);
+    internal bool IsOptionSelected(NTAutocompleteOption option) => string.Equals(option.Value, CurrentValueAsString, StringComparison.Ordinal);
+
+    internal static string BuildOptionJson(NTAutocompleteOption option, bool selected) {
         var builder = new StringBuilder();
-        AppendOptionJson(builder, id: null, GetOptionClass(selected, option.EffectiveDisabled), option.Value, option.EffectiveLabel, option.SupportingText, option.EffectiveDisabled, selected, isCustom: false, customFormat: null, option.LeadingIcon, option.GroupLabel);
+        AppendOptionJson(builder, id: null, NTMenuOptionClass.ForSelectable(selected, option.EffectiveDisabled), option.Value, option.EffectiveLabel, option.SupportingText, option.EffectiveDisabled, selected, isCustom: false, customFormat: null, option.LeadingIcon, option.GroupLabel);
         return builder.ToString();
     }
 
@@ -403,13 +373,6 @@ public partial class NTAutocomplete : IAsyncDisposable {
         builder.Append(value ? "true" : "false");
     }
 
-    private static string GetOptionClass(bool selected, bool disabled) => (selected, disabled) switch {
-        (true, true) => "nt-combobox-option nt-combobox-option-selected nt-combobox-option-disabled",
-        (true, false) => "nt-combobox-option nt-combobox-option-selected",
-        (false, true) => "nt-combobox-option nt-combobox-option-disabled",
-        _ => "nt-combobox-option"
-    };
-
     private bool CanUpdateCurrentValue() => !FieldReadOnly && !FieldDisabled;
 
     private void RequestOptionChildrenRefresh() {
@@ -456,6 +419,9 @@ public sealed class NTAutocompleteOption : ComponentBase, IDisposable {
     private string? _lastLabel;
     private string? _lastSupportingText;
     private string? _lastValue;
+    private string? _json;
+    private bool _jsonSelected;
+
     /// <summary>
     ///     Gets or sets whether the suggestion is disabled in the enhanced menu.
     /// </summary>
@@ -525,7 +491,13 @@ public sealed class NTAutocompleteOption : ComponentBase, IDisposable {
         builder.OpenElement(0, "script");
         builder.AddAttribute(1, "type", "application/json");
         builder.AddAttribute(2, "data-nt-autocomplete-option-definition", "true");
-        builder.AddContent(3, (MarkupString)Context!.BuildOptionJson(this));
+        var selected = Context!.IsOptionSelected(this);
+        if (_json is null || _jsonSelected != selected || LeadingIcon is not null) {
+            _json = NTAutocomplete.BuildOptionJson(this, selected);
+            _jsonSelected = selected;
+        }
+
+        builder.AddContent(3, (MarkupString)_json);
         builder.CloseElement();
     }
 
@@ -543,6 +515,7 @@ public sealed class NTAutocompleteOption : ComponentBase, IDisposable {
     protected override void OnParametersSet() {
         base.OnParametersSet();
         if (HasOptionParametersChanged()) {
+            _json = null;
             Context?.NotifyOptionChildChanged();
         }
     }

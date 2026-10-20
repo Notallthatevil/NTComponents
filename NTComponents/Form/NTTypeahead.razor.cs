@@ -50,7 +50,7 @@ public partial class NTTypeahead<TItem> : IAsyncDisposable {
     private CancellationTokenSource? _searchCancellationTokenSource;
     private readonly NTDisposalState _disposalState = new();
     private IReadOnlyList<TItem> _items = [];
-    private IJSObjectReference? _jsModule;
+    private NTMenuFieldInterop<NTTypeahead<TItem>>? _interop;
     private TItem? _lastSyncedValue;
     private string? _lastSearchTextParameter;
     private int _activeIndex = -1;
@@ -197,6 +197,8 @@ public partial class NTTypeahead<TItem> : IAsyncDisposable {
         }
     }
 
+    private NTMenuFieldInterop<NTTypeahead<TItem>> Interop => _interop ??= new(this, JsModulePath, _disposalState, false, true);
+
     [Inject]
     private IJSRuntime JSRuntime { get; set; } = default!;
 
@@ -209,21 +211,7 @@ public partial class NTTypeahead<TItem> : IAsyncDisposable {
             }
             finally {
                 ((IDisposable)this).Dispose();
-                var module = _jsModule;
-                _jsModule = null;
-                if (module is not null) {
-                    try {
-                        try {
-                            await module.InvokeVoidAsync("onDispose", Element);
-                        }
-                        finally {
-                            await module.DisposeAsync();
-                        }
-                    }
-                    catch (JSDisconnectedException) {
-                        // JS runtime was disconnected, safe to ignore during disposal.
-                    }
-                }
+                await Interop.ReleaseAsync(Element);
 
                 GC.SuppressFinalize(this);
             }
@@ -255,42 +243,11 @@ public partial class NTTypeahead<TItem> : IAsyncDisposable {
     protected override string? FormatValueAsString(TItem? value) => value is null ? null : ItemTextSelector(value);
 
     /// <inheritdoc />
+    [SuppressMessage("Reliability", "NTBA0003:Lifecycle method should use meaningful exception handling or owner ErrorBoundary coverage", Justification = "JS interop failures are handled by NTMenuFieldInterop.")]
     protected override async Task OnAfterRenderAsync(bool firstRender) {
         await base.OnAfterRenderAsync(firstRender);
 
-        if (!_disposalState.HasStarted) {
-            try {
-                if (firstRender) {
-                    var importedModule = await JSRuntime.ImportIsolatedJs(this, JsModulePath);
-                    if (!_disposalState.HasStarted) {
-                        _jsModule = importedModule;
-                        await importedModule.InvokeVoidAsync("onLoad", Element);
-                    }
-                    else {
-                        await importedModule.DisposeAsync();
-                    }
-                }
-                else if (!_disposalState.HasStarted && _jsModule is not null) {
-                    await _jsModule.InvokeVoidAsync("onUpdate", Element);
-                }
-            }
-            catch (JSDisconnectedException) {
-                // JS runtime was disconnected, safe to ignore during render.
-            }
-            catch (JSException) {
-                // Menu positioning is a progressive enhancement. Keep the typeahead usable instead of failing the circuit.
-                var module = _jsModule;
-                _jsModule = null;
-                if (module is not null) {
-                    try {
-                        await module.DisposeAsync();
-                    }
-                    catch (JSDisconnectedException) {
-                        // JS runtime was disconnected while releasing the failed enhancement.
-                    }
-                }
-            }
-        }
+        await Interop.AfterRenderAsync(JSRuntime, Element, firstRender);
     }
 
     /// <inheritdoc />
@@ -389,11 +346,6 @@ public partial class NTTypeahead<TItem> : IAsyncDisposable {
 
     private string GetItemSupportingText(TItem item) => ItemSupportingTextSelector?.Invoke(item) ?? string.Empty;
     private string GetOptionId(int index) => $"{InputId}-option-{index}";
-    private static string GetOptionClass(bool isActive, bool isSelected) => CssClassBuilder.Create()
-        .AddClass("nt-combobox-option")
-        .AddClass("nt-combobox-option-active", isActive)
-        .AddClass("nt-combobox-option-selected", isSelected)
-        .Build()!;
 
     private async Task OnFocusAsync(FocusEventArgs args) {
         if (!FieldDisabled && !FieldReadOnly && _items.Count > 0) {
@@ -512,12 +464,13 @@ public partial class NTTypeahead<TItem> : IAsyncDisposable {
     }
 
     private async Task ScrollActiveOptionIntoViewAsync() {
-        if (_jsModule is null || ActiveDescendantId is null) {
+        var module = Interop.Module;
+        if (module is null || ActiveDescendantId is null) {
             return;
         }
 
         try {
-            await _jsModule.InvokeVoidAsync("scrollActiveOptionIntoView", Element, ActiveDescendantId);
+            await module.InvokeVoidAsync("scrollActiveOptionIntoView", Element, ActiveDescendantId);
         }
         catch (JSDisconnectedException) {
             // JS runtime was disconnected, safe to ignore.

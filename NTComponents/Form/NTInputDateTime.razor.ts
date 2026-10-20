@@ -108,7 +108,7 @@ let activePickerState: PickerState | null = null;
 let pendingFrame: number | null = null;
 let pointerDownInsideActivePicker = false;
 let globalHandlersAttached = false;
-const dateTimeFormatByKey = new Map<string, Intl.DateTimeFormat>();
+const formatterByKey = new Map<string, Intl.DateTimeFormat>();
 const lifecycleScopeByPageScript = new WeakMap<Element, Element>();
 
 function clamp(value: number, min: number, max: number): number {
@@ -134,16 +134,23 @@ function padYear(value: number): string {
     return `${sign}${String(absoluteYear).padStart(4, '0')}`;
 }
 
-function getDateTimeFormatter(options: Intl.DateTimeFormatOptions): Intl.DateTimeFormat {
-    const key = JSON.stringify(options);
-    const existing = dateTimeFormatByKey.get(key);
-    if (existing) {
-        return existing;
+const FORMATTER_OPTIONS = {
+    dayHeadline: { weekday: 'short', month: 'short', day: 'numeric' },
+    month: { month: 'long' },
+    monthShort: { month: 'short' },
+    monthYear: { month: 'long', year: 'numeric' },
+    time: { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true },
+    year: { year: 'numeric' },
+} satisfies Record<string, Intl.DateTimeFormatOptions>;
+
+function formatLocal(key: keyof typeof FORMATTER_OPTIONS, date: Date): string {
+    let formatter = formatterByKey.get(key);
+    if (!formatter) {
+        formatter = new Intl.DateTimeFormat(undefined, FORMATTER_OPTIONS[key]);
+        formatterByKey.set(key, formatter);
     }
 
-    const formatter = new Intl.DateTimeFormat(undefined, options);
-    dateTimeFormatByKey.set(key, formatter);
-    return formatter;
+    return formatter.format(date);
 }
 
 function createLocalDate(year: number, month: number, day: number, hour = 0, minute = 0, second = 0): Date {
@@ -421,29 +428,22 @@ function createTimePanel(scopeAttributeName: string | null): HTMLElement {
     panel.dataset.tntDtpTimePanel = '';
     const fields = createScopedElement('div', scopeAttributeName, 'tnt-dtp-time-fields');
 
-    const hourLabel = createScopedElement('label', scopeAttributeName, 'tnt-dtp-time-field');
-    const hourInput = createScopedElement('input', scopeAttributeName);
-    hourInput.inputMode = 'numeric';
-    hourInput.autocomplete = 'off';
-    hourInput.setAttribute('aria-label', 'Hour');
-    hourInput.dataset.tntDtpHour = '';
-    const hourText = createScopedElement('span', scopeAttributeName);
-    hourText.textContent = 'Hour';
-    hourLabel.append(hourInput, hourText);
+    const createTimeField = (text: string, dataKey: 'tntDtpHour' | 'tntDtpMinute'): HTMLLabelElement => {
+        const label = createScopedElement('label', scopeAttributeName, 'tnt-dtp-time-field');
+        const input = createScopedElement('input', scopeAttributeName);
+        input.inputMode = 'numeric';
+        input.autocomplete = 'off';
+        input.setAttribute('aria-label', text);
+        input.dataset[dataKey] = '';
+        const caption = createScopedElement('span', scopeAttributeName);
+        caption.textContent = text;
+        label.append(input, caption);
+        return label;
+    };
 
     const separator = createScopedElement('span', scopeAttributeName, 'tnt-dtp-time-separator');
     separator.setAttribute('aria-hidden', 'true');
     separator.textContent = ':';
-
-    const minuteLabel = createScopedElement('label', scopeAttributeName, 'tnt-dtp-time-field');
-    const minuteInput = createScopedElement('input', scopeAttributeName);
-    minuteInput.inputMode = 'numeric';
-    minuteInput.autocomplete = 'off';
-    minuteInput.setAttribute('aria-label', 'Minute');
-    minuteInput.dataset.tntDtpMinute = '';
-    const minuteText = createScopedElement('span', scopeAttributeName);
-    minuteText.textContent = 'Minute';
-    minuteLabel.append(minuteInput, minuteText);
 
     const meridiemGroup = createScopedElement('div', scopeAttributeName, 'tnt-dtp-meridiem-field');
     meridiemGroup.setAttribute('role', 'group');
@@ -456,75 +456,51 @@ function createTimePanel(scopeAttributeName: string | null): HTMLElement {
     pmButton.textContent = 'PM';
     meridiemGroup.append(amButton, pmButton);
 
-    fields.append(hourLabel, separator, minuteLabel, meridiemGroup);
+    fields.append(createTimeField('Hour', 'tntDtpHour'), separator, createTimeField('Minute', 'tntDtpMinute'), meridiemGroup);
     panel.appendChild(fields);
     return panel;
+}
+
+function refreshPickerElements(state: PickerState): void {
+    const previousYearList = state.elements.yearList;
+    state.elements = collectPickerElements(state.picker);
+    if (previousYearList !== state.elements.yearList) {
+        previousYearList?.removeEventListener('scroll', state.onYearListScroll);
+        state.elements.yearList?.addEventListener('scroll', state.onYearListScroll);
+        state.yearListStart = null;
+        state.yearListEnd = null;
+        state.yearListMinYear = null;
+        state.yearListMaxYear = null;
+        state.yearListSelectedYear = null;
+    }
 }
 
 function ensureLazyPickerStructure(state: PickerState): boolean {
     const scopeAttributeName = getCssScopeAttributeName(state.picker);
     const content = getPickerContentElement(state.picker, scopeAttributeName);
-    const modeConfig = getModeConfig(state.mode);
+    const { hasDate, hasTime } = getModeConfig(state.mode);
+    const panels: [string, boolean, (scope: string | null) => HTMLElement][] = [
+        ['[data-tnt-dtp-date-panel]', hasDate, createDatePanel],
+        ['[data-tnt-dtp-month-panel]', hasDate || state.mode === 'month', createMonthPanel],
+        ['[data-tnt-dtp-year-panel]', hasDate, createYearPanel],
+        ['[data-tnt-dtp-time-panel]', hasTime, createTimePanel],
+    ];
     let changed = false;
 
-    const removeIfPresent = (selector: string): void => {
-        const element = content.querySelector(selector);
-        if (element) {
-            element.remove();
+    for (const [selector, wanted, create] of panels) {
+        const existing = content.querySelector(selector);
+        if (wanted && !existing) {
+            content.appendChild(create(scopeAttributeName));
             changed = true;
         }
-    };
-
-    if (modeConfig.hasDate) {
-        if (!content.querySelector('[data-tnt-dtp-date-panel]')) {
-            content.appendChild(createDatePanel(scopeAttributeName));
+        else if (!wanted && existing) {
+            existing.remove();
             changed = true;
         }
-        if (!content.querySelector('[data-tnt-dtp-month-panel]')) {
-            content.appendChild(createMonthPanel(scopeAttributeName));
-            changed = true;
-        }
-        if (!content.querySelector('[data-tnt-dtp-year-panel]')) {
-            content.appendChild(createYearPanel(scopeAttributeName));
-            changed = true;
-        }
-    }
-    else {
-        removeIfPresent('[data-tnt-dtp-date-panel]');
-        removeIfPresent('[data-tnt-dtp-year-panel]');
-        if (state.mode === 'month') {
-            if (!content.querySelector('[data-tnt-dtp-month-panel]')) {
-                content.appendChild(createMonthPanel(scopeAttributeName));
-                changed = true;
-            }
-        }
-        else {
-            removeIfPresent('[data-tnt-dtp-month-panel]');
-        }
-    }
-
-    if (modeConfig.hasTime) {
-        if (!content.querySelector('[data-tnt-dtp-time-panel]')) {
-            content.appendChild(createTimePanel(scopeAttributeName));
-            changed = true;
-        }
-    }
-    else {
-        removeIfPresent('[data-tnt-dtp-time-panel]');
     }
 
     if (changed) {
-        const previousYearList = state.elements.yearList;
-        state.elements = collectPickerElements(state.picker);
-        if (previousYearList !== state.elements.yearList) {
-            previousYearList?.removeEventListener('scroll', state.onYearListScroll);
-            state.elements.yearList?.addEventListener('scroll', state.onYearListScroll);
-            state.yearListStart = null;
-            state.yearListEnd = null;
-            state.yearListMinYear = null;
-            state.yearListMaxYear = null;
-            state.yearListSelectedYear = null;
-        }
+        refreshPickerElements(state);
     }
 
     return changed;
@@ -608,9 +584,21 @@ function escapeRegex(value: string): string {
     return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-function parseDraftWithPattern(format: string, value: string): PickerDraft | null {
-    const tokens: string[] = [];
+interface FormatPattern {
+    regexes: RegExp[];
+    tokens: string[];
+}
+
+const formatPatternByFormat = new Map<string, FormatPattern>();
+
+function getFormatPattern(format: string): FormatPattern {
+    let formatPattern = formatPatternByFormat.get(format);
+    if (formatPattern) {
+        return formatPattern;
+    }
+
     const tokenMatches = Array.from(format.matchAll(FORMAT_TOKEN_PATTERN));
+    const tokens = tokenMatches.map(match => match[0]);
     const buildLiteralPattern = (literal: string, allowOmittedPunctuation: boolean) => Array.from(literal)
         .map(character => allowOmittedPunctuation && !/\s/.test(character) ? `${escapeRegex(character)}?` : escapeRegex(character))
         .join('');
@@ -638,13 +626,26 @@ function parseDraftWithPattern(format: string, value: string): PickerDraft | nul
         return `${pattern}$`;
     };
 
-    for (const match of tokenMatches) {
-        tokens.push(match[0]);
+    const patterns = [buildPattern(true), buildPattern(true, true)];
+    if (tokens.every(token => token === 'yyyy' || token.length === 2)) {
+        patterns.push(buildPattern(false));
     }
 
-    const match = new RegExp(buildPattern(true), 'i').exec(value)
-        ?? new RegExp(buildPattern(true, true), 'i').exec(value)
-        ?? (tokens.every(token => token === 'yyyy' || token.length === 2) ? new RegExp(buildPattern(false), 'i').exec(value) : null);
+    formatPattern = { regexes: patterns.map(pattern => new RegExp(pattern, 'i')), tokens };
+    formatPatternByFormat.set(format, formatPattern);
+    return formatPattern;
+}
+
+function parseDraftWithPattern(format: string, value: string): PickerDraft | null {
+    const { regexes, tokens } = getFormatPattern(format);
+    let match: RegExpExecArray | null = null;
+    for (const regex of regexes) {
+        match = regex.exec(value);
+        if (match) {
+            break;
+        }
+    }
+
     if (!match) {
         return null;
     }
@@ -899,53 +900,29 @@ function updateDisabledSets(state: PickerState): void {
     state.disabledTimeSet = parseDisabledSet(state.input?.dataset?.tntDtpDisabledTimes, normalizeTimeToken);
 }
 
+function getComparable(mode: DateTimePickerMode): ((draft: PickerDraft) => number) | null {
+    switch (mode) {
+        case 'date': return toDateComparable;
+        case 'time': return toTimeComparable;
+        case 'month': return toMonthComparable;
+        case 'datetime': return toDateTimeComparable;
+        default: return null;
+    }
+}
+
 function clampDraftToConstraints(state: PickerState, draft: PickerDraft): PickerDraft {
-    const candidate = cloneDraft(draft);
-
-    if (state.mode === 'date') {
-        const value = toDateComparable(candidate);
-        if (state.minDraft && value < toDateComparable(state.minDraft)) {
+    const comparable = getComparable(state.mode);
+    if (comparable) {
+        const value = comparable(draft);
+        if (state.minDraft && value < comparable(state.minDraft)) {
             return cloneDraft(state.minDraft);
         }
-        if (state.maxDraft && value > toDateComparable(state.maxDraft)) {
-            return cloneDraft(state.maxDraft);
-        }
-        return candidate;
-    }
-
-    if (state.mode === 'time') {
-        const value = toTimeComparable(candidate);
-        if (state.minDraft && value < toTimeComparable(state.minDraft)) {
-            return cloneDraft(state.minDraft);
-        }
-        if (state.maxDraft && value > toTimeComparable(state.maxDraft)) {
-            return cloneDraft(state.maxDraft);
-        }
-        return candidate;
-    }
-
-    if (state.mode === 'month') {
-        const value = toMonthComparable(candidate);
-        if (state.minDraft && value < toMonthComparable(state.minDraft)) {
-            return cloneDraft(state.minDraft);
-        }
-        if (state.maxDraft && value > toMonthComparable(state.maxDraft)) {
-            return cloneDraft(state.maxDraft);
-        }
-        return candidate;
-    }
-
-    if (state.mode === 'datetime') {
-        const value = toDateTimeComparable(candidate);
-        if (state.minDraft && value < toDateTimeComparable(state.minDraft)) {
-            return cloneDraft(state.minDraft);
-        }
-        if (state.maxDraft && value > toDateTimeComparable(state.maxDraft)) {
+        if (state.maxDraft && value > comparable(state.maxDraft)) {
             return cloneDraft(state.maxDraft);
         }
     }
 
-    return candidate;
+    return cloneDraft(draft);
 }
 
 function setInputValue(state: PickerState, value: string): void {
@@ -1021,22 +998,7 @@ function isDateDisabled(state: PickerState, year: number, month: number, day: nu
     }
 
     const value = toDateComparable({ year, month, day });
-
-    if (state.minDraft) {
-        const minValue = toDateComparable(state.minDraft);
-        if (value < minValue) {
-            return true;
-        }
-    }
-
-    if (state.maxDraft) {
-        const maxValue = toDateComparable(state.maxDraft);
-        if (value > maxValue) {
-            return true;
-        }
-    }
-
-    return false;
+    return (!!state.minDraft && value < toDateComparable(state.minDraft)) || (!!state.maxDraft && value > toDateComparable(state.maxDraft));
 }
 
 function isTimeDisabled(state: PickerState, hour: number, minute: number, second: number): boolean {
@@ -1048,23 +1010,9 @@ function isDraftDisabled(state: PickerState, draft: Maybe<PickerDraft>): boolean
         return false;
     }
 
-    if (state.mode === 'date') {
-        return isDateDisabled(state, draft.year, draft.month, draft.day);
-    }
-
-    if (state.mode === 'time') {
-        return isTimeDisabled(state, draft.hour, draft.minute, draft.second);
-    }
-
-    if (state.mode === 'month') {
-        return false;
-    }
-
-    if (state.mode === 'datetime') {
-        return isDateDisabled(state, draft.year, draft.month, draft.day) || isTimeDisabled(state, draft.hour, draft.minute, draft.second);
-    }
-
-    return false;
+    const checksDate = state.mode === 'date' || state.mode === 'datetime';
+    const checksTime = state.mode === 'time' || state.mode === 'datetime';
+    return (checksDate && isDateDisabled(state, draft.year, draft.month, draft.day)) || (checksTime && isTimeDisabled(state, draft.hour, draft.minute, draft.second));
 }
 
 function renderHeader(state: PickerState): void {
@@ -1077,26 +1025,19 @@ function renderHeader(state: PickerState): void {
     const local = createLocalDate(state.draft.year, state.draft.month, state.draft.day, state.draft.hour, state.draft.minute, state.draft.second);
 
     if (state.mode === 'time') {
-        headline.textContent = getDateTimeFormatter({ hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }).format(local);
+        headline.textContent = formatLocal('time', local);
         subhead.textContent = 'Select a time';
         return;
     }
 
     if (state.mode === 'month') {
-        headline.textContent = getDateTimeFormatter({ month: 'long', year: 'numeric' }).format(local);
+        headline.textContent = formatLocal('monthYear', local);
         subhead.textContent = 'Select a month';
         return;
     }
 
-    const headlineText = getDateTimeFormatter({ weekday: 'short', month: 'short', day: 'numeric' }).format(local);
-    headline.textContent = headlineText;
-
-    if (state.mode === 'date') {
-        subhead.textContent = getDateTimeFormatter({ year: 'numeric', month: 'long' }).format(local);
-    }
-    else {
-        subhead.textContent = getDateTimeFormatter({ hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }).format(local);
-    }
+    headline.textContent = formatLocal('dayHeadline', local);
+    subhead.textContent = formatLocal(state.mode === 'date' ? 'monthYear' : 'time', local);
 }
 
 function renderTimeFields(state: PickerState): void {
@@ -1131,9 +1072,9 @@ function renderCalendar(state: PickerState): void {
     }
 
     const monthStart = createLocalDate(state.viewYear, state.viewMonth, 1);
-    monthLabel.textContent = getDateTimeFormatter({ month: 'long' }).format(monthStart);
+    monthLabel.textContent = formatLocal('month', monthStart);
     if (calendarYearLabel) {
-        calendarYearLabel.textContent = getDateTimeFormatter({ year: 'numeric' }).format(monthStart);
+        calendarYearLabel.textContent = formatLocal('year', monthStart);
     }
 
     const startOffset = monthStart.getDay();
@@ -1168,22 +1109,7 @@ function renderCalendar(state: PickerState): void {
 
 function isMonthDisabled(state: PickerState, year: number, month: number): boolean {
     const value = toMonthComparable({ year, month });
-
-    if (state.minDraft) {
-        const minValue = toMonthComparable(state.minDraft);
-        if (value < minValue) {
-            return true;
-        }
-    }
-
-    if (state.maxDraft) {
-        const maxValue = toMonthComparable(state.maxDraft);
-        if (value > maxValue) {
-            return true;
-        }
-    }
-
-    return false;
+    return (!!state.minDraft && value < toMonthComparable(state.minDraft)) || (!!state.maxDraft && value > toMonthComparable(state.maxDraft));
 }
 
 function renderMonthGrid(state: PickerState): void {
@@ -1205,7 +1131,7 @@ function renderMonthGrid(state: PickerState): void {
         const selected = cellKey === selectedKey;
         const isToday = cellKey === todayKey;
         const disabled = isMonthDisabled(state, state.viewYear, month);
-        const monthLabel = getDateTimeFormatter({ month: 'short' }).format(createLocalDate(state.viewYear, month, 1));
+        const monthLabel = formatLocal('monthShort', createLocalDate(state.viewYear, month, 1));
 
         button.textContent = monthLabel;
         button.dataset.tntDtpYear = String(state.viewYear);
@@ -1238,15 +1164,7 @@ function getInitialYearListRange(state: PickerState): { end: number; start: numb
 }
 
 function isYearDisabled(state: PickerState, year: number): boolean {
-    if (state.minDraft && year < state.minDraft.year) {
-        return true;
-    }
-
-    if (state.maxDraft && year > state.maxDraft.year) {
-        return true;
-    }
-
-    return false;
+    return (!!state.minDraft && year < state.minDraft.year) || (!!state.maxDraft && year > state.maxDraft.year);
 }
 
 function getCssScopeAttributeName(element: HTMLElement): string | null {
@@ -1267,11 +1185,7 @@ function createYearOption(year: number, scopeAttributeName: string | null): HTML
     yearButton.dataset.tntDtpYearOption = String(year);
     yearButton.setAttribute('role', 'option');
     yearButton.textContent = padYear(year);
-    if (scopeAttributeName) {
-        yearButton.setAttribute(scopeAttributeName, '');
-    }
-
-    return yearButton;
+    return applyScopeAttribute(yearButton, scopeAttributeName);
 }
 
 function appendYearOptions(yearList: HTMLElement, start: number, end: number, placement: 'afterbegin' | 'beforeend'): void {
@@ -1426,18 +1340,22 @@ function handleYearListScroll(state: PickerState, yearList: HTMLElement): void {
     }
 }
 
+function isSubSelectionView(state: PickerState): boolean {
+    return (state.dateView === 'month' || state.dateView === 'year') && getModeConfig(state.mode).supportsSubSelection;
+}
+
 function renderActionState(state: PickerState): void {
     const { cancelButton, confirmButton } = state.elements;
-    const isSubSelectionView = (state.dateView === 'month' || state.dateView === 'year') && getModeConfig(state.mode).supportsSubSelection;
+    const subSelection = isSubSelectionView(state);
 
     if (cancelButton) {
-        cancelButton.textContent = isSubSelectionView ? 'Back' : 'Cancel';
-        cancelButton.setAttribute('aria-label', isSubSelectionView ? 'Back to calendar' : 'Cancel');
+        cancelButton.textContent = subSelection ? 'Back' : 'Cancel';
+        cancelButton.setAttribute('aria-label', subSelection ? 'Back to calendar' : 'Cancel');
     }
 
     if (confirmButton) {
-        confirmButton.hidden = isSubSelectionView;
-        confirmButton.setAttribute('aria-hidden', isSubSelectionView ? 'true' : 'false');
+        confirmButton.hidden = subSelection;
+        confirmButton.setAttribute('aria-hidden', subSelection ? 'true' : 'false');
         confirmButton.disabled = isDraftDisabled(state, state.draft);
     }
 }
@@ -1574,20 +1492,7 @@ function setTrigger(state: PickerState, trigger: HTMLButtonElement | null): void
 
 function getLabelAnchorRect(state: PickerState): DOMRect | null {
     const labelElement = state.input.closest('label') ?? state.input.labels?.[0] ?? null;
-    if (labelElement?.getBoundingClientRect) {
-        return labelElement.getBoundingClientRect();
-    }
-
-    return null;
-}
-
-function getHorizontalAnchorRect(state: PickerState): DOMRect {
-    const labelRect = getLabelAnchorRect(state);
-    if (labelRect) {
-        return labelRect;
-    }
-
-    return state.input.getBoundingClientRect();
+    return labelElement?.getBoundingClientRect ? labelElement.getBoundingClientRect() : null;
 }
 
 function positionPicker(state: Maybe<PickerState>): void {
@@ -1609,8 +1514,8 @@ function positionPicker(state: Maybe<PickerState>): void {
     }
 
     const inputRect = state.input.getBoundingClientRect();
-    const horizontalAnchorRect = getHorizontalAnchorRect(state);
     const labelAnchorRect = getLabelAnchorRect(state);
+    const horizontalAnchorRect = labelAnchorRect ?? inputRect;
     const anchorTop = labelAnchorRect ? Math.min(labelAnchorRect.top, inputRect.top) : inputRect.top;
     const anchorBottom = labelAnchorRect ? Math.max(labelAnchorRect.bottom, inputRect.bottom) : inputRect.bottom;
 
@@ -1625,7 +1530,7 @@ function positionPicker(state: Maybe<PickerState>): void {
     const offset = 6;
 
     const maxLeft = Math.max(edgePadding, viewportWidth - pickerRect.width - edgePadding);
-    let left = clamp(horizontalAnchorRect.left, edgePadding, maxLeft);
+    const left = clamp(horizontalAnchorRect.left, edgePadding, maxLeft);
 
     const spaceBelow = Math.max(0, viewportHeight - anchorBottom - edgePadding);
     const spaceAbove = Math.max(0, anchorTop - edgePadding);
@@ -1762,82 +1667,55 @@ function handleDaySelection(state: PickerState, button: Maybe<HTMLButtonElement>
 }
 
 function handlePickerAction(state: PickerState, action: Maybe<string>): void {
-    if (!action) {
-        return;
-    }
-
-    if (action === 'prev-month') {
-        const previous = shiftYearMonth(state.viewYear, state.viewMonth, -1);
-        state.viewYear = previous.year;
-        state.viewMonth = previous.month;
-        state.dateView = 'calendar';
-        renderPicker(state);
-        return;
-    }
-
-    if (action === 'next-month') {
-        const next = shiftYearMonth(state.viewYear, state.viewMonth, 1);
-        state.viewYear = next.year;
-        state.viewMonth = next.month;
-        state.dateView = 'calendar';
-        renderPicker(state);
-        return;
-    }
-
-    if (action === 'show-months') {
-        state.dateView = 'month';
-        renderPicker(state);
-        return;
-    }
-
-    if (action === 'show-years') {
-        state.dateView = 'year';
-        renderPicker(state);
-        return;
-    }
-
-    if (action === 'prev-year') {
-        state.viewYear -= 1;
-        renderPicker(state);
-        return;
-    }
-
-    if (action === 'next-year') {
-        state.viewYear += 1;
-        renderPicker(state);
-        return;
-    }
-
-    if (action === 'set-am' || action === 'set-pm') {
-        state.meridiem = action === 'set-pm' ? 'pm' : 'am';
-        const currentHour = toTwelveHour(state.draft.hour).hour;
-        state.draft.hour = toTwentyFourHour(currentHour, state.meridiem);
-        state.draft = clampDraftToConstraints(state, state.draft);
-        renderPicker(state);
-        return;
-    }
-
-    if (action === 'cancel') {
-        if ((state.dateView === 'month' || state.dateView === 'year') && getModeConfig(state.mode).supportsSubSelection) {
+    switch (action) {
+        case 'prev-month':
+        case 'next-month': {
+            const shifted = shiftYearMonth(state.viewYear, state.viewMonth, action === 'next-month' ? 1 : -1);
+            state.viewYear = shifted.year;
+            state.viewMonth = shifted.month;
             state.dateView = 'calendar';
-            renderPicker(state);
-            return;
+            break;
         }
+        case 'show-months':
+            state.dateView = 'month';
+            break;
+        case 'show-years':
+            state.dateView = 'year';
+            break;
+        case 'prev-year':
+            state.viewYear -= 1;
+            break;
+        case 'next-year':
+            state.viewYear += 1;
+            break;
+        case 'set-am':
+        case 'set-pm':
+            state.meridiem = action === 'set-pm' ? 'pm' : 'am';
+            state.draft.hour = toTwentyFourHour(toTwelveHour(state.draft.hour).hour, state.meridiem);
+            state.draft = clampDraftToConstraints(state, state.draft);
+            break;
+        case 'cancel':
+            if (!isSubSelectionView(state)) {
+                closePicker(state);
+                return;
+            }
 
-        closePicker(state);
-        return;
+            state.dateView = 'calendar';
+            break;
+        case 'confirm':
+            state.draft = clampDraftToConstraints(state, state.draft);
+            if (!isDraftDisabled(state, state.draft)) {
+                setInputValue(state, formatDraft(state.mode, state.draft, state.input.getAttribute('format')));
+                closePicker(state);
+                return;
+            }
+
+            break;
+        default:
+            return;
     }
 
-    if (action === 'confirm') {
-        state.draft = clampDraftToConstraints(state, state.draft);
-        if (isDraftDisabled(state, state.draft)) {
-            renderPicker(state);
-            return;
-        }
-
-        setInputValue(state, formatDraft(state.mode, state.draft, state.input.getAttribute('format')));
-        closePicker(state);
-    }
+    renderPicker(state);
 }
 
 function syncDraftFromTimeFields(state: PickerState): void {
@@ -1859,17 +1737,7 @@ function syncDraftFromTimeFields(state: PickerState): void {
 }
 
 function configureStateFromAttributes(state: PickerState): void {
-    const previousYearList = state.elements.yearList;
-    state.elements = collectPickerElements(state.picker);
-    if (previousYearList !== state.elements.yearList) {
-        previousYearList?.removeEventListener('scroll', state.onYearListScroll);
-        state.elements.yearList?.addEventListener('scroll', state.onYearListScroll);
-        state.yearListStart = null;
-        state.yearListEnd = null;
-        state.yearListMinYear = null;
-        state.yearListMaxYear = null;
-        state.yearListSelectedYear = null;
-    }
+    refreshPickerElements(state);
 
     state.label = state.input.closest('label') ?? state.input.labels?.[0] ?? state.label ?? null;
     state.mode = parseMode(state);
@@ -1964,11 +1832,11 @@ function createPickerState(input: HTMLInputElement, picker: HTMLElement): Picker
     state.onInputCommit = () => {
         const value = state.input.value.trim();
         const format = state.input.getAttribute('format');
-        const parsed = parseDraft(state.mode, value, format);
         if (!format) {
             return;
         }
 
+        const parsed = parseDraft(state.mode, value, format);
         if (!parsed) {
             setInputParseError(state, value ? `Enter a value in the format ${format}.` : null);
             return;

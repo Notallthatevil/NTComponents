@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Web;
 using System.Globalization;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Text;
 
 using NTComponents.CodeDocumentation;
@@ -24,7 +25,18 @@ namespace NTComponents;
     CompatibilityDetails = "Static SSR preserves the rendered markup and native browser behavior. EventCallback handlers, bound state updates, and live validation require an interactive render mode.")]
 public abstract class NTFormControlBaseCore<TValue> : NTValidationInputBase<TValue> {
     private string _generatedInputId = "nt-form-control-field";
+    private string? _generatedInputIdPrefix;
+    private bool _generatedInputIdResolved;
+    private string? _generatedInputIdSource;
     private string? _resolvedElementName;
+    private string? _derivedIdBase;
+    private string? _errorTextId;
+    private string? _labelId;
+    private string? _supportingTextId;
+    private string? _fieldCssClassInput;
+    private string? _fieldCssClass;
+    private string? _fieldCssClassResult;
+    private Func<FocusEventArgs, Task>? _blurHandler;
 
     /// <inheritdoc />
     [Parameter]
@@ -135,7 +147,7 @@ public abstract class NTFormControlBaseCore<TValue> : NTValidationInputBase<TVal
     /// <summary>
     ///     Gets the id for error text.
     /// </summary>
-    protected string ErrorTextId => $"{InputId}-error";
+    protected string ErrorTextId => GetDerivedId(ref _errorTextId, "-error");
 
     /// <summary>
     ///     Gets the id for the native control.
@@ -150,12 +162,12 @@ public abstract class NTFormControlBaseCore<TValue> : NTValidationInputBase<TVal
     /// <summary>
     ///     Gets the id for label text.
     /// </summary>
-    protected string LabelId => $"{InputId}-label";
+    protected string LabelId => GetDerivedId(ref _labelId, "-label");
 
     /// <summary>
     ///     Gets the id for supporting text.
     /// </summary>
-    protected string SupportingTextId => $"{InputId}-supporting";
+    protected string SupportingTextId => GetDerivedId(ref _supportingTextId, "-supporting");
 
     /// <summary>
     ///     Gets the current error text.
@@ -202,6 +214,11 @@ public abstract class NTFormControlBaseCore<TValue> : NTValidationInputBase<TVal
     protected virtual bool HasRequiredSupportingText => false;
 
     /// <summary>
+    ///     Gets the <see cref="OnBlurAsync" /> delegate, created once instead of on every render.
+    /// </summary>
+    private protected Func<FocusEventArgs, Task> BlurHandler => _blurHandler ??= OnBlurAsync;
+
+    /// <summary>
     ///     Sets focus to the native control.
     /// </summary>
     /// <returns>A task that represents the asynchronous operation.</returns>
@@ -238,7 +255,49 @@ public abstract class NTFormControlBaseCore<TValue> : NTValidationInputBase<TVal
     /// </summary>
     /// <param name="className">The root class value.</param>
     /// <returns>The updated root class value.</returns>
-    protected string AppendFieldCssClass(string className) => CssClassBuilder.Create(className).AddClass(EditContext?.FieldCssClass(FieldIdentifier)).Build();
+    protected string AppendFieldCssClass(string className) => AppendFieldCssClass(className, EditContext?.FieldCssClass(FieldIdentifier));
+
+    /// <summary>
+    ///     Appends an already resolved field CSS class, reusing the previous result while both inputs are unchanged.
+    /// </summary>
+    private protected string AppendFieldCssClass(string className, string? fieldCssClass) {
+        if (_fieldCssClassResult is null || !ReferenceEquals(className, _fieldCssClassInput) || !ReferenceEquals(fieldCssClass, _fieldCssClass)) {
+            var hasClass = !string.IsNullOrWhiteSpace(className);
+            var hasFieldClass = !string.IsNullOrWhiteSpace(fieldCssClass) && !string.Equals(fieldCssClass, className, StringComparison.Ordinal);
+            _fieldCssClassResult = (hasClass && hasFieldClass ? $"{className} {fieldCssClass}" : hasClass ? className : hasFieldClass ? fieldCssClass! : string.Empty).Trim();
+            _fieldCssClassInput = className;
+            _fieldCssClass = fieldCssClass;
+        }
+
+        return _fieldCssClassResult;
+    }
+
+    /// <summary>
+    ///     Appends a CSS custom property that references an NT theme color when the color is set.
+    /// </summary>
+    private protected static string? AppendColorVariable(string? style, string variableName, NTColor? color) => color.HasValue ? $"{style}--{variableName}:{color.Value.ToCssNTColorVariable()};" : style;
+
+    /// <summary>
+    ///     Gets an id derived from <see cref="InputId" />, rebuilding it only after the input id changes.
+    /// </summary>
+    private protected string GetDerivedId(ref string? cache, string suffix) {
+        var inputId = InputId;
+        if (!ReferenceEquals(inputId, _derivedIdBase)) {
+            _derivedIdBase = inputId;
+            ClearDerivedIds();
+        }
+
+        return cache ??= inputId + suffix;
+    }
+
+    /// <summary>
+    ///     Clears the ids cached through <see cref="GetDerivedId" />.
+    /// </summary>
+    private protected virtual void ClearDerivedIds() {
+        _errorTextId = null;
+        _labelId = null;
+        _supportingTextId = null;
+    }
 
     /// <summary>
     ///     Builds the aria-describedby value from existing additional attributes and internal text ids.
@@ -273,12 +332,29 @@ public abstract class NTFormControlBaseCore<TValue> : NTValidationInputBase<TVal
     /// <param name="value">The resolved value.</param>
     /// <returns><see langword="true" /> when the value exists; otherwise, <see langword="false" />.</returns>
     protected bool TryGetAdditionalAttribute(string name, out object? value) {
-        if (AdditionalAttributes?.TryGetValue(name, out value) == true) {
+        var attributes = AdditionalAttributes;
+        if (attributes is null) {
+            value = null;
+            return false;
+        }
+
+        if (attributes.TryGetValue(name, out value)) {
             return true;
         }
 
-        if (AdditionalAttributes is not null) {
-            foreach (var (key, attributeValue) in AdditionalAttributes) {
+        // A case-insensitive dictionary has already answered; otherwise scan, avoiding a boxed enumerator for concrete dictionaries.
+        if (attributes is Dictionary<string, object> dictionary) {
+            if (dictionary.Comparer != StringComparer.OrdinalIgnoreCase) {
+                foreach (var (key, attributeValue) in dictionary) {
+                    if (string.Equals(key, name, StringComparison.OrdinalIgnoreCase)) {
+                        value = attributeValue;
+                        return true;
+                    }
+                }
+            }
+        }
+        else {
+            foreach (var (key, attributeValue) in attributes) {
                 if (string.Equals(key, name, StringComparison.OrdinalIgnoreCase)) {
                     value = attributeValue;
                     return true;
@@ -297,30 +373,11 @@ public abstract class NTFormControlBaseCore<TValue> : NTValidationInputBase<TVal
     /// <param name="additionalControlAttributes">Additional attributes supplied by a derived type.</param>
     /// <returns>The filtered attributes, or null when no attributes remain.</returns>
     protected IReadOnlyDictionary<string, object?>? BuildFilteredAttributes(IEnumerable<string> explicitAttributeNames, IReadOnlyDictionary<string, object?>? additionalControlAttributes = null) {
-        if (AdditionalAttributes is null && additionalControlAttributes is null) {
-            return null;
-        }
-
-        var attributes = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
-
-        if (AdditionalAttributes is not null) {
-            foreach (var (key, value) in AdditionalAttributes) {
-                attributes[key] = value;
-            }
-        }
-
-        if (additionalControlAttributes is not null) {
-            foreach (var (key, value) in additionalControlAttributes) {
-                attributes[key] = value;
-            }
-        }
-
-        attributes.Remove("class");
-        foreach (var attributeName in explicitAttributeNames) {
-            attributes.Remove(attributeName);
-        }
-
-        return attributes.Count == 0 ? null : attributes;
+        // Copy only the attributes that survive filtering so the common all-explicit case allocates nothing.
+        Dictionary<string, object?>? attributes = null;
+        CopyUnownedAttributes((IReadOnlyDictionary<string, object?>?)AdditionalAttributes, explicitAttributeNames, ref attributes);
+        CopyUnownedAttributes(additionalControlAttributes, explicitAttributeNames, ref attributes);
+        return attributes;
     }
 
     /// <summary>
@@ -335,6 +392,29 @@ public abstract class NTFormControlBaseCore<TValue> : NTValidationInputBase<TVal
 
         var stringValue = attributeValue?.ToString();
         return string.IsNullOrWhiteSpace(stringValue) ? null : stringValue;
+    }
+
+    private static void CopyUnownedAttributes(IReadOnlyDictionary<string, object?>? source, IEnumerable<string> explicitAttributeNames, ref Dictionary<string, object?>? target) {
+        if (source is Dictionary<string, object?> dictionary) {
+            foreach (var (key, value) in dictionary) {
+                Copy(key, value, explicitAttributeNames, ref target);
+            }
+        }
+        else if (source is not null) {
+            foreach (var (key, value) in source) {
+                Copy(key, value, explicitAttributeNames, ref target);
+            }
+        }
+
+        static void Copy(string key, object? value, IEnumerable<string> explicitAttributeNames, ref Dictionary<string, object?>? target) {
+            var isExplicit = string.Equals(key, "class", StringComparison.OrdinalIgnoreCase)
+                || (explicitAttributeNames is HashSet<string> set && set.Comparer == StringComparer.OrdinalIgnoreCase
+                    ? set.Contains(key)
+                    : explicitAttributeNames.Contains(key, StringComparer.OrdinalIgnoreCase));
+            if (!isExplicit) {
+                (target ??= new(StringComparer.OrdinalIgnoreCase))[key] = value;
+            }
+        }
     }
 
     private string? ResolveElementName() {
@@ -352,11 +432,15 @@ public abstract class NTFormControlBaseCore<TValue> : NTValidationInputBase<TVal
 
     private string ResolveGeneratedInputId() {
         var source = !string.IsNullOrWhiteSpace(_resolvedElementName) ? _resolvedElementName : FieldIdentifier.FieldName;
-        if (string.IsNullOrWhiteSpace(source)) {
-            return $"{InputIdPrefix}-field";
+        var prefix = InputIdPrefix;
+        if (!_generatedInputIdResolved || !string.Equals(source, _generatedInputIdSource, StringComparison.Ordinal) || !string.Equals(prefix, _generatedInputIdPrefix, StringComparison.Ordinal)) {
+            _generatedInputIdResolved = true;
+            _generatedInputIdSource = source;
+            _generatedInputIdPrefix = prefix;
+            _generatedInputId = string.IsNullOrWhiteSpace(source) ? $"{prefix}-field" : $"{prefix}-{CreateIdSegment(source)}-{ComputeStableHash(source)}";
         }
 
-        return $"{InputIdPrefix}-{CreateIdSegment(source)}-{ComputeStableHash(source)}";
+        return _generatedInputId;
     }
 
     private string? BuildElementNameFromExpression(Expression? expression) {
@@ -440,14 +524,20 @@ public abstract class NTFormControlBaseCore<TValue> : NTValidationInputBase<TVal
 
     private static bool TryEvaluateExpression(Expression expression, out object? value) {
         try {
-            var lambda = Expression.Lambda<Func<object?>>(Expression.Convert(expression, typeof(object)));
-            value = lambda.Compile().Invoke();
+            value = Evaluate(expression);
             return true;
         }
         catch {
             value = null;
             return false;
         }
+
+        // Index arguments are nearly always constants or captured locals; read those directly instead of compiling a lambda.
+        static object? Evaluate(Expression expression) => expression switch {
+            ConstantExpression constant => constant.Value,
+            MemberExpression { Member: FieldInfo field } member => field.GetValue(member.Expression is null ? null : Evaluate(member.Expression)),
+            _ => Expression.Lambda<Func<object?>>(Expression.Convert(expression, typeof(object))).Compile().Invoke()
+        };
     }
 
     private static Expression? UnwrapConvert(Expression? expression) {

@@ -50,6 +50,21 @@ public partial class NTInputRangeSlider<TNumber> where TNumber : struct, INumber
     private IReadOnlyDictionary<string, object?>? _inputAttributes;
     private string? _elementStyle;
     private int[] _stopIndexes = [];
+    private string[] _stopStyles = [];
+    private readonly EventCallback<ChangeEventArgs> _startInputCallback;
+    private readonly EventCallback<ChangeEventArgs> _startChangeCallback;
+    private readonly EventCallback<ChangeEventArgs> _endInputCallback;
+    private readonly EventCallback<ChangeEventArgs> _endChangeCallback;
+
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="NTInputRangeSlider{TNumber}" /> class.
+    /// </summary>
+    public NTInputRangeSlider() {
+        _startInputCallback = EventCallback.Factory.Create<ChangeEventArgs>(this, OnStartInputAsync);
+        _startChangeCallback = EventCallback.Factory.Create<ChangeEventArgs>(this, OnStartChangeAsync);
+        _endInputCallback = EventCallback.Factory.Create<ChangeEventArgs>(this, OnEndInputAsync);
+        _endChangeCallback = EventCallback.Factory.Create<ChangeEventArgs>(this, OnEndChangeAsync);
+    }
 
     /// <summary>
     ///     Gets the browser module path used for static SSR range-slider enhancement.
@@ -224,22 +239,22 @@ public partial class NTInputRangeSlider<TNumber> where TNumber : struct, INumber
     /// <summary>
     ///     Gets the lower input event callback only when live input binding is enabled.
     /// </summary>
-    protected EventCallback<ChangeEventArgs> StartInputEventCallback => BindOnInput ? EventCallback.Factory.Create<ChangeEventArgs>(this, OnStartInputAsync) : default;
+    protected EventCallback<ChangeEventArgs> StartInputEventCallback => BindOnInput ? _startInputCallback : default;
 
     /// <summary>
     ///     Gets the lower change event callback only when live input binding is disabled.
     /// </summary>
-    protected EventCallback<ChangeEventArgs> StartChangeEventCallback => BindOnInput ? default : EventCallback.Factory.Create<ChangeEventArgs>(this, OnStartChangeAsync);
+    protected EventCallback<ChangeEventArgs> StartChangeEventCallback => BindOnInput ? default : _startChangeCallback;
 
     /// <summary>
     ///     Gets the upper input event callback only when live input binding is enabled.
     /// </summary>
-    protected EventCallback<ChangeEventArgs> EndInputEventCallback => BindOnInput ? EventCallback.Factory.Create<ChangeEventArgs>(this, OnEndInputAsync) : default;
+    protected EventCallback<ChangeEventArgs> EndInputEventCallback => BindOnInput ? _endInputCallback : default;
 
     /// <summary>
     ///     Gets the upper change event callback only when live input binding is disabled.
     /// </summary>
-    protected EventCallback<ChangeEventArgs> EndChangeEventCallback => BindOnInput ? default : EventCallback.Factory.Create<ChangeEventArgs>(this, OnEndChangeAsync);
+    protected EventCallback<ChangeEventArgs> EndChangeEventCallback => BindOnInput ? default : _endChangeCallback;
 
     /// <summary>
     ///     Gets filtered input attributes for the native range inputs.
@@ -304,6 +319,7 @@ public partial class NTInputRangeSlider<TNumber> where TNumber : struct, INumber
         base.OnParametersSet();
         _inputAttributes = BuildFilteredAttributes(ExplicitInputAttributeNames);
         _stopIndexes = BuildStopIndexes();
+        _stopStyles = Array.ConvertAll(_stopIndexes, BuildStopStyle);
         _elementStyle = BuildElementStyle();
     }
 
@@ -357,10 +373,10 @@ public partial class NTInputRangeSlider<TNumber> where TNumber : struct, INumber
     /// </summary>
     /// <param name="stopIndex">The stop index.</param>
     /// <returns>The stop CSS class.</returns>
-    protected string BuildStopClass(int stopIndex) {
+    protected string BuildStopClass(int stopIndex) => GetStopClass(stopIndex, CalculatePercent(EffectiveStart), CalculatePercent(EffectiveEnd));
+
+    private string GetStopClass(int stopIndex, double startPercent, double endPercent) {
         var stopPercent = CalculateStopPercent(stopIndex, _stopIndexes.Length);
-        var startPercent = CalculatePercent(EffectiveStart);
-        var endPercent = CalculatePercent(EffectiveEnd);
         return stopPercent >= startPercent && stopPercent <= endPercent
             ? "nt-slider-stop nt-slider-stop-active"
             : "nt-slider-stop nt-slider-stop-inactive";

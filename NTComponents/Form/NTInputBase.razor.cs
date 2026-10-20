@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Web;
+using System.Globalization;
 
 using NTComponents.CodeDocumentation;
 namespace NTComponents;
@@ -43,10 +45,17 @@ public abstract partial class NTInputBase<TValue> : NTFieldBase<TValue> {
 
     private const string InputControlClass = "nt-input-control";
 
+    private string? _counterId;
+    private string? _formPostInputId;
+    private string? _inputClass;
+    private string? _inputClassAttribute;
+    private string? _inputClassField;
+    private Func<string?, Task>? _inputHandler;
     private int? _maxLength;
     private string? _maxValue;
     private int? _minLength;
     private string? _minValue;
+    private RenderFragment? _renderInputElement;
 
     /// <summary>
     ///     Gets or sets a value indicating whether binding should happen on input instead of change.
@@ -93,7 +102,7 @@ public abstract partial class NTInputBase<TValue> : NTFieldBase<TValue> {
     /// <summary>
     ///     Gets the character counter id.
     /// </summary>
-    private protected string CounterId => $"{InputId}-counter";
+    private protected string CounterId => GetDerivedId(ref _counterId, "-counter");
 
     /// <summary>
     ///     Gets the character counter display text.
@@ -101,24 +110,19 @@ public abstract partial class NTInputBase<TValue> : NTFieldBase<TValue> {
     private protected string CounterText => $"{CurrentValueAsString?.Length ?? 0}/{_maxLength}";
 
     /// <summary>
+    ///     Gets the <see cref="OnInputAsync" /> delegate, created once instead of on every render.
+    /// </summary>
+    private protected Func<string?, Task> InputHandler => _inputHandler ??= OnInputAsync;
+
+    /// <summary>
     ///     Gets the hidden form-post input id.
     /// </summary>
-    private protected string FormPostInputId => $"{InputId}-form-value";
+    private protected string FormPostInputId => GetDerivedId(ref _formPostInputId, "-form-value");
 
     /// <summary>
     ///     Gets the hidden form-post input value.
     /// </summary>
     private protected string? FormPostValue => FormatFormPostValue();
-
-    /// <summary>
-    ///     Gets the native control CSS class.
-    /// </summary>
-    private protected string InputClass {
-        get {
-            var cssClass = CssClass;
-            return string.IsNullOrEmpty(cssClass) ? InputControlClass : $"{InputControlClass} {cssClass}";
-        }
-    }
 
     /// <summary>
     ///     Gets the native visible control name.
@@ -146,6 +150,21 @@ public abstract partial class NTInputBase<TValue> : NTFieldBase<TValue> {
     private protected bool ShouldRenderFormPostValue => UsesSeparateFormPostValue
         && !FieldDisabled
         && !string.IsNullOrWhiteSpace(ElementName);
+
+    /// <summary>
+    ///     Gets the EditContext field CSS class resolved once by the current field-shell render.
+    /// </summary>
+    private protected string? RenderFieldCssClass { get; private set; }
+
+    /// <summary>
+    ///     Gets a value indicating whether the current field-shell render shows error text.
+    /// </summary>
+    private protected bool RenderHasErrorText { get; private set; }
+
+    /// <summary>
+    ///     Gets a value indicating whether the current field-shell render shows supporting text.
+    /// </summary>
+    private protected bool RenderHasSupportingText { get; private set; }
 
     /// <inheritdoc />
     protected override bool HasSupportingRowContent => ShowCounter;
@@ -206,6 +225,30 @@ public abstract partial class NTInputBase<TValue> : NTFieldBase<TValue> {
     protected override void OnParametersSet() {
         CacheNativeMetadata();
         base.OnParametersSet();
+    }
+
+    /// <inheritdoc />
+    private protected override void ClearDerivedIds() {
+        base.ClearDerivedIds();
+        _counterId = null;
+        _formPostInputId = null;
+    }
+
+    /// <summary>
+    ///     Gets the native control CSS class, matching <see cref="InputBase{TValue}.CssClass" /> for the resolved field class.
+    /// </summary>
+    /// <param name="fieldCssClass">The EditContext field CSS class.</param>
+    /// <returns>The native control CSS class.</returns>
+    private protected string GetInputClass(string? fieldCssClass) {
+        var classAttribute = AdditionalAttributes?.TryGetValue("class", out var value) == true ? Convert.ToString(value, CultureInfo.InvariantCulture) : null;
+        if (_inputClass is null || !ReferenceEquals(classAttribute, _inputClassAttribute) || !ReferenceEquals(fieldCssClass, _inputClassField)) {
+            var cssClass = string.IsNullOrEmpty(classAttribute) ? fieldCssClass : string.IsNullOrEmpty(fieldCssClass) ? classAttribute : $"{classAttribute} {fieldCssClass}";
+            _inputClass = string.IsNullOrEmpty(cssClass) ? InputControlClass : $"{InputControlClass} {cssClass}";
+            _inputClassAttribute = classAttribute;
+            _inputClassField = fieldCssClass;
+        }
+
+        return _inputClass;
     }
 
     private string? BuildInputNativeOnInputHandler() {

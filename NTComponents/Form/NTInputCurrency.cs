@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 
@@ -27,7 +28,13 @@ namespace NTComponents;
     CompatibilitySummary = "Renders useful static HTML and adds Blazor behavior when interactive.",
     CompatibilityDetails = "Static SSR preserves the rendered markup and native browser behavior. EventCallback handlers, bound state updates, and live validation require an interactive render mode.")]
 public class NTInputCurrency : NTInputNumeric<decimal> {
-    private CultureInfo _cultureInfo = CultureInfo.GetCultureInfo("en-US");
+    // Resolving a currency symbol can scan every specific culture, so share each resolved format culture. It is never mutated.
+    private static readonly ConcurrentDictionary<(string CultureCode, string CurrencyCode), CultureInfo> FormatCultures = new();
+    private const int _maxCachedFormatCultures = 256;
+
+    private IReadOnlyDictionary<string, object?>? _additionalInputAttributes;
+    private string? _resolvedCultureCode;
+    private string? _resolvedCurrencyCode;
     private CultureInfo _formatCultureInfo = CultureInfo.GetCultureInfo("en-US");
     private string _currencySymbol = "$";
     private int _currencyDecimalDigits = 2;
@@ -53,17 +60,15 @@ public class NTInputCurrency : NTInputNumeric<decimal> {
     protected override string? NativeOnInputHandler => "window.NTComponents?.prefixCurrencyInput?.(this)";
 
     /// <inheritdoc />
-    protected override IReadOnlyDictionary<string, object?>? BuildAdditionalInputAttributes() {
-        return new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase) {
-            ["cultureCode"] = CultureCode,
-            ["currencyCode"] = CurrencyCode,
-            ["currencyDecimalDigits"] = _currencyDecimalDigits.ToString(CultureInfo.InvariantCulture),
-            ["currencyDecimalSeparator"] = _formatCultureInfo.NumberFormat.CurrencyDecimalSeparator,
-            ["currencyGroupSeparator"] = _formatCultureInfo.NumberFormat.CurrencyGroupSeparator,
-            ["currencySymbol"] = _currencySymbol,
-            ["inputmode"] = "decimal"
-        };
-    }
+    protected override IReadOnlyDictionary<string, object?>? BuildAdditionalInputAttributes() => _additionalInputAttributes ??= new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase) {
+        ["cultureCode"] = CultureCode,
+        ["currencyCode"] = CurrencyCode,
+        ["currencyDecimalDigits"] = _currencyDecimalDigits.ToString(CultureInfo.InvariantCulture),
+        ["currencyDecimalSeparator"] = _formatCultureInfo.NumberFormat.CurrencyDecimalSeparator,
+        ["currencyGroupSeparator"] = _formatCultureInfo.NumberFormat.CurrencyGroupSeparator,
+        ["currencySymbol"] = _currencySymbol,
+        ["inputmode"] = "decimal"
+    };
 
     /// <inheritdoc />
     protected override string? FormatValueAsString(decimal? value) => _isEditing ? _editingText : value?.ToString("C", _formatCultureInfo);
@@ -89,10 +94,24 @@ public class NTInputCurrency : NTInputNumeric<decimal> {
 
     /// <inheritdoc />
     protected override void OnParametersSet() {
-        _cultureInfo = CultureInfo.GetCultureInfo(CultureCode);
-        _currencySymbol = ResolveCurrencySymbol(_cultureInfo, CurrencyCode);
-        _formatCultureInfo = CreateCurrencyFormatCulture(_cultureInfo, _currencySymbol);
-        _currencyDecimalDigits = _formatCultureInfo.NumberFormat.CurrencyDecimalDigits;
+        if (_resolvedCultureCode is null || !string.Equals(CultureCode, _resolvedCultureCode, StringComparison.Ordinal) || !string.Equals(CurrencyCode, _resolvedCurrencyCode, StringComparison.Ordinal)) {
+            var key = (CultureCode, CurrencyCode);
+            if (!FormatCultures.TryGetValue(key, out var formatCulture)) {
+                var cultureInfo = CultureInfo.GetCultureInfo(key.CultureCode);
+                formatCulture = CultureInfo.ReadOnly(CreateCurrencyFormatCulture(cultureInfo, ResolveCurrencySymbol(cultureInfo, key.CurrencyCode)));
+                // Codes are normally developer-supplied; the cap keeps user-driven codes from growing the shared cache without bound.
+                if (FormatCultures.Count < _maxCachedFormatCultures) {
+                    formatCulture = FormatCultures.GetOrAdd(key, formatCulture);
+                }
+            }
+
+            _formatCultureInfo = formatCulture;
+            _currencySymbol = _formatCultureInfo.NumberFormat.CurrencySymbol;
+            _currencyDecimalDigits = _formatCultureInfo.NumberFormat.CurrencyDecimalDigits;
+            _additionalInputAttributes = null;
+            _resolvedCultureCode = CultureCode;
+            _resolvedCurrencyCode = CurrencyCode;
+        }
 
         base.OnParametersSet();
     }

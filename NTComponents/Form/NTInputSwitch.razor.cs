@@ -1,7 +1,5 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
-using NTComponents.Core;
-using System.Text;
 
 using NTComponents.CodeDocumentation;
 namespace NTComponents;
@@ -33,6 +31,8 @@ public partial class NTInputSwitch {
     private const string RootClassBase = "nt-switch";
     private static readonly string[] SwitchExplicitInputAttributeNames = [.. CommonExplicitInputAttributeNames, "role"];
     private string? _elementStyle;
+    private string? _rootClass;
+    private (NTSwitchVariant, NTFormDensity, int) _rootClassKey;
 
     /// <summary>
     ///     Gets or sets whether Material handle icons are rendered inside the switch handle.
@@ -168,68 +168,53 @@ public partial class NTInputSwitch {
         _elementStyle = BuildElementStyle();
     }
 
-    private string? BuildElementStyle() => CssStyleBuilder.Create()
-        .AddVariable("nt-switch-disabled-handle-color", DisabledHandleColor.ToCssNTColorVariable(), DisabledHandleColor.HasValue)
-        .AddVariable("nt-switch-disabled-icon-color", DisabledIconColor.ToCssNTColorVariable(), DisabledIconColor.HasValue)
-        .AddVariable("nt-switch-disabled-track-color", DisabledTrackColor.ToCssNTColorVariable(), DisabledTrackColor.HasValue)
-        .AddVariable("nt-switch-error-color", ErrorColor.ToCssNTColorVariable(), ErrorColor.HasValue)
-        .AddVariable("nt-switch-icon-color", IconColor.ToCssNTColorVariable(), IconColor.HasValue)
-        .AddVariable("nt-switch-label-color", LabelColor.ToCssNTColorVariable(), LabelColor.HasValue)
-        .AddVariable("nt-switch-selected-handle-color", SelectedHandleColor.ToCssNTColorVariable(), SelectedHandleColor.HasValue)
-        .AddVariable("nt-switch-selected-icon-color", SelectedIconColor.ToCssNTColorVariable(), SelectedIconColor.HasValue)
-        .AddVariable("nt-switch-selected-state-layer-color", SelectedStateLayerColor.ToCssNTColorVariable(), SelectedStateLayerColor.HasValue)
-        .AddVariable("nt-switch-selected-track-color", SelectedTrackColor.ToCssNTColorVariable(), SelectedTrackColor.HasValue)
-        .AddVariable("nt-switch-state-layer-color", StateLayerColor.ToCssNTColorVariable(), StateLayerColor.HasValue)
-        .AddVariable("nt-switch-supporting-text-color", SupportingTextColor.ToCssNTColorVariable(), SupportingTextColor.HasValue)
-        .AddVariable("nt-switch-unselected-handle-color", UnselectedHandleColor.ToCssNTColorVariable(), UnselectedHandleColor.HasValue)
-        .AddVariable("nt-switch-unselected-icon-color", UnselectedIconColor.ToCssNTColorVariable(), UnselectedIconColor.HasValue)
-        .AddVariable("nt-switch-unselected-outline-color", UnselectedOutlineColor.ToCssNTColorVariable(), UnselectedOutlineColor.HasValue)
-        .AddVariable("nt-switch-unselected-track-color", UnselectedTrackColor.ToCssNTColorVariable(), UnselectedTrackColor.HasValue)
-        .Build();
+    private string? BuildElementStyle() {
+        var style = AppendColorVariable(null, "nt-switch-disabled-handle-color", DisabledHandleColor);
+        style = AppendColorVariable(style, "nt-switch-disabled-icon-color", DisabledIconColor);
+        style = AppendColorVariable(style, "nt-switch-disabled-track-color", DisabledTrackColor);
+        style = AppendColorVariable(style, "nt-switch-error-color", ErrorColor);
+        style = AppendColorVariable(style, "nt-switch-icon-color", IconColor);
+        style = AppendColorVariable(style, "nt-switch-label-color", LabelColor);
+        style = AppendColorVariable(style, "nt-switch-selected-handle-color", SelectedHandleColor);
+        style = AppendColorVariable(style, "nt-switch-selected-icon-color", SelectedIconColor);
+        style = AppendColorVariable(style, "nt-switch-selected-state-layer-color", SelectedStateLayerColor);
+        style = AppendColorVariable(style, "nt-switch-selected-track-color", SelectedTrackColor);
+        style = AppendColorVariable(style, "nt-switch-state-layer-color", StateLayerColor);
+        style = AppendColorVariable(style, "nt-switch-supporting-text-color", SupportingTextColor);
+        style = AppendColorVariable(style, "nt-switch-unselected-handle-color", UnselectedHandleColor);
+        style = AppendColorVariable(style, "nt-switch-unselected-icon-color", UnselectedIconColor);
+        style = AppendColorVariable(style, "nt-switch-unselected-outline-color", UnselectedOutlineColor);
+        return AppendColorVariable(style, "nt-switch-unselected-track-color", UnselectedTrackColor);
+    }
 
     private string BuildRootClass() {
-        var className = new StringBuilder(RootClassBase);
-        className.Append(Variant switch {
-            NTSwitchVariant.Leading => " nt-switch-leading-control",
-            NTSwitchVariant.Trailing => " nt-switch-trailing-control",
-            _ => throw new InvalidOperationException($"{Variant} is not a valid value of {nameof(NTSwitchVariant)}")
-        });
-
-        className.Append(EffectiveDensity switch {
-            NTFormDensity.Comfortable => " nt-switch-comfortable",
-            NTFormDensity.Dense => " nt-switch-dense",
-            _ => " nt-switch-standard"
-        });
-
-        if (CurrentValue) {
-            className.Append(" nt-switch-selected");
+        var flags = (CurrentValue ? 1 : 0) | (FieldDisabled ? 2 : 0) | (FieldReadOnly ? 4 : 0) | (ShowHandleIcon ? 8 : 0)
+            | (LeadingIcon is not null ? 16 : 0) | (TrailingIcon is not null ? 32 : 0) | (string.IsNullOrWhiteSpace(Label) ? 64 : 0);
+        // The class string only changes with these inputs, so reuse it across renders.
+        if (_rootClass is null || _rootClassKey != (Variant, EffectiveDensity, flags)) {
+            _rootClass = string.Concat(
+                RootClassBase,
+                Variant switch {
+                    NTSwitchVariant.Leading => " nt-switch-leading-control",
+                    NTSwitchVariant.Trailing => " nt-switch-trailing-control",
+                    _ => throw new InvalidOperationException($"{Variant} is not a valid value of {nameof(NTSwitchVariant)}")
+                },
+                EffectiveDensity switch {
+                    NTFormDensity.Comfortable => " nt-switch-comfortable",
+                    NTFormDensity.Dense => " nt-switch-dense",
+                    _ => " nt-switch-standard"
+                },
+                CurrentValue ? " nt-switch-selected" : null,
+                FieldDisabled ? " nt-switch-disabled" : null,
+                FieldReadOnly ? " nt-switch-readonly" : null,
+                ShowHandleIcon ? " nt-switch-has-handle-icon" : null,
+                LeadingIcon is not null ? " nt-switch-has-leading-icon" : null,
+                TrailingIcon is not null ? " nt-switch-has-trailing-icon" : null,
+                string.IsNullOrWhiteSpace(Label) ? " nt-switch-no-label" : null);
+            _rootClassKey = (Variant, EffectiveDensity, flags);
         }
 
-        if (FieldDisabled) {
-            className.Append(" nt-switch-disabled");
-        }
-
-        if (FieldReadOnly) {
-            className.Append(" nt-switch-readonly");
-        }
-
-        if (ShowHandleIcon) {
-            className.Append(" nt-switch-has-handle-icon");
-        }
-
-        if (LeadingIcon is not null) {
-            className.Append(" nt-switch-has-leading-icon");
-        }
-
-        if (TrailingIcon is not null) {
-            className.Append(" nt-switch-has-trailing-icon");
-        }
-
-        if (string.IsNullOrWhiteSpace(Label)) {
-            className.Append(" nt-switch-no-label");
-        }
-
-        return AppendFieldCssClass(className.ToString());
+        return AppendFieldCssClass(_rootClass);
     }
 }
 

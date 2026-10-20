@@ -6,12 +6,16 @@
 @{
     var errorText = CurrentErrorText;
     var hasErrorText = !string.IsNullOrWhiteSpace(errorText);
+    var fieldCssClass = EditContext?.FieldCssClass(FieldIdentifier);
 }
 
-<div class="@GetRootClass()" style="@ElementStyle">
+<div class="@GetRootClass(fieldCssClass)" style="@ElementStyle">
     @{
         var supportingText = hasErrorText ? null : CurrentSupportingText;
         var hasSupportingText = !string.IsNullOrWhiteSpace(supportingText);
+        RenderFieldCssClass = fieldCssClass;
+        RenderHasErrorText = hasErrorText;
+        RenderHasSupportingText = hasSupportingText;
     }
 
     <div class="nt-input-container-overflow">
@@ -53,7 +57,7 @@
                 }
 
                 <span class="nt-input-control-container">
-                    @RenderInputElement
+                    @(_renderInputElement ??= RenderInputElement)
                     @if (HasLabel) {
                         <span class="nt-input-label" id="@LabelId">@Label</span>
                     }
@@ -100,7 +104,7 @@
 
 @code {
     protected virtual void RenderInputElement(RenderTreeBuilder __builder) {
-        var hasErrorText = !string.IsNullOrWhiteSpace(CurrentErrorText);
+        var hasErrorText = RenderHasErrorText;
 
         <input @attributes="ControlAttributes"
                id="@InputId"
@@ -117,15 +121,15 @@
                min="@_minValue"
                max="@_maxValue"
                placeholder="@EffectivePlaceholder"
-               aria-describedby="@BuildDescribedBy(hasErrorText, !hasErrorText && !string.IsNullOrWhiteSpace(CurrentSupportingText))"
+               aria-describedby="@BuildDescribedBy(hasErrorText, RenderHasSupportingText)"
                aria-invalid="@(hasErrorText ? "true" : "false")"
                aria-errormessage="@(hasErrorText ? ErrorTextId : null)"
-               class="@InputClass"
+               class="@GetInputClass(RenderFieldCssClass)"
                oninput="@InputNativeOnInputHandler"
                @bind-value:get="@CurrentValueAsString"
-               @bind-value:set="OnInputAsync"
+               @bind-value:set="InputHandler"
                @bind-value:event="@(EffectiveBindOnInput ? "oninput" : "onchange")"
-               @onblur="@OnBlurAsync"
+               @onblur="BlurHandler"
                @ref="Element" />
         @if (ShouldRenderFormPostValue) {
             <input type="hidden"

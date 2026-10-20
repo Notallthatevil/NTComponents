@@ -3,11 +3,9 @@ type Maybe<T> = T | null | undefined;
 interface RangeSliderState {
     endInput: HTMLInputElement;
     form: HTMLFormElement | null;
-    onEndChange: () => void;
-    onEndInput: () => void;
+    onEndUpdate: () => void;
     onFormSubmit: () => void;
-    onStartChange: () => void;
-    onStartInput: () => void;
+    onStartUpdate: () => void;
     root: HTMLElement;
     startInput: HTMLInputElement;
 }
@@ -106,19 +104,17 @@ function createState(root: HTMLElement, startInput: HTMLInputElement, endInput: 
     const state: RangeSliderState = {
         endInput,
         form: startInput.form ?? endInput.form,
-        onEndChange: () => updateEnd(state),
-        onEndInput: () => updateEnd(state),
+        onEndUpdate: () => updateEnd(state),
         onFormSubmit: () => updateRangeSlider(state),
-        onStartChange: () => updateStart(state),
-        onStartInput: () => updateStart(state),
+        onStartUpdate: () => updateStart(state),
         root,
         startInput,
     };
 
-    startInput.addEventListener('input', state.onStartInput);
-    startInput.addEventListener('change', state.onStartChange);
-    endInput.addEventListener('input', state.onEndInput);
-    endInput.addEventListener('change', state.onEndChange);
+    startInput.addEventListener('input', state.onStartUpdate);
+    startInput.addEventListener('change', state.onStartUpdate);
+    endInput.addEventListener('input', state.onEndUpdate);
+    endInput.addEventListener('change', state.onEndUpdate);
     state.form?.addEventListener('submit', state.onFormSubmit);
     updateRangeSlider(state);
     return state;
@@ -129,10 +125,10 @@ function cleanupState(state: Maybe<RangeSliderState>): void {
         return;
     }
 
-    state.startInput.removeEventListener('input', state.onStartInput);
-    state.startInput.removeEventListener('change', state.onStartChange);
-    state.endInput.removeEventListener('input', state.onEndInput);
-    state.endInput.removeEventListener('change', state.onEndChange);
+    state.startInput.removeEventListener('input', state.onStartUpdate);
+    state.startInput.removeEventListener('change', state.onStartUpdate);
+    state.endInput.removeEventListener('input', state.onEndUpdate);
+    state.endInput.removeEventListener('change', state.onEndUpdate);
     state.form?.removeEventListener('submit', state.onFormSubmit);
 }
 

@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Web;
-using NTComponents.Core;
-using System.Text;
 
 using NTComponents.CodeDocumentation;
 namespace NTComponents;
@@ -36,6 +34,8 @@ public partial class NTInputCheckbox {
     private static readonly string[] CheckboxExplicitInputAttributeNames = [.. CommonExplicitInputAttributeNames, "data-indeterminate"];
     private bool _isIndeterminate;
     private string? _elementStyle;
+    private string? _rootClass;
+    private (NTInputCheckboxVariant, NTFormDensity, int) _rootClassKey;
 
     /// <summary>
     ///     Gets or sets whether the checkbox renders the mixed/indeterminate visual state.
@@ -194,68 +194,53 @@ public partial class NTInputCheckbox {
         await BindAfter.InvokeAsync(CurrentValue);
     }
 
-    private string? BuildElementStyle() => CssStyleBuilder.Create()
-        .AddVariable("nt-checkbox-disabled-container-color", DisabledContainerColor.ToCssNTColorVariable(), DisabledContainerColor.HasValue)
-        .AddVariable("nt-checkbox-disabled-icon-color", DisabledIconColor.ToCssNTColorVariable(), DisabledIconColor.HasValue)
-        .AddVariable("nt-checkbox-disabled-outline-color", DisabledOutlineColor.ToCssNTColorVariable(), DisabledOutlineColor.HasValue)
-        .AddVariable("nt-checkbox-error-color", ErrorColor.ToCssNTColorVariable(), ErrorColor.HasValue)
-        .AddVariable("nt-checkbox-error-icon-color", ErrorIconColor.ToCssNTColorVariable(), ErrorIconColor.HasValue)
-        .AddVariable("nt-checkbox-focus-outline-color", FocusOutlineColor.ToCssNTColorVariable(), FocusOutlineColor.HasValue)
-        .AddVariable("nt-checkbox-hover-outline-color", HoverOutlineColor.ToCssNTColorVariable(), HoverOutlineColor.HasValue)
-        .AddVariable("nt-checkbox-icon-color", IconColor.ToCssNTColorVariable(), IconColor.HasValue)
-        .AddVariable("nt-checkbox-label-color", LabelColor.ToCssNTColorVariable(), LabelColor.HasValue)
-        .AddVariable("nt-checkbox-outline-color", OutlineColor.ToCssNTColorVariable(), OutlineColor.HasValue)
-        .AddVariable("nt-checkbox-pressed-outline-color", PressedOutlineColor.ToCssNTColorVariable(), PressedOutlineColor.HasValue)
-        .AddVariable("nt-checkbox-selected-container-color", SelectedContainerColor.ToCssNTColorVariable(), SelectedContainerColor.HasValue)
-        .AddVariable("nt-checkbox-selected-icon-color", SelectedIconColor.ToCssNTColorVariable(), SelectedIconColor.HasValue)
-        .AddVariable("nt-checkbox-selected-state-layer-color", SelectedStateLayerColor.ToCssNTColorVariable(), SelectedStateLayerColor.HasValue)
-        .AddVariable("nt-checkbox-state-layer-color", StateLayerColor.ToCssNTColorVariable(), StateLayerColor.HasValue)
-        .AddVariable("nt-checkbox-supporting-text-color", SupportingTextColor.ToCssNTColorVariable(), SupportingTextColor.HasValue)
-        .Build();
+    private string? BuildElementStyle() {
+        var style = AppendColorVariable(null, "nt-checkbox-disabled-container-color", DisabledContainerColor);
+        style = AppendColorVariable(style, "nt-checkbox-disabled-icon-color", DisabledIconColor);
+        style = AppendColorVariable(style, "nt-checkbox-disabled-outline-color", DisabledOutlineColor);
+        style = AppendColorVariable(style, "nt-checkbox-error-color", ErrorColor);
+        style = AppendColorVariable(style, "nt-checkbox-error-icon-color", ErrorIconColor);
+        style = AppendColorVariable(style, "nt-checkbox-focus-outline-color", FocusOutlineColor);
+        style = AppendColorVariable(style, "nt-checkbox-hover-outline-color", HoverOutlineColor);
+        style = AppendColorVariable(style, "nt-checkbox-icon-color", IconColor);
+        style = AppendColorVariable(style, "nt-checkbox-label-color", LabelColor);
+        style = AppendColorVariable(style, "nt-checkbox-outline-color", OutlineColor);
+        style = AppendColorVariable(style, "nt-checkbox-pressed-outline-color", PressedOutlineColor);
+        style = AppendColorVariable(style, "nt-checkbox-selected-container-color", SelectedContainerColor);
+        style = AppendColorVariable(style, "nt-checkbox-selected-icon-color", SelectedIconColor);
+        style = AppendColorVariable(style, "nt-checkbox-selected-state-layer-color", SelectedStateLayerColor);
+        style = AppendColorVariable(style, "nt-checkbox-state-layer-color", StateLayerColor);
+        return AppendColorVariable(style, "nt-checkbox-supporting-text-color", SupportingTextColor);
+    }
 
     private string BuildRootClass() {
-        var className = new StringBuilder(RootClassBase);
-        className.Append(Variant switch {
-            NTInputCheckboxVariant.Leading => " nt-checkbox-leading-control",
-            NTInputCheckboxVariant.Trailing => " nt-checkbox-trailing-control",
-            _ => throw new InvalidOperationException($"{Variant} is not a valid value of {nameof(NTInputCheckboxVariant)}")
-        });
-
-        className.Append(EffectiveDensity switch {
-            NTFormDensity.Comfortable => " nt-checkbox-comfortable",
-            NTFormDensity.Dense => " nt-checkbox-dense",
-            _ => " nt-checkbox-standard"
-        });
-
-        if (CurrentValue) {
-            className.Append(" nt-checkbox-selected");
+        var flags = (CurrentValue ? 1 : 0) | (_isIndeterminate ? 2 : 0) | (FieldDisabled ? 4 : 0) | (FieldReadOnly ? 8 : 0)
+            | (LeadingIcon is not null ? 16 : 0) | (TrailingIcon is not null ? 32 : 0) | (string.IsNullOrWhiteSpace(Label) ? 64 : 0);
+        // The class string only changes with these inputs, so reuse it across renders.
+        if (_rootClass is null || _rootClassKey != (Variant, EffectiveDensity, flags)) {
+            _rootClass = string.Concat(
+                RootClassBase,
+                Variant switch {
+                    NTInputCheckboxVariant.Leading => " nt-checkbox-leading-control",
+                    NTInputCheckboxVariant.Trailing => " nt-checkbox-trailing-control",
+                    _ => throw new InvalidOperationException($"{Variant} is not a valid value of {nameof(NTInputCheckboxVariant)}")
+                },
+                EffectiveDensity switch {
+                    NTFormDensity.Comfortable => " nt-checkbox-comfortable",
+                    NTFormDensity.Dense => " nt-checkbox-dense",
+                    _ => " nt-checkbox-standard"
+                },
+                CurrentValue ? " nt-checkbox-selected" : null,
+                _isIndeterminate ? " nt-checkbox-indeterminate" : null,
+                FieldDisabled ? " nt-checkbox-disabled" : null,
+                FieldReadOnly ? " nt-checkbox-readonly" : null,
+                LeadingIcon is not null ? " nt-checkbox-has-leading-icon" : null,
+                TrailingIcon is not null ? " nt-checkbox-has-trailing-icon" : null,
+                string.IsNullOrWhiteSpace(Label) ? " nt-checkbox-no-label" : null);
+            _rootClassKey = (Variant, EffectiveDensity, flags);
         }
 
-        if (_isIndeterminate) {
-            className.Append(" nt-checkbox-indeterminate");
-        }
-
-        if (FieldDisabled) {
-            className.Append(" nt-checkbox-disabled");
-        }
-
-        if (FieldReadOnly) {
-            className.Append(" nt-checkbox-readonly");
-        }
-
-        if (LeadingIcon is not null) {
-            className.Append(" nt-checkbox-has-leading-icon");
-        }
-
-        if (TrailingIcon is not null) {
-            className.Append(" nt-checkbox-has-trailing-icon");
-        }
-
-        if (string.IsNullOrWhiteSpace(Label)) {
-            className.Append(" nt-checkbox-no-label");
-        }
-
-        return AppendFieldCssClass(className.ToString());
+        return AppendFieldCssClass(_rootClass);
     }
 }
 

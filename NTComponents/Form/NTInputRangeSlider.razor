@@ -7,6 +7,10 @@
     var hasErrorText = !string.IsNullOrWhiteSpace(errorText);
     var supportingText = hasErrorText ? null : CurrentSupportingText;
     var hasSupportingText = !string.IsNullOrWhiteSpace(supportingText);
+    var range = NormalizeRange(CurrentValue);
+    var startText = FormatValue(range.Start);
+    var endText = FormatValue(range.End);
+    var describedBy = BuildDescribedBy(hasErrorText, hasSupportingText);
 }
 
 <div class="@BuildRootClass()" style="@ElementStyle">
@@ -25,8 +29,12 @@
                     <span class="nt-slider-inactive-track-end"></span>
                     @if (ShouldRenderStops) {
                         <span class="nt-slider-stops">
+                            @{
+                                var startPercent = CalculatePercent(range.Start);
+                                var endPercent = CalculatePercent(range.End);
+                            }
                             @foreach (var stop in StopIndexes) {
-                                <span class="@BuildStopClass(stop)" style="@BuildStopStyle(stop)"></span>
+                                <span class="@GetStopClass(stop, startPercent, endPercent)" style="@_stopStyles[stop]"></span>
                             }
                         </span>
                     }
@@ -38,15 +46,15 @@
                        class="nt-slider-range-input nt-slider-start-input"
                        type="range"
                        min="@FormatValue(EffectiveMin)"
-                       max="@FormatValue(EffectiveEnd)"
+                       max="@endText"
                        step="@StepAttribute"
-                       value="@FormatValue(EffectiveStart)"
+                       value="@startText"
                        style="@StartInputStyle"
                        disabled="@(FieldDisabled || FieldReadOnly)"
                        autofocus="@AutoFocus"
                        aria-orientation="horizontal"
                        aria-label="@StartAriaLabel"
-                       aria-describedby="@BuildDescribedBy(hasErrorText, hasSupportingText)"
+                       aria-describedby="@describedBy"
                        aria-invalid="@(hasErrorText ? "true" : "false")"
                        aria-errormessage="@(hasErrorText ? ErrorTextId : null)"
                        @oninput="@StartInputEventCallback"
@@ -59,23 +67,23 @@
                        name="@EndElementName"
                        class="nt-slider-range-input nt-slider-end-input"
                        type="range"
-                       min="@FormatValue(EffectiveStart)"
+                       min="@startText"
                        max="@FormatValue(EffectiveMax)"
                        step="@StepAttribute"
-                       value="@FormatValue(EffectiveEnd)"
+                       value="@endText"
                        style="@EndInputStyle"
                        disabled="@(FieldDisabled || FieldReadOnly)"
                        aria-orientation="horizontal"
                        aria-label="@EndAriaLabel"
-                       aria-describedby="@BuildDescribedBy(hasErrorText, hasSupportingText)"
+                       aria-describedby="@describedBy"
                        aria-invalid="@(hasErrorText ? "true" : "false")"
                        aria-errormessage="@(hasErrorText ? ErrorTextId : null)"
                        @oninput="@EndInputEventCallback"
                        @onchange="@EndChangeEventCallback"
                        @onblur="OnBlurAsync" />
                 @if (ShowValueIndicator) {
-                    <output class="nt-slider-value-indicator nt-slider-start-value" for="@StartInputId" aria-hidden="true">@FormatValue(EffectiveStart)</output>
-                    <output class="nt-slider-value-indicator nt-slider-end-value" for="@EndInputId" aria-hidden="true">@FormatValue(EffectiveEnd)</output>
+                    <output class="nt-slider-value-indicator nt-slider-start-value" for="@StartInputId" aria-hidden="true">@startText</output>
+                    <output class="nt-slider-value-indicator nt-slider-end-value" for="@EndInputId" aria-hidden="true">@endText</output>
                 }
             </span>
         </span>
@@ -99,9 +107,9 @@
     @if (ShouldRenderReadOnlyFormPostValue) {
         <input type="hidden"
                name="@StartFormPostElementName"
-               value="@FormatValue(EffectiveStart)" />
+               value="@startText" />
         <input type="hidden"
                name="@EndFormPostElementName"
-               value="@FormatValue(EffectiveEnd)" />
+               value="@endText" />
     }
 </div>

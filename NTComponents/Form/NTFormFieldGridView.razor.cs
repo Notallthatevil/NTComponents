@@ -79,39 +79,7 @@ public partial class NTFormFieldGridView : NTComponentBase {
         BuildElementAttributes();
     }
 
-    private void BuildElementAttributes() {
-        _elementAttributes.Clear();
-        if (AdditionalAttributes is not null) {
-            foreach (var (attributeName, attributeValue) in AdditionalAttributes) {
-                _elementAttributes[attributeName] = attributeValue;
-            }
-        }
-
-        _elementAttributes["class"] = _elementClass!;
-        if (!string.IsNullOrWhiteSpace(_elementStyle)) {
-            _elementAttributes["style"] = _elementStyle!;
-        }
-        else {
-            _elementAttributes.Remove("style");
-        }
-
-        if (AutoFocus == true) {
-            _elementAttributes["autofocus"] = true;
-        }
-
-        SetAttribute("id", ElementId);
-        SetAttribute("lang", ElementLang);
-        SetAttribute("title", ElementTitle);
-    }
-
-    private void SetAttribute(string attributeName, string? value) {
-        if (value is null) {
-            _elementAttributes.Remove(attributeName);
-            return;
-        }
-
-        _elementAttributes[attributeName] = value;
-    }
+    private void BuildElementAttributes() => NTFormElementAttributes.Build(_elementAttributes, AdditionalAttributes, _elementClass!, _elementStyle, AutoFocus, ElementId, ElementLang, ElementTitle);
 
     private static int NormalizeMaxColumns(int maxColumns) =>
         maxColumns switch {

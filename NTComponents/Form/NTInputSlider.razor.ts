@@ -2,8 +2,7 @@ type Maybe<T> = T | null | undefined;
 
 interface SliderState {
     input: HTMLInputElement;
-    onChange: () => void;
-    onInput: () => void;
+    onUpdate: () => void;
     root: HTMLElement;
 }
 
@@ -36,17 +35,6 @@ function formatPercent(percent: number): string {
     return `${Number.isFinite(percent) ? Math.round(percent * 1000) / 1000 : 0}%`;
 }
 
-function getValuePercent(input: HTMLInputElement): number {
-    const min = parseNumber(input.min, 0);
-    const max = parseNumber(input.max, 100);
-    const value = clamp(parseNumber(input.value, min), min, max);
-    if (max <= min) {
-        return 0;
-    }
-
-    return ((value - min) / (max - min)) * 100;
-}
-
 function updateInsetIcon(root: HTMLElement, percent: number): void {
     const icon = root.querySelector<HTMLElement>('.nt-slider-inset-icon');
     if (!icon) {
@@ -67,7 +55,7 @@ function updateSlider(root: HTMLElement, input: HTMLInputElement): void {
         input.value = value.toString();
     }
 
-    const percent = getValuePercent(input);
+    const percent = max <= min ? 0 : ((value - min) / (max - min)) * 100;
     const isCentered = root.classList.contains('nt-slider-centered');
     const startPercent = isCentered ? Math.min(50, percent) : 0;
     const endPercent = isCentered ? Math.max(50, percent) : percent;
@@ -83,13 +71,12 @@ function updateSlider(root: HTMLElement, input: HTMLInputElement): void {
 function createState(root: HTMLElement, input: HTMLInputElement): SliderState {
     const state: SliderState = {
         input,
-        onChange: () => updateSlider(root, input),
-        onInput: () => updateSlider(root, input),
+        onUpdate: () => updateSlider(root, input),
         root,
     };
 
-    input.addEventListener('input', state.onInput);
-    input.addEventListener('change', state.onChange);
+    input.addEventListener('input', state.onUpdate);
+    input.addEventListener('change', state.onUpdate);
     updateSlider(root, input);
     return state;
 }
@@ -99,8 +86,8 @@ function cleanupState(state: Maybe<SliderState>): void {
         return;
     }
 
-    state.input.removeEventListener('input', state.onInput);
-    state.input.removeEventListener('change', state.onChange);
+    state.input.removeEventListener('input', state.onUpdate);
+    state.input.removeEventListener('change', state.onUpdate);
 }
 
 function synchronizeRoot(root: Maybe<HTMLElement>): void {

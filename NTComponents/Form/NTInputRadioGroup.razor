@@ -24,7 +24,7 @@
               aria-required="@(IsRequired ? "true" : null)"
               tabindex="@(FieldDisabled ? null : "0")"
               onkeydown="window.NTComponents?.radioGroupKeyDownHandler?.(event)"
-              @onblur="OnBlurAsync"
+              @onblur="BlurHandler"
               @ref="Element">
         <span class="nt-radio-background" aria-hidden="true"></span>
         <span class="nt-radio-state-layer" aria-hidden="true"></span>

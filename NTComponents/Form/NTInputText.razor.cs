@@ -87,18 +87,12 @@ public partial class NTInputText {
     }
 
     private static string? ApplyPhoneMask(string? value, string mask) {
-        if (string.IsNullOrEmpty(value) || string.IsNullOrWhiteSpace(mask) || !mask.Contains('#', StringComparison.Ordinal)) {
+        if (!TryGetMaskDigits(value, mask, out var digits)) {
             return value;
         }
 
-        var digits = new string(value.Where(char.IsDigit).ToArray());
         if (digits.Length == 0) {
             return string.Empty;
-        }
-
-        var maximumDigits = mask.Count(character => character == '#');
-        if (digits.Length > maximumDigits) {
-            digits = digits[..maximumDigits];
         }
 
         var builder = new StringBuilder(mask.Length);
@@ -124,6 +118,25 @@ public partial class NTInputText {
         return builder.ToString();
     }
 
+    /// <summary>
+    ///     Gets the digits of <paramref name="value" />, truncated to the number of digit slots in <paramref name="mask" />.
+    /// </summary>
+    /// <returns><see langword="false" /> when the value is empty or the mask has no digit slots.</returns>
+    private static bool TryGetMaskDigits([NotNullWhen(true)] string? value, string mask, out string digits) {
+        if (string.IsNullOrEmpty(value) || string.IsNullOrWhiteSpace(mask) || !mask.Contains('#', StringComparison.Ordinal)) {
+            digits = string.Empty;
+            return false;
+        }
+
+        digits = new string(value.Where(char.IsDigit).ToArray());
+        var maximumDigits = mask.AsSpan().Count('#');
+        if (digits.Length > maximumDigits) {
+            digits = digits[..maximumDigits];
+        }
+
+        return true;
+    }
+
     private static int GetPhoneCountryCodeDigitCount(string mask) {
         var trimmedMask = mask.TrimStart();
         if (!trimmedMask.StartsWith('+')) {
@@ -143,18 +156,12 @@ public partial class NTInputText {
     }
 
     private static string? NormalizePhoneValue(string? value, string mask) {
-        if (string.IsNullOrEmpty(value) || string.IsNullOrWhiteSpace(mask) || !mask.Contains('#', StringComparison.Ordinal)) {
+        if (!TryGetMaskDigits(value, mask, out var digits)) {
             return value;
         }
 
-        var digits = new string(value.Where(char.IsDigit).ToArray());
         if (digits.Length == 0) {
             return string.Empty;
-        }
-
-        var maximumDigits = mask.Count(character => character == '#');
-        if (digits.Length > maximumDigits) {
-            digits = digits[..maximumDigits];
         }
 
         var countryCodeDigitCount = GetPhoneCountryCodeDigitCount(mask);

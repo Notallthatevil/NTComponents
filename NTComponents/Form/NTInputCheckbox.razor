@@ -34,8 +34,8 @@
                    aria-errormessage="@(hasErrorText ? ErrorTextId : null)"
                    aria-required="@(Required ? "true" : null)"
                    data-indeterminate="@(_isIndeterminate ? "true" : null)"
-                   @onchange="OnChangeAsync"
-                   @onblur="OnBlurAsync"
+                   @onchange="ChangeHandler"
+                   @onblur="BlurHandler"
                    @ref="Element" />
             <span class="nt-checkbox-state-layer" aria-hidden="true"></span>
             <span class="nt-checkbox-container" aria-hidden="true">

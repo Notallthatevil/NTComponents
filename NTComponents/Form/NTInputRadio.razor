@@ -1,7 +1,12 @@
 @namespace NTComponents
 @typeparam TValue
 
-<label class="@BuildRootClass()" for="@InputId" title="@ElementTitle" lang="@ElementLang">
+@{
+    var inputId = ResolveIds();
+    var supportingTextId = string.IsNullOrWhiteSpace(SupportingText) ? null : _supportingTextId ??= inputId + "-supporting";
+}
+
+<label class="@BuildRootClass()" for="@inputId" title="@ElementTitle" lang="@ElementLang">
     @if (LeadingIcon is not null) {
         <span class="nt-radio-option-leading" aria-hidden="true">
             @LeadingIcon.Render()
@@ -11,14 +16,14 @@
     <span class="nt-radio-option-main">
         <span class="nt-radio-touch-target">
             <input @attributes="InputAttributes"
-                   id="@InputId"
+                   id="@inputId"
                    name="@Group.RadioName"
                    type="radio"
                    value="@ValueAsString"
                    checked="@IsSelected"
                    disabled="@(Group.IsGroupDisabled || Group.IsGroupReadOnly || Disabled || ReadOnly)"
                    required="@Group.IsRequired"
-                   aria-describedby="@SupportingTextId"
+                   aria-describedby="@supportingTextId"
                    @onchange="OnChangeAsync"
                    @ref="Element" />
             <span class="nt-radio-option-state-layer" aria-hidden="true"></span>
@@ -27,10 +32,10 @@
 
         <span class="nt-radio-option-content">
             @if (!string.IsNullOrWhiteSpace(Label)) {
-                <span class="nt-radio-option-label" id="@LabelId">@Label</span>
+                <span class="nt-radio-option-label" id="@(_labelId ??= inputId + "-label")">@Label</span>
             }
             @if (!string.IsNullOrWhiteSpace(SupportingText)) {
-                <span class="nt-radio-option-supporting" id="@SupportingTextId">@SupportingText</span>
+                <span class="nt-radio-option-supporting" id="@supportingTextId">@SupportingText</span>
             }
         </span>
     </span>

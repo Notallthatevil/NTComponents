@@ -34,8 +34,8 @@
                    aria-invalid="@(hasErrorText ? "true" : "false")"
                    aria-errormessage="@(hasErrorText ? ErrorTextId : null)"
                    aria-required="@(Required ? "true" : null)"
-                   @onchange="OnChangeAsync"
-                   @onblur="OnBlurAsync"
+                   @onchange="ChangeHandler"
+                   @onblur="BlurHandler"
                    @ref="Element" />
             <span class="nt-switch-state-layer" aria-hidden="true"></span>
             <span class="nt-switch-track" aria-hidden="true">

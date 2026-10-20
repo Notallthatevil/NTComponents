@@ -162,8 +162,6 @@ public partial class NTFileUpload {
 
     private string DisplayErrorText => _selectionError ?? CurrentErrorText ?? string.Empty;
 
-    private string DisplayValue => _displayValue;
-
     private bool HasUploadHandler => OnUploadFile.HasDelegate;
 
     private string? InputLabelledBy => HasLabel ? LabelId : null;
@@ -193,7 +191,7 @@ public partial class NTFileUpload {
     }
 
     /// <inheritdoc />
-    protected override string? FormatValueAsString(IReadOnlyList<IBrowserFile>? value) => value is { Count: > 0 } ? string.Join(", ", value.Select(file => file.Name)) : null;
+    protected override string? FormatValueAsString(IReadOnlyList<IBrowserFile>? value) => value is { Count: > 0 } ? FormatFileNames(value) : null;
 
     /// <inheritdoc />
     protected override void BuildAdditionalRootClasses(StringBuilder builder) {

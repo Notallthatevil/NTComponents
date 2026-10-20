@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Components;
-using NTComponents.Core;
 using System.Text;
 
 using NTComponents.CodeDocumentation;
@@ -19,9 +18,13 @@ namespace NTComponents;
     CompatibilitySummary = "Renders useful static HTML and adds Blazor behavior when interactive.",
     CompatibilityDetails = "Static SSR preserves the rendered markup and native browser behavior. EventCallback handlers, bound state updates, and live validation require an interactive render mode.")]
 public abstract class NTFieldBase<TValue> : NTFormControlBase<TValue> {
-    private string _appearanceClass = "nt-input-outlined";
-    private string _densityClass = "nt-input-standard";
+    [ThreadStatic]
+    private static StringBuilder? _cachedRootClassBuilder;
+
+    private string? _elementStyle;
+    private string? _prefixId;
     private string _rootClass = "nt-input";
+    private string? _suffixId;
 
     /// <summary>
     ///     Gets or sets the field appearance. When null, the containing <see cref="NTForm" /> value is used.
@@ -208,37 +211,17 @@ public abstract class NTFieldBase<TValue> : NTFormControlBase<TValue> {
     /// <summary>
     ///     Gets the id for prefix text.
     /// </summary>
-    protected string PrefixId => $"{InputId}-prefix";
+    protected string PrefixId => GetDerivedId(ref _prefixId, "-prefix");
 
     /// <summary>
     ///     Gets the id for suffix text.
     /// </summary>
-    protected string SuffixId => $"{InputId}-suffix";
+    protected string SuffixId => GetDerivedId(ref _suffixId, "-suffix");
 
     /// <summary>
     ///     Gets inline CSS variable overrides for the field.
     /// </summary>
-    protected string? ElementStyle => CssStyleBuilder.Create()
-        .AddVariable("nt-input-active-indicator-color", ActiveIndicatorColor.ToCssNTColorVariable(), ActiveIndicatorColor.HasValue)
-        .AddVariable("nt-input-caret-color", CaretColor.ToCssNTColorVariable(), CaretColor.HasValue)
-        .AddVariable("nt-input-container-color", BackgroundColor.ToCssNTColorVariable(), BackgroundColor.HasValue)
-        .AddVariable("nt-input-disabled-container-color", DisabledContainerColor.ToCssNTColorVariable(), DisabledContainerColor.HasValue)
-        .AddVariable("nt-input-disabled-content-color", DisabledContentColor.ToCssNTColorVariable(), DisabledContentColor.HasValue)
-        .AddVariable("nt-input-disabled-outline-color", DisabledOutlineColor.ToCssNTColorVariable(), DisabledOutlineColor.HasValue)
-        .AddVariable("nt-input-error-caret-color", ErrorCaretColor.ToCssNTColorVariable(), ErrorCaretColor.HasValue)
-        .AddVariable("nt-input-error-color", ErrorColor.ToCssNTColorVariable(), ErrorColor.HasValue)
-        .AddVariable("nt-input-focus-color", FocusColor.ToCssNTColorVariable(), FocusColor.HasValue)
-        .AddVariable("nt-input-hover-active-indicator-color", HoverActiveIndicatorColor.ToCssNTColorVariable(), HoverActiveIndicatorColor.HasValue)
-        .AddVariable("nt-input-hover-outline-color", HoverOutlineColor.ToCssNTColorVariable(), HoverOutlineColor.HasValue)
-        .AddVariable("nt-input-icon-color", IconColor.ToCssNTColorVariable(), IconColor.HasValue)
-        .AddVariable("nt-input-label-color", LabelColor.ToCssNTColorVariable(), LabelColor.HasValue)
-        .AddVariable("nt-input-outline-color", OutlineColor.ToCssNTColorVariable(), OutlineColor.HasValue)
-        .AddVariable("nt-input-placeholder-color", PlaceholderColor.ToCssNTColorVariable(), PlaceholderColor.HasValue)
-        .AddVariable("nt-input-prefix-suffix-color", PrefixSuffixColor.ToCssNTColorVariable(), PrefixSuffixColor.HasValue)
-        .AddVariable("nt-input-state-layer-color", StateLayerColor.ToCssNTColorVariable(), StateLayerColor.HasValue)
-        .AddVariable("nt-input-supporting-text-color", SupportingTextColor.ToCssNTColorVariable(), SupportingTextColor.HasValue)
-        .AddVariable("nt-input-text-color", TextColor.ToCssNTColorVariable(), TextColor.HasValue)
-        .Build();
+    protected string? ElementStyle => _elementStyle;
 
     /// <summary>
     ///     Gets concrete control attribute names that should not pass through from additional attributes.
@@ -271,8 +254,16 @@ public abstract class NTFieldBase<TValue> : NTFormControlBase<TValue> {
     protected override void OnParametersSet() {
         base.OnParametersSet();
         CacheEffectiveState();
-        IsRequired = HasAdditionalAttribute("required");
-        ControlAttributes = BuildControlAttributes();
+        IsRequired = TryGetAdditionalAttribute("required", out _);
+        ControlAttributes = BuildFilteredAttributes(ExplicitControlAttributeNames, BuildAdditionalControlAttributes());
+        _elementStyle = BuildElementStyle();
+    }
+
+    /// <inheritdoc />
+    private protected override void ClearDerivedIds() {
+        base.ClearDerivedIds();
+        _prefixId = null;
+        _suffixId = null;
     }
 
     /// <summary>
@@ -280,6 +271,11 @@ public abstract class NTFieldBase<TValue> : NTFormControlBase<TValue> {
     /// </summary>
     /// <returns>The root CSS class.</returns>
     protected string GetRootClass() => AppendFieldCssClass(_rootClass);
+
+    /// <summary>
+    ///     Gets the root CSS class with an already resolved EditContext field class appended.
+    /// </summary>
+    private protected string GetRootClass(string? fieldCssClass) => AppendFieldCssClass(_rootClass, fieldCssClass);
 
     /// <summary>
     ///     Builds additional described-by ids for concrete fields.
@@ -319,31 +315,50 @@ public abstract class NTFieldBase<TValue> : NTFormControlBase<TValue> {
 
     private void CacheEffectiveState() {
         EffectiveAppearance = Appearance ?? Form?.Appearance ?? NTFormAppearance.Outlined;
-        var effectiveDensity = Density ?? Form?.Density ?? NTFormDensity.Standard;
-        _appearanceClass = EffectiveAppearance switch {
-            NTFormAppearance.Filled => "nt-input-filled",
-            NTFormAppearance.Outlined => "nt-input-outlined",
-            _ => $"nt-input-{EffectiveAppearance.ToString().ToLowerInvariant()}"
-        };
-        _densityClass = effectiveDensity switch {
-            NTFormDensity.Comfortable => "nt-input-comfortable",
-            NTFormDensity.Standard => "nt-input-standard",
-            NTFormDensity.Dense => "nt-input-dense",
-            _ => $"nt-input-{effectiveDensity.ToString().ToLowerInvariant()}"
-        };
-
         var placeholder = string.IsNullOrWhiteSpace(Placeholder) ? FallbackPlaceholder : Placeholder;
         EffectivePlaceholder = string.IsNullOrWhiteSpace(placeholder) ? " " : placeholder;
         _rootClass = BuildRootClass();
     }
 
-    private IReadOnlyDictionary<string, object?>? BuildControlAttributes() => BuildFilteredAttributes(ExplicitControlAttributeNames, BuildAdditionalControlAttributes());
+    private string? BuildElementStyle() {
+        var style = AppendColorVariable(null, "nt-input-active-indicator-color", ActiveIndicatorColor);
+        style = AppendColorVariable(style, "nt-input-caret-color", CaretColor);
+        style = AppendColorVariable(style, "nt-input-container-color", BackgroundColor);
+        style = AppendColorVariable(style, "nt-input-disabled-container-color", DisabledContainerColor);
+        style = AppendColorVariable(style, "nt-input-disabled-content-color", DisabledContentColor);
+        style = AppendColorVariable(style, "nt-input-disabled-outline-color", DisabledOutlineColor);
+        style = AppendColorVariable(style, "nt-input-error-caret-color", ErrorCaretColor);
+        style = AppendColorVariable(style, "nt-input-error-color", ErrorColor);
+        style = AppendColorVariable(style, "nt-input-focus-color", FocusColor);
+        style = AppendColorVariable(style, "nt-input-hover-active-indicator-color", HoverActiveIndicatorColor);
+        style = AppendColorVariable(style, "nt-input-hover-outline-color", HoverOutlineColor);
+        style = AppendColorVariable(style, "nt-input-icon-color", IconColor);
+        style = AppendColorVariable(style, "nt-input-label-color", LabelColor);
+        style = AppendColorVariable(style, "nt-input-outline-color", OutlineColor);
+        style = AppendColorVariable(style, "nt-input-placeholder-color", PlaceholderColor);
+        style = AppendColorVariable(style, "nt-input-prefix-suffix-color", PrefixSuffixColor);
+        style = AppendColorVariable(style, "nt-input-state-layer-color", StateLayerColor);
+        style = AppendColorVariable(style, "nt-input-supporting-text-color", SupportingTextColor);
+        return AppendColorVariable(style, "nt-input-text-color", TextColor);
+    }
 
     private string BuildRootClass() {
-        var className = new StringBuilder("nt-input ");
-        className.Append(_appearanceClass);
-        className.Append(' ');
-        className.Append(_densityClass);
+        // Reuse one builder per thread, and keep the previous string when the classes are unchanged so field-class
+        // composition can reuse its cached result.
+        var className = _cachedRootClassBuilder ?? new StringBuilder(96);
+        _cachedRootClassBuilder = null;
+        className.Clear().Append("nt-input ");
+        className.Append(EffectiveAppearance switch {
+            NTFormAppearance.Filled => "nt-input-filled",
+            NTFormAppearance.Outlined => "nt-input-outlined",
+            _ => $"nt-input-{EffectiveAppearance.ToString().ToLowerInvariant()}"
+        });
+        className.Append(EffectiveDensity switch {
+            NTFormDensity.Comfortable => " nt-input-comfortable",
+            NTFormDensity.Standard => " nt-input-standard",
+            NTFormDensity.Dense => " nt-input-dense",
+            _ => $" nt-input-{EffectiveDensity.ToString().ToLowerInvariant()}"
+        });
 
         if (FieldDisabled) {
             className.Append(" nt-input-disabled");
@@ -366,7 +381,9 @@ public abstract class NTFieldBase<TValue> : NTFormControlBase<TValue> {
         }
 
         BuildAdditionalRootClasses(className);
-        return className.ToString();
+        var rootClass = className.Equals(_rootClass.AsSpan()) ? _rootClass : className.ToString();
+        _cachedRootClassBuilder = className;
+        return rootClass;
     }
 
     /// <summary>
@@ -394,8 +411,6 @@ public abstract class NTFieldBase<TValue> : NTFormControlBase<TValue> {
 
         return BuildAdditionalDescribedBy(ids) ?? string.Empty;
     }
-
-    private bool HasAdditionalAttribute(string name) => TryGetAdditionalAttribute(name, out _);
 
     /// <summary>
     ///     Render state for the field trailing adornment.

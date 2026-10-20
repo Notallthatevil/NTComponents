@@ -6,7 +6,7 @@
 
 @code {
     protected override void RenderInputElement(RenderTreeBuilder __builder) {
-        var hasErrorText = !string.IsNullOrWhiteSpace(CurrentErrorText);
+        var hasErrorText = RenderHasErrorText;
 
         <textarea @attributes="ControlAttributes"
                   id="@InputId"
@@ -18,15 +18,15 @@
                   disabled="@FieldDisabled"
                   required="@IsRequired"
                   placeholder="@EffectivePlaceholder"
-                  aria-describedby="@BuildDescribedBy(hasErrorText, !hasErrorText && !string.IsNullOrWhiteSpace(CurrentSupportingText))"
+                  aria-describedby="@BuildDescribedBy(hasErrorText, RenderHasSupportingText)"
                   aria-invalid="@(hasErrorText ? "true" : "false")"
                   aria-errormessage="@(hasErrorText ? ErrorTextId : null)"
-                  class="@InputClass"
+                  class="@GetInputClass(RenderFieldCssClass)"
                   oninput="@InputNativeOnInputHandler"
                   @bind-value:get="@CurrentValueAsString"
-                  @bind-value:set="OnInputAsync"
+                  @bind-value:set="InputHandler"
                   @bind-value:event="@(EffectiveBindOnInput ? "oninput" : "onchange")"
-                  @onblur="@OnBlurAsync"
+                  @onblur="BlurHandler"
                   @ref="Element"></textarea>
         @if (ShouldAutoGrow) {
             <NTPageScript Src="@JsModulePath" />

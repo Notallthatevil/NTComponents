@@ -65,7 +65,6 @@ $nt-radio-disabled-outline-opacity: 0.12;
     .nt-radio-fieldset {
         position: relative;
         display: block;
-        gap: $nt-radio-field-gap;
         box-sizing: border-box;
         min-width: 0;
         margin: 0;
@@ -147,7 +146,6 @@ $nt-radio-disabled-outline-opacity: 0.12;
         z-index: 2;
         display: flex;
         flex-direction: column;
-        gap: 0;
         min-width: 0;
     }
 
@@ -279,7 +277,6 @@ $nt-radio-disabled-outline-opacity: 0.12;
 
     &.nt-radio-standard {
         .nt-radio-fieldset {
-            gap: $nt-radio-field-gap-standard;
             padding: $nt-radio-field-padding-block-standard $nt-radio-field-padding-inline-standard;
         }
 
@@ -317,7 +314,6 @@ $nt-radio-disabled-outline-opacity: 0.12;
 
     &.nt-radio-dense {
         .nt-radio-fieldset {
-            gap: $nt-radio-field-gap-dense;
             padding: $nt-radio-field-padding-block-dense $nt-radio-field-padding-inline-dense;
         }
 

@@ -1,9 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
-using NTComponents.Core;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
-using System.Text;
 
 using NTComponents.CodeDocumentation;
 namespace NTComponents;
@@ -41,9 +39,10 @@ public partial class NTInputRadioGroup<[DynamicallyAccessedMembers(DynamicallyAc
     };
 
     private readonly List<NTInputRadio<TValue>> _registeredRadios = [];
-    private string _appearanceClass = "nt-radio-outlined";
-    private string _densityClass = "nt-radio-standard";
     private string? _elementStyle;
+    private string? _rootClass;
+    private string? _rootClassAdditionalClass;
+    private (NTFormAppearance, NTFormDensity, int) _rootClassKey;
 
     /// <summary>
     ///     Gets or sets the radio options.
@@ -201,6 +200,11 @@ public partial class NTInputRadioGroup<[DynamicallyAccessedMembers(DynamicallyAc
     internal bool IsDense => EffectiveDensity == NTFormDensity.Dense;
 
     /// <summary>
+    ///     Gets the id prefix for generated radio option ids.
+    /// </summary>
+    internal string RadioIdBase => InputId;
+
+    /// <summary>
     ///     Gets the HTML name shared by the radios in this group.
     /// </summary>
     internal string? RadioName => string.IsNullOrWhiteSpace(GroupName) ? ElementName : GroupName;
@@ -235,16 +239,9 @@ public partial class NTInputRadioGroup<[DynamicallyAccessedMembers(DynamicallyAc
     }
 
     /// <summary>
-    ///     Gets the deterministic input id for a radio option.
+    ///     Gets the zero-based registration index used to build a radio option's deterministic input id.
     /// </summary>
-    internal string GetRadioInputId(NTInputRadio<TValue> radio) {
-        if (!string.IsNullOrWhiteSpace(radio.ElementId)) {
-            return radio.ElementId;
-        }
-
-        var index = Math.Max(0, _registeredRadios.IndexOf(radio));
-        return $"{InputId}-option-{index + 1}";
-    }
+    internal int GetRadioIndex(NTInputRadio<TValue> radio) => Math.Max(0, _registeredRadios.IndexOf(radio));
 
     /// <summary>
     ///     Gets whether a radio option is selected.
@@ -280,16 +277,6 @@ public partial class NTInputRadioGroup<[DynamicallyAccessedMembers(DynamicallyAc
     protected override void OnParametersSet() {
         base.OnParametersSet();
         EffectiveAppearance = Appearance ?? Form?.Appearance ?? NTFormAppearance.Outlined;
-        _appearanceClass = EffectiveAppearance switch {
-            NTFormAppearance.Filled => "nt-radio-filled",
-            NTFormAppearance.Outlined => "nt-radio-outlined",
-            _ => $"nt-radio-{EffectiveAppearance.ToString().ToLowerInvariant()}"
-        };
-        _densityClass = EffectiveDensity switch {
-            NTFormDensity.Comfortable => "nt-radio-comfortable",
-            NTFormDensity.Dense => "nt-radio-dense",
-            _ => "nt-radio-standard"
-        };
         IsRequired = TryGetAdditionalAttribute("required", out _);
         GroupAttributes = BuildFilteredAttributes(GroupExplicitAttributeNames);
         _elementStyle = BuildElementStyle();
@@ -326,50 +313,51 @@ public partial class NTInputRadioGroup<[DynamicallyAccessedMembers(DynamicallyAc
     }
 
     private string BuildRootClass() {
-        var builder = new StringBuilder("nt-radio ");
-        builder.Append(_appearanceClass);
-        builder.Append(' ');
-        builder.Append(_densityClass);
-
-        if (FieldDisabled) {
-            builder.Append(" nt-radio-disabled");
-        }
-
-        if (FieldReadOnly) {
-            builder.Append(" nt-radio-readonly");
-        }
-
-        if (!HasLabel) {
-            builder.Append(" nt-radio-no-label");
-        }
-
         var additionalClass = GetAdditionalAttributeString("class");
-        if (!string.IsNullOrWhiteSpace(additionalClass)) {
-            builder.Append(' ');
-            builder.Append(additionalClass);
+        var flags = (FieldDisabled ? 1 : 0) | (FieldReadOnly ? 2 : 0) | (HasLabel ? 0 : 4);
+        // The class string only changes with these inputs, so reuse it across renders.
+        if (_rootClass is null || _rootClassKey != (EffectiveAppearance, EffectiveDensity, flags) || !ReferenceEquals(additionalClass, _rootClassAdditionalClass)) {
+            _rootClass = string.Concat(
+                "nt-radio ",
+                EffectiveAppearance switch {
+                    NTFormAppearance.Filled => "nt-radio-filled",
+                    NTFormAppearance.Outlined => "nt-radio-outlined",
+                    _ => $"nt-radio-{EffectiveAppearance.ToString().ToLowerInvariant()}"
+                },
+                EffectiveDensity switch {
+                    NTFormDensity.Comfortable => " nt-radio-comfortable",
+                    NTFormDensity.Dense => " nt-radio-dense",
+                    _ => " nt-radio-standard"
+                },
+                FieldDisabled ? " nt-radio-disabled" : null,
+                FieldReadOnly ? " nt-radio-readonly" : null,
+                HasLabel ? null : " nt-radio-no-label",
+                additionalClass is null ? null : " " + additionalClass);
+            _rootClassKey = (EffectiveAppearance, EffectiveDensity, flags);
+            _rootClassAdditionalClass = additionalClass;
         }
 
-        return AppendFieldCssClass(builder.ToString());
+        return AppendFieldCssClass(_rootClass);
     }
 
-    private string? BuildElementStyle() => CssStyleBuilder.Create()
-        .AddVariable("nt-radio-active-indicator-color", ActiveIndicatorColor.ToCssNTColorVariable(), ActiveIndicatorColor.HasValue)
-        .AddVariable("nt-radio-container-color", BackgroundColor.ToCssNTColorVariable(), BackgroundColor.HasValue)
-        .AddVariable("nt-radio-disabled-container-color", DisabledContainerColor.ToCssNTColorVariable(), DisabledContainerColor.HasValue)
-        .AddVariable("nt-radio-disabled-content-color", DisabledContentColor.ToCssNTColorVariable(), DisabledContentColor.HasValue)
-        .AddVariable("nt-radio-disabled-outline-color", DisabledOutlineColor.ToCssNTColorVariable(), DisabledOutlineColor.HasValue)
-        .AddVariable("nt-radio-error-color", ErrorColor.ToCssNTColorVariable(), ErrorColor.HasValue)
-        .AddVariable("nt-radio-focus-color", FocusColor.ToCssNTColorVariable(), FocusColor.HasValue)
-        .AddVariable("nt-radio-hover-active-indicator-color", HoverActiveIndicatorColor.ToCssNTColorVariable(), HoverActiveIndicatorColor.HasValue)
-        .AddVariable("nt-radio-hover-outline-color", HoverOutlineColor.ToCssNTColorVariable(), HoverOutlineColor.HasValue)
-        .AddVariable("nt-radio-label-color", LabelColor.ToCssNTColorVariable(), LabelColor.HasValue)
-        .AddVariable("nt-radio-outline-color", OutlineColor.ToCssNTColorVariable(), OutlineColor.HasValue)
-        .AddVariable("nt-radio-selected-color", SelectedColor.ToCssNTColorVariable(), SelectedColor.HasValue)
-        .AddVariable("nt-radio-selected-state-layer-color", SelectedStateLayerColor.ToCssNTColorVariable(), SelectedStateLayerColor.HasValue)
-        .AddVariable("nt-radio-state-layer-color", StateLayerColor.ToCssNTColorVariable(), StateLayerColor.HasValue)
-        .AddVariable("nt-radio-supporting-text-color", SupportingTextColor.ToCssNTColorVariable(), SupportingTextColor.HasValue)
-        .AddVariable("nt-radio-unselected-color", UnselectedColor.ToCssNTColorVariable(), UnselectedColor.HasValue)
-        .Build();
+    private string? BuildElementStyle() {
+        var style = AppendColorVariable(null, "nt-radio-active-indicator-color", ActiveIndicatorColor);
+        style = AppendColorVariable(style, "nt-radio-container-color", BackgroundColor);
+        style = AppendColorVariable(style, "nt-radio-disabled-container-color", DisabledContainerColor);
+        style = AppendColorVariable(style, "nt-radio-disabled-content-color", DisabledContentColor);
+        style = AppendColorVariable(style, "nt-radio-disabled-outline-color", DisabledOutlineColor);
+        style = AppendColorVariable(style, "nt-radio-error-color", ErrorColor);
+        style = AppendColorVariable(style, "nt-radio-focus-color", FocusColor);
+        style = AppendColorVariable(style, "nt-radio-hover-active-indicator-color", HoverActiveIndicatorColor);
+        style = AppendColorVariable(style, "nt-radio-hover-outline-color", HoverOutlineColor);
+        style = AppendColorVariable(style, "nt-radio-label-color", LabelColor);
+        style = AppendColorVariable(style, "nt-radio-outline-color", OutlineColor);
+        style = AppendColorVariable(style, "nt-radio-selected-color", SelectedColor);
+        style = AppendColorVariable(style, "nt-radio-selected-state-layer-color", SelectedStateLayerColor);
+        style = AppendColorVariable(style, "nt-radio-state-layer-color", StateLayerColor);
+        style = AppendColorVariable(style, "nt-radio-supporting-text-color", SupportingTextColor);
+        return AppendColorVariable(style, "nt-radio-unselected-color", UnselectedColor);
+    }
 
     private static bool TryConvertToBool<T>(string? value, out T result) {
         if (bool.TryParse(value, out var boolValue)) {

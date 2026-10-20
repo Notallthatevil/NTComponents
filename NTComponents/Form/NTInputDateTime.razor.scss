@@ -591,24 +591,6 @@ $nt-dtp-trigger-top-dense: 14px;
         }
     }
 
-    .tnt-dtp-tonal-button {
-        background-color: colors.$nt-color-secondary-container;
-        color: colors.$nt-color-on-secondary-container;
-
-        &:hover {
-            background-color: color-mix(in srgb, colors.$nt-color-secondary-container 70%, colors.$nt-color-secondary);
-        }
-    }
-
-    .tnt-dtp-filled-button {
-        background-color: colors.$nt-color-primary;
-        color: colors.$nt-color-on-primary;
-
-        &:hover {
-            background-color: color-mix(in srgb, colors.$nt-color-primary 82%, colors.$nt-color-on-primary 18%);
-        }
-    }
-
     &.tnt-dtp-mode-time {
         .tnt-dtp-date-panel,
         .tnt-dtp-month-panel {
@@ -632,10 +614,7 @@ $nt-dtp-trigger-top-dense: 14px;
     }
 
     &.tnt-dtp-view-month {
-        .tnt-dtp-date-panel {
-            display: none;
-        }
-
+        .tnt-dtp-date-panel,
         .tnt-dtp-time-panel {
             display: none;
         }

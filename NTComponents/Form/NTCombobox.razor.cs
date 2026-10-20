@@ -66,10 +66,9 @@ public partial class NTCombobox<TValue> : IAsyncDisposable {
 
     private const string ComboboxControlBaseClass = "nt-input-control nt-combobox-control";
     private readonly NTDisposalState _disposalState = new();
-    private DotNetObjectReference<NTCombobox<TValue>>? _dotNetObjectRef;
+    private NTMenuFieldInterop<NTCombobox<TValue>>? _interop;
     private readonly Dictionary<string, TValue> _optionsByFormattedValue = new(StringComparer.Ordinal);
     private IReadOnlyList<NTComboboxOption<TValue>> _items = [];
-    private IJSObjectReference? _jsModule;
     private bool _isOpen;
 
     /// <summary>
@@ -142,6 +141,8 @@ public partial class NTCombobox<TValue> : IAsyncDisposable {
     /// <inheritdoc />
     protected override bool HasFloatingValue => SelectedValues.Count > 0;
 
+    private NTMenuFieldInterop<NTCombobox<TValue>> Interop => _interop ??= new(this, JsModulePath, _disposalState, true, false);
+
     [Inject]
     private IJSRuntime JSRuntime { get; set; } = default!;
 
@@ -162,32 +163,14 @@ public partial class NTCombobox<TValue> : IAsyncDisposable {
 
     private IReadOnlyList<TValue> SelectedValues => CurrentValue ?? [];
 
-    private static string GetOptionClass(bool selected, bool disabled) => (selected, disabled) switch {
-        (true, true) => "nt-combobox-option nt-combobox-option-selected nt-combobox-option-disabled",
-        (true, false) => "nt-combobox-option nt-combobox-option-selected",
-        (false, true) => "nt-combobox-option nt-combobox-option-disabled",
-        _ => "nt-combobox-option"
-    };
-
     /// <inheritdoc />
     public async ValueTask DisposeAsync() {
         if (_disposalState.TryBegin()) {
             try {
-                if (_jsModule is not null) {
-                    try {
-                        await _jsModule.InvokeVoidAsync("onDispose", Element, _dotNetObjectRef).ConfigureAwait(false);
-                        await _jsModule.DisposeAsync().ConfigureAwait(false);
-                    }
-                    catch (JSDisconnectedException) {
-                        // JS runtime was disconnected, safe to ignore during disposal.
-                    }
-                }
+                await Interop.ReleaseAsync(Element).ConfigureAwait(false);
             }
             finally {
                 ((IDisposable)this).Dispose();
-                _jsModule = null;
-                _dotNetObjectRef?.Dispose();
-                _dotNetObjectRef = null;
                 GC.SuppressFinalize(this);
             }
         }
@@ -222,30 +205,11 @@ public partial class NTCombobox<TValue> : IAsyncDisposable {
     protected override string? FormatValueAsString(IReadOnlyList<TValue>? value) => value is null || value.Count == 0 ? null : BuildSelectionDisplayText(value, EffectiveItems);
 
     /// <inheritdoc />
+    [SuppressMessage("Reliability", "NTBA0003:Lifecycle method should use meaningful exception handling or owner ErrorBoundary coverage", Justification = "JS interop failures are handled by NTMenuFieldInterop.")]
     protected override async Task OnAfterRenderAsync(bool firstRender) {
         await base.OnAfterRenderAsync(firstRender);
 
-        if (!_disposalState.HasStarted) {
-            try {
-                _dotNetObjectRef ??= DotNetObjectReference.Create(this);
-                if (firstRender) {
-                    var importedModule = await JSRuntime.ImportIsolatedJs(this, JsModulePath);
-                    if (!_disposalState.HasStarted && _dotNetObjectRef is not null) {
-                        _jsModule = importedModule;
-                        await importedModule.InvokeVoidAsync("onLoad", Element, _dotNetObjectRef);
-                    }
-                    else {
-                        await importedModule.DisposeAsync();
-                    }
-                }
-                else if (!_disposalState.HasStarted && _jsModule is not null && _dotNetObjectRef is not null) {
-                    await _jsModule.InvokeVoidAsync("onUpdate", Element, _dotNetObjectRef);
-                }
-            }
-            catch (JSDisconnectedException) {
-                // JS runtime was disconnected, safe to ignore during render.
-            }
-        }
+        await Interop.AfterRenderAsync(JSRuntime, Element, firstRender);
     }
 
     /// <inheritdoc />
@@ -301,8 +265,12 @@ public partial class NTCombobox<TValue> : IAsyncDisposable {
 
         var selectedLabels = new List<string>(selectedValues.Count);
         foreach (var selectedValue in selectedValues) {
-            var option = items.FirstOrDefault(item => ValuesEqual(item.Value, selectedValue));
-            selectedLabels.Add(option is null ? FormatOptionValue(selectedValue) : option.Label);
+            var index = 0;
+            while (index < items.Count && !EffectiveComparer.Equals(items[index].Value, selectedValue)) {
+                index++;
+            }
+
+            selectedLabels.Add(index < items.Count ? items[index].Label : FormatOptionValue(selectedValue));
         }
 
         return string.Join(SelectedTextSeparator, selectedLabels);
@@ -330,8 +298,6 @@ public partial class NTCombobox<TValue> : IAsyncDisposable {
     }
 
     private bool ShouldRenderFormPostValues(IReadOnlyList<TValue> selectedValues) => !FieldDisabled && !string.IsNullOrWhiteSpace(ElementName) && selectedValues.Count > 0;
-
-    private bool ValuesEqual(TValue left, TValue right) => EffectiveComparer.Equals(left, right);
 }
 
 /// <summary>

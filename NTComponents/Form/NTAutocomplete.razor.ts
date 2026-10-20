@@ -39,6 +39,7 @@ interface AutocompleteOptionDefinition {
 }
 
 interface AutocompleteState {
+    activeElement: HTMLElement | null;
     activeIndex: number;
     documentListenersAttached: boolean;
     dotNetRef: DotNetAutocompleteRef | null;
@@ -220,9 +221,8 @@ function updateSelectedOptionDom(state: AutocompleteState): void {
 function clearActiveOption(state: AutocompleteState): void {
     state.activeIndex = -1;
     state.input.removeAttribute('aria-activedescendant');
-    for (const option of state.options) {
-        option.element.classList.remove(activeOptionClass);
-    }
+    state.activeElement?.classList.remove(activeOptionClass);
+    state.activeElement = null;
 }
 
 function updateActiveOption(state: AutocompleteState, nextIndex: number): void {
@@ -237,13 +237,13 @@ function updateActiveOption(state: AutocompleteState, nextIndex: number): void {
         return;
     }
 
-    for (const option of state.options) {
-        option.element.classList.remove(activeOptionClass);
-    }
+    state.activeElement?.classList.remove(activeOptionClass);
+    state.activeElement = null;
 
     state.activeIndex = ((nextIndex % visibleOptions.length) + visibleOptions.length) % visibleOptions.length;
     const activeOption = visibleOptions[state.activeIndex];
     activeOption.element.classList.add(activeOptionClass);
+    state.activeElement = activeOption.element;
     state.input.setAttribute('aria-activedescendant', activeOption.element.id);
     scrollOptionIntoView(activeOption);
 }
@@ -737,6 +737,7 @@ function clearMenuOptions(state: AutocompleteState): void {
 
 function createState(input: HTMLInputElement, dotNetRef: Maybe<unknown>): AutocompleteState {
     const state: AutocompleteState = {
+        activeElement: null,
         activeIndex: -1,
         documentListenersAttached: false,
         dotNetRef: isDotNetObjectReference(dotNetRef) ? dotNetRef : null,

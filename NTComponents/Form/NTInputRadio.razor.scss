@@ -180,8 +180,7 @@ $nt-radio-motion-easing: motion.$nt-motion-easing-standard;
         opacity: $nt-radio-state-pressed-opacity;
     }
 
-    &:has(input:focus-visible) .nt-radio-option-state-layer,
-    &.nt-radio-option-highlighted .nt-radio-option-state-layer {
+    &:has(input:focus-visible) .nt-radio-option-state-layer {
         opacity: $nt-radio-state-focus-opacity;
     }
 

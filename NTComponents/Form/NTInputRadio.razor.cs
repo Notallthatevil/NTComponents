@@ -28,6 +28,16 @@ public partial class NTInputRadio<[DynamicallyAccessedMembers(DynamicallyAccesse
         "onchange"
     };
 
+    private string? _generatedInputId;
+    private string? _generatedInputIdBase;
+    private int _generatedInputIdIndex;
+    private string? _inputId;
+    private string? _labelId;
+    private string? _rootClass;
+    private string? _rootClassAdditionalClass;
+    private int _rootClassFlags;
+    private string? _supportingTextId;
+
     /// <summary>
     ///     Gets or sets additional native input attributes.
     /// </summary>
@@ -105,15 +115,10 @@ public partial class NTInputRadio<[DynamicallyAccessedMembers(DynamicallyAccesse
     [CascadingParameter(Name = "SelectedRadioValue")]
     internal TValue? SelectedValue { get; set; }
 
-    private string InputId => Group.GetRadioInputId(this);
-
+    // Rebuilt every render: AdditionalAttributes can be passed explicitly and mutated in place, so a reference-keyed cache could go stale.
     private IReadOnlyDictionary<string, object?>? InputAttributes => BuildInputAttributes();
 
     private bool IsSelected => EqualityComparer<TValue>.Default.Equals(SelectedValue, Value);
-
-    private string LabelId => $"{InputId}-label";
-
-    private string? SupportingTextId => string.IsNullOrWhiteSpace(SupportingText) ? null : $"{InputId}-supporting";
 
     private string? ValueAsString => BindConverter.FormatValue(Value?.ToString(), CultureInfo.CurrentCulture);
 
@@ -136,16 +141,57 @@ public partial class NTInputRadio<[DynamicallyAccessedMembers(DynamicallyAccesse
         Group.RegisterRadio(this);
     }
 
-    private string BuildRootClass() => CssClassBuilder.Create("nt-radio-option")
-        .AddClass("nt-radio-option-disabled", Group.IsGroupDisabled || Disabled)
-        .AddClass("nt-radio-option-readonly", Group.IsGroupReadOnly || ReadOnly)
-        .AddClass("nt-radio-option-standard", Group.IsStandard)
-        .AddClass("nt-radio-option-dense", Group.IsDense)
-        .AddClass("nt-radio-option-no-label", string.IsNullOrWhiteSpace(Label))
-        .AddClass("nt-radio-option-has-leading-icon", LeadingIcon is not null)
-        .AddClass("nt-radio-option-has-trailing-icon", TrailingIcon is not null)
-        .AddClass(GetAdditionalClass())
-        .Build();
+    private string BuildRootClass() {
+        var additionalClass = GetAdditionalClass();
+        var flags = (Group.IsGroupDisabled || Disabled ? 1 : 0) | (Group.IsGroupReadOnly || ReadOnly ? 2 : 0) | (Group.IsStandard ? 4 : 0) | (Group.IsDense ? 8 : 0)
+            | (string.IsNullOrWhiteSpace(Label) ? 16 : 0) | (LeadingIcon is not null ? 32 : 0) | (TrailingIcon is not null ? 64 : 0);
+        // The class string only changes with these inputs, so reuse it across renders.
+        if (_rootClass is null || flags != _rootClassFlags || !ReferenceEquals(additionalClass, _rootClassAdditionalClass)) {
+            _rootClass = CssClassBuilder.Create("nt-radio-option")
+                .AddClass("nt-radio-option-disabled", (flags & 1) != 0)
+                .AddClass("nt-radio-option-readonly", (flags & 2) != 0)
+                .AddClass("nt-radio-option-standard", (flags & 4) != 0)
+                .AddClass("nt-radio-option-dense", (flags & 8) != 0)
+                .AddClass("nt-radio-option-no-label", (flags & 16) != 0)
+                .AddClass("nt-radio-option-has-leading-icon", (flags & 32) != 0)
+                .AddClass("nt-radio-option-has-trailing-icon", (flags & 64) != 0)
+                .AddClass(additionalClass)
+                .Build();
+            _rootClassFlags = flags;
+            _rootClassAdditionalClass = additionalClass;
+        }
+
+        return _rootClass;
+    }
+
+    /// <summary>
+    ///     Resolves the input, label, and supporting-text ids, rebuilding them only when the group id or option index changes.
+    /// </summary>
+    private string ResolveIds() {
+        string inputId;
+        if (!string.IsNullOrWhiteSpace(ElementId)) {
+            inputId = ElementId;
+        }
+        else {
+            var groupId = Group.RadioIdBase;
+            var index = Group.GetRadioIndex(this);
+            if (_generatedInputId is null || index != _generatedInputIdIndex || !ReferenceEquals(groupId, _generatedInputIdBase)) {
+                _generatedInputId = $"{groupId}-option-{index + 1}";
+                _generatedInputIdBase = groupId;
+                _generatedInputIdIndex = index;
+            }
+
+            inputId = _generatedInputId;
+        }
+
+        if (!ReferenceEquals(inputId, _inputId)) {
+            _inputId = inputId;
+            _labelId = null;
+            _supportingTextId = null;
+        }
+
+        return inputId;
+    }
 
     private IReadOnlyDictionary<string, object?>? BuildInputAttributes() {
         if (AdditionalAttributes is null) {

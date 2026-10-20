@@ -84,9 +84,5 @@
         ::deep .nt-combobox-list-item:not(.nt-combobox-list-group) + .nt-combobox-list-group {
             margin-block-start: 0;
         }
-
-        ::deep .nt-combobox-group-label {
-            @include typescale.nt-label-large;
-        }
     }
 }

@@ -45,7 +45,7 @@
 
                 <span class="nt-input-control-container">
                     <span class="nt-file-upload-choose" aria-hidden="true">@ChooseButtonText</span>
-                    <span class="nt-file-upload-value">@DisplayValue</span>
+                    <span class="nt-file-upload-value">@_displayValue</span>
                     @if (RendererInfo.IsInteractive) {
                         <InputFile @key="_inputKey"
                                    OnChange="OnFilesSelectedAsync"

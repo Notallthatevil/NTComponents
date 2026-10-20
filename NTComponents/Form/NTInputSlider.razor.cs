@@ -47,6 +47,17 @@ public partial class NTInputSlider<TNumber> where TNumber : struct, INumber<TNum
     private IReadOnlyDictionary<string, object?>? _inputAttributes;
     private string? _elementStyle;
     private int[] _stopIndexes = [];
+    private string[] _stopStyles = [];
+    private readonly EventCallback<ChangeEventArgs> _inputCallback;
+    private readonly EventCallback<ChangeEventArgs> _changeCallback;
+
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="NTInputSlider{TNumber}" /> class.
+    /// </summary>
+    public NTInputSlider() {
+        _inputCallback = EventCallback.Factory.Create<ChangeEventArgs>(this, OnInputAsync);
+        _changeCallback = EventCallback.Factory.Create<ChangeEventArgs>(this, OnChangeAsync);
+    }
 
     /// <summary>
     ///     Gets the browser module path used for static SSR slider enhancement.
@@ -207,12 +218,12 @@ public partial class NTInputSlider<TNumber> where TNumber : struct, INumber<TNum
     /// <summary>
     ///     Gets the input event callback only when live input binding is enabled.
     /// </summary>
-    protected EventCallback<ChangeEventArgs> InputEventCallback => BindOnInput ? EventCallback.Factory.Create<ChangeEventArgs>(this, OnInputAsync) : default;
+    protected EventCallback<ChangeEventArgs> InputEventCallback => BindOnInput ? _inputCallback : default;
 
     /// <summary>
     ///     Gets the change event callback only when live input binding is disabled.
     /// </summary>
-    protected EventCallback<ChangeEventArgs> ChangeEventCallback => BindOnInput ? default : EventCallback.Factory.Create<ChangeEventArgs>(this, OnChangeAsync);
+    protected EventCallback<ChangeEventArgs> ChangeEventCallback => BindOnInput ? default : _changeCallback;
 
     /// <summary>
     ///     Gets the inset icon class for the current placement.
@@ -272,6 +283,7 @@ public partial class NTInputSlider<TNumber> where TNumber : struct, INumber<TNum
         base.OnParametersSet();
         _inputAttributes = BuildFilteredAttributes(ExplicitInputAttributeNames);
         _stopIndexes = BuildStopIndexes();
+        _stopStyles = Array.ConvertAll(_stopIndexes, BuildStopStyle);
         _elementStyle = BuildElementStyle();
     }
 
@@ -339,10 +351,10 @@ public partial class NTInputSlider<TNumber> where TNumber : struct, INumber<TNum
     /// </summary>
     /// <param name="stopIndex">The stop index.</param>
     /// <returns>The stop CSS class.</returns>
-    protected string BuildStopClass(int stopIndex) {
+    protected string BuildStopClass(int stopIndex) => GetStopClass(stopIndex, GetActiveStartPercent(), GetActiveEndPercent());
+
+    private string GetStopClass(int stopIndex, double startPercent, double endPercent) {
         var stopPercent = CalculateStopPercent(stopIndex, _stopIndexes.Length);
-        var startPercent = GetActiveStartPercent();
-        var endPercent = GetActiveEndPercent();
         return stopPercent >= startPercent && stopPercent <= endPercent
             ? "nt-slider-stop nt-slider-stop-active"
             : "nt-slider-stop nt-slider-stop-inactive";

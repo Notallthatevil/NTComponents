@@ -49,8 +49,17 @@ export function hsvToRgb(h: number, s: number, v: number): { b: number; g: numbe
     const chroma = v * s;
     const x = chroma * (1 - Math.abs(((hue / 60) % 2) - 1));
     const m = v - chroma;
-    const sector = Math.floor(hue / 60);
-    const [r, g, b] = [[chroma, x, 0], [x, chroma, 0], [0, chroma, x], [0, x, chroma], [x, 0, chroma], [chroma, 0, x]][sector] ?? [chroma, x, 0];
+    let r = chroma;
+    let g = x;
+    let b = 0;
+    switch (Math.floor(hue / 60)) {
+        case 1: r = x; g = chroma; break;
+        case 2: r = 0; g = chroma; b = x; break;
+        case 3: r = 0; g = x; b = chroma; break;
+        case 4: r = x; g = 0; b = chroma; break;
+        case 5: r = chroma; g = 0; b = x; break;
+    }
+
     return { r: Math.round((r + m) * 255), g: Math.round((g + m) * 255), b: Math.round((b + m) * 255) };
 }
 
@@ -166,7 +175,8 @@ function currentHex(instance: PickerInstance): string {
     return formatColor(currentColor(instance), instance.showAlpha);
 }
 
-function render(instance: PickerInstance): void {
+/** Pass `formatChanged: false` while dragging or stepping: the format buttons and field groups only depend on the active format. */
+function render(instance: PickerInstance, formatChanged = true): void {
     const { root } = instance;
     const color = currentColor(instance);
     const saturation = Math.round(instance.s * 100);
@@ -197,12 +207,14 @@ function render(instance: PickerInstance): void {
         alpha.value = String(alphaPercent);
     }
 
-    for (const button of root.querySelectorAll<HTMLElement>('[data-nt-color-format]')) {
-        button.setAttribute('aria-pressed', String(button.dataset.ntColorFormat === instance.format));
-    }
+    if (formatChanged) {
+        for (const button of root.querySelectorAll<HTMLElement>('[data-nt-color-format]')) {
+            button.setAttribute('aria-pressed', String(button.dataset.ntColorFormat === instance.format));
+        }
 
-    for (const fieldset of root.querySelectorAll<HTMLElement>('[data-nt-color-fieldset]')) {
-        fieldset.hidden = !(fieldset.dataset.ntColorFieldset ?? '').split(' ').includes(instance.format);
+        for (const fieldset of root.querySelectorAll<HTMLElement>('[data-nt-color-fieldset]')) {
+            fieldset.hidden = !(fieldset.dataset.ntColorFieldset ?? '').split(' ').includes(instance.format);
+        }
     }
 
     const hsl = hsvToHsl(instance.h, instance.s, instance.v);
@@ -248,7 +260,7 @@ function applyHsv(instance: PickerInstance, hsv: Partial<Hsv> & { a?: number }, 
     instance.s = clamp(hsv.s ?? instance.s, 0, 1);
     instance.v = clamp(hsv.v ?? instance.v, 0, 1);
     instance.a = clamp(hsv.a ?? instance.a, 0, 1);
-    render(instance);
+    render(instance, false);
     emitValue(instance, 'input');
     if (commit) {
         emitValue(instance, 'change');

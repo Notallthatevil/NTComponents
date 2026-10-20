@@ -17,6 +17,7 @@ interface ComboboxOptionState {
 }
 
 interface ComboboxState {
+    activeElement: HTMLElement | null;
     activeIndex: number;
     dotNetRef: DotNetComboboxRef | null;
     hiddenContainer: HTMLElement | null;
@@ -252,22 +253,19 @@ function invokeDotNetSafely(callback: () => Promise<unknown> | void): Promise<vo
 function updateActiveOption(state: ComboboxState, nextIndex: number): void {
     const visibleOptions = getVisibleEnabledOptions(state);
     if (visibleOptions.length === 0) {
-        for (const option of state.options) {
-            option.element.classList.remove(activeOptionClass);
-        }
-
+        state.activeElement?.classList.remove(activeOptionClass);
+        state.activeElement = null;
         state.activeIndex = -1;
         state.input.removeAttribute('aria-activedescendant');
         return;
     }
 
-    for (const option of state.options) {
-        option.element.classList.remove(activeOptionClass);
-    }
+    state.activeElement?.classList.remove(activeOptionClass);
 
     state.activeIndex = ((nextIndex % visibleOptions.length) + visibleOptions.length) % visibleOptions.length;
     const activeOption = visibleOptions[state.activeIndex];
     activeOption.element.classList.add(activeOptionClass);
+    state.activeElement = activeOption.element;
     state.input.setAttribute('aria-activedescendant', activeOption.element.id);
     scrollOptionIntoView(activeOption);
 }
@@ -469,6 +467,7 @@ function updateElements(state: ComboboxState): void {
 
 function createState(input: HTMLInputElement, dotNetRef: Maybe<unknown>): ComboboxState {
     const state: ComboboxState = {
+        activeElement: null,
         activeIndex: -1,
         dotNetRef: isDotNetObjectReference(dotNetRef) ? dotNetRef : null,
         filterQuery: '',

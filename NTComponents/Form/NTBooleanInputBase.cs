@@ -42,6 +42,8 @@ public abstract class NTBooleanInputBase : NTFormControlBase<bool> {
     private string? _requiredValidationMessage;
     private EditContext? _validationEditContext;
     private ValidationMessageStore? _requiredValidationMessages;
+    private Func<ChangeEventArgs, Task>? _changeHandler;
+
     /// <summary>
     ///     Gets or sets a callback invoked after the value changes.
     /// </summary>
@@ -92,6 +94,11 @@ public abstract class NTBooleanInputBase : NTFormControlBase<bool> {
 
     /// <inheritdoc />
     protected override bool HasRequiredSupportingText => Required;
+
+    /// <summary>
+    ///     Gets the <see cref="OnChangeAsync" /> delegate, created once instead of on every render.
+    /// </summary>
+    private protected Func<ChangeEventArgs, Task> ChangeHandler => _changeHandler ??= OnChangeAsync;
 
     /// <inheritdoc />
     public void Dispose() => ((IDisposable)this).Dispose();

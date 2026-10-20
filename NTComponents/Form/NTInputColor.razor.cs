@@ -1,5 +1,4 @@
 using System.Diagnostics.CodeAnalysis;
-using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Components;
 using NTComponents.CodeDocumentation;
 using NTComponents.Core;
@@ -28,8 +27,6 @@ public partial class NTInputColor {
 
     private const string JsModulePath = "./_content/NTComponents/Form/NTInputColor.razor.js";
 
-    private static readonly Regex _hexPattern = new("^#?(?<digits>[0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1));
-
     private static readonly IReadOnlyDictionary<string, object?> _inputAttributes = new Dictionary<string, object?> {
         ["data-nt-input-color-input"] = "true",
         ["spellcheck"] = "false"
@@ -48,18 +45,26 @@ public partial class NTInputColor {
     protected override InputType InputTypeAttribute => InputType.Text;
 
     /// <inheritdoc />
-    protected override RenderFragment? LeadingContent => SwatchFragment;
+    protected override RenderFragment? LeadingContent => _swatchFragment ??= SwatchFragment;
 
     /// <inheritdoc />
     protected override int? NativeMaxLength => 9;
 
     private readonly string _instanceId = TnTComponentIdentifier.NewId();
+    private string? _popoverId;
+    private string? _rootStyle;
+    private RenderFragment? _swatchFragment;
 
     private bool IsPickerDisabled => FieldDisabled || FieldReadOnly;
     private string PickerValue => TryNormalize(CurrentValueAsString, ShowAlpha, out var normalized) ? normalized : string.Empty;
-    private string PopoverId => $"{_instanceId}-popover";
-    private string RootClass => AppendFieldCssClass($"nt-input-color nt-input-color-{EffectiveDensity.ToString().ToLowerInvariant()}");
-    private string RootStyle => $"--nt-input-color-anchor: --nt-input-color-{_instanceId};";
+    private string PopoverId => _popoverId ??= $"{_instanceId}-popover";
+    private string RootClass => AppendFieldCssClass(EffectiveDensity switch {
+        NTFormDensity.Comfortable => "nt-input-color nt-input-color-comfortable",
+        NTFormDensity.Standard => "nt-input-color nt-input-color-standard",
+        NTFormDensity.Dense => "nt-input-color nt-input-color-dense",
+        var density => $"nt-input-color nt-input-color-{density.ToString().ToLowerInvariant()}"
+    });
+    private string RootStyle => _rootStyle ??= $"--nt-input-color-anchor: --nt-input-color-{_instanceId};";
     private string ShowAlphaAttribute => ShowAlpha ? "true" : "false";
     private string? SwatchStyle => TryNormalize(CurrentValueAsString, ShowAlpha, out var normalized) ? $"--nt-input-color-swatch: {normalized}" : null;
 
@@ -86,22 +91,37 @@ public partial class NTInputColor {
     }
 
     private static bool TryNormalize(string? value, bool showAlpha, [NotNullWhen(true)] out string? normalized) {
+        var span = value.AsSpan().Trim();
+        if (span.StartsWith('#')) {
+            span = span[1..];
+        }
+
         normalized = null;
-        var match = string.IsNullOrWhiteSpace(value) ? null : _hexPattern.Match(value.Trim());
-        if (match is not { Success: true }) {
+        if (span.Length is not (3 or 6 or 8)) {
             return false;
         }
 
-        var digits = match.Groups["digits"].Value.ToLowerInvariant();
-        if (digits.Length == 3) {
-            digits = string.Concat(digits.Select(digit => $"{digit}{digit}"));
+        foreach (var c in span) {
+            if (!char.IsAsciiHexDigit(c)) {
+                return false;
+            }
         }
 
-        if (digits.Length == 8 && (!showAlpha || digits.EndsWith("ff", StringComparison.Ordinal))) {
-            digits = digits[..6];
+        if (span.Length == 8 && (!showAlpha || span[6..].Equals("ff", StringComparison.OrdinalIgnoreCase))) {
+            span = span[..6];
         }
 
-        normalized = $"#{digits}";
+        normalized = span.Length == 3
+            ? string.Create(7, span, static (chars, digits) => {
+                chars[0] = '#';
+                for (var i = 0; i < 3; i++) {
+                    chars[1 + i * 2] = chars[2 + i * 2] = char.ToLowerInvariant(digits[i]);
+                }
+            })
+            : string.Create(span.Length + 1, span, static (chars, digits) => {
+                chars[0] = '#';
+                digits.ToLowerInvariant(chars[1..]);
+            });
         return true;
     }
 }

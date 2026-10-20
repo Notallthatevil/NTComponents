@@ -30,6 +30,8 @@ namespace NTComponents;
 public partial class NTTextArea : INTPageScriptComponent<NTTextArea> {
     private const string TextAreaJsModulePath = "./_content/NTComponents/Form/NTTextArea.razor.js";
     private readonly NTDisposalState _disposalState = new();
+    private IReadOnlyDictionary<string, object?>? _additionalInputAttributes;
+    private (int MinLines, int? MaxLines, bool AutoGrow, bool SizeByContent, string? Style) _additionalInputAttributesKey;
 
     private static readonly HashSet<string> TextAreaExplicitControlAttributeNames = new(StringComparer.OrdinalIgnoreCase) {
         "id",
@@ -127,6 +129,12 @@ public partial class NTTextArea : INTPageScriptComponent<NTTextArea> {
 
     /// <inheritdoc />
     protected override IReadOnlyDictionary<string, object?>? BuildAdditionalInputAttributes() {
+        // The attributes depend only on these inputs, so rebuild them only when one changes.
+        var key = (MinVisibleLines, MaxVisibleLines, ShouldAutoGrow, SizeByContent, GetAdditionalAttributeString("style"));
+        if (_additionalInputAttributes is not null && key == _additionalInputAttributesKey) {
+            return _additionalInputAttributes;
+        }
+
         var attributes = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
         attributes["rows"] = MinVisibleLines.ToString(CultureInfo.InvariantCulture);
 
@@ -139,12 +147,13 @@ public partial class NTTextArea : INTPageScriptComponent<NTTextArea> {
             }
         }
 
-        var style = BuildTextAreaStyle();
+        var style = BuildTextAreaStyle(key.Item5);
         if (style is not null) {
             attributes["style"] = style;
         }
 
-        return attributes.Count == 0 ? null : attributes;
+        _additionalInputAttributesKey = key;
+        return _additionalInputAttributes = attributes;
     }
 
     /// <inheritdoc />
@@ -268,8 +277,7 @@ public partial class NTTextArea : INTPageScriptComponent<NTTextArea> {
         return !DisposalStarted && module is not null && dotNetRef is not null;
     }
 
-    private string? BuildTextAreaStyle() {
-        var style = GetAdditionalAttributeString("style");
+    private string? BuildTextAreaStyle(string? style) {
         if (!SizeByContent) {
             return style;
         }

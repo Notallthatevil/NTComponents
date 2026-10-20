@@ -72,8 +72,8 @@
                            data-nt-combobox-input="true"
                            data-nt-combobox-listbox="@listboxId"
                            data-nt-combobox-name="@ElementName"
-                           data-nt-combobox-readonly="@FieldReadOnly.ToString().ToLowerInvariant()"
-                           data-nt-combobox-searchable="@Searchable.ToString().ToLowerInvariant()"
+                           data-nt-combobox-readonly="@(FieldReadOnly ? "true" : "false")"
+                           data-nt-combobox-searchable="@(Searchable ? "true" : "false")"
                            data-nt-combobox-separator="@SelectedTextSeparator"
                            value="@BuildSelectionDisplayText(selectedValues, items)"
                            @ref="Element" />
@@ -109,7 +109,7 @@
                         var selected = selectedValueSet?.Contains(option.Value) == true;
                         var disabled = FieldDisabled || FieldReadOnly || option.Disabled;
                         <li class="nt-combobox-list-item" role="presentation">
-                            <button class="@GetOptionClass(selected, disabled)"
+                            <button class="@NTMenuOptionClass.ForSelectable(selected, disabled)"
                                     id="@GetOptionId(listboxId, index)"
                                     type="button"
                                     role="option"
