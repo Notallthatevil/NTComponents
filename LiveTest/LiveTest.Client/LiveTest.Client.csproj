@@ -28,6 +28,7 @@
                       ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\..\NTComponents.Extensions\NTComponents.Extensions.csproj" />
     <ProjectReference Include="..\..\NTComponents\NTComponents.csproj" />
+    <ProjectReference Include="..\..\NTComponents.Documentation\NTComponents.Documentation.csproj" />
     <ProjectReference Include="..\..\Submodules\NTComponents.Charts\NTComponents.Charts\NTComponents.Charts.csproj" />
   </ItemGroup>
 

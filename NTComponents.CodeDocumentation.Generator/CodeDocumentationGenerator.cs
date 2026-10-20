@@ -16,6 +16,7 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
     private const string AttributeName = "GenerateCodeDocumentationAttribute";
     private const string FullyQualifiedAttributeName = AttributeNamespace + "." + AttributeName;
     private const string DocumentationAttributeFullName = "NTComponents.CodeDocumentation.NTDocumentationAttribute";
+    private const string CompilerGeneratedAttributeFullName = "System.Runtime.CompilerServices.CompilerGeneratedAttribute";
 
     private static readonly SymbolDisplayFormat TypeDisplayFormat = new(
         typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
@@ -52,64 +53,85 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         context.RegisterPostInitializationOutput(static postInitializationContext =>
             postInitializationContext.AddSource("GenerateCodeDocumentationAttribute.g.cs", SourceText.From(AttributeSourceText, Encoding.UTF8)));
 
-        var modelProvider = context.CompilationProvider.Select(static (compilation, cancellationToken) => {
-            if (!HasCodeDocumentationAttribute(compilation, cancellationToken)) {
-                return null;
+        var resultProvider = context.CompilationProvider
+            .Combine(context.AdditionalTextsProvider.Collect())
+            .Select(static (input, cancellationToken) => BuildResult(input.Left, input.Right, cancellationToken));
+
+        context.RegisterSourceOutput(resultProvider, static (sourceProductionContext, result) => {
+            if (result.Error is not null) {
+                sourceProductionContext.ReportDiagnostic(Diagnostic.Create(GenerationFailed, Location.None, result.Error));
             }
 
-            return BuildModel(compilation, cancellationToken);
-        });
-
-        context.RegisterSourceOutput(modelProvider, static (sourceProductionContext, model) => {
-            if (model is null) {
-                return;
+            if (result.Model is not null) {
+                sourceProductionContext.AddSource("GeneratedCodeDocumentation.g.cs", SourceText.From(BuildGeneratedSource(result.Model), Encoding.UTF8));
             }
-
-            var source = BuildGeneratedSource(model);
-            sourceProductionContext.AddSource("GeneratedCodeDocumentation.g.cs", SourceText.From(source, Encoding.UTF8));
         });
     }
 
-    private static AssemblyDocumentationModel BuildModel(Compilation compilation, CancellationToken cancellationToken) {
+    private static readonly DiagnosticDescriptor GenerationFailed = new("NTDOC001", "Code documentation could not be generated", "{0}", "NTCodeDocumentation", DiagnosticSeverity.Error, isEnabledByDefault: true);
+
+    private static GenerationResult BuildResult(Compilation compilation, ImmutableArray<AdditionalText> additionalTexts, CancellationToken cancellationToken) {
+        var assemblyName = GetDocumentedAssemblyName(compilation);
+        if (assemblyName is null) {
+            return new GenerationResult(null, null);
+        }
+
+        var assembly = compilation.SourceModule.ReferencedAssemblySymbols.FirstOrDefault(reference => string.Equals(reference.Name, assemblyName, StringComparison.Ordinal));
+        if (assembly is null) {
+            return new GenerationResult(null, $"The documented assembly '{assemblyName}' is not referenced.");
+        }
+
+        var documentationFile = additionalTexts.FirstOrDefault(text => string.Equals(Path.GetFileName(text.Path), assemblyName + ".xml", StringComparison.OrdinalIgnoreCase));
+        if (documentationFile?.GetText(cancellationToken) is not { } documentationText) {
+            return new GenerationResult(null, $"The XML documentation file '{assemblyName}.xml' is not an additional file.");
+        }
+
+        var parseOptions = compilation.SyntaxTrees.FirstOrDefault()?.Options as CSharpParseOptions ?? CSharpParseOptions.Default;
+        var context = new DocumentationContext(assembly, ReadXmlDocumentation(documentationText), SourceFacts.Create(additionalTexts, parseOptions, cancellationToken));
+        return new GenerationResult(BuildModel(context, assemblyName, cancellationToken), null);
+    }
+
+    private static AssemblyDocumentationModel BuildModel(DocumentationContext context, string assemblyName, CancellationToken cancellationToken) {
         var types = ImmutableArray.CreateBuilder<TypeDocumentationModel>();
 
-        foreach (var type in EnumerateTypes(compilation.Assembly.GlobalNamespace)) {
+        foreach (var type in EnumerateTypes(context.Assembly.GlobalNamespace)) {
             cancellationToken.ThrowIfCancellationRequested();
             if (!ShouldIncludeType(type)) {
                 continue;
             }
 
-            types.Add(BuildTypeDocumentation(type, cancellationToken));
+            types.Add(BuildTypeDocumentation(context, type, cancellationToken));
         }
 
         var orderedTypes = types
             .ToImmutable()
             .Sort(static (left, right) => string.CompareOrdinal(left.FullName, right.FullName));
 
-        return new AssemblyDocumentationModel(
-            compilation.AssemblyName ?? "UnknownAssembly",
-            CreateGeneratedNamespace(compilation.AssemblyName),
-            orderedTypes);
+        return new AssemblyDocumentationModel(assemblyName, CreateGeneratedNamespace(assemblyName), orderedTypes);
     }
 
-    private static TypeDocumentationModel BuildTypeDocumentation(INamedTypeSymbol type, CancellationToken cancellationToken) {
+    private static TypeDocumentationModel BuildTypeDocumentation(DocumentationContext context, INamedTypeSymbol type, CancellationToken cancellationToken) {
         var methods = ImmutableArray.CreateBuilder<MethodDocumentationModel>();
         var properties = ImmutableArray.CreateBuilder<PropertyDocumentationModel>();
         var fields = ImmutableArray.CreateBuilder<FieldDocumentationModel>();
-        var xmlDocumentation = GetXmlDocumentation(type, cancellationToken);
+        var xmlDocumentation = context.GetXmlDocumentation(type);
+        var sourceFile = context.Sources.GetTypeFile(type);
 
-        foreach (var documentedMember in EnumerateMembersIncludingBaseTypes(type)) {
+        foreach (var documentedMember in EnumerateMembersIncludingBaseTypes(context.Assembly, type)) {
             cancellationToken.ThrowIfCancellationRequested();
+            if (!ShouldIncludeMember(context, documentedMember.Member)) {
+                continue;
+            }
 
             switch (documentedMember.Member) {
                 case IMethodSymbol method when ShouldIncludeMethod(method):
-                    methods.Add(BuildMethodDocumentation(method, documentedMember.IsFromBaseType, cancellationToken));
+                    methods.Add(BuildMethodDocumentation(context, method, documentedMember.IsFromBaseType));
                     break;
-                case IPropertySymbol property when !property.IsImplicitlyDeclared:
-                    properties.Add(BuildPropertyDocumentation(property, documentedMember.IsFromBaseType, cancellationToken));
+                case IPropertySymbol property:
+                    properties.Add(BuildPropertyDocumentation(context, property, documentedMember.IsFromBaseType));
                     break;
-                case IFieldSymbol field when !field.IsImplicitlyDeclared:
-                    fields.Add(BuildFieldDocumentation(field, documentedMember.IsFromBaseType, cancellationToken));
+                case IFieldSymbol field:
+                    fields.Add(BuildFieldDocumentation(context, field, documentedMember.IsFromBaseType));
                     break;
             }
         }
@@ -120,8 +142,8 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
             type.BaseType?.ToDisplayString(TypeDisplayFormat) ?? string.Empty,
             type.TypeKind.ToString(),
             type.DeclaredAccessibility.ToString(),
-            GetSourceFolder(type),
-            GetSourceFileName(type),
+            sourceFile.Folder,
+            sourceFile.FileName,
             ExtractSummary(xmlDocumentation),
             ExtractRemarks(xmlDocumentation),
             xmlDocumentation,
@@ -132,8 +154,8 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
             fields.ToImmutable().Sort(static (left, right) => CompareBySignatureAndDeclaringType(left.Signature, left.DeclaringTypeFullName, right.Signature, right.DeclaringTypeFullName)));
     }
 
-    private static MethodDocumentationModel BuildMethodDocumentation(IMethodSymbol method, bool isFromBaseType, CancellationToken cancellationToken) {
-        var xmlDocumentation = GetXmlDocumentation(method, cancellationToken);
+    private static MethodDocumentationModel BuildMethodDocumentation(DocumentationContext context, IMethodSymbol method, bool isFromBaseType) {
+        var xmlDocumentation = context.GetXmlDocumentation(method);
         return new MethodDocumentationModel(
             method.Name,
             method.ToDisplayString(MethodDisplayFormat),
@@ -145,15 +167,15 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
             GetObsoleteDocumentation(method));
     }
 
-    private static PropertyDocumentationModel BuildPropertyDocumentation(IPropertySymbol property, bool isFromBaseType, CancellationToken cancellationToken) {
-        var xmlDocumentation = GetXmlDocumentation(property, cancellationToken);
+    private static PropertyDocumentationModel BuildPropertyDocumentation(DocumentationContext context, IPropertySymbol property, bool isFromBaseType) {
+        var xmlDocumentation = context.GetXmlDocumentation(property);
         return new PropertyDocumentationModel(
             property.Name,
             property.ToDisplayString(PropertyDisplayFormat),
             property.DeclaredAccessibility.ToString(),
             property.Type.ToDisplayString(MemberTypeDisplayFormat),
             property.Type.ToDisplayString(TypeDisplayFormat),
-            GetDefaultValueExpression(property, cancellationToken),
+            context.Sources.GetDefaultValueExpression(property),
             ExtractSummary(xmlDocumentation),
             xmlDocumentation,
             property.ContainingType?.ToDisplayString(TypeDisplayFormat) ?? string.Empty,
@@ -164,8 +186,8 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
             GetObsoleteDocumentation(property));
     }
 
-    private static FieldDocumentationModel BuildFieldDocumentation(IFieldSymbol field, bool isFromBaseType, CancellationToken cancellationToken) {
-        var xmlDocumentation = GetXmlDocumentation(field, cancellationToken);
+    private static FieldDocumentationModel BuildFieldDocumentation(DocumentationContext context, IFieldSymbol field, bool isFromBaseType) {
+        var xmlDocumentation = context.GetXmlDocumentation(field);
         return new FieldDocumentationModel(
             field.Name,
             field.ToDisplayString(FieldDisplayFormat),
@@ -189,14 +211,15 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         return string.CompareOrdinal(leftDeclaringType, rightDeclaringType);
     }
 
-    private static IEnumerable<DocumentedMember> EnumerateMembersIncludingBaseTypes(INamedTypeSymbol type) {
+    private static IEnumerable<DocumentedMember> EnumerateMembersIncludingBaseTypes(IAssemblySymbol assembly, INamedTypeSymbol type) {
         foreach (var member in type.GetMembers()) {
             yield return new DocumentedMember(member, false);
         }
 
+        // Only base types from the documented assembly contribute members, so framework bases such as ComponentBase are left out.
         var baseType = type.BaseType;
         while (baseType is not null) {
-            if (ShouldIncludeBaseTypeMembers(baseType)) {
+            if (SymbolEqualityComparer.Default.Equals(baseType.ContainingAssembly, assembly)) {
                 foreach (var member in baseType.GetMembers()) {
                     yield return new DocumentedMember(member, true);
                 }
@@ -206,8 +229,17 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         }
     }
 
-    private static bool ShouldIncludeBaseTypeMembers(INamedTypeSymbol baseType) =>
-        !baseType.DeclaringSyntaxReferences.IsDefaultOrEmpty;
+    // Consumers only show public types and their public or protected members, so nothing else is generated.
+    private static bool IsVisible(Accessibility accessibility) => accessibility is Accessibility.Public or Accessibility.Protected or Accessibility.ProtectedOrInternal;
+
+    private static bool ShouldIncludeMember(DocumentationContext context, ISymbol member) {
+        if (member.IsImplicitlyDeclared || !IsVisible(member.DeclaredAccessibility) || HasAttribute(member, CompilerGeneratedAttributeFullName)) {
+            return false;
+        }
+
+        // Metadata keeps the compiler's implicit parameterless constructor, which source never declared.
+        return member is not IMethodSymbol { MethodKind: MethodKind.Constructor } constructor || context.Sources.HasExplicitConstructor(constructor.ContainingType);
+    }
 
     private static string BuildGeneratedSource(AssemblyDocumentationModel model) {
         var builder = new StringBuilder();
@@ -829,45 +861,14 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
 
     private static string ToBooleanLiteral(bool value) => value ? "true" : "false";
 
-    private static bool HasCodeDocumentationAttribute(Compilation compilation, CancellationToken cancellationToken) {
+    private static string? GetDocumentedAssemblyName(Compilation compilation) {
         foreach (var attribute in compilation.Assembly.GetAttributes()) {
-            cancellationToken.ThrowIfCancellationRequested();
-            var attributeName = attribute.AttributeClass?.ToDisplayString();
-            if (string.Equals(attributeName, FullyQualifiedAttributeName, StringComparison.Ordinal)) {
-                return true;
+            if (string.Equals(attribute.AttributeClass?.ToDisplayString(), FullyQualifiedAttributeName, StringComparison.Ordinal)) {
+                return attribute.ConstructorArguments.FirstOrDefault().Value as string;
             }
         }
 
-        foreach (var syntaxTree in compilation.SyntaxTrees) {
-            cancellationToken.ThrowIfCancellationRequested();
-            var root = syntaxTree.GetRoot(cancellationToken);
-
-            foreach (var attributeList in root.DescendantNodes().OfType<AttributeListSyntax>()) {
-                if (attributeList.Target is null || !attributeList.Target.Identifier.IsKind(SyntaxKind.AssemblyKeyword)) {
-                    continue;
-                }
-
-                foreach (var attribute in attributeList.Attributes) {
-                    var attributeName = attribute.Name.ToString();
-                    if (IsMatchingAttributeName(attributeName)) {
-                        return true;
-                    }
-                }
-            }
-        }
-
-        return false;
-    }
-
-    private static bool IsMatchingAttributeName(string attributeName) {
-        if (attributeName.StartsWith("global::", StringComparison.Ordinal)) {
-            attributeName = attributeName.Substring("global::".Length);
-        }
-
-        return string.Equals(attributeName, FullyQualifiedAttributeName, StringComparison.Ordinal) ||
-               string.Equals(attributeName, AttributeName, StringComparison.Ordinal) ||
-               string.Equals(attributeName, "GenerateCodeDocumentation", StringComparison.Ordinal) ||
-               string.Equals(attributeName, AttributeNamespace + ".GenerateCodeDocumentation", StringComparison.Ordinal);
+        return null;
     }
 
     private static string CreateGeneratedNamespace(string? assemblyName) {
@@ -903,13 +904,16 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
 
     private static bool ShouldIncludeType(INamedTypeSymbol type) {
         if (type.IsImplicitlyDeclared ||
-            type.DeclaringSyntaxReferences.IsDefaultOrEmpty ||
+            !IsPublicType(type) ||
+            HasAttribute(type, CompilerGeneratedAttributeFullName) ||
             (type.TypeKind != TypeKind.Class && type.TypeKind != TypeKind.Struct && type.TypeKind != TypeKind.Enum)) {
             return false;
         }
 
+        // Razor emits a public _Imports class for every _Imports.razor; it is not part of the library surface.
         var containingNamespace = type.ContainingNamespace?.ToDisplayString() ?? string.Empty;
-        if (containingNamespace.EndsWith(".GeneratedDocumentation", StringComparison.Ordinal) ||
+        if (string.Equals(type.Name, "_Imports", StringComparison.Ordinal) ||
+            containingNamespace.EndsWith(".GeneratedDocumentation", StringComparison.Ordinal) ||
             string.Equals(containingNamespace, AttributeNamespace, StringComparison.Ordinal)) {
             return false;
         }
@@ -917,11 +921,17 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         return true;
     }
 
-    private static bool ShouldIncludeMethod(IMethodSymbol method) {
-        if (method.IsImplicitlyDeclared) {
-            return false;
+    private static bool IsPublicType(INamedTypeSymbol type) {
+        for (var current = type; current is not null; current = current.ContainingType) {
+            if (current.DeclaredAccessibility != Accessibility.Public) {
+                return false;
+            }
         }
 
+        return true;
+    }
+
+    private static bool ShouldIncludeMethod(IMethodSymbol method) {
         return method.MethodKind != MethodKind.PropertyGet &&
                method.MethodKind != MethodKind.PropertySet &&
                method.MethodKind != MethodKind.EventAdd &&
@@ -1020,24 +1030,6 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         };
     }
 
-    private static string GetSourceFolder(INamedTypeSymbol type) {
-        var filePath = GetSourceFilePath(type);
-        if (string.IsNullOrWhiteSpace(filePath)) {
-            return string.Empty;
-        }
-
-        var directory = Path.GetDirectoryName(filePath);
-        return string.IsNullOrWhiteSpace(directory) ? string.Empty : Path.GetFileName(directory);
-    }
-
-    private static string GetSourceFileName(INamedTypeSymbol type) {
-        var filePath = GetSourceFilePath(type);
-        return string.IsNullOrWhiteSpace(filePath) ? string.Empty : Path.GetFileName(filePath);
-    }
-
-    private static string GetSourceFilePath(INamedTypeSymbol type) =>
-        type.DeclaringSyntaxReferences.FirstOrDefault()?.SyntaxTree.FilePath ?? string.Empty;
-
     private static IEnumerable<INamedTypeSymbol> EnumerateTypes(INamespaceSymbol namespaceSymbol) {
         foreach (var type in namespaceSymbol.GetTypeMembers()) {
             foreach (var nestedType in EnumerateNestedTypes(type)) {
@@ -1062,8 +1054,38 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         }
     }
 
-    private static string GetXmlDocumentation(ISymbol symbol, CancellationToken cancellationToken) =>
-        symbol.GetDocumentationCommentXml(expandIncludes: true, cancellationToken: cancellationToken) ?? string.Empty;
+    /// <summary>
+    ///     Reads each <c>member</c> element of a compiler-written XML documentation file in the form
+    ///     <see cref="ISymbol.GetDocumentationCommentXml" /> returns for source symbols: dedented to the member element, CRLF line endings.
+    /// </summary>
+    private static Dictionary<string, string> ReadXmlDocumentation(SourceText text) {
+        var members = new Dictionary<string, string>(StringComparer.Ordinal);
+        var builder = new StringBuilder();
+        string? id = null;
+        var indent = 0;
+
+        foreach (var textLine in text.Lines) {
+            var line = textLine.ToString();
+            var trimmed = line.TrimStart();
+            if (id is null) {
+                if (trimmed.StartsWith("<member name=\"", StringComparison.Ordinal) && !trimmed.EndsWith("/>", StringComparison.Ordinal)) {
+                    id = trimmed.Substring(14, trimmed.IndexOf('"', 14) - 14);
+                    indent = line.Length - trimmed.Length;
+                    builder.Clear().Append(trimmed).Append("\r\n");
+                }
+
+                continue;
+            }
+
+            builder.Append(line.Length >= indent && string.IsNullOrWhiteSpace(line.Substring(0, indent)) ? line.Substring(indent) : trimmed).Append("\r\n");
+            if (trimmed == "</member>") {
+                members[id] = builder.ToString();
+                id = null;
+            }
+        }
+
+        return members;
+    }
 
     private static string ExtractSummary(string xmlDocumentation) {
         return ExtractXmlElement(xmlDocumentation, "summary");
@@ -1092,16 +1114,6 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         catch {
             return string.Empty;
         }
-    }
-
-    private static string GetDefaultValueExpression(IPropertySymbol property, CancellationToken cancellationToken) {
-        foreach (var syntaxReference in property.DeclaringSyntaxReferences) {
-            if (syntaxReference.GetSyntax(cancellationToken) is PropertyDeclarationSyntax { Initializer.Value: { } initializer }) {
-                return initializer.ToString();
-            }
-        }
-
-        return string.Empty;
     }
 
     private static void AppendDocumentationText(StringBuilder builder, XElement element) {
@@ -1201,10 +1213,15 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         namespace NTCodeDocumentation;
 
         /// <summary>
-        /// Enables generation of a code documentation model for an assembly.
+        /// Generates a code documentation model for a referenced assembly. The assembly's XML documentation file and its source
+        /// files must be passed to the compiler as additional files.
         /// </summary>
         [global::System.AttributeUsage(global::System.AttributeTargets.Assembly, AllowMultiple = false, Inherited = false)]
-        public sealed class GenerateCodeDocumentationAttribute : global::System.Attribute {
+        internal sealed class GenerateCodeDocumentationAttribute(string assemblyName) : global::System.Attribute {
+            /// <summary>
+            /// Gets the name of the referenced assembly to document.
+            /// </summary>
+            public string AssemblyName { get; } = assemblyName;
         }
 
         #pragma warning restore CS1591
@@ -1477,5 +1494,154 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         public ISymbol Member { get; }
 
         public bool IsFromBaseType { get; }
+    }
+
+    private sealed class GenerationResult(AssemblyDocumentationModel? model, string? error) {
+        public AssemblyDocumentationModel? Model { get; } = model;
+
+        public string? Error { get; } = error;
+    }
+
+    private sealed class DocumentationContext(IAssemblySymbol assembly, Dictionary<string, string> xmlDocumentation, SourceFacts sources) {
+        public IAssemblySymbol Assembly { get; } = assembly;
+
+        public SourceFacts Sources { get; } = sources;
+
+        // Members of constructed generic bases share the documentation of their original definitions.
+        public string GetXmlDocumentation(ISymbol symbol) =>
+            symbol.OriginalDefinition.GetDocumentationCommentId() is { } id && xmlDocumentation.TryGetValue(id, out var xml) ? xml : string.Empty;
+    }
+
+    private sealed class SourceFile(string folder, string fileName) {
+        public static readonly SourceFile None = new(string.Empty, string.Empty);
+
+        public string Folder { get; } = folder;
+
+        public string FileName { get; } = fileName;
+    }
+
+    /// <summary>
+    ///     Facts that only source code holds: which file declares each type, property initializers, and which types declare
+    ///     constructors. Keys use metadata names (<c>Namespace.Outer`1+Inner</c>); Razor-only types are keyed by file name.
+    /// </summary>
+    private sealed class SourceFacts {
+        private readonly Dictionary<string, SourceFile> _typeFiles = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, SourceFile> _razorTypeFiles = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, string> _defaultValues = new(StringComparer.Ordinal);
+        private readonly HashSet<string> _typesWithConstructors = new(StringComparer.Ordinal);
+
+        public static SourceFacts Create(ImmutableArray<AdditionalText> texts, CSharpParseOptions parseOptions, CancellationToken cancellationToken) {
+            var facts = new SourceFacts();
+
+            // C# files come first and in path order, as in the library's compilation, so a partial type reports its first file.
+            foreach (var text in texts.Where(static text => text.Path.EndsWith(".cs", StringComparison.OrdinalIgnoreCase)).OrderBy(static text => text.Path, StringComparer.OrdinalIgnoreCase)) {
+                if (text.GetText(cancellationToken) is not { } source) {
+                    continue;
+                }
+
+                var file = new SourceFile(GetFolder(text.Path), Path.GetFileName(text.Path));
+                foreach (var declaration in CSharpSyntaxTree.ParseText(source, parseOptions, text.Path, cancellationToken).GetRoot(cancellationToken).DescendantNodes().OfType<BaseTypeDeclarationSyntax>()) {
+                    var key = GetKey(declaration);
+                    if (!facts._typeFiles.ContainsKey(key)) {
+                        facts._typeFiles.Add(key, file);
+                    }
+
+                    if (declaration is TypeDeclarationSyntax type) {
+                        facts.AddMembers(type, key);
+                    }
+                }
+            }
+
+            foreach (var text in texts.Where(static text => text.Path.EndsWith(".razor", StringComparison.OrdinalIgnoreCase))) {
+                if (text.GetText(cancellationToken)?.ToString() is not { } source) {
+                    continue;
+                }
+
+                // A Razor component is named after its file and gets one type parameter per @typeparam directive.
+                var name = Path.GetFileNameWithoutExtension(text.Path);
+                var arity = source.Split('\n').Count(static line => line.TrimStart().StartsWith("@typeparam ", StringComparison.Ordinal));
+                var key = arity == 0 ? name : $"{name}`{arity}";
+                if (!facts._razorTypeFiles.ContainsKey(key)) {
+                    facts._razorTypeFiles.Add(key, new SourceFile(GetFolder(text.Path), name + "_razor.decl.g.cs"));
+                }
+
+                foreach (var block in GetCodeBlocks(source)) {
+                    // Parsing the block as the component's class body lets Roslyn find the matching brace and any constructors.
+                    var root = CSharpSyntaxTree.ParseText($"class {name} {block}", parseOptions, cancellationToken: cancellationToken).GetRoot(cancellationToken);
+                    if (root.DescendantNodes().OfType<ClassDeclarationSyntax>().FirstOrDefault() is { } type) {
+                        facts.AddMembers(type, key);
+                    }
+                }
+            }
+
+            return facts;
+        }
+
+        public SourceFile GetTypeFile(INamedTypeSymbol type) =>
+            _typeFiles.TryGetValue(GetKey(type), out var file) || _razorTypeFiles.TryGetValue(type.OriginalDefinition.MetadataName, out file) ? file : SourceFile.None;
+
+        public string GetDefaultValueExpression(IPropertySymbol property) {
+            var type = property.ContainingType.OriginalDefinition;
+            return _defaultValues.TryGetValue($"{GetKey(type)}|{property.Name}", out var value) || _defaultValues.TryGetValue($"{type.MetadataName}|{property.Name}", out value) ? value : string.Empty;
+        }
+
+        public bool HasExplicitConstructor(INamedTypeSymbol type) =>
+            _typesWithConstructors.Contains(GetKey(type)) || _typesWithConstructors.Contains(type.OriginalDefinition.MetadataName);
+
+        private void AddMembers(TypeDeclarationSyntax type, string key) {
+            if (type.ParameterList is not null) {
+                _typesWithConstructors.Add(key);
+            }
+
+            // Razor @code blocks can hold markup templates that C# cannot parse; error recovery there invents members, so they are skipped.
+            foreach (var member in type.Members.Where(static member => !member.ContainsDiagnostics)) {
+                switch (member) {
+                    case PropertyDeclarationSyntax { Initializer.Value: { } initializer } property when !_defaultValues.ContainsKey($"{key}|{property.Identifier.Text}"):
+                        _defaultValues.Add($"{key}|{property.Identifier.Text}", initializer.ToString());
+                        break;
+                    case ConstructorDeclarationSyntax constructor when !constructor.Modifiers.Any(SyntaxKind.StaticKeyword):
+                        _typesWithConstructors.Add(key);
+                        break;
+                }
+            }
+        }
+
+        private static IEnumerable<string> GetCodeBlocks(string razor) {
+            foreach (var directive in new[] { "@code", "@functions" }) {
+                for (var index = razor.IndexOf(directive, StringComparison.Ordinal); index >= 0; index = razor.IndexOf(directive, index + directive.Length, StringComparison.Ordinal)) {
+                    var brace = razor.IndexOf('{', index + directive.Length);
+                    if (brace >= 0 && string.IsNullOrWhiteSpace(razor.Substring(index + directive.Length, brace - index - directive.Length))) {
+                        yield return razor.Substring(brace);
+                    }
+                }
+            }
+        }
+
+        private static string GetFolder(string path) => Path.GetFileName(Path.GetDirectoryName(path)) ?? string.Empty;
+
+        private static string GetKey(BaseTypeDeclarationSyntax declaration) {
+            var parts = new List<string>();
+            string? containingNamespace = null;
+            for (SyntaxNode? node = declaration; node is not null; node = node.Parent) {
+                if (node is BaseTypeDeclarationSyntax type) {
+                    var arity = type is TypeDeclarationSyntax { TypeParameterList: { } typeParameters } ? typeParameters.Parameters.Count : 0;
+                    parts.Insert(0, arity == 0 ? type.Identifier.Text : $"{type.Identifier.Text}`{arity}");
+                }
+                else if (node is BaseNamespaceDeclarationSyntax namespaceDeclaration) {
+                    containingNamespace = containingNamespace is null ? namespaceDeclaration.Name.ToString() : $"{namespaceDeclaration.Name}.{containingNamespace}";
+                }
+            }
+
+            return containingNamespace is null ? string.Join("+", parts) : $"{containingNamespace}.{string.Join("+", parts)}";
+        }
+
+        private static string GetKey(INamedTypeSymbol type) {
+            var parts = new List<string>();
+            for (var current = type.OriginalDefinition; current is not null; current = current.ContainingType) {
+                parts.Insert(0, current.MetadataName);
+            }
+
+            return type.ContainingNamespace is { IsGlobalNamespace: false } containingNamespace ? $"{containingNamespace.ToDisplayString()}.{string.Join("+", parts)}" : string.Join("+", parts);
+        }
     }
 }

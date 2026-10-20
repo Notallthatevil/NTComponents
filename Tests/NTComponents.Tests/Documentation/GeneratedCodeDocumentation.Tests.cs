@@ -107,14 +107,14 @@ public class GeneratedCodeDocumentation_Tests {
         var model = GeneratedCodeDocumentation.Model;
 
         // Act
-        var accordionType = model.Types.FirstOrDefault(x => x.FullName == "NTComponents.TnTAccordion");
-        var parentAccordion = accordionType?.CascadingParameters.FirstOrDefault(x => x.Name == "_parentAccordion");
+        var menuItemType = model.Types.FirstOrDefault(x => x.FullName == "NTComponents.NTMenuButtonItem");
+        var parentMenu = menuItemType?.CascadingParameters.FirstOrDefault(x => x.Name == "Parent");
 
         // Assert
-        accordionType.Should().NotBeNull();
-        accordionType!.CascadingParameters.Should().OnlyContain(x => x.IsCascadingParameter);
-        parentAccordion.Should().NotBeNull();
-        parentAccordion!.Summary.Should().Contain("Gets or sets the parent accordion.");
+        menuItemType.Should().NotBeNull();
+        menuItemType!.CascadingParameters.Should().OnlyContain(x => x.IsCascadingParameter);
+        parentMenu.Should().NotBeNull();
+        parentMenu!.Summary.Should().Contain("The parent menu that owns this item.");
     }
 
     [Fact]

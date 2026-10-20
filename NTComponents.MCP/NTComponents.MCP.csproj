@@ -13,6 +13,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\NTComponents\NTComponents.csproj" />
+		<ProjectReference Include="..\NTComponents.Documentation\NTComponents.Documentation.csproj" />
 	</ItemGroup>
 
 </Project>

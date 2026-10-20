@@ -20,6 +20,7 @@
 	<ItemGroup>
 		<ProjectReference Include="..\..\NTComponents.Analyzers\NTComponents.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 		<ProjectReference Include="..\..\NTComponents\NTComponents.csproj" />
+		<ProjectReference Include="..\..\NTComponents.Documentation\NTComponents.Documentation.csproj" />
 		<ProjectReference Include="..\..\NTComponents.AspNetCore\NTComponents.AspNetCore.csproj" />
 		<ProjectReference Include="..\..\NTComponents.Extensions\NTComponents.Extensions.csproj" />
 		<ProjectReference Include="..\..\NTComponents.Site\NTComponents.Site.csproj" Condition="'$(TargetFramework)' != 'net9.0'" />

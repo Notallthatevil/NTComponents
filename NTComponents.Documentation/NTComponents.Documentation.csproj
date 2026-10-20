@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFrameworks>net9.0;net10.0;net11.0</TargetFrameworks>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<IsPackable>false</IsPackable>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\NTComponents\NTComponents.csproj" />
+		<ProjectReference Include="..\NTComponents.CodeDocumentation.Generator\NTComponents.CodeDocumentation.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<!-- The generator reads facts that only source holds (declaring file, property initializers, constructors) from the library sources. -->
+		<AdditionalFiles Include="..\NTComponents\**\*.cs;..\NTComponents\**\*.razor" Exclude="..\NTComponents\bin\**;..\NTComponents\obj\**;..\NTComponents\obj-codex\**" Visible="false" />
+	</ItemGroup>
+
+	<!-- Doc comments come from the XML documentation file that the referenced library build writes next to its assembly. -->
+	<Target Name="AddNTComponentsXmlDocumentation" AfterTargets="ResolveAssemblyReferences">
+		<ItemGroup>
+			<AdditionalFiles Include="@(ReferenceCopyLocalPaths)" Condition="'%(Filename)%(Extension)' == 'NTComponents.xml'" />
+		</ItemGroup>
+	</Target>
+
+</Project>
