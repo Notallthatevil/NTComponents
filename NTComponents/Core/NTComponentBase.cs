@@ -54,20 +54,14 @@ public abstract class NTComponentBase : ComponentBase, INTComponentBase {
     protected override void OnParametersSet() {
         base.OnParametersSet();
 
-        // Only create a new dictionary if needed, and avoid unnecessary allocations
-        Dictionary<string, object> dict;
-        if (AdditionalAttributes is null) {
-            dict = [];
-        }
-        else if (!AdditionalAttributes.ContainsKey(_tnTCustomIdentifierAttribute) || !Equals(AdditionalAttributes[_tnTCustomIdentifierAttribute], ComponentIdentifier)) {
-            dict = new Dictionary<string, object>(AdditionalAttributes);
-        }
-        else {
-            // Already set and correct, no need to update
+        // Copy only when the identifier is missing or stale; the incoming dictionary belongs to the parent.
+        if (AdditionalAttributes?.TryGetValue(_tnTCustomIdentifierAttribute, out var identifier) == true && Equals(identifier, ComponentIdentifier)) {
             return;
         }
-        dict[_tnTCustomIdentifierAttribute] = ComponentIdentifier;
-        AdditionalAttributes = dict;
+
+        AdditionalAttributes = AdditionalAttributes is null
+            ? new Dictionary<string, object>(1) { [_tnTCustomIdentifierAttribute] = ComponentIdentifier }
+            : new Dictionary<string, object>(AdditionalAttributes) { [_tnTCustomIdentifierAttribute] = ComponentIdentifier };
     }
 }
 

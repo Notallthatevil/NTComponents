@@ -276,26 +276,38 @@ public static class NTTypographyExt {
     ///     </para>
     /// </remarks>
     /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="typography" /> is not a valid <see cref="NTTypography" /> value.</exception>
-    public static string ToCssClass(this NTTypography typography, bool emphasized = false) {
-        var cssClass = typography switch {
-            NTTypography.DisplayLarge => "nt-display-large",
-            NTTypography.DisplayMedium => "nt-display-medium",
-            NTTypography.DisplaySmall => "nt-display-small",
-            NTTypography.HeadlineLarge => "nt-headline-large",
-            NTTypography.HeadlineMedium => "nt-headline-medium",
-            NTTypography.HeadlineSmall => "nt-headline-small",
-            NTTypography.TitleLarge => "nt-title-large",
-            NTTypography.TitleMedium => "nt-title-medium",
-            NTTypography.TitleSmall => "nt-title-small",
-            NTTypography.BodyLarge => "nt-body-large",
-            NTTypography.BodyMedium => "nt-body-medium",
-            NTTypography.BodySmall => "nt-body-small",
-            NTTypography.LabelLarge => "nt-label-large",
-            NTTypography.LabelMedium => "nt-label-medium",
-            NTTypography.LabelSmall => "nt-label-small",
-            _ => throw new ArgumentOutOfRangeException(nameof(typography), typography, null)
-        };
-
-        return emphasized ? $"{cssClass}-emphasized" : cssClass;
-    }
+    public static string ToCssClass(this NTTypography typography, bool emphasized = false) => (typography, emphasized) switch {
+        // Constant strings for both variants so markup that calls this on every render allocates nothing.
+        (NTTypography.DisplayLarge, false) => "nt-display-large",
+        (NTTypography.DisplayLarge, true) => "nt-display-large-emphasized",
+        (NTTypography.DisplayMedium, false) => "nt-display-medium",
+        (NTTypography.DisplayMedium, true) => "nt-display-medium-emphasized",
+        (NTTypography.DisplaySmall, false) => "nt-display-small",
+        (NTTypography.DisplaySmall, true) => "nt-display-small-emphasized",
+        (NTTypography.HeadlineLarge, false) => "nt-headline-large",
+        (NTTypography.HeadlineLarge, true) => "nt-headline-large-emphasized",
+        (NTTypography.HeadlineMedium, false) => "nt-headline-medium",
+        (NTTypography.HeadlineMedium, true) => "nt-headline-medium-emphasized",
+        (NTTypography.HeadlineSmall, false) => "nt-headline-small",
+        (NTTypography.HeadlineSmall, true) => "nt-headline-small-emphasized",
+        (NTTypography.TitleLarge, false) => "nt-title-large",
+        (NTTypography.TitleLarge, true) => "nt-title-large-emphasized",
+        (NTTypography.TitleMedium, false) => "nt-title-medium",
+        (NTTypography.TitleMedium, true) => "nt-title-medium-emphasized",
+        (NTTypography.TitleSmall, false) => "nt-title-small",
+        (NTTypography.TitleSmall, true) => "nt-title-small-emphasized",
+        (NTTypography.BodyLarge, false) => "nt-body-large",
+        (NTTypography.BodyLarge, true) => "nt-body-large-emphasized",
+        (NTTypography.BodyMedium, false) => "nt-body-medium",
+        (NTTypography.BodyMedium, true) => "nt-body-medium-emphasized",
+        (NTTypography.BodySmall, false) => "nt-body-small",
+        (NTTypography.BodySmall, true) => "nt-body-small-emphasized",
+        (NTTypography.LabelLarge, false) => "nt-label-large",
+        (NTTypography.LabelLarge, true) => "nt-label-large-emphasized",
+        (NTTypography.LabelMedium, false) => "nt-label-medium",
+        (NTTypography.LabelMedium, true) => "nt-label-medium-emphasized",
+        (NTTypography.LabelSmall, false) => "nt-label-small",
+        (NTTypography.LabelSmall, true) => "nt-label-small-emphasized",
+        _ => throw new ArgumentOutOfRangeException(nameof(typography), typography, null)
+    };
 }

@@ -46,6 +46,8 @@ public abstract class NTIcon : NTComponentBase {
     [Parameter]
     public RenderFragment? Tooltip { get; set; }
 
+    private RenderFragment? _defaultFragment;
+
     /// <summary>
     ///     Additional CSS class to be applied to the icon element.
     /// </summary>
@@ -79,6 +81,10 @@ public abstract class NTIcon : NTComponentBase {
     /// </summary>
     /// <returns>A <see cref="RenderFragment" /> that can be used to render this icon.</returns>
     public RenderFragment Render(string? additionalClass = null, bool suppressTitle = false) {
+        if (additionalClass is null && !suppressTitle) {
+            return _defaultFragment ??= builder => BuildRenderTree(builder, suppressTitle: false);
+        }
+
         return new(builder => {
             if (additionalClass is not null) {
                 AdditionalClass = additionalClass;

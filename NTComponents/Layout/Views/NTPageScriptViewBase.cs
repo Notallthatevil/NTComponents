@@ -42,11 +42,14 @@ public abstract class NTPageScriptViewBase<[DynamicallyAccessedMembers(Dynamical
     /// <summary>
     ///     Gets the page script fragment used to enhance static SSR markup when the page loads in the browser.
     /// </summary>
-    protected RenderFragment PageScript => builder => {
+    protected RenderFragment PageScript => _pageScript ??= builder => {
         builder.OpenComponent<NTPageScript>(0);
         builder.AddAttribute(1, nameof(NTPageScript.Src), JsModulePath);
         builder.CloseComponent();
     };
+
+    // Cached like NTPageScriptComponent.PageScript; the fragment still reads JsModulePath when it is invoked.
+    private RenderFragment? _pageScript;
 
     /// <summary>
     ///     Initializes a new instance of the <see cref="NTPageScriptViewBase{TDerived}" /> class.

@@ -119,30 +119,30 @@ public sealed class CssStyleBuilder {
     /// </summary>
     /// <returns>A combined CSS style string (for example, "margin:4px;color:var(--tnt-color-primary);") or <c>null</c> if no styles were added.</returns>
     public string? Build() {
-        var styles = _styles.Where(kv => !string.IsNullOrWhiteSpace(kv.Key));
-        var sb = new StringBuilder(_styleString);
-        if (styles.Any()) {
-            foreach (var (key, value) in styles) {
-                var trimmedKey = key.Trim();
-                var trimmedValue = value.Trim();
-                sb.Append(trimmedKey);
-                if (!string.IsNullOrWhiteSpace(trimmedValue)) {
-                    if (!trimmedKey.EndsWith(':')) {
-                        sb.Append(':');
-                    }
-                    sb.Append(trimmedValue);
+        if (_styles.Count == 0) {
+            return string.IsNullOrEmpty(_styleString) ? null : _styleString;
+        }
 
-                    if (!trimmedValue.EndsWith(';')) {
-                        sb.Append(';');
-                    }
+        var sb = new StringBuilder(_styleString);
+        foreach (var (key, value) in _styles) {
+            var trimmedKey = key.AsSpan().Trim();
+            var trimmedValue = value.AsSpan().Trim();
+            sb.Append(trimmedKey);
+            if (trimmedValue.IsEmpty) {
+                if (!trimmedKey.EndsWith(';')) {
+                    sb.Append(';');
                 }
-                else {
-                    if (!trimmedKey.EndsWith(';')) {
-                        sb.Append(';');
-                    }
-                }
+                continue;
+            }
+
+            if (!trimmedKey.EndsWith(':')) {
+                sb.Append(':');
+            }
+            sb.Append(trimmedValue);
+            if (!trimmedValue.EndsWith(';')) {
+                sb.Append(';');
             }
         }
-        return sb.Length > 0 ? sb.ToString() : null;
+        return sb.ToString();
     }
 }

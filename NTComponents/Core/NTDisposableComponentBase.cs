@@ -65,24 +65,11 @@ public abstract class NTDisposableComponentBase : TnTComponentBase, IAsyncDispos
 }
 
 internal sealed class NTDisposalState {
-    private readonly Lock _syncRoot = new();
-    private bool _started;
+    private int _started;
 
-    internal bool HasStarted {
-        get {
-            lock (_syncRoot) {
-                return _started;
-            }
-        }
-    }
+    internal bool HasStarted => Volatile.Read(ref _started) != 0;
 
-    internal bool TryBegin() {
-        lock (_syncRoot) {
-            var canBegin = !_started;
-            _started = true;
-            return canBegin;
-        }
-    }
+    internal bool TryBegin() => Interlocked.Exchange(ref _started, 1) == 0;
 }
 
 /// <inheritdoc />

@@ -1,9 +1,4 @@
-using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace NTComponents.Core;
 
@@ -13,7 +8,6 @@ namespace NTComponents.Core;
 [ExcludeFromCodeCoverage]
 public static class TnTComponentIdentifier {
     private const string _identifierPrefix = "tnt_";
-    private static readonly Random _rnd = new();
 
     /// <summary>
     ///     Returns a new small Id. HTML id must start with a letter.
@@ -28,10 +22,10 @@ public static class TnTComponentIdentifier {
                 throw new ArgumentOutOfRangeException(nameof(length), "length must be less than 16");
             }
             if (length <= 8) {
-                return $"{_identifierPrefix}{_rnd.Next():x}";
+                return $"{_identifierPrefix}{Random.Shared.Next():x}";
             }
 
-            return $"{_identifierPrefix}{_rnd.Next():x}{_rnd.Next():x}"[..length];
+            return $"{_identifierPrefix}{Random.Shared.Next():x}{Random.Shared.Next():x}"[..length];
         }
 
         return TnTComponentIdentifierContext.Current.GenerateId();

@@ -27,10 +27,12 @@ public abstract class NTPageScriptComponent<[DynamicallyAccessedMembers(Dynamica
     [Inject]
     protected IJSRuntime JSRuntime { get; private set; } = default!;
 
+    private RenderFragment? _pageScript;
+
     /// <summary>
     ///     Gets the render fragment for the page script. Always uses the latest JsModulePath.
     /// </summary>
-    protected RenderFragment PageScript => builder => {
+    protected RenderFragment PageScript => _pageScript ??= builder => {
         builder.OpenComponent<NTPageScript>(0);
         builder.AddAttribute(1, "Src", JsModulePath);
         builder.CloseComponent();
