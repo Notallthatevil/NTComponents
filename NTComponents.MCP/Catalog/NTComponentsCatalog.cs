@@ -43,10 +43,16 @@ public sealed class NTComponentsCatalog {
             .OrderBy(type => type.Name, StringComparer.Ordinal)
             .ToArray();
 
-        _references = documentedTypes
+        var publicTypes = documentedTypes
             .Where(type => string.Equals(type.Accessibility, "Public", StringComparison.OrdinalIgnoreCase))
             .Where(type => !_components.Contains(type))
-            .Where(type => type.Kind == "Enum" || type.Name.StartsWith("NT", StringComparison.Ordinal) || _components.Any(component => UsesType(component, type)))
+            .ToArray();
+        var exposedTypeNames = publicTypes.Where(type => _components.Any(component => ExposesType(component, type))).Select(type => type.FullName).ToHashSet(StringComparer.Ordinal);
+        var typesByFullName = documentedTypes.ToDictionary(type => type.FullName, StringComparer.Ordinal);
+
+        // A type also counts when it derives from a parameter type a component exposes, such as MaterialIcon for NTIcon parameters.
+        _references = publicTypes
+            .Where(type => type.Kind == "Enum" || type.Name.StartsWith("NT", StringComparison.Ordinal) || _components.Any(component => UsesType(component, type)) || DerivesFromAny(type, exposedTypeNames, typesByFullName))
             .OrderBy(GetReferenceKind, StringComparer.Ordinal)
             .ThenBy(type => type.Name, StringComparer.Ordinal)
             .ToArray();
@@ -445,8 +451,24 @@ public sealed class NTComponentsCatalog {
     private static bool UsesType(TypeDocumentation component, TypeDocumentation reference) {
         var referenceFullName = NormalizeDocumentationFullName(reference.FullName);
         var referenceName = NormalizeDocumentationName(reference.Name);
-        return component.Properties.Any(property => ContainsType(property.TypeFullName, property.TypeDisplayName, referenceFullName, referenceName))
+        return ExposesType(component, reference)
             || component.Methods.Any(method => method.Signature.Contains(referenceFullName, StringComparison.Ordinal) || method.Signature.Contains(referenceName, StringComparison.Ordinal));
+    }
+
+    private static bool ExposesType(TypeDocumentation component, TypeDocumentation reference) {
+        var referenceFullName = NormalizeDocumentationFullName(reference.FullName);
+        var referenceName = NormalizeDocumentationName(reference.Name);
+        return component.Properties.Any(property => ContainsType(property.TypeFullName, property.TypeDisplayName, referenceFullName, referenceName));
+    }
+
+    private static bool DerivesFromAny(TypeDocumentation type, HashSet<string> typeNames, Dictionary<string, TypeDocumentation> typesByFullName) {
+        for (var baseName = type.BaseTypeFullName; typesByFullName.TryGetValue(baseName, out var baseType); baseName = baseType.BaseTypeFullName) {
+            if (typeNames.Contains(baseName)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static bool ContainsType(string fullTypeName, string displayTypeName, string referenceFullName, string referenceName) =>
