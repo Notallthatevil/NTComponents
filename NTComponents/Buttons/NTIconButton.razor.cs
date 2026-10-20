@@ -59,19 +59,28 @@ public partial class NTIconButton : NTButtonBase, INTBadgeable {
     public override string? ElementClass => CssClassBuilder.Create()
         .AddFromAdditionalAttributes(AdditionalAttributes)
         .AddClass("nt-icon-button")
-        .AddClass("nt-icon-button-elevated", Variant == NTButtonVariant.Elevated)
-        .AddClass("nt-icon-button-filled", Variant == NTButtonVariant.Filled)
-        .AddClass("nt-icon-button-tonal", Variant == NTButtonVariant.Tonal)
-        .AddClass("nt-icon-button-outlined", Variant == NTButtonVariant.Outlined)
-        .AddClass("nt-icon-button-standard", Variant == NTButtonVariant.Text)
+        .AddClass(Variant switch {
+            NTButtonVariant.Elevated => "nt-icon-button-elevated",
+            NTButtonVariant.Filled => "nt-icon-button-filled",
+            NTButtonVariant.Tonal => "nt-icon-button-tonal",
+            NTButtonVariant.Outlined => "nt-icon-button-outlined",
+            NTButtonVariant.Text => "nt-icon-button-standard",
+            _ => null
+        })
         .AddClass("nt-icon-button-toggle", IsToggleButton)
         .AddClass("nt-icon-button-selected", Selected)
         .AddClass("nt-button-progress-active", ShowProgress)
-        .AddClass("nt-icon-button-width-narrow", Width == NTIconButtonAppearance.Narrow)
-        .AddClass("nt-icon-button-width-default", Width == NTIconButtonAppearance.Default)
-        .AddClass("nt-icon-button-width-wide", Width == NTIconButtonAppearance.Wide)
-        .AddClass("nt-icon-button-shape-round", EffectiveShape == ButtonShape.Round)
-        .AddClass("nt-icon-button-shape-square", EffectiveShape == ButtonShape.Square)
+        .AddClass(Width switch {
+            NTIconButtonAppearance.Narrow => "nt-icon-button-width-narrow",
+            NTIconButtonAppearance.Default => "nt-icon-button-width-default",
+            NTIconButtonAppearance.Wide => "nt-icon-button-width-wide",
+            _ => null
+        })
+        .AddClass(EffectiveShape switch {
+            ButtonShape.Round => "nt-icon-button-shape-round",
+            ButtonShape.Square => "nt-icon-button-shape-square",
+            _ => null
+        })
         .AddElevation(Elevation)
         .AddSize(ButtonSize)
         .AddDisabled(Disabled)
@@ -149,9 +158,7 @@ public partial class NTIconButton : NTButtonBase, INTBadgeable {
 
     internal string? AriaPressed => ToggleAriaPressed;
 
-    private string? AriaDescribedBy => NTBadge.GetDescribedBy(AdditionalAttributes?.GetValueOrDefault("aria-describedby"), ShowBadge, BadgeId);
-
-    private string BadgeId => $"{ComponentIdentifier}-badge";
+    private string? AriaDescribedBy => DescribedBy(ShowBadge);
 
     private ButtonShape EffectiveShape => GetEffectiveToggleShape(Shape);
 

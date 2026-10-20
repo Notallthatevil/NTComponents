@@ -59,9 +59,12 @@ public partial class NTCard : NTComponentBase {
     public override string? ElementClass => CssClassBuilder.Create()
         .AddFromAdditionalAttributes(AdditionalAttributes)
         .AddClass("nt-card")
-        .AddClass("nt-card-filled", Variant == NTCardVariant.Filled)
-        .AddClass("nt-card-outlined", Variant == NTCardVariant.Outlined)
-        .AddClass("nt-card-elevated", Variant == NTCardVariant.Elevated)
+        .AddClass(Variant switch {
+            NTCardVariant.Filled => "nt-card-filled",
+            NTCardVariant.Outlined => "nt-card-outlined",
+            NTCardVariant.Elevated => "nt-card-elevated",
+            _ => null
+        })
         .AddClass("nt-card-actionable", RendersButton || RendersAnchor)
         .AddClass("nt-card-disabled", IsDisabled)
         .AddClass("nt-card-link", RendersAnchor)
@@ -134,33 +137,33 @@ public partial class NTCard : NTComponentBase {
 
     private IReadOnlyDictionary<string, object>? RenderedAdditionalAttributes {
         get {
-            if (AdditionalAttributes is null) {
-                return null;
+            var anchor = RendersAnchor;
+            if (AdditionalAttributes is null || (anchor && !IsDisabled) || !HasLinkAttribute(AdditionalAttributes) && !anchor) {
+                return AdditionalAttributes;
             }
 
             var filteredAttributes = new Dictionary<string, object>(AdditionalAttributes);
-
-            if (RendersAnchor && !IsDisabled) {
-                return filteredAttributes;
-            }
-
-            if (RendersAnchor) {
-                foreach (var attributeName in _linkAttributeNames) {
-                    filteredAttributes.Remove(attributeName);
-                }
-
-                filteredAttributes["aria-disabled"] = "true";
-                filteredAttributes["tabindex"] = "-1";
-
-                return filteredAttributes;
-            }
-
             foreach (var attributeName in _linkAttributeNames) {
                 filteredAttributes.Remove(attributeName);
             }
 
+            if (anchor) {
+                filteredAttributes["aria-disabled"] = "true";
+                filteredAttributes["tabindex"] = "-1";
+            }
+
             return filteredAttributes;
         }
+    }
+
+    private static bool HasLinkAttribute(IReadOnlyDictionary<string, object> attributes) {
+        foreach (var attributeName in _linkAttributeNames) {
+            if (attributes.ContainsKey(attributeName)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private bool RendersAnchor => !RendersButton && HasHrefAttribute;

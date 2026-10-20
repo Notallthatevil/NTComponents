@@ -16,8 +16,8 @@
                     tabindex="0"
                     data-carousel-item
                     data-aspect-ratio="@(AspectRatio?.ToString(System.Globalization.CultureInfo.InvariantCulture))"
-                    data-clickable="@OnClickCallback.HasDelegate.ToString().ToLowerInvariant()"
-                    data-disabled="@Disabled.ToString().ToLowerInvariant()"
+                    data-clickable="@(OnClickCallback.HasDelegate ? "true" : "false")"
+                    data-disabled="@(Disabled ? "true" : "false")"
                     @ref="Element">
     <div class="nt-carousel-item-mask">
         <div class="nt-carousel-item-media" style="@MediaStyle" aria-hidden="true">

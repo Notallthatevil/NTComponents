@@ -41,6 +41,8 @@ public partial class NTChip : NTComponentBase, INTBadgeable {
     private bool _selectedTextColorWasProvided;
     private bool _stateLayerColorWasProvided;
     private bool _textColorWasProvided;
+    private Func<MouseEventArgs, Task>? _clickHandler;
+    private Func<KeyboardEventArgs, Task>? _removeKeyDownHandler;
     private bool _selected;
 
     /// <summary>
@@ -347,13 +349,11 @@ public partial class NTChip : NTComponentBase, INTBadgeable {
     [Parameter]
     public NTChipVariant Variant { get; set; } = NTChipVariant.Assist;
 
-    private EventCallback<MouseEventArgs> ActionClickCallback => OnClickCallback.HasDelegate ? EventCallback.Factory.Create<MouseEventArgs>(this, HandleClickAsync) : default;
+    private EventCallback<MouseEventArgs> ClickCallback => OnClickCallback.HasDelegate ? EventCallback.Factory.Create(this, _clickHandler ??= HandleClickAsync) : default;
     private string? AriaDisabled => Disabled ? "true" : null;
-    private string? BadgeDescribedBy => NTBadge.GetDescribedBy(null, ShowBadge, BadgeId);
+    private string? BadgeDescribedBy => ShowBadge ? BadgeId : null;
     private string BadgeId => $"{StableElementId}-badge";
-    private string? ContainerClass => CssClassBuilder.Create("nt-chip-container")
-        .AddElevation(EffectiveElevation)
-        .Build();
+    private string? ContainerClass => "nt-chip-container " + EffectiveElevation.ToCssClass();
     private string? DisabledTabIndex => Disabled ? "-1" : null;
     private NTChipAppearance EffectiveAppearance => !_appearanceWasProvided && Variant == NTChipVariant.Suggestion ? NTChipAppearance.Elevated : Appearance;
     private NTElevation EffectiveElevation => Elevation ?? (EffectiveAppearance == NTChipAppearance.Elevated ? NTElevation.Lowest : NTElevation.None);
@@ -369,15 +369,13 @@ public partial class NTChip : NTComponentBase, INTBadgeable {
     private bool IsSelectedLeadingIcon => ShowSelectedIcon && Variant == NTChipVariant.Filter && CurrentSelected;
     private bool IsTwoAction => ShowRemoveButton && HasPrimaryAction;
     private string LeadingIconClass => IsSelectedLeadingIcon ? "nt-chip-icon nt-chip-leading nt-chip-selected-leading" : "nt-chip-icon nt-chip-leading";
-    private EventCallback<MouseEventArgs> LinkClickCallback => OnClickCallback.HasDelegate ? EventCallback.Factory.Create<MouseEventArgs>(this, HandleClickAsync) : default;
     private string MenuAnchorName => $"--{StableElementId}-menu-anchor";
     private string MenuAnchorSelector => $"#{MenuButtonId}";
     private string MenuButtonId => $"{StableElementId}-menu-button";
     private string MenuButtonStyle => $"anchor-name: {MenuAnchorName};";
-    private EventCallback<MouseEventArgs> MenuClickCallback => OnClickCallback.HasDelegate ? EventCallback.Factory.Create<MouseEventArgs>(this, HandleClickAsync) : default;
     private string MenuId => $"{StableElementId}-menu";
     private string? MenuPopoverTarget => Disabled ? null : MenuId;
-    private EventCallback<KeyboardEventArgs> RemoveKeyDownCallback => ShowRemoveButton ? EventCallback.Factory.Create<KeyboardEventArgs>(this, HandleRemoveKeyDownAsync) : default;
+    private EventCallback<KeyboardEventArgs> RemoveKeyDownCallback => ShowRemoveButton ? EventCallback.Factory.Create(this, _removeKeyDownHandler ??= HandleRemoveKeyDownAsync) : default;
     private string? SelectedAriaPressed => CurrentSelected ? "true" : "false";
     private bool ShowRemoveButton => Removable || Variant == NTChipVariant.Input || OnRemoveCallback.HasDelegate;
     private string StableElementId => string.IsNullOrWhiteSpace(ElementId) ? ComponentIdentifier : ElementId;

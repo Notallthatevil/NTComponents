@@ -117,7 +117,8 @@ public partial class NTAccordionItem : NTComponentBase {
     private bool IsCompact => ParentAccordion?.Appearance == NTAccordionAppearance.Compact;
     private string? PanelRole => UseRegionRole ? "region" : null;
     private bool RenderedOpen => _renderedOpen;
-    private string SummaryElementId => $"{ComponentIdentifier}-summary";
+    private string SummaryElementId => _summaryElementId ??= $"{ComponentIdentifier}-summary";
+    private string? _summaryElementId;
     private bool _renderedOpen;
 
     [CascadingParameter]

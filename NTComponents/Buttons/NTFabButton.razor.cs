@@ -90,7 +90,7 @@ public partial class NTFabButton : NTButtonBase, INTBadgeable {
     [Parameter]
     public NTFabButtonPlacement Placement { get; set; } = NTFabButtonPlacement.Inline;
 
-    internal string? AriaDescribedBy => NTBadge.GetDescribedBy(AdditionalAttributes?.GetValueOrDefault("aria-describedby"), ShowBadge && EffectiveAriaLabel is not null, BadgeId);
+    internal string? AriaDescribedBy => DescribedBy(ShowBadge && EffectiveAriaLabel is not null);
 
     internal string? EffectiveAriaLabel => string.IsNullOrWhiteSpace(AriaLabel) ? null : AriaLabel;
 
@@ -102,8 +102,6 @@ public partial class NTFabButton : NTButtonBase, INTBadgeable {
         NTSize.Largest => NTSize.Large,
         _ => NTSize.Medium
     };
-
-    private string BadgeId => $"{ComponentIdentifier}-badge";
 
     internal bool HasLabel => !string.IsNullOrWhiteSpace(Label);
 

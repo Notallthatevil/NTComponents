@@ -38,16 +38,22 @@ public partial class NTButton : NTButtonBase, INTBadgeable {
     public override string? ElementClass => CssClassBuilder.Create()
         .AddFromAdditionalAttributes(AdditionalAttributes)
         .AddClass("nt-button")
-        .AddClass("nt-button-elevated", Variant == NTButtonVariant.Elevated)
-        .AddClass("nt-button-filled", Variant == NTButtonVariant.Filled)
-        .AddClass("nt-button-tonal", Variant == NTButtonVariant.Tonal)
-        .AddClass("nt-button-outlined", Variant == NTButtonVariant.Outlined)
-        .AddClass("nt-button-text", Variant == NTButtonVariant.Text)
+        .AddClass(Variant switch {
+            NTButtonVariant.Elevated => "nt-button-elevated",
+            NTButtonVariant.Filled => "nt-button-filled",
+            NTButtonVariant.Tonal => "nt-button-tonal",
+            NTButtonVariant.Outlined => "nt-button-outlined",
+            NTButtonVariant.Text => "nt-button-text",
+            _ => null
+        })
         .AddClass("nt-button-toggle", IsToggleButton)
         .AddClass("nt-button-selected", Selected)
         .AddClass("nt-button-progress-active", ShowProgress)
-        .AddClass("nt-button-shape-round", EffectiveShape == ButtonShape.Round)
-        .AddClass("nt-button-shape-square", EffectiveShape == ButtonShape.Square)
+        .AddClass(EffectiveShape switch {
+            ButtonShape.Round => "nt-button-shape-round",
+            ButtonShape.Square => "nt-button-shape-square",
+            _ => null
+        })
         .AddElevation(Elevation)
         .AddSize(ButtonSize)
         .AddDisabled(Disabled)
@@ -110,9 +116,7 @@ public partial class NTButton : NTButtonBase, INTBadgeable {
 
     internal string? AriaPressed => ToggleAriaPressed;
 
-    private string? AriaDescribedBy => NTBadge.GetDescribedBy(AdditionalAttributes?.GetValueOrDefault("aria-describedby"), ShowBadge && AdditionalAttributes?.ContainsKey("aria-label") == true, BadgeId);
-
-    private string BadgeId => $"{ComponentIdentifier}-badge";
+    private string? AriaDescribedBy => DescribedBy(ShowBadge && AdditionalAttributes?.ContainsKey("aria-label") == true);
 
     private ButtonShape EffectiveShape => GetEffectiveToggleShape(Shape);
 

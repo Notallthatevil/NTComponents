@@ -5,6 +5,7 @@
 @use '../Styles/_Variables/_elevation.scss' as elevation;
 @use '../Styles/_Variables/_measurements.scss' as measurements;
 @use '../Styles/_Variables/_typescale.scss' as typescale;
+@use './buttonChrome' as buttonChrome;
 @use './buttonMotion' as buttonMotion;
 @use './buttonFocusRing' as focus;
 
@@ -15,14 +16,6 @@ $nt-button-group-sizes: (
     l: (96px, 128px, 48px, 8px, 12px, 32px, measurements.$tnt-pill-border-radius-large, corners.$nt-corner-radius-large, corners.$nt-corner-radius-extra-large, 400, 24px, 32px, 0),
     xl: (136px, 168px, 64px, 8px, 16px, 40px, measurements.$tnt-pill-border-radius-xl, corners.$nt-corner-radius-large-increased, corners.$nt-corner-radius-extra-large, 400, 32px, 40px, 0)
 );
-
-@function nt-button-group-touch-inset($height) {
-    @if $height < 48px {
-        @return math.div(48px - $height, 2);
-    }
-
-    @return 0px;
-}
 
 @mixin nt-button-group-size($height, $icon-only-width, $padding, $disconnected-gap, $content-gap, $icon-size, $round-radius, $connected-radius, $square-radius, $weight, $font-size, $line-height, $tracking) {
     @include typescale.tnt-typescale($weight, $font-size, $line-height, $tracking);
@@ -40,7 +33,7 @@ $nt-button-group-sizes: (
 
         &::after,
         &::before {
-            inset-block: nt-button-group-touch-inset($height);
+            inset-block: buttonChrome.touch-inset($height);
         }
 
         &[aria-pressed='true'] {
@@ -93,7 +86,7 @@ $nt-button-group-sizes: (
     }
 
     ::deep .nt-button-ripple-host {
-        inset-block: nt-button-group-touch-inset($height);
+        inset-block: buttonChrome.touch-inset($height);
     }
 
     ::deep .tnt-icon {

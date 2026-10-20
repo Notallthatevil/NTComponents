@@ -215,14 +215,13 @@ public partial class NTFabMenu {
     private string MenuPanelStyle => $"position-anchor: {MenuAnchorName};";
     private string? MenuPopoverTarget => Disabled ? null : MenuId;
     private string StableElementId => string.IsNullOrWhiteSpace(ElementId) ? ComponentIdentifier : ElementId;
-    private string ToggleButtonClass => CssClassBuilder.Create("nt-fab-menu-button")
-        .AddElevation(Elevation)
-        .Build();
+    private string ToggleButtonClass => "nt-fab-menu-button " + Elevation.ToCssClass();
     private string ToggleButtonStyle => $"anchor-name: {MenuAnchorName};";
-    private static NTIcon CloseIcon => MaterialIcon.Close;
+    private NTIcon CloseIcon => _closeIcon ??= MaterialIcon.Close;
 
     private static readonly RenderFragment ButtonRipple = NTRipple.RenderHost();
     private readonly List<IFabMenuItem> _menuItems = [];
+    private NTIcon? _closeIcon;
 
     /// <inheritdoc />
     protected override void OnParametersSet() {

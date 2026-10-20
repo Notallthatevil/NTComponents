@@ -78,9 +78,7 @@ public partial class NTCarouselItem {
     [CascadingParameter]
     private NTCarousel _carousel { get; set; } = default!;
 
-    private string? MediaStyle => CssStyleBuilder.Create()
-        .AddStyle("background-image", $"url('{BackgroundImageSrc}')", !string.IsNullOrWhiteSpace(BackgroundImageSrc))
-        .Build();
+    private string? MediaStyle => string.IsNullOrWhiteSpace(BackgroundImageSrc) ? null : CssStyleBuilder.Create().AddStyle("background-image", $"url('{BackgroundImageSrc}')").Build();
 
     /// <inheritdoc />
     protected override void OnParametersSet() {

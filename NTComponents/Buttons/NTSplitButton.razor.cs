@@ -72,13 +72,19 @@ public partial class NTSplitButton {
     public override string? ElementClass => CssClassBuilder.Create("nt-split-button")
         .AddFromAdditionalAttributes(AdditionalAttributes)
         .AddClass("nt-split-button-expanded", Expanded)
-        .AddClass("nt-split-button-elevated", Variant == NTButtonVariant.Elevated)
-        .AddClass("nt-split-button-filled", Variant == NTButtonVariant.Filled)
-        .AddClass("nt-split-button-tonal", Variant == NTButtonVariant.Tonal)
-        .AddClass("nt-split-button-outlined", Variant == NTButtonVariant.Outlined)
-        .AddClass("nt-split-button-text", Variant == NTButtonVariant.Text)
-        .AddClass("nt-split-button-shape-round", Shape == ButtonShape.Round)
-        .AddClass("nt-split-button-shape-square", Shape == ButtonShape.Square)
+        .AddClass(Variant switch {
+            NTButtonVariant.Elevated => "nt-split-button-elevated",
+            NTButtonVariant.Filled => "nt-split-button-filled",
+            NTButtonVariant.Tonal => "nt-split-button-tonal",
+            NTButtonVariant.Outlined => "nt-split-button-outlined",
+            NTButtonVariant.Text => "nt-split-button-text",
+            _ => null
+        })
+        .AddClass(Shape switch {
+            ButtonShape.Round => "nt-split-button-shape-round",
+            ButtonShape.Square => "nt-split-button-shape-square",
+            _ => null
+        })
         .AddSize(ButtonSize)
         .AddDisabled(Disabled)
         .Build();
@@ -208,9 +214,7 @@ public partial class NTSplitButton {
     public NTButtonVariant Variant { get; set; } = NTButtonVariant.Filled;
 
     private string? ActionButtonAriaLabel => string.IsNullOrWhiteSpace(ActionAriaLabel) ? null : ActionAriaLabel;
-    private string ActionButtonClass => CssClassBuilder.Create("nt-split-button-segment nt-split-button-leading")
-        .AddElevation(Elevation)
-        .Build();
+    private string ActionButtonClass => WithElevation("nt-split-button-segment nt-split-button-leading");
     private string ExpandedAttribute => ToLowerInvariantString(Expanded);
     private string EffectiveActionLabel => !string.IsNullOrWhiteSpace(Label) ? Label : ActionAriaLabel ?? "action";
     private string EffectiveMenuAriaLabel => string.IsNullOrWhiteSpace(MenuButtonLabel) ? $"More options for {EffectiveActionLabel}" : MenuButtonLabel;
@@ -219,20 +223,21 @@ public partial class NTSplitButton {
     private bool IsMenuButtonDisabled => Disabled || MenuButtonDisabled;
     private string MenuAnchorSelector => $"#{MenuButtonId}";
     private string MenuAnchorName => $"--{StableElementId}-anchor";
-    private string MenuButtonClass => CssClassBuilder.Create("nt-split-button-segment nt-split-button-trailing")
-        .AddElevation(Elevation)
-        .Build();
+    private string MenuButtonClass => WithElevation("nt-split-button-segment nt-split-button-trailing");
     private string MenuButtonId => $"{ComponentIdentifier}-menu-button";
     private string MenuButtonStyle => $"anchor-name: {MenuAnchorName};";
     private string MenuId => $"{StableElementId}-menu";
     private string? MenuPopoverTarget => IsMenuButtonDisabled ? null : MenuId;
     private string StableElementId => string.IsNullOrWhiteSpace(ElementId) ? ComponentIdentifier : ElementId;
-    private static NTIcon MenuIcon => MaterialIcon.ArrowDropDown;
+    private NTIcon MenuIcon => _menuIcon ??= MaterialIcon.ArrowDropDown;
+
+    private string WithElevation(string classes) => Elevation.HasValue ? $"{classes} {Elevation.Value.ToCssClass()}" : classes;
 
     private static readonly RenderFragment ButtonRipple = NTRipple.RenderHost();
     private bool _backgroundColorWasProvided;
     private bool _elevationWasProvided;
     private NTMenu? _menu;
+    private NTIcon? _menuIcon;
     private bool _menuBackgroundColorWasProvided;
     private bool _menuSelectedBackgroundColorWasProvided;
     private bool _menuSelectedTextColorWasProvided;

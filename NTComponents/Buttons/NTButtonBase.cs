@@ -10,6 +10,7 @@ namespace NTComponents;
 ///     Base class for concrete NTComponents button controls that render a native button.
 /// </summary>
 public abstract class NTButtonBase : NTComponentBase {
+    private string? _badgeId;
     private readonly HashSet<string> _providedParameterNames = [];
 
     /// <summary>
@@ -130,7 +131,7 @@ public abstract class NTButtonBase : NTComponentBase {
     /// <summary>
     ///     Gets the rendered aria-pressed value for toggle buttons.
     /// </summary>
-    protected string? ToggleAriaPressed => IsToggleEnabled ? ToggleSelected.ToString().ToLowerInvariant() : null;
+    protected string? ToggleAriaPressed => IsToggleEnabled ? (ToggleSelected ? "true" : "false") : null;
 
     private void RenderButtonProgressIndicator(RenderTreeBuilder builder) {
         builder.OpenElement(0, "span");
@@ -161,6 +162,10 @@ public abstract class NTButtonBase : NTComponentBase {
     ///     Returns whether the current parameter set included the supplied parameter name.
     /// </summary>
     protected bool WasParameterProvided(string parameterName) => _providedParameterNames.Contains(parameterName);
+
+    private protected string BadgeId => _badgeId ??= $"{ComponentIdentifier}-badge";
+
+    private protected string? DescribedBy(bool showBadge) => NTBadge.GetDescribedBy(AdditionalAttributes?.GetValueOrDefault("aria-describedby"), showBadge, showBadge ? BadgeId : string.Empty);
 
     /// <summary>
     ///     Gets the resting shape after applying shared toggle shape behavior.

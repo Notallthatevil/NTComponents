@@ -4,6 +4,7 @@
 @use '../Styles/_Variables/_corner-radius.scss' as corners;
 @use '../Styles/_Variables/_elevation.scss' as elevation;
 @use '../Styles/_Variables/_typescale.scss' as typescale;
+@use './buttonChrome' as buttonChrome;
 @use './buttonMotion' as buttonMotion;
 @use './buttonFocusRing' as focus;
 
@@ -19,14 +20,6 @@ $sizes: (
     xl: (136px, 64px, 64px, 16px, 40px, 50px, corners.$nt-corner-radius-medium, corners.$nt-corner-radius-extra-large, -6px, type-token('headline-large', weight), type-token('headline-large', size), type-token('headline-large', line-height), type-token('headline-large', tracking))
 );
 
-@function touch-inset($height) {
-    @if $height < 48px {
-        @return math.div(48px - $height, 2);
-    }
-
-    @return 0px;
-}
-
 @mixin split-button-size($height, $leading-start, $leading-end, $content-gap, $leading-icon-size, $trailing-icon-size, $inner-radius, $square-radius, $trailing-icon-offset, $weight, $font-size, $line-height, $tracking) {
     @include typescale.nt-typescale($weight, $font-size, $line-height, $tracking);
 
@@ -35,7 +28,7 @@ $sizes: (
 
         &::after,
         &::before {
-            inset-block: touch-inset($height);
+            inset-block: buttonChrome.touch-inset($height);
         }
     }
 
@@ -98,7 +91,7 @@ $sizes: (
 
     ::deep {
         .nt-button-ripple-host {
-            inset-block: touch-inset($height);
+            inset-block: buttonChrome.touch-inset($height);
         }
 
         .nt-split-button-leading-icon .tnt-icon {

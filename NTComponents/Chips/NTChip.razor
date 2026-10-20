@@ -54,7 +54,7 @@
                             aria-pressed="@SelectedAriaPressed"
                             popovertarget="@MenuPopoverTarget"
                             popovertargetaction="toggle"
-                            @onclick="@MenuClickCallback"
+                            @onclick="@ClickCallback"
                             @onkeydown="@RemoveKeyDownCallback">
                         @if (EffectiveLeadingIcon is not null) {
                             <span class="@LeadingIconClass" aria-hidden="true">
@@ -78,7 +78,7 @@
                        aria-describedby="@BadgeDescribedBy"
                        aria-disabled="@AriaDisabled"
                        tabindex="@DisabledTabIndex"
-                       @onclick="@LinkClickCallback"
+                       @onclick="@ClickCallback"
                        @onkeydown="@RemoveKeyDownCallback">
                         @if (EffectiveLeadingIcon is not null) {
                             <span class="@LeadingIconClass" aria-hidden="true">
@@ -101,7 +101,7 @@
                             autofocus="@AutoFocus"
                             aria-label="@AriaLabel"
                             aria-describedby="@BadgeDescribedBy"
-                            @onclick="@ActionClickCallback"
+                            @onclick="@ClickCallback"
                             @onkeydown="@RemoveKeyDownCallback">
                         @if (EffectiveLeadingIcon is not null) {
                             <span class="@LeadingIconClass" aria-hidden="true">
@@ -169,7 +169,7 @@
                 aria-pressed="@SelectedAriaPressed"
                 popovertarget="@MenuPopoverTarget"
                 popovertargetaction="toggle"
-                @onclick="@MenuClickCallback"
+                @onclick="@ClickCallback"
                 @onkeydown="@RemoveKeyDownCallback">
             <span class="@ContainerClass">
                 @if (EffectiveLeadingIcon is not null) {
@@ -195,7 +195,7 @@
            aria-describedby="@BadgeDescribedBy"
            aria-disabled="@AriaDisabled"
            tabindex="@DisabledTabIndex"
-           @onclick="@LinkClickCallback"
+           @onclick="@ClickCallback"
            @onkeydown="@RemoveKeyDownCallback">
             <span class="@ContainerClass">
                 @if (EffectiveLeadingIcon is not null) {
@@ -220,7 +220,7 @@
                 autofocus="@AutoFocus"
                 aria-label="@AriaLabel"
                 aria-describedby="@BadgeDescribedBy"
-                @onclick="@ActionClickCallback"
+                @onclick="@ClickCallback"
                 @onkeydown="@RemoveKeyDownCallback">
             <span class="@ContainerClass">
                 @if (EffectiveLeadingIcon is not null) {

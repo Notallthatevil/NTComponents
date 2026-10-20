@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Components.Forms;
 using NTComponents.Core;
 using System.Globalization;
 using System.Linq.Expressions;
-using System.Text;
 
 using NTComponents.CodeDocumentation;
 namespace NTComponents;
@@ -101,16 +100,25 @@ public partial class NTButtonGroup<TObjectType> : NTComponentBase {
     /// <inheritdoc />
     public override string? ElementClass => CssClassBuilder.Create("nt-button-group")
         .AddFromAdditionalAttributes(AdditionalAttributes)
-        .AddClass("nt-button-group-disconnected", DisplayType == NTButtonGroupDisplayType.Disconnected)
-        .AddClass("nt-button-group-connected", DisplayType == NTButtonGroupDisplayType.Connected)
+        .AddClass(DisplayType switch {
+            NTButtonGroupDisplayType.Disconnected => "nt-button-group-disconnected",
+            NTButtonGroupDisplayType.Connected => "nt-button-group-connected",
+            _ => null
+        })
         .AddClass("nt-button-group-full-width", FullWidth)
-        .AddClass("nt-button-group-round", Shape == ButtonShape.Round)
-        .AddClass("nt-button-group-square", Shape == ButtonShape.Square)
-        .AddClass("nt-button-group-elevated", Variant == NTButtonVariant.Elevated)
-        .AddClass("nt-button-group-filled", Variant == NTButtonVariant.Filled)
-        .AddClass("nt-button-group-tonal", Variant == NTButtonVariant.Tonal)
-        .AddClass("nt-button-group-outlined", Variant == NTButtonVariant.Outlined)
-        .AddClass("nt-button-group-text", Variant == NTButtonVariant.Text)
+        .AddClass(Shape switch {
+            ButtonShape.Round => "nt-button-group-round",
+            ButtonShape.Square => "nt-button-group-square",
+            _ => null
+        })
+        .AddClass(Variant switch {
+            NTButtonVariant.Elevated => "nt-button-group-elevated",
+            NTButtonVariant.Filled => "nt-button-group-filled",
+            NTButtonVariant.Tonal => "nt-button-group-tonal",
+            NTButtonVariant.Outlined => "nt-button-group-outlined",
+            NTButtonVariant.Text => "nt-button-group-text",
+            _ => null
+        })
         .AddSize(ButtonSize)
         .AddClass(EditContext?.FieldCssClass(in _fieldIdentifier), EditContext is not null)
         .Build();
@@ -256,6 +264,7 @@ public partial class NTButtonGroup<TObjectType> : NTComponentBase {
     public NTButtonVariant Variant { get; set; } = NTButtonVariant.Tonal;
 
     private bool _backgroundColorWasProvided;
+    private string? _errorStyle;
     private string? _name => _fieldIdentifier.FieldName;
     private bool _selectedBackgroundColorWasProvided;
     private bool _selectedTextColorWasProvided;
@@ -343,6 +352,7 @@ public partial class NTButtonGroup<TObjectType> : NTComponentBase {
     /// <inheritdoc />
     protected override void OnParametersSet() {
         base.OnParametersSet();
+        _errorStyle = CssStyleBuilder.Create().AddForegroundColor(ErrorColor).Build();
 
         SelectedKeys ??= Array.Empty<TObjectType>();
         RebuildSelectedKeySet();
@@ -364,18 +374,6 @@ public partial class NTButtonGroup<TObjectType> : NTComponentBase {
 
     private static string GetAriaPressed(bool isSelected) => isSelected ? "true" : "false";
 
-    private static string GetDefaultItemElevationClass(NTButtonVariant variant) => variant == NTButtonVariant.Elevated ? "nt-elevation-lowest" : "nt-elevation-none";
-
-    private static string GetIconWidthClassSuffix(NTIconButtonAppearance iconWidth) => iconWidth switch {
-        NTIconButtonAppearance.Narrow => "narrow",
-        NTIconButtonAppearance.Default => "default",
-        NTIconButtonAppearance.Wide => "wide",
-        _ => "default"
-    };
-
-    /// <summary>
-    /// Ensures a default or required item is selected when no explicit selection exists.
-    /// </summary>
     private void EnsureSelectionIsSet() {
         if (!IsSelectable) {
             return;
@@ -412,52 +410,21 @@ public partial class NTButtonGroup<TObjectType> : NTComponentBase {
         }
     }
 
-    private ButtonShape GetEffectiveItemShape(NTButtonGroupItem<TObjectType> item, bool isSelected) {
-        var shape = Shape;
-        return isSelected
-            ? shape == ButtonShape.Round ? ButtonShape.Square : ButtonShape.Round
-            : shape;
-    }
-
     private string GetItemAriaLabel(NTButtonGroupItem<TObjectType> item) => !string.IsNullOrWhiteSpace(item.AriaLabel)
         ? item.AriaLabel
         : item.Label ?? Convert.ToString(item.Key, CultureInfo.InvariantCulture) ?? string.Empty;
 
     private string GetItemLabel(NTButtonGroupItem<TObjectType> item) => item.Label ?? GetItemAriaLabel(item);
 
-    private string GetItemPosition(int itemIndex) {
-        if (_items.Count == 1) {
-            return "btn-group-single";
-        }
-
-        if (itemIndex == 0) {
-            return "btn-group-first";
-        }
-
-        return itemIndex == _items.Count - 1 ? "btn-group-last" : "btn-group-middle";
-    }
-
     private ItemRenderState GetItemRenderState(NTButtonGroupItem<TObjectType> item, int itemIndex) {
-        var buttonClass = new StringBuilder("nt-btn-grp-btn");
-
-        if (itemIndex == 0) {
-            buttonClass.Append(" nt-btn-grp-btn-first");
-        }
-
-        if (itemIndex == _items.Count - 1) {
-            buttonClass.Append(" nt-btn-grp-btn-last");
-        }
-
-        var isSelected = IsSelectedItem(item);
-        var isDisabled = IsButtonDisabled(item);
+        var isFirst = itemIndex == 0;
+        var isLast = itemIndex == _items.Count - 1;
+        var buttonClass = isFirst
+            ? isLast ? "nt-btn-grp-btn nt-btn-grp-btn-first nt-btn-grp-btn-last" : "nt-btn-grp-btn nt-btn-grp-btn-first"
+            : isLast ? "nt-btn-grp-btn nt-btn-grp-btn-last" : "nt-btn-grp-btn";
         var isIconOnly = string.IsNullOrWhiteSpace(item.Label);
-        var variant = Variant;
-        var effectiveShape = GetEffectiveItemShape(item, isSelected);
-        var buttonSize = ButtonSize;
-        var isBeforeSelected = itemIndex < _items.Count - 1 && IsSelectedItem(_items[itemIndex + 1]);
-        var itemPosition = GetItemPosition(itemIndex);
 
-        return new ItemRenderState(isDisabled, isIconOnly, buttonClass.ToString(), isIconOnly ? GetItemAriaLabel(item) : null, IsSelectable ? GetAriaPressed(isSelected) : null, isIconOnly ? "nt-icon-button-icon" : "nt-button-icon", isIconOnly ? null : GetItemLabel(item));
+        return new ItemRenderState(IsButtonDisabled(item), isIconOnly, buttonClass, isIconOnly ? GetItemAriaLabel(item) : null, IsSelectable ? GetAriaPressed(IsSelectedItem(item)) : null, isIconOnly ? "nt-icon-button-icon" : "nt-button-icon", isIconOnly ? null : GetItemLabel(item));
     }
 
     private async Task HandleItemClickAsync(NTButtonGroupItem<TObjectType> item) {
