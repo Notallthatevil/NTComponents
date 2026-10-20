@@ -5,18 +5,19 @@ namespace NTComponents.Tests.Core;
 public class NTHeadDependencies_Tests : BunitContext {
 
     [Fact]
-    public void Render_ConsolidatesDefaultFontFamiliesIntoOneStylesheet() {
+    public void Render_DefaultFontFamilies_SplitsTextAndIconStylesheets() {
         var cut = Render<NTHeadDependencies>();
-        var fontStylesheet = cut.FindAll("link#nt-fonts-stylesheet").Should().ContainSingle().Subject;
-        var href = fontStylesheet.GetAttribute("href");
+        var textHref = cut.FindAll("link#nt-fonts-stylesheet").Should().ContainSingle().Subject.GetAttribute("href");
+        var iconHref = cut.FindAll("link#nt-icon-fonts-stylesheet").Should().ContainSingle().Subject.GetAttribute("href");
 
-        href.Should().StartWith("https://fonts.googleapis.com/css2?");
-        href.Should().Contain("family=Roboto:wght@400;500;600;700");
-        href.Should().Contain("family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200");
-        href.Should().Contain("family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200");
-        href.Should().Contain("family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200");
-        href.Should().EndWith("&display=swap");
-        cut.FindAll("link[href^='https://fonts.googleapis.com/css2']").Should().ContainSingle();
+        textHref.Should().Be("https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap");
+        iconHref.Should().StartWith("https://fonts.googleapis.com/css2?");
+        iconHref.Should().Contain("family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0..1,0");
+        iconHref.Should().Contain("family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0");
+        iconHref.Should().Contain("family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@20..48,400,0..1,0");
+        iconHref.Should().NotContain("Roboto");
+        iconHref.Should().EndWith("&display=block");
+        cut.FindAll("link[href^='https://fonts.googleapis.com/css2']").Should().HaveCount(2);
     }
 
     [Fact]
@@ -86,6 +87,7 @@ public class NTHeadDependencies_Tests : BunitContext {
         cut.Find("#nt-fonts-api-preconnect").HasAttribute("data-permanent").Should().BeTrue();
         cut.Find("#nt-fonts-static-preconnect").HasAttribute("data-permanent").Should().BeTrue();
         cut.Find("#nt-fonts-stylesheet").HasAttribute("data-permanent").Should().BeTrue();
+        cut.Find("#nt-icon-fonts-stylesheet").HasAttribute("data-permanent").Should().BeTrue();
         cut.Find("#nt-anchor-positioning-loader").HasAttribute("data-permanent").Should().BeTrue();
     }
 
@@ -99,19 +101,37 @@ public class NTHeadDependencies_Tests : BunitContext {
     }
 
     [Fact]
-    public void CreateGoogleFontsStylesheetHref_NoFamilies_ReturnsNull() {
-        NTHeadDependencies.CreateGoogleFontsStylesheetHref(NTFontFamily.None).Should().BeNull();
+    public void CreateIconFontStylesheetHref_NoIconFamilies_ReturnsNull() {
+        NTHeadDependencies.CreateIconFontStylesheetHref(NTFontFamily.None).Should().BeNull();
+        NTHeadDependencies.CreateIconFontStylesheetHref(NTFontFamily.Roboto).Should().BeNull();
     }
 
     [Fact]
     public void Render_SelectedFontFamilies_OnlyIncludesRequestedFamilies() {
         var cut = Render<NTHeadDependencies>(parameters => parameters.Add(p => p.FontFamilies, NTFontFamily.Roboto | NTFontFamily.MaterialSymbolsOutlined));
-        var href = cut.Find("#nt-fonts-stylesheet").GetAttribute("href");
+        var iconHref = cut.Find("#nt-icon-fonts-stylesheet").GetAttribute("href");
 
-        href.Should().Contain("family=Roboto:wght@400;500;600;700");
-        href.Should().Contain("family=Material+Symbols+Outlined");
-        href.Should().NotContain("Material+Symbols+Rounded");
-        href.Should().NotContain("Material+Symbols+Sharp");
+        cut.Find("#nt-fonts-stylesheet").GetAttribute("href").Should().Contain("family=Roboto:wght@400;500;600;700");
+        iconHref.Should().Contain("family=Material+Symbols+Outlined");
+        iconHref.Should().NotContain("Material+Symbols+Rounded");
+        iconHref.Should().NotContain("Material+Symbols+Sharp");
+    }
+
+    [Fact]
+    public void Render_IconFamiliesOnly_OmitsTextStylesheet() {
+        var cut = Render<NTHeadDependencies>(parameters => parameters.Add(p => p.FontFamilies, NTFontFamily.MaterialSymbolsOutlined));
+
+        cut.FindAll("#nt-fonts-stylesheet").Should().BeEmpty();
+        cut.Find("#nt-icon-fonts-stylesheet").GetAttribute("href").Should().Contain("family=Material+Symbols+Outlined");
+        cut.FindAll("#nt-fonts-api-preconnect,#nt-fonts-static-preconnect").Should().HaveCount(2);
+    }
+
+    [Fact]
+    public void Render_RobotoOnly_OmitsIconStylesheet() {
+        var cut = Render<NTHeadDependencies>(parameters => parameters.Add(p => p.FontFamilies, NTFontFamily.Roboto));
+
+        cut.Find("#nt-fonts-stylesheet").GetAttribute("href").Should().EndWith("&display=swap");
+        cut.FindAll("#nt-icon-fonts-stylesheet").Should().BeEmpty();
     }
 
     [Fact]
@@ -126,7 +146,7 @@ public class NTHeadDependencies_Tests : BunitContext {
     public void Render_NoFontFamilies_OmitsFontDependencies() {
         var cut = Render<NTHeadDependencies>(parameters => parameters.Add(p => p.FontFamilies, NTFontFamily.None));
 
-        cut.FindAll("#nt-fonts-stylesheet,#nt-fonts-api-preconnect,#nt-fonts-static-preconnect").Should().BeEmpty();
+        cut.FindAll("#nt-fonts-stylesheet,#nt-icon-fonts-stylesheet,#nt-fonts-api-preconnect,#nt-fonts-static-preconnect").Should().BeEmpty();
     }
 
     [Fact]

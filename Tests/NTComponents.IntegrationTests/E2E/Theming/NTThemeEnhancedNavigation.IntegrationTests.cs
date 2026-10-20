@@ -119,6 +119,7 @@ public sealed class NTThemeEnhancedNavigation_IntegrationTests : IAsyncLifetime 
             "nt-fonts-api-preconnect",
             "nt-fonts-static-preconnect",
             "nt-fonts-stylesheet",
+            "nt-icon-fonts-stylesheet",
             "nt-anchor-positioning-loader"
         };
 
@@ -143,7 +144,8 @@ public sealed class NTThemeEnhancedNavigation_IntegrationTests : IAsyncLifetime 
         rippleStylesheet.Should().Contain("_content/NTComponents/nt-ripple.").And.NotEndWith("/nt-ripple.css");
         anchorLoader.Should().Contain("_content/NTComponents/css-anchor-positioning.").And.NotContain("unpkg.com");
         fontStylesheet.Should().Contain("family=Roboto:wght@400;500;600;700");
-        (await _page.Locator("link[href^='https://fonts.googleapis.com/css2']").CountAsync()).Should().Be(1);
+        (await _page.Locator("#nt-icon-fonts-stylesheet").GetAttributeAsync("href")).Should().Contain("family=Material+Symbols+Outlined");
+        (await _page.Locator("link[href^='https://fonts.googleapis.com/css2']").CountAsync()).Should().Be(2);
     }
 
     private void ClearRequests() {
@@ -182,6 +184,7 @@ public sealed class NTThemeEnhancedNavigation_IntegrationTests : IAsyncLifetime 
                     'nt-fonts-api-preconnect',
                     'nt-fonts-static-preconnect',
                     'nt-fonts-stylesheet',
+                    'nt-icon-fonts-stylesheet',
                     'nt-anchor-positioning-loader'
                 ]);
                 const sampleBackgrounds = () => {

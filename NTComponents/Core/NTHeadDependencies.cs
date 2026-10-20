@@ -22,8 +22,15 @@ public class NTHeadDependencies : IComponent {
     private const string ActiveThemeElementId = "nt-theme-active-slot";
     private const string PendingThemeElementId = "nt-theme-pending-slot";
     private const string GoogleFontsStylesheetRoot = "https://fonts.googleapis.com/css2";
-    private const string MaterialSymbolsAxes = "opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200";
+    // Only the axes the components use: FILL toggles, opsz follows font-size, weight and grade stay at their defaults. The full
+    // axis ranges cost about 4 MB per icon family; this request is about 1.1 MB.
+    private const string MaterialSymbolsAxes = "opsz,wght,FILL,GRAD@20..48,400,0..1,0";
+    // Text swaps so it stays readable while Roboto loads; icons block so ligature names never flash in place of glyphs.
+    private const string RobotoStylesheetHref = $"{GoogleFontsStylesheetRoot}?family=Roboto:wght@400;500;600;700&display=swap";
+    private const NTFontFamily IconFontFamilies = NTFontFamily.MaterialSymbolsOutlined | NTFontFamily.MaterialSymbolsRounded | NTFontFamily.MaterialSymbolsSharp;
+    private static readonly string?[] _iconFontStylesheetHrefs = new string?[((int)IconFontFamilies >> 1) + 1];
     private RenderHandle _renderHandle;
+    private RenderFragment? _render;
 
     /// <summary>
     ///     Gets or sets the default contrast level when storage has no valid value.
@@ -62,7 +69,7 @@ public class NTHeadDependencies : IComponent {
     public double FooterHeight { get; set; } = 64;
 
     /// <summary>
-    ///     Gets or sets a custom font stylesheet URL. When set, it replaces the generated Google Fonts stylesheet and its connection hints.
+    ///     Gets or sets a custom font stylesheet URL. When set, it replaces the generated Google Fonts stylesheets and their connection hints.
     /// </summary>
     [Parameter]
     public string? FontStylesheetHref { get; set; }
@@ -70,6 +77,11 @@ public class NTHeadDependencies : IComponent {
     /// <summary>
     ///     Gets or sets the default font families to request when <see cref="FontStylesheetHref" /> is not set.
     /// </summary>
+    /// <remarks>
+    ///     Roboto loads from its own stylesheet with <c>font-display: swap</c>. Material Symbols families share a second stylesheet
+    ///     with <c>font-display: block</c>, a variable FILL (0..1) and optical size (20..48) axis, weight 400, and grade 0. Use
+    ///     <see cref="FontStylesheetHref" /> to load other weight or grade values.
+    /// </remarks>
     [Parameter]
     public NTFontFamily FontFamilies { get; set; } = NTFontFamily.All;
 
@@ -121,7 +133,7 @@ public class NTHeadDependencies : IComponent {
     /// <inheritdoc />
     public Task SetParametersAsync(ParameterView parameters) {
         parameters.SetParameterProperties(this);
-        _renderHandle.Render(Render);
+        _renderHandle.Render(_render ??= Render);
         return Task.CompletedTask;
     }
 
@@ -148,12 +160,15 @@ public class NTHeadDependencies : IComponent {
         return $"{root.TrimEnd('/')}/{file.TrimStart('/')}";
     }
 
-    internal static string? CreateGoogleFontsStylesheetHref(NTFontFamily fontFamilies) {
-        var families = new List<string>(4);
+    internal static string? CreateIconFontStylesheetHref(NTFontFamily fontFamilies) {
+        // Only the icon family flags affect the URL, so each of the 7 possible URLs is built once per process.
+        var index = (int)(fontFamilies & IconFontFamilies) >> 1;
+        return index == 0 ? null : _iconFontStylesheetHrefs[index] ??= BuildIconFontStylesheetHref(fontFamilies);
+    }
 
-        if (fontFamilies.HasFlag(NTFontFamily.Roboto)) {
-            families.Add("Roboto:wght@400;500;600;700");
-        }
+    private static string BuildIconFontStylesheetHref(NTFontFamily fontFamilies) {
+        var families = new List<string>(3);
+
         if (fontFamilies.HasFlag(NTFontFamily.MaterialSymbolsOutlined)) {
             families.Add($"Material+Symbols+Outlined:{MaterialSymbolsAxes}");
         }
@@ -164,7 +179,7 @@ public class NTHeadDependencies : IComponent {
             families.Add($"Material+Symbols+Sharp:{MaterialSymbolsAxes}");
         }
 
-        return families.Count == 0 ? null : $"{GoogleFontsStylesheetRoot}?family={string.Join("&family=", families)}&display=swap";
+        return $"{GoogleFontsStylesheetRoot}?family={string.Join("&family=", families)}&display=block";
     }
 
     internal static string ResolveAssetPath(ResourceAssetCollection assets, string path) => assets[path];
@@ -194,9 +209,11 @@ public class NTHeadDependencies : IComponent {
         RenderFirstPaintThemeLinks(builder);
         builder.CloseRegion();
 
-        builder.OpenRegion(9);
-        RenderFontPreconnects(builder);
-        builder.CloseRegion();
+        if (string.IsNullOrWhiteSpace(FontStylesheetHref) && (FontFamilies & NTFontFamily.All) != NTFontFamily.None) {
+            builder.OpenRegion(9);
+            RenderFontPreconnects(builder);
+            builder.CloseRegion();
+        }
 
         // Stable empty slots are preserved across enhanced navigation and activated by NTThemeRuntime as needed.
         builder.OpenRegion(20);
@@ -256,7 +273,7 @@ public class NTHeadDependencies : IComponent {
         builder.CloseElement();
 
         builder.OpenRegion(55);
-        RenderFontStylesheet(builder);
+        RenderFontStylesheets(builder);
         builder.CloseRegion();
 
         // <script type="module">...</script>
@@ -283,11 +300,7 @@ public class NTHeadDependencies : IComponent {
         builder.CloseElement();
     }
 
-    private void RenderFontPreconnects(RenderTreeBuilder builder) {
-        if (!string.IsNullOrWhiteSpace(FontStylesheetHref) || CreateGoogleFontsStylesheetHref(FontFamilies) is null) {
-            return;
-        }
-
+    private static void RenderFontPreconnects(RenderTreeBuilder builder) {
         builder.OpenElement(0, "link");
         builder.AddAttribute(1, "id", "nt-fonts-api-preconnect");
         builder.AddAttribute(2, "rel", "preconnect");
@@ -304,20 +317,34 @@ public class NTHeadDependencies : IComponent {
         builder.CloseElement();
     }
 
-    private void RenderFontStylesheet(RenderTreeBuilder builder) {
-        var href = string.IsNullOrWhiteSpace(FontStylesheetHref)
-            ? CreateGoogleFontsStylesheetHref(FontFamilies)
-            : ResolveAssetPath(_renderHandle.Assets, FontStylesheetHref.Trim());
-
-        if (href is null) {
+    private void RenderFontStylesheets(RenderTreeBuilder builder) {
+        if (!string.IsNullOrWhiteSpace(FontStylesheetHref)) {
+            builder.OpenRegion(0);
+            RenderStylesheetLink(builder, "nt-fonts-stylesheet", ResolveAssetPath(_renderHandle.Assets, FontStylesheetHref.Trim()));
+            builder.CloseRegion();
             return;
         }
 
+        if (FontFamilies.HasFlag(NTFontFamily.Roboto)) {
+            builder.OpenRegion(1);
+            RenderStylesheetLink(builder, "nt-fonts-stylesheet", RobotoStylesheetHref);
+            builder.CloseRegion();
+        }
+
+        var iconFontStylesheetHref = CreateIconFontStylesheetHref(FontFamilies);
+        if (iconFontStylesheetHref is not null) {
+            builder.OpenRegion(2);
+            RenderStylesheetLink(builder, "nt-icon-fonts-stylesheet", iconFontStylesheetHref);
+            builder.CloseRegion();
+        }
+    }
+
+    private static void RenderStylesheetLink(RenderTreeBuilder builder, string id, string href) {
         builder.OpenElement(0, "link");
-        builder.AddAttribute(1, "id", "nt-fonts-stylesheet");
+        builder.AddAttribute(1, "id", id);
         builder.AddAttribute(2, "rel", "stylesheet");
         builder.AddAttribute(3, "href", href);
-        builder.AddAttribute(4, "data-permanent", "nt-fonts-stylesheet");
+        builder.AddAttribute(4, "data-permanent", id);
         builder.CloseElement();
     }
 
