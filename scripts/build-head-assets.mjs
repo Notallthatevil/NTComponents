@@ -18,7 +18,7 @@ async function prepare(source, module) {
   const result = await minify(source, {
     compress: true,
     format: { comments: false },
-    mangle: false,
+    mangle: true,
     module,
   });
 

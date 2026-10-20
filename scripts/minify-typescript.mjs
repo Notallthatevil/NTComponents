@@ -29,7 +29,7 @@ for (const typeScriptFile of typeScriptFiles) {
   const result = await minify(await readFile(javaScriptFile, "utf8"), {
     compress: true,
     format: { comments: false },
-    mangle: false,
+    mangle: true,
     module: true,
   });
 

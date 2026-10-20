@@ -20,8 +20,6 @@
     "build:site:release": "tsc -p tsconfig.site.json && node scripts/build-site-assets.mjs --minify",
     "build:ts": "npm run compile:ts && npm run build:site && npm run build:head",
     "build:ts:release": "npm run compile:ts && node scripts/minify-typescript.mjs && npm run build:site:release && npm run build:head",
-    "build:rich-text-editor": "tsc -p tsconfig.json --pretty false",
-    "build:rich-text-editor:release": "tsc -p tsconfig.json --pretty false && terser NTComponents/Editors/NTRichTextEditor.razor.js --module --compress --comments false --output NTComponents/Editors/NTRichTextEditor.razor.js && terser NTComponents/Shapes/NTShape.razor.js --module --compress --comments false --output NTComponents/Shapes/NTShape.razor.js",
     "pretest": "npm run build:ts && npm run test:release",
     "test:release": "node --test scripts/release-notes.test.mjs scripts/semantic-release.test.mjs",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
