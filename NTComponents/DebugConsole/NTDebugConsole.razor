@@ -6,8 +6,7 @@
 
 @if (IsShown) {
     var entries = DebugConsole.Entries;
-    var errorCount = entries.Count(entry => entry.Level is LogLevel.Error or LogLevel.Critical);
-    var warningCount = entries.Count(entry => entry.Level == LogLevel.Warning);
+    var (errorCount, warningCount) = CountProblems(entries);
     <section @attributes="AdditionalAttributes"
              class="@ElementClass"
              style="@ElementStyle"

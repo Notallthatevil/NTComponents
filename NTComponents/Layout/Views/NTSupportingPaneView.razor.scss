@@ -1,7 +1,7 @@
 @use '../../Styles/_Variables/_screen-width.scss' as screen-width;
 @use './viewCommon' as view;
 
-@include view.root;
+@include view.root($panes: true);
 
 .nt-supporting-pane-view {
     container-type: inline-size;

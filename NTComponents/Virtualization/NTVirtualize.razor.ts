@@ -69,6 +69,7 @@ type DotNetVirtualizeRefKey = DotNetVirtualizeRef | number | string;
 const observersByDotNetRef = new Map<DotNetVirtualizeRefKey, VirtualizeObservers>();
 const scrollPositionsStateKey = '__ntVirtualizeScrollPositions';
 const scrollPersistenceInterval = 100;
+const scrollInterruptKeys = new Set(['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' ']);
 
 /**
  * Initializes the virtualization component by setting up intersection observers and mutation observers
@@ -189,7 +190,7 @@ export function init(dotNetRef: Maybe<DotNetVirtualizeRef>, topSpacer: HTMLEleme
         pendingScrollTop = null;
     }
     const interruptScroll = (event: Event): void => {
-        if (event instanceof KeyboardEvent && !['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(event.key)) {
+        if (event instanceof KeyboardEvent && !scrollInterruptKeys.has(event.key)) {
             return;
         }
         interactionVersion++;
@@ -654,7 +655,9 @@ function isValidTableElement(element: Maybe<Element>): boolean {
 
 function getScrollMetrics(scrollContainer: Maybe<HTMLElement>, topSpacer: HTMLElement): ScrollMetrics {
     const topSpacerRect = topSpacer.getBoundingClientRect();
-    const viewportTop = scrollContainer ? scrollContainer.getBoundingClientRect().top + scrollContainer.clientTop : 0;
+    // Read once; the header scan below only reads layout, so the rect cannot change before it is reused.
+    const scrollContainerRect = scrollContainer?.getBoundingClientRect();
+    const viewportTop = scrollContainer && scrollContainerRect ? scrollContainerRect.top + scrollContainer.clientTop : 0;
     let headerInset = 0;
     const header = topSpacer.closest('table')?.tHead;
     if (header) {
@@ -670,8 +673,7 @@ function getScrollMetrics(scrollContainer: Maybe<HTMLElement>, topSpacer: HTMLEl
         }
     }
 
-    if (scrollContainer) {
-        const scrollContainerRect = scrollContainer.getBoundingClientRect();
+    if (scrollContainer && scrollContainerRect) {
         let containerSize = scrollContainer.clientHeight;
 
         // max-height can be larger than clientHeight before initial overflow exists.

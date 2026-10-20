@@ -10,7 +10,7 @@
           style="@ElementStyle"
           @ref="Element"
           data-shape="@((int)Shape)"
-          data-animate-shape-changes="@AnimateShapeChanges.ToString().ToLowerInvariant()"
+          data-animate-shape-changes="@(AnimateShapeChanges ? "true" : "false")"
           data-transition-duration-ms="@TransitionDurationMilliseconds"
           data-transition-easing="@((int)TransitionEasing)"
           data-clip-id="@ClipPathId">

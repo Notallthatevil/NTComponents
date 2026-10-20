@@ -22,12 +22,6 @@ internal sealed class NTSnackbarService(IJSRuntime _jsRuntime) : INTSnackbarServ
         }
     }
 
-    internal IReadOnlyList<INTSnackbar> GetCurrentStack(int maxCount = 3) {
-        lock (_snackbarsById) {
-            return _snackbarsById.Values.Take(maxCount).ToArray();
-        }
-    }
-
     public event INTSnackbarService.OnCloseCallback? OnClose;
 
     public event INTSnackbarService.OnOpenCallback? OnOpen;

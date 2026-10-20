@@ -43,9 +43,12 @@ public partial class NTShape : NTPageScriptComponent<NTShape> {
     [Parameter]
     public NTMotionDuration TransitionDuration { get; set; } = NTMotionDuration.Ms500;
 
-    internal string ClipPathId => $"nt-shape-clip-{ComponentIdentifier}";
+    private string? _clipPathId;
+    private string? _contentStyle;
 
-    internal string ContentStyle => $"clip-path:url(#{ClipPathId});-webkit-clip-path:url(#{ClipPathId});background-color:var(--nt-shape-content-background, transparent);";
+    internal string ClipPathId => _clipPathId ??= $"nt-shape-clip-{ComponentIdentifier}";
+
+    internal string ContentStyle => _contentStyle ??= $"clip-path:url(#{ClipPathId});-webkit-clip-path:url(#{ClipPathId});background-color:var(--nt-shape-content-background, transparent);";
 
     /// <inheritdoc />
     public override string? ElementClass => CssClassBuilder.Create()

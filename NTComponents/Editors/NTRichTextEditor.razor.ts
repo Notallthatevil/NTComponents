@@ -52,13 +52,6 @@ interface DotNetEditorRef {
     invokeMethodAsync(methodName: 'UpdateMarkupValueFromJs', html: string): Promise<unknown> | void;
 }
 
-interface IframeDetails {
-    src: string;
-    title: string;
-    width: string;
-    height: string;
-}
-
 interface ImageDetails {
     src: string;
     alt: string;

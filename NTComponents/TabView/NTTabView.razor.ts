@@ -92,8 +92,11 @@ function getQueryParameterName(tabView: NTTabViewElement): string | null {
     return parameterName ? parameterName : null;
 }
 
+let valueCollator: Intl.Collator | undefined;
+
 function valuesEqual(left: Maybe<string>, right: Maybe<string>): boolean {
-    return (left ?? '').localeCompare(right ?? '', undefined, { sensitivity: 'accent' }) === 0;
+    valueCollator ??= new Intl.Collator(undefined, { sensitivity: 'accent' });
+    return valueCollator.compare(left ?? '', right ?? '') === 0;
 }
 
 function findTabByValue(tabView: NTTabViewElement, value: Maybe<string>): HTMLButtonElement | null {

@@ -114,10 +114,13 @@ public partial class NTWindow : NTComponentBase {
     [Parameter, EditorRequired]
     public string Title { get; set; } = string.Empty;
 
+    private string? _contentId;
+    private string? _titleId;
+
     private string CloseAriaLabel => CloseButtonAriaLabel ?? $"Close {Title}";
-    private string ContentExpanded => (State != NTWindowState.Minimized).ToString().ToLowerInvariant();
-    private string ContentHidden => (State == NTWindowState.Minimized).ToString().ToLowerInvariant();
-    private string ContentId => $"{ComponentIdentifier}-content";
+    private string ContentExpanded => State != NTWindowState.Minimized ? "true" : "false";
+    private string ContentHidden => State == NTWindowState.Minimized ? "true" : "false";
+    private string ContentId => _contentId ??= $"{ComponentIdentifier}-content";
     private string DockPositionValue => DockPosition switch {
         NTWindowDockPosition.TopLeft => "top-left",
         NTWindowDockPosition.TopCenter => "top-center",
@@ -127,14 +130,18 @@ public partial class NTWindow : NTComponentBase {
         NTWindowDockPosition.BottomRight => "bottom-right",
         _ => throw new ArgumentOutOfRangeException(nameof(DockPosition), DockPosition, "The window dock position is not supported.")
     };
-    private string DraggableValue => Draggable.ToString().ToLowerInvariant();
+    private string DraggableValue => Draggable ? "true" : "false";
     private string FullscreenAriaLabel => FullscreenButtonAriaLabel ?? (State == NTWindowState.Fullscreen ? $"Restore {Title}" : $"Show {Title} fullscreen");
     private NTIcon FullscreenIcon => State == NTWindowState.Fullscreen ? MaterialIcon.FullscreenExit : MaterialIcon.Fullscreen;
-    private string FullscreenPressed => (State == NTWindowState.Fullscreen).ToString().ToLowerInvariant();
+    private string FullscreenPressed => State == NTWindowState.Fullscreen ? "true" : "false";
     private string MinimizeAriaLabel => MinimizeButtonAriaLabel ?? (State == NTWindowState.Minimized ? $"Restore {Title}" : $"Minimize {Title}");
     private NTIcon MinimizeIcon => State == NTWindowState.Minimized ? MaterialIcon.KeyboardArrowUp : MaterialIcon.Minimize;
-    private string StateValue => State.ToString().ToLowerInvariant();
-    private string TitleId => $"{ComponentIdentifier}-title";
+    private string StateValue => State switch {
+        NTWindowState.Normal => "normal",
+        NTWindowState.Minimized => "minimized",
+        _ => "fullscreen"
+    };
+    private string TitleId => _titleId ??= $"{ComponentIdentifier}-title";
 
     /// <inheritdoc />
     protected override void OnParametersSet() {

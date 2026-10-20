@@ -77,24 +77,20 @@ $nt-navigation-rail-modal-width: min($nt-navigation-rail-expanded-width, 88vw);
         }
 
         ::deep {
-            .nt-navigation-rail-item:not(.nt-navigation-rail-item-expanded),
-            .nt-navigation-rail-group-trigger:not(.nt-navigation-rail-item-expanded) {
+            :is(.nt-navigation-rail-item, .nt-navigation-rail-group-trigger):not(.nt-navigation-rail-item-expanded) {
                 min-block-size: 48px;
             }
 
-            .nt-navigation-rail-item:not(.nt-navigation-rail-item-expanded) .nt-navigation-rail-item-body,
-            .nt-navigation-rail-group-trigger:not(.nt-navigation-rail-item-expanded) .nt-navigation-rail-item-body {
+            :is(.nt-navigation-rail-item, .nt-navigation-rail-group-trigger):not(.nt-navigation-rail-item-expanded) .nt-navigation-rail-item-body {
                 padding-block: 0;
             }
 
-            .nt-navigation-rail-item:not(.nt-navigation-rail-item-expanded) .nt-navigation-rail-item-content,
-            .nt-navigation-rail-group-trigger:not(.nt-navigation-rail-item-expanded) .nt-navigation-rail-item-content {
+            :is(.nt-navigation-rail-item, .nt-navigation-rail-group-trigger):not(.nt-navigation-rail-item-expanded) .nt-navigation-rail-item-content {
                 grid-template-rows: $nt-navigation-rail-compact-indicator-height $nt-navigation-rail-icon-label-gap auto;
                 min-block-size: 48px;
             }
 
-            .nt-navigation-rail-item:not(.nt-navigation-rail-item-expanded) .nt-navigation-rail-item-indicator,
-            .nt-navigation-rail-group-trigger:not(.nt-navigation-rail-item-expanded) .nt-navigation-rail-item-indicator {
+            :is(.nt-navigation-rail-item, .nt-navigation-rail-group-trigger):not(.nt-navigation-rail-item-expanded) .nt-navigation-rail-item-indicator {
                 block-size: $nt-navigation-rail-compact-indicator-height;
                 top: 0;
             }
@@ -115,8 +111,7 @@ $nt-navigation-rail-modal-width: min($nt-navigation-rail-expanded-width, 88vw);
                 inset-inline-start: $nt-navigation-rail-collapsed-indicator-margin-inline;
             }
 
-            .nt-navigation-rail-item:not(.nt-navigation-rail-item-expanded) .nt-navigation-rail-item-label,
-            .nt-navigation-rail-group-trigger:not(.nt-navigation-rail-item-expanded) .nt-navigation-rail-item-label {
+            :is(.nt-navigation-rail-item, .nt-navigation-rail-group-trigger):not(.nt-navigation-rail-item-expanded) .nt-navigation-rail-item-label {
                 @include typescale.nt-label-small;
 
                 -webkit-line-clamp: 1;
@@ -160,10 +155,6 @@ $nt-navigation-rail-modal-width: min($nt-navigation-rail-expanded-width, 88vw);
 
     &.nt-navigation-rail-expanded {
         inline-size: $nt-navigation-rail-expanded-width;
-
-        &.nt-navigation-rail-with-divider {
-            border-right: 1px solid var(--nt-navigation-rail-divider-color, #{colors.$nt-color-outline-variant});
-        }
     }
 
     &.nt-navigation-rail-expanding:not(.nt-navigation-rail-responsive-modal):not(.nt-navigation-rail-hide-when-collapsed) {
@@ -199,20 +190,18 @@ $nt-navigation-rail-modal-width: min($nt-navigation-rail-expanded-width, 88vw);
         overflow-x: visible;
 
         &.nt-navigation-rail-expanded,
-        &.nt-navigation-rail-expanding {
-            border-end-end-radius: $nt-navigation-rail-modal-corner-radius;
-            border-start-end-radius: $nt-navigation-rail-modal-corner-radius;
-            box-shadow: 0 8px 24px color-mix(in srgb, #{colors.$nt-color-shadow} 24%, transparent);
-            inline-size: $nt-navigation-rail-expanded-width;
-            margin-inline-end: calc($nt-navigation-rail-collapsed-width - $nt-navigation-rail-expanded-width);
-            z-index: 1000;
-        }
-
+        &.nt-navigation-rail-expanding,
         &.nt-navigation-rail-collapsing {
             border-end-end-radius: $nt-navigation-rail-modal-corner-radius;
             border-start-end-radius: $nt-navigation-rail-modal-corner-radius;
             box-shadow: 0 8px 24px color-mix(in srgb, #{colors.$nt-color-shadow} 24%, transparent);
             z-index: 1000;
+        }
+
+        &.nt-navigation-rail-expanded,
+        &.nt-navigation-rail-expanding {
+            inline-size: $nt-navigation-rail-expanded-width;
+            margin-inline-end: calc($nt-navigation-rail-collapsed-width - $nt-navigation-rail-expanded-width);
         }
     }
 
@@ -239,12 +228,6 @@ $nt-navigation-rail-modal-width: min($nt-navigation-rail-expanded-width, 88vw);
     }
 }
 
-.nt-navigation-rail-menu {
-    align-items: center;
-    display: flex;
-    flex-direction: column;
-}
-
 .nt-navigation-rail-menu,
 .nt-navigation-rail-header,
 .nt-navigation-rail-footer {
@@ -257,6 +240,8 @@ $nt-navigation-rail-modal-width: min($nt-navigation-rail-expanded-width, 88vw);
 .nt-navigation-rail-menu {
     align-items: flex-start;
     background: inherit;
+    display: flex;
+    flex-direction: column;
     inset-block-start: 0;
     margin-block-start: $nt-navigation-rail-menu-button-block-inset;
     margin-block-end: 12px;

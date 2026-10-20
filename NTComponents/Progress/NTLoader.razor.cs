@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using NTComponents.Core;
@@ -157,9 +157,12 @@ public partial class NTLoader : NTDisposableComponentBase, INTPageScriptComponen
     private string? EffectiveAriaLabelledBy => GetAdditionalAttributeValue("aria-labelledby") ?? AriaLabelledBy;
     private string EffectiveRole => GetAdditionalAttributeValue("role") ?? "progressbar";
     private string InitialShapePathData => NTShapeCatalog.GetPathData(_initialShape);
-    private string ShapeClipPathId => $"nt-loader-shape-clip-{ComponentIdentifier}";
-    private string ShapeContentStyle => $"clip-path:url(#{ShapeClipPathId});-webkit-clip-path:url(#{ShapeClipPathId});background-color:var(--nt-shape-content-background, transparent);";
+    private string AnimateValue => Animate ? "true" : "false";
+    private string ShapeClipPathId => _shapeClipPathId!;
+    private string ShapeContentStyle => _shapeContentStyle!;
     private string ShapeSequenceValue => _shapeSequenceValue;
+    private string? _shapeClipPathId;
+    private string? _shapeContentStyle;
     private IReadOnlyList<NTShapeType> _effectiveShapes = _defaultShapes;
     private NTShapeType _initialShape = NTShapeType.SoftBurst;
     private string _shapeSequenceValue = string.Empty;
@@ -169,15 +172,20 @@ public partial class NTLoader : NTDisposableComponentBase, INTPageScriptComponen
 
     // Every shape, starting with the Material loading indicator's soft burst; later steps are chosen at random.
     private static readonly NTShapeType[] _defaultShapes = [NTShapeType.SoftBurst, .. Enum.GetValues<NTShapeType>().Where(shape => shape != NTShapeType.SoftBurst)];
+    private static readonly string _defaultShapeSequenceValue = GetShapeSequenceValue(_defaultShapes);
 
     /// <inheritdoc />
     protected override void OnParametersSet() {
         base.OnParametersSet();
 
+        _shapeClipPathId ??= $"nt-loader-shape-clip-{ComponentIdentifier}";
+        _shapeContentStyle ??= $"clip-path:url(#{_shapeClipPathId});-webkit-clip-path:url(#{_shapeClipPathId});background-color:var(--nt-shape-content-background, transparent);";
         _effectiveShapes = Shapes is { Count: > 0 } ? Shapes : _defaultShapes;
         _initialShape = _effectiveShapes[0];
-        _shapeSequenceValue = string.Join(' ', _effectiveShapes.Select(shape => ((int)shape).ToString(CultureInfo.InvariantCulture)));
+        _shapeSequenceValue = ReferenceEquals(_effectiveShapes, _defaultShapes) ? _defaultShapeSequenceValue : GetShapeSequenceValue(_effectiveShapes);
     }
+
+    private static string GetShapeSequenceValue(IReadOnlyList<NTShapeType> shapes) => string.Join(' ', shapes.Select(shape => ((int)shape).ToString(CultureInfo.InvariantCulture)));
 
     /// <inheritdoc />
     protected override async Task OnAfterRenderAsync(bool firstRender) {

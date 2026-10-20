@@ -153,26 +153,25 @@
     }
     const systemPrefersDark = (): boolean => rootWindow.matchMedia?.('(prefers-color-scheme: dark)').matches === true;
     const resolveActualTheme = (theme: NTThemePreference): NTThemeName => theme === 'SYSTEM' ? (systemPrefersDark() ? 'DARK' : 'LIGHT') : theme;
-    const getStoredTheme = (config: NTThemeConfiguration): NTThemePreference | null => {
-        const stored = upper(safeGetStorage(config.themeStorageKey));
-        return validThemes.has(stored as NTThemePreference) ? stored as NTThemePreference : null;
-    };
-    const getStoredContrast = (config: NTThemeConfiguration): NTThemeContrastName | null => {
-        const stored = upper(safeGetStorage(config.contrastStorageKey));
-        return validContrasts.has(stored as NTThemeContrastName) ? stored as NTThemeContrastName : null;
-    };
+    // Reads one stored value, removing it when it is present but invalid; returns the normalized valid value or null.
+    const readStoredValue = <T extends string>(key: string, valid: Set<T>, removeInvalid: boolean): T | null => {
+        const stored = safeGetStorage(key);
+        const normalized = upper(stored);
+        if (valid.has(normalized as T)) {
+            return normalized as T;
+        }
 
+        if (stored && removeInvalid) {
+            safeRemoveStorage(key);
+        }
+
+        return null;
+    };
+    const getStoredTheme = (config: NTThemeConfiguration): NTThemePreference | null => readStoredValue(config.themeStorageKey, validThemes, false);
+    const getStoredContrast = (config: NTThemeConfiguration): NTThemeContrastName | null => readStoredValue(config.contrastStorageKey, validContrasts, false);
     const cleanupInvalidStoredValues = (config: NTThemeConfiguration): void => {
-        const storedTheme = safeGetStorage(config.themeStorageKey);
-        const storedContrast = safeGetStorage(config.contrastStorageKey);
-
-        if (storedTheme && !validThemes.has(upper(storedTheme) as NTThemePreference)) {
-            safeRemoveStorage(config.themeStorageKey);
-        }
-
-        if (storedContrast && !validContrasts.has(upper(storedContrast) as NTThemeContrastName)) {
-            safeRemoveStorage(config.contrastStorageKey);
-        }
+        readStoredValue(config.themeStorageKey, validThemes, true);
+        readStoredValue(config.contrastStorageKey, validContrasts, true);
     };
 
     const hasScheme = (value: string): boolean => /^[a-z][a-z0-9+.-]*:/i.test(value);
@@ -195,21 +194,16 @@
         }
     };
 
+    type NTThemeCssKey = 'lightDefaultCss' | 'lightMediumCss' | 'lightHighCss' | 'darkDefaultCss' | 'darkMediumCss' | 'darkHighCss';
+    const cssFileKeys: Record<NTThemeName, Record<NTThemeContrastName, NTThemeCssKey>> = {
+        LIGHT: { DEFAULT: 'lightDefaultCss', MEDIUM: 'lightMediumCss', HIGH: 'lightHighCss' },
+        DARK: { DEFAULT: 'darkDefaultCss', MEDIUM: 'darkMediumCss', HIGH: 'darkHighCss' },
+    };
+    // Only the requested file name is validated; the default-contrast file is the fallback.
     const getCssFile = (config: NTThemeConfiguration, theme: NTThemeName, contrast: NTThemeContrastName): string => {
-        const cssMap: Record<NTThemeName, Record<NTThemeContrastName, string>> = {
-            LIGHT: {
-                DEFAULT: safeFileName(config.lightDefaultCss, defaultConfig.lightDefaultCss),
-                MEDIUM: safeFileName(config.lightMediumCss, defaultConfig.lightMediumCss),
-                HIGH: safeFileName(config.lightHighCss, defaultConfig.lightHighCss),
-            },
-            DARK: {
-                DEFAULT: safeFileName(config.darkDefaultCss, defaultConfig.darkDefaultCss),
-                MEDIUM: safeFileName(config.darkMediumCss, defaultConfig.darkMediumCss),
-                HIGH: safeFileName(config.darkHighCss, defaultConfig.darkHighCss),
-            },
-        };
-
-        return cssMap[theme][contrast] || cssMap[theme].DEFAULT || defaultConfig.lightDefaultCss;
+        const keys = cssFileKeys[theme];
+        const cssFile = (key: NTThemeCssKey | undefined): string => key ? safeFileName(config[key], defaultConfig[key]) : '';
+        return cssFile(keys[contrast]) || cssFile(keys.DEFAULT) || defaultConfig.lightDefaultCss;
     };
 
     const resolveThemeHref = (config: NTThemeConfiguration, theme: NTThemeName, contrast: NTThemeContrastName): string => {
@@ -520,8 +514,11 @@
                     apply({ waitForLoad: true });
                 }
             };
-            mediaQueryList.addEventListener?.('change', handleMediaChange);
-            mediaQueryList.addListener?.(handleMediaChange);
+            if (mediaQueryList.addEventListener) {
+                mediaQueryList.addEventListener('change', handleMediaChange);
+            } else {
+                mediaQueryList.addListener?.(handleMediaChange);
+            }
         }
 
         rootWindow.addEventListener?.('storage', event => {

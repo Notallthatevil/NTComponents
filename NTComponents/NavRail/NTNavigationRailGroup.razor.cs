@@ -36,16 +36,10 @@ public partial class NTNavigationRailGroup : NTComponentBase {
     public bool Disabled { get; set; }
 
     /// <inheritdoc />
-    public override string? ElementClass => CssClassBuilder.Create()
-        .AddFromAdditionalAttributes(AdditionalAttributes)
-        .AddClass("nt-navigation-rail-group")
-        .AddDisabled(Disabled)
-        .Build();
+    public override string? ElementClass => _elementClass;
 
     /// <inheritdoc />
-    public override string? ElementStyle => CssStyleBuilder.Create()
-        .AddFromAdditionalAttributes(AdditionalAttributes)
-        .Build();
+    public override string? ElementStyle => _elementStyle;
 
     /// <summary>
     ///     Whether the group starts expanded when the rail is expanded.
@@ -74,20 +68,19 @@ public partial class NTNavigationRailGroup : NTComponentBase {
     [CascadingParameter]
     private NTNavigationRail? Parent { get; set; }
 
-    private string EffectiveAriaLabel => string.IsNullOrWhiteSpace(AriaLabel) ? Label : AriaLabel;
-    private string? EffectiveElementId => ElementId ?? TryGetStringAttribute("id");
-    private string? EffectiveElementLang => ElementLang ?? TryGetStringAttribute("lang");
-    private string? EffectiveElementTitle => ElementTitle ?? TryGetStringAttribute("title");
     private string DefaultExpandedText => Expanded ? "true" : "false";
     private string ExpandedText => Parent?.IsExpanded == true && Expanded ? "true" : "false";
-    private string PanelAriaLabel => $"{EffectiveAriaLabel} destinations";
-    private string PanelId => $"{ComponentIdentifier}-panel";
 
-    private string? TriggerClass => CssClassBuilder.Create("nt-navigation-rail-group-trigger")
-        .AddClass("nt-navigation-rail-item")
-        .AddClass("nt-navigation-rail-item-button")
-        .AddDisabled(Disabled)
-        .Build();
+    private string _effectiveAriaLabel = string.Empty;
+    private string? _effectiveElementId;
+    private string? _effectiveElementLang;
+    private string? _effectiveElementTitle;
+    private string? _elementClass;
+    private string? _elementStyle;
+    private string _panelAriaLabel = string.Empty;
+    private string? _triggerClass;
+
+    private string PanelId => $"{ComponentIdentifier}-panel";
 
     /// <inheritdoc />
     protected override void OnParametersSet() {
@@ -96,6 +89,25 @@ public partial class NTNavigationRailGroup : NTComponentBase {
         if (string.IsNullOrWhiteSpace(Label)) {
             throw new ArgumentException("NTNavigationRailGroup requires a non-empty Label.", nameof(Label));
         }
+
+        _effectiveAriaLabel = string.IsNullOrWhiteSpace(AriaLabel) ? Label : AriaLabel;
+        _effectiveElementId = ElementId ?? TryGetStringAttribute("id");
+        _effectiveElementLang = ElementLang ?? TryGetStringAttribute("lang");
+        _effectiveElementTitle = ElementTitle ?? TryGetStringAttribute("title");
+        _panelAriaLabel = $"{_effectiveAriaLabel} destinations";
+        _elementClass = CssClassBuilder.Create()
+            .AddFromAdditionalAttributes(AdditionalAttributes)
+            .AddClass("nt-navigation-rail-group")
+            .AddDisabled(Disabled)
+            .Build();
+        _elementStyle = CssStyleBuilder.Create()
+            .AddFromAdditionalAttributes(AdditionalAttributes)
+            .Build();
+        _triggerClass = CssClassBuilder.Create("nt-navigation-rail-group-trigger")
+            .AddClass("nt-navigation-rail-item")
+            .AddClass("nt-navigation-rail-item-button")
+            .AddDisabled(Disabled)
+            .Build();
     }
 
     private string? TryGetStringAttribute(string attributeName) {

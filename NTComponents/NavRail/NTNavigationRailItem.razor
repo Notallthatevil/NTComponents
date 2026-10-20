@@ -3,18 +3,18 @@
 @inherits NTComponentBase
 
 @if (RendersAnchor) {
-    <a @attributes="RenderedAdditionalAttributes"
+    <a @attributes="_renderedAdditionalAttributes"
        class="@ElementClass"
        style="@ElementStyle"
        href="@RenderedHref"
        aria-current="@AriaCurrent"
-       aria-label="@EffectiveAriaLabel"
-       aria-describedby="@AriaDescribedBy"
+       aria-label="@_effectiveAriaLabel"
+       aria-describedby="@_ariaDescribedBy"
        aria-disabled="@AriaDisabled"
        tabindex="@RenderedTabIndex"
-       lang="@EffectiveElementLang"
-       title="@EffectiveElementTitle"
-       id="@EffectiveElementId"
+       lang="@_effectiveElementLang"
+       title="@_effectiveElementTitle"
+       id="@_effectiveElementId"
        data-nt-navigation-rail-match="@RouteMatchText"
        data-nt-navigation-rail-selected="@SelectedText"
        @ref="Element">
@@ -22,7 +22,7 @@
     </a>
 }
 else {
-    <button @attributes="RenderedAdditionalAttributes"
+    <button @attributes="_renderedAdditionalAttributes"
             class="@ElementClass"
             style="@ElementStyle"
             type="@Type.ToHtmlAttribute()"
@@ -30,11 +30,11 @@ else {
             value="@Value"
             disabled="@Disabled"
             aria-current="@AriaCurrent"
-            aria-label="@EffectiveAriaLabel"
-            aria-describedby="@AriaDescribedBy"
-            lang="@EffectiveElementLang"
-            title="@EffectiveElementTitle"
-            id="@EffectiveElementId"
+            aria-label="@_effectiveAriaLabel"
+            aria-describedby="@_ariaDescribedBy"
+            lang="@_effectiveElementLang"
+            title="@_effectiveElementTitle"
+            id="@_effectiveElementId"
             data-nt-navigation-rail-match="@RouteMatchText"
             data-nt-navigation-rail-selected="@SelectedText"
             @ref="Element">
@@ -48,8 +48,8 @@ else {
         <span class="nt-navigation-rail-item-content">
             @NTRipple.RenderHost("nt-button-ripple-host nt-navigation-rail-item-ripple")
             <span class="nt-navigation-rail-item-icon" aria-hidden="true">
-                @if (EffectiveIcon is not null) {
-                    @EffectiveIcon.Render(EffectiveIconClass)
+                @if (_effectiveIcon is not null) {
+                    @_effectiveIcon.Render(EffectiveIconClass)
                 }
                 else if (EffectiveIconFragment is not null) {
                     @EffectiveIconFragment

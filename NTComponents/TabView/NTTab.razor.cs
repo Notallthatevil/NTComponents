@@ -95,7 +95,8 @@ public partial class NTTab : INTBadgeable {
     [CascadingParameter]
     private NTTabView _context { get; set; } = default!;
 
-    internal string? AriaDescribedBy => NTBadge.GetDescribedBy(null, ShowBadge && ResolvedAriaLabel is not null, BadgeId);
+    // Same result as NTBadge.GetDescribedBy(null, ...), without building the badge id when no badge is shown.
+    internal string? AriaDescribedBy => ShowBadge && ResolvedAriaLabel is not null ? BadgeId : null;
 
     internal string BadgeId => $"{ResolvedTabId}-badge";
 
@@ -146,12 +147,24 @@ public partial class NTTab : INTBadgeable {
     }
 
     private static string NormalizeValue(string value) {
-        var normalized = new string(value.Trim().ToLowerInvariant().Select(character => char.IsLetterOrDigit(character) ? character : '-').ToArray()).Trim('-');
-        while (normalized.Contains("--", StringComparison.Ordinal)) {
-            normalized = normalized.Replace("--", "-", StringComparison.Ordinal);
+        var trimmed = value.AsSpan().Trim();
+        Span<char> buffer = trimmed.Length <= 128 ? stackalloc char[trimmed.Length] : new char[trimmed.Length];
+        var length = 0;
+        foreach (var character in trimmed) {
+            var lowered = char.ToLowerInvariant(character);
+            if (char.IsLetterOrDigit(lowered)) {
+                buffer[length++] = lowered;
+            }
+            else if (length > 0 && buffer[length - 1] != '-') {
+                buffer[length++] = '-';
+            }
         }
 
-        return string.IsNullOrWhiteSpace(normalized) ? "tab" : normalized;
+        if (length > 0 && buffer[length - 1] == '-') {
+            length--;
+        }
+
+        return length == 0 ? "tab" : new string(buffer[..length]);
     }
 
     private readonly record struct IconMetadata(string Icon, string? Class, string? Style, string? Id, string? Title, bool HasTooltip);

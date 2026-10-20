@@ -67,7 +67,7 @@
                 @if (IsSineWaveAppearance) {
                     @foreach (var frame in RingSineWavePathFrames) {
                         <path class="nt-progress-active-track nt-progress-active-track-main nt-progress-sine-wave-path"
-                              style="--nt-progress-ring-wave-frame-index:@frame.Index"
+                              style="@frame.Style"
                               d="@frame.PathData" />
                     }
                 }

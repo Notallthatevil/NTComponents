@@ -1,7 +1,7 @@
 @namespace NTComponents
 @inherits NTPageScriptViewBase<NTListDetailView>
 
-<div @attributes="ElementAttributes" data-detail-visible="@DetailVisible.ToString().ToLowerInvariant()" @ref="Element">
+<div @attributes="ElementAttributes" data-detail-visible="@(DetailVisible ? "true" : "false")" @ref="Element">
     <div class="nt-list-detail-view-layout">
         <section class="nt-view-pane nt-list-detail-view-list" aria-label="@ListPaneLabel">
             @List

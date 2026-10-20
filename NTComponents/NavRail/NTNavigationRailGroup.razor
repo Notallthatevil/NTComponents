@@ -5,17 +5,17 @@
 <div @attributes="AdditionalAttributes"
      class="@ElementClass"
      style="@ElementStyle"
-     lang="@EffectiveElementLang"
-     title="@EffectiveElementTitle"
-     id="@EffectiveElementId"
+     lang="@_effectiveElementLang"
+     title="@_effectiveElementTitle"
+     id="@_effectiveElementId"
      data-nt-navigation-rail-group-expanded="@DefaultExpandedText"
      @ref="Element">
-    <button class="@TriggerClass"
+    <button class="@_triggerClass"
             type="button"
             disabled="@Disabled"
             aria-expanded="@ExpandedText"
             aria-controls="@PanelId"
-            aria-label="@EffectiveAriaLabel"
+            aria-label="@_effectiveAriaLabel"
             data-nt-navigation-rail-group-trigger="true">
         <span class="nt-navigation-rail-item-body">
             @NTRipple.RenderHost("nt-button-ripple-host nt-navigation-rail-item-ripple")
@@ -40,7 +40,7 @@
          class="nt-navigation-rail-group-panel"
          popover="auto"
          role="group"
-         aria-label="@PanelAriaLabel">
+         aria-label="@_panelAriaLabel">
         <div class="nt-navigation-rail-group-items">
             @ChildContent
         </div>

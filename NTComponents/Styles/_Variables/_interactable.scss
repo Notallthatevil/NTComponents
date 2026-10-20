@@ -8,51 +8,6 @@
     }
 }
 
-@mixin tnt-interactable {
-    &.tnt-interactable:not(.tnt-disabled) {
-        position: relative;
-        cursor: pointer;
-
-        &:before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: transparent;
-            opacity: 1;
-            transition-timing-function: ease-in-out;
-            transition-duration: 200ms;
-            transition-property: opacity, background-color;
-            border-radius: inherit;
-        }
-
-        @each $colorClass in colors.$tnt-all-color-classes {
-            &.tnt-tint-color-#{$colorClass} {
-                &:hover, &:active {
-                    &:before {
-                        background-color: var(--tnt-color-#{$colorClass});
-                        opacity: 0.3;
-                    }
-                }
-
-                ::deep {
-                    .tnt-rippling {
-                        background-color: var(--tnt-color-#{$colorClass});
-                    }
-                }
-            }
-
-            &.tnt-on-tint-color-#{$colorClass} {
-                &:hover, &:active {
-                    color: var(--tnt-color-on-#{$colorClass});
-                }
-            }
-        }
-    }
-}
-
 @mixin tnt-interactable($tint-color: null, $on-tint-color: null, $deep-ripple: true) {
     &.tnt-interactable:not(.tnt-disabled) {
         position: relative;

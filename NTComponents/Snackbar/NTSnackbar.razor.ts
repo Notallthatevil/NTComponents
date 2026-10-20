@@ -643,7 +643,7 @@ function getForegroundDialogFromMutations(mutations: MutationRecord[]): HTMLDial
             return mutation.target;
         }
 
-        for (const node of Array.from(mutation.addedNodes)) {
+        for (const node of mutation.addedNodes) {
             const dialog = getOpenDialogNode(node);
             if (dialog) {
                 return dialog;
@@ -659,7 +659,13 @@ function mutationTouchesDialog(mutation: MutationRecord): boolean {
         return true;
     }
 
-    return Array.from(mutation.addedNodes).some(isOpenDialogNode);
+    for (const node of mutation.addedNodes) {
+        if (isOpenDialogNode(node)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 function syncSnackbarHostForegroundContainer(host: NTSnackbarHostElement): void {

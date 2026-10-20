@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
+using System.Collections.Concurrent;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
@@ -166,15 +167,7 @@ public class NTWizardFormStep : NTWizardStepBase, INTWizardFormStep {
             return false;
         }
 
-        foreach (var property in model.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)) {
-            if (property.GetIndexParameters().Length > 0 || !property.CanRead) {
-                continue;
-            }
-
-            if (!property.GetCustomAttributes<RequiredAttribute>(inherit: true).Any()) {
-                continue;
-            }
-
+        foreach (var property in _requiredProperties.GetOrAdd(model.GetType(), FindRequiredProperties)) {
             var value = property.GetValue(model);
             if (value is null) {
                 return false;
@@ -187,6 +180,12 @@ public class NTWizardFormStep : NTWizardStepBase, INTWizardFormStep {
 
         return true;
     }
+
+    // The required-property set depends only on the model type, so it is computed once per type instead of on every field change.
+    private static readonly ConcurrentDictionary<Type, PropertyInfo[]> _requiredProperties = new();
+
+    [UnconditionalSuppressMessage("Trimming", "IL2070", Justification = "Used only for UI affordance in wizard button state; runtime model metadata is available in component usage.")]
+    private static PropertyInfo[] FindRequiredProperties(Type modelType) => [.. modelType.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(property => property.GetIndexParameters().Length == 0 && property.CanRead && property.GetCustomAttributes<RequiredAttribute>(inherit: true).Any())];
 
     /// <inheritdoc />
     public async Task<bool> FormValidAsync() {

@@ -41,6 +41,8 @@ public partial class NTTabView {
     private bool _initialRegistrationComplete;
     private Task? _registrationCompletionTask;
     private int _renderSequence;
+    private NTTab? _selectedTab;
+    private bool _selectedTabResolved;
 
     private string? ResolvedQueryParameterName => QueryParameterName ?? Name;
 
@@ -54,7 +56,10 @@ public partial class NTTabView {
 
     internal int GetNextRenderSequence() => _renderSequence++;
 
-    internal void ResetRenderSequence() => _renderSequence = 0;
+    internal void ResetRenderSequence() {
+        _renderSequence = 0;
+        _selectedTabResolved = false;
+    }
 
     internal void SetTabSequence(NTTab tab, int sequence, bool headerMetadataChanged) {
         var sequenceChanged = tab.ResolvedSequence != sequence;
@@ -223,16 +228,18 @@ public partial class NTTabView {
 
     internal Task WaitForInitialRegistrationAsync() => _registrationCompletionTask ??= InvokeAsync(CompleteInitialRegistrationWhenStableAsync);
 
+    // Resolved once per render pass so every tab header and panel shares one query-string parse; any structural change invalidates it.
     internal NTTab? GetInitiallySelectedTab() {
-        var firstEnabledTab = OrderedTabs.FirstOrDefault(candidate => !candidate.Disabled);
-        if (firstEnabledTab is null) {
-            return null;
+        if (!_selectedTabResolved) {
+            var firstEnabledTab = OrderedTabs.FirstOrDefault(candidate => !candidate.Disabled);
+            var selectedValue = firstEnabledTab is null ? null : GetInitialSelectedValue();
+            _selectedTab = !string.IsNullOrWhiteSpace(selectedValue)
+                ? OrderedTabs.FirstOrDefault(tab => !tab.Disabled && string.Equals(tab.ResolvedValue, selectedValue, StringComparison.OrdinalIgnoreCase)) ?? firstEnabledTab
+                : firstEnabledTab;
+            _selectedTabResolved = true;
         }
 
-        var selectedValue = GetInitialSelectedValue();
-        return !string.IsNullOrWhiteSpace(selectedValue)
-            ? OrderedTabs.FirstOrDefault(tab => !tab.Disabled && string.Equals(tab.ResolvedValue, selectedValue, StringComparison.OrdinalIgnoreCase)) ?? firstEnabledTab
-            : firstEnabledTab;
+        return _selectedTab;
     }
 
     private string? GetInitialSelectedValue() => GetQuerySelectedValue() ?? SelectedValue;
@@ -292,6 +299,7 @@ public partial class NTTabView {
     }
 
     internal void RefreshTabOrder() {
+        _selectedTabResolved = false;
         _orderedTabs.Clear();
         _orderedTabs.AddRange(_tabs.OrderBy(tab => tab.ResolvedSequence));
         _tabIndexes.Clear();
@@ -300,13 +308,17 @@ public partial class NTTabView {
         }
     }
 
-    private string BuildTabClass(NTTab tab, bool selected) {
-        return CssClassBuilder.Create("nt-tab-view-tab")
-            .AddClass("nt-tab-view-tab-selected", selected)
-            .AddClass("nt-tab-view-tab-disabled", tab.Disabled)
-            .AddClass("nt-tab-view-tab-with-icon", tab.Icon is not null)
-            .Build();
-    }
+    // Constant per state combination, in the order the class builder emitted them (selected, disabled, with-icon).
+    private static string BuildTabClass(NTTab tab, bool selected) => (selected, tab.Disabled, tab.Icon is not null) switch {
+        (false, false, false) => "nt-tab-view-tab",
+        (true, false, false) => "nt-tab-view-tab nt-tab-view-tab-selected",
+        (false, true, false) => "nt-tab-view-tab nt-tab-view-tab-disabled",
+        (true, true, false) => "nt-tab-view-tab nt-tab-view-tab-selected nt-tab-view-tab-disabled",
+        (false, false, true) => "nt-tab-view-tab nt-tab-view-tab-with-icon",
+        (true, false, true) => "nt-tab-view-tab nt-tab-view-tab-selected nt-tab-view-tab-with-icon",
+        (false, true, true) => "nt-tab-view-tab nt-tab-view-tab-disabled nt-tab-view-tab-with-icon",
+        (true, true, true) => "nt-tab-view-tab nt-tab-view-tab-selected nt-tab-view-tab-disabled nt-tab-view-tab-with-icon"
+    };
 }
 
 /// <summary>

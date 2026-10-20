@@ -73,11 +73,17 @@ public class NTMenuSubMenuItem : Microsoft.AspNetCore.Components.IComponent, INT
     [Parameter]
     public bool Selected { get; set; }
 
-    private string AnchorName => $"--{_componentId}-anchor";
-    private string AnchorSelector => $"#{ButtonId}";
-    private string ButtonId => $"{_componentId}-button";
-    private string ButtonStyle => $"anchor-name: {AnchorName};";
-    private string SubMenuId => $"{_componentId}-menu";
+    // Derived from the fixed component id once instead of on every render.
+    private string AnchorName => _anchorName ??= $"--{_componentId}-anchor";
+    private string AnchorSelector => _anchorSelector ??= $"#{ButtonId}";
+    private string ButtonId => _buttonId ??= $"{_componentId}-button";
+    private string ButtonStyle => _buttonStyle ??= $"anchor-name: {AnchorName};";
+    private string SubMenuId => _subMenuId ??= $"{_componentId}-menu";
+    private string? _anchorName;
+    private string? _anchorSelector;
+    private string? _buttonId;
+    private string? _buttonStyle;
+    private string? _subMenuId;
     private static NTIcon TrailingIcon => MaterialIcon.ChevronRight;
 
     /// <inheritdoc />

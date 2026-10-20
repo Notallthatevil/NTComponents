@@ -22,10 +22,8 @@ $multi-pane-min-inline-size-medium: $pane-inline-size-medium !default;
 $multi-pane-min-inline-size-large: $pane-inline-size-large !default;
 $multi-pane-min-inline-size-extra-large: $pane-inline-size-extra-large !default;
 $multi-pane-min-inline-size: $multi-pane-min-inline-size-medium !default;
-$supporting-pane-inline-size: $list-detail-list-inline-size !default;
-$supporting-pane-expanded-inline-size: $list-detail-list-expanded-inline-size !default;
 
-@mixin root {
+@mixin root($panes: false) {
     .nt-view {
         box-sizing: border-box;
         gap: $gap;
@@ -40,11 +38,13 @@ $supporting-pane-expanded-inline-size: $list-detail-list-expanded-inline-size !d
         @include scrollbar.nt-scrollbar;
     }
 
-    .nt-view-pane {
-        box-sizing: border-box;
-        min-block-size: 0;
-        min-inline-size: 0;
-        overflow: auto;
-        @include scrollbar.nt-scrollbar;
+    @if $panes {
+        .nt-view-pane {
+            box-sizing: border-box;
+            min-block-size: 0;
+            min-inline-size: 0;
+            overflow: auto;
+            @include scrollbar.nt-scrollbar;
+        }
     }
 }

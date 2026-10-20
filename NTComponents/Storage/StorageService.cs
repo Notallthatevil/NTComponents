@@ -58,12 +58,8 @@ internal abstract class StorageService(IJSRuntime _jsRuntime) : IStorageService 
         try {
             await _jsRuntime.InvokeVoidAsync($"{_storageType}.clear", cancellationToken);
         }
-        catch (Exception exception) {
-            if (IsStorageDisabledException(exception)) {
-                throw new BrowserStorageDisabledException(_storageNotAvailableMessage, exception);
-            }
-
-            throw;
+        catch (Exception exception) when (IsStorageDisabledException(exception)) {
+            throw new BrowserStorageDisabledException(_storageNotAvailableMessage, exception);
         }
     }
 
@@ -72,12 +68,8 @@ internal abstract class StorageService(IJSRuntime _jsRuntime) : IStorageService 
         try {
             return await _jsRuntime.InvokeAsync<bool>($"{_storageType}.hasOwnProperty", cancellationToken, key);
         }
-        catch (Exception exception) {
-            if (IsStorageDisabledException(exception)) {
-                throw new BrowserStorageDisabledException(_storageNotAvailableMessage, exception);
-            }
-
-            throw;
+        catch (Exception exception) when (IsStorageDisabledException(exception)) {
+            throw new BrowserStorageDisabledException(_storageNotAvailableMessage, exception);
         }
     }
 
@@ -111,12 +103,8 @@ internal abstract class StorageService(IJSRuntime _jsRuntime) : IStorageService 
                 return (T)(object)serializedData;
             }
         }
-        catch (Exception exception) {
-            if (IsStorageDisabledException(exception)) {
-                throw new BrowserStorageDisabledException(_storageNotAvailableMessage, exception);
-            }
-
-            throw;
+        catch (Exception exception) when (IsStorageDisabledException(exception)) {
+            throw new BrowserStorageDisabledException(_storageNotAvailableMessage, exception);
         }
     }
 
@@ -125,11 +113,8 @@ internal abstract class StorageService(IJSRuntime _jsRuntime) : IStorageService 
         try {
             return await _jsRuntime.InvokeAsync<string>($"{_storageType}.key", cancellationToken, index);
         }
-        catch (Exception exception) {
-            if (IsStorageDisabledException(exception)) {
-                throw new BrowserStorageDisabledException(_storageNotAvailableMessage, exception);
-            }
-            throw;
+        catch (Exception exception) when (IsStorageDisabledException(exception)) {
+            throw new BrowserStorageDisabledException(_storageNotAvailableMessage, exception);
         }
     }
 
@@ -138,12 +123,8 @@ internal abstract class StorageService(IJSRuntime _jsRuntime) : IStorageService 
         try {
             return await _jsRuntime.InvokeAsync<IEnumerable<string>>("eval", cancellationToken, $"Object.keys({_storageType})");
         }
-        catch (Exception exception) {
-            if (IsStorageDisabledException(exception)) {
-                throw new BrowserStorageDisabledException(_storageNotAvailableMessage, exception);
-            }
-
-            throw;
+        catch (Exception exception) when (IsStorageDisabledException(exception)) {
+            throw new BrowserStorageDisabledException(_storageNotAvailableMessage, exception);
         }
     }
 
@@ -152,12 +133,8 @@ internal abstract class StorageService(IJSRuntime _jsRuntime) : IStorageService 
         try {
             return await _jsRuntime.InvokeAsync<int>("eval", cancellationToken, $"{_storageType}.length");
         }
-        catch (Exception exception) {
-            if (IsStorageDisabledException(exception)) {
-                throw new BrowserStorageDisabledException(_storageNotAvailableMessage, exception);
-            }
-
-            throw;
+        catch (Exception exception) when (IsStorageDisabledException(exception)) {
+            throw new BrowserStorageDisabledException(_storageNotAvailableMessage, exception);
         }
     }
 
@@ -170,12 +147,8 @@ internal abstract class StorageService(IJSRuntime _jsRuntime) : IStorageService 
         try {
             await _jsRuntime.InvokeVoidAsync($"{_storageType}.removeItem", cancellationToken, key);
         }
-        catch (Exception exception) {
-            if (IsStorageDisabledException(exception)) {
-                throw new BrowserStorageDisabledException(_storageNotAvailableMessage, exception);
-            }
-
-            throw;
+        catch (Exception exception) when (IsStorageDisabledException(exception)) {
+            throw new BrowserStorageDisabledException(_storageNotAvailableMessage, exception);
         }
     }
 
@@ -186,12 +159,8 @@ internal abstract class StorageService(IJSRuntime _jsRuntime) : IStorageService 
                 await _jsRuntime.InvokeVoidAsync($"{_storageType}.removeItem", cancellationToken, key);
             }
         }
-        catch (Exception exception) {
-            if (IsStorageDisabledException(exception)) {
-                throw new BrowserStorageDisabledException(_storageNotAvailableMessage, exception);
-            }
-
-            throw;
+        catch (Exception exception) when (IsStorageDisabledException(exception)) {
+            throw new BrowserStorageDisabledException(_storageNotAvailableMessage, exception);
         }
     }
 
@@ -214,12 +183,8 @@ internal abstract class StorageService(IJSRuntime _jsRuntime) : IStorageService 
             await _jsRuntime.InvokeVoidAsync($"{_storageType}.setItem", cancellationToken, key, data);
             Changed?.Invoke(this, new ChangedEventArgs { Key = key, OldValue = changingArgs.OldValue, NewValue = data });
         }
-        catch (Exception exception) {
-            if (IsStorageDisabledException(exception)) {
-                throw new BrowserStorageDisabledException(_storageNotAvailableMessage, exception);
-            }
-
-            throw;
+        catch (Exception exception) when (IsStorageDisabledException(exception)) {
+            throw new BrowserStorageDisabledException(_storageNotAvailableMessage, exception);
         }
 
         Changed?.Invoke(this, new ChangedEventArgs { Key = key, OldValue = changingArgs.OldValue, NewValue = data });
@@ -246,12 +211,8 @@ internal abstract class StorageService(IJSRuntime _jsRuntime) : IStorageService 
             await _jsRuntime.InvokeVoidAsync($"{_storageType}.setItem", cancellationToken, key, serializedData);
             Changed?.Invoke(this, new ChangedEventArgs { Key = key, OldValue = changingArgs.OldValue, NewValue = serializedData });
         }
-        catch (Exception exception) {
-            if (IsStorageDisabledException(exception)) {
-                throw new BrowserStorageDisabledException(_storageNotAvailableMessage, exception);
-            }
-
-            throw;
+        catch (Exception exception) when (IsStorageDisabledException(exception)) {
+            throw new BrowserStorageDisabledException(_storageNotAvailableMessage, exception);
         }
     }
 

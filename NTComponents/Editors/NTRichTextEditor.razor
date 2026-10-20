@@ -9,14 +9,16 @@
     var supportingText = hasErrorText ? null : CurrentSupportingText;
     var hasSupportingText = !string.IsNullOrWhiteSpace(supportingText);
     var describedBy = BuildDescribedBy(hasErrorText, !hasErrorText && hasSupportingText);
+    var isEditable = !FieldDisabled && !FieldReadOnly;
+    var editableText = isEditable ? "true" : "false";
 }
 
 <div class="@GetRootClass()" style="@ElementStyle">
     <div class="nt-input-container-overflow">
 	    <nt-rich-text-editor @attributes="ControlAttributes"
 	                         class="nt-input-container"
-	                         data-bind-on-input="@(BindOnInput.ToString().ToLowerInvariant())"
-	                         data-editable="@((!FieldDisabled && !FieldReadOnly).ToString().ToLowerInvariant())"
+	                         data-bind-on-input="@(BindOnInput ? "true" : "false")"
+	                         data-editable="@editableText"
 	                         title="@ElementTitle"
 	                         lang="@ElementLang"
 	                         @ref="_editorElement">
@@ -78,7 +80,7 @@
 						                    aria-keyshortcuts="@GetToolbarButtonAriaKeyShortcuts(toolbarButton)"
 						                    title="@GetToolbarButtonTitle(toolbarButton)"
 						                    aria-pressed="false"
-						                    disabled="@(FieldDisabled || FieldReadOnly)">
+						                    disabled="@(!isEditable)">
 							            @if (toolbarButton.Icon is not null) {
 								            @toolbarButton.Icon.Render("tnt-rich-text-editor-toolbar-icon", suppressTitle: true)
 							            }
@@ -100,9 +102,9 @@
 			                  class="tnt-rich-text-editor-surface nt-input-control"
 			                  data-role="surface"
 			                  data-placeholder="@RichTextPlaceholder"
-			                  data-empty="@string.IsNullOrWhiteSpace(CurrentValueAsString).ToString().ToLowerInvariant()"
+			                  data-empty="@(string.IsNullOrWhiteSpace(CurrentValueAsString) ? "true" : "false")"
 			                  data-maxlength="@MaxLength"
-			                  contenteditable="@((!FieldDisabled && !FieldReadOnly).ToString().ToLowerInvariant())"
+			                  contenteditable="@editableText"
 			                  tabindex="@(FieldDisabled ? "-1" : "0")"
 			                  role="textbox"
 			                  aria-multiline="true"
@@ -122,7 +124,7 @@
 			                          rows="1"
 			                          spellcheck="false"
 			                          hidden
-			                          disabled="@(FieldDisabled || FieldReadOnly)"></textarea>
+			                          disabled="@(!isEditable)"></textarea>
 			            </span>
                     </span>
 

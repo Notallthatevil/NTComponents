@@ -151,9 +151,9 @@ public partial class NTProgress : TnTDisposableComponentBase {
     private string _effectiveProgressPercentValue = "0";
     private const int LinearSineWavePathWidth = 4080;
     private const double LinearSineWaveAmplitude = 3.0;
-    private static readonly string LinearSineWavePathData10 = BuildLinearSineWavePathData(10.0);
-    private static readonly string LinearSineWavePathData12 = BuildLinearSineWavePathData(12.0);
-    private static readonly string LinearSineWavePathData14 = BuildLinearSineWavePathData(14.0);
+    private static string? _linearSineWavePathData10;
+    private static string? _linearSineWavePathData12;
+    private static string? _linearSineWavePathData14;
     private const double RingSineWaveContainerSize = 48.0;
     private const double RingSineWaveStrokeWidth = 4.0;
     private const double RingSineWaveAmplitude = 1.6;
@@ -163,8 +163,8 @@ public partial class NTProgress : TnTDisposableComponentBase {
     private const double RingSineWaveViewBoxScale = 100.0 / RingSineWaveContainerSize;
     private const double RingSineWaveOuterPathRadius = ((RingSineWaveContainerSize - RingSineWaveStrokeWidth) / 2.0) * RingSineWaveViewBoxScale;
     private const double RingSineWaveBaseRadius = RingSineWaveOuterPathRadius - (RingSineWaveAmplitude * RingSineWaveViewBoxScale);
-    private static readonly string RingSineWavePathData = BuildRingSineWavePathData();
-    private static readonly RingSineWavePathFrame[] RingSineWavePathFrames = BuildRingSineWavePathFrames();
+    private static RingSineWavePathFrame[]? _ringSineWavePathFrames;
+    private static RingSineWavePathFrame[] RingSineWavePathFrames => _ringSineWavePathFrames ??= BuildRingSineWavePathFrames();
     private double EffectiveLinearSineWaveHeight => EffectiveLinearThickness + (LinearSineWaveAmplitude * 2.0);
     private double EffectiveLinearThickness
         => Size switch {
@@ -175,9 +175,9 @@ public partial class NTProgress : TnTDisposableComponentBase {
 
     private string LinearSineWavePathData
         => EffectiveLinearSineWaveHeight switch {
-            12.0 => LinearSineWavePathData12,
-            14.0 => LinearSineWavePathData14,
-            _ => LinearSineWavePathData10
+            12.0 => _linearSineWavePathData12 ??= BuildLinearSineWavePathData(12.0),
+            14.0 => _linearSineWavePathData14 ??= BuildLinearSineWavePathData(14.0),
+            _ => _linearSineWavePathData10 ??= BuildLinearSineWavePathData(10.0)
         };
 
     private string LinearSineWaveViewBox => $"0 0 {LinearSineWavePathWidth} {LinearSineWaveViewBoxHeight}";
@@ -187,9 +187,17 @@ public partial class NTProgress : TnTDisposableComponentBase {
         base.OnParametersSet();
 
         _effectiveMax = Max > 0 ? Max : 100.0;
-        _effectiveProgressValue = IsDeterminate ? Math.Clamp(Value.GetValueOrDefault(), 0, _effectiveMax) : 0;
-        var effectiveProgressPercent = _effectiveProgressValue / _effectiveMax * 100.0;
-        _effectiveProgressPercentValue = FormatCssNumber(effectiveProgressPercent);
+        if (!IsDeterminate) {
+            // Indeterminate indicators never emit these values, so skip formatting them.
+            _effectiveProgressValue = 0;
+            _effectiveProgressAngle = "0deg";
+            _effectiveProgressPercentage = "0%";
+            _effectiveProgressPercentValue = "0";
+            return;
+        }
+
+        _effectiveProgressValue = Math.Clamp(Value.GetValueOrDefault(), 0, _effectiveMax);
+        _effectiveProgressPercentValue = FormatCssNumber(_effectiveProgressValue / _effectiveMax * 100.0);
         _effectiveProgressPercentage = $"{_effectiveProgressPercentValue}%";
         _effectiveProgressAngle = $"{FormatCssNumber(_effectiveProgressValue / _effectiveMax * 360.0)}deg";
     }
@@ -234,10 +242,9 @@ public partial class NTProgress : TnTDisposableComponentBase {
     private static RingSineWavePathFrame[] BuildRingSineWavePathFrames() {
         var frames = new RingSineWavePathFrame[RingSineWaveAnimationFrameCount];
 
-        frames[0] = new RingSineWavePathFrame(0, RingSineWavePathData);
-        for (var frame = 1; frame < frames.Length; frame++) {
+        for (var frame = 0; frame < frames.Length; frame++) {
             var phase = -2.0 * Math.PI * frame / RingSineWaveAnimationFrameCount;
-            frames[frame] = new RingSineWavePathFrame(frame, BuildRingSineWavePathData(phase));
+            frames[frame] = new RingSineWavePathFrame(BuildRingSineWavePathData(phase), $"--nt-progress-ring-wave-frame-index:{frame}");
         }
 
         return frames;
@@ -255,7 +262,7 @@ public partial class NTProgress : TnTDisposableComponentBase {
             .Append(FormatCssNumber(y));
     }
 
-    private sealed record RingSineWavePathFrame(int Index, string PathData);
+    private sealed record RingSineWavePathFrame(string PathData, string Style);
 }
 
 /// <summary>

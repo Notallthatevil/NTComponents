@@ -184,8 +184,6 @@ public partial class NTNavLink {
     private IReadOnlyDictionary<string, object>? _renderedAdditionalAttributes;
     private bool _textColorWasProvided;
 
-    private static readonly IReadOnlyDictionary<string, object> _emptyAdditionalAttributes = new Dictionary<string, object>();
-
     /// <inheritdoc />
     public override Task SetParametersAsync(ParameterView parameters) {
         _backgroundColorWasProvided = false;
@@ -256,85 +254,89 @@ public partial class NTNavLink {
             return null;
         }
 
-        var filteredReservedAttribute = false;
         Dictionary<string, object>? filteredAttributes = null;
-        foreach (var (attributeName, attributeValue) in AdditionalAttributes) {
+        foreach (var attributeName in AdditionalAttributes.Keys) {
             if (IsReservedRenderedAttribute(attributeName)) {
-                filteredReservedAttribute = true;
-                continue;
+                filteredAttributes = new(AdditionalAttributes.Count);
+                break;
             }
-
-            filteredAttributes ??= [];
-            filteredAttributes[attributeName] = attributeValue;
         }
 
-        return filteredAttributes ?? (filteredReservedAttribute ? _emptyAdditionalAttributes : AdditionalAttributes);
-    }
-
-    private bool IsReservedRenderedAttribute(string attributeName) {
-        if (string.Equals(attributeName, "aria-current", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(attributeName, "aria-disabled", StringComparison.OrdinalIgnoreCase)) {
-            return true;
-        }
-
-        return Disabled
-            && (string.Equals(attributeName, "href", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(attributeName, "tabindex", StringComparison.OrdinalIgnoreCase));
-    }
-
-    private string? GetHrefAttribute() {
-        if (AdditionalAttributes is null) {
-            return null;
+        if (filteredAttributes is null) {
+            return AdditionalAttributes;
         }
 
         foreach (var (attributeName, attributeValue) in AdditionalAttributes) {
-            if (string.Equals(attributeName, "href", StringComparison.OrdinalIgnoreCase)) {
-                return Convert.ToString(attributeValue);
+            if (!IsReservedRenderedAttribute(attributeName)) {
+                filteredAttributes[attributeName] = attributeValue;
             }
         }
 
-        return null;
+        return filteredAttributes;
     }
+
+    private bool IsReservedRenderedAttribute(string attributeName) =>
+        string.Equals(attributeName, "aria-current", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(attributeName, "aria-disabled", StringComparison.OrdinalIgnoreCase)
+        || Disabled && (string.Equals(attributeName, "href", StringComparison.OrdinalIgnoreCase) || string.Equals(attributeName, "tabindex", StringComparison.OrdinalIgnoreCase));
 
     private bool IsActiveRoute() {
-        var href = GetHrefAttribute();
+        string? href = null;
+        if (AdditionalAttributes is not null) {
+            foreach (var (attributeName, attributeValue) in AdditionalAttributes) {
+                if (string.Equals(attributeName, "href", StringComparison.OrdinalIgnoreCase)) {
+                    href = Convert.ToString(attributeValue);
+                    break;
+                }
+            }
+        }
+
         if (string.IsNullOrWhiteSpace(href)) {
             return false;
         }
 
-        Uri targetUri;
+        string targetUri;
         try {
-            targetUri = NavigationManager.ToAbsoluteUri(href);
+            targetUri = NavigationManager.ToAbsoluteUri(href).AbsoluteUri;
         }
         catch (InvalidOperationException) {
             return false;
         }
 
-        if (!IsUnderBaseUri(targetUri)) {
+        return IsActive(NavigationManager, targetUri, Match);
+    }
+
+    internal static bool IsActive(NavigationManager navigationManager, string absoluteTargetUri, NavLinkMatch match) {
+        var baseUri = navigationManager.BaseUri;
+        var currentUri = navigationManager.Uri;
+        if (!absoluteTargetUri.StartsWith(baseUri, StringComparison.OrdinalIgnoreCase)) {
             return false;
         }
 
-        var currentPath = NormalizePath(NavigationManager.ToBaseRelativePath(NavigationManager.Uri));
-        var targetPath = NormalizePath(NavigationManager.ToBaseRelativePath(targetUri.AbsoluteUri));
+        var targetPath = NormalizePath(absoluteTargetUri.AsSpan(baseUri.Length));
+        var currentPath = NormalizePath(GetBaseRelativePath(baseUri, currentUri));
 
-        if (Match == NavLinkMatch.All) {
-            return string.Equals(currentPath, targetPath, StringComparison.OrdinalIgnoreCase);
-        }
-
-        return currentPath.StartsWith(targetPath, StringComparison.OrdinalIgnoreCase)
-            && (currentPath.Length == targetPath.Length || currentPath[targetPath.Length] == '/');
+        return match == NavLinkMatch.All
+            ? currentPath.Equals(targetPath, StringComparison.OrdinalIgnoreCase)
+            : currentPath.StartsWith(targetPath, StringComparison.OrdinalIgnoreCase) && (currentPath.Length == targetPath.Length || currentPath[targetPath.Length] == '/');
     }
 
-    private bool IsUnderBaseUri(Uri uri) => uri.AbsoluteUri.StartsWith(NavigationManager.BaseUri, StringComparison.OrdinalIgnoreCase);
-
-    private static string NormalizePath(string path) {
-        var queryIndex = path.IndexOfAny(['?', '#']);
-        if (queryIndex >= 0) {
-            path = path[..queryIndex];
+    // Mirrors NavigationManager.ToBaseRelativePath, including its "base without the trailing slash, then query or fragment" case.
+    private static ReadOnlySpan<char> GetBaseRelativePath(string baseUri, string uri) {
+        if (uri.StartsWith(baseUri, StringComparison.OrdinalIgnoreCase)) {
+            return uri.AsSpan(baseUri.Length);
         }
 
-        path = path.Trim('/');
-        return path.Length == 0 ? string.Empty : path;
+        var pathEnd = uri.AsSpan().IndexOfAny('?', '#');
+        var pathOnly = pathEnd < 0 ? uri.AsSpan() : uri.AsSpan(0, pathEnd);
+        return baseUri.EndsWith('/') && pathOnly.Equals(baseUri.AsSpan(0, baseUri.Length - 1), StringComparison.OrdinalIgnoreCase)
+            ? uri.AsSpan(baseUri.Length - 1)
+            : uri.AsSpan();
+    }
+
+    private static ReadOnlySpan<char> NormalizePath(ReadOnlySpan<char> path) {
+        var queryIndex = path.IndexOfAny('?', '#');
+        return (queryIndex >= 0 ? path[..queryIndex] : path).Trim('/');
     }
 
     private NTColor? GetDefaultBackgroundColor() {

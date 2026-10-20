@@ -66,17 +66,17 @@ public partial class NTAnimation : NTPageScriptComponent<NTAnimation> {
         .AddClass("nt-animation")
         .AddClass(Animation.ToCssClass())
         .AddClass("nt-animation-stagger", Stagger > TimeSpan.Zero)
-        .AddClass($"nt-animation-enter-{EasingName(EnterEasing)}", EnterEasing != DefaultEnterEasing)
-        .AddClass($"nt-animation-exit-{EasingName(ExitEasing)}", ExitEasing != DefaultExitEasing)
+        .AddClass(EnterEasing != DefaultEnterEasing ? $"nt-animation-enter-{EasingName(EnterEasing)}" : null)
+        .AddClass(ExitEasing != DefaultExitEasing ? $"nt-animation-exit-{EasingName(ExitEasing)}" : null)
         .Build();
 
     /// <inheritdoc />
     public override string? ElementStyle => CssStyleBuilder.Create()
         .AddFromAdditionalAttributes(AdditionalAttributes)
-        .AddVariable("nt-animation-enter-duration", $"{EnterDuration.ToMilliseconds()}ms", EnterDuration != DefaultEnterDuration)
-        .AddVariable("nt-animation-exit-duration", $"{ExitDuration.ToMilliseconds()}ms", ExitDuration != DefaultExitDuration)
-        .AddVariable("nt-animation-delay", ToCssTime(Delay), Delay > TimeSpan.Zero)
-        .AddVariable("nt-animation-stagger", ToCssTime(Stagger), Stagger > TimeSpan.Zero)
+        .AddVariable("nt-animation-enter-duration", EnterDuration != DefaultEnterDuration ? $"{EnterDuration.ToMilliseconds()}ms" : "", EnterDuration != DefaultEnterDuration)
+        .AddVariable("nt-animation-exit-duration", ExitDuration != DefaultExitDuration ? $"{ExitDuration.ToMilliseconds()}ms" : "", ExitDuration != DefaultExitDuration)
+        .AddVariable("nt-animation-delay", Delay > TimeSpan.Zero ? ToCssTime(Delay) : "", Delay > TimeSpan.Zero)
+        .AddVariable("nt-animation-stagger", Stagger > TimeSpan.Zero ? ToCssTime(Stagger) : "", Stagger > TimeSpan.Zero)
         .AddVariable("nt-animation-distance", Distance!, !string.IsNullOrWhiteSpace(Distance))
         .Build();
 
@@ -190,10 +190,18 @@ public partial class NTAnimation : NTPageScriptComponent<NTAnimation> {
             Set("lang", ElementLang);
             Set("title", ElementTitle);
             if (!Disabled) {
-                Set("data-nt-animation-trigger", Trigger.ToString().ToLowerInvariant());
+                Set("data-nt-animation-trigger", Trigger switch {
+                    NTAnimationTrigger.Render => "render",
+                    NTAnimationTrigger.Manual => "manual",
+                    _ => "visible"
+                });
             }
             if (UsesObserver) {
-                Set("data-nt-animation-repeat", Repeat.ToString().ToLowerInvariant());
+                Set("data-nt-animation-repeat", Repeat switch {
+                    NTAnimationRepeat.Reverse => "reverse",
+                    NTAnimationRepeat.Replay => "replay",
+                    _ => "once"
+                });
                 Set("data-nt-animation-threshold", Math.Clamp(double.IsNaN(Threshold) ? 0 : Threshold, 0, 1).ToString("0.###", CultureInfo.InvariantCulture));
                 Set("data-nt-animation-root-margin", RootMargin);
                 Set("data-nt-animation-notify", OnEntered.HasDelegate || OnExited.HasDelegate ? true : null);

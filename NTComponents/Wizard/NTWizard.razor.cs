@@ -308,22 +308,26 @@ public partial class NTWizard : NTComponentBase, IDisposable {
         StateHasChanged();
     }
 
-    private string GetStepIndicatorClass(int stepIndex) => CssClassBuilder.Create("nt-wizard-step-indicator")
+    private string GetStepIndicatorClass(int stepIndex, bool canUse) => CssClassBuilder.Create("nt-wizard-step-indicator")
         .AddClass("current-step", _stepIndex == stepIndex)
         .AddClass("completed-step", IsStepCompleted(stepIndex))
         .AddClass("disabled-step", IsStepDisabled(stepIndex))
-        .AddClass("available-step", CanUseStepIndicator(stepIndex))
+        .AddClass("available-step", canUse)
         .AddClass("invalid-step", IsStepInvalid(stepIndex))
         .AddClass("next-step", IsImmediateNextStep(stepIndex))
         .AddClass("optional-step", _steps.ElementAtOrDefault(stepIndex)?.Optional == true)
         .AddClass("skipped-step", IsStepSkipped(stepIndex))
         .Build();
 
-    private string GetStepIndicatorState(int stepIndex) => GetStepState(stepIndex).ToString().ToLowerInvariant();
-
-    private bool GetStepIndicatorAriaDisabled(int stepIndex) => !CanUseStepIndicator(stepIndex);
-
-    private int GetStepIndicatorTabIndex(int stepIndex) => GetStepIndicatorAriaDisabled(stepIndex) ? -1 : 0;
+    private static string GetStepStateValue(NTWizardStepState state) => state switch {
+        NTWizardStepState.NotStarted => "notstarted",
+        NTWizardStepState.Available => "available",
+        NTWizardStepState.Current => "current",
+        NTWizardStepState.Completed => "completed",
+        NTWizardStepState.Skipped => "skipped",
+        NTWizardStepState.Invalid => "invalid",
+        _ => "disabled"
+    };
 
     private bool CanUseStepIndicator(int stepIndex) => stepIndex == _stepIndex || (CanNavigateToStep(stepIndex) && (stepIndex <= _stepIndex || !ShouldDisableNavigationButtonForInvalidForm()));
 
@@ -331,13 +335,12 @@ public partial class NTWizard : NTComponentBase, IDisposable {
 
     private string GetStepTabId(int stepIndex) => $"{ElementId ?? "nt-wizard"}-step-tab-{stepIndex}";
 
-    private string GetStepIndicatorAriaLabel(int stepIndex) {
+    private string GetStepIndicatorAriaLabel(int stepIndex, NTWizardStepState state) {
         var step = _steps.ElementAtOrDefault(stepIndex);
         if (step is null) {
             return $"Step {stepIndex + 1}";
         }
 
-        var state = GetStepState(stepIndex);
         return string.IsNullOrWhiteSpace(step.SubTitle)
             ? $"Step {stepIndex + 1}, {step.Title}, {state}"
             : $"Step {stepIndex + 1}, {step.Title}, {step.SubTitle}, {state}";
@@ -437,7 +440,7 @@ public partial class NTWizard : NTComponentBase, IDisposable {
         return step.Skipped || _skippedStepIds.Contains(step._internalId);
     }
 
-    private NTWizardStepState GetStepState(int stepIndex) {
+    private NTWizardStepState GetStepState(int stepIndex, bool canUse) {
         if (IsStepDisabled(stepIndex)) {
             return NTWizardStepState.Disabled;
         }
@@ -458,7 +461,7 @@ public partial class NTWizard : NTComponentBase, IDisposable {
             return NTWizardStepState.Completed;
         }
 
-        if (CanUseStepIndicator(stepIndex)) {
+        if (canUse) {
             return NTWizardStepState.Available;
         }
 

@@ -1,4 +1,3 @@
-using System.Text;
 using System.Text.Encodings.Web;
 
 namespace NTComponents;
@@ -64,24 +63,20 @@ public sealed class NTThemeConfiguration {
     /// </summary>
     public string DarkHighCss { get; set; } = "dark-hc.css";
 
-    internal string ToJson()
-    {
-        var builder = new StringBuilder();
-        builder.Append('{');
-        AppendJsonProperty(builder, "themeStorageKey", ThemeStorageKey);
-        AppendJsonProperty(builder, "contrastStorageKey", ContrastStorageKey);
-        AppendJsonProperty(builder, "defaultTheme", ToRuntimeValue(DefaultTheme));
-        AppendJsonProperty(builder, "defaultContrast", ToRuntimeValue(DefaultContrast));
-        AppendJsonProperty(builder, "themesRoot", ThemesRoot);
-        AppendJsonProperty(builder, "lightDefaultCss", LightDefaultCss);
-        AppendJsonProperty(builder, "lightMediumCss", LightMediumCss);
-        AppendJsonProperty(builder, "lightHighCss", LightHighCss);
-        AppendJsonProperty(builder, "darkDefaultCss", DarkDefaultCss);
-        AppendJsonProperty(builder, "darkMediumCss", DarkMediumCss);
-        AppendJsonProperty(builder, "darkHighCss", DarkHighCss, false);
-        builder.Append('}');
-        return builder.ToString();
-    }
+    internal string ToJson() => string.Concat([
+        "{\"themeStorageKey\":\"", Encode(ThemeStorageKey),
+        "\",\"contrastStorageKey\":\"", Encode(ContrastStorageKey),
+        "\",\"defaultTheme\":\"", ToRuntimeValue(DefaultTheme),
+        "\",\"defaultContrast\":\"", ToRuntimeValue(DefaultContrast),
+        "\",\"themesRoot\":\"", Encode(ThemesRoot),
+        "\",\"lightDefaultCss\":\"", Encode(LightDefaultCss),
+        "\",\"lightMediumCss\":\"", Encode(LightMediumCss),
+        "\",\"lightHighCss\":\"", Encode(LightHighCss),
+        "\",\"darkDefaultCss\":\"", Encode(DarkDefaultCss),
+        "\",\"darkMediumCss\":\"", Encode(DarkMediumCss),
+        "\",\"darkHighCss\":\"", Encode(DarkHighCss),
+        "\"}"
+    ]);
 
     internal static string ToRuntimeValue(NTTheme theme) => theme switch {
         NTTheme.Light => "LIGHT",
@@ -101,14 +96,5 @@ public sealed class NTThemeConfiguration {
         _ => NTTheme.System
     };
 
-    private static void AppendJsonProperty(StringBuilder builder, string name, string? value, bool appendComma = true)
-    {
-        builder.Append('"').Append(name).Append("\":\"");
-        builder.Append(_jsonEncoder.Encode(value ?? string.Empty));
-        builder.Append('"');
-
-        if (appendComma) {
-            builder.Append(',');
-        }
-    }
+    private static string Encode(string? value) => _jsonEncoder.Encode(value ?? string.Empty);
 }

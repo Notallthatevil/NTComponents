@@ -15,7 +15,7 @@
      data-nt-window-host="true"
      data-permanent
      @ref="Element">
-    @foreach (var window in WindowService.Windows) {
+    @foreach (var window in (WindowService as NTComponents.Windowing.NTWindowService)?.RenderSnapshot ?? WindowService.Windows) {
         <NTWindow @key="window.Id"
                   DockPosition="@window.DockPosition"
                   Title="@window.Title"

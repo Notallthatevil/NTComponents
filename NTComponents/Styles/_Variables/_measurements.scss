@@ -1,7 +1,6 @@
 @use 'sass:string';
 
 $tnt-side-nav-width: var(--tnt-side-nav-width, 256px);
-$nt-navigation-rail-width-collapsed: var(--nt-navigation-rail-width-collapsed, 96px);
 $tnt-header-height: var(--tnt-header-height, 64px);
 $tnt-footer-height: var(--tnt-footer-height, 64px);
 $tnt-pill-border-radius-xs: string.unquote('32px / 100%');
@@ -23,13 +22,10 @@ $large-and-up: "only screen and (min-width : #{$medium-screen-up})" !default;
 $extra-large-and-up: "only screen and (min-width : #{$large-screen-up})" !default;
 $small-and-down: "only screen and (max-width : #{$small-screen})" !default;
 $medium-and-down: "only screen and (max-width : #{$medium-screen})" !default;
-$medium-only: "only screen and (min-width : #{$small-screen-up}) and (max-width : #{$medium-screen})" !default;
 
 // Grid
 $num-cols: 12 !default;
 $gutter-width: 24px !default;
-$element-top-margin: calc($gutter-width / 3) !default;
-$element-bottom-margin: calc(calc($gutter-width * 2) / 3) !default;
 
 // Mixins to eliminate code repitition
 @mixin grid-classes($size, $i, $perc) {

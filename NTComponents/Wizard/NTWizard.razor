@@ -11,20 +11,24 @@
         </h1>
     }
     <ol class="nt-wizard-steps" role="tablist" aria-orientation="@(LayoutDirection == LayoutDirection.Horizontal ? "horizontal" : "vertical")">
-        @foreach (var (step, i) in _steps.Select((s, i) => new KeyValuePair<NTWizardStepBase, int>(s, i))) {
-            <li class="@GetStepIndicatorClass(i)" data-state="@GetStepIndicatorState(i)">
+        @for (var i = 0; i < _steps.Count; i++) {
+            var index = i;
+            var step = _steps[i];
+            var canUse = CanUseStepIndicator(i);
+            var state = GetStepState(i, canUse);
+            <li class="@GetStepIndicatorClass(i, canUse)" data-state="@GetStepStateValue(state)">
                 <button type="button"
                         class="nt-wizard-step-button"
                         id="@GetStepTabId(i)"
                         role="tab"
                         aria-controls="@GetStepPanelId(i)"
                         aria-current="@(_stepIndex == i ? "step" : null)"
-                        aria-disabled="@(GetStepIndicatorAriaDisabled(i) ? "true" : "false")"
+                        aria-disabled="@(canUse ? "false" : "true")"
                         aria-invalid="@(IsStepInvalid(i) ? "true" : "false")"
-                        aria-label="@GetStepIndicatorAriaLabel(i)"
+                        aria-label="@GetStepIndicatorAriaLabel(i, state)"
                         aria-selected="@(_stepIndex == i ? "true" : "false")"
-                        tabindex="@GetStepIndicatorTabIndex(i)"
-                        @onclick="@(() => NavigateToStepAsync(i))">
+                        tabindex="@(canUse ? 0 : -1)"
+                        @onclick="@(() => NavigateToStepAsync(index))">
                     <span class="nt-wizard-step-title">
                         <span class="nt-wizard-step-index">
                             @(i + 1)
@@ -45,17 +49,17 @@
     </ol>
     <div class="nt-wizard-body">
         @if (HideStepsInsteadOfRemovingFromDom) {
-            @foreach (var (step, i) in _steps.Select((s, i) => new KeyValuePair<NTWizardStepBase, int>(s, i))) {
-                var stepClass = step == _currentStep ? "nt-wizard-current-step" : "nt-wizard-hidden-step";
-                var hiddenStyle = step == _currentStep ? string.Empty : "display:none;";
+            @for (var i = 0; i < _steps.Count; i++) {
+                var step = _steps[i];
+                var isCurrent = step == _currentStep;
                 <div @key="step"
-                     class="@stepClass"
+                     class="@(isCurrent ? "nt-wizard-current-step" : "nt-wizard-hidden-step")"
                      id="@GetStepPanelId(i)"
                      role="tabpanel"
                      aria-labelledby="@GetStepTabId(i)"
-                     aria-hidden="@(step == _currentStep ? null : "true")"
-                     hidden="@(step == _currentStep ? null : true)"
-                     style="@hiddenStyle">
+                     aria-hidden="@(isCurrent ? null : "true")"
+                     hidden="@(isCurrent ? null : true)"
+                     style="@(isCurrent ? string.Empty : "display:none;")">
                     @step.Render()
                 </div>
             }

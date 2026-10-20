@@ -5,6 +5,7 @@ using Microsoft.JSInterop;
 using NTComponents.Core;
 using NTComponents.Ext;
 using NTComponents.Interfaces;
+using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
@@ -51,6 +52,8 @@ public partial class NTRichTextEditor : INTPageScriptComponent<NTRichTextEditor>
         "type",
         "value"
     };
+
+    private static readonly ConcurrentDictionary<string, string> _ariaKeyShortcuts = new(StringComparer.Ordinal);
 
     private readonly IJSRuntime _jsRuntime;
     private readonly NTDisposalState _disposalState = new();
@@ -236,8 +239,15 @@ public partial class NTRichTextEditor : INTPageScriptComponent<NTRichTextEditor>
         };
 
 
-    private bool HasToolbarAction(string action) => (ToolbarButtons ?? DefaultToolbarButtons).Any(button =>
-        !button.IsDivider && string.Equals(button.Action, action, StringComparison.Ordinal));
+    private bool HasToolbarAction(string action) {
+        foreach (var button in ToolbarButtons ?? DefaultToolbarButtons) {
+            if (!button.IsDivider && string.Equals(button.Action, action, StringComparison.Ordinal)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     private static string GetToolbarButtonAriaLabel(INTRichTextEditorButton toolbarButton) =>
         !string.IsNullOrWhiteSpace(toolbarButton.AriaLabel)
@@ -261,21 +271,20 @@ public partial class NTRichTextEditor : INTPageScriptComponent<NTRichTextEditor>
             return null;
         }
 
-        return toolbarButton.Shortcut
+        return _ariaKeyShortcuts.GetOrAdd(toolbarButton.Shortcut, static shortcut => shortcut
             .Replace("Ctrl", "Control", StringComparison.OrdinalIgnoreCase)
             .Replace("Cmd", "Meta", StringComparison.OrdinalIgnoreCase)
-            .Replace("Option", "Alt", StringComparison.OrdinalIgnoreCase);
+            .Replace("Option", "Alt", StringComparison.OrdinalIgnoreCase));
     }
 
-    private static string GetToolbarButtonClass(INTRichTextEditorButton toolbarButton) => CssClassBuilder.Create()
-        .AddClass("tnt-rich-text-editor-toolbar-button")
-        .AddClass(toolbarButton.CssClass, !string.IsNullOrWhiteSpace(toolbarButton.CssClass))
-        .Build();
+    // Constant for the common case; custom classes still go through the builder so dedupe and trimming stay identical.
+    private static string GetToolbarButtonClass(INTRichTextEditorButton toolbarButton) => string.IsNullOrWhiteSpace(toolbarButton.CssClass)
+        ? "tnt-components tnt-rich-text-editor-toolbar-button"
+        : CssClassBuilder.Create().AddClass("tnt-rich-text-editor-toolbar-button").AddClass(toolbarButton.CssClass).Build();
 
-    private static string GetToolbarDividerClass(INTRichTextEditorButton toolbarButton) => CssClassBuilder.Create()
-        .AddClass("tnt-rich-text-editor-toolbar-divider")
-        .AddClass(toolbarButton.CssClass, !string.IsNullOrWhiteSpace(toolbarButton.CssClass))
-        .Build();
+    private static string GetToolbarDividerClass(INTRichTextEditorButton toolbarButton) => string.IsNullOrWhiteSpace(toolbarButton.CssClass)
+        ? "tnt-components tnt-rich-text-editor-toolbar-divider"
+        : CssClassBuilder.Create().AddClass("tnt-rich-text-editor-toolbar-divider").AddClass(toolbarButton.CssClass).Build();
 
     /// <inheritdoc />
     protected override void OnParametersSet() {
@@ -301,9 +310,14 @@ public partial class NTRichTextEditor : INTPageScriptComponent<NTRichTextEditor>
 
         base.OnParametersSet();
 
-        _activeToolsToRender = (Tools ?? DefaultTools)
-            .Where(tool => HasToolbarAction(tool.Action))
-            .ToArray();
+        var activeTools = new List<INTRichTextEditorTool>();
+        foreach (var tool in Tools ?? DefaultTools) {
+            if (HasToolbarAction(tool.Action)) {
+                activeTools.Add(tool);
+            }
+        }
+
+        _activeToolsToRender = activeTools;
 
         PageScript = CreatePageScript(_activeToolsToRender);
     }
@@ -489,13 +503,14 @@ public partial class NTRichTextEditor : INTPageScriptComponent<NTRichTextEditor>
         builder.CloseComponent();
 
         var sequence = 2;
-        foreach (var jsModulePath in activeToolsToRender
-                     .Select(tool => tool.JsModulePath)
-                     .Where(path => !string.IsNullOrWhiteSpace(path))
-                     .Distinct(StringComparer.Ordinal)) {
-            builder.OpenComponent<NTPageScript>(sequence++);
-            builder.AddAttribute(sequence++, nameof(NTPageScript.Src), jsModulePath);
-            builder.CloseComponent();
+        HashSet<string>? seen = null;
+        foreach (var tool in activeToolsToRender) {
+            var jsModulePath = tool.JsModulePath;
+            if (!string.IsNullOrWhiteSpace(jsModulePath) && (seen ??= new HashSet<string>(StringComparer.Ordinal)).Add(jsModulePath)) {
+                builder.OpenComponent<NTPageScript>(sequence++);
+                builder.AddAttribute(sequence++, nameof(NTPageScript.Src), jsModulePath);
+                builder.CloseComponent();
+            }
         }
     };
 }

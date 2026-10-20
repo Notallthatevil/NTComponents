@@ -89,15 +89,8 @@
     ::deep > .nt-body,
     ::deep > .nt-layout {
         flex: 1 1 auto;
+        grid-area: body;
         min-inline-size: 0;
-    }
-
-    ::deep > .nt-body {
-        grid-area: body;
-    }
-
-    ::deep > .nt-layout {
-        grid-area: body;
     }
 
     ::deep > .nt-header,

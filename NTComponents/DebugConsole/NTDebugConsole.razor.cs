@@ -248,6 +248,23 @@ public partial class NTDebugConsole {
         DebugConsole.Changed += OnDebugConsoleChanged;
     }
 
+    // One pass over the buffer per render instead of a LINQ count per level.
+    private static (int Errors, int Warnings) CountProblems(IReadOnlyList<NTDebugConsoleEntry> entries) {
+        var errors = 0;
+        var warnings = 0;
+        for (var i = 0; i < entries.Count; i++) {
+            switch (entries[i].Level) {
+                case LogLevel.Error or LogLevel.Critical:
+                    errors++;
+                    break;
+                case LogLevel.Warning:
+                    warnings++;
+                    break;
+            }
+        }
+        return (errors, warnings);
+    }
+
     private static string LevelClass(LogLevel level) => level switch {
         LogLevel.Critical or LogLevel.Error => "nt-debug-console-level-error",
         LogLevel.Warning => "nt-debug-console-level-warning",
@@ -349,5 +366,13 @@ public partial class NTDebugConsole {
         }
     }
 
-    private List<NTDebugConsoleEntry> VisibleEntries(IReadOnlyList<NTDebugConsoleEntry> entries) => [.. entries.Where(Matches)];
+    private List<NTDebugConsoleEntry> VisibleEntries(IReadOnlyList<NTDebugConsoleEntry> entries) {
+        var visible = new List<NTDebugConsoleEntry>(entries.Count);
+        for (var i = 0; i < entries.Count; i++) {
+            if (Matches(entries[i])) {
+                visible.Add(entries[i]);
+            }
+        }
+        return visible;
+    }
 }

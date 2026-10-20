@@ -206,10 +206,12 @@ public partial class NTMenu {
 
     internal string? GetMenuAnchorItemHref(NTMenuAnchorItem item) => IsMenuItemDisabled(item) ? null : item.Href;
 
-    internal string GetMenuDividerClass(NTMenuDividerItem item) => CssClassBuilder.Create("nt-menu-divider")
-            .AddClass(GetMenuItemAdditionalClass(item))
-            .AddClass("nt-menu-divider-inset", item.Inset)
-            .Build();
+    internal string GetMenuDividerClass(NTMenuDividerItem item) {
+        var additionalClass = GetMenuItemAdditionalClass(item);
+        return additionalClass is not null
+            ? CssClassBuilder.Create("nt-menu-divider").AddClass(additionalClass).AddClass("nt-menu-divider-inset", item.Inset).Build()
+            : item.Inset ? "nt-menu-divider nt-menu-divider-inset" : "nt-menu-divider";
+    }
 
     internal string? GetMenuItemAriaDisabled(INTMenuItem item) => IsMenuItemDisabled(item) ? "true" : null;
 
@@ -218,15 +220,23 @@ public partial class NTMenu {
 
     internal string GetMenuItemAriaLabel(INTMenuItem item) => string.IsNullOrWhiteSpace(item.AriaLabel) ? item.Label : item.AriaLabel;
 
-    internal string GetMenuItemClass(INTMenuItem item) => CssClassBuilder.Create("nt-menu-item")
-            .AddClass(GetMenuItemAdditionalClass(item))
-            .AddClass("nt-menu-item-selected", item.Selected)
-            .AddClass("nt-menu-item-disabled", IsMenuItemDisabled(item))
-            .Build();
+    internal string GetMenuItemClass(INTMenuItem item) {
+        var disabled = IsMenuItemDisabled(item);
+        var additionalClass = GetMenuItemAdditionalClass(item);
+        return additionalClass is not null
+            ? CssClassBuilder.Create("nt-menu-item").AddClass(additionalClass).AddClass("nt-menu-item-selected", item.Selected).AddClass("nt-menu-item-disabled", disabled).Build()
+            : (item.Selected, disabled) switch {
+                (true, true) => "nt-menu-item nt-menu-item-selected nt-menu-item-disabled",
+                (true, false) => "nt-menu-item nt-menu-item-selected",
+                (false, true) => "nt-menu-item nt-menu-item-disabled",
+                _ => "nt-menu-item"
+            };
+    }
 
-    internal string GetMenuLabelClass(NTMenuLabelItem item) => CssClassBuilder.Create("nt-menu-label")
-            .AddClass(GetMenuItemAdditionalClass(item))
-            .Build();
+    internal string GetMenuLabelClass(NTMenuLabelItem item) {
+        var additionalClass = GetMenuItemAdditionalClass(item);
+        return additionalClass is not null ? CssClassBuilder.Create("nt-menu-label").AddClass(additionalClass).Build() : "nt-menu-label";
+    }
 
     internal string? GetMenuItemDisabledAttribute(INTMenuItem item) => IsMenuItemDisabled(item) ? "true" : null;
 

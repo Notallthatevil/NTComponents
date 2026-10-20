@@ -33,8 +33,8 @@
             ? Button.Text
             : Button.Title ?? "Insert table";
 
-    private string ButtonClass => CssClassBuilder.Create()
-        .AddClass("tnt-rich-text-editor-toolbar-button")
-        .AddClass(Button.CssClass, !string.IsNullOrWhiteSpace(Button.CssClass))
-        .Build();
+    // Constant for the common case; a custom class still goes through the builder so dedupe and trimming stay identical.
+    private string ButtonClass => string.IsNullOrWhiteSpace(Button.CssClass)
+        ? "tnt-components tnt-rich-text-editor-toolbar-button"
+        : CssClassBuilder.Create().AddClass("tnt-rich-text-editor-toolbar-button").AddClass(Button.CssClass).Build();
 }

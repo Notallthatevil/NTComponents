@@ -8,13 +8,26 @@ namespace NTComponents.Windowing;
 /// </summary>
 internal sealed class NTWindowService : INTWindowService {
     private readonly List<NTWindowImplementation> _windows = [];
+    private INTWindow[]? _snapshot;
 
     public event Action? Changed;
 
+    // Public callers get their own copy, as before; arrays are mutable through IList, so the cached snapshot must not escape.
     public IReadOnlyList<INTWindow> Windows {
         get {
             lock (_windows) {
-                return _windows.ToArray();
+                return [.. _windows];
+            }
+        }
+    }
+
+    /// <summary>
+    ///     A snapshot shared by the window host between open/close changes so host renders do not copy the list each time. Never mutate it.
+    /// </summary>
+    internal IReadOnlyList<INTWindow> RenderSnapshot {
+        get {
+            lock (_windows) {
+                return _snapshot ??= [.. _windows];
             }
         }
     }
@@ -26,6 +39,7 @@ internal sealed class NTWindowService : INTWindowService {
         lock (_windows) {
             if (window is NTWindowImplementation implementation) {
                 changed = _windows.Remove(implementation);
+                _snapshot = null;
             }
         }
 
@@ -43,6 +57,7 @@ internal sealed class NTWindowService : INTWindowService {
         var window = new NTWindowImplementation(TnTComponentIdentifier.NewId(), title, content, initialState, dockPosition);
         lock (_windows) {
             _windows.Add(window);
+            _snapshot = null;
         }
 
         Changed?.Invoke();

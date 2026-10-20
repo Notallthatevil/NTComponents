@@ -38,8 +38,8 @@ public partial class NTDivider {
     public override string? ElementClass => CssClassBuilder.Create()
         .AddFromAdditionalAttributes(AdditionalAttributes)
         .AddClass("nt-divider")
-        .AddClass($"nt-divider-{Direction.ToCssString()}")
-        .AddClass($"nt-divider-{Variant.ToCssClass()}", Direction == LayoutDirection.Horizontal)
+        .AddClass(Direction == LayoutDirection.Vertical ? "nt-divider-vertical" : "nt-divider-horizontal")
+        .AddClass(Variant.ToCssClass(), Direction == LayoutDirection.Horizontal)
         .Build();
 
     /// <inheritdoc />
@@ -86,9 +86,9 @@ internal static class NTDividerVariantExtensions {
 
     public static string ToCssClass(this NTDividerVariant variant) {
         return variant switch {
-            NTDividerVariant.FullWidth => "full-width",
-            NTDividerVariant.Inset => "inset",
-            NTDividerVariant.MiddleInset => "middle-inset",
+            NTDividerVariant.FullWidth => "nt-divider-full-width",
+            NTDividerVariant.Inset => "nt-divider-inset",
+            NTDividerVariant.MiddleInset => "nt-divider-middle-inset",
             _ => throw new InvalidOperationException($"{variant} is not a valid value of {nameof(NTDividerVariant)}")
         };
     }

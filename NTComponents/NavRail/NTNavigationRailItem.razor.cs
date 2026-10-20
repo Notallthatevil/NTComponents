@@ -52,14 +52,7 @@ public partial class NTNavigationRailItem : NTComponentBase, INTBadgeable {
     public bool Disabled { get; set; }
 
     /// <inheritdoc />
-    public override string? ElementClass => CssClassBuilder.Create()
-        .AddFromAdditionalAttributes(AdditionalAttributes)
-        .AddClass("nt-navigation-rail-item")
-        .AddClass("nt-navigation-rail-item-selected", _isSelected)
-        .AddClass("nt-navigation-rail-item-link", RendersAnchor)
-        .AddClass("nt-navigation-rail-item-button", !RendersAnchor)
-        .AddDisabled(Disabled)
-        .Build();
+    public override string? ElementClass => _elementClass;
 
     /// <summary>
     ///     Optional native button name when the item renders as a button.
@@ -68,9 +61,7 @@ public partial class NTNavigationRailItem : NTComponentBase, INTBadgeable {
     public string? ElementName { get; set; }
 
     /// <inheritdoc />
-    public override string? ElementStyle => CssStyleBuilder.Create()
-        .AddFromAdditionalAttributes(AdditionalAttributes)
-        .Build();
+    public override string? ElementStyle => _elementStyle;
 
     /// <summary>
     ///     Route href for static-SSR navigation.
@@ -128,32 +119,27 @@ public partial class NTNavigationRailItem : NTComponentBase, INTBadgeable {
     [Inject]
     private NavigationManager NavigationManager { get; set; } = default!;
 
-    private string? AriaDescribedBy => NTBadge.GetDescribedBy(RenderedAdditionalAttributes?.GetValueOrDefault("aria-describedby"), ShowBadge && EffectiveAriaLabel is not null, BadgeId);
     private string? AriaCurrent => _isSelected && !Disabled ? "page" : null;
     private string? AriaDisabled => Disabled && RendersAnchor ? "true" : null;
     private string BadgeId => $"{ComponentIdentifier}-badge";
-    private string? EffectiveAriaLabel => string.IsNullOrWhiteSpace(AriaLabel) || string.Equals(AriaLabel, Label, StringComparison.Ordinal) ? null : AriaLabel;
-    private string? EffectiveElementId => ElementId ?? TryGetStringAttribute("id");
-    private string? EffectiveElementLang => ElementLang ?? TryGetStringAttribute("lang");
-    private string? EffectiveElementTitle => ElementTitle ?? TryGetStringAttribute("title");
-    private string? EffectiveIconClass => _isSelected && EffectiveIcon is MaterialIcon ? "nt-nav-rail-selected-icon" : null;
-    private NTIcon? EffectiveIcon => _isSelected && ActiveIcon is not null
-        ? GetSelectedMaterialIcon(ActiveIcon)
-        : _isSelected && ActiveIconContent is not null
-            ? null
-            : _isSelected
-                ? GetSelectedMaterialIcon(Icon)
-                : Icon;
+    private string? EffectiveIconClass => _isSelected && _effectiveIcon is MaterialIcon ? "nt-nav-rail-selected-icon" : null;
     private RenderFragment? EffectiveIconFragment => _isSelected && ActiveIconContent is not null ? ActiveIconContent : IconContent;
     private string? RenderedHref => Disabled ? null : Href;
     private string? RenderedTabIndex => Disabled && RendersAnchor ? "-1" : null;
     private string RouteMatchText => Match.ToString();
     private bool RendersAnchor => !string.IsNullOrWhiteSpace(Href);
-    private string SelectedText => Selected.ToString().ToLowerInvariant();
+    private string SelectedText => Selected ? "true" : "false";
 
+    private string? _ariaDescribedBy;
+    private string? _effectiveAriaLabel;
+    private string? _effectiveElementId;
+    private string? _effectiveElementLang;
+    private string? _effectiveElementTitle;
+    private NTIcon? _effectiveIcon;
+    private string? _elementClass;
+    private string? _elementStyle;
     private bool _isSelected;
     private IReadOnlyDictionary<string, object>? _renderedAdditionalAttributes;
-    private IReadOnlyDictionary<string, object>? RenderedAdditionalAttributes => _renderedAdditionalAttributes;
 
     private static readonly HashSet<string> _reservedAttributeNames = new(StringComparer.OrdinalIgnoreCase) {
         "aria-current",
@@ -184,6 +170,30 @@ public partial class NTNavigationRailItem : NTComponentBase, INTBadgeable {
 
         _renderedAdditionalAttributes = FilterAdditionalAttributes();
         _isSelected = Selected || IsSelectedByRoute();
+
+        _effectiveAriaLabel = string.IsNullOrWhiteSpace(AriaLabel) || string.Equals(AriaLabel, Label, StringComparison.Ordinal) ? null : AriaLabel;
+        _effectiveElementId = ElementId ?? TryGetStringAttribute("id");
+        _effectiveElementLang = ElementLang ?? TryGetStringAttribute("lang");
+        _effectiveElementTitle = ElementTitle ?? TryGetStringAttribute("title");
+        _effectiveIcon = _isSelected && ActiveIcon is not null
+            ? GetSelectedMaterialIcon(ActiveIcon)
+            : _isSelected && ActiveIconContent is not null
+                ? null
+                : _isSelected
+                    ? GetSelectedMaterialIcon(Icon)
+                    : Icon;
+        _ariaDescribedBy = NTBadge.GetDescribedBy(_renderedAdditionalAttributes?.GetValueOrDefault("aria-describedby"), ShowBadge && _effectiveAriaLabel is not null, ShowBadge ? BadgeId : string.Empty);
+        _elementClass = CssClassBuilder.Create()
+            .AddFromAdditionalAttributes(AdditionalAttributes)
+            .AddClass("nt-navigation-rail-item")
+            .AddClass("nt-navigation-rail-item-selected", _isSelected)
+            .AddClass("nt-navigation-rail-item-link", RendersAnchor)
+            .AddClass("nt-navigation-rail-item-button", !RendersAnchor)
+            .AddDisabled(Disabled)
+            .Build();
+        _elementStyle = CssStyleBuilder.Create()
+            .AddFromAdditionalAttributes(AdditionalAttributes)
+            .Build();
     }
 
     private IReadOnlyDictionary<string, object>? FilterAdditionalAttributes() {
@@ -210,23 +220,8 @@ public partial class NTNavigationRailItem : NTComponentBase, INTBadgeable {
             return false;
         }
 
-        var targetUri = NavigationManager.ToAbsoluteUri(Href);
-        if (!IsUnderBaseUri(targetUri)) {
-            return false;
-        }
-
-        var currentPath = NormalizePath(NavigationManager.ToBaseRelativePath(NavigationManager.Uri));
-        var targetPath = NormalizePath(NavigationManager.ToBaseRelativePath(targetUri.AbsoluteUri));
-
-        if (Match == NavLinkMatch.All) {
-            return string.Equals(currentPath, targetPath, StringComparison.OrdinalIgnoreCase);
-        }
-
-        return currentPath.StartsWith(targetPath, StringComparison.OrdinalIgnoreCase)
-            && (currentPath.Length == targetPath.Length || currentPath[targetPath.Length] == '/');
+        return NTNavLink.IsActive(NavigationManager, NavigationManager.ToAbsoluteUri(Href).AbsoluteUri, Match);
     }
-
-    private bool IsUnderBaseUri(Uri uri) => uri.AbsoluteUri.StartsWith(NavigationManager.BaseUri, StringComparison.OrdinalIgnoreCase);
 
     private static NTIcon? GetSelectedMaterialIcon(NTIcon? icon) => icon is MaterialIcon materialIcon
         ? new MaterialIcon(materialIcon.Icon) {
@@ -236,16 +231,6 @@ public partial class NTNavigationRailItem : NTComponentBase, INTBadgeable {
             Tooltip = materialIcon.Tooltip
         }
         : icon;
-
-    private static string NormalizePath(string path) {
-        var queryIndex = path.IndexOfAny(['?', '#']);
-        if (queryIndex >= 0) {
-            path = path[..queryIndex];
-        }
-
-        path = path.Trim('/');
-        return path.Length == 0 ? string.Empty : path;
-    }
 
     private string? TryGetStringAttribute(string attributeName) {
         return AdditionalAttributes?.TryGetValue(attributeName, out var value) == true

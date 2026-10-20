@@ -84,16 +84,6 @@ $container-shape: 4px;
                 z-index: 3;
                 pointer-events: auto;
             }
-
-            &.nt-snackbar-queued {
-                z-index: 2;
-                opacity: 0.92;
-            }
-
-            &.nt-snackbar-stack-depth-2 {
-                z-index: 1;
-                opacity: 0.84;
-            }
         }
 
         .nt-snackbar {
