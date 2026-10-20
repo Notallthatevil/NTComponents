@@ -45,10 +45,13 @@
 
 	<ItemGroup>
 		<PackageReference Include="AspNetCore.SassCompiler" PrivateAssets="all" />
-		<PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" />
 	</ItemGroup>
 
 	<!-- Published dependency floors: the lowest ASP.NET Core patch consumers need. Raise them only for security fixes. -->
+	<ItemGroup>
+		<PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" VersionOverride="2.3.0" />
+	</ItemGroup>
+
 	<ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
 		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" VersionOverride="9.0.0" />
 		<PackageReference Include="Microsoft.AspNetCore.Components.Authorization" VersionOverride="9.0.0" />
