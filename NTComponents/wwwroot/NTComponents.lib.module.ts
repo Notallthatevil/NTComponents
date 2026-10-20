@@ -7,7 +7,9 @@ const richTextEditorToolRegistry = {
 let rippleHandlersRegistered = false;
 let bodyFillObserverStarted = false;
 const rippleReleaseTimeoutByHost = new WeakMap();
-const buttonInteractionRegistrationByElement = new WeakMap();
+// Hosts that may still hold ripple nodes, so global releases avoid scanning every host in the document.
+const activeRippleHosts = new Set();
+const registeredButtonInteractions = new WeakSet();
 
 export function setRichTextEditorToolRegistryChangedCallback(callback) {
     richTextEditorToolRegistry.onChange = callback;
@@ -140,18 +142,13 @@ function enhanceAnimationWrappers() {
 }
 
 function getRippleHost(element) {
-    return element?.querySelector?.(':scope > .nt-button-ripple-host')
-        ?? element?.querySelector?.(':scope .nt-navigation-rail-item-ripple.nt-button-ripple-host')
-        ?? null;
-}
-
-function getRippleContainer(element) {
-    const host = getRippleHost(element);
-    if (host?.classList?.contains('nt-navigation-rail-item-ripple')) {
-        return host.parentElement ?? element ?? null;
+    for (const child of element?.children ?? []) {
+        if (child.classList.contains('nt-button-ripple-host')) {
+            return child;
+        }
     }
 
-    return element ?? null;
+    return element?.querySelector?.('.nt-navigation-rail-item-ripple.nt-button-ripple-host') ?? null;
 }
 
 function clearRippleReleaseTimeout(host) {
@@ -169,37 +166,64 @@ function releaseRippleHost(host) {
 
     clearRippleReleaseTimeout(host);
 
-    const ripples = host.querySelectorAll(':scope > .nt-button-ripple');
+    const ripples = [];
+    for (const child of host.children) {
+        if (child.classList.contains('nt-button-ripple')) {
+            ripples.push(child);
+        }
+    }
+
     if (!ripples.length) {
+        activeRippleHosts.delete(host);
         return;
     }
 
-    ripples.forEach((ripple) => {
+    for (const ripple of ripples) {
         ripple.classList.add('nt-button-ripple-releasing');
-    });
+    }
 
     const timeoutId = setTimeout(() => {
-        ripples.forEach((ripple) => ripple.remove());
+        for (const ripple of ripples) {
+            ripple.remove();
+        }
         rippleReleaseTimeoutByHost.delete(host);
+        activeRippleHosts.delete(host);
     }, 600);
 
     rippleReleaseTimeoutByHost.set(host, timeoutId);
 }
 
-function createRippleAtPosition(element, x, y) {
-    const host = getRippleHost(element);
-    const container = getRippleContainer(element);
+function releaseAllRippleHosts() {
+    for (const host of activeRippleHosts) {
+        if (host.isConnected) {
+            releaseRippleHost(host);
+        } else {
+            activeRippleHosts.delete(host);
+        }
+    }
+}
 
-    if (!host || !container || element.disabled) {
+// Creates a ripple at the pointer position of the event, or centered when no pointer event is given.
+function createRipple(element, pointerEvent) {
+    const host = getRippleHost(element);
+    if (!host || element.disabled) {
         return false;
+    }
+
+    const container = host.classList.contains('nt-navigation-rail-item-ripple') ? host.parentElement ?? element : element;
+    const width = container.offsetWidth || 0;
+    const height = container.offsetHeight || 0;
+    let x = width / 2;
+    let y = height / 2;
+    if (pointerEvent) {
+        const coords = getCoords(container);
+        x = (pointerEvent.pageX ?? (pointerEvent.clientX + window.scrollX)) - coords.left;
+        y = (pointerEvent.pageY ?? (pointerEvent.clientY + window.scrollY)) - coords.top;
     }
 
     clearRippleReleaseTimeout(host);
 
-    const width = container.offsetWidth || 0;
-    const height = container.offsetHeight || 0;
     const rippleElement = document.createElement('span');
-
     rippleElement.classList.add('nt-button-ripple');
     rippleElement.style.pointerEvents = 'none';
     rippleElement.style.setProperty('--nt-button-ripple-origin-x', `${x}px`);
@@ -207,6 +231,7 @@ function createRippleAtPosition(element, x, y) {
     rippleElement.style.setProperty('--nt-button-ripple-width', `${width * 2}px`);
     rippleElement.style.setProperty('--nt-button-ripple-height', `${height * 2}px`);
     host.appendChild(rippleElement);
+    activeRippleHosts.add(host);
 
     void rippleElement.offsetWidth;
 
@@ -215,31 +240,6 @@ function createRippleAtPosition(element, x, y) {
     }, 1);
 
     return true;
-}
-
-function createPointerRipple(event, element) {
-    const container = getRippleContainer(element);
-    if (!container) {
-        return false;
-    }
-
-    const coords = getCoords(container);
-    const pageX = event.pageX ?? (event.clientX + window.scrollX);
-    const pageY = event.pageY ?? (event.clientY + window.scrollY);
-    const x = pageX - coords.left;
-    const y = pageY - coords.top;
-    return createRippleAtPosition(element, x, y);
-}
-
-function createCenteredRipple(element) {
-    const container = getRippleContainer(element);
-    if (!container) {
-        return false;
-    }
-
-    const width = container.offsetWidth || 0;
-    const height = container.offsetHeight || 0;
-    return createRippleAtPosition(element, width / 2, height / 2);
 }
 
 function findRippleElementFromEventTarget(target) {
@@ -252,43 +252,32 @@ function isKeyboardRippleEvent(event) {
 
 function handleDelegatedRipplePointerDown(event) {
     const element = findRippleElementFromEventTarget(event.target);
-
-    if (!element) {
-        return;
+    if (element) {
+        createRipple(element, event);
     }
-
-    createPointerRipple(event, element);
 }
 
 function handleDelegatedRipplePointerUp(event) {
     const element = findRippleElementFromEventTarget(event.target);
-
     if (element) {
         releaseRippleHost(getRippleHost(element));
-        return;
+    } else {
+        releaseAllRippleHosts();
     }
-
-    document.querySelectorAll('.nt-button-ripple-host').forEach((host) => {
-        releaseRippleHost(host);
-    });
 }
 
 function handleDelegatedRippleKeyDown(event) {
     const element = findRippleElementFromEventTarget(event.target);
-    if (!element || !isKeyboardRippleEvent(event)) {
-        return;
+    if (element && isKeyboardRippleEvent(event)) {
+        createRipple(element, null);
     }
-
-    createCenteredRipple(element);
 }
 
 function handleDelegatedRippleKeyUp(event) {
     const element = findRippleElementFromEventTarget(event.target);
-    if (!element || !isKeyboardRippleEvent(event)) {
-        return;
+    if (element && isKeyboardRippleEvent(event)) {
+        releaseRippleHost(getRippleHost(element));
     }
-
-    releaseRippleHost(getRippleHost(element));
 }
 
 function ensureRippleHandlers() {
@@ -310,95 +299,64 @@ function ensureRippleHandlers() {
 
     document.addEventListener('keydown', handleDelegatedRippleKeyDown);
     document.addEventListener('keyup', handleDelegatedRippleKeyUp);
-    window.addEventListener('blur', () => {
-        document.querySelectorAll('.nt-button-ripple-host').forEach((host) => {
-            releaseRippleHost(host);
-        });
-    });
-}
-
-function getRippleRegistrationElement(host) {
-    return host?.closest?.('button, a, [role="button"], [tabindex]')
-        ?? host?.parentElement
-        ?? null;
+    window.addEventListener('blur', releaseAllRippleHosts);
 }
 
 function setPressedShape(element, isPressed) {
     element?.classList?.toggle('nt-button--pressed-shape', isPressed);
 }
 
+// Shared listeners for every registered button interaction; currentTarget is the registered element.
+function onButtonPointerDown(event) {
+    setPressedShape(event.currentTarget, true);
+    createRipple(event.currentTarget, event);
+}
+
+function onButtonPointerUp(event) {
+    releaseRippleHost(getRippleHost(event.currentTarget));
+}
+
+function onButtonKeyDown(event) {
+    if (isKeyboardRippleEvent(event)) {
+        setPressedShape(event.currentTarget, true);
+        createRipple(event.currentTarget, null);
+    }
+}
+
+function onButtonKeyUp(event) {
+    if (isKeyboardRippleEvent(event)) {
+        onButtonPointerExit(event);
+    }
+}
+
+function onButtonPointerExit(event) {
+    setPressedShape(event.currentTarget, false);
+    releaseRippleHost(getRippleHost(event.currentTarget));
+}
+
 function registerButtonInteraction(element) {
-    if (!element || buttonInteractionRegistrationByElement.has(element)) {
+    if (!element || registeredButtonInteractions.has(element)) {
         return;
     }
 
-    const onPointerDown = (event) => {
-        setPressedShape(element, true);
-        if (getRippleHost(element)) {
-            createPointerRipple(event, element);
-        }
-    };
-
-    const onPointerUp = () => {
-        releaseRippleHost(getRippleHost(element));
-    };
-
-    const onKeyDown = (event) => {
-        if (!isKeyboardRippleEvent(event)) {
-            return;
-        }
-
-        setPressedShape(element, true);
-        if (getRippleHost(element)) {
-            createCenteredRipple(element);
-        }
-    };
-
-    const onKeyUp = (event) => {
-        if (!isKeyboardRippleEvent(event)) {
-            return;
-        }
-
-        setPressedShape(element, false);
-        releaseRippleHost(getRippleHost(element));
-    };
-
-    const onPointerExit = () => {
-        setPressedShape(element, false);
-        releaseRippleHost(getRippleHost(element));
-    };
-
-    const onBlur = () => {
-        setPressedShape(element, false);
-        releaseRippleHost(getRippleHost(element));
-    };
-
     if (window.PointerEvent) {
-        element.addEventListener('pointerdown', onPointerDown);
-        element.addEventListener('pointerup', onPointerUp);
-        element.addEventListener('pointercancel', onPointerExit);
-        element.addEventListener('pointerleave', onPointerExit);
+        element.addEventListener('pointerdown', onButtonPointerDown);
+        element.addEventListener('pointerup', onButtonPointerUp);
+        element.addEventListener('pointercancel', onButtonPointerExit);
+        element.addEventListener('pointerleave', onButtonPointerExit);
     } else {
-        element.addEventListener('mousedown', onPointerDown);
-        element.addEventListener('mouseup', onPointerUp);
-        element.addEventListener('mouseleave', onPointerExit);
-        element.addEventListener('touchstart', onPointerDown, { passive: true });
-        element.addEventListener('touchend', onPointerExit);
-        element.addEventListener('touchcancel', onPointerExit);
+        element.addEventListener('mousedown', onButtonPointerDown);
+        element.addEventListener('mouseup', onButtonPointerUp);
+        element.addEventListener('mouseleave', onButtonPointerExit);
+        element.addEventListener('touchstart', onButtonPointerDown, { passive: true });
+        element.addEventListener('touchend', onButtonPointerExit);
+        element.addEventListener('touchcancel', onButtonPointerExit);
     }
 
-    element.addEventListener('keydown', onKeyDown);
-    element.addEventListener('keyup', onKeyUp);
-    element.addEventListener('blur', onBlur);
-
-    buttonInteractionRegistrationByElement.set(element, {
-        onBlur,
-        onKeyDown,
-        onKeyUp,
-        onPointerDown,
-        onPointerExit,
-        onPointerUp
-    });
+    element.addEventListener('keydown', onButtonKeyDown);
+    element.addEventListener('keyup', onButtonKeyUp);
+    element.addEventListener('blur', onButtonPointerExit);
+    registeredButtonInteractions.add(element);
 }
 
 function registerButtonInteractions(element) {
@@ -418,11 +376,11 @@ function registerButtonInteractions(element) {
 }
 
 function registerRippleHost(host) {
-    const element = getRippleRegistrationElement(host);
-    registerButtonInteraction(element);
+    registerButtonInteraction(host?.closest?.('button, a, [role="button"], [tabindex]') ?? host?.parentElement ?? null);
 }
 
-function startButtonInteraction(script) {
+// Inline component scripts call these; the registration goes through window.NTComponents and retries briefly in case it is not attached yet.
+function startRegistration(script, registrationName) {
     const element = script?.previousElementSibling;
     if (!element) {
         return;
@@ -430,8 +388,8 @@ function startButtonInteraction(script) {
 
     let attempts = 0;
     const tryRegister = () => {
-        if (typeof window.NTComponents?.registerButtonInteractions === 'function') {
-            window.NTComponents.registerButtonInteractions(element);
+        if (typeof window.NTComponents?.[registrationName] === 'function') {
+            window.NTComponents[registrationName](element);
             return;
         }
 
@@ -443,25 +401,12 @@ function startButtonInteraction(script) {
     tryRegister();
 }
 
+function startButtonInteraction(script) {
+    startRegistration(script, 'registerButtonInteractions');
+}
+
 function startRippleHost(script) {
-    const host = script?.previousElementSibling;
-    if (!host) {
-        return;
-    }
-
-    let attempts = 0;
-    const tryRegister = () => {
-        if (typeof window.NTComponents?.registerRippleHost === 'function') {
-            window.NTComponents.registerRippleHost(host);
-            return;
-        }
-
-        if (attempts++ < 20) {
-            setTimeout(tryRegister, 0);
-        }
-    };
-
-    tryRegister();
+    startRegistration(script, 'registerRippleHost');
 }
 
 function setupPageScriptElement() {
@@ -564,8 +509,6 @@ function setupBodyFillRemaining() {
     if (bodyFillObserverStarted) {
         return;
     }
-
-    setupPageScriptElement();
 
     let body = document.querySelector('.tnt-body');
     if (body) {
