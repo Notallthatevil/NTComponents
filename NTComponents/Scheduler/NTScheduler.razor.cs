@@ -30,6 +30,7 @@ public partial class NTScheduler<TEventType> where TEventType : TnTEvent {
     private DotNetObjectReference<NTSchedulerJsInteropBridge>? _dotNetObjectRef;
     private IJSObjectReference? _isolatedJsModule;
     private NTSchedulerJsInteropBridge? _jsInteropBridge;
+    private string[]? _timeLabels;
 
     /// <summary>
     ///     Gets the page script fragment used to enhance static SSR markup when the page loads in the browser.
@@ -252,6 +253,8 @@ public partial class NTScheduler<TEventType> where TEventType : TnTEvent {
     private RenderFragment MonthView => builder => {
         var sequence = 0;
         var today = ToDisplayDate(DateTimeOffset.Now);
+        var infos = GetEventInfos();
+        var hasSlotClicked = SlotClicked.HasDelegate;
         builder.OpenElement(sequence++, "div");
         builder.AddAttribute(sequence++, "class", "month-view");
         builder.AddAttribute(sequence++, "role", "grid");
@@ -269,7 +272,7 @@ public partial class NTScheduler<TEventType> where TEventType : TnTEvent {
         builder.CloseElement();
 
         foreach (var week in MonthDates.Chunk(7)) {
-            var segments = BuildAllDaySegments(week, true);
+            var segments = BuildAllDaySegments(week, true, infos);
             builder.OpenElement(sequence++, "div");
             builder.AddAttribute(sequence++, "class", "month-week");
             for (var dayIndex = 0; dayIndex < week.Length; dayIndex++) {
@@ -280,8 +283,10 @@ public partial class NTScheduler<TEventType> where TEventType : TnTEvent {
                 builder.AddAttribute(sequence++, "style", $"grid-column: {dayIndex + 1};");
                 builder.AddAttribute(sequence++, "data-nt-scheduler-drop-date", FormatDate(date));
                 builder.AddAttribute(sequence++, "data-nt-scheduler-all-day", "true");
-                builder.AddAttribute(sequence++, "onclick", EventCallback.Factory.Create<MouseEventArgs>(this, () => InvokeSlotClickedAsync(date, null)));
-                builder.AddEventStopPropagationAttribute(sequence++, "onclick", false);
+                if (hasSlotClicked) {
+                    builder.AddAttribute(sequence++, "onclick", EventCallback.Factory.Create<MouseEventArgs>(this, () => InvokeSlotClickedAsync(date, null)));
+                    builder.AddEventStopPropagationAttribute(sequence++, "onclick", false);
+                }
                 builder.OpenElement(sequence++, "span");
                 builder.AddAttribute(sequence++, "class", "day-number");
                 builder.AddContent(sequence++, date.Day.ToString(_culture));
@@ -451,6 +456,8 @@ public partial class NTScheduler<TEventType> where TEventType : TnTEvent {
     private void BuildAgendaView(RenderTreeBuilder builder, IReadOnlyList<DateOnly> visibleDates, bool isSingleDay) {
         var sequence = 0;
         var today = ToDisplayDate(DateTimeOffset.Now);
+        var infos = GetEventInfos();
+        var hasSlotClicked = SlotClicked.HasDelegate;
         builder.OpenElement(sequence++, "div");
         builder.AddAttribute(sequence++, "class", "agenda-view");
 
@@ -496,11 +503,13 @@ public partial class NTScheduler<TEventType> where TEventType : TnTEvent {
             builder.AddAttribute(sequence++, "style", $"grid-column: {dayIndex + 1};");
             builder.AddAttribute(sequence++, "data-nt-scheduler-drop-date", FormatDate(date));
             builder.AddAttribute(sequence++, "data-nt-scheduler-all-day", "true");
-            builder.AddAttribute(sequence++, "onclick", EventCallback.Factory.Create<MouseEventArgs>(this, () => InvokeSlotClickedAsync(date, null)));
+            if (hasSlotClicked) {
+                builder.AddAttribute(sequence++, "onclick", EventCallback.Factory.Create<MouseEventArgs>(this, () => InvokeSlotClickedAsync(date, null)));
+            }
             builder.CloseElement();
         }
 
-        BuildEventSegments(builder, ref sequence, BuildAllDaySegments(visibleDates, false), false);
+        BuildEventSegments(builder, ref sequence, BuildAllDaySegments(visibleDates, false, infos), false);
 
         builder.CloseElement();
         builder.CloseElement();
@@ -509,10 +518,11 @@ public partial class NTScheduler<TEventType> where TEventType : TnTEvent {
         builder.AddAttribute(sequence++, "class", "time-grid");
         builder.OpenElement(sequence++, "div");
         builder.AddAttribute(sequence++, "class", "time-gutter");
-        for (var hour = 0; hour < 24; hour++) {
+        _timeLabels ??= [.. Enumerable.Range(0, 24).Select(hour => new TimeOnly(hour, 0).ToString("h tt", _culture))];
+        foreach (var label in _timeLabels) {
             builder.OpenElement(sequence++, "div");
             builder.AddAttribute(sequence++, "class", "time-label");
-            builder.AddContent(sequence++, new TimeOnly(hour, 0).ToString("h tt", _culture));
+            builder.AddContent(sequence++, label);
             builder.CloseElement();
         }
         builder.CloseElement();
@@ -520,14 +530,14 @@ public partial class NTScheduler<TEventType> where TEventType : TnTEvent {
         builder.OpenElement(sequence++, "div");
         builder.AddAttribute(sequence++, "class", "timed-days");
         foreach (var date in visibleDates) {
-            BuildTimedDay(builder, ref sequence, date);
+            BuildTimedDay(builder, ref sequence, date, infos, hasSlotClicked);
         }
         builder.CloseElement();
         builder.CloseElement();
         builder.CloseElement();
     }
 
-    private void BuildTimedDay(RenderTreeBuilder builder, ref int sequence, DateOnly date) {
+    private void BuildTimedDay(RenderTreeBuilder builder, ref int sequence, DateOnly date, List<EventInfo> infos, bool hasSlotClicked) {
         builder.OpenElement(sequence++, "div");
         builder.AddAttribute(sequence++, "class", "timed-day");
         builder.AddAttribute(sequence++, "data-nt-scheduler-drop-date", FormatDate(date));
@@ -539,11 +549,13 @@ public partial class NTScheduler<TEventType> where TEventType : TnTEvent {
             builder.AddAttribute(sequence++, "type", "button");
             builder.AddAttribute(sequence++, "class", "time-slot");
             builder.AddAttribute(sequence++, "data-nt-scheduler-drop-slot", slotMinute.ToString(CultureInfo.InvariantCulture));
-            builder.AddAttribute(sequence++, "onclick", EventCallback.Factory.Create<MouseEventArgs>(this, args => InvokeSlotClickedAsync(date, GetClickedSlotMinute(slotMinute, args.OffsetY))));
+            if (hasSlotClicked) {
+                builder.AddAttribute(sequence++, "onclick", EventCallback.Factory.Create<MouseEventArgs>(this, args => InvokeSlotClickedAsync(date, GetClickedSlotMinute(slotMinute, args.OffsetY))));
+            }
             builder.CloseElement();
         }
 
-        BuildEventSegments(builder, ref sequence, BuildTimedSegments(date), false);
+        BuildEventSegments(builder, ref sequence, BuildTimedSegments(date, infos), false);
 
         builder.CloseElement();
     }
@@ -559,14 +571,14 @@ public partial class NTScheduler<TEventType> where TEventType : TnTEvent {
     private void BuildEventSegment(RenderTreeBuilder builder, SchedulerEventSegment segment, bool monthSegment) {
         var sequence = 0;
         builder.OpenElement(sequence++, "article");
-        builder.SetKey($"{segment.Event.Id}:{segment.StartDate:yyyyMMdd}:{segment.EndDate:yyyyMMdd}:{segment.Lane}");
+        builder.SetKey((segment.Event.Id, segment.StartDate.DayNumber, segment.EndDate.DayNumber, segment.Lane));
         builder.AddAttribute(sequence++, "class", GetEventClass(segment, monthSegment));
         builder.AddAttribute(sequence++, "style", GetEventStyle(segment, monthSegment));
         builder.AddAttribute(sequence++, "data-nt-scheduler-event-id", segment.Event.Id.ToString(CultureInfo.InvariantCulture));
         builder.AddAttribute(sequence++, "onclick", EventCallback.Factory.Create<MouseEventArgs>(this, () => EventClicked.InvokeAsync(segment.Event)));
         builder.AddEventStopPropagationAttribute(sequence++, "onclick", true);
 
-        var renderResizeHandles = AllowDraggingEvents && !monthSegment && !IsMultiDay(segment.Event);
+        var renderResizeHandles = AllowDraggingEvents && !monthSegment && !segment.IsMultiDay;
         if (renderResizeHandles) {
             builder.OpenElement(sequence++, "span");
             builder.AddAttribute(sequence++, "class", "resize-handle resize-handle-start");
@@ -603,14 +615,29 @@ public partial class NTScheduler<TEventType> where TEventType : TnTEvent {
         builder.CloseElement();
     }
 
-    private IReadOnlyList<SchedulerEventSegment> BuildAllDaySegments(IReadOnlyList<DateOnly> dates, bool includeSingleDayEvents) {
+    private List<EventInfo> GetEventInfos() {
+        var infos = new List<EventInfo>(Events.Count);
+        foreach (var @event in Events) {
+            var displayStart = TimeZoneInfo.ConvertTime(@event.EventStart, TimeZone);
+            var displayEnd = TimeZoneInfo.ConvertTime(@event.EventEnd, TimeZone);
+            var endDate = DateOnly.FromDateTime(displayEnd.DateTime);
+            infos.Add(new EventInfo(
+                @event,
+                DateOnly.FromDateTime(displayStart.DateTime),
+                displayEnd.TimeOfDay == TimeSpan.Zero && displayEnd > displayStart ? endDate.AddDays(-1) : endDate,
+                (displayStart.Hour * 60) + displayStart.Minute,
+                (displayEnd.Hour * 60) + displayEnd.Minute));
+        }
+
+        return infos;
+    }
+
+    private static IReadOnlyList<SchedulerEventSegment> BuildAllDaySegments(IReadOnlyList<DateOnly> dates, bool includeSingleDayEvents, List<EventInfo> infos) {
         var visibleStart = dates[0];
         var visibleEnd = dates[^1];
-        var segments = Events
-            .Where(e => includeSingleDayEvents || e.IsAllDay)
-            .Select(e => CreateAllDaySegment(e, visibleStart, visibleEnd))
-            .Where(s => s is not null)
-            .Select(s => s!)
+        var segments = infos
+            .Where(i => (includeSingleDayEvents || i.Event.IsAllDay) && i.EndDate >= visibleStart && i.StartDate <= visibleEnd)
+            .Select(i => CreateAllDaySegment(i, visibleStart, visibleEnd))
             .OrderBy(s => s.StartDate)
             .ThenByDescending(s => s.ColumnSpan)
             .ThenBy(s => s.Event.EventStart)
@@ -619,12 +646,10 @@ public partial class NTScheduler<TEventType> where TEventType : TnTEvent {
         return segments;
     }
 
-    private IReadOnlyList<SchedulerEventSegment> BuildTimedSegments(DateOnly date) {
-        var segments = Events
-            .Where(e => !e.IsAllDay && EventOverlaps(e, date, date))
-            .Select(e => CreateTimedSegment(e, date))
-            .Where(s => s is not null)
-            .Select(s => s!)
+    private IReadOnlyList<SchedulerEventSegment> BuildTimedSegments(DateOnly date, List<EventInfo> infos) {
+        var segments = infos
+            .Where(i => !i.Event.IsAllDay && i.StartDate <= date && i.EndDate >= date)
+            .Select(i => CreateTimedSegment(i, date))
             .OrderBy(s => s.StartMinute)
             .ThenByDescending(s => s.EndMinute - s.StartMinute)
             .ToList();
@@ -632,38 +657,29 @@ public partial class NTScheduler<TEventType> where TEventType : TnTEvent {
         return segments;
     }
 
-    private SchedulerEventSegment? CreateAllDaySegment(TEventType @event, DateOnly visibleStart, DateOnly visibleEnd) {
-        var eventStartDate = GetEventStartDate(@event);
-        var eventEndDate = GetEventEndDate(@event);
-        if (eventEndDate < visibleStart || eventStartDate > visibleEnd) {
-            return null;
-        }
-
-        var startDate = eventStartDate < visibleStart ? visibleStart : eventStartDate;
-        var endDate = eventEndDate > visibleEnd ? visibleEnd : eventEndDate;
-        return new SchedulerEventSegment(@event, startDate, endDate) {
+    private static SchedulerEventSegment CreateAllDaySegment(EventInfo info, DateOnly visibleStart, DateOnly visibleEnd) {
+        var startDate = info.StartDate < visibleStart ? visibleStart : info.StartDate;
+        var endDate = info.EndDate > visibleEnd ? visibleEnd : info.EndDate;
+        return new SchedulerEventSegment(info.Event, startDate, endDate) {
             ColumnStart = (startDate.DayNumber - visibleStart.DayNumber) + 1,
             ColumnSpan = (endDate.DayNumber - startDate.DayNumber) + 1,
-            ContinuesBefore = eventStartDate < startDate,
-            ContinuesAfter = eventEndDate > endDate
+            ContinuesBefore = info.StartDate < startDate,
+            ContinuesAfter = info.EndDate > endDate,
+            IsMultiDay = info.StartDate != info.EndDate
         };
     }
 
-    private SchedulerEventSegment? CreateTimedSegment(TEventType @event, DateOnly date) {
-        var displayStart = TimeZoneInfo.ConvertTime(@event.EventStart, TimeZone);
-        var displayEnd = TimeZoneInfo.ConvertTime(@event.EventEnd, TimeZone);
-        var startMinute = GetEventStartDate(@event) < date ? 0 : (displayStart.Hour * 60) + displayStart.Minute;
-        var endMinute = GetEventEndDate(@event) > date ? MinutesPerDay : (displayEnd.Hour * 60) + displayEnd.Minute;
-        endMinute = Math.Max(startMinute + DragSnapMinutes, endMinute);
+    private SchedulerEventSegment CreateTimedSegment(EventInfo info, DateOnly date) {
+        var startMinute = info.StartDate < date ? 0 : info.StartMinute;
+        var endMinute = Math.Max(startMinute + DragSnapMinutes, info.EndDate > date ? MinutesPerDay : info.EndMinute);
 
-        return EventOverlaps(@event, date, date)
-            ? new SchedulerEventSegment(@event, date, date) {
-                StartMinute = Math.Clamp(startMinute, 0, MinutesPerDay - 1),
-                EndMinute = Math.Clamp(endMinute, DragSnapMinutes, MinutesPerDay),
-                ColumnStart = 1,
-                ColumnSpan = 1
-            }
-            : null;
+        return new SchedulerEventSegment(info.Event, date, date) {
+            StartMinute = Math.Clamp(startMinute, 0, MinutesPerDay - 1),
+            EndMinute = Math.Clamp(endMinute, DragSnapMinutes, MinutesPerDay),
+            ColumnStart = 1,
+            ColumnSpan = 1,
+            IsMultiDay = info.StartDate != info.EndDate
+        };
     }
 
     private static void AssignLanes(List<SchedulerEventSegment> segments) {
@@ -682,7 +698,47 @@ public partial class NTScheduler<TEventType> where TEventType : TnTEvent {
         }
     }
 
+    // Segments arrive sorted by start minute, so a segment fits a lane when that lane's last (and latest-ending) segment ends at or before it starts.
     private static void AssignTimedLanes(List<SchedulerEventSegment> segments) {
+        // The sweep relies on positive-length segments; zero-length ones (possible when DragSnapMinutes <= 0) keep the original strict-overlap layout.
+        if (segments.Exists(segment => segment.EndMinute <= segment.StartMinute)) {
+            AssignTimedLanesPairwise(segments);
+            return;
+        }
+
+        var laneEnds = new List<int>();
+        foreach (var segment in segments) {
+            var lane = laneEnds.FindIndex(end => end <= segment.StartMinute);
+            if (lane < 0) {
+                lane = laneEnds.Count;
+                laneEnds.Add(segment.EndMinute);
+            }
+            else {
+                laneEnds[lane] = segment.EndMinute;
+            }
+
+            segment.Lane = lane;
+        }
+
+        // Every group of transitively overlapping segments shares the lane count of its widest member.
+        for (var start = 0; start < segments.Count;) {
+            var clusterEnd = segments[start].EndMinute;
+            var maxLane = segments[start].Lane;
+            var end = start + 1;
+            for (; end < segments.Count && segments[end].StartMinute < clusterEnd; end++) {
+                clusterEnd = Math.Max(clusterEnd, segments[end].EndMinute);
+                maxLane = Math.Max(maxLane, segments[end].Lane);
+            }
+
+            for (var i = start; i < end; i++) {
+                segments[i].LaneCount = maxLane + 1;
+            }
+
+            start = end;
+        }
+    }
+
+    private static void AssignTimedLanesPairwise(List<SchedulerEventSegment> segments) {
         var lanes = new List<List<SchedulerEventSegment>>();
         foreach (var segment in segments) {
             var lane = lanes.FindIndex(existingSegments => existingSegments.All(existing => !TimedEventsOverlap(existing, segment)));
@@ -734,8 +790,6 @@ public partial class NTScheduler<TEventType> where TEventType : TnTEvent {
             : CreateDateTimeOffset(date, TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(clampedMinute)));
     }
 
-    private bool EventOverlaps(TEventType @event, DateOnly startDate, DateOnly endDate) => GetEventStartDate(@event) <= endDate && GetEventEndDate(@event) >= startDate;
-
     private string FormatDate(DateOnly date) => date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
 
     private IEnumerable<string> GetWeekdayLabels() {
@@ -786,15 +840,6 @@ public partial class NTScheduler<TEventType> where TEventType : TnTEvent {
         .AddClass("today", date == today)
         .Build();
 
-    private DateOnly GetEventEndDate(TEventType @event) {
-        var displayEnd = TimeZoneInfo.ConvertTime(@event.EventEnd, TimeZone);
-        var displayStart = TimeZoneInfo.ConvertTime(@event.EventStart, TimeZone);
-        var endDate = DateOnly.FromDateTime(displayEnd.DateTime);
-        return displayEnd.TimeOfDay == TimeSpan.Zero && displayEnd > displayStart ? endDate.AddDays(-1) : endDate;
-    }
-
-    private DateOnly GetEventStartDate(TEventType @event) => DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(@event.EventStart, TimeZone).DateTime);
-
     private int GetClickedSlotMinute(int hourStartMinute, double offsetY) {
         var snapMinutes = Math.Clamp(DragSnapMinutes, 1, MinutesPerDay);
         var minuteWithinHour = Math.Clamp(offsetY, 0, Math.Max(HourRowHeight, 1)) / Math.Max(HourRowHeight, 1) * 60;
@@ -804,8 +849,6 @@ public partial class NTScheduler<TEventType> where TEventType : TnTEvent {
     }
 
     private Task GoToTodayAsync() => SetDateAsync(DateTimeOffset.Now);
-
-    private bool IsMultiDay(TEventType @event) => GetEventStartDate(@event) != GetEventEndDate(@event);
 
     private Task InvokeSlotClickedAsync(DateOnly date, int? minute) {
         if (!SlotClicked.HasDelegate) {
@@ -849,6 +892,8 @@ public partial class NTScheduler<TEventType> where TEventType : TnTEvent {
 
     private DateOnly ToDisplayDate(DateTimeOffset date) => DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(date, TimeZone).DateTime);
 
+    private readonly record struct EventInfo(TEventType Event, DateOnly StartDate, DateOnly EndDate, int StartMinute, int EndMinute);
+
     private sealed class SchedulerEventSegment {
         public SchedulerEventSegment(TEventType @event, DateOnly startDate, DateOnly endDate) {
             Event = @event;
@@ -860,6 +905,7 @@ public partial class NTScheduler<TEventType> where TEventType : TnTEvent {
         public int ColumnStart { get; init; } = 1;
         public bool ContinuesAfter { get; init; }
         public bool ContinuesBefore { get; init; }
+        public bool IsMultiDay { get; init; }
         public DateOnly EndDate { get; }
         public int EndMinute { get; init; }
         public TEventType Event { get; }

@@ -13,8 +13,8 @@
          lang="@ElementLang"
          data-nt-scheduler="true"
          data-nt-scheduler-snap-minutes="@DragSnapMinutes"
-         data-nt-scheduler-drag-enabled="@AllowDraggingEvents.ToString().ToLowerInvariant()"
-         data-nt-scheduler-range-select-enabled="@SlotSelected.HasDelegate.ToString().ToLowerInvariant()"
+         data-nt-scheduler-drag-enabled="@(AllowDraggingEvents ? "true" : "false")"
+         data-nt-scheduler-range-select-enabled="@(SlotSelected.HasDelegate ? "true" : "false")"
          aria-label="@AriaLabel">
     @if (!HideDateControls) {
         <header class="toolbar">

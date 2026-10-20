@@ -32,6 +32,7 @@ interface SchedulerSelection {
 
 interface SchedulerDrag {
     affectedEventStyles: Map<HTMLElement, string | null>;
+    candidateMinutes: Map<HTMLElement, readonly [number, number]>;
     currentDrop: SchedulerDrop | null;
     currentResize: SchedulerResize | null;
     currentTarget: HTMLElement | null;
@@ -306,6 +307,65 @@ interface TimedLayoutEvent {
     startMinute: number;
 }
 
+// Events are processed in start order, so an event fits a lane once that lane's last (and latest-ending) event has ended.
+function assignTimedLanes(events: TimedLayoutEvent[]): void {
+    const orderedEvents = [...events].sort((first, second) => first.startMinute - second.startMinute || (second.endMinute - second.startMinute) - (first.endMinute - first.startMinute));
+    // The sweep relies on positive-length events; zero-length or invalid ones keep the original strict-overlap layout.
+    if (orderedEvents.some(event => !(event.endMinute > event.startMinute))) {
+        assignTimedLanesPairwise(orderedEvents, events);
+        return;
+    }
+
+    const laneEnds: number[] = [];
+    for (const event of orderedEvents) {
+        let lane = laneEnds.findIndex(end => end <= event.startMinute);
+        if (lane < 0) {
+            lane = laneEnds.length;
+            laneEnds.push(event.endMinute);
+        }
+        else {
+            laneEnds[lane] = event.endMinute;
+        }
+
+        event.lane = lane;
+    }
+
+    // Every run of transitively overlapping events shares the lane count of its widest member.
+    for (let start = 0; start < orderedEvents.length;) {
+        let clusterEnd = orderedEvents[start].endMinute;
+        let maxLane = orderedEvents[start].lane;
+        let end = start + 1;
+        for (; end < orderedEvents.length && orderedEvents[end].startMinute < clusterEnd; end++) {
+            clusterEnd = Math.max(clusterEnd, orderedEvents[end].endMinute);
+            maxLane = Math.max(maxLane, orderedEvents[end].lane);
+        }
+
+        for (let index = start; index < end; index++) {
+            orderedEvents[index].laneCount = maxLane + 1;
+        }
+
+        start = end;
+    }
+}
+
+function assignTimedLanesPairwise(orderedEvents: TimedLayoutEvent[], events: TimedLayoutEvent[]): void {
+    const lanes: TimedLayoutEvent[][] = [];
+    for (const event of orderedEvents) {
+        let lane = lanes.findIndex(existingEvents => existingEvents.every(existing => !eventsOverlap(existing, event)));
+        if (lane < 0) {
+            lane = lanes.length;
+            lanes.push([]);
+        }
+
+        event.lane = lane;
+        lanes[lane].push(event);
+    }
+
+    for (const event of orderedEvents) {
+        event.laneCount = getLaneCount(event, events);
+    }
+}
+
 function eventsOverlap(first: TimedLayoutEvent, second: TimedLayoutEvent): boolean {
     return first.startMinute < second.endMinute && second.startMinute < first.endMinute;
 }
@@ -328,25 +388,6 @@ function getLaneCount(event: TimedLayoutEvent, events: TimedLayoutEvent[]): numb
     return Math.max(...Array.from(connectedEvents, item => item.lane)) + 1;
 }
 
-function assignTimedLanes(events: TimedLayoutEvent[]): void {
-    const lanes: TimedLayoutEvent[][] = [];
-    const orderedEvents = [...events].sort((first, second) => first.startMinute - second.startMinute || (second.endMinute - second.startMinute) - (first.endMinute - first.startMinute));
-    for (const event of orderedEvents) {
-        let lane = lanes.findIndex(existingEvents => existingEvents.every(existing => !eventsOverlap(existing, event)));
-        if (lane < 0) {
-            lane = lanes.length;
-            lanes.push([]);
-        }
-
-        event.lane = lane;
-        lanes[lane].push(event);
-    }
-
-    for (const event of orderedEvents) {
-        event.laneCount = getLaneCount(event, events);
-    }
-}
-
 function applyEventLaneStyle(drag: SchedulerDrag, event: TimedLayoutEvent): void {
     if (event.element !== drag.preview) {
         rememberEventStyle(drag, event.element);
@@ -366,9 +407,15 @@ function applyTimedPreviewLayout(drag: SchedulerDrag, target: HTMLElement, start
     const events: TimedLayoutEvent[] = Array.from(target.querySelectorAll<HTMLElement>('.event-timed'))
         .filter(candidate => candidate !== drag.eventElement && candidate.dataset.ntSchedulerEventId !== drag.eventId)
         .map(candidate => {
-            const candidateStart = getCssNumber(candidate, '--event-start-minute') ?? 0;
-            const candidateEnd = getCssNumber(candidate, '--event-end-minute') ?? candidateStart + 1;
-            return { element: candidate, endMinute: candidateEnd, lane: 0, laneCount: 1, startMinute: candidateStart };
+            // The start and end minutes never change during a drag, so read them from computed style once per event.
+            let minutes = drag.candidateMinutes.get(candidate);
+            if (!minutes) {
+                const candidateStart = getCssNumber(candidate, '--event-start-minute') ?? 0;
+                minutes = [candidateStart, getCssNumber(candidate, '--event-end-minute') ?? candidateStart + 1];
+                drag.candidateMinutes.set(candidate, minutes);
+            }
+
+            return { element: candidate, endMinute: minutes[1], lane: 0, laneCount: 1, startMinute: minutes[0] };
         });
 
     const previewEvent: TimedLayoutEvent = { element: preview, endMinute, lane: 0, laneCount: 1, startMinute };
@@ -575,6 +622,7 @@ function attachScheduler(scheduler: SchedulerElement, dotNetRef: Maybe<DotNetSch
                 const rect = eventElement.getBoundingClientRect();
                 state.activeDrag = {
                     affectedEventStyles: new Map<HTMLElement, string | null>(),
+                    candidateMinutes: new Map<HTMLElement, readonly [number, number]>(),
                     currentDrop: null,
                     currentResize: null,
                     currentTarget: null,
