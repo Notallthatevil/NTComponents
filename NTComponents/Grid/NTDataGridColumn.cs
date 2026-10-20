@@ -93,6 +93,8 @@ public abstract class NTDataGridColumn<TItem> : ComponentBase, IDisposable where
 
     internal string HeaderCellClass { get; private set; } = "nt-data-grid-header-cell";
 
+    internal string? ColumnStyle { get; private set; }
+
     internal string HeaderTitle => !string.IsNullOrWhiteSpace(Title) ? Title! : DefaultTitle;
 
     internal abstract string DefaultTitle { get; }
@@ -104,6 +106,8 @@ public abstract class NTDataGridColumn<TItem> : ComponentBase, IDisposable where
     internal virtual object? GetSortValue(TItem item) => null;
 
     internal virtual IOrderedQueryable<TItem>? ApplyQueryableSort(IQueryable<TItem> source, SortDirection direction, bool thenBy) => null;
+
+    internal virtual IOrderedEnumerable<TItem>? ApplyEnumerableSort(IEnumerable<TItem> source, SortDirection direction, bool thenBy) => null;
 
     internal virtual IOrderedEnumerable<TItem>? ApplyLocalSort(IEnumerable<TItem> source, SortDirection direction, bool thenBy) => null;
 
@@ -212,7 +216,12 @@ public abstract class NTDataGridColumn<TItem> : ComponentBase, IDisposable where
         if (CanSort) {
             HeaderCellClass += " nt-data-grid-header-cell-sortable";
         }
+
+        var style = string.Join(" ", new[] { Declaration("width", Width), Declaration("min-width", MinWidth), Declaration("max-width", MaxWidth) }.Where(declaration => declaration is not null));
+        ColumnStyle = style.Length == 0 ? null : style;
     }
+
+    private static string? Declaration(string propertyName, string? value) => string.IsNullOrWhiteSpace(value) ? null : $"{propertyName}: {value};";
 
     private static string AddTextAlignment(string className, TextAlign? textAlign) => textAlign is null ? className : $"{className} nt-data-grid-align-{textAlign.ToCssString()}";
 

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.AspNetCore.Components.Web.Virtualization;
@@ -78,6 +79,7 @@ public partial class NTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessedM
     private string? _lastNavigationManagerUri;
     private string? _previousDataState;
     private string? _style;
+    private string? _detailStyle;
     private bool _hasDataStateSnapshot;
     private bool _disposed;
     private bool _refreshQueued;
@@ -133,7 +135,9 @@ public partial class NTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessedM
     public string RowDetailMaxHeight { get; set; } = "320px";
 
     /// <summary>Returns whether the row is expanded. Supply a stable RowKey to preserve expansion across provider refreshes.</summary>
-    public bool IsRowExpanded(TItem item) => RowDetailTemplate is not null && (_allRowsExpanded != _expansionExceptions.Contains(GetRowIdentity(item)));
+    public bool IsRowExpanded(TItem item) => RowDetailTemplate is not null && IsIdentityExpanded(GetRowIdentity(item));
+
+    private bool IsIdentityExpanded(object identity) => _allRowsExpanded != _expansionExceptions.Contains(identity);
 
     /// <summary>Expands or collapses a row. Can be called from OnRowClicked.</summary>
     public Task SetRowExpandedAsync(TItem item, bool expanded) => InvokeAsync(() => {
@@ -572,6 +576,7 @@ public partial class NTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessedM
         }
         ValidateConfiguration();
         CaptureRootAttributes();
+        _detailStyle = RowDetailTemplate is null ? null : $"max-height: {RowDetailMaxHeight};";
         _currentPageSize = PageSize > 0 ? PageSize : 10;
         _currentPageIndex = Math.Max(0, PageIndex);
         ApplyQueryState();
@@ -795,6 +800,17 @@ public partial class NTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessedM
             return new NTItemsProviderResult<TItem>([], 0);
         }
 
+        // In-memory queryables would recompile an expression tree for every Count and enumeration, so run the same operators over the underlying sequence.
+        if (Items.Provider is EnumerableQuery<TItem> && TryApplyEnumerableSorts(Items, out var sorted)) {
+            var totalCount = sorted.Count();
+            var page = sorted.Skip(Math.Max(0, startIndex));
+            if (count is > 0) {
+                page = page.Take(count.Value);
+            }
+
+            return new NTItemsProviderResult<TItem>(page.ToArray(), totalCount);
+        }
+
         if (TryApplyQueryableSorts(Items, out var query)) {
             var totalCount = query.Count();
             var page = query.Skip(Math.Max(0, startIndex));
@@ -812,6 +828,20 @@ public partial class NTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessedM
             ? localItems
             : localItems.AsSpan(localStartIndex, localCount).ToArray();
         return new NTItemsProviderResult<TItem>(localPage, localItems.Length);
+    }
+
+    private bool TryApplyEnumerableSorts(IEnumerable<TItem> source, out IEnumerable<TItem> result) {
+        result = source;
+        IOrderedEnumerable<TItem>? ordered = null;
+        foreach (var sort in GetSortPlan().ResolvedSorts) {
+            ordered = sort.Column.ApplyEnumerableSort(ordered ?? source, sort.Direction, ordered is not null);
+            if (ordered is null) {
+                return false;
+            }
+        }
+
+        result = ordered ?? source;
+        return true;
     }
 
     private bool TryApplyQueryableSorts(IQueryable<TItem> source, out IQueryable<TItem> query) {
@@ -1002,13 +1032,13 @@ public partial class NTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessedM
         var uriState = GetUriState();
         var href = uriState.PageHrefPrefix + (pageIndex + 1).ToString(CultureInfo.InvariantCulture);
         if (!string.IsNullOrWhiteSpace(sortValue)) {
-            href += $"&{uriState.SortParameter}={Uri.EscapeDataString(sortValue)}";
+            href += $"&{Uri.EscapeDataString(uriState.SortName)}={Uri.EscapeDataString(sortValue)}";
         }
 
         if (PersistPageSizeInQuery) {
-            href += $"&{Uri.EscapeDataString(GetQueryName("pageSize"))}={(pageSize ?? CurrentPageSize).ToString(CultureInfo.InvariantCulture)}";
+            href += $"&{Uri.EscapeDataString(uriState.PageSizeName)}={(pageSize ?? CurrentPageSize).ToString(CultureInfo.InvariantCulture)}";
         }
-        return href + _navManager.ToAbsoluteUri(GetCurrentUri()).Fragment;
+        return href + uriState.Fragment;
     }
 
     private UriState GetUriState() {
@@ -1035,7 +1065,7 @@ public partial class NTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessedM
             + Uri.EscapeDataString(pageParameter)
             + "=";
 
-        _uriState = new UriState(currentUri, QueryParameterPrefix, pageHrefPrefix, Uri.EscapeDataString(sortParameter), query);
+        _uriState = new UriState(currentUri, QueryParameterPrefix, pageHrefPrefix, pageParameter, pageSizeParameter, sortParameter, uri.Fragment, query);
         return _uriState;
     }
 
@@ -1102,16 +1132,17 @@ public partial class NTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessedM
     }
 
     private void ApplyQueryState() {
-        var query = GetUriState().Query;
-        if (query.TryGetValue(GetQueryName("page"), out var pageValue) && int.TryParse(pageValue, out var pageNumber)) {
+        var uriState = GetUriState();
+        var query = uriState.Query;
+        if (query.TryGetValue(uriState.PageName, out var pageValue) && int.TryParse(pageValue, out var pageNumber)) {
             _currentPageIndex = Math.Max(1, pageNumber) - 1;
         }
 
-        if (PersistPageSizeInQuery && query.TryGetValue(GetQueryName("pageSize"), out var pageSizeValue) && int.TryParse(pageSizeValue, out var pageSize) && pageSize > 0) {
+        if (PersistPageSizeInQuery && query.TryGetValue(uriState.PageSizeName, out var pageSizeValue) && int.TryParse(pageSizeValue, out var pageSize) && pageSize > 0) {
             _currentPageSize = pageSize;
         }
 
-        if (query.TryGetValue(GetQueryName("sort"), out var sortValue)) {
+        if (query.TryGetValue(uriState.SortName, out var sortValue)) {
             SetSorts(NormalizeSorts(ParseSorts(sortValue)));
             _sortsInitialized = true;
         }
@@ -1166,27 +1197,14 @@ public partial class NTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessedM
 
     private IReadOnlyList<NTSortDescriptor> NormalizeSorts(IEnumerable<NTSortDescriptor> sorts) => AllowMultiSort ? sorts.ToArray() : sorts.Take(1).ToArray();
 
-    private static string SerializeSorts(IEnumerable<NTSortDescriptor> sorts) =>
+    private static string SerializeSorts(IReadOnlyList<NTSortDescriptor> sorts) => sorts.Count == 0 ? string.Empty :
         string.Join(",", sorts.Select(sort => $"{sort.PropertyName}:{(sort.Direction == SortDirection.Descending ? "desc" : "asc")}"));
 
-    private string? GetColumnStyle(NTDataGridColumn<TItem> column) {
-        var declarations = new List<string>();
-        AddDeclaration(declarations, "width", column.Width);
-        AddDeclaration(declarations, "min-width", column.MinWidth);
-        AddDeclaration(declarations, "max-width", column.MaxWidth);
-        return declarations.Count == 0 ? null : string.Join(" ", declarations);
-    }
-
-    private static void AddDeclaration(List<string> declarations, string propertyName, string? value) {
-        if (!string.IsNullOrWhiteSpace(value)) {
-            declarations.Add($"{propertyName}: {value};");
-        }
-    }
-
-    private static string GetSortIndicatorClass(SortDirection sortDirection) => CssClassBuilder.Create("nt-data-grid-sort-indicator")
-        .AddClass("nt-data-grid-sort-indicator-ascending", sortDirection == SortDirection.Ascending)
-        .AddClass("nt-data-grid-sort-indicator-descending", sortDirection == SortDirection.Descending)
-        .Build();
+    private static string GetSortIndicatorClass(SortDirection sortDirection) => sortDirection switch {
+        SortDirection.Ascending => "nt-data-grid-sort-indicator nt-data-grid-sort-indicator-ascending",
+        SortDirection.Descending => "nt-data-grid-sort-indicator nt-data-grid-sort-indicator-descending",
+        _ => "nt-data-grid-sort-indicator"
+    };
 
     private static string GetSortIndicator() => "arrow_drop_down";
 
@@ -1227,8 +1245,8 @@ public partial class NTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessedM
         return _resolvedPageSizeOptions;
     }
 
-    private string GetRowClass(TItem item) {
-        if (!HasStripedRows || !_rowIndices.TryGetValue(GetRowIdentity(item), out var rowIndex)) {
+    private string GetRowClass(bool hasIndex, int rowIndex) {
+        if (!HasStripedRows || !hasIndex) {
             return HasRowClickCallback ? _clickableRowClass : _rowClass;
         }
 
@@ -1300,47 +1318,54 @@ public partial class NTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessedM
         return changed;
     }
 
-    private string GetDataState() => string.Join("|", CurrentPageIndex, CurrentPageSize, ShowPagination, Virtualize, AllowMultiSort, GetCurrentUri(), SerializeSorts(_sorts));
+    private string GetDataState() => $"{CurrentPageIndex}|{CurrentPageSize}|{ShowPagination}|{Virtualize}|{AllowMultiSort}|{GetCurrentUri()}|{SerializeSorts(_sorts)}";
 
     private Task InvokeRowClickedAsync(TItem item) => HasRowClickCallback ? OnRowClicked.InvokeAsync(item) : Task.CompletedTask;
 
     private Task InvokeRowClickedFromKeyboardAsync(TItem item, KeyboardEventArgs args) =>
         args.Key is "Enter" or " " or "Spacebar" ? InvokeRowClickedAsync(item) : Task.CompletedTask;
 
-    private RenderFragment RenderRow(TItem item) => builder => {
+    private RenderFragment RenderRowFragment(TItem item) => builder => RenderRow(builder, item);
+
+    private void RenderRow(RenderTreeBuilder builder, TItem item) {
+        var key = RowKey?.Invoke(item) ?? item;
+        var identity = key ?? DBNull.Value;
+        var hasIndex = _rowIndices.TryGetValue(identity, out var index);
+        var expanded = RowDetailTemplate is not null && IsIdentityExpanded(identity);
+        builder.OpenRegion(0);
         builder.OpenElement(0, "tr");
-        builder.SetKey(RowKey?.Invoke(item) ?? item);
-        builder.AddAttribute(1, "class", GetRowClass(item));
+        builder.SetKey(key);
+        builder.AddAttribute(1, "class", GetRowClass(hasIndex, index));
         if (HasRowClickCallback) {
             builder.AddAttribute(2, "tabindex", "0");
             builder.AddAttribute(3, "onclick", EventCallback.Factory.Create<MouseEventArgs>(this, () => InvokeRowClickedAsync(item)));
             builder.AddAttribute(4, "onkeydown", EventCallback.Factory.Create<KeyboardEventArgs>(this, args => InvokeRowClickedFromKeyboardAsync(item, args)));
         }
 
-        var hasIndex = _rowIndices.TryGetValue(GetRowIdentity(item), out var index);
         builder.AddAttribute(5, "data-nt-virtualize-index", Virtualize && MeasureVirtualizedRows && hasIndex ? index : (int?)null);
         builder.AddAttribute(6, "aria-rowindex", RowDetailTemplate is null && hasIndex ? (long)index + 2 : (long?)null);
+        // The expansion cell and detail row stay Razor templates (NTDataGrid.razor) so they carry the CSS-isolation scope attribute.
         if (RowDetailTemplate is not null) {
-            builder.AddContent(7, RenderExpansionCell(item));
+            builder.AddContent(7, RenderExpansionCell(item, expanded));
         }
         for (var i = 0; i < _columns.Count; i++) {
             var column = _columns[i];
-            builder.OpenElement(10, "td");
-            builder.AddAttribute(11, "class", column.BodyCellClass);
-            builder.OpenElement(12, "div");
-            builder.AddAttribute(13, "class", "nt-data-grid-cell-content");
-            builder.OpenRegion(14);
+            builder.OpenElement(20, "td");
+            builder.AddAttribute(21, "class", column.BodyCellClass);
+            builder.OpenElement(22, "div");
+            builder.AddAttribute(23, "class", "nt-data-grid-cell-content");
+            builder.OpenRegion(24);
             column.RenderCell(builder, item);
             builder.CloseRegion();
             builder.CloseElement();
             builder.CloseElement();
         }
         builder.CloseElement();
-        if (IsRowExpanded(item)) {
-            builder.AddContent(20, RenderRowDetail(item));
+        if (expanded) {
+            builder.AddContent(29, RenderRowDetail(item, identity, Virtualize && hasIndex ? index : null));
         }
-    };
-
+        builder.CloseRegion();
+    }
     private RenderFragment RenderEmptyRow() => builder => {
         builder.OpenElement(0, "tr");
         builder.AddAttribute(1, "class", _emptyRowClass);
@@ -1389,7 +1414,7 @@ public partial class NTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessedM
 
     private sealed record SortPlan(ResolvedSort[] ResolvedSorts, IReadOnlyList<NTSortDescriptor> ProviderDescriptors);
 
-    private sealed record UriState(string SourceUri, string? GridQueryPrefix, string PageHrefPrefix, string SortParameter, IReadOnlyDictionary<string, string> Query);
+    private sealed record UriState(string SourceUri, string? GridQueryPrefix, string PageHrefPrefix, string PageName, string PageSizeName, string SortName, string Fragment, IReadOnlyDictionary<string, string> Query);
 
     private sealed class NTDataGridObjectComparer : IComparer<object?> {
         public static readonly NTDataGridObjectComparer Instance = new();

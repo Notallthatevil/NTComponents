@@ -4,6 +4,7 @@ using NTComponents.CodeDocumentation;
 using NTComponents.Ext;
 using System.Globalization;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Text.RegularExpressions;
 namespace NTComponents;
 
@@ -17,6 +18,7 @@ namespace NTComponents;
 public sealed class NTPropertyColumn<TItem, TValue> : NTDataGridColumn<TItem> where TItem : class {
     private Func<TItem, TValue>? _accessor;
     private string? _accessorExpressionText;
+    private MemberInfo? _accessorMember;
     private string? _previousFormat;
     private string? _previousPropertyExpressionText;
     private Expression<Func<TItem, TValue>>? _propertyMetadataSource;
@@ -56,10 +58,16 @@ public sealed class NTPropertyColumn<TItem, TValue> : NTDataGridColumn<TItem> wh
             }
         }
 
-        var expressionText = Property?.ToString();
-        if (_accessor is null || !string.Equals(_accessorExpressionText, expressionText, StringComparison.Ordinal)) {
-            _accessor = Property?.Compile();
-            _accessorExpressionText = expressionText;
+        // A fresh expression instance usually arrives on every parent render, so skip printing it when it is the same plain member access.
+        var member = Property?.Body is MemberExpression { Expression: ParameterExpression } memberExpression ? memberExpression.Member : null;
+        if (_accessor is null || member is null || !ReferenceEquals(member, _accessorMember)) {
+            var expressionText = Property?.ToString();
+            if (_accessor is null || !string.Equals(_accessorExpressionText, expressionText, StringComparison.Ordinal)) {
+                _accessor = Property?.Compile();
+                _accessorExpressionText = expressionText;
+            }
+
+            _accessorMember = member;
         }
 
         base.OnParametersSet();
@@ -81,6 +89,22 @@ public sealed class NTPropertyColumn<TItem, TValue> : NTDataGridColumn<TItem> wh
         return direction == SortDirection.Descending
             ? source.OrderByDescending(Property)
             : source.OrderBy(Property);
+    }
+
+    internal override IOrderedEnumerable<TItem>? ApplyEnumerableSort(IEnumerable<TItem> source, SortDirection direction, bool thenBy) {
+        if (_accessor is null) {
+            return null;
+        }
+
+        if (thenBy && source is IOrderedEnumerable<TItem> orderedSource) {
+            return direction == SortDirection.Descending
+                ? orderedSource.ThenByDescending(_accessor)
+                : orderedSource.ThenBy(_accessor);
+        }
+
+        return direction == SortDirection.Descending
+            ? source.OrderByDescending(_accessor)
+            : source.OrderBy(_accessor);
     }
 
     /// <inheritdoc />

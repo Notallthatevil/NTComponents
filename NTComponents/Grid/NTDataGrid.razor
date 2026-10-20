@@ -25,7 +25,7 @@
                         <col class="nt-data-grid-expansion-column" />
                     }
                     @foreach (var column in _columns) {
-                        <col style="@GetColumnStyle(column)" />
+                        <col style="@column.ColumnStyle" />
                     }
                 </colgroup>
             }
@@ -114,16 +114,10 @@
                                   RevalidateCachedItems="VirtualizationRevalidateCachedItems"
                                   MaxCachedItemCount="VirtualizationMaxCachedItemCount"
                                   ScrollRestorationKey="@VirtualizedScrollRestorationKey"
-                                  SpacerElement="tr">
-                        <SpacerTemplate>
-                            @RenderSpacerCell(context)
-                        </SpacerTemplate>
-                        <ItemTemplate>
-                            @RenderRow(context)
-                        </ItemTemplate>
-                        <LoadingTemplate>
-                            @RenderLoadingRow(context)
-                        </LoadingTemplate>
+                                  SpacerElement="tr"
+                                  SpacerTemplate="RenderSpacerCell"
+                                  ItemTemplate="RenderRowFragment"
+                                  LoadingTemplate="RenderLoadingRow">
                         <EmptyTemplate>
                             @RenderEmptyRow()
                         </EmptyTemplate>
@@ -131,7 +125,7 @@
                 }
                 else if (_loadedItems.Count > 0) {
                     @foreach (var item in _loadedItems) {
-                        @RenderRow(item)
+                        RenderRow(__builder, item);
                     }
                 }
                 else {
@@ -166,7 +160,7 @@
                    href="@BuildPageHref(0)"
                    title="First page"
                    aria-label="First page"
-                   aria-disabled="@((!CanGoToPreviousPage).ToString().ToLowerInvariant())"
+                   aria-disabled="@(CanGoToPreviousPage ? "false" : "true")"
                    @onclick="() => GoToPageAsync(0)"
                    @onclick:preventDefault="true">
                     <MaterialIcon Icon="@MaterialIcon.FirstPage" Size="IconSize.Small" />
@@ -175,7 +169,7 @@
                    href="@BuildPageHref(CurrentPageIndex - 1)"
                    title="Previous page"
                    aria-label="Previous page"
-                   aria-disabled="@((!CanGoToPreviousPage).ToString().ToLowerInvariant())"
+                   aria-disabled="@(CanGoToPreviousPage ? "false" : "true")"
                    @onclick="() => GoToPageAsync(CurrentPageIndex - 1)"
                    @onclick:preventDefault="true">
                     <MaterialIcon Icon="@MaterialIcon.ChevronLeft" Size="IconSize.Small" />
@@ -184,12 +178,13 @@
                 @if (_totalItemCount > 0) {
                     @foreach (var pageIndex in GetVisiblePageIndices()) {
                         var isCurrentPage = CurrentPageIndex == pageIndex;
+                        var pageLabel = $"Page {pageIndex + 1}";
                         <a class="@GetPaginationButtonClass(false, isCurrentPage)"
                            href="@BuildPageHref(pageIndex)"
-                           title="@($"Page {pageIndex + 1}")"
-                           aria-label="@($"Page {pageIndex + 1}")"
+                           title="@pageLabel"
+                           aria-label="@pageLabel"
                            aria-current="@(isCurrentPage ? "page" : null)"
-                           aria-disabled="@(isCurrentPage.ToString().ToLowerInvariant())"
+                           aria-disabled="@(isCurrentPage ? "true" : "false")"
                            @onclick="() => GoToPageAsync(pageIndex)"
                            @onclick:preventDefault="true">@(pageIndex + 1)</a>
                     }
@@ -199,7 +194,7 @@
                    href="@BuildPageHref(CurrentPageIndex + 1)"
                    title="Next page"
                    aria-label="Next page"
-                   aria-disabled="@((!CanGoToNextPage).ToString().ToLowerInvariant())"
+                   aria-disabled="@(CanGoToNextPage ? "false" : "true")"
                    @onclick="() => GoToPageAsync(CurrentPageIndex + 1)"
                    @onclick:preventDefault="true">
                     <MaterialIcon Icon="@MaterialIcon.ChevronRight" Size="IconSize.Small" />
@@ -208,7 +203,7 @@
                    href="@BuildPageHref(PageCount - 1)"
                    title="Last page"
                    aria-label="Last page"
-                   aria-disabled="@((!CanGoToNextPage).ToString().ToLowerInvariant())"
+                   aria-disabled="@(CanGoToNextPage ? "false" : "true")"
                    @onclick="() => GoToPageAsync(PageCount - 1)"
                    @onclick:preventDefault="true">
                     <MaterialIcon Icon="@MaterialIcon.LastPage" Size="IconSize.Small" />
@@ -219,16 +214,16 @@
 </div>
 
 @code {
-    private RenderFragment RenderExpansionCell(TItem item) => @<td class="nt-data-grid-cell nt-data-grid-expansion-cell" @onclick:stopPropagation="true" @onkeydown:stopPropagation="true">
-        <NTButton Label="@(IsRowExpanded(item) ? CollapseRowText : ExpandRowText)" Variant="NTButtonVariant.Text"
-                  Disabled="@(!RendererInfo.IsInteractive)" aria-expanded="@(IsRowExpanded(item) ? "true" : "false")"
+    // Kept as Razor templates (not builder code) so the rendered elements get this component's CSS-isolation scope attribute.
+    private RenderFragment RenderExpansionCell(TItem item, bool expanded) => @<td class="nt-data-grid-cell nt-data-grid-expansion-cell" @onclick:stopPropagation="true" @onkeydown:stopPropagation="true">
+        <NTButton Label="@(expanded ? CollapseRowText : ExpandRowText)" Variant="NTButtonVariant.Text"
+                  Disabled="@(!RendererInfo.IsInteractive)" aria-expanded="@(expanded ? "true" : "false")"
                   OnClickCallback="@(() => ToggleRowExpandedAsync(item))" />
     </td>;
 
-    private RenderFragment RenderRowDetail(TItem item) => @<tr @key="GetRowIdentity(item)" class="nt-data-grid-detail-row"
-        data-nt-virtualize-index="@(Virtualize && _rowIndices.TryGetValue(GetRowIdentity(item), out var index) ? index : (int?)null)">
+    private RenderFragment RenderRowDetail(TItem item, object identity, int? virtualizeIndex) => @<tr @key="identity" class="nt-data-grid-detail-row" data-nt-virtualize-index="@virtualizeIndex">
         <td colspan="@VisibleColumnCount">
-            <div class="nt-data-grid-detail-scroll" style="max-height: @RowDetailMaxHeight;" role="region" aria-label="Row details" tabindex="0">
+            <div class="nt-data-grid-detail-scroll" style="@_detailStyle" role="region" aria-label="Row details" tabindex="0">
                 @RowDetailTemplate!(item)
             </div>
         </td>
