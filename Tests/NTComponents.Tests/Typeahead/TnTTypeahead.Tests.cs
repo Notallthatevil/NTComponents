@@ -856,8 +856,8 @@ public class TnTTypeahead_Tests : BunitContext {
         input.Input("ap");
         cut.WaitForAssertion(() => cut.FindAll(".tnt-typeahead-list-item").Should().HaveCountGreaterThan(0), TimeSpan.FromSeconds(3));
 
-        // Act - Clear the input
-        input.Input("");
+        // Act - Clear the input; the search re-rendered it, so find it again rather than reuse a stale event handler.
+        cut.Find("input").Input("");
 
         // Assert
         cut.WaitForAssertion(() => cut.FindAll(".tnt-typeahead-content").Should().BeEmpty(), TimeSpan.FromSeconds(3));
