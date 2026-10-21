@@ -8,6 +8,8 @@ async function waitForAnimationFrame(ms = 580) {
   await jest.advanceTimersByTimeAsync(ms);
 }
 
+let moduleInstance = 0;
+
 describe('NTNavigationRail module', () => {
   let module;
   let originalMatchMedia;
@@ -17,7 +19,8 @@ describe('NTNavigationRail module', () => {
     document.body.innerHTML = '';
     window.NTComponents = undefined;
     originalMatchMedia = window.matchMedia;
-    module = await import(moduleUrl('NTComponents/NavRail/NTNavigationRail.razor.js'));
+    // The module keeps expanded state per rail id in a module-level map; load a fresh instance per test so state cannot leak between tests.
+    module = await import(`${moduleUrl('NTComponents/NavRail/NTNavigationRail.razor.js')}?test=${++moduleInstance}`);
   });
 
   afterEach(() => {
