@@ -88,10 +88,10 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
 
         var parseOptions = compilation.SyntaxTrees.FirstOrDefault()?.Options as CSharpParseOptions ?? CSharpParseOptions.Default;
         var context = new DocumentationContext(assembly, ReadXmlDocumentation(documentationText), SourceFacts.Create(additionalTexts, parseOptions, cancellationToken));
-        return new GenerationResult(BuildModel(context, assemblyName, cancellationToken), null);
+        return new GenerationResult(BuildModel(context, assemblyName, GetSharedModelNamespace(compilation), cancellationToken), null);
     }
 
-    private static AssemblyDocumentationModel BuildModel(DocumentationContext context, string assemblyName, CancellationToken cancellationToken) {
+    private static AssemblyDocumentationModel BuildModel(DocumentationContext context, string assemblyName, string? sharedModelNamespace, CancellationToken cancellationToken) {
         var types = ImmutableArray.CreateBuilder<TypeDocumentationModel>();
 
         foreach (var type in EnumerateTypes(context.Assembly.GlobalNamespace)) {
@@ -107,7 +107,7 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
             .ToImmutable()
             .Sort(static (left, right) => string.CompareOrdinal(left.FullName, right.FullName));
 
-        return new AssemblyDocumentationModel(assemblyName, CreateGeneratedNamespace(assemblyName), orderedTypes);
+        return new AssemblyDocumentationModel(assemblyName, CreateGeneratedNamespace(assemblyName), sharedModelNamespace, orderedTypes);
     }
 
     private static TypeDocumentationModel BuildTypeDocumentation(DocumentationContext context, INamedTypeSymbol type, CancellationToken cancellationToken) {
@@ -250,6 +250,44 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         builder.AppendLine();
         builder.AppendLine($"namespace {model.GeneratedNamespace};");
         builder.AppendLine();
+        if (model.SharedModelNamespace is { } sharedNamespace) {
+            builder.AppendLine($"using {sharedNamespace};");
+        }
+        else {
+            AppendModelTypes(builder);
+        }
+        builder.AppendLine();
+        builder.AppendLine("/// <summary>");
+        builder.AppendLine("/// Provides access to generated code documentation for the assembly.");
+        builder.AppendLine("/// </summary>");
+        builder.AppendLine("public static class GeneratedCodeDocumentation {");
+        builder.AppendLine("    /// <summary>");
+        builder.AppendLine("    /// Gets the generated documentation model.");
+        builder.AppendLine("    /// </summary>");
+        builder.AppendLine("    public static CodeDocumentationModel Model { get; } =");
+        builder.AppendLine($"        new CodeDocumentationModel({ToLiteral(model.AssemblyName)}, CreateTypes());");
+        builder.AppendLine();
+        builder.AppendLine("    private static TypeDocumentation[] CreateTypes() => new TypeDocumentation[] {");
+
+        for (var index = 0; index < model.Types.Length; ++index) {
+            builder.AppendLine($"        {GetTypeFactoryMethodName(index)}(),");
+        }
+
+        builder.AppendLine("    };");
+        builder.AppendLine();
+
+        for (var index = 0; index < model.Types.Length; ++index) {
+            AppendTypeFactoryMethod(builder, model.Types[index], index);
+        }
+
+        builder.AppendLine("}");
+        builder.AppendLine();
+        builder.AppendLine("#pragma warning restore CS1591");
+
+        return builder.ToString();
+    }
+
+    private static void AppendModelTypes(StringBuilder builder) {
         builder.AppendLine("/// <summary>");
         builder.AppendLine("/// Represents documentation for a compiled assembly.");
         builder.AppendLine("/// </summary>");
@@ -739,35 +777,6 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         builder.AppendLine("    /// </summary>");
         builder.AppendLine("    public bool IsObsoleteError { get; }");
         builder.AppendLine("}");
-        builder.AppendLine();
-        builder.AppendLine("/// <summary>");
-        builder.AppendLine("/// Provides access to generated code documentation for the assembly.");
-        builder.AppendLine("/// </summary>");
-        builder.AppendLine("public static class GeneratedCodeDocumentation {");
-        builder.AppendLine("    /// <summary>");
-        builder.AppendLine("    /// Gets the generated documentation model.");
-        builder.AppendLine("    /// </summary>");
-        builder.AppendLine("    public static CodeDocumentationModel Model { get; } =");
-        builder.AppendLine($"        new CodeDocumentationModel({ToLiteral(model.AssemblyName)}, CreateTypes());");
-        builder.AppendLine();
-        builder.AppendLine("    private static TypeDocumentation[] CreateTypes() => new TypeDocumentation[] {");
-
-        for (var index = 0; index < model.Types.Length; ++index) {
-            builder.AppendLine($"        {GetTypeFactoryMethodName(index)}(),");
-        }
-
-        builder.AppendLine("    };");
-        builder.AppendLine();
-
-        for (var index = 0; index < model.Types.Length; ++index) {
-            AppendTypeFactoryMethod(builder, model.Types[index], index);
-        }
-
-        builder.AppendLine("}");
-        builder.AppendLine();
-        builder.AppendLine("#pragma warning restore CS1591");
-
-        return builder.ToString();
     }
 
     private static string GetTypeFactoryMethodName(int index) => $"CreateTypeDocumentation{index}";
@@ -865,6 +874,16 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         foreach (var attribute in compilation.Assembly.GetAttributes()) {
             if (string.Equals(attribute.AttributeClass?.ToDisplayString(), FullyQualifiedAttributeName, StringComparison.Ordinal)) {
                 return attribute.ConstructorArguments.FirstOrDefault().Value as string;
+            }
+        }
+
+        return null;
+    }
+
+    private static string? GetSharedModelNamespace(Compilation compilation) {
+        foreach (var attribute in compilation.Assembly.GetAttributes()) {
+            if (string.Equals(attribute.AttributeClass?.ToDisplayString(), FullyQualifiedAttributeName, StringComparison.Ordinal)) {
+                return attribute.NamedArguments.FirstOrDefault(argument => argument.Key == "SharedModelNamespace").Value.Value as string;
             }
         }
 
@@ -1222,14 +1241,21 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
             /// Gets the name of the referenced assembly to document.
             /// </summary>
             public string AssemblyName { get; } = assemblyName;
+
+            /// <summary>
+            /// Gets or sets a namespace that already declares the documentation model types, for example when another documentation
+            /// project in the same app owns them. The generated source then reuses those types instead of declaring its own.
+            /// </summary>
+            public string? SharedModelNamespace { get; init; }
         }
 
         #pragma warning restore CS1591
         """;
 
     private sealed class AssemblyDocumentationModel {
-        public AssemblyDocumentationModel(string assemblyName, string generatedNamespace, ImmutableArray<TypeDocumentationModel> types) {
+        public AssemblyDocumentationModel(string assemblyName, string generatedNamespace, string? sharedModelNamespace, ImmutableArray<TypeDocumentationModel> types) {
             AssemblyName = assemblyName;
+            SharedModelNamespace = sharedModelNamespace;
             GeneratedNamespace = generatedNamespace;
             Types = types;
         }
@@ -1237,6 +1263,8 @@ public sealed class CodeDocumentationGenerator : IIncrementalGenerator {
         public string AssemblyName { get; }
 
         public string GeneratedNamespace { get; }
+
+        public string? SharedModelNamespace { get; }
 
         public ImmutableArray<TypeDocumentationModel> Types { get; }
     }

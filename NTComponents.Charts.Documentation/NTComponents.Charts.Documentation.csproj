@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFrameworks>net10.0;net11.0</TargetFrameworks>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<IsPackable>false</IsPackable>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\NTComponents.Documentation\NTComponents.Documentation.csproj" />
+		<ProjectReference Include="..\Submodules\NTComponents.Charts\NTComponents.Charts\NTComponents.Charts.csproj" />
+		<ProjectReference Include="..\NTComponents.CodeDocumentation.Generator\NTComponents.CodeDocumentation.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<!-- The generator reads facts that only source holds (declaring file, property initializers, constructors) from the library sources. -->
+		<AdditionalFiles Include="..\Submodules\NTComponents.Charts\NTComponents.Charts\**\*.cs;..\Submodules\NTComponents.Charts\NTComponents.Charts\**\*.razor" Exclude="..\Submodules\NTComponents.Charts\NTComponents.Charts\bin\**;..\Submodules\NTComponents.Charts\NTComponents.Charts\obj\**" Visible="false" />
+	</ItemGroup>
+
+	<!-- Doc comments come from the XML documentation file that the referenced library build writes next to its assembly. -->
+	<Target Name="AddNTComponentsChartsXmlDocumentation" AfterTargets="ResolveAssemblyReferences">
+		<ItemGroup>
+			<AdditionalFiles Include="@(ReferenceCopyLocalPaths)" Condition="'%(Filename)%(Extension)' == 'NTComponents.Charts.xml'" />
+		</ItemGroup>
+	</Target>
+
+</Project>
