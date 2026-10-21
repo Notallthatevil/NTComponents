@@ -20,7 +20,7 @@ $nt-tooltip-rich-padding-block: var(--nt-tooltip-rich-padding-block, 12px);
 $nt-tooltip-rich-padding-inline: var(--nt-tooltip-rich-padding-inline, 16px);
 $nt-tooltip-rich-container-color: var(--nt-tooltip-rich-container-color, #{colors.$nt-color-surface-container});
 $nt-tooltip-rich-label-color: var(--nt-tooltip-rich-label-color, #{colors.$nt-color-on-surface-variant});
-$nt-tooltip-rich-container-shape: var(--nt-tooltip-rich-container-shape, #{radius.$nt-corner-radius-small});
+$nt-tooltip-rich-container-shape: var(--nt-tooltip-rich-container-shape, #{radius.$nt-corner-radius-medium});
 $nt-tooltip-rich-max-width: min(var(--nt-tooltip-rich-max-width, 320px), calc(100vw - 16px));
 $nt-tooltip-rich-content-gap: var(--nt-tooltip-rich-content-gap, 4px);
 
