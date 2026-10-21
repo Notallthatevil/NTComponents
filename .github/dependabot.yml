@@ -11,6 +11,8 @@ updates:
       time: "06:00"
       timezone: "America/Denver"
     ignore:
+      # These reach other projects through the library's floors; bumping them adds a pin that breaks the newer frameworks.
+      - dependency-name: "Microsoft.AspNetCore.Components.Authorization"
       - dependency-name: "Microsoft.AspNetCore.Components.WebAssembly"
     exclude-paths:
       # The library pins its published ASP.NET Core dependency floors with VersionOverride, raised only for security
