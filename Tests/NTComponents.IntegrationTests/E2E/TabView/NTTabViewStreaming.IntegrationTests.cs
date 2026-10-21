@@ -27,6 +27,22 @@ public sealed class NTTabViewStreaming_IntegrationTests : IAsyncLifetime {
         await _fixture.Context.AddInitScriptAsync(
             """
             window.__ntTabViewInitial = null;
+            window.__ntTabViewArrival = null;
+
+            // Record the stream and renderer state the moment the tab view reaches the DOM. The styled capture below waits for CSS,
+            // which can arrive after the 500ms stream completes on a loaded machine.
+            const arrivalObserver = new MutationObserver(() => {
+                if (document.querySelector('[data-testid="streamed-tab-view"]') === null) {
+                    return;
+                }
+
+                window.__ntTabViewArrival = {
+                    streamingComplete: document.querySelector('[data-testid="streaming-complete"]') !== null,
+                    interactive: document.querySelector('[data-testid="interactive-renderer"]') !== null
+                };
+                arrivalObserver.disconnect();
+            });
+            arrivalObserver.observe(document, { childList: true, subtree: true });
 
             const captureInitialTabView = () => {
                 if (window.__ntTabViewInitial !== null) {
@@ -47,9 +63,7 @@ public sealed class NTTabViewStreaming_IntegrationTests : IAsyncLifetime {
                     tabCount: header.querySelectorAll('[role="tab"]').length,
                     headerHeight: header.getBoundingClientRect().height,
                     selectedTab: selectedTab?.textContent?.trim() ?? null,
-                    selectedPanelText: selectedPanel?.textContent?.trim() ?? null,
-                    streamingComplete: document.querySelector('[data-testid="streaming-complete"]') !== null,
-                    interactive: document.querySelector('[data-testid="interactive-renderer"]') !== null
+                    selectedPanelText: selectedPanel?.textContent?.trim() ?? null
                 };
             };
 
@@ -57,7 +71,7 @@ public sealed class NTTabViewStreaming_IntegrationTests : IAsyncLifetime {
             """);
 
         await _page.GotoAsync($"{_fixture.ServerAddress}/nt-tab-view-streaming-test", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
-        await _page.WaitForFunctionAsync("window.__ntTabViewInitial !== null", null, new PageWaitForFunctionOptions { Timeout = 5000 });
+        await _page.WaitForFunctionAsync("window.__ntTabViewInitial !== null && window.__ntTabViewArrival !== null", null, new PageWaitForFunctionOptions { Timeout = 5000 });
         var initialTabCount = await _page.EvaluateAsync<int>("window.__ntTabViewInitial.tabCount");
         var initialHeaderHeight = await _page.EvaluateAsync<double>("window.__ntTabViewInitial.headerHeight");
 
@@ -65,8 +79,8 @@ public sealed class NTTabViewStreaming_IntegrationTests : IAsyncLifetime {
         initialHeaderHeight.Should().BeApproximately(37, 0.5);
         (await _page.EvaluateAsync<string?>("window.__ntTabViewInitial.selectedTab")).Should().Be("Diary Notes");
         (await _page.EvaluateAsync<string?>("window.__ntTabViewInitial.selectedPanelText")).Should().Be("Diary notes");
-        (await _page.EvaluateAsync<bool>("window.__ntTabViewInitial.streamingComplete")).Should().BeFalse();
-        (await _page.EvaluateAsync<bool>("window.__ntTabViewInitial.interactive")).Should().BeFalse();
+        (await _page.EvaluateAsync<bool>("window.__ntTabViewArrival.streamingComplete")).Should().BeFalse();
+        (await _page.EvaluateAsync<bool>("window.__ntTabViewArrival.interactive")).Should().BeFalse();
 
         await _page.GetByTestId("streaming-complete").WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 5000 });
         await _page.GetByTestId("interactive-renderer").WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 30000 });
