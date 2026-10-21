@@ -18,6 +18,7 @@
 	<ItemGroup>
 		<ProjectReference Include="..\..\LiveTest\LiveTest\LiveTest.csproj" />
 		<ProjectReference Include="..\..\NTComponents\NTComponents.csproj" />
+		<ProjectReference Include="..\..\Submodules\NTComponents.Charts\NTComponents.Charts\NTComponents.Charts.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
