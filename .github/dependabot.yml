@@ -14,6 +14,8 @@ updates:
       # These reach other projects through the library's floors; bumping them adds a pin that breaks the newer frameworks.
       - dependency-name: "Microsoft.AspNetCore.Components.Authorization"
       - dependency-name: "Microsoft.AspNetCore.Components.WebAssembly"
+      # Must move with the SkiaSharp version in the Charts submodule, which Dependabot does not update here.
+      - dependency-name: "SkiaSharp.NativeAssets.Linux.NoDependencies"
     exclude-paths:
       # The library pins its published ASP.NET Core dependency floors with VersionOverride, raised only for security
       # fixes; submodules own their dependencies.
