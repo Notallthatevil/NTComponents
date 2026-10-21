@@ -62,38 +62,47 @@ jobs:
             project: Tests/NTComponents.Tests/NTComponents.Tests.csproj
             framework: net9.0
             install-playwright: false
+            install-wasm-workloads: true
           - name: ntcomponents-net10
             project: Tests/NTComponents.Tests/NTComponents.Tests.csproj
             framework: net10.0
             install-playwright: false
+            install-wasm-workloads: true
           - name: ntcomponents-net11
             project: Tests/NTComponents.Tests/NTComponents.Tests.csproj
             framework: net11.0
             install-playwright: false
+            install-wasm-workloads: true
           - name: ntcomponents-integration-net9
             project: Tests/NTComponents.IntegrationTests/NTComponents.IntegrationTests.csproj
             framework: net9.0
             install-playwright: true
+            install-wasm-workloads: true
           - name: ntcomponents-integration-net10
             project: Tests/NTComponents.IntegrationTests/NTComponents.IntegrationTests.csproj
             framework: net10.0
             install-playwright: true
+            install-wasm-workloads: true
           - name: ntcomponents-integration-net11
             project: Tests/NTComponents.IntegrationTests/NTComponents.IntegrationTests.csproj
             framework: net11.0
             install-playwright: true
+            install-wasm-workloads: true
           - name: analyzers-net10
             project: Tests/NTComponents.Analyzers.Tests/NTComponents.Analyzers.Tests.csproj
             framework: net10.0
             install-playwright: false
+            install-wasm-workloads: false
           - name: mcp-net10
             project: Tests/NTComponents.MCP.Tests/NTComponents.MCP.Tests.csproj
             framework: net10.0
             install-playwright: false
+            install-wasm-workloads: false
           - name: mcp-integration-net10
             project: Tests/NTComponents.MCP.IntegrationTests/NTComponents.MCP.IntegrationTests.csproj
             framework: net10.0
             install-playwright: false
+            install-wasm-workloads: false
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -115,7 +124,8 @@ jobs:
           node-version: lts/*
 
       - name: Restore WebAssembly workloads
-        if: matrix.install-playwright
+        # Projects that reference NTComponents.Site need wasm-tools to restore, because the Site links SkiaSharp natively.
+        if: matrix.install-wasm-workloads
         run: dotnet workload restore NTComponents.slnx --skip-manifest-update
 
       - name: Restore dependencies
