@@ -1,0 +1,17 @@
+@using NTComponents.Charts
+@using NTComponents.Charts.Core
+@using NTComponents.Charts.Core.Axes
+
+<NTChart TData="Load" style="height: 320px">
+    <NTYAxisOptions TData="Load" TAxisValue="decimal" ValueSelector="@(load => load.Hour)" Title="Hour" LabelFormat="{0:0}:00" />
+    <NTHeatMapSeries Data="_loads" MinColor="NTColor.SurfaceContainerHighest" MaxColor="NTColor.Tertiary" CellPadding="6" XValue="@(load => load.Day)" YValueSelector="@(load => load.Hour)" WeightSelector="@(load => load.Tickets)" />
+    <NTComponents.Charts.Core.NTTooltip TData="Load" />
+</NTChart>
+
+@code {
+    private static readonly string[] _days = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+
+    private readonly Load[] _loads = [.. _days.SelectMany((day, d) => Enumerable.Range(9, 8).Select(hour => new Load(day, hour, 4 + ((d + 2) * hour * 7 % 13) + (hour is >= 10 and <= 12 ? 8 : 0))))];
+
+    private sealed record Load(string Day, decimal Hour, decimal Tickets);
+}

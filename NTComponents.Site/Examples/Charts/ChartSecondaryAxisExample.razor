@@ -1,0 +1,22 @@
+@using NTComponents.Charts
+@using NTComponents.Charts.Core
+@using NTComponents.Charts.Core.Axes
+
+<NTChart TData="Sale" style="height: 320px">
+    <NTXAxisOptions TData="Sale" TAxisType="string" ValueSelector="@(sale => sale.Month)" />
+    <NTYAxisOptions TData="Sale" TAxisValue="decimal" ValueSelector="@(sale => sale.Units)" Title="Units" />
+    <NTYAxisOptions TData="Sale" TAxisValue="decimal" ValueSelector="@(sale => sale.Revenue)" Title="Revenue ($)" ShowGridLines="false" />
+    <NTBarSeries Data="_sales" Title="Units" XValue="@(sale => sale.Month)" YValueSelector="@(sale => sale.Units)" />
+    <NTLineSeries Data="_sales" Title="Revenue" UseSecondaryYAxis="true" XValue="@(sale => sale.Month)" YValueSelector="@(sale => sale.Revenue)" />
+    <NTLegend TData="Sale" />
+    <NTComponents.Charts.Core.NTTooltip TData="Sale" />
+</NTChart>
+
+@code {
+    private readonly Sale[] _sales = [
+        new("Jan", 120, 14400), new("Feb", 150, 19500), new("Mar", 170, 20400),
+        new("Apr", 160, 22400), new("May", 210, 29400), new("Jun", 240, 33600)
+    ];
+
+    private sealed record Sale(string Month, decimal Units, decimal Revenue);
+}

@@ -1,0 +1,14 @@
+@using NTComponents.Charts
+@using NTComponents.Charts.Core
+
+<div class="docs-fill" style="height: 360px">
+    <NTChart TData="Folder">
+        <NTTreeMapSeries TData="Folder" Data="_folders" XValue="@(f => f.Name)" ValueSelector="@(f => f.SizeMb)" DataLabelFormat="{0:N0} MB" />
+    </NTChart>
+</div>
+
+@code {
+    private readonly Folder[] _folders = [new("Videos", 5200m), new("Photos", 3100m), new("Documents", 900m), new("Music", 1800m), new("Downloads", 1300m), new("Projects", 2400m)];
+
+    private sealed record Folder(string Name, decimal SizeMb);
+}

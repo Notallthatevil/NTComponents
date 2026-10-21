@@ -1,0 +1,14 @@
+@using NTComponents.Charts
+@using NTComponents.Charts.Core
+
+<div class="docs-fill" style="height: 400px">
+    <NTChart TData="Package">
+        <NTBubblePackSeries TData="Package" Data="_packages" XValue="@(p => p.Name)" ValueSelector="@(p => p.Downloads)" Interactions="ChartInteractions.ZoomAll" />
+    </NTChart>
+</div>
+
+@code {
+    private readonly Package[] _packages = [new("Serilog", 95m), new("Dapper", 70m), new("Polly", 60m), new("AutoMapper", 55m), new("Humanizer", 30m), new("Bogus", 25m), new("Refit", 22m), new("MediatR", 48m), new("Scrutor", 12m), new("Mapster", 18m)];
+
+    private sealed record Package(string Name, decimal Downloads);
+}

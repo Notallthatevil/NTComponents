@@ -1,0 +1,15 @@
+@using NTComponents.Charts
+@using NTComponents.Charts.Core
+
+<div class="docs-fill" style="height: 360px">
+    <NTChart TData="Expense" TitleOptions="@(new NTTitleOptions("Monthly budget"))">
+        <NTLegend TData="Expense" Position="LegendPosition.Right" />
+        <NTPieSeries TData="Expense" Data="_expenses" XValue="@(e => e.Category)" ValueSelector="@(e => e.Amount)" InnerRadiusRatio="0.6f" />
+    </NTChart>
+</div>
+
+@code {
+    private readonly Expense[] _expenses = [new("Rent", 1400m), new("Food", 520m), new("Transport", 180m), new("Savings", 600m), new("Fun", 250m)];
+
+    private sealed record Expense(string Category, decimal Amount);
+}

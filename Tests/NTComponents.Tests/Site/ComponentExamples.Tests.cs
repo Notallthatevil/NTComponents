@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using NTComponents.Site.Documentation;
 using NTComponents.Site.Examples;
+using System.Text.RegularExpressions;
 
 namespace NTComponents.Tests.Site;
 
@@ -14,6 +15,8 @@ public class ComponentExamples_Tests : BunitContext {
         Services.AddNTServices();
         Services.AddNTDebugConsole(options => options.AllowAll());
         SetRendererInfo(new RendererInfo("WebAssembly", isInteractive: true));
+        // Chart pages host SkiaSharp views that need a browser canvas; stub them so the pages around them still render.
+        ComponentFactories.AddStub(type => type.FullName is "SkiaSharp.Views.Blazor.SKGLView" or "SkiaSharp.Views.Blazor.SKCanvasView");
     }
 
     public static TheoryData<string> PageNames => [.. ComponentExamples.Pages.Keys.Order(StringComparer.Ordinal)];
@@ -37,7 +40,8 @@ public class ComponentExamples_Tests : BunitContext {
 
         page.DependentComponents.Prepend(page)
             .Select(component => component.Type.Name)
-            .Where(name => !source.Contains($"<{name}", StringComparison.Ordinal))
+            // A tag may carry its namespace (<NTComponents.Charts.Core.NTTooltip) when two libraries share a component name.
+            .Where(name => !Regex.IsMatch(source, $@"<(?:[\w.]+\.)?{Regex.Escape(name)}"))
             .Should().BeEmpty("each component documented on a page should appear in at least one of its examples");
     }
 

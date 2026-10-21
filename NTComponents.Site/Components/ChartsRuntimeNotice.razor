@@ -1,0 +1,17 @@
+@namespace NTComponents.Site.Components
+
+@if (_isNet11) {
+    <div class="docs-callout docs-callout-important">
+        <strong>Live previews unavailable</strong>
+        <span>Live chart previews need the .NET 10 build of this site; SkiaSharp can't link natively on .NET 11 yet.</span>
+    </div>
+}
+
+@code {
+    // SkiaSharp can only link natively on .NET 10, so the .NET 11 build cannot render chart examples.
+#if NET11_0_OR_GREATER
+    private const bool _isNet11 = true;
+#else
+    private const bool _isNet11 = false;
+#endif
+}

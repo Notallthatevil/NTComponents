@@ -1,0 +1,19 @@
+@using NTComponents.Charts
+@using NTComponents.Charts.Core
+@using NTComponents.Charts.Core.Axes
+
+<NTChart TData="Signup" style="height: 320px">
+    <NTXAxisOptions TData="Signup" TAxisType="DateTime" ValueSelector="@(signup => signup.Month)" Title="2025" />
+    <NTLineSeries Data="_signups" XValue="@(signup => signup.Month)" YValueSelector="@(signup => signup.Count)" />
+    <NTComponents.Charts.Core.NTTooltip TData="Signup" />
+</NTChart>
+
+@code {
+    private readonly Signup[] _signups = [
+        new(new DateTime(2025, 1, 1), 310), new(new DateTime(2025, 2, 1), 340), new(new DateTime(2025, 3, 1), 420),
+        new(new DateTime(2025, 4, 1), 390), new(new DateTime(2025, 5, 1), 480), new(new DateTime(2025, 6, 1), 530),
+        new(new DateTime(2025, 7, 1), 510), new(new DateTime(2025, 8, 1), 560), new(new DateTime(2025, 9, 1), 640)
+    ];
+
+    private sealed record Signup(DateTime Month, decimal Count);
+}

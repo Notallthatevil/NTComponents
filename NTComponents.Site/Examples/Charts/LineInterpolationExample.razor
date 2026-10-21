@@ -1,0 +1,25 @@
+@using NTComponents.Charts
+@using NTComponents.Charts.Core
+@using NTComponents.Charts.Core.Series
+
+<div class="docs-actions">
+    @foreach (var interpolation in Enum.GetValues<LineInterpolation>()) {
+        <NTButton Label="@interpolation.ToString()" Variant="@(interpolation == _interpolation ? NTButtonVariant.Filled : NTButtonVariant.Outlined)" OnClickCallback="@(() => _interpolation = interpolation)" />
+    }
+</div>
+
+<NTChart TData="Reading" style="height: 320px">
+    <NTLineSeries Data="_readings" Interpolation="_interpolation" XValue="@(reading => reading.Month)" YValueSelector="@(reading => reading.Value)" />
+    <NTComponents.Charts.Core.NTTooltip TData="Reading" />
+</NTChart>
+
+@code {
+    private LineInterpolation _interpolation = LineInterpolation.Smoothed;
+
+    private readonly Reading[] _readings = [
+        new("Jan", 12), new("Feb", 18), new("Mar", 9), new("Apr", 22),
+        new("May", 17), new("Jun", 25), new("Jul", 14), new("Aug", 20)
+    ];
+
+    private sealed record Reading(string Month, decimal Value);
+}

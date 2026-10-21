@@ -12,6 +12,13 @@ namespace NTComponents.Site.Components;
 /// <typeparam name="TExample">The example component. Its <c>.razor</c> file is embedded as a resource with the same name.</typeparam>
 public partial class DocsExample<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TExample> {
     private static readonly string Source = ReadSource();
+
+    // SkiaSharp links natively only on .NET 10, so the .NET 11 build shows chart examples as source without a live preview.
+#if NET11_0_OR_GREATER
+    private static readonly bool CanRenderLive = typeof(TExample).Namespace != "NTComponents.Site.Examples.Charts";
+#else
+    private static readonly bool CanRenderLive = true;
+#endif
     private DotNetObjectReference<DocsExample<TExample>>? _dotNetRef;
     private ElementReference _preview;
 

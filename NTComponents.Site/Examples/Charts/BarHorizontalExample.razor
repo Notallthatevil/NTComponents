@@ -1,0 +1,13 @@
+@using NTComponents.Charts
+@using NTComponents.Charts.Core
+
+<NTChart TData="Language" style="height: 320px">
+    <NTBarSeries Data="_languages" Orientation="NTChartOrientation.Horizontal" XValue="@(language => language.Name)" YValueSelector="@(language => language.Users)" />
+    <NTComponents.Charts.Core.NTTooltip TData="Language" />
+</NTChart>
+
+@code {
+    private readonly Language[] _languages = [new("JavaScript", 62), new("Python", 51), new("TypeScript", 38), new("C#", 27), new("Rust", 12)];
+
+    private sealed record Language(string Name, decimal Users);
+}

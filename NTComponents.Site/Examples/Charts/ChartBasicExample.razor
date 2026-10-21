@@ -1,0 +1,18 @@
+@using NTComponents.Charts
+@using NTComponents.Charts.Core
+
+<NTChart TData="Sale" style="height: 320px">
+    <NTLineSeries Data="_sales" Title="Online" XValue="@(sale => sale.Month)" YValueSelector="@(sale => sale.Online)" />
+    <NTLineSeries Data="_sales" Title="In store" XValue="@(sale => sale.Month)" YValueSelector="@(sale => sale.InStore)" />
+    <NTLegend TData="Sale" Position="LegendPosition.Bottom" />
+    <NTComponents.Charts.Core.NTTooltip TData="Sale" />
+</NTChart>
+
+@code {
+    private readonly Sale[] _sales = [
+        new("Jan", 120, 90), new("Feb", 150, 85), new("Mar", 170, 110),
+        new("Apr", 160, 130), new("May", 210, 125), new("Jun", 240, 140)
+    ];
+
+    private sealed record Sale(string Month, decimal Online, decimal InStore);
+}

@@ -1,0 +1,14 @@
+@using NTComponents.Charts
+@using NTComponents.Charts.Core
+
+<div class="docs-fill" style="height: 360px">
+    <NTChart TData="Region">
+        <NTPieSeries TData="Region" Data="_regions" XValue="@(r => r.Name)" ValueSelector="@(r => r.Sales)" DataLabelFormat="{0:N1}M" DataLabelSize="14" ExplodeOnHover="false" />
+    </NTChart>
+</div>
+
+@code {
+    private readonly Region[] _regions = [new("North", 12.4m), new("South", 8.9m), new("East", 15.2m), new("West", 6.3m)];
+
+    private sealed record Region(string Name, decimal Sales);
+}

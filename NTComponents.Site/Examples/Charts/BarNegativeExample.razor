@@ -1,0 +1,16 @@
+@using NTComponents.Charts
+@using NTComponents.Charts.Core
+
+<NTChart TData="Result" style="height: 320px">
+    <NTBarSeries Data="_results" XValue="@(result => result.Month)" YValueSelector="@(result => result.Profit)" />
+    <NTComponents.Charts.Core.NTTooltip TData="Result" />
+</NTChart>
+
+@code {
+    private readonly Result[] _results = [
+        new("Jan", 10), new("Feb", -6), new("Mar", 14), new("Apr", -9),
+        new("May", 7), new("Jun", -12), new("Jul", 5), new("Aug", -3)
+    ];
+
+    private sealed record Result(string Month, decimal Profit);
+}

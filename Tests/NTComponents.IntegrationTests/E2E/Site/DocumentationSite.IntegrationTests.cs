@@ -20,6 +20,9 @@ namespace NTComponents.IntegrationTests.Site;
 public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
     private const int ExpectedComponentTypeCount = 94;
     private const int ExpectedRootRouteCount = 68;
+    private const int ExpectedChartRootRouteCount = 11;
+    // Chart components live in their own assembly; these are documented on the NTChart and NTRadarSeries pages.
+    private static readonly string[] ExpectedChartDependentComponentNames = ["NTLegend", "NTTooltip", "NTXAxisOptions", "NTYAxisOptions", "NTRadialAxisOptions"];
     private static readonly string[] ExpectedDependentComponentNames = [
         "NTAccordionItem",
         "NTAutocompleteOption",
@@ -137,7 +140,7 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
         var indexedRoutes = await _page.Locator("a[href^='/components/']").EvaluateAllAsync<string[]>(
             "links => links.map(link => link.getAttribute('href')).filter(Boolean)");
         var routes = indexedRoutes.Distinct(StringComparer.Ordinal).OrderBy(route => route, StringComparer.Ordinal).ToArray();
-        routes.Should().HaveCount(ExpectedRootRouteCount, "the component index should link to exactly the expected root component pages");
+        routes.Should().HaveCount(ExpectedRootRouteCount + ExpectedChartRootRouteCount, "the component index should link to exactly the expected root component pages");
 
         var exportedComponentTypes = typeof(NTButton).Assembly.ExportedTypes
             .Where(type => !type.IsAbstract && type.Name.StartsWith("NT", StringComparison.Ordinal) && typeof(IComponent).IsAssignableFrom(type))
@@ -150,6 +153,13 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
         var expectedDependentComponentNames = ExpectedDependentComponentNames.Intersect(expectedComponentNames, StringComparer.Ordinal).ToHashSet(StringComparer.Ordinal);
         var expectedRootComponentNames = expectedComponentNames.Except(expectedDependentComponentNames, StringComparer.Ordinal).ToHashSet(StringComparer.Ordinal);
         expectedRootComponentNames.Should().HaveCount(ExpectedRootRouteCount, "every current exported component should be classified as either a root route or a composed dependent");
+        var expectedChartRootComponentNames = typeof(NTComponents.Charts.Core.NTChart<>).Assembly.ExportedTypes
+            .Where(type => !type.IsAbstract && type.Name.StartsWith("NT", StringComparison.Ordinal) && typeof(IComponent).IsAssignableFrom(type))
+            .Select(type => RemoveGenericArity(type.Name))
+            .Except(ExpectedChartDependentComponentNames, StringComparer.Ordinal)
+            .ToHashSet(StringComparer.Ordinal);
+        expectedChartRootComponentNames.Should().HaveCount(ExpectedChartRootRouteCount, "every exported chart component should be classified as either a root route or a composed dependent");
+        expectedRootComponentNames.UnionWith(expectedChartRootComponentNames);
 
         var failures = new List<string>();
         var rootComponentNames = new List<string>();
@@ -509,11 +519,12 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
         await navigation.GetByRole(AriaRole.Link, new LocatorGetByRoleOptions { Name = "Getting started", Exact = true }).ClickAsync();
         await _page.WaitForURLAsync("**/getting-started");
         await Assertions.Expect(_page.Locator("main h1")).ToHaveTextAsync("Getting started");
-        (await _page.Locator("main h2").CountAsync()).Should().Be(9);
+        (await _page.Locator("main h2").CountAsync()).Should().Be(10);
         var guideCode = string.Join("\n", await _page.Locator("main pre code").AllTextContentsAsync());
         guideCode.Should().Contain("dotnet add package NTComponents").And.Contain("builder.Services.AddNTServices();")
             .And.Contain("<NTHeadDependencies />").And.Contain("<HeadContent>").And.Contain("<NTToast />")
-            .And.Contain("@page \"/welcome\"").And.Contain("light-hc.css").And.Contain("dark-hc.css");
+            .And.Contain("@page \"/welcome\"").And.Contain("light-hc.css").And.Contain("dark-hc.css")
+            .And.Contain("dotnet add package NTComponents.Charts").And.Contain("<WasmBuildNative>true</WasmBuildNative>");
         await Assertions.Expect(_page.Locator("main a[href='/tools/material-theme']")).ToBeVisibleAsync();
         await _page.ReloadAsync();
         await Assertions.Expect(_page.Locator("main h1")).ToHaveTextAsync("Getting started");

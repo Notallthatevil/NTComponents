@@ -7,12 +7,17 @@
         <p>@Description</p>
     }
     <div class="docs-example-preview" data-docs-example="@typeof(TExample).Name" data-nt-nav-exclude @ref="_preview">
-        <ErrorBoundary>
-            <ChildContent>@RenderExample</ChildContent>
-            <ErrorContent Context="exception">
-                <div class="docs-callout docs-callout-error docs-example-failure" role="alert">This example failed to render: @exception.GetBaseException().Message</div>
-            </ErrorContent>
-        </ErrorBoundary>
+        @if (CanRenderLive) {
+            <ErrorBoundary>
+                <ChildContent>@RenderExample</ChildContent>
+                <ErrorContent Context="exception">
+                    <div class="docs-callout docs-callout-error docs-example-failure" role="alert">This example failed to render: @exception.GetBaseException().Message</div>
+                </ErrorContent>
+            </ErrorBoundary>
+        }
+        else {
+            <p class="docs-example-unavailable">The live preview needs the .NET 10 build of this site. The source below still shows the full example.</p>
+        }
     </div>
     <details class="docs-example-code">
         <summary>Razor</summary>

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using NTComponents.Site.Examples.Buttons;
+using NTComponents.Site.Examples.Charts;
 using NTComponents.Site.Examples.Inputs;
 using NTComponents.Site.Examples.Selection;
 using NTComponents.Site.Examples.Forms;
@@ -83,7 +84,18 @@ public static class ComponentExamples {
         ["NTVirtualize"] = Render<VirtualizeExamples>(),
         ["NTScheduler"] = Render<SchedulerExamples>(),
         ["NTThemeToggle"] = Render<ThemeToggleExamples>(),
-        ["NTHeadDependencies"] = Render<HeadDependenciesExamples>()
+        ["NTHeadDependencies"] = Render<HeadDependenciesExamples>(),
+        ["NTChart"] = Render<ChartExamples>(),
+        ["NTLineSeries"] = Render<LineSeriesExamples>(),
+        ["NTAreaSeries"] = Render<AreaSeriesExamples>(),
+        ["NTBarSeries"] = Render<BarSeriesExamples>(),
+        ["NTPointSeries"] = Render<PointSeriesExamples>(),
+        ["NTPieSeries"] = Render<PieSeriesExamples>(),
+        ["NTRadarSeries"] = Render<RadarSeriesExamples>(),
+        ["NTTreeMapSeries"] = Render<TreeMapSeriesExamples>(),
+        ["NTBubblePackSeries"] = Render<BubblePackSeriesExamples>(),
+        ["NTHeatMapSeries"] = Render<HeatMapSeriesExamples>(),
+        ["NTBoxPlotSeries"] = Render<BoxPlotSeriesExamples>()
     };
 
     private static RenderFragment Render<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TExamples>() where TExamples : IComponent => builder => {

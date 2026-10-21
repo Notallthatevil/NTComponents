@@ -1,0 +1,21 @@
+@using NTComponents.Charts
+@using NTComponents.Charts.Core
+
+<NTChart TData="Sale" Annotations="_annotations" style="height: 320px">
+    <NTLineSeries Data="_sales" XValue="@(sale => sale.Month)" YValueSelector="@(sale => sale.Total)" />
+    <NTComponents.Charts.Core.NTTooltip TData="Sale" />
+</NTChart>
+
+@code {
+    private readonly NTChartAnnotation[] _annotations = [
+        new() { Type = NTChartAnnotationType.YLine, Y = 200m, Label = "Goal", StrokeColor = NTColor.Error, DashLength = 6f },
+        new() { Type = NTChartAnnotationType.XRange, X = "Mar", X2 = "Apr", Label = "Promotion", StrokeColor = NTColor.Tertiary },
+        new() { Type = NTChartAnnotationType.Point, X = "Jun", Y = 240m, Label = "Best month", StrokeColor = NTColor.Primary }
+    ];
+
+    private readonly Sale[] _sales = [
+        new("Jan", 120), new("Feb", 150), new("Mar", 170), new("Apr", 160), new("May", 210), new("Jun", 240)
+    ];
+
+    private sealed record Sale(string Month, decimal Total);
+}

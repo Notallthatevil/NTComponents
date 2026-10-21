@@ -100,6 +100,30 @@
             <p>Then add <code>&lt;NTDebugConsole /&gt;</code> to your layout. Users show and hide it with Ctrl+`. On Blazor Server, each user only ever sees their own circuit's entries.</p>
         </section>
 
+        <section id="charts" class="docs-section">
+            <h2>Add charts (optional)</h2>
+            <p>The <code>NTComponents.Charts</code> package adds interactive line, area, bar, point, heat map, box plot, pie, radar, tree map, and bubble pack charts. Charts draw to a canvas with SkiaSharp, so they run in the browser through Blazor WebAssembly. Add the package next to <code>NTComponents</code>, and complete steps 1 to 4 first.</p>
+            <DocsCode Title="Terminal" Code="dotnet add package NTComponents.Charts" />
+            <p>Add the namespaces to <code>_Imports.razor</code>, or to the page that uses a chart:</p>
+            <DocsCode Title="_Imports.razor" Code="@_chartImports" />
+            <p><code>NTComponents</code> also has a general <code>NTTooltip</code>, so a chart's tooltip needs its full name: <code>&lt;NTComponents.Charts.Core.NTTooltip TData="SalesPoint" /&gt;</code>.</p>
+            <h3>Link the native assets</h3>
+            <p>SkiaSharp needs its native WebAssembly build in the browser. Install the wasm-tools workload, then turn on native linking in the WebAssembly client project, which is the standalone app or the <code>.Client</code> project of a Blazor Web App:</p>
+            <DocsCode Title="Terminal" Code="dotnet workload install wasm-tools" />
+            <DocsCode Title="YourApp.Client.csproj" Code="@_chartProject" />
+            <div class="docs-callout docs-callout-important">
+                <strong>Browser rendering needs .NET 10 for now</strong>
+                <span>SkiaSharp 4.153.1 can't link its native assets with the .NET 11 toolchain, so charts build and trim on .NET 11 but don't render in the browser. Target .NET 10 until SkiaSharp ships compatible native assets.</span>
+            </div>
+            <h3>Build your first chart</h3>
+            <p>A chart fills its parent, so give it a height. Each series reads its X and Y values from your data:</p>
+            <DocsCode Title="Pages/Sales.razor" Code="@_firstChart" />
+            <h3>Theming</h3>
+            <p>Charts read the same Material 3 theme as the rest of NTComponents, so the colors follow your theme files, light and dark mode, and contrast. A chart redraws when the user changes the theme. Series take their colors from a palette of theme roles, and any color you set is an <code>NTColor</code> role.</p>
+            <h3>Explore the charts</h3>
+            <p>Start with <a href="/components/ntchart">NTChart</a> for axes, legends, annotations, and interactions. Then see <a href="/components/ntlineseries">NTLineSeries</a>, <a href="/components/ntareaseries">NTAreaSeries</a>, <a href="/components/ntbarseries">NTBarSeries</a>, <a href="/components/ntpointseries">NTPointSeries</a>, <a href="/components/ntheatmapseries">NTHeatMapSeries</a>, and <a href="/components/ntboxplotseries">NTBoxPlotSeries</a> for cartesian charts, and <a href="/components/ntpieseries">NTPieSeries</a>, <a href="/components/ntradarseries">NTRadarSeries</a>, <a href="/components/nttreemapseries">NTTreeMapSeries</a>, and <a href="/components/ntbubblepackseries">NTBubblePackSeries</a> for circular ones.</p>
+        </section>
+
         <section id="troubleshooting" class="docs-section">
             <h2>Troubleshooting</h2>
             <div class="docs-table-wrap">
@@ -238,6 +262,34 @@
             background: var(--nt-color-surface-container);
             color: var(--nt-color-on-surface);
             border: 1px solid var(--nt-color-outline-variant);
+        }
+        """;
+
+    private const string _chartImports = """
+        @using NTComponents.Charts
+        @using NTComponents.Charts.Core
+        @using NTComponents.Charts.Core.Axes
+        @using NTComponents.Charts.Core.Series
+        """;
+
+    private const string _chartProject = """
+        <PropertyGroup>
+            <WasmBuildNative>true</WasmBuildNative>
+        </PropertyGroup>
+        """;
+
+    private const string _firstChart = """
+        @page "/sales"
+
+        <NTChart TData="SalesPoint" style="height: 320px">
+            <NTLineSeries Data="_sales" Title="Sales" XValue="@(point => point.Month)" YValueSelector="@(point => point.Total)" />
+            <NTComponents.Charts.Core.NTTooltip TData="SalesPoint" />
+        </NTChart>
+
+        @code {
+            private readonly SalesPoint[] _sales = [new("January", 120m), new("February", 180m), new("March", 150m)];
+
+            private sealed record SalesPoint(string Month, decimal Total);
         }
         """;
 

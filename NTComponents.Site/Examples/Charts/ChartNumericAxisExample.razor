@@ -1,0 +1,19 @@
+@using NTComponents.Charts
+@using NTComponents.Charts.Core
+@using NTComponents.Charts.Core.Axes
+
+<NTChart TData="Reading" style="height: 320px">
+    <NTXAxisOptions TData="Reading" TAxisType="double" ValueSelector="@(reading => reading.Hour)" Title="Hour of day" />
+    <NTYAxisOptions TData="Reading" TAxisValue="decimal" ValueSelector="@(reading => reading.Temperature)" Title="Temperature (C)" />
+    <NTLineSeries Data="_readings" XValue="@(reading => reading.Hour)" YValueSelector="@(reading => reading.Temperature)" />
+    <NTComponents.Charts.Core.NTTooltip TData="Reading" />
+</NTChart>
+
+@code {
+    private readonly Reading[] _readings = [
+        new(0, 11.2m), new(2.5, 10.1m), new(6, 12.4m), new(7.5, 14.8m),
+        new(11, 19.6m), new(14.5, 22.3m), new(18, 18.9m), new(23, 13.0m)
+    ];
+
+    private sealed record Reading(double Hour, decimal Temperature);
+}

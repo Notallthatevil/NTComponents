@@ -1,0 +1,15 @@
+@using NTComponents.Charts
+@using NTComponents.Charts.Core
+
+<div class="docs-fill" style="height: 360px">
+    <NTChart TData="Browser" TitleOptions="@(new NTTitleOptions("Browser share"))">
+        <NTLegend TData="Browser" />
+        <NTPieSeries TData="Browser" Data="_browsers" XValue="@(b => b.Name)" ValueSelector="@(b => b.Share)" />
+    </NTChart>
+</div>
+
+@code {
+    private readonly Browser[] _browsers = [new("Chrome", 64m), new("Safari", 19m), new("Edge", 6m), new("Firefox", 3m), new("Other", 8m)];
+
+    private sealed record Browser(string Name, decimal Share);
+}

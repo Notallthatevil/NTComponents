@@ -1,0 +1,17 @@
+@using NTComponents.Charts
+@using NTComponents.Charts.Core
+@using NTComponents.Charts.Core.Axes
+
+<div class="docs-fill" style="height: 400px">
+    <NTChart TData="Metric">
+        <NTRadialAxisOptions TData="Metric" Levels="4" Shape="RadialAxisShape.Circle" Labels="_labels" />
+        <NTRadarSeries TData="Metric" Data="_metrics" XValue="@(m => m.Key)" ValueSelector="@(m => m.Value)" MaxValue="100m" Title="Team" />
+    </NTChart>
+</div>
+
+@code {
+    private readonly List<string> _labels = ["Speed", "Quality", "Reliability", "Cost", "Support"];
+    private readonly Metric[] _metrics = [new("speed", 80m), new("quality", 65m), new("reliability", 90m), new("cost", 50m), new("support", 70m)];
+
+    private sealed record Metric(string Key, decimal Value);
+}

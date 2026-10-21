@@ -1,0 +1,16 @@
+@using NTComponents.Charts
+@using NTComponents.Charts.Core
+
+<div class="docs-fill" style="height: 360px">
+    <NTChart TData="Account">
+        <NTTreeMapSeries TData="Account" Data="_accounts" XValue="@(a => a.Name)" ValueSelector="@(a => a.Balance)" GroupSelector="@(a => a.Kind)" ColorSelector="PickColor" ShowValuesInLabels="false" />
+    </NTChart>
+</div>
+
+@code {
+    private readonly Account[] _accounts = [new("Assets", "Cash", 4200m), new("Assets", "Investments", 9800m), new("Assets", "Property", 15000m), new("Debts", "Mortgage", 7200m), new("Debts", "Car loan", 2100m)];
+
+    private static NTColor PickColor(TreeMapColorContext<Account> context) => context.Path.FirstOrDefault() == "Debts" ? NTColor.Error : NTColor.Primary;
+
+    private sealed record Account(string Kind, string Name, decimal Balance);
+}

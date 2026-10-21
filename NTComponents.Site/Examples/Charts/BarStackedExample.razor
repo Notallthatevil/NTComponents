@@ -1,0 +1,19 @@
+@using NTComponents.Charts
+@using NTComponents.Charts.Core
+
+<NTChart TData="Quarter" style="height: 320px">
+    <NTBarSeries Data="_quarters" SegmentSelector="Segments" XValue="@(quarter => quarter.Name)" YValueSelector="@(quarter => quarter.Hardware + quarter.Software + quarter.Services)" />
+    <NTComponents.Charts.Core.NTTooltip TData="Quarter" />
+</NTChart>
+
+@code {
+    private readonly Quarter[] _quarters = [new("Q1", 50, 80, 30), new("Q2", 60, 95, 35), new("Q3", 55, 110, 45), new("Q4", 70, 130, 60)];
+
+    private static IEnumerable<NTBarSegment> Segments(Quarter quarter) => [
+        new() { Value = quarter.Hardware, Label = "Hardware", Color = NTColor.Primary },
+        new() { Value = quarter.Software, Label = "Software", Color = NTColor.Tertiary },
+        new() { Value = quarter.Services, Label = "Services", Color = NTColor.Secondary }
+    ];
+
+    private sealed record Quarter(string Name, decimal Hardware, decimal Software, decimal Services);
+}

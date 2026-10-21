@@ -1,0 +1,22 @@
+@using NTComponents.Charts
+@using NTComponents.Charts.Core
+@using NTComponents.Charts.Core.Series
+
+<NTChart TData="Sample" style="height: 320px">
+    <NTLineSeries TData="Sample" Data="_samples" Interactions="ChartInteractions.All" OnClick="OnPointClick" PointStyle="PointStyle.None" XValue="@(sample => sample.Day)" YValueSelector="@(sample => sample.Value)" />
+    <NTComponents.Charts.Core.NTTooltip TData="Sample" />
+</NTChart>
+<p>@_message</p>
+
+@code {
+    private readonly Sample[] _samples = [.. Enumerable.Range(1, 200).Select(day => new Sample(day, 50m + (decimal)Math.Round(25 * Math.Sin(day / 12d), 1) + (day * 7 % 11)))];
+    private string _message = "Select a point to see its value. Drag to pan, scroll to zoom, and use the refresh button to reset.";
+
+    private void OnPointClick(NTSeriesClickEventArgs<Sample> args) {
+        if (args.DataPoint is { } sample) {
+            _message = $"Day {sample.Day}: {sample.Value}";
+        }
+    }
+
+    private sealed record Sample(double Day, decimal Value);
+}

@@ -1,0 +1,15 @@
+@using NTComponents.Charts
+@using NTComponents.Charts.Core
+@using NTComponents.Charts.Core.Series
+
+<NTChart TData="Sample" style="height: 320px">
+    <NTLineSeries Data="_samples" Interactions="ChartInteractions.All" PointStyle="PointStyle.None" XValue="@(sample => sample.Index)" YValueSelector="@(sample => sample.Value)" />
+    <NTComponents.Charts.Core.NTTooltip TData="Sample" />
+</NTChart>
+
+@code {
+    // Deterministic signal: a slow wave plus a repeating sawtooth.
+    private readonly Sample[] _samples = [.. Enumerable.Range(0, 5000).Select(i => new Sample(i, 50m + (decimal)Math.Round(30 * Math.Sin(i / 400d), 2) + (i * 7919 % 23) - 11))];
+
+    private sealed record Sample(double Index, decimal Value);
+}

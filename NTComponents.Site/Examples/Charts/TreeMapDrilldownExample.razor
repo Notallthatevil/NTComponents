@@ -1,0 +1,21 @@
+@using NTComponents.Charts
+@using NTComponents.Charts.Core
+
+<div class="docs-fill" style="height: 420px">
+    <NTChart TData="Sale">
+        <NTTreeMapSeries TData="Sale" Data="_sales" XValue="@(s => s.Product)" ValueSelector="@(s => s.Revenue)" GroupSelector="@(s => s.Region)" GroupLevelLabels="_levels">
+            <NTTreeMapSeries TData="Sale" XValue="@(s => s.Product)" ValueSelector="@(s => s.Revenue)" GroupSelector="@(s => s.Category)" />
+        </NTTreeMapSeries>
+    </NTChart>
+</div>
+
+@code {
+    private readonly string[] _levels = ["Region", "Category"];
+    private readonly Sale[] _sales = [
+        new("Europe", "Hardware", "Keyboards", 420m), new("Europe", "Hardware", "Monitors", 910m), new("Europe", "Software", "Licenses", 640m),
+        new("Americas", "Hardware", "Keyboards", 560m), new("Americas", "Hardware", "Monitors", 1250m), new("Americas", "Software", "Licenses", 980m), new("Americas", "Software", "Support", 330m),
+        new("Asia", "Hardware", "Monitors", 770m), new("Asia", "Software", "Licenses", 450m), new("Asia", "Software", "Support", 210m)
+    ];
+
+    private sealed record Sale(string Region, string Category, string Product, decimal Revenue);
+}

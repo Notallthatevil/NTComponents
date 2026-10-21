@@ -1,0 +1,19 @@
+@using NTComponents.Charts
+@using NTComponents.Charts.Core
+@using NTComponents.Charts.Core.Series
+
+<NTChart TData="Sale" style="height: 320px">
+    <NTLineSeries Data="_sales" Title="Actual" PointShape="PointShape.Circle" XValue="@(sale => sale.Month)" YValueSelector="@(sale => sale.Actual)" />
+    <NTLineSeries Data="_sales" Title="Forecast" LineStyle="LineStyle.Dashed" StrokeWidth="3" PointStyle="PointStyle.Outlined" PointShape="PointShape.Diamond" PointSize="10" XValue="@(sale => sale.Month)" YValueSelector="@(sale => sale.Forecast)" />
+    <NTLegend TData="Sale" />
+    <NTComponents.Charts.Core.NTTooltip TData="Sale" />
+</NTChart>
+
+@code {
+    private readonly Sale[] _sales = [
+        new("Jan", 120, 130), new("Feb", 150, 145), new("Mar", 170, 165),
+        new("Apr", 160, 180), new("May", 210, 200), new("Jun", 240, 225)
+    ];
+
+    private sealed record Sale(string Month, decimal Actual, decimal Forecast);
+}

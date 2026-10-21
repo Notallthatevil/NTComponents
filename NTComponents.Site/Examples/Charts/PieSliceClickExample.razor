@@ -1,0 +1,19 @@
+@using NTComponents.Charts
+@using NTComponents.Charts.Core
+@using NTComponents.Charts.Core.Series
+
+<div class="docs-fill" style="height: 360px">
+    <NTChart TData="Fruit">
+        <NTPieSeries TData="Fruit" Data="_fruits" XValue="@(f => f.Name)" ValueSelector="@(f => f.Crates)" OnClick="OnSliceClicked" />
+    </NTChart>
+</div>
+<p>@_message</p>
+
+@code {
+    private readonly Fruit[] _fruits = [new("Apples", 40m), new("Pears", 25m), new("Plums", 15m), new("Cherries", 20m)];
+    private string _message = "Select a slice.";
+
+    private void OnSliceClicked(NTSeriesClickEventArgs<Fruit> args) => _message = args.DataPoint is { } fruit ? $"{fruit.Name}: {fruit.Crates} crates" : "Select a slice.";
+
+    private sealed record Fruit(string Name, decimal Crates);
+}

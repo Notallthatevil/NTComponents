@@ -1,0 +1,19 @@
+@using NTComponents.Charts
+@using NTComponents.Charts.Core
+
+<NTChart TData="Visit" style="height: 320px">
+    <NTAreaSeries Data="_visits" Title="Social" AreaOpacity="0.9f" XValue="@(visit => visit.Month)" YValueSelector="@(visit => visit.Search + visit.Direct + visit.Social)" />
+    <NTAreaSeries Data="_visits" Title="Direct" AreaOpacity="0.9f" XValue="@(visit => visit.Month)" YValueSelector="@(visit => visit.Search + visit.Direct)" />
+    <NTAreaSeries Data="_visits" Title="Search" AreaOpacity="0.9f" XValue="@(visit => visit.Month)" YValueSelector="@(visit => visit.Search)" />
+    <NTLegend TData="Visit" />
+    <NTComponents.Charts.Core.NTTooltip TData="Visit" />
+</NTChart>
+
+@code {
+    private readonly Visit[] _visits = [
+        new("Jan", 500, 300, 150), new("Feb", 650, 320, 210), new("Mar", 600, 380, 180),
+        new("Apr", 800, 400, 260), new("May", 760, 450, 300), new("Jun", 900, 470, 340)
+    ];
+
+    private sealed record Visit(string Month, decimal Search, decimal Direct, decimal Social);
+}

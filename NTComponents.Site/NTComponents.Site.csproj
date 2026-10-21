@@ -9,6 +9,11 @@
 		<WasmBuildNative>false</WasmBuildNative>
   </PropertyGroup>
 
+	<PropertyGroup Condition="'$(TargetFramework)' == 'net10.0'">
+		<!-- SkiaSharp (charts) needs native WebAssembly linking, which works on .NET 10 only; SkiaSharp 4.153.1 cannot link with .NET 11 RC's Emscripten 6. -->
+		<WasmBuildNative>true</WasmBuildNative>
+	</PropertyGroup>
+
 	<ItemGroup>
 	  <Content Remove="compilerconfig.json" />
 	</ItemGroup>
@@ -23,6 +28,7 @@
 		<ProjectReference Include="..\NTComponents.Analyzers\NTComponents.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 		<ProjectReference Include="..\NTComponents\NTComponents.csproj" />
 		<ProjectReference Include="..\NTComponents.Documentation\NTComponents.Documentation.csproj" />
+		<ProjectReference Include="..\NTComponents.Charts.Documentation\NTComponents.Charts.Documentation.csproj" />
 		<ProjectReference Include="..\Submodules\NTComponents.Charts\NTComponents.Charts\NTComponents.Charts.csproj" />
 	</ItemGroup>
 

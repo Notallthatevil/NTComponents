@@ -1,0 +1,15 @@
+@using NTComponents.Charts
+@using NTComponents.Charts.Core
+
+<NTChart TData="Sale" style="height: 320px">
+    <NTBarSeries Data="_sales" Title="Online" XValue="@(sale => sale.Quarter)" YValueSelector="@(sale => sale.Online)" />
+    <NTBarSeries Data="_sales" Title="In store" XValue="@(sale => sale.Quarter)" YValueSelector="@(sale => sale.InStore)" />
+    <NTLegend TData="Sale" />
+    <NTComponents.Charts.Core.NTTooltip TData="Sale" />
+</NTChart>
+
+@code {
+    private readonly Sale[] _sales = [new("Q1", 120, 90), new("Q2", 150, 110), new("Q3", 170, 130), new("Q4", 240, 160)];
+
+    private sealed record Sale(string Quarter, decimal Online, decimal InStore);
+}

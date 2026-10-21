@@ -1,0 +1,19 @@
+@using NTComponents.Charts
+@using NTComponents.Charts.Core
+@using NTComponents.Charts.Core.Axes
+
+<div class="docs-fill" style="height: 400px">
+    <NTChart TData="Rating">
+        <NTLegend TData="Rating" />
+        <NTRadialAxisOptions TData="Rating" />
+        <NTRadarSeries TData="Rating" Data="_phoneA" XValue="@(r => r.Feature)" ValueSelector="@(r => r.Score)" MaxValue="10m" Title="Phone A" AreaOpacity="0.25f" />
+        <NTRadarSeries TData="Rating" Data="_phoneB" XValue="@(r => r.Feature)" ValueSelector="@(r => r.Score)" MaxValue="10m" Title="Phone B" AreaOpacity="0.25f" />
+    </NTChart>
+</div>
+
+@code {
+    private readonly Rating[] _phoneA = [new("Camera", 9m), new("Battery", 6m), new("Display", 8m), new("Speed", 7m), new("Price", 4m)];
+    private readonly Rating[] _phoneB = [new("Camera", 6m), new("Battery", 9m), new("Display", 7m), new("Speed", 8m), new("Price", 8m)];
+
+    private sealed record Rating(string Feature, decimal Score);
+}

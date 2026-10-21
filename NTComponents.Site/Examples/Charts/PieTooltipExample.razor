@@ -1,0 +1,21 @@
+@using NTComponents.Charts
+@using NTComponents.Charts.Core
+@using NTComponents.Charts.Core.Series
+
+<div class="docs-fill" style="height: 360px">
+    <NTChart TData="Ticket">
+        <NTComponents.Charts.Core.NTTooltip TData="Ticket" />
+        <NTPieSeries TData="Ticket" Data="_tickets" XValue="@(t => t.Status)" ValueSelector="@(t => t.Count)" TooltipInfoSelector="DescribeTicket" />
+    </NTChart>
+</div>
+
+@code {
+    private readonly Ticket[] _tickets = [new("Open", 18, "Waiting for triage"), new("In progress", 27, "Assigned to an engineer"), new("Resolved", 61, "Fixed and verified")];
+
+    private static TooltipInfo DescribeTicket(NTSeriesTooltipContext<Ticket> context) => new() {
+        Header = context.Data.Status,
+        Lines = [new TooltipLine { Label = "Tickets", Value = context.Data.Count.ToString(), Color = context.DefaultInfo.Lines[0].Color }, new TooltipLine { Label = "Meaning", Value = context.Data.Note, Color = context.DefaultInfo.Lines[0].Color }]
+    };
+
+    private sealed record Ticket(string Status, int Count, string Note);
+}

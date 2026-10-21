@@ -1,0 +1,16 @@
+@using NTComponents.Charts
+@using NTComponents.Charts.Core
+
+<NTChart TData="Visit" style="height: 320px">
+    <NTAreaSeries Data="_visits" AreaOpacity="0.4f" XValue="@(visit => visit.Month)" YValueSelector="@(visit => visit.Count)" />
+    <NTComponents.Charts.Core.NTTooltip TData="Visit" />
+</NTChart>
+
+@code {
+    private readonly Visit[] _visits = [
+        new("Jan", 1200), new("Feb", 1800), new("Mar", 900), new("Apr", 2200),
+        new("May", 1700), new("Jun", 2500), new("Jul", 1400), new("Aug", 2000)
+    ];
+
+    private sealed record Visit(string Month, decimal Count);
+}

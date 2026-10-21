@@ -1,0 +1,20 @@
+@using NTComponents.Charts
+@using NTComponents.Charts.Core
+@using NTComponents.Charts.Core.Series
+
+<NTChart TData="Batch" style="height: 320px">
+    <NTBoxPlotSeries Data="_batches" XValue="@(batch => batch.Name)" YValueSelector="@(batch => batch.Times.Median)" BoXValue="@(batch => batch.Times)" />
+    <NTComponents.Charts.Core.NTTooltip TData="Batch" />
+</NTChart>
+
+@code {
+    private readonly Batch[] _batches = [
+        new("Batch A", new(2, 6, 10, 14, 20, [26])),
+        new("Batch B", new(3, 7, 11, 15, 21)),
+        new("Batch C", new(4, 8, 12, 16, 22, [28])),
+        new("Batch D", new(5, 9, 13, 17, 23)),
+        new("Batch E", new(6, 10, 14, 18, 24, [30]))
+    ];
+
+    private sealed record Batch(string Name, BoxPlotValues Times);
+}

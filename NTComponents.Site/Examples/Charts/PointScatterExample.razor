@@ -1,0 +1,22 @@
+@using NTComponents.Charts
+@using NTComponents.Charts.Core
+@using NTComponents.Charts.Core.Axes
+@using NTComponents.Charts.Core.Series
+
+<NTChart TData="Plant" style="height: 320px">
+    <NTXAxisOptions TData="Plant" TAxisType="double" ValueSelector="@(plant => plant.Height)" Title="Height (cm)" />
+    <NTYAxisOptions TData="Plant" TAxisValue="decimal" ValueSelector="@(plant => plant.Yield)" Title="Yield (kg)" />
+    <NTPointSeries Data="_tomatoes" Title="Tomato" PointShape="PointShape.Circle" PointSize="10" XValue="@(plant => plant.Height)" YValueSelector="@(plant => plant.Yield)" />
+    <NTPointSeries Data="_peppers" Title="Pepper" PointShape="PointShape.Triangle" PointStyle="PointStyle.Outlined" PointSize="12" XValue="@(plant => plant.Height)" YValueSelector="@(plant => plant.Yield)" />
+    <NTPointSeries Data="_beans" Title="Bean" PointShape="PointShape.Square" PointSize="8" XValue="@(plant => plant.Height)" YValueSelector="@(plant => plant.Yield)" />
+    <NTLegend TData="Plant" />
+    <NTComponents.Charts.Core.NTTooltip TData="Plant" />
+</NTChart>
+
+@code {
+    private readonly Plant[] _tomatoes = [new(80, 4.2m), new(95, 5.1m), new(110, 6.4m), new(120, 6.0m), new(135, 7.8m)];
+    private readonly Plant[] _peppers = [new(45, 2.1m), new(55, 2.8m), new(60, 3.5m), new(70, 3.2m), new(75, 4.1m)];
+    private readonly Plant[] _beans = [new(150, 1.8m), new(165, 2.2m), new(180, 2.9m), new(190, 2.6m), new(200, 3.4m)];
+
+    private sealed record Plant(double Height, decimal Yield);
+}

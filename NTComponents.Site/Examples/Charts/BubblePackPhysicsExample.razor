@@ -1,0 +1,14 @@
+@using NTComponents.Charts
+@using NTComponents.Charts.Core
+
+<div class="docs-fill" style="height: 400px">
+    <NTChart TData="Topic">
+        <NTBubblePackSeries TData="Topic" Data="_topics" XValue="@(t => t.Name)" ValueSelector="@(t => t.Mentions)" GravityStrength="1.5f" CollisionStrength="1.2f" VelocityDamping="0.88f" ThrowStrength="1.5f" ConstrainToCanvas="true" EdgeBounce="0.6f" />
+    </NTChart>
+</div>
+
+@code {
+    private readonly Topic[] _topics = [new("Blazor", 90m), new("Charts", 60m), new("Themes", 45m), new("Forms", 70m), new("Grids", 55m), new("Dialogs", 30m), new("Icons", 25m)];
+
+    private sealed record Topic(string Name, decimal Mentions);
+}

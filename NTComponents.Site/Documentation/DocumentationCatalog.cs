@@ -34,16 +34,23 @@ public sealed partial class DocumentationCatalog {
         ["NTTab"] = "NTTabView",
         ["NTTemplateColumn"] = "NTDataGrid",
         ["NTWizardFormStep"] = "NTWizard",
-        ["NTWizardStep"] = "NTWizard"
+        ["NTWizardStep"] = "NTWizard",
+
+        // Charts dependents are keyed by full name because NTComponents.Charts.Core.NTTooltip shares its name with the core NTTooltip.
+        ["NTComponents.Charts.Core.NTLegend"] = "NTChart",
+        ["NTComponents.Charts.Core.NTTooltip"] = "NTChart",
+        ["NTComponents.Charts.Core.Axes.NTXAxisOptions"] = "NTChart",
+        ["NTComponents.Charts.Core.Axes.NTYAxisOptions"] = "NTChart",
+        ["NTComponents.Charts.Core.Axes.NTRadialAxisOptions"] = "NTRadarSeries"
     };
 
     private readonly IReadOnlyDictionary<string, ComponentDocumentationEntry> _componentRoutes;
     private readonly IReadOnlyList<ReferenceDocumentationEntry> _references;
 
     public DocumentationCatalog() {
-        var componentEntries = GeneratedCodeDocumentation.Model.Types
+        var componentEntries = AllTypes
             .Where(IsDocumentedNtComponent)
-            .Select(type => new ComponentDocumentationEntry(type, CreateSlug(type.Name), ResolveGroupName(type), BuildComponentDisplayName(type.Name), BuildMemberGroups(type), ComponentExamples.Pages.GetValueOrDefault(type.Name)))
+            .Select(type => new ComponentDocumentationEntry(type, CreateComponentSlug(type), ResolveGroupName(type), BuildComponentDisplayName(type.Name), BuildMemberGroups(type), ComponentExamples.Pages.GetValueOrDefault(type.Name)))
             .ToList();
         var referencedTypeNames = componentEntries
             .SelectMany(component => component.Parameters)
@@ -58,13 +65,17 @@ public sealed partial class DocumentationCatalog {
             .SelectMany(page => page.DependentComponents.Prepend(page).Select(component => (component.Slug, page)))
             .ToDictionary(route => route.Slug, route => route.page, StringComparer.OrdinalIgnoreCase);
 
-        _references = [.. GeneratedCodeDocumentation.Model.Types
+        _references = [.. AllTypes
             .Where(type => IsReferenceType(type, referencedTypeNames))
             .Select(type => new ReferenceDocumentationEntry(type, CreateSlug(type.FullName), BuildReferenceGroupName(type), ResolveGroupName(type)))
             .OrderBy(reference => reference.GroupName, StringComparer.Ordinal)
             .ThenBy(reference => reference.FamilyName, StringComparer.Ordinal)
             .ThenBy(reference => reference.Type.Name, StringComparer.Ordinal)];
     }
+
+    // The core library and the Charts library are documented by separate generated models that share the same model types.
+    private static IEnumerable<TypeDocumentation> AllTypes =>
+        GeneratedCodeDocumentation.Model.Types.Concat(NTComponents.Charts.GeneratedDocumentation.GeneratedCodeDocumentation.Model.Types);
 
     public IReadOnlyList<ComponentDocumentationEntry> Components { get; }
 
@@ -155,9 +166,9 @@ public sealed partial class DocumentationCatalog {
 
     private static IReadOnlyList<ComponentDocumentationEntry> BuildComponentPages(IReadOnlyList<ComponentDocumentationEntry> componentEntries) {
         var names = componentEntries.Select(component => component.Type.Name).ToHashSet(StringComparer.Ordinal);
-        bool IsDependent(ComponentDocumentationEntry component) => DependentComponentParentsByName.TryGetValue(component.Type.Name, out var parentName) && names.Contains(parentName);
+        bool IsDependent(ComponentDocumentationEntry component) => TryGetParentName(component.Type, out var parentName) && names.Contains(parentName);
 
-        var childrenByParentName = componentEntries.Where(IsDependent).ToLookup(component => DependentComponentParentsByName[component.Type.Name], StringComparer.Ordinal);
+        var childrenByParentName = componentEntries.Where(IsDependent).ToLookup(component => TryGetParentName(component.Type, out var parentName) ? parentName : string.Empty, StringComparer.Ordinal);
         return [.. componentEntries
             .Where(component => !IsDependent(component))
             .Select(component => component with { DependentComponents = [.. childrenByParentName[component.Type.Name].OrderBy(child => child.DisplayName, StringComparer.Ordinal)] })];
@@ -181,7 +192,16 @@ public sealed partial class DocumentationCatalog {
         documentation.Kind == "Class" &&
         documentation.Accessibility == "Public" &&
         !documentation.IsObsolete &&
-        (ComponentExamples.Pages.ContainsKey(documentation.Name) || DependentComponentParentsByName.ContainsKey(documentation.Name));
+        (ComponentExamples.Pages.ContainsKey(documentation.Name) || TryGetParentName(documentation, out _));
+
+    private static bool TryGetParentName(TypeDocumentation type, out string parentName) =>
+        DependentComponentParentsByName.TryGetValue(RemoveGenericArity(type.FullName), out parentName!) || DependentComponentParentsByName.TryGetValue(type.Name, out parentName!);
+
+    private static bool IsChartsType(TypeDocumentation type) => type.FullName.StartsWith("NTComponents.Charts.", StringComparison.Ordinal);
+
+    // Charts dependents get a prefix so their routes cannot collide with a core component of the same name.
+    private static string CreateComponentSlug(TypeDocumentation type) =>
+        CreateSlug(IsChartsType(type) && TryGetParentName(type, out _) ? $"Chart {type.Name}" : type.Name);
 
     private static bool IsReferenceType(TypeDocumentation type, HashSet<string> referencedTypeNames) =>
         referencedTypeNames.Contains(type.FullName) ||
@@ -208,7 +228,7 @@ public sealed partial class DocumentationCatalog {
         type.Kind == "Enum" ? "Enums" : "Constants";
 
     private static string ResolveGroupName(TypeDocumentation type) =>
-        string.IsNullOrWhiteSpace(type.SourceFolder) ? "Core" : type.SourceFolder switch {
+        IsChartsType(type) ? "Charts" : string.IsNullOrWhiteSpace(type.SourceFolder) ? "Core" : type.SourceFolder switch {
             "NavRail" => "Navigation",
             "Views" => "Layout",
             _ => type.SourceFolder

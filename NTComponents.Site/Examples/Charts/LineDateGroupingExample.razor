@@ -1,0 +1,20 @@
+@using NTComponents.Charts
+@using NTComponents.Charts.Core
+@using NTComponents.Charts.Core.Axes
+@using NTComponents.Charts.Core.Series
+
+<NTChart TData="Visit" style="height: 320px">
+    <NTXAxisOptions TData="Visit" TAxisType="DateTime" ValueSelector="@(visit => visit.Date)" EnableAutoDateGrouping="true" />
+    <NTLineSeries TData="Visit" Data="_visits" Interactions="ChartInteractions.All" PointStyle="PointStyle.None" OnDateGroupClick="OnGroupClick" XValue="@(visit => visit.Date)" YValueSelector="@(visit => visit.Count)" />
+    <NTComponents.Charts.Core.NTTooltip TData="Visit" />
+</NTChart>
+<p>@_message</p>
+
+@code {
+    private readonly Visit[] _visits = [.. Enumerable.Range(0, 1095).Select(day => new Visit(new DateTime(2023, 1, 1).AddDays(day), 400m + (decimal)Math.Round(120 * Math.Sin(day / 58d)) + (day / 6) + (day * 31 % 40)))];
+    private string _message = "Select a year or month to zoom into it.";
+
+    private void OnGroupClick(NTSeriesDateGroupClickEventArgs<Visit> args) => _message = $"Selected {args.GroupDate:MMMM yyyy} ({args.GroupingLevel} level).";
+
+    private sealed record Visit(DateTime Date, decimal Count);
+}

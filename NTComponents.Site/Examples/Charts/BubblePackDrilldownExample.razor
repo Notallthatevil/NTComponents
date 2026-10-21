@@ -1,0 +1,18 @@
+@using NTComponents.Charts
+@using NTComponents.Charts.Core
+
+<div class="docs-fill" style="height: 420px">
+    <NTChart TData="Item">
+        <NTBubblePackSeries TData="Item" Data="_items" XValue="@(i => i.Name)" ValueSelector="@(i => i.Quantity)" GroupSelector="@(i => i.Aisle)" />
+    </NTChart>
+</div>
+
+@code {
+    private readonly Item[] _items = [
+        new("Produce", "Apples", 120m), new("Produce", "Carrots", 80m), new("Produce", "Spinach", 45m),
+        new("Dairy", "Milk", 150m), new("Dairy", "Cheese", 70m), new("Dairy", "Yogurt", 90m),
+        new("Bakery", "Bread", 110m), new("Bakery", "Bagels", 40m)
+    ];
+
+    private sealed record Item(string Aisle, string Name, decimal Quantity);
+}

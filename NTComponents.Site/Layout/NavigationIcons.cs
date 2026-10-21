@@ -76,6 +76,19 @@ public static class NavigationIcons {
         ["NTWindowHost"] = () => MaterialIcon.Layers,
         ["NTWizard"] = () => MaterialIcon.AutoFixHigh,
 
+        // Chart pages.
+        ["NTAreaSeries"] = () => MaterialIcon.AreaChart,
+        ["NTBarSeries"] = () => MaterialIcon.BarChart,
+        ["NTBoxPlotSeries"] = () => MaterialIcon.Leaderboard,
+        ["NTBubblePackSeries"] = () => MaterialIcon.BubbleChart,
+        ["NTChart"] = () => MaterialIcon.Insights,
+        ["NTHeatMapSeries"] = () => MaterialIcon.GridView,
+        ["NTLineSeries"] = () => MaterialIcon.ShowChart,
+        ["NTPieSeries"] = () => MaterialIcon.PieChart,
+        ["NTPointSeries"] = () => MaterialIcon.ScatterPlot,
+        ["NTRadarSeries"] = () => MaterialIcon.Radar,
+        ["NTTreeMapSeries"] = () => MaterialIcon.AccountTree,
+
         // Families: component groups and the enum and constant groups that share their names.
         ["Accordion"] = () => MaterialIcon.ViewAgenda,
         ["Anchor"] = () => MaterialIcon.Link,
@@ -84,6 +97,7 @@ public static class NavigationIcons {
         ["Buttons"] = () => MaterialIcon.TouchApp,
         ["Cards"] = () => MaterialIcon.Note,
         ["Carousel"] = () => MaterialIcon.ViewCarousel,
+        ["Charts"] = () => MaterialIcon.Insights,
         ["Chips"] = () => MaterialIcon.Label,
         ["CodeDocumentation"] = () => MaterialIcon.Description,
         ["Core"] = () => MaterialIcon.Code,

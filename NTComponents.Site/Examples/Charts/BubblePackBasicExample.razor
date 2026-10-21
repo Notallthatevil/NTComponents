@@ -1,0 +1,14 @@
+@using NTComponents.Charts
+@using NTComponents.Charts.Core
+
+<div class="docs-fill" style="height: 400px">
+    <NTChart TData="Language">
+        <NTBubblePackSeries TData="Language" Data="_languages" XValue="@(l => l.Name)" ValueSelector="@(l => l.Developers)" />
+    </NTChart>
+</div>
+
+@code {
+    private readonly Language[] _languages = [new("C#", 28m), new("JavaScript", 63m), new("Python", 49m), new("Java", 30m), new("Go", 14m), new("Rust", 12m), new("PHP", 18m), new("Kotlin", 9m)];
+
+    private sealed record Language(string Name, decimal Developers);
+}
