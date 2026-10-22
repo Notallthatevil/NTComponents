@@ -25,7 +25,7 @@
                         <col class="nt-data-grid-expansion-column" />
                     }
                     @foreach (var column in _columns) {
-                        <col style="@column.ColumnStyle" />
+                        <col class="@column.ColumnClass" style="@column.ColumnStyle" />
                     }
                 </colgroup>
             }
@@ -188,6 +188,21 @@
                            @onclick="() => GoToPageAsync(pageIndex)"
                            @onclick:preventDefault="true">@(pageIndex + 1)</a>
                     }
+                    <span class="nt-data-grid-page-jump">
+                        <span>Page</span>
+                        @if (PageCount <= _maxPageJumpOptions) {
+                            <select aria-label="Go to page" value="@(CurrentPageIndex + 1)" onchange="@PageJumpOnChange"
+                                    data-nt-data-grid-page-href="@(RendererInfo.IsInteractive ? null : BuildHref(_pageHrefPlaceholder, _sorts))">
+                                @for (var pageNumber = 1; pageNumber <= PageCount; pageNumber++) {
+                                    <option value="@pageNumber">@pageNumber</option>
+                                }
+                            </select>
+                        }
+                        else {
+                            <span>@(CurrentPageIndex + 1)</span>
+                        }
+                        <span>of @PageCount</span>
+                    </span>
                 }
 
                 <a class="@GetPaginationButtonClass(!CanGoToNextPage, false, "pagination-next-page")"

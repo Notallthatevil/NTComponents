@@ -5,7 +5,8 @@ namespace NTComponents.IntegrationTests;
 /// <summary>
 ///     Base fixture for E2E tests using Playwright. Handles browser, context, and page lifecycle management with a test server using WebApplicationFactory.
 /// </summary>
-public class PlaywrightFixture : IAsyncLifetime {
+/// <param name="_contextOptions">Options for the browser context, such as touch emulation; the browser defaults apply when omitted.</param>
+public class PlaywrightFixture(BrowserNewContextOptions? _contextOptions = null) : IAsyncLifetime {
     private static readonly Lazy<Task<SharedPlaywrightResources>> SharedResources = new(CreateSharedResourcesAsync);
 
     public HttpClient HttpClient => new() { BaseAddress = new Uri(ServerAddress) };
@@ -38,7 +39,7 @@ public class PlaywrightFixture : IAsyncLifetime {
     /// </summary>
     public async ValueTask InitializeAsync() {
         _resources = await SharedResources.Value;
-        Context = await _resources.Browser.NewContextAsync();
+        Context = await _resources.Browser.NewContextAsync(_contextOptions);
         // The test host has no dotnet-watch provider for the SDK's Debug-build initializer.
         await Context.RouteAsync("**/_framework/dotnet-browser-tools/hot-reload-settings.json", route => route.FulfillAsync(new() { ContentType = "application/json", Body = "{\"hotReload\":false}" }));
         Page = await Context.NewPageAsync();

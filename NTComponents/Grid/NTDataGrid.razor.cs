@@ -60,6 +60,9 @@ public partial class NTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessedM
     private const string _clickableStripedOddRowClass = "nt-data-grid-row nt-data-grid-row-clickable nt-data-grid-row-striped-odd";
     private const string _clickableStripedEvenRowClass = "nt-data-grid-row nt-data-grid-row-clickable nt-data-grid-row-striped-even";
     private const string _emptyRowClass = "nt-data-grid-row nt-data-grid-row-empty";
+    // The page dropdown renders at every width (CSS shows it below the large breakpoint), so very large page counts fall back to text.
+    private const int _maxPageJumpOptions = 1_000;
+    private const string _pageHrefPlaceholder = "{page}";
     private readonly List<NTDataGridColumn<TItem>> _columns = [];
     private readonly Dictionary<string, NTDataGridColumn<TItem>> _columnsBySortProperty = new(StringComparer.Ordinal);
     private readonly List<TItem> _loadedItems = [];
@@ -985,6 +988,17 @@ public partial class NTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessedM
         await UpdateBrowserUriAsync();
     }
 
+    // Static SSR has no .NET event handling, so the page dropdown navigates through an inline handler there instead.
+    private object PageJumpOnChange => RendererInfo.IsInteractive
+        ? EventCallback.Factory.Create<ChangeEventArgs>(this, JumpToPageAsync)
+        : "window.NTComponents?.jumpToGridPage(this)";
+
+    private async Task JumpToPageAsync(ChangeEventArgs args) {
+        if (int.TryParse(Convert.ToString(args.Value, CultureInfo.InvariantCulture), out var page)) {
+            await GoToPageAsync(page - 1);
+        }
+    }
+
     private async Task ChangePageSizeAsync(ChangeEventArgs args) {
         if (!int.TryParse(Convert.ToString(args.Value, CultureInfo.InvariantCulture), out var pageSize) || pageSize <= 0) {
             return;
@@ -1026,11 +1040,13 @@ public partial class NTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessedM
 
     private string BuildPageHref(int pageIndex) => BuildHref(Math.Clamp(pageIndex, 0, PageCount - 1), _sorts);
 
-    private string BuildHref(int pageIndex, IReadOnlyList<NTSortDescriptor> sorts, int? pageSize = null) {
-        pageIndex = Math.Max(0, pageIndex);
+    private string BuildHref(int pageIndex, IReadOnlyList<NTSortDescriptor> sorts, int? pageSize = null) =>
+        BuildHref((Math.Max(0, pageIndex) + 1).ToString(CultureInfo.InvariantCulture), sorts, pageSize);
+
+    private string BuildHref(string pageValue, IReadOnlyList<NTSortDescriptor> sorts, int? pageSize = null) {
         var sortValue = SerializeSorts(sorts);
         var uriState = GetUriState();
-        var href = uriState.PageHrefPrefix + (pageIndex + 1).ToString(CultureInfo.InvariantCulture);
+        var href = uriState.PageHrefPrefix + pageValue;
         if (!string.IsNullOrWhiteSpace(sortValue)) {
             href += $"&{Uri.EscapeDataString(uriState.SortName)}={Uri.EscapeDataString(sortValue)}";
         }

@@ -1278,6 +1278,24 @@ window.NTComponents = Object.assign(window.NTComponents || {}, {
             }
         }
     },
+    /**
+     * Inline onchange handler for the NTDataGrid page dropdown in static SSR; interactive grids handle the change in .NET.
+     * @param {HTMLSelectElement} select - The page dropdown, whose data-nt-data-grid-page-href holds a URL with a {page} placeholder.
+     */
+    jumpToGridPage: (select) => {
+        const href = select?.dataset?.ntDataGridPageHref;
+        if (!href) {
+            return;
+        }
+
+        const target = href.replace('{page}', encodeURIComponent(select.value));
+        if (typeof window.Blazor?.navigateTo === 'function') {
+            window.Blazor.navigateTo(target);
+        }
+        else {
+            window.location.assign(target);
+        }
+    },
     toggleSideNavGroup: (event) => {
         const toggler = event.target.parentElement.querySelector('.tnt-side-nav-menu-group-toggler');
 

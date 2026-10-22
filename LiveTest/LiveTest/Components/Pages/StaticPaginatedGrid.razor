@@ -1,0 +1,25 @@
+@page "/static-paginated-grid"
+@using NTComponents
+
+@* No render mode: this page stays static SSR so the page dropdown runs through its inline handler. *@
+@* The HideBelow columns have fixed widths so a <col> left in the layout would visibly reserve space. *@
+<NTDataGrid TItem="Order" Items="_orders" Caption="Static SSR orders" ShowPagination="true" PageSize="5" QueryParameterPrefix="static-grid"
+            Density="@(Compact ? NTDataGridDensity.Compact : NTDataGridDensity.Standard)">
+    <NTPropertyColumn TItem="Order" TValue="string" Title="Order" Property="order => order.Name" />
+    <NTPropertyColumn TItem="Order" TValue="decimal" Title="Total" Property="order => order.Total" Format="C" />
+    <NTTemplateColumn TItem="Order" Title="Small and up" HideBelow="NTBreakpoint.Small" Width="120px">small @context.Name</NTTemplateColumn>
+    <NTTemplateColumn TItem="Order" Title="Medium and up" HideBelow="NTBreakpoint.Medium" Width="120px">medium @context.Name</NTTemplateColumn>
+    <NTTemplateColumn TItem="Order" Title="Large and up" HideBelow="NTBreakpoint.Large" Width="120px">large @context.Name</NTTemplateColumn>
+    <NTTemplateColumn TItem="Order" Title="Extra large and up" HideBelow="NTBreakpoint.ExtraLarge" Width="120px">extra large @context.Name</NTTemplateColumn>
+</NTDataGrid>
+
+@code {
+    private static readonly IQueryable<Order> _orders = Enumerable.Range(1, 30)
+        .Select(index => new Order($"Order {index}", index * 10m))
+        .AsQueryable();
+
+    [SupplyParameterFromQuery]
+    public bool Compact { get; set; }
+
+    private sealed record Order(string Name, decimal Total);
+}

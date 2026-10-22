@@ -25,6 +25,7 @@ public abstract class NTDataGridColumn<TItem> : ComponentBase, IDisposable where
     private SortDirection? _previousInitialSortDirection;
     private TextAlign? _previousHeaderTextAlign;
     private TextAlign? _previousTextAlign;
+    private NTBreakpoint? _previousHideBelow;
     private bool _hasParameterState;
     private bool _previousSortable;
     private bool _registered;
@@ -77,6 +78,17 @@ public abstract class NTDataGridColumn<TItem> : ComponentBase, IDisposable where
     public string? MaxWidth { get; set; }
 
     /// <summary>
+    ///     Gets or sets the viewport breakpoint below which the column is hidden.
+    /// </summary>
+    /// <remarks>
+    ///     Use it on low-priority columns so narrow screens show the columns that matter instead of scrolling sideways.
+    ///     The column's header and cells are removed from the layout and the accessibility tree, so show values users still
+    ///     need, for example in <see cref="NTDataGrid{TItem}.RowDetailTemplate" />. Sorting by a hidden column stays applied.
+    /// </remarks>
+    [Parameter]
+    public NTBreakpoint? HideBelow { get; set; }
+
+    /// <summary>
     ///     Gets or sets a custom cell template.
     /// </summary>
     [Parameter]
@@ -92,6 +104,8 @@ public abstract class NTDataGridColumn<TItem> : ComponentBase, IDisposable where
     internal bool CanSort { get; private set; }
 
     internal string HeaderCellClass { get; private set; } = "nt-data-grid-header-cell";
+
+    internal string? ColumnClass { get; private set; }
 
     internal string? ColumnStyle { get; private set; }
 
@@ -144,6 +158,7 @@ public abstract class NTDataGridColumn<TItem> : ComponentBase, IDisposable where
             || !string.Equals(_previousWidth, Width, StringComparison.Ordinal)
             || !string.Equals(_previousMinWidth, MinWidth, StringComparison.Ordinal)
             || !string.Equals(_previousMaxWidth, MaxWidth, StringComparison.Ordinal)
+            || _previousHideBelow != HideBelow
             || !Equals(_previousCellTemplate, CellTemplate)
             || !string.Equals(_previousHeaderTitle, headerTitle, StringComparison.Ordinal)
             || !string.Equals(_previousStateSignature, stateSignature, StringComparison.Ordinal)
@@ -165,6 +180,7 @@ public abstract class NTDataGridColumn<TItem> : ComponentBase, IDisposable where
         _previousWidth = Width;
         _previousMinWidth = MinWidth;
         _previousMaxWidth = MaxWidth;
+        _previousHideBelow = HideBelow;
         _previousCellTemplate = CellTemplate;
         _previousHeaderTitle = headerTitle;
         _previousSortPropertyName = sortPropertyName;
@@ -210,9 +226,17 @@ public abstract class NTDataGridColumn<TItem> : ComponentBase, IDisposable where
     protected virtual string GetSortStateSignature() => string.Empty;
 
     private void UpdateCellClasses() {
-        BodyCellClass = AddTextAlignment("nt-data-grid-cell", TextAlign);
+        ColumnClass = HideBelow switch {
+            NTBreakpoint.Small => "nt-data-grid-hide-below-small",
+            NTBreakpoint.Medium => "nt-data-grid-hide-below-medium",
+            NTBreakpoint.Large => "nt-data-grid-hide-below-large",
+            NTBreakpoint.ExtraLarge => "nt-data-grid-hide-below-extra-large",
+            _ => null
+        };
+        var hideClass = ColumnClass is null ? string.Empty : $" {ColumnClass}";
+        BodyCellClass = AddTextAlignment("nt-data-grid-cell", TextAlign) + hideClass;
         CanSort = Sortable && !string.IsNullOrWhiteSpace(SortPropertyName);
-        HeaderCellClass = AddTextAlignment("nt-data-grid-header-cell", HeaderTextAlign ?? TextAlign);
+        HeaderCellClass = AddTextAlignment("nt-data-grid-header-cell", HeaderTextAlign ?? TextAlign) + hideClass;
         if (CanSort) {
             HeaderCellClass += " nt-data-grid-header-cell-sortable";
         }

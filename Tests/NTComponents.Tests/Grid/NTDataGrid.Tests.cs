@@ -41,6 +41,168 @@ public class NTDataGrid_Tests : BunitContext {
     }
 
     [Fact]
+    public void WithThreePages_PageJumpListsPagesAndSelectsCurrentPage() {
+        var cut = RenderPagedGrid(pageIndex: 1);
+
+        cut.WaitForAssertion(() => {
+            var select = cut.Find("select[aria-label='Go to page']");
+            select.GetAttribute("value").Should().Be("2");
+            select.QuerySelectorAll("option").Select(option => (option.GetAttribute("value"), option.TextContent)).Should().Equal(("1", "1"), ("2", "2"), ("3", "3"));
+            cut.Find(".nt-data-grid-page-jump").TextContent.Should().EndWith("of 3");
+        });
+    }
+
+    [Fact]
+    public void Interactive_PageJumpOmitsStaticNavigationAttributes() {
+        var cut = RenderPagedGrid();
+
+        var select = cut.Find("select[aria-label='Go to page']");
+        select.HasAttribute("onchange").Should().BeFalse("interactive grids handle the change in .NET");
+        select.HasAttribute("data-nt-data-grid-page-href").Should().BeFalse();
+    }
+
+    [Fact]
+    public void PageJumpChange_ShowsSelectedPage() {
+        var cut = RenderPagedGrid();
+
+        cut.Find("select[aria-label='Go to page']").Change("3");
+
+        cut.WaitForAssertion(() => {
+            cut.FindAll("tbody tr").Should().ContainSingle().Which.TextContent.Should().Contain("Beta");
+            cut.Find(".pagination-btn[aria-current='page']").TextContent.Should().Be("3");
+            cut.Find("select[aria-label='Go to page']").GetAttribute("value").Should().Be("3");
+        });
+    }
+
+    [Fact]
+    public void PageJumpChange_RaisesPageIndexChangedWithZeroBasedIndex() {
+        var pageIndexes = new List<int>();
+        var cut = RenderPagedGrid(onPageIndexChanged: pageIndexes.Add);
+
+        cut.Find("select[aria-label='Go to page']").Change("3");
+
+        cut.WaitForAssertion(() => pageIndexes.Should().Equal(2));
+    }
+
+    [Fact]
+    public void PageJumpChange_UpdatesBrowserUriToSelectedPage() {
+        var cut = RenderPagedGrid();
+
+        cut.Find("select[aria-label='Go to page']").Change("3");
+
+        cut.WaitForAssertion(() => {
+            var invocation = JSInterop.Invocations.Last(invocation => invocation.Identifier == "NTComponents.updateUri");
+            invocation.Arguments[0].Should().BeOfType<string>().Subject.Should().Contain("ntdg-page=3");
+        });
+    }
+
+    [Fact]
+    public void PageJumpChangeWithNonNumericValue_StaysOnCurrentPage() {
+        var pageIndexes = new List<int>();
+        var cut = RenderPagedGrid(onPageIndexChanged: pageIndexes.Add);
+
+        cut.Find("select[aria-label='Go to page']").Change("not-a-page");
+
+        pageIndexes.Should().BeEmpty();
+        cut.Find(".pagination-btn[aria-current='page']").TextContent.Should().Be("1");
+    }
+
+    [Fact]
+    public void StaticSsr_PageJumpIsWiredForInlineNavigation() {
+        // Arrange
+        var navigationManager = (BunitNavigationManager)Services.GetRequiredService<NavigationManager>();
+        navigationManager.NavigateTo("https://example.test/orders?existing=true&ntdg-page=2");
+        SetRendererInfo(new RendererInfo("Static", false));
+
+        // Act
+        var cut = RenderPagedGrid();
+
+        // Assert: the inline handler fills {page} in the href template, so the select must be enabled and carry both.
+        var select = cut.Find("select[aria-label='Go to page']");
+        select.HasAttribute("disabled").Should().BeFalse();
+        select.GetAttribute("onchange").Should().Be("window.NTComponents?.jumpToGridPage(this)");
+        select.GetAttribute("data-nt-data-grid-page-href").Should().Be("https://example.test/orders?existing=true&ntdg-page={page}");
+    }
+
+    [Fact]
+    public void StaticSsr_PageJumpHref_KeepsSortPageSizeAndFragment() {
+        var navigationManager = (BunitNavigationManager)Services.GetRequiredService<NavigationManager>();
+        navigationManager.NavigateTo("https://example.test/orders?ntdg-sort=Name%3Adesc#results");
+        SetRendererInfo(new RendererInfo("Static", false));
+
+        var cut = Render<NTDataGrid<TestGridItem>>(parameters => parameters
+            .Add(grid => grid.Items, _items)
+            .Add(grid => grid.ShowPagination, true)
+            .Add(grid => grid.PageSize, 1)
+            .Add(grid => grid.PersistPageSizeInQuery, true)
+            .Add(grid => grid.ChildContent, DefaultColumns));
+
+        cut.Find("select[aria-label='Go to page']").GetAttribute("data-nt-data-grid-page-href")
+            .Should().Be("https://example.test/orders?ntdg-page={page}&ntdg-sort=Name%3Adesc&ntdg-pageSize=1#results");
+    }
+
+    [Fact]
+    public void WithOneThousandPages_PageJumpStillRendersSelect() {
+        var cut = RenderPagedGrid(itemCount: 1_000);
+
+        cut.WaitForAssertion(() => cut.Find("select[aria-label='Go to page']").QuerySelectorAll("option").Should().HaveCount(1_000));
+    }
+
+    [Fact]
+    public void WithMoreThanOneThousandPages_PageJumpFallsBackToText() {
+        var cut = RenderPagedGrid(itemCount: 1_001);
+
+        cut.WaitForAssertion(() => {
+            cut.FindAll(".nt-data-grid-page-jump select").Should().BeEmpty();
+            cut.FindAll(".nt-data-grid-page-jump > span").Select(span => span.TextContent).Should().Equal("Page", "1", "of 1001");
+        });
+    }
+
+    [Fact]
+    public void WithoutItems_OmitsPageJump() {
+        var cut = RenderPagedGrid(itemCount: 0);
+
+        cut.FindAll(".nt-data-grid-page-jump").Should().BeEmpty();
+    }
+
+    [Theory]
+    [InlineData(NTBreakpoint.Small, "nt-data-grid-hide-below-small")]
+    [InlineData(NTBreakpoint.Medium, "nt-data-grid-hide-below-medium")]
+    [InlineData(NTBreakpoint.Large, "nt-data-grid-hide-below-large")]
+    [InlineData(NTBreakpoint.ExtraLarge, "nt-data-grid-hide-below-extra-large")]
+    public void WithHideBelow_MarksOnlyThatColumnsColHeaderAndCells(NTBreakpoint breakpoint, string expectedClass) {
+        var cut = RenderGrid(HideBelowColumns(breakpoint));
+
+        cut.WaitForAssertion(() => {
+            cut.FindAll("col")[0].ClassList.Should().Contain(expectedClass);
+            cut.FindAll("th")[0].ClassList.Should().Contain(["nt-data-grid-header-cell", expectedClass]);
+            cut.FindAll("tbody tr").Should().HaveCount(3).And.OnlyContain(row => row.Children[0].ClassList.Contains(expectedClass));
+            cut.FindAll("col")[1].HasAttribute("class").Should().BeFalse();
+            cut.FindAll("th")[1].ClassList.Should().NotContain(expectedClass);
+            cut.FindAll("tbody td")[1].ClassList.Should().NotContain(expectedClass);
+        });
+    }
+
+    [Fact]
+    public void HideBelowClearedAtRuntime_RemovesHideClasses() {
+        NTBreakpoint? hideBelow = NTBreakpoint.Medium;
+        RenderFragment columns = builder => builder.AddContent(0, HideBelowColumns(hideBelow));
+        var cut = RenderGrid(columns);
+        cut.WaitForAssertion(() => cut.FindAll(".nt-data-grid-hide-below-medium").Should().HaveCount(5));
+
+        hideBelow = null;
+        cut.Render(parameters => parameters
+            .Add(grid => grid.Items, _items)
+            .Add(grid => grid.Caption, "Invoices")
+            .Add(grid => grid.ChildContent, columns));
+
+        cut.WaitForAssertion(() => {
+            cut.FindAll(".nt-data-grid-hide-below-medium").Should().BeEmpty();
+            cut.FindAll("col")[0].HasAttribute("class").Should().BeFalse();
+        });
+    }
+
+    [Fact]
     public async Task VirtualizedScroll_DelegatesToInteractiveVirtualizer() {
         var cut = Render<NTDataGrid<TestGridItem>>(parameters => parameters
             .Add(grid => grid.Items, _items)
@@ -977,7 +1139,7 @@ public class NTDataGrid_Tests : BunitContext {
             cut.Find(".nt-data-grid-pagination-buttons .current-page").TextContent.Should().Contain("1");
             cut.Find(".nt-data-grid-pagination-buttons .pagination-next-page").GetAttribute("href").Should().Contain("ntdg-page=2");
             cut.Find(".nt-data-grid-pagination-buttons .pagination-next-page").GetAttribute("href").Should().NotContain("ntdg-pageSize");
-            cut.FindAll(".nt-data-grid-page-status").Should().BeEmpty();
+            cut.FindAll(".nt-data-grid-page-jump option").Should().HaveCount(2);
             cut.Find(".nt-data-grid-page-size select").GetAttribute("value").Should().Be("2");
         });
 
@@ -1704,6 +1866,24 @@ public class NTDataGrid_Tests : BunitContext {
         cut.Find("table").Should().NotBeNull();
     }
 
+    // One row per page over _items (Gamma, Alpha, Beta) unless itemCount asks for generated rows instead.
+    private IRenderedComponent<NTDataGrid<TestGridItem>> RenderPagedGrid(int pageIndex = 0, int? itemCount = null, Action<int>? onPageIndexChanged = null) {
+        var items = itemCount is null
+            ? _items
+            : Enumerable.Range(1, itemCount.Value).Select(id => new TestGridItem(id, $"Item {id}", new DateOnly(2026, 1, 1), id)).AsQueryable();
+        return Render<NTDataGrid<TestGridItem>>(parameters => {
+            parameters
+                .Add(grid => grid.Items, items)
+                .Add(grid => grid.ShowPagination, true)
+                .Add(grid => grid.PageSize, 1)
+                .Add(grid => grid.PageIndex, pageIndex)
+                .Add(grid => grid.ChildContent, DefaultColumns);
+            if (onPageIndexChanged is not null) {
+                parameters.Add(grid => grid.PageIndexChanged, onPageIndexChanged);
+            }
+        });
+    }
+
     private IRenderedComponent<NTDataGrid<TestGridItem>> RenderGrid(RenderFragment? columns = null) => RenderGrid(null, columns);
 
     private IRenderedComponent<NTDataGrid<TestGridItem>> RenderGrid(Action<ComponentParameterCollectionBuilder<NTDataGrid<TestGridItem>>>? configure, RenderFragment? columns = null) =>
@@ -1730,6 +1910,17 @@ public class NTDataGrid_Tests : BunitContext {
         builder.AddAttribute(9, nameof(NTPropertyColumn<TestGridItem, decimal>.Property), (System.Linq.Expressions.Expression<Func<TestGridItem, decimal>>)(item => item.Amount));
         builder.AddAttribute(10, nameof(NTPropertyColumn<TestGridItem, decimal>.Format), "C");
         builder.AddAttribute(11, nameof(NTPropertyColumn<TestGridItem, decimal>.TextAlign), TextAlign.Right);
+        builder.CloseComponent();
+    };
+
+    // The first column carries HideBelow; the second stays visible at every width.
+    private static RenderFragment HideBelowColumns(NTBreakpoint? hideBelow) => builder => {
+        builder.OpenComponent<NTPropertyColumn<TestGridItem, string>>(0);
+        builder.AddAttribute(1, nameof(NTPropertyColumn<TestGridItem, string>.Property), (System.Linq.Expressions.Expression<Func<TestGridItem, string>>)(item => item.Name));
+        builder.AddAttribute(2, nameof(NTPropertyColumn<TestGridItem, string>.HideBelow), hideBelow);
+        builder.CloseComponent();
+        builder.OpenComponent<NTPropertyColumn<TestGridItem, decimal>>(3);
+        builder.AddAttribute(4, nameof(NTPropertyColumn<TestGridItem, decimal>.Property), (System.Linq.Expressions.Expression<Func<TestGridItem, decimal>>)(item => item.Amount));
         builder.CloseComponent();
     };
 

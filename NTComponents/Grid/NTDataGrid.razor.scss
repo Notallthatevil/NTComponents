@@ -1,6 +1,7 @@
 @use '../Styles/_Variables/_colors.scss' as colors;
 @use '../Styles/_Variables/_corner-radius.scss' as corners;
 @use '../Styles/_Variables/_motion.scss' as motion;
+@use '../Styles/_Variables/_screen-width.scss' as screen-width;
 @use '../Styles/_Variables/_typescale.scss' as typescale;
 
 $nt-data-grid-row-size: 36px;
@@ -8,6 +9,7 @@ $nt-data-grid-compact-row-size: 28px;
 $nt-data-grid-pagination-min-block-size: 48px;
 $nt-data-grid-page-size-select-min-block-size: 32px;
 $nt-data-grid-page-button-size: 24px;
+$nt-data-grid-touch-target-size: 48px;
 $nt-data-grid-sort-order-min-inline-size: 16px;
 $nt-data-grid-sort-indicator-size: 18px;
 $nt-data-grid-page-button-font-size: 12px;
@@ -417,18 +419,19 @@ $nt-data-grid-spacer-animation-duration: motion.$nt-motion-duration-extra_long_2
     align-items: center;
     gap: $nt-data-grid-spacing-md;
     margin-inline-end: auto;
+}
 
-    select {
-        @include typescale.nt-label-large;
+.nt-data-grid-page-size select,
+.nt-data-grid-page-jump select {
+    @include typescale.nt-label-large;
 
-        min-block-size: $nt-data-grid-page-size-select-min-block-size;
-        padding-block: $nt-data-grid-spacing-sm;
-        padding-inline: $nt-data-grid-spacing-md $nt-data-grid-select-trailing-padding;
-        color: colors.$nt-color-on-surface;
-        background: colors.$nt-color-surface;
-        border: $nt-data-grid-border-size solid colors.$nt-color-outline;
-        border-radius: $nt-data-grid-select-shape;
-    }
+    min-block-size: $nt-data-grid-page-size-select-min-block-size;
+    padding-block: $nt-data-grid-spacing-sm;
+    padding-inline: $nt-data-grid-spacing-md $nt-data-grid-select-trailing-padding;
+    color: colors.$nt-color-on-surface;
+    background: colors.$nt-color-surface;
+    border: $nt-data-grid-border-size solid colors.$nt-color-outline;
+    border-radius: $nt-data-grid-select-shape;
 }
 
 .nt-data-grid-pagination-buttons {
@@ -489,6 +492,53 @@ $nt-data-grid-spacer-animation-duration: motion.$nt-motion-duration-extra_long_2
 
         .tnt-icon {
             font-size: $nt-data-grid-sort-indicator-size;
+        }
+    }
+
+    .nt-data-grid-page-jump {
+        display: none;
+        align-items: center;
+        gap: $nt-data-grid-spacing-md;
+        padding-inline: $nt-data-grid-spacing-md;
+        white-space: nowrap;
+    }
+}
+
+// Below the large breakpoint, keep previous, a page dropdown and next instead of a row of page numbers.
+@media #{screen-width.$medium-and-down} {
+    .nt-data-grid-pagination-buttons {
+        .pagination-btn:not(.pagination-previous-page, .pagination-next-page) {
+            display: none;
+        }
+
+        .nt-data-grid-page-jump {
+            display: inline-flex;
+        }
+    }
+}
+
+// Touch screens get Material 3's 48dp minimum target. Compact density keeps its more specific header sizing.
+@media (pointer: coarse) {
+    .nt-data-grid-pagination-buttons .pagination-btn {
+        block-size: $nt-data-grid-touch-target-size;
+        inline-size: $nt-data-grid-touch-target-size;
+        min-block-size: $nt-data-grid-touch-target-size;
+        min-inline-size: $nt-data-grid-touch-target-size;
+        line-height: $nt-data-grid-touch-target-size;
+    }
+
+    .nt-data-grid-page-size select,
+    .nt-data-grid-page-jump select,
+    .nt-data-grid-sort-link {
+        min-block-size: $nt-data-grid-touch-target-size;
+    }
+}
+
+// Columns with HideBelow drop out under their breakpoint. The <col> goes too so its width is not reserved.
+@each $name, $query in (small: screen-width.$extra-small-only, medium: screen-width.$small-and-down, large: screen-width.$medium-and-down, extra-large: screen-width.$large-and-down) {
+    @media #{$query} {
+        .nt-data-grid ::deep .nt-data-grid-hide-below-#{$name} {
+            display: none;
         }
     }
 }
