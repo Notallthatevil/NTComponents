@@ -1,0 +1,15 @@
+<NTButtonGroup TObjectType="string" />
+<NTButtonGroup TObjectType="string" Variant="NTButtonVariant.Text" /> @* NTC1019 *@
+<NTButtonGroup TObjectType="string" Variant="NTButtonVariant.Text" SelectionMode="NTButtonGroupSelectionMode.None" />
+<NTButtonGroup TObjectType="string" Variant="NTButtonVariant.Text" SelectionMode="_mode" />
+<NTButtonGroup TObjectType="string" Variant="NTButtonVariant.Outlined" BackgroundColor="NTColor.Primary" SelectionMode="NTButtonGroupSelectionMode.None" /> @* NTC1020 *@
+<NTButtonGroup TObjectType="string" BackgroundColor="NTColor.Transparent" /> @* NTC1021 *@
+<NTButtonGroup TObjectType="string" TextColor="NTColor.Transparent" /> @* NTC1022 *@
+<NTButtonGroup TObjectType="string" SelectedBackgroundColor="NTColor.Transparent" /> @* NTC1023 *@
+<NTButtonGroup TObjectType="string" SelectedTextColor="NTColor.Transparent" /> @* NTC1024 *@
+<NTButtonGroup TObjectType="string" SelectedTextColor="NTColor.Transparent" SelectionMode="NTButtonGroupSelectionMode.None" />
+<NTButtonGroup TObjectType="string"><NTButtonGroupItem TObjectType="string" Key="@("a")" Label="A" /><NTButtonGroupItem TObjectType="string" Key="@("b")" Icon="MaterialIcon.Add" /></NTButtonGroup> @* NTC1025 *@
+
+@code {
+    private NTButtonGroupSelectionMode _mode = NTButtonGroupSelectionMode.None;
+}

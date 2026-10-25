@@ -1,0 +1,19 @@
+<NTSplitButton Label="Save"><NTMenuButtonItem Label="Save as" /></NTSplitButton>
+<NTSplitButton Label=""><NTMenuButtonItem Label="Save as" /></NTSplitButton> @* NTC1009 *@
+<NTSplitButton Label="" LeadingIcon="MaterialIcon.Add"><NTMenuButtonItem Label="Save as" /></NTSplitButton> @* NTC1010 *@
+<NTSplitButton Label="Save" Variant="NTButtonVariant.Text" BackgroundColor="NTColor.Primary"><NTMenuButtonItem Label="Save as" /></NTSplitButton> @* NTC1011 *@
+<NTSplitButton Label="Save" BackgroundColor="NTColor.Transparent"><NTMenuButtonItem Label="Save as" /></NTSplitButton> @* NTC1012 *@
+<NTSplitButton Label="Save" TextColor="NTColor.Transparent"><NTMenuButtonItem Label="Save as" /></NTSplitButton> @* NTC1013 *@
+<NTSplitButton Label="Save" Elevation="NTElevation.High"><NTMenuButtonItem Label="Save as" /></NTSplitButton> @* NTC1014 *@
+<NTSplitButton Label="Save" MenuTextColor="NTColor.Transparent"><NTMenuButtonItem Label="Save as" /></NTSplitButton> @* NTC1015 *@
+<NTSplitButton Label="Save"><NTMenuDividerItem /></NTSplitButton> @* NTC1016 *@
+<NTSplitButton Label="Save" /> @* NTC1016 *@
+<NTSplitButton Label="Save">@if (_show) {<NTMenuButtonItem Label="Save as" />}</NTSplitButton>
+<NTSplitButton Label="@_label" Variant="_variant" BackgroundColor="NTColor.Transparent">@_items</NTSplitButton>
+
+@code {
+    private bool _show = true;
+    private string _label = "Save";
+    private NTButtonVariant _variant = NTButtonVariant.Text;
+    private RenderFragment _items = builder => { };
+}
