@@ -1,0 +1,12 @@
+<NTChip Label="Tag" />
+<NTChip Label="" /> @* NTC1090 *@
+<NTChip Label="Tag" Href="/x" Variant="NTChipVariant.Filter" /> @* NTC1091 *@
+<NTChip Label="Tag" Href="/x" Selectable="@_selectable" />
+<NTChip Label="Tag" Variant="NTChipVariant.Filter"><MenuContent><span>Menu</span></MenuContent></NTChip>
+<NTChip Label="Tag" Href="/x"><MenuContent><span>Menu</span></MenuContent></NTChip> @* NTC1091 *@
+<NTChip Label="Tag" ShowBadge="true" /> @* NTC1101 *@
+<NTChip /> @* unmapped NTC1090 *@
+
+@code {
+    private bool? _selectable = DateTime.Now.Year > 2000;
+}

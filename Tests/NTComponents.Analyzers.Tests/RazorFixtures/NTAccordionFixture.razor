@@ -1,0 +1,9 @@
+<NTAccordion LimitToOneExpanded="true" GroupName="faq"><NTAccordionItem Label="One">Body</NTAccordionItem></NTAccordion>
+<NTAccordion GroupName="faq"><NTAccordionItem Label="One">Body</NTAccordionItem></NTAccordion> @* NTC1102 *@
+<NTAccordion><NTAccordionItem Label="">Body</NTAccordionItem></NTAccordion> @* NTC1096 *@
+<NTAccordion><NTAccordionItem Label="One"><HeaderContent>Header</HeaderContent><ChildContent>Body</ChildContent></NTAccordionItem></NTAccordion> @* NTC1102 *@
+<NTAccordion><NTAccordionItem Label="@_label">Body</NTAccordionItem></NTAccordion>
+
+@code {
+    private string _label = "One";
+}

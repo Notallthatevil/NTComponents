@@ -1,0 +1,9 @@
+<NTVirtualize TItem="string" ItemsProvider="_provider" ItemSize="40" />
+<NTVirtualize TItem="string" ItemSize="40" /> @* NTC1097 *@
+<NTVirtualize TItem="string" ItemsProvider="_provider" ItemSize="0" /> @* NTC1098 *@
+<NTVirtualize TItem="string" ItemsProvider="_provider" ItemSize="@_size" />
+
+@code {
+    private float _size = DateTime.Now.Year;
+    private NTVirtualizeItemsProvider<string> _provider = request => default;
+}

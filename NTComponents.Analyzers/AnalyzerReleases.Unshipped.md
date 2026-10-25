@@ -87,3 +87,16 @@ NTC1081 | Usage | Warning | NTAnimation Repeat, Threshold, RootMargin, OnEntered
 NTC1082 | Usage | Warning | NTAnimation Threshold must be between 0 and 1.
 NTC1102 | Usage | Info | Parameter has no effect in this configuration.
 NTC1103 | Usage | Info | Parameter value is adjusted at runtime.
+NTC1090 | Usage | Warning | NTChip requires a non-empty Label.
+NTC1091 | Usage | Warning | NTChip Href, MenuContent and selectable behavior cannot be combined.
+NTC1092 | Accessibility | Warning | NTNavigationRail requires a non-empty AriaLabel.
+NTC1093 | Usage | Warning | NTNavigationRailItem, NTNavigationRailGroup and NTNavigationRailSectionHeader require a non-empty Label.
+NTC1094 | Usage | Warning | NTNavigationRailSectionHeader AriaLevel must be between 1 and 6.
+NTC1095 | Usage | Warning | NTWindow requires a non-empty Title.
+NTC1096 | Usage | Warning | NTAccordionItem requires either a non-empty Label or HeaderContent.
+NTC1097 | Usage | Warning | NTVirtualize requires a non-null ItemsProvider.
+NTC1098 | Usage | Warning | NTVirtualize ItemSize must be finite and greater than zero.
+NTC1099 | Usage | Warning | NTResponsive CustomBreakpoint must be zero or greater.
+NTC1100 | Accessibility | Warning | NTDialog needs a Title, TitleContent or aria-label to have an accessible name.
+NTC1101 | Accessibility | Info | A dot badge needs an accessible label.
+NTC1109 | Usage | Warning | A raw attribute the component sets itself never reaches the DOM.

@@ -1,0 +1,12 @@
+<NTBadge Content="3" />
+<NTBadge AriaLabel="New" />
+<NTBadge /> @* unmapped NTC1101 *@
+<NTBadge Placement="NTBadgePlacement.Edge" /> @* NTC1101 *@
+<NTButton Label="Inbox" ShowBadge="true" BadgeContent="3" />
+<NTButton Label="Inbox" ShowBadge="true" /> @* NTC1101 *@
+<NTButton Label="Inbox" ShowBadge="true" BadgeAriaLabel="New mail" />
+<NTButton Label="Inbox" ShowBadge="@_show" />
+
+@code {
+    private bool _show = DateTime.Now.Year > 2000;
+}
