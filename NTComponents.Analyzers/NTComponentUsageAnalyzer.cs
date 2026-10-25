@@ -38,7 +38,8 @@ public sealed class NTComponentUsageAnalyzer : DiagnosticAnalyzer {
         NTVirtualizeRules.Register,
         NTResponsiveRules.Register,
         NTDialogRules.Register,
-        NTBadgeRules.Register);
+        NTBadgeRules.Register,
+        NTLayoutViewRules.Register);
 
     private readonly ComponentRuleRegistry _registry;
 

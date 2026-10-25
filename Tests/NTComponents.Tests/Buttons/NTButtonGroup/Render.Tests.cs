@@ -218,12 +218,15 @@ public sealed class Render_Tests : NTButtonGroupTestContext {
     [Fact]
     public void WithIconOnlyItemWithoutAriaLabel_Throws() {
         // Arrange
+        // This test proves the runtime throw that NTC1025 predicts.
+#pragma warning disable NTC1025
         RenderFragment items = builder => {
             builder.OpenComponent<NTButtonGroupItem<string>>(0);
             builder.AddAttribute(1, nameof(NTButtonGroupItem<string>.Key), "search");
             builder.AddAttribute(2, nameof(NTButtonGroupItem<string>.Icon), (object)MaterialIcon.Search);
             builder.CloseComponent();
         };
+#pragma warning restore NTC1025
 
         // Act
         var act = () => Render<NTButtonGroup<string>>(parameters => parameters.AddChildContent(items));

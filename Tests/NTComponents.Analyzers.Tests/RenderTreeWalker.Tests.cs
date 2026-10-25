@@ -85,13 +85,19 @@ public sealed class RenderTreeWalker_Tests {
                     builder.OpenComponent<NTSplitButton>(5);
                     builder.AddAttribute(6, "ChildContent", (RenderFragment)(inner => inner.AddContent(7, "text")));
                     builder.CloseComponent();
+                    builder.OpenComponent<NTContextMenu>(8);
+                    builder.AddAttribute(9, "MenuContent", (RenderFragment)(inner => RenderItems(inner)));
+                    builder.CloseComponent();
                 }
+
+                private static void RenderItems(RenderTreeBuilder builder) { }
             }
             """);
 
         Assert.True(Assert.Single(frames, static frame => frame.MetadataName == "NTComponents.NTMenu").RendersOpaqueContent);
         Assert.True(Assert.Single(frames, static frame => frame.MetadataName == "NTComponents.NTFabMenu").RendersOpaqueContent);
         Assert.False(Assert.Single(frames, static frame => frame.MetadataName == "NTComponents.NTSplitButton").RendersOpaqueContent);
+        Assert.True(Assert.Single(frames, static frame => frame.MetadataName == "NTComponents.NTContextMenu").RendersOpaqueContent);
     }
 
     [Fact]

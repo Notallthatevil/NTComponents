@@ -53,10 +53,18 @@ internal sealed class RenderTreeWalker {
                 continue;
             }
 
-            if (node is not InvocationExpressionSyntax invocation
-                || !BuilderMethodNames.Contains(NameOf(invocation))
+            if (node is not InvocationExpressionSyntax invocation) {
+                continue;
+            }
+
+            if (!BuilderMethodNames.Contains(NameOf(invocation))
                 || _model.GetSymbolInfo(invocation, _cancellationToken).Symbol is not IMethodSymbol method
                 || !SymbolEqualityComparer.Default.Equals(method.ContainingType, _builderType)) {
+                // A helper that receives the builder renders content the walker cannot see.
+                if ((open.FirstOrDefault(static entry => entry is not null) ?? owner) is { } target && PassesBuilder(invocation)) {
+                    target.RendersOpaqueContent = true;
+                }
+
                 continue;
             }
 
@@ -131,6 +139,9 @@ internal sealed class RenderTreeWalker {
 
         return found;
     }
+
+    private bool PassesBuilder(InvocationExpressionSyntax invocation) =>
+        invocation.ArgumentList.Arguments.Any(argument => SymbolEqualityComparer.Default.Equals(_model.GetTypeInfo(argument.Expression, _cancellationToken).Type, _builderType));
 
     private bool IsRenderFragment(ExpressionSyntax value) =>
         _model.GetTypeInfo(value, _cancellationToken).Type?.OriginalDefinition.ToDisplayString() is "Microsoft.AspNetCore.Components.RenderFragment" or "Microsoft.AspNetCore.Components.RenderFragment<TValue>";

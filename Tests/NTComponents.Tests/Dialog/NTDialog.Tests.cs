@@ -520,11 +520,14 @@ public class NTDialog_Tests : BunitContext {
         public bool Opened { get; private set; }
 
         protected override void BuildRenderTree(RenderTreeBuilder builder) {
+            // The host only exercises opening; it deliberately renders an unnamed dialog.
+#pragma warning disable NTC1100
             builder.OpenComponent<NTDialog>(0);
             builder.AddComponentParameter(1, nameof(NTDialog.Id), "parent-after-render-dialog");
             builder.AddComponentParameter(2, nameof(NTDialog.ChildContent), (RenderFragment<NTDialogParameters>)(_ => childBuilder => childBuilder.AddContent(0, "Queued body")));
             builder.AddComponentReferenceCapture(3, value => _dialog = (NTDialog)value);
             builder.CloseComponent();
+#pragma warning restore NTC1100
         }
 
         protected override async Task OnAfterRenderAsync(bool firstRender) {
