@@ -1,0 +1,34 @@
+<NTIconButton Icon="MaterialIcon.Add" AriaLabel="Add" />
+<NTIconButton Icon="MaterialIcon.Add" AriaLabel="" /> @* NTC1027 *@
+<NTIconButton Icon="MaterialIcon.Add" AriaLabel="Add" BackgroundColor="NTColor.Primary" /> @* NTC1028 *@
+<NTIconButton Icon="MaterialIcon.Add" AriaLabel="Add" Variant="NTButtonVariant.Elevated" Elevation="NTElevation.None" /> @* NTC1031 *@
+<NTIconButton Icon="null" AriaLabel="Add" /> @* NTC1026 *@
+<NTIconButton AriaLabel="@_text" Icon="MaterialIcon.Add" BackgroundColor="NTColor.Transparent" Variant="_variant" />
+
+<NTFabButton Icon="MaterialIcon.Add" AriaLabel="Add" />
+<NTFabButton Icon="MaterialIcon.Add" /> @* NTC1033 *@
+<NTFabButton Icon="MaterialIcon.Add" Label="Create" ButtonSize="NTSize.Largest" /> @* NTC1037 *@
+<NTFabButton Icon="MaterialIcon.Add" Label="Create" Placement="(NTFabButtonPlacement)99" /> @* NTC1038 *@
+
+<NTFabMenu Icon="MaterialIcon.Add" AriaLabel="Actions">
+    <NTFabMenuButtonItem Label="Edit" />
+    <NTFabMenuAnchorItem Label="Home" Href="/" />
+</NTFabMenu>
+<NTFabMenu Icon="MaterialIcon.Add" AriaLabel="Actions"> @* NTC1044 *@
+    <NTFabMenuButtonItem Label="Edit" />
+</NTFabMenu>
+<NTFabMenu Icon="MaterialIcon.Add" AriaLabel="Actions">
+    @foreach (var label in _labels) {
+        <NTFabMenuButtonItem Label="@label" />
+    }
+</NTFabMenu>
+<NTFabMenu Icon="MaterialIcon.Add" AriaLabel="Actions" TextColor="NTColor.Transparent"> @* NTC1041 *@
+    <NTFabMenuButtonItem Label="" /> @* NTC1045 *@
+    <NTFabMenuAnchorItem Label="Home" Href="" /> @* NTC1046 *@
+</NTFabMenu>
+
+@code {
+    private string _text = "Add";
+    private NTButtonVariant _variant = NTButtonVariant.Filled;
+    private string[] _labels = ["A", "B"];
+}
