@@ -88,7 +88,7 @@ internal static class NTFabButtonRules {
 
     private static void Analyze(ComponentContext context) {
         var frame = context.Frame;
-        if (NTIconButtonRules.IsOmittedOrNull(frame, "Icon")) {
+        if (frame.IsOmittedOrNull("Icon")) {
             context.Report(MissingIcon, frame.LocationOf("Icon"));
         }
 

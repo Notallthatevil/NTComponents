@@ -78,9 +78,6 @@ internal static class NTNavLinkRules {
         registry.On("NTComponents.NTNavLink", Analyze);
     }
 
-    /// <summary>Unmatched attributes such as <c>aria-current</c> have no markup location of their own, so fall back to the component.</summary>
-    private static Location LocationOf(ComponentFrame frame, ComponentAttribute attribute) => SourceLocations.IsMapped(attribute.Location) ? attribute.Location : frame.Location;
-
     private static void Analyze(ComponentContext context) {
         var frame = context.Frame;
         if (frame.GetStringState("Label") == StringState.Empty) {
@@ -90,10 +87,10 @@ internal static class NTNavLinkRules {
         // The component filters these out case-insensitively.
         foreach (var attribute in frame.Attributes.Values) {
             if (attribute.Name.Equals("aria-current", StringComparison.OrdinalIgnoreCase) || attribute.Name.Equals("aria-disabled", StringComparison.OrdinalIgnoreCase)) {
-                context.Report(ComponentOwnedAriaState, LocationOf(frame, attribute), attribute.Name);
+                context.Report(ComponentOwnedAriaState, frame.LocationOf(attribute.Name), attribute.Name);
             }
             else if (attribute.Name.Equals("tabindex", StringComparison.OrdinalIgnoreCase) && frame.GetBool("Disabled") == true) {
-                context.Report(DisabledTabIndex, LocationOf(frame, attribute));
+                context.Report(DisabledTabIndex, frame.LocationOf(attribute.Name));
             }
         }
 

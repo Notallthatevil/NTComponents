@@ -93,17 +93,15 @@ internal static class NTProgressRules {
     /// </summary>
     private static void AnalyzeAccessibleName(ComponentContext context) {
         var frame = context.Frame;
-        if (frame.HasSplattedAttributes
-            || EffectiveState(frame, "aria-labelledby", "AriaLabelledBy", null) != StringState.Empty
-            || EffectiveState(frame, "aria-label", "AriaLabel", "Loading") != StringState.Empty) {
-            return;
+        if (!frame.HasSplattedAttributes
+            && EffectiveState(frame, "aria-labelledby", "AriaLabelledBy", null) == StringState.Empty
+            && EffectiveState(frame, "aria-label", "AriaLabel", "Loading") == StringState.Empty) {
+            context.Report(MissingAccessibleName, frame.Has("aria-label") ? frame.LocationOf("aria-label") : frame.LocationOf("AriaLabel"), frame.Type.Name);
         }
-
-        context.Report(MissingAccessibleName, frame.Has("aria-label") ? frame.LocationOf("aria-label") : frame.LocationOf("AriaLabel"), frame.Type.Name);
     }
 
     private static StringState EffectiveState(ComponentFrame frame, string attributeName, string parameterName, string? parameterDefault) =>
-        frame.Attributes.TryGetValue(attributeName, out var attribute) && !OperationConstants.IsNull(attribute.Value)
+        frame.HasNonNull(attributeName)
             ? frame.GetStringState(attributeName)
             : frame.GetStringState(parameterName, parameterDefault);
 

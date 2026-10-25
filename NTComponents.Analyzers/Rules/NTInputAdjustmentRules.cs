@@ -21,7 +21,7 @@ internal static class NTInputAdjustmentRules {
     private static void AnalyzeTextArea(ComponentContext context) {
         var frame = context.Frame;
         if (frame.Has("AutoGrow") && frame.GetBool("AutoGrow") == true && frame.GetBool("SizeByContent") == true) {
-            context.Report(CommonRules.NoEffect, NTInputRules.Where(frame, "AutoGrow"), "NTTextArea AutoGrow", "when SizeByContent is true");
+            context.Report(CommonRules.NoEffect, frame.LocationOf("AutoGrow"), "NTTextArea AutoGrow", "when SizeByContent is true");
         }
     }
 
@@ -31,24 +31,24 @@ internal static class NTInputAdjustmentRules {
         if (frame.GetBool("MonthOnly") == true
             && NTInputRules.SingleTypeArgument(frame) is { } argument
             && NTInputRules.IsSystemType(NTInputRules.UnderlyingType(argument), "DateTime", "DateTimeOffset", "TimeOnly")) {
-            context.Report(CommonRules.NoEffect, NTInputRules.Where(frame, "MonthOnly"), "NTInputDateTime MonthOnly", "unless T is DateOnly");
+            context.Report(CommonRules.NoEffect, frame.LocationOf("MonthOnly"), "NTInputDateTime MonthOnly", "unless T is DateOnly");
         }
     }
 
     // Stops render only when ShowStops is true, and the count is limited to 50; fewer than 2 draws none.
     private static void AnalyzeSliderStops(ComponentContext context) {
         var frame = context.Frame;
-        if (!frame.Has("StopCount") || OperationConstants.IsNull(frame.Attributes["StopCount"].Value)) {
+        if (!frame.HasNonNull("StopCount")) {
             return;
         }
 
         var parameter = frame.Type.Name + " StopCount";
         var showStops = frame.GetBool("ShowStops");
         if (showStops == false) {
-            context.Report(CommonRules.NoEffect, NTInputRules.Where(frame, "StopCount"), parameter, "unless ShowStops is true");
+            context.Report(CommonRules.NoEffect, frame.LocationOf("StopCount"), parameter, "unless ShowStops is true");
         }
         else if (showStops == true && frame.GetNumber("StopCount") is { } count && (count > 50 || count < 2)) {
-            context.Report(CommonRules.Adjusted, NTInputRules.Where(frame, "StopCount"), parameter, Format(count), count > 50 ? "50" : "0");
+            context.Report(CommonRules.Adjusted, frame.LocationOf("StopCount"), parameter, Format(count), count > 50 ? "50" : "0");
         }
     }
 
@@ -66,7 +66,7 @@ internal static class NTInputAdjustmentRules {
             _ => value
         };
         if (normalized != value) {
-            context.Report(CommonRules.Adjusted, NTInputRules.Where(frame, "MaxColumns"), frame.Type.Name + " MaxColumns", Format(value), Format(normalized));
+            context.Report(CommonRules.Adjusted, frame.LocationOf("MaxColumns"), frame.Type.Name + " MaxColumns", Format(value), Format(normalized));
         }
     }
 
@@ -74,7 +74,7 @@ internal static class NTInputAdjustmentRules {
         var frame = context.Frame;
         foreach (var name in new[] { "SmallColumns", "MediumColumns", "LargeColumns" }) {
             if (frame.GetNumber(name) is { } columns && (columns < 1 || columns > 12)) {
-                context.Report(CommonRules.Adjusted, NTInputRules.Where(frame, name), "NTFormFieldLayoutSpan " + name, Format(columns), columns < 1 ? "1" : "12");
+                context.Report(CommonRules.Adjusted, frame.LocationOf(name), "NTFormFieldLayoutSpan " + name, Format(columns), columns < 1 ? "1" : "12");
             }
         }
     }
@@ -83,8 +83,8 @@ internal static class NTInputAdjustmentRules {
     private static void AnalyzeRichTextEditorAliases(ComponentContext context) {
         var frame = context.Frame;
         foreach (var (alias, canonical) in new[] { ("ErrorMessage", "ErrorText"), ("StartIcon", "LeadingIcon"), ("EndIcon", "TrailingIcon") }) {
-            if (frame.Has(alias) && frame.Has(canonical) && !OperationConstants.IsNull(frame.Attributes[alias].Value) && IsKnownNonNull(frame.Attributes[canonical].Value)) {
-                context.Report(CommonRules.NoEffect, NTInputRules.Where(frame, alias), "NTRichTextEditor " + alias, $"when {canonical} is also set");
+            if (frame.HasNonNull(alias) && frame.Has(canonical) && IsKnownNonNull(frame.Attributes[canonical].Value)) {
+                context.Report(CommonRules.NoEffect, frame.LocationOf(alias), "NTRichTextEditor " + alias, $"when {canonical} is also set");
             }
         }
     }

@@ -25,12 +25,10 @@ internal static class NTLayoutViewRules {
         });
 
         registry.On("NTComponents.NTContainerView", static context => {
-            if (context.Frame.GetBool("EnableOnThisPageNavigation", true) != false) {
-                return;
-            }
-
-            foreach (var parameter in OnThisPageParameters.Where(context.Frame.Has)) {
-                context.Report(CommonRules.NoEffect, context.Frame.LocationOf(parameter), "NTContainerView " + parameter, "unless EnableOnThisPageNavigation is true");
+            if (context.Frame.GetBool("EnableOnThisPageNavigation", true) == false) {
+                foreach (var parameter in OnThisPageParameters.Where(context.Frame.Has)) {
+                    context.Report(CommonRules.NoEffect, context.Frame.LocationOf(parameter), "NTContainerView " + parameter, "unless EnableOnThisPageNavigation is true");
+                }
             }
         });
     }

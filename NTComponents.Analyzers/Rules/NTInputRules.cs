@@ -97,44 +97,34 @@ internal static class NTInputRules {
 
     private static void AnalyzePhoneMask(ComponentContext context) {
         var frame = context.Frame;
-        if (!frame.Has("PhoneMask")) {
-            return;
-        }
-
-        var inputType = frame.GetEnumName("InputType", "Text");
-        if (inputType is null) {
-            return;
-        }
-
-        var phoneMask = frame.Attributes["PhoneMask"];
-        if (inputType != "Tel") {
-            context.Report(PhoneMaskRequiresTel, Where(frame, "PhoneMask"));
-        }
-        else if (OperationConstants.TryGetString(phoneMask.Value, out var mask) && (mask is null || mask.IndexOf('#') < 0)) {
-            context.Report(InvalidPhoneMask, Where(frame, "PhoneMask"));
+        if (frame.Has("PhoneMask") && frame.GetEnumName("InputType", "Text") is { } inputType) {
+            if (inputType != "Tel") {
+                context.Report(PhoneMaskRequiresTel, frame.LocationOf("PhoneMask"));
+            }
+            else if (OperationConstants.TryGetString(frame.Attributes["PhoneMask"].Value, out var mask) && (mask is null || mask.IndexOf('#') < 0)) {
+                context.Report(InvalidPhoneMask, frame.LocationOf("PhoneMask"));
+            }
         }
     }
 
     private static void AnalyzeValueExpression(ComponentContext context) {
         var frame = context.Frame;
-        if (frame.HasSplattedAttributes || frame.Has("ValueExpression") || !(frame.Has("ValueChanged") || frame.Has("Value"))) {
-            return;
+        if (!frame.HasSplattedAttributes && !frame.Has("ValueExpression") && (frame.Has("ValueChanged") || frame.Has("Value"))) {
+            context.Report(MissingValueExpression, frame.LocationOf(frame.Has("ValueChanged") ? "ValueChanged" : "Value"), frame.Type.Name);
         }
-
-        context.Report(MissingValueExpression, Where(frame, frame.Has("ValueChanged") ? "ValueChanged" : "Value"), frame.Type.Name);
     }
 
     private static void AnalyzeBooleanRequired(ComponentContext context) {
         var frame = context.Frame;
         if (frame.Attributes.TryGetValue("required", out var required)) {
-            context.Report(BooleanInputRequiredAttribute, Where(frame, "required"), frame.Type.Name);
+            context.Report(BooleanInputRequiredAttribute, frame.LocationOf("required"), frame.Type.Name);
         }
     }
 
     private static void AnalyzeRequiredSupportingText(ComponentContext context) {
         var frame = context.Frame;
         if (frame.GetBool("ShowRequiredSupportingText") == true && frame.Has("RequiredSupportingText") && frame.GetStringState("RequiredSupportingText") == StringState.Empty) {
-            context.Report(EmptyRequiredSupportingText, Where(frame, "RequiredSupportingText"));
+            context.Report(EmptyRequiredSupportingText, frame.LocationOf("RequiredSupportingText"));
         }
     }
 
@@ -144,13 +134,13 @@ internal static class NTInputRules {
         var min = NumberOrDefault(frame, "MinVisibleLines", 2);
         var max = NumberOrDefault(frame, "MaxVisibleLines", 5);
         if (min < 1) {
-            context.Report(InvalidVisibleLines, Where(frame, "MinVisibleLines"), "MinVisibleLines must be a positive number");
+            context.Report(InvalidVisibleLines, frame.LocationOf("MinVisibleLines"), "MinVisibleLines must be a positive number");
         }
         else if (max < 1) {
-            context.Report(InvalidVisibleLines, Where(frame, "MaxVisibleLines"), "MaxVisibleLines must be a positive number when specified");
+            context.Report(InvalidVisibleLines, frame.LocationOf("MaxVisibleLines"), "MaxVisibleLines must be a positive number when specified");
         }
         else if (max < min) {
-            context.Report(InvalidVisibleLines, Where(frame, "MaxVisibleLines"), "MaxVisibleLines must be greater than or equal to MinVisibleLines");
+            context.Report(InvalidVisibleLines, frame.LocationOf("MaxVisibleLines"), "MaxVisibleLines must be greater than or equal to MinVisibleLines");
         }
     }
 
@@ -158,7 +148,7 @@ internal static class NTInputRules {
         var frame = context.Frame;
         foreach (var attribute in frame.Attributes.Values) {
             if (string.Equals(attribute.Name, "multiple", StringComparison.OrdinalIgnoreCase)) {
-                context.Report(SelectMultiple, Where(frame, attribute.Name));
+                context.Report(SelectMultiple, frame.LocationOf(attribute.Name));
             }
         }
 
@@ -179,9 +169,6 @@ internal static class NTInputRules {
             context.Report(UnsupportedTypeArgument, frame.Location, "NTInputDateTime", argument.ToDisplayString());
         }
     }
-
-    /// <summary>The attribute's location, or the component's when Razor leaves the attribute unmapped (raw string attributes have no markup mapping).</summary>
-    internal static Location Where(ComponentFrame frame, string name) => SourceLocations.Prefer(frame.Location, [frame.LocationOf(name)]);
 
     internal static ITypeSymbol? SingleTypeArgument(ComponentFrame frame) => frame.Type.TypeArguments.Length == 1 ? frame.Type.TypeArguments[0] : null;
 

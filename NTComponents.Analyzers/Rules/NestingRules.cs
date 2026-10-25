@@ -58,13 +58,11 @@ internal static class NestingRules {
         registry.On(child, context => {
             var frame = context.Frame;
             var ancestors = frame.Ancestors().ToArray();
-            if (ancestors.Any(ancestor => parents.Any(ancestor.IsOrDerivesFrom) && (!sameTypeArgument || SameFirstTypeArgument(ancestor, frame)))
-                || !(ancestors.LastOrDefault() ?? frame).IsPageRoot
-                || ancestors.Any(static ancestor => !ancestor.IsNTComponent)) {
-                return;
+            if (!ancestors.Any(ancestor => parents.Any(ancestor.IsOrDerivesFrom) && (!sameTypeArgument || SameFirstTypeArgument(ancestor, frame)))
+                && (ancestors.LastOrDefault() ?? frame).IsPageRoot
+                && ancestors.All(static ancestor => ancestor.IsNTComponent)) {
+                context.Report(MissingParent, frame.Location, frame.Type.Name, parentDescription);
             }
-
-            context.Report(MissingParent, frame.Location, frame.Type.Name, parentDescription);
         });
     }
 

@@ -38,28 +38,26 @@ internal static class NTInputAccessibilityRules {
 
     private static void AnalyzeField(ComponentContext context) {
         var frame = context.Frame;
-        if (frame.HasSplattedAttributes || frame.IsOrDerivesFrom("NTComponents.NTRichTextEditor")) {
-            return;
-        }
-
-        if (frame.GetStringState("Label") == StringState.Empty
+        if (!frame.HasSplattedAttributes
+            && !frame.IsOrDerivesFrom("NTComponents.NTRichTextEditor")
+            && frame.GetStringState("Label") == StringState.Empty
             && frame.GetStringState("aria-label") == StringState.Empty
             && frame.GetStringState("aria-labelledby") == StringState.Empty) {
-            context.Report(MissingAccessibleName, NTInputRules.Where(frame, "Label"), frame.Type.Name, "Label, aria-label, or aria-labelledby");
+            context.Report(MissingAccessibleName, frame.LocationOf("Label"), frame.Type.Name, "Label, aria-label, or aria-labelledby");
         }
     }
 
     private static void AnalyzeColorPicker(ComponentContext context) {
         var frame = context.Frame;
         if (frame.Has("AriaLabel") && frame.GetStringState("AriaLabel", "Color picker") == StringState.Empty) {
-            context.Report(MissingAccessibleName, NTInputRules.Where(frame, "AriaLabel"), frame.Type.Name, "AriaLabel");
+            context.Report(MissingAccessibleName, frame.LocationOf("AriaLabel"), frame.Type.Name, "AriaLabel");
         }
     }
 
     private static void AnalyzeSection(ComponentContext context) {
         var frame = context.Frame;
         if (frame.GetBool("UseFieldset") == true && frame.GetStringState("Heading") == StringState.Empty) {
-            context.Report(FieldsetWithoutLegend, NTInputRules.Where(frame, "Heading"));
+            context.Report(FieldsetWithoutLegend, frame.LocationOf("Heading"));
         }
     }
 }

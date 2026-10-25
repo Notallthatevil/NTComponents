@@ -64,13 +64,9 @@ internal static class NTIconButtonRules {
         registry.On("NTComponents.NTIconButton", Analyze);
     }
 
-    /// <summary>True when a required, non-nullable parameter such as Icon is omitted or explicitly null. Any other value counts as present.</summary>
-    internal static bool IsOmittedOrNull(ComponentFrame frame, string name) =>
-        frame.Attributes.TryGetValue(name, out var attribute) ? OperationConstants.IsNull(attribute.Value) : !frame.HasSplattedAttributes;
-
     private static void Analyze(ComponentContext context) {
         var frame = context.Frame;
-        if (IsOmittedOrNull(frame, "Icon")) {
+        if (frame.IsOmittedOrNull("Icon")) {
             context.Report(MissingIcon, frame.LocationOf("Icon"));
         }
 

@@ -14,8 +14,7 @@ public sealed class NTFabMenuRules_Tests {
     private static Task<string[]> MenuAsync(string content, string parameters = Valid) =>
         IdsAsync($"{parameters}builder.AddAttribute(10, \"ChildContent\", (RenderFragment)(b => {{ {content} }}));");
 
-    private static async Task<string[]> IdsAsync(string parameters) =>
-        [.. (await AnalyzerHarness.AnalyzeBuildAsync($"builder.OpenComponent<NTFabMenu>(0);\n{parameters}\nbuilder.CloseComponent();")).Ids().Order()];
+    private static Task<string[]> IdsAsync(string parameters) => AnalyzerHarness.ComponentIdsAsync("NTFabMenu", parameters);
 
     /// <summary>An NTCard (an NT component the walker can see into) whose content is the given item statements.</summary>
     private static string Card(string items) => $"b.OpenComponent<NTCard>(5);b.AddAttribute(6, \"ChildContent\", (RenderFragment)(c => {{ {items.Replace("b.", "c.")} }}));b.CloseComponent();";

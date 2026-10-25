@@ -45,21 +45,17 @@ internal static class NTAnimationRules {
         }
 
         var trigger = frame.GetEnumName("Trigger", "Visible");
-        if (trigger is null) {
-            return;
-        }
+        if (trigger is not null) {
+            if (trigger != "Manual" && frame.Has("Shown")) {
+                context.Report(ShownRequiresManual, frame.LocationOf("Shown"));
+            }
 
-        if (trigger != "Manual" && frame.Has("Shown")) {
-            context.Report(ShownRequiresManual, frame.LocationOf("Shown"));
-        }
-
-        if (trigger == "Visible") {
-            return;
-        }
-
-        foreach (var name in VisibleOnlyParameters) {
-            if (frame.Has(name)) {
-                context.Report(VisibleOnlyParameter, frame.LocationOf(name), name);
+            if (trigger != "Visible") {
+                foreach (var name in VisibleOnlyParameters) {
+                    if (frame.Has(name)) {
+                        context.Report(VisibleOnlyParameter, frame.LocationOf(name), name);
+                    }
+                }
             }
         }
     }

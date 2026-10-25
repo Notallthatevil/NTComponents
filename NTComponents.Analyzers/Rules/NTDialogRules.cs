@@ -25,13 +25,11 @@ internal static class NTDialogRules {
     /// </summary>
     private static void Analyze(ComponentContext context) {
         var frame = context.Frame;
-        if (frame.HasSplattedAttributes
-            || frame.GetStringState("Title") != StringState.Empty
-            || RenderFragmentChecks.IsSet(frame, "TitleContent") != false
-            || frame.GetStringState("aria-label") != StringState.Empty) {
-            return;
+        if (!frame.HasSplattedAttributes
+            && frame.GetStringState("Title") == StringState.Empty
+            && frame.IsFragmentSet("TitleContent") == false
+            && frame.GetStringState("aria-label") == StringState.Empty) {
+            context.Report(MissingAccessibleName, frame.Location);
         }
-
-        context.Report(MissingAccessibleName, frame.Location);
     }
 }

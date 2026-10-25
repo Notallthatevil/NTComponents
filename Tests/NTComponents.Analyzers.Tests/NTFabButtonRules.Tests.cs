@@ -6,8 +6,7 @@ public sealed class NTFabButtonRules_Tests {
         builder.AddComponentParameter(2, "AriaLabel", "Add");
         """;
 
-    private static async Task<string[]> IdsAsync(string parameters) =>
-        [.. (await AnalyzerHarness.AnalyzeBuildAsync($"builder.OpenComponent<NTFabButton>(0);\n{parameters}\nbuilder.CloseComponent();")).Ids().Order()];
+    private static Task<string[]> IdsAsync(string parameters) => AnalyzerHarness.ComponentIdsAsync("NTFabButton", parameters);
 
     [Fact]
     public async Task Valid_Configuration_Is_Clean() {

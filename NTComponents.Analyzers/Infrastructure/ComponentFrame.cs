@@ -1,5 +1,6 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Operations;
 
 namespace NTComponents.Analyzers;
 
@@ -108,6 +109,29 @@ internal sealed class ComponentFrame {
     /// <summary>Returns a constant number, or null when omitted, null, or unknown.</summary>
     public double? GetNumber(string name) =>
         _attributes.TryGetValue(name, out var attribute) && OperationConstants.TryGetNumber(attribute.Value, out var value) ? value : null;
+
+    /// <summary>True when the parameter is written with a value other than a constant null.</summary>
+    public bool HasNonNull(string name) => _attributes.TryGetValue(name, out var attribute) && !OperationConstants.IsNull(attribute.Value);
+
+    /// <summary>True when a required, non-nullable parameter such as Icon is omitted or explicitly null. Any other value counts as present.</summary>
+    public bool IsOmittedOrNull(string name) => _attributes.TryGetValue(name, out var attribute) ? OperationConstants.IsNull(attribute.Value) : !HasSplattedAttributes;
+
+    /// <summary>
+    ///     Returns true for a RenderFragment written inline (a lambda, as Razor emits for child content), false when the parameter is omitted
+    ///     or null, and null when it is a variable that may be null or when <c>@attributes</c> may supply it.
+    /// </summary>
+    public bool? IsFragmentSet(string name) {
+        if (!_attributes.TryGetValue(name, out var attribute)) {
+            return HasSplattedAttributes ? null : false;
+        }
+
+        if (OperationConstants.IsNull(attribute.Value)) {
+            return false;
+        }
+
+        var value = OperationConstants.Unwrap(attribute.Value);
+        return (value is IDelegateCreationOperation creation ? creation.Target : value) is IAnonymousFunctionOperation ? true : null;
+    }
 
     internal void SetAttribute(ComponentAttribute attribute) {
         _attributes[attribute.Name] = attribute;

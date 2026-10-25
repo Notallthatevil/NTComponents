@@ -117,13 +117,11 @@ internal static class NTDataGridRules {
 
     private static void AnalyzeColumn(ComponentContext context) {
         var frame = context.Frame;
-        if (!frame.Attributes.TryGetValue("Property", out var attribute)
-            || GetSelectedProperty(attribute.Value) is not { } property
-            || !IsComputedAggregate(property, context.CancellationToken)) {
-            return;
+        if (frame.Attributes.TryGetValue("Property", out var attribute)
+            && GetSelectedProperty(attribute.Value) is { } property
+            && IsComputedAggregate(property, context.CancellationToken)) {
+            context.Report(ComputedPropertySort, attribute.Location, property.Name);
         }
-
-        context.Report(ComputedPropertySort, attribute.Location, property.Name);
     }
 
     /// <summary>Returns the property a lambda such as <c>row => row.FullName</c> returns, or null for any other shape.</summary>

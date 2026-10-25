@@ -25,16 +25,14 @@ internal static class UndefinedEnumRules {
         registry.Describe(UndefinedValue);
         registry.OnAny(static context => {
             var frame = context.Frame;
-            if (!frame.IsNTComponent) {
-                return;
-            }
-
-            foreach (var attribute in frame.Attributes.Values) {
-                if (OperationConstants.TryGetEnum(attribute.Value, out var value)
-                    && value.Member is null
-                    && !value.IsFlags
-                    && !DedicatedRules.Contains(frame.MetadataName + "." + attribute.Name)) {
-                    context.Report(UndefinedValue, attribute.Location, frame.Type.Name, attribute.Name, value.Type.Name);
+            if (frame.IsNTComponent) {
+                foreach (var attribute in frame.Attributes.Values) {
+                    if (OperationConstants.TryGetEnum(attribute.Value, out var value)
+                        && value.Member is null
+                        && !value.IsFlags
+                        && !DedicatedRules.Contains(frame.MetadataName + "." + attribute.Name)) {
+                        context.Report(UndefinedValue, attribute.Location, frame.Type.Name, attribute.Name, value.Type.Name);
+                    }
                 }
             }
         });

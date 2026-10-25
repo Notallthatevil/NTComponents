@@ -90,7 +90,7 @@ internal static class NTSplitButtonRules {
         var frame = context.Frame;
         if (frame.GetStringState("Label", string.Empty) == StringState.Empty) {
             // An omitted LeadingIcon is only known to be missing when @attributes cannot supply it.
-            if (frame.Has("LeadingIcon") ? OperationConstants.IsNull(frame.Attributes["LeadingIcon"].Value) : !frame.HasSplattedAttributes) {
+            if (frame.IsOmittedOrNull("LeadingIcon")) {
                 context.Report(EmptyLabel, frame.LocationOf("Label"));
             }
             else if (frame.GetStringState("ActionAriaLabel") == StringState.Empty) {
@@ -100,11 +100,7 @@ internal static class NTSplitButtonRules {
 
         ButtonVariantChecks.Analyze(context, frame.GetEnumName("Variant", "Filled"), isSelectedToggle: false, OpaqueBackground, TransparentBackground, InvisibleTextColor, InvalidElevation);
 
-        foreach (var name in MenuColorParameters) {
-            if (frame.GetEnumName(name) == "Transparent") {
-                context.Report(InvisibleMenuColor, frame.LocationOf(name), name);
-            }
-        }
+        context.ReportTransparent(InvisibleMenuColor, MenuColorParameters);
 
         NTMenuRules.RequireActionableItem(context, "ChildContent", MissingActionableItem);
     }

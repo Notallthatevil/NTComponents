@@ -88,7 +88,7 @@ internal static class NTFabMenuRules {
 
     private static void AnalyzeMenu(ComponentContext context) {
         var menu = context.Frame;
-        if (NTIconButtonRules.IsOmittedOrNull(menu, "Icon")) {
+        if (menu.IsOmittedOrNull("Icon")) {
             context.Report(MissingIcon, menu.LocationOf("Icon"));
         }
 
@@ -96,11 +96,7 @@ internal static class NTFabMenuRules {
             context.Report(MissingAriaLabel, menu.LocationOf("AriaLabel"));
         }
 
-        foreach (var name in ColorParameters) {
-            if (menu.GetEnumName(name) == "Transparent") {
-                context.Report(InvisibleColor, menu.LocationOf(name), name);
-            }
-        }
+        context.ReportTransparent(InvisibleColor, ColorParameters);
 
         var size = menu.GetEnumName("ButtonSize");
         if (NTFabButtonRules.FallbackSize(size) is { } fallback) {

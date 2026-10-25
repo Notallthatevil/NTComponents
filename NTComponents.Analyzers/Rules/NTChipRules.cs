@@ -35,21 +35,19 @@ internal static class NTChipRules {
         }
 
         var hasHref = frame.GetStringState("Href") == StringState.NonEmpty;
-        var hasMenu = RenderFragmentChecks.IsSet(frame, "MenuContent");
+        var hasMenu = frame.IsFragmentSet("MenuContent");
         if (hasHref && IsSelectable(frame, hasMenu) == true) {
             context.Report(IncompatibleModes, frame.LocationOf("Href"), "Href", "selectable behavior (Selectable, or the Filter variant)");
         }
 
-        if (hasMenu != true) {
-            return;
-        }
+        if (hasMenu == true) {
+            if (hasHref) {
+                context.Report(IncompatibleModes, frame.LocationOf("MenuContent"), "MenuContent", "Href");
+            }
 
-        if (hasHref) {
-            context.Report(IncompatibleModes, RenderFragmentChecks.MappedLocationOf(frame, "MenuContent"), "MenuContent", "Href");
-        }
-
-        if (frame.GetBool("Selectable") == true) {
-            context.Report(IncompatibleModes, frame.LocationOf("Selectable"), "MenuContent", "Selectable");
+            if (frame.GetBool("Selectable") == true) {
+                context.Report(IncompatibleModes, frame.LocationOf("Selectable"), "MenuContent", "Selectable");
+            }
         }
     }
 
@@ -59,8 +57,8 @@ internal static class NTChipRules {
             return hasMenu is null ? null : false;
         }
 
-        if (frame.Attributes.TryGetValue("Selectable", out var attribute) && !OperationConstants.IsNull(attribute.Value)) {
-            return OperationConstants.TryGetBool(attribute.Value, out var selectable) ? selectable : null;
+        if (frame.HasNonNull("Selectable")) {
+            return OperationConstants.TryGetBool(frame.Attributes["Selectable"].Value, out var selectable) ? selectable : null;
         }
 
         if (!frame.Has("Selectable") && frame.HasSplattedAttributes) {

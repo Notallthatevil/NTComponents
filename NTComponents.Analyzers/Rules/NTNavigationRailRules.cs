@@ -50,23 +50,19 @@ internal static class NTNavigationRailRules {
             context.Report(EmptyAriaLabel, frame.LocationOf("AriaLabel"));
         }
 
-        if (RenderFragmentChecks.IsSet(frame, "Menu") != true) {
-            return;
-        }
+        if (frame.IsFragmentSet("Menu") == true) {
+            // A custom Menu replaces the default menu button, so only its href is unused; the icons and labels still feed the
+            // external (small screen) menu button unless that button is not rendered either.
+            if (frame.Has("MenuHref")) {
+                context.Report(CommonRules.NoEffect, frame.LocationOf("MenuHref"), "NTNavigationRail MenuHref", "when Menu is set");
+            }
 
-        // A custom Menu replaces the default menu button, so only its href is unused; the icons and labels still feed the
-        // external (small screen) menu button unless that button is not rendered either.
-        if (frame.Has("MenuHref")) {
-            context.Report(CommonRules.NoEffect, frame.LocationOf("MenuHref"), "NTNavigationRail MenuHref", "when Menu is set");
-        }
-
-        if (frame.GetBool("HideRailOnXSScreens", true) != false || frame.GetEnumName("CollapseBehavior", "Rail") != "Rail") {
-            return;
-        }
-
-        foreach (var name in _defaultMenuButtonParameters) {
-            if (frame.Has(name)) {
-                context.Report(CommonRules.NoEffect, frame.LocationOf(name), "NTNavigationRail " + name, "when Menu is set and HideRailOnXSScreens is false");
+            if (frame.GetBool("HideRailOnXSScreens", true) == false && frame.GetEnumName("CollapseBehavior", "Rail") == "Rail") {
+                foreach (var name in _defaultMenuButtonParameters) {
+                    if (frame.Has(name)) {
+                        context.Report(CommonRules.NoEffect, frame.LocationOf(name), "NTNavigationRail " + name, "when Menu is set and HideRailOnXSScreens is false");
+                    }
+                }
             }
         }
     }
@@ -80,13 +76,11 @@ internal static class NTNavigationRailRules {
 
     private static void AnalyzeItem(ComponentContext context) {
         var frame = context.Frame;
-        if (frame.GetStringState("Href") != StringState.NonEmpty) {
-            return;
-        }
-
-        foreach (var name in _buttonOnlyItemParameters) {
-            if (frame.Has(name)) {
-                context.Report(CommonRules.NoEffect, frame.LocationOf(name), "NTNavigationRailItem " + name, "when Href is set because the item renders a link");
+        if (frame.GetStringState("Href") == StringState.NonEmpty) {
+            foreach (var name in _buttonOnlyItemParameters) {
+                if (frame.Has(name)) {
+                    context.Report(CommonRules.NoEffect, frame.LocationOf(name), "NTNavigationRailItem " + name, "when Href is set because the item renders a link");
+                }
             }
         }
     }

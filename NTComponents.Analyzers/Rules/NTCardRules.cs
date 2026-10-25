@@ -30,18 +30,15 @@ internal static class NTCardRules {
 
     private static void Analyze(ComponentContext context) {
         var frame = context.Frame;
-        var variant = frame.GetEnumName("Variant", "Filled");
-        if (variant is null) {
-            return;
-        }
+        if (frame.GetEnumName("Variant", "Filled") is { } variant) {
+            // BackgroundColor is nullable: null (or omitted) means "use the variant default", which GetEnumName reports as null.
+            if (variant != "Outlined" && frame.GetEnumName("BackgroundColor") == "Transparent") {
+                context.Report(TransparentBackground, frame.LocationOf("BackgroundColor"), variant);
+            }
 
-        // BackgroundColor is nullable: null (or omitted) means "use the variant default", which GetEnumName reports as null.
-        if (variant != "Outlined" && frame.GetEnumName("BackgroundColor") == "Transparent") {
-            context.Report(TransparentBackground, frame.LocationOf("BackgroundColor"), variant);
-        }
-
-        if (variant != "Elevated" && frame.Has("Elevation")) {
-            context.Report(IgnoredElevation, frame.LocationOf("Elevation"), variant);
+            if (variant != "Elevated" && frame.Has("Elevation")) {
+                context.Report(IgnoredElevation, frame.LocationOf("Elevation"), variant);
+            }
         }
     }
 }

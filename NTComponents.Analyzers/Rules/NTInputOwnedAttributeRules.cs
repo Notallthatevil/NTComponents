@@ -99,7 +99,7 @@ internal static class NTInputOwnedAttributeRules {
 
         foreach (var attribute in frame.Attributes.Values) {
             if (owned.TryGetValue(attribute.Name, out var remedy)) {
-                context.Report(OwnedAttribute, NTInputRules.Where(frame, attribute.Name), attribute.Name, frame.Type.Name, remedy);
+                context.Report(OwnedAttribute, frame.LocationOf(attribute.Name), attribute.Name, frame.Type.Name, remedy);
             }
         }
     }

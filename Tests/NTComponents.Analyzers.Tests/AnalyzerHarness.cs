@@ -29,6 +29,10 @@ internal static class AnalyzerHarness {
         }
         """);
 
+    /// <summary>The sorted IDs reported for one <paramref name="component" /> opened with parameter <paramref name="statements" />.</summary>
+    public static async Task<string[]> ComponentIdsAsync(string component, string statements) =>
+        [.. (await AnalyzeBuildAsync($"builder.OpenComponent<{component}>(0);\n{statements}\nbuilder.CloseComponent();")).Ids().Order()];
+
     /// <summary>Analyzes complete C# sources. Fails the test when a source does not compile or a rule throws.</summary>
     public static Task<ImmutableArray<Diagnostic>> AnalyzeAsync(params string[] sources) => AnalyzeAsync(new NTComponentUsageAnalyzer(), sources);
 

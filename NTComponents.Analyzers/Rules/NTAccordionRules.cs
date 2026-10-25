@@ -30,7 +30,7 @@ internal static class NTAccordionRules {
     private static void AnalyzeItem(ComponentContext context) {
         var frame = context.Frame;
         var label = frame.GetStringState("Label");
-        var headerContent = RenderFragmentChecks.IsSet(frame, "HeaderContent");
+        var headerContent = frame.IsFragmentSet("HeaderContent");
         if (label == StringState.Empty && headerContent == false) {
             context.Report(MissingHeader, frame.LocationOf("Label"));
         }

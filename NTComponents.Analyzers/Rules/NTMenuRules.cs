@@ -99,11 +99,7 @@ internal static class NTMenuRules {
             context.Report(MissingAriaLabel, frame.LocationOf("AriaLabel"));
         }
 
-        foreach (var name in ColorParameters) {
-            if (frame.GetEnumName(name) == "Transparent") {
-                context.Report(InvisibleColor, frame.LocationOf(name), name);
-            }
-        }
+        context.ReportTransparent(InvisibleColor, ColorParameters);
 
         if (checkItems) {
             RequireActionableItem(context, contentName, MissingActionableItem);

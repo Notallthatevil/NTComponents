@@ -53,7 +53,7 @@ internal static class OwnedAttributeRules {
         var frame = context.Frame;
         foreach (var (attribute, instead) in owned) {
             if (frame.Has(attribute)) {
-                context.Report(OwnedAttribute, RenderFragmentChecks.MappedLocationOf(frame, attribute), frame.Type.Name, attribute, instead);
+                context.Report(OwnedAttribute, frame.LocationOf(attribute), frame.Type.Name, attribute, instead);
             }
         }
     }

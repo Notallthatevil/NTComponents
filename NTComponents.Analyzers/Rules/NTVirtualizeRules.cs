@@ -30,8 +30,7 @@ internal static class NTVirtualizeRules {
 
     private static void Analyze(ComponentContext context) {
         var frame = context.Frame;
-        var missing = frame.Attributes.TryGetValue("ItemsProvider", out var provider) ? OperationConstants.IsNull(provider.Value) : !frame.HasSplattedAttributes;
-        if (missing) {
+        if (frame.IsOmittedOrNull("ItemsProvider")) {
             context.Report(MissingItemsProvider, frame.LocationOf("ItemsProvider"));
         }
 
