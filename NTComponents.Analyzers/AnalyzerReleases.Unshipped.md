@@ -105,3 +105,4 @@ NTC1099 | Usage | Warning | NTResponsive CustomBreakpoint must be zero or greate
 NTC1100 | Accessibility | Warning | NTDialog needs a Title, TitleContent or aria-label to have an accessible name.
 NTC1101 | Accessibility | Info | A dot badge needs an accessible label.
 NTC1109 | Usage | Warning | A raw attribute the component sets itself never reaches the DOM.
+NTC1110 | Accessibility | Warning | NTProgress and NTLoader need a non-empty AriaLabel or AriaLabelledBy to have an accessible name.

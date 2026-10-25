@@ -1,0 +1,15 @@
+<NTCarousel AriaLabel="Photos">
+    <NTCarouselItem AriaLabel="First" AspectRatio="1" />
+</NTCarousel>
+<NTCarousel AriaLabel="" /> @* NTC1069 *@
+<NTCarousel AriaLabel="Photos" ItemHeight="0" /> @* NTC1070 *@
+<NTCarousel AriaLabel="Photos" Appearance="CarouselAppearance.FullScreen" EnableSnapping="false" /> @* NTC1071 *@
+<NTCarouselItem AriaLabel="" /> @* NTC1072 *@
+<NTCarouselItem AriaLabel="Wide" AspectRatio="3" /> @* NTC1073 *@
+<NTCarousel AriaLabel="Photos" Appearance="(CarouselAppearance)9" /> @* NTC1074 *@
+<NTCarousel AriaLabel="@_label" ItemHeight="_height" />
+
+@code {
+    private string _label = "Photos";
+    private int _height = 0;
+}

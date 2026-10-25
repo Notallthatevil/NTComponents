@@ -1,0 +1,16 @@
+<NTProgress Value="50" />
+<NTProgress Max="0" /> @* NTC1052 *@
+<NTProgress Value="150" /> @* NTC1053 *@
+<NTProgress AriaLabel="" /> @* NTC1110 *@
+<NTProgress AriaLabel="" AriaLabelledBy="heading" />
+<NTLoader AnimationDuration="TimeSpan.FromMilliseconds(100)" /> @* NTC1054 *@
+<NTLoader AnimationDuration="TimeSpan.FromSeconds(1)" />
+<NTLoader Shapes="@(new[] { NTShapeType.Circle })" /> @* NTC1055 *@
+<NTLoader Shapes="[NTShapeType.Circle]" /> @* NTC1055 *@
+<NTLoader Shapes="[NTShapeType.Circle, NTShapeType.Diamond]" />
+<NTLoader AriaLabel="" /> @* NTC1110 *@
+<NTLoader AriaLabel="@_label" />
+
+@code {
+    private string _label = "";
+}
