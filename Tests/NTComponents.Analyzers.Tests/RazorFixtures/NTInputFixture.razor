@@ -1,0 +1,42 @@
+@* A trailing marker lists the diagnostics expected on its line; "unmapped" ones have no markup location to point at. *@
+<NTInputText Label="Name" />
+<NTInputText Label="Phone" PhoneMask="(###) ###-####" /> @* NTC1059 *@
+<NTInputText Label="Phone" InputType="TextInputType.Tel" PhoneMask="-" /> @* NTC1060 *@
+<NTInputText Label="Phone" InputType="_inputType" PhoneMask="-" />
+<NTInputText Label="Name" Value="@_text" /> @* NTC1062 *@
+<NTInputText Label="Name" @bind-Value="_text" />
+<NTInputText Label="Name" id="name" aria-invalid="true" /> @* NTC1061 NTC1061 *@
+<NTInputText Label="Name" Placeholder="Name" Disabled="true" />
+<NTInputCheckbox Label="Agree" aria-checked="true" /> @* NTC1061 *@
+<NTInputCheckbox Label="Agree" title="Agree" aria-describedby="hint" />
+<NTForm Model="_model" ShowRequiredSupportingText="true" RequiredSupportingText="" /> @* NTC1064 *@
+<NTTextArea Label="Notes" MinVisibleLines="0" /> @* NTC1104 *@
+<NTTextArea Label="Notes" AutoGrow="true" SizeByContent="true" /> @* NTC1102 *@
+<NTSelect TValue="string" Label="Pick" multiple="true" /> @* NTC1105 *@
+<NTSelect TValue="object" Label="Pick" /> @* NTC1106 *@
+<NTSelect TValue="int?" Label="Pick" />
+<NTInputDateTime DateTimeType="string" Label="When" /> @* NTC1106 *@
+<NTInputDateTime DateTimeType="DateTime" Label="When" MonthOnly="true" /> @* NTC1102 *@
+<NTInputDateTime DateTimeType="DateOnly?" Label="When" MonthOnly="true" />
+<NTInputText Placeholder="Name" /> @* NTC1107 *@
+<NTInputText aria-label="Name" />
+<NTInputText Label="@_text" />
+<NTInputText /> @* unmapped NTC1107 *@
+<NTInputSlider TNumber="int" Value="3" ValueChanged="_ => { }" ValueExpression="() => _number" /> @* NTC1107 *@
+<NTInputSlider TNumber="int" Label="Volume" ShowStops="false" StopCount="5" /> @* NTC1102 *@
+<NTInputSlider TNumber="int" Label="Volume" ShowStops="true" StopCount="100" /> @* NTC1103 *@
+<NTInputRangeSlider TNumber="int" />
+<NTColorPicker AriaLabel="" /> @* NTC1107 *@
+<NTColorPicker />
+<NTFormSectionView UseFieldset="true" Heading="Address" />
+<NTFormSectionView UseFieldset="true" /> @* NTC1108 *@
+<NTFormFieldGridView MaxColumns="5" id="grid" /> @* NTC1103 NTC1061 *@
+<NTFormFieldLayoutSpan SmallColumns="20" /> @* NTC1103 *@
+<NTRichTextEditor Label="Body" ErrorText="Bad" ErrorMessage="Worse" StartIcon="MaterialIcon.Home" LeadingIcon="MaterialIcon.Search" /> @* NTC1102 NTC1102 *@
+
+@code {
+    private string? _text;
+    private int _number = 3;
+    private object _model = new();
+    private TextInputType _inputType = TextInputType.Tel;
+}
