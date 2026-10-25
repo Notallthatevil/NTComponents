@@ -41,7 +41,7 @@ internal static class NTDataGridRules {
         "Computed aggregate properties cannot be translated reliably",
         "NTPropertyColumn Property '{0}' combines other instance members and may fail when sorting a database-backed IQueryable; use NTTemplateColumn with SortBy targeting mapped properties",
         RuleCategory.Usage,
-        DiagnosticSeverity.Warning,
+        DiagnosticSeverity.Info,
         isEnabledByDefault: true,
         helpLinkUri: RuleCategory.HelpUri + "#ntc1068");
 

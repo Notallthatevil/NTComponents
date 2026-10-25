@@ -22,7 +22,7 @@ internal static class NTSplitButtonRules {
         "NTC1010",
         "Icon-only NTSplitButton action needs an accessible label",
         "Icon-only NTSplitButton actions require a non-empty ActionAriaLabel",
-        RuleCategory.Usage,
+        RuleCategory.Accessibility,
         DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
         helpLinkUri: RuleCategory.HelpUri + "#ntc1010");

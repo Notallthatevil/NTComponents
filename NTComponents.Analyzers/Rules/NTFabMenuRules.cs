@@ -19,7 +19,7 @@ internal static class NTFabMenuRules {
         "NTC1040",
         "NTFabMenu requires an aria label",
         "NTFabMenu requires a non-empty AriaLabel that describes the menu opened by the FAB",
-        RuleCategory.Usage,
+        RuleCategory.Accessibility,
         DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
         helpLinkUri: RuleCategory.HelpUri + "#ntc1040");
@@ -38,7 +38,7 @@ internal static class NTFabMenuRules {
         "NTFabMenu size is unsupported",
         "NTFabMenu does not support ButtonSize '{0}' and will render with '{1}'",
         RuleCategory.Usage,
-        DiagnosticSeverity.Warning,
+        DiagnosticSeverity.Info,
         isEnabledByDefault: true,
         helpLinkUri: RuleCategory.HelpUri + "#ntc1042");
 

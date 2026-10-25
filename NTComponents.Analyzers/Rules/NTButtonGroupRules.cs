@@ -67,7 +67,7 @@ internal static class NTButtonGroupRules {
         "NTC1025",
         "Icon-only NTButtonGroup item needs an accessible label",
         "NTButtonGroupItem requires a non-empty AriaLabel when rendering an icon-only item",
-        RuleCategory.Usage,
+        RuleCategory.Accessibility,
         DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
         helpLinkUri: RuleCategory.HelpUri + "#ntc1025");

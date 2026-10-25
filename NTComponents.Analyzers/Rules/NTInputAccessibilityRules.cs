@@ -26,6 +26,7 @@ internal static class NTInputAccessibilityRules {
 
     public static void Register(ComponentRuleRegistry registry) {
         registry.Describe(MissingAccessibleName, FieldsetWithoutLegend);
+        registry.Uses("NTComponents.NTRichTextEditor");
         // These render a native control named by Label. NTInputRangeSlider is left out: its handles fall back to "Minimum" and
         // "Maximum", and NTRichTextEditor falls back to Placeholder or the field name.
         registry.On("NTComponents.NTFieldBase`1", AnalyzeField);

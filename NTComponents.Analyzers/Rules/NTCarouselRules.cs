@@ -10,7 +10,7 @@ internal static class NTCarouselRules {
         "NTC1069",
         "NTCarousel requires an accessible name",
         "NTCarousel AriaLabel cannot be empty because it provides the carousel accessible name",
-        RuleCategory.Usage,
+        RuleCategory.Accessibility,
         DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
         helpLinkUri: RuleCategory.HelpUri + "#ntc1069");
@@ -37,7 +37,7 @@ internal static class NTCarouselRules {
         "NTC1072",
         "NTCarouselItem requires an accessible name",
         "NTCarouselItem AriaLabel cannot be empty because it provides the slide accessible name",
-        RuleCategory.Usage,
+        RuleCategory.Accessibility,
         DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
         helpLinkUri: RuleCategory.HelpUri + "#ntc1072");

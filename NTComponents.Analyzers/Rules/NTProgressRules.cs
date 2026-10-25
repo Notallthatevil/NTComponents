@@ -12,7 +12,7 @@ internal static class NTProgressRules {
         "NTProgress Max must be positive",
         "NTProgress Max should be a positive value; non-positive values fall back to 100",
         RuleCategory.Usage,
-        DiagnosticSeverity.Warning,
+        DiagnosticSeverity.Info,
         isEnabledByDefault: true,
         helpLinkUri: RuleCategory.HelpUri + "#ntc1052");
 
@@ -21,7 +21,7 @@ internal static class NTProgressRules {
         "NTProgress Value should be within range",
         "NTProgress Value should be between 0 and Max; out-of-range values are clamped at render time",
         RuleCategory.Usage,
-        DiagnosticSeverity.Warning,
+        DiagnosticSeverity.Info,
         isEnabledByDefault: true,
         helpLinkUri: RuleCategory.HelpUri + "#ntc1053");
 
@@ -30,7 +30,7 @@ internal static class NTProgressRules {
         "NTLoader animation duration is too short",
         "NTLoader AnimationDuration should be at least 400ms; shorter durations are clamped",
         RuleCategory.Usage,
-        DiagnosticSeverity.Warning,
+        DiagnosticSeverity.Info,
         isEnabledByDefault: true,
         helpLinkUri: RuleCategory.HelpUri + "#ntc1054");
 
@@ -39,7 +39,7 @@ internal static class NTProgressRules {
         "Animated NTLoader needs multiple shapes",
         "Animated NTLoader Shapes should contain at least two shapes; a single-shape sequence cannot visibly morph",
         RuleCategory.Usage,
-        DiagnosticSeverity.Warning,
+        DiagnosticSeverity.Info,
         isEnabledByDefault: true,
         helpLinkUri: RuleCategory.HelpUri + "#ntc1055");
 

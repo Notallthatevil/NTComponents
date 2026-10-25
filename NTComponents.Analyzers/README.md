@@ -11,7 +11,13 @@ Roslyn analyzers for NTComponents applications. The package reports invalid comp
 </PackageReference>
 ```
 
-Diagnostics use the `NTC` prefix and run during IDE analysis and builds.
+Diagnostics use the `NTC` prefix and run during IDE analysis and builds. They check NT component parameters written in Razor markup or hand-written `RenderTreeBuilder` code, and point at the `.razor` line when Razor maps one.
+
+- **Warnings** predict a runtime exception or broken rendering, such as an empty required label, a background that does not match the variant, or a component rendered outside the parent it needs.
+- **Accessibility** rules report controls that would render without an accessible name.
+- **Info** suggestions report values a component ignores or adjusts, such as a parameter that only applies in another mode.
+
+The analyzers only report what they can prove from constant values; anything computed at runtime is left alone. See [RULES.md](https://github.com/Notallthatevil/NTComponents/blob/main/NTComponents.Analyzers/RULES.md) for every rule, and tune one with `dotnet_diagnostic.NTC1003.severity` or a category with `dotnet_analyzer_diagnostic.category-Accessibility.severity` in `.editorconfig`.
 
 ## Color Migration
 

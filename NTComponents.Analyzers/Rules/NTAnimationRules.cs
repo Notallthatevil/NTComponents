@@ -11,7 +11,7 @@ internal static class NTAnimationRules {
         "NTAnimation Shown requires Manual trigger",
         "NTAnimation Shown only applies when Trigger is Manual",
         RuleCategory.Usage,
-        DiagnosticSeverity.Warning,
+        DiagnosticSeverity.Info,
         isEnabledByDefault: true,
         helpLinkUri: RuleCategory.HelpUri + "#ntc1080");
 
@@ -20,7 +20,7 @@ internal static class NTAnimationRules {
         "NTAnimation parameter requires Visible trigger",
         "NTAnimation {0} only applies when Trigger is Visible",
         RuleCategory.Usage,
-        DiagnosticSeverity.Warning,
+        DiagnosticSeverity.Info,
         isEnabledByDefault: true,
         helpLinkUri: RuleCategory.HelpUri + "#ntc1081");
 
@@ -29,7 +29,7 @@ internal static class NTAnimationRules {
         "NTAnimation Threshold must be between 0 and 1",
         "NTAnimation Threshold must be between 0 and 1; out-of-range values are clamped at runtime",
         RuleCategory.Usage,
-        DiagnosticSeverity.Warning,
+        DiagnosticSeverity.Info,
         isEnabledByDefault: true,
         helpLinkUri: RuleCategory.HelpUri + "#ntc1082");
 

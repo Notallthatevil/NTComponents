@@ -13,9 +13,9 @@ public sealed class TnTColorMigrationAnalyzer : DiagnosticAnalyzer {
     public const string RemovedColorDiagnosticId = "NTC1078";
     public const string CssHelperDiagnosticId = "NTC1079";
 
-    private static readonly DiagnosticDescriptor MigrationRule = new(DiagnosticId, "Use NTColor", "Use NTColor instead of TnTColor", "Migration", DiagnosticSeverity.Warning, true);
-    private static readonly DiagnosticDescriptor RemovedColorRule = new(RemovedColorDiagnosticId, "Choose a supported NT color", "TnTColor.{0} has no NTColor equivalent; use an optional color or choose a semantic color role", "Migration", DiagnosticSeverity.Warning, true);
-    private static readonly DiagnosticDescriptor CssHelperRule = new(CssHelperDiagnosticId, "Use NT theme color variables", "Use ToCssNTColorVariable instead of ToCssTnTColorVariable", "Migration", DiagnosticSeverity.Warning, true);
+    private static readonly DiagnosticDescriptor MigrationRule = new(DiagnosticId, "Use NTColor", "Use NTColor instead of TnTColor", RuleCategory.Migration, DiagnosticSeverity.Warning, true, helpLinkUri: RuleCategory.HelpUri + "#ntc1077");
+    private static readonly DiagnosticDescriptor RemovedColorRule = new(RemovedColorDiagnosticId, "Choose a supported NT color", "TnTColor.{0} has no NTColor equivalent; use an optional color or choose a semantic color role", RuleCategory.Migration, DiagnosticSeverity.Warning, true, helpLinkUri: RuleCategory.HelpUri + "#ntc1078");
+    private static readonly DiagnosticDescriptor CssHelperRule = new(CssHelperDiagnosticId, "Use NT theme color variables", "Use ToCssNTColorVariable instead of ToCssTnTColorVariable", RuleCategory.Migration, DiagnosticSeverity.Warning, true, helpLinkUri: RuleCategory.HelpUri + "#ntc1079");
 
     /// <inheritdoc />
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => [MigrationRule, RemovedColorRule, CssHelperRule];

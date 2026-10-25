@@ -18,7 +18,7 @@ internal static class NTFabButtonRules {
         "NTC1033",
         "Icon-only NTFabButton requires an aria label",
         "Icon-only NTFabButton requires a non-empty AriaLabel",
-        RuleCategory.Usage,
+        RuleCategory.Accessibility,
         DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
         helpLinkUri: RuleCategory.HelpUri + "#ntc1033");
@@ -55,7 +55,7 @@ internal static class NTFabButtonRules {
         "NTFabButton size is unsupported",
         "NTFabButton does not support ButtonSize '{0}' and will render with '{1}'",
         RuleCategory.Usage,
-        DiagnosticSeverity.Warning,
+        DiagnosticSeverity.Info,
         isEnabledByDefault: true,
         helpLinkUri: RuleCategory.HelpUri + "#ntc1037");
 

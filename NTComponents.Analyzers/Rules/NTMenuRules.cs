@@ -12,7 +12,7 @@ internal static class NTMenuRules {
         "NTC1047",
         "NTMenu requires an aria label",
         "NTMenu requires a non-empty AriaLabel that describes the menu",
-        RuleCategory.Usage,
+        RuleCategory.Accessibility,
         DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
         helpLinkUri: RuleCategory.HelpUri + "#ntc1047");
@@ -55,6 +55,7 @@ internal static class NTMenuRules {
 
     public static void Register(ComponentRuleRegistry registry) {
         registry.Describe(MissingAriaLabel, MissingActionableItem, EmptyItemLabel, EmptyItemHref, InvisibleColor);
+        registry.Uses([.. ActionableItems, .. PassiveItems]);
         registry.On("NTComponents.NTMenu", context => AnalyzeMenu(context, "ChildContent", checkItems: true));
         // Inherited parent menu content can supply the actionable items, so only a context menu known not to inherit is checked.
         registry.On("NTComponents.NTContextMenu", context => AnalyzeMenu(context, "MenuContent", context.Frame.GetBool("InheritParentMenus") == false));

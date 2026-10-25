@@ -18,7 +18,7 @@ internal static class NTIconButtonRules {
         "NTC1027",
         "NTIconButton aria label cannot be empty",
         "NTIconButton requires a non-empty AriaLabel",
-        RuleCategory.Usage,
+        RuleCategory.Accessibility,
         DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
         helpLinkUri: RuleCategory.HelpUri + "#ntc1027");

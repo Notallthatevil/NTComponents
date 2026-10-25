@@ -14,7 +14,7 @@ internal static class NTNavLinkRules {
         "NTC1056",
         "NTNavLink label cannot be empty",
         "NTNavLink requires a non-empty Label so the anchor has an accessible name",
-        RuleCategory.Usage,
+        RuleCategory.Accessibility,
         DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
         helpLinkUri: RuleCategory.HelpUri + "#ntc1056");
@@ -23,7 +23,7 @@ internal static class NTNavLinkRules {
         "NTC1057",
         "NTNavLink owns this ARIA state",
         "Do not set '{0}' on NTNavLink. Use NTNavLink parameters and route matching so the component renders this ARIA state correctly.",
-        RuleCategory.Usage,
+        RuleCategory.Accessibility,
         DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
         helpLinkUri: RuleCategory.HelpUri + "#ntc1057");
@@ -32,7 +32,7 @@ internal static class NTNavLinkRules {
         "NTC1058",
         "Disabled NTNavLink cannot be focusable",
         "Disabled NTNavLink renders tabindex='-1'. Remove the explicit tabindex or do not disable the link.",
-        RuleCategory.Usage,
+        RuleCategory.Accessibility,
         DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
         helpLinkUri: RuleCategory.HelpUri + "#ntc1058");

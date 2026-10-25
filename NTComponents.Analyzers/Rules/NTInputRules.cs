@@ -14,7 +14,7 @@ internal static class NTInputRules {
         "NTInputText PhoneMask requires tel input",
         "NTInputText PhoneMask is ignored unless InputType is TextInputType.Tel",
         RuleCategory.Usage,
-        DiagnosticSeverity.Warning,
+        DiagnosticSeverity.Info,
         isEnabledByDefault: true,
         helpLinkUri: RuleCategory.HelpUri + "#ntc1059");
 
@@ -23,7 +23,7 @@ internal static class NTInputRules {
         "NTInputText PhoneMask must contain digit placeholders",
         "NTInputText PhoneMask should contain at least one '#' digit placeholder",
         RuleCategory.Usage,
-        DiagnosticSeverity.Warning,
+        DiagnosticSeverity.Info,
         isEnabledByDefault: true,
         helpLinkUri: RuleCategory.HelpUri + "#ntc1060");
 
