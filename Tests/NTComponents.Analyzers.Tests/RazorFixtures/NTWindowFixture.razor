@@ -1,0 +1,10 @@
+<NTWindow Title="Inbox" Open="true" />
+<NTWindow Title="" Open="true" /> @* NTC1095 *@
+<NTWindow Title="Inbox" role="alertdialog" /> @* NTC1109 *@
+<NTWindow Title="@_title" />
+<NTWindowHost role="list" /> @* unmapped NTC1109 *@
+<NTTooltip aria-hidden="false">Tip</NTTooltip> @* unmapped NTC1109 *@
+
+@code {
+    private string _title = "Inbox";
+}
