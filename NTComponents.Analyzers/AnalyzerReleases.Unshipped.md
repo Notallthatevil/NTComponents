@@ -63,7 +63,7 @@ NTC1057 | Usage | Warning | NTNavLink owns aria-current and aria-disabled state 
 NTC1058 | Usage | Warning | Disabled NTNavLink cannot be kept in the tab order with an explicit tabindex.
 NTC1059 | Usage | Warning | NTInputText PhoneMask is ignored unless InputType is TextInputType.Tel.
 NTC1060 | Usage | Warning | NTInputText PhoneMask should contain at least one digit placeholder.
-NTC1061 | Usage | Warning | NTInputBase-derived components own core native input attributes.
+NTC1061 | Usage | Warning | NT form components own some native attributes.
 NTC1062 | Usage | Warning | Validation-bound NT inputs require ValueExpression when Value or ValueChanged is set.
 NTC1063 | Usage | Warning | NTInputCheckbox and NTInputSwitch required validation should use Required instead of a raw required attribute.
 NTC1064 | Usage | Warning | NTForm RequiredSupportingText cannot be empty when ShowRequiredSupportingText is enabled.
@@ -87,3 +87,8 @@ NTC1081 | Usage | Warning | NTAnimation Repeat, Threshold, RootMargin, OnEntered
 NTC1082 | Usage | Warning | NTAnimation Threshold must be between 0 and 1.
 NTC1102 | Usage | Info | Parameter has no effect in this configuration.
 NTC1103 | Usage | Info | Parameter value is adjusted at runtime.
+NTC1104 | Usage | Warning | NTTextArea MinVisibleLines and MaxVisibleLines must be positive and MaxVisibleLines cannot be less than MinVisibleLines.
+NTC1105 | Usage | Warning | NTSelect does not support the multiple attribute.
+NTC1106 | Usage | Warning | Component does not support this type argument.
+NTC1107 | Accessibility | Info | Form field has no accessible name.
+NTC1108 | Accessibility | Warning | NTFormSectionView with UseFieldset needs a Heading for the legend.
