@@ -6,6 +6,6 @@ internal static class RuleCategory {
     public const string Accessibility = "Accessibility";
     public const string Migration = "Migration";
 
-    /// <summary>Each rule links to its README section: <c>HelpUri + "#ntc1003"</c>.</summary>
-    public const string HelpUri = "https://github.com/Notallthatevil/NTComponents/blob/main/NTComponents.Analyzers/README.md";
+    /// <summary>Each rule links to its RULES.md section: <c>HelpUri + "#ntc1003"</c>.</summary>
+    public const string HelpUri = "https://github.com/Notallthatevil/NTComponents/blob/main/NTComponents.Analyzers/RULES.md";
 }

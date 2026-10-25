@@ -4,6 +4,8 @@
     <Nullable>enable</Nullable>
     <!-- RazorFixtures are compiled only so the tests can analyze the code Razor generates for them; they are never rendered. -->
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <!-- An absolute, short path: the generator nests its output several folders deep, which overflows MAX_PATH in worktrees. -->
+    <CompilerGeneratedFilesOutputPath>$([System.IO.Path]::Combine($(MSBuildProjectDirectory), $(BaseIntermediateOutputPath)gen))</CompilerGeneratedFilesOutputPath>
     <NoWarn>$(NoWarn);CS0618;RZ2012</NoWarn>
   </PropertyGroup>
 
