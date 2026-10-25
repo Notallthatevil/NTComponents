@@ -122,7 +122,7 @@ public sealed class NTSplitButtonRules_Tests {
     [InlineData("b.OpenComponent<NTMenuSubMenuItem>(0); b.AddComponentParameter(1, \"Label\", \"More\"); b.CloseComponent();")]
     [InlineData("if (DateTime.Now.Year > 0) { " + Item + " }")]
     [InlineData("foreach (var i in new[] { 1 }) { " + Item + " }")]
-    [InlineData("b.OpenComponent<NTBadge>(0); b.CloseComponent();")]
+    [InlineData("b.OpenComponent<NTBadge>(0); b.AddComponentParameter(1, \"Content\", \"3\"); b.CloseComponent();")]
     [InlineData("RenderFragment f = c => { }; b.AddContent(0, f);")]
     public async Task DoesNotReport_Menus_That_Have_Or_May_Render_Items(string content) {
         Assert.Empty(await AnalyzerHarness.AnalyzeBuildAsync(Labeled(content: content)));

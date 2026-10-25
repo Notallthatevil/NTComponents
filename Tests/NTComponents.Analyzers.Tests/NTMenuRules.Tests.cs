@@ -46,8 +46,8 @@ public sealed class NTMenuRules_Tests {
     [Theory]
     [InlineData("RenderFragment f = c => { }; b.OpenElement(0, \"div\"); b.AddContent(1, f); b.CloseElement();")]
     [InlineData("RenderFragment f = c => { }; b.AddContent(0, f);")]
-    [InlineData("b.OpenComponent<NTBadge>(0); b.CloseComponent();")]
-    [InlineData(Divider + "b.OpenComponent<NTBadge>(0); b.CloseComponent();")]
+    [InlineData("b.OpenComponent<NTBadge>(0); b.AddComponentParameter(1, \"Content\", \"3\"); b.CloseComponent();")]
+    [InlineData(Divider + "b.OpenComponent<NTBadge>(0); b.AddComponentParameter(1, \"Content\", \"3\"); b.CloseComponent();")]
     public async Task DoesNotReport_Content_That_May_Render_Items(string content) {
         Assert.Empty(await AnalyzerHarness.AnalyzeBuildAsync(Menu(content)));
     }
