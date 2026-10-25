@@ -1,6 +1,10 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk.Razor">
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <!-- RazorFixtures are compiled only so the tests can analyze the code Razor generates for them; they are never rendered. -->
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <NoWarn>$(NoWarn);CS0618;RZ2012</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -11,9 +15,17 @@
   <ItemGroup>
     <ProjectReference Include="..\..\NTComponents.Analyzers\NTComponents.Analyzers.csproj" />
     <ProjectReference Include="..\..\NTComponents.Analyzers.CodeFixes\NTComponents.Analyzers.CodeFixes.csproj" />
+    <ProjectReference Include="..\..\NTComponents\NTComponents.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
+
+  <Target Name="CopyRazorFixtureOutput" AfterTargets="CoreCompile">
+    <ItemGroup>
+      <RazorFixtureOutput Include="$(CompilerGeneratedFilesOutputPath)/**/*_razor*.g.cs" />
+    </ItemGroup>
+    <Copy SourceFiles="@(RazorFixtureOutput)" DestinationFolder="$(OutDir)RazorFixtures" SkipUnchangedFiles="true" />
+  </Target>
 </Project>

@@ -85,3 +85,5 @@ NTC1079 | Migration | Warning | Replace ToCssTnTColorVariable with ToCssNTColorV
 NTC1080 | Usage | Warning | NTAnimation Shown only applies when Trigger is Manual.
 NTC1081 | Usage | Warning | NTAnimation Repeat, Threshold, RootMargin, OnEntered and OnExited only apply when Trigger is Visible.
 NTC1082 | Usage | Warning | NTAnimation Threshold must be between 0 and 1.
+NTC1102 | Usage | Info | Parameter has no effect in this configuration.
+NTC1103 | Usage | Info | Parameter value is adjusted at runtime.

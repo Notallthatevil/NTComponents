@@ -1,0 +1,15 @@
+@* A trailing marker lists the diagnostics expected on its line; "unmapped" ones have no markup location to point at. *@
+<NTButton Label="Save" />
+<NTButton Label="" /> @* NTC1008 *@
+<NTButton Label="Save" Variant="NTButtonVariant.Text" BackgroundColor="NTColor.Primary" /> @* NTC1003 *@
+<NTButton Label="Save" Variant="NTButtonVariant.Elevated" BackgroundColor="null" Elevation="null" />
+<NTButton Label="Save" Variant="NTButtonVariant.Text" IsToggleButton="true" /> @* NTC1007 *@
+<NTButton Label="Save" Variant="NTButtonVariant.Elevated" Elevation="NTElevation.None" /> @* NTC1006 *@
+<NTButton Label="Save" TextColor="NTColor.Transparent" /> @* NTC1005 *@
+<NTButton Label="@_label" Variant="_variant" BackgroundColor="NTColor.Transparent" />
+<NTButton /> @* unmapped NTC1008 *@
+
+@code {
+    private string _label = "Save";
+    private NTButtonVariant _variant = NTButtonVariant.Filled;
+}
