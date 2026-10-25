@@ -10,6 +10,7 @@ $nt-data-grid-pagination-min-block-size: 48px;
 $nt-data-grid-page-size-select-min-block-size: 32px;
 $nt-data-grid-page-button-size: 24px;
 $nt-data-grid-touch-target-size: 48px;
+$nt-data-grid-scroll-fade-size: 24px;
 $nt-data-grid-sort-order-min-inline-size: 16px;
 $nt-data-grid-sort-indicator-size: 18px;
 $nt-data-grid-page-button-font-size: 12px;
@@ -58,6 +59,67 @@ $nt-data-grid-spacer-animation-duration: motion.$nt-motion-duration-extra_long_2
 .nt-data-grid-scroll {
     overflow: auto;
     background: colors.$nt-color-surface;
+
+    // The drag-to-scroll handler in NTComponents.lib.module marks tables that can scroll sideways when the pointer enters
+    // them, and marks the table while a mouse drag scrolls it.
+    &[data-nt-can-drag] {
+        cursor: grab;
+    }
+
+    &[data-nt-dragging] {
+        cursor: grabbing;
+        user-select: none;
+    }
+
+    // Fade the edge that has more columns past it. The scroll timeline is inactive when the table fits, so nothing fades
+    // then; browsers without scroll-driven animations skip the fade entirely.
+    &[data-nt-drag-scroll] {
+        @supports (animation-timeline: scroll()) {
+            mask-image: linear-gradient(to right, transparent, #000 var(--nt-data-grid-fade-start), #000 calc(100% - var(--nt-data-grid-fade-end)), transparent);
+            animation: nt-data-grid-fade-start linear both, nt-data-grid-fade-end linear both;
+            animation-timeline: scroll(self inline);
+            animation-range: $nt-data-grid-zero $nt-data-grid-scroll-fade-size, calc(100% - #{$nt-data-grid-scroll-fade-size}) 100%;
+
+            &:dir(rtl) {
+                mask-image: linear-gradient(to left, transparent, #000 var(--nt-data-grid-fade-start), #000 calc(100% - var(--nt-data-grid-fade-end)), transparent);
+            }
+        }
+    }
+}
+
+// Registered so the scroll-driven animations can interpolate the fade widths; they change with scroll position at runtime,
+// which SCSS variables cannot express.
+@property --nt-data-grid-fade-start {
+    syntax: "<length>";
+    inherits: false;
+    initial-value: 0px;
+}
+
+@property --nt-data-grid-fade-end {
+    syntax: "<length>";
+    inherits: false;
+    initial-value: 0px;
+}
+
+// The start fade grows over the first few pixels scrolled; the end fade shrinks over the last few.
+@keyframes nt-data-grid-fade-start {
+    from {
+        --nt-data-grid-fade-start: 0px;
+    }
+
+    to {
+        --nt-data-grid-fade-start: #{$nt-data-grid-scroll-fade-size};
+    }
+}
+
+@keyframes nt-data-grid-fade-end {
+    from {
+        --nt-data-grid-fade-end: #{$nt-data-grid-scroll-fade-size};
+    }
+
+    to {
+        --nt-data-grid-fade-end: 0px;
+    }
 }
 
 .nt-data-grid-table {

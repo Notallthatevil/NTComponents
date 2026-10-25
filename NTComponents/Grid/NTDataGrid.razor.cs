@@ -373,6 +373,19 @@ public partial class NTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessedM
     public NTDataGridDensity Density { get; set; }
 
     /// <summary>
+    ///     Gets or sets whether mouse users can drag the table sideways when it is wider than the grid.
+    /// </summary>
+    /// <remarks>
+    ///     A press that moves less than a few pixels stays a click. Once it becomes a drag, the release does not click the
+    ///     button, link, or row under the pointer. Presses on form fields and the scrollbar keep their usual behavior, and touch
+    ///     and pen input pan natively either way. While the table overflows, it shows a grab cursor on hover and fades the edges
+    ///     that have more columns past them; the fades need scroll-driven animations, so Firefox skips them. Disable it when
+    ///     users need to select cell text with the mouse.
+    /// </remarks>
+    [Parameter]
+    public bool DragToScroll { get; set; } = true;
+
+    /// <summary>
     /// Gets or sets the grid appearance.
     /// </summary>
     [Parameter]

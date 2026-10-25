@@ -884,6 +884,115 @@ export function applyPhoneMaskInput(input) {
     }
 }
 
+// Drag-to-scroll: mouse users can drag a [data-nt-drag-scroll] container sideways. Touch and pen already pan natively.
+// One set of document listeners serves every container, so it works for static SSR and interactive rendering alike.
+const dragScrollThreshold = 5;
+const dragScrollIgnoredTargets = 'input, textarea, select, [contenteditable]:not([contenteditable="false"])';
+let dragScroll = null;
+let dragScrollSuppressClick = false;
+let dragScrollReady = false;
+
+function onDragScrollPointerDown(event) {
+    // Every press starts fresh, so a release the page never saw cannot leave an old press blocking native dragging.
+    dragScroll?.scroller.removeAttribute('data-nt-dragging');
+    dragScroll = null;
+    if (event.pointerType !== 'mouse' || event.button !== 0 || !(event.target instanceof Element)) {
+        return;
+    }
+
+    const scroller = event.target.closest('[data-nt-drag-scroll]');
+    if (!scroller || scroller.scrollWidth <= scroller.clientWidth || event.target.closest(dragScrollIgnoredTargets)) {
+        return;
+    }
+
+    // Presses on the scrollbar keep the native scrollbar drag.
+    const rect = scroller.getBoundingClientRect();
+    const x = event.clientX - rect.left - scroller.clientLeft;
+    const y = event.clientY - rect.top - scroller.clientTop;
+    if (x < 0 || x >= scroller.clientWidth || y < 0 || y >= scroller.clientHeight) {
+        return;
+    }
+
+    dragScroll = { scroller, pointerId: event.pointerId, startX: event.clientX, scrollLeft: scroller.scrollLeft, dragging: false };
+}
+
+function onDragScrollPointerMove(event) {
+    if (dragScroll?.pointerId !== event.pointerId) {
+        return;
+    }
+
+    const deltaX = event.clientX - dragScroll.startX;
+    if (!dragScroll.dragging) {
+        // Small movements stay clicks, so buttons, links and row clicks keep working.
+        if (Math.abs(deltaX) < dragScrollThreshold) {
+            return;
+        }
+
+        dragScroll.dragging = true;
+        dragScroll.scroller.setPointerCapture?.(event.pointerId);
+        dragScroll.scroller.setAttribute('data-nt-dragging', '');
+        window.getSelection?.()?.removeAllRanges();
+    }
+
+    dragScroll.scroller.scrollLeft = dragScroll.scrollLeft - deltaX;
+}
+
+function onDragScrollPointerEnd(event) {
+    if (dragScroll?.pointerId !== event.pointerId) {
+        return;
+    }
+
+    if (dragScroll.dragging) {
+        dragScroll.scroller.removeAttribute('data-nt-dragging');
+        // The browser fires click right after pointerup; swallow it so the element under the pointer ignores the drag.
+        dragScrollSuppressClick = event.type === 'pointerup';
+        setTimeout(() => dragScrollSuppressClick = false);
+    }
+
+    dragScroll = null;
+}
+
+function onDragScrollClick(event) {
+    if (dragScrollSuppressClick) {
+        dragScrollSuppressClick = false;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+    }
+}
+
+// Marks containers that can scroll sideways so CSS shows a grab cursor. CSS cannot tell whether content overflows, and the
+// cursor only matters while hovering, so this checks when the pointer enters the container or moves within it.
+function onDragScrollPointerOver(event) {
+    const scroller = event.target instanceof Element ? event.target.closest('[data-nt-drag-scroll]') : null;
+    scroller?.toggleAttribute('data-nt-can-drag', scroller.scrollWidth > scroller.clientWidth);
+}
+
+// Native link and image dragging would cancel the pointer stream mid-scroll; explicitly draggable content keeps it.
+function onDragScrollDragStart(event) {
+    if (dragScroll && !(event.target instanceof Element && event.target.closest('[draggable="true"]'))) {
+        event.preventDefault();
+    }
+}
+
+function setupDragScroll() {
+    if (dragScrollReady) {
+        return;
+    }
+
+    dragScrollReady = true;
+    document.addEventListener('pointerover', onDragScrollPointerOver);
+    document.addEventListener('pointerdown', onDragScrollPointerDown);
+    document.addEventListener('pointermove', onDragScrollPointerMove);
+    document.addEventListener('pointerup', onDragScrollPointerEnd);
+    document.addEventListener('pointercancel', onDragScrollPointerEnd);
+    document.addEventListener('dragstart', onDragScrollDragStart);
+    // Capture on window runs before Blazor's and the target's own click handlers.
+    window.addEventListener('click', onDragScrollClick, true);
+}
+
+// The listeners do not depend on Blazor, so attach them as soon as the module loads.
+setupDragScroll();
+
 function startBlazorComponents(blazor) {
     setupPageScriptElement();
     setupEnhancedNavigation(blazor);

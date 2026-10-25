@@ -1,12 +1,15 @@
 @page "/static-paginated-grid"
 @using NTComponents
 
-@* No render mode: this page stays static SSR so the page dropdown runs through its inline handler. *@
-@* The HideBelow columns have fixed widths so a <col> left in the layout would visibly reserve space. *@
+@* Test fixture, not a demo: NTComponents.IntegrationTests drives it to cover NTDataGrid HideBelow, pagination and drag-to-scroll under static
+   SSR, which the WebAssembly-only NTComponents.Site cannot render. The user-facing demos live in the Site's NTDataGrid examples. *@
+@* The HideBelow columns have fixed widths so a <col> left in the layout would visibly reserve space. The unwrapping Shipping
+   column makes the table wider than the grid at phone widths so it can be dragged; column widths alone are only preferred. *@
 <NTDataGrid TItem="Order" Items="_orders" Caption="Static SSR orders" ShowPagination="true" PageSize="5" QueryParameterPrefix="static-grid"
             Density="@(Compact ? NTDataGridDensity.Compact : NTDataGridDensity.Standard)">
     <NTPropertyColumn TItem="Order" TValue="string" Title="Order" Property="order => order.Name" />
     <NTPropertyColumn TItem="Order" TValue="decimal" Title="Total" Property="order => order.Total" Format="C" />
+    <NTTemplateColumn TItem="Order" Title="Shipping"><span style="white-space: nowrap">Ships from the Northwind warehouse in Seattle by overnight freight</span></NTTemplateColumn>
     <NTTemplateColumn TItem="Order" Title="Small and up" HideBelow="NTBreakpoint.Small" Width="120px">small @context.Name</NTTemplateColumn>
     <NTTemplateColumn TItem="Order" Title="Medium and up" HideBelow="NTBreakpoint.Medium" Width="120px">medium @context.Name</NTTemplateColumn>
     <NTTemplateColumn TItem="Order" Title="Large and up" HideBelow="NTBreakpoint.Large" Width="120px">large @context.Name</NTTemplateColumn>

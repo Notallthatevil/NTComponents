@@ -14,7 +14,7 @@
                       Disabled="@(!RendererInfo.IsInteractive)" OnClickCallback="@(() => SetAllRowsExpandedAsync(!AllRowsExpanded))" />
         </div>
     }
-    <div class="nt-data-grid-scroll" style="@ScrollStyle">
+    <div class="nt-data-grid-scroll" style="@ScrollStyle" data-nt-drag-scroll="@DragToScroll">
         <table class="nt-data-grid-table" aria-rowcount="@AccessibleRowCount">
             @if (!string.IsNullOrWhiteSpace(Caption)) {
                 <caption>@Caption</caption>

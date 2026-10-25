@@ -41,6 +41,20 @@ public class NTDataGrid_Tests : BunitContext {
     }
 
     [Fact]
+    public void ByDefault_ScrollContainerOptsIntoDragToScroll() {
+        var cut = RenderGrid();
+
+        cut.Find(".nt-data-grid-scroll").HasAttribute("data-nt-drag-scroll").Should().BeTrue();
+    }
+
+    [Fact]
+    public void DragToScrollDisabled_ScrollContainerOmitsDragAttribute() {
+        var cut = RenderGrid(parameters => parameters.Add(grid => grid.DragToScroll, false));
+
+        cut.Find(".nt-data-grid-scroll").HasAttribute("data-nt-drag-scroll").Should().BeFalse();
+    }
+
+    [Fact]
     public void WithThreePages_PageJumpListsPagesAndSelectsCurrentPage() {
         var cut = RenderPagedGrid(pageIndex: 1);
 

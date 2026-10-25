@@ -661,6 +661,80 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
     }
 
     [Fact]
+    public async Task DragToScrollDemo_DragFromTrackButtonScrollsTheTable() {
+        var example = await OpenDragScrollDemoAsync();
+
+        await DragAsync(example.GetByRole(AriaRole.Button, new() { Name = "Track" }).First, -150);
+
+        (await example.Locator(".nt-data-grid-scroll").EvaluateAsync<double>("strip => strip.scrollLeft")).Should().BeGreaterThan(75, "the table follows the mouse");
+        _browserDiagnostics.Should().BeEmpty();
+    }
+
+    // WebAssembly runs a click handler and its re-render inside the click dispatch, which the mouse release awaits, so a click
+    // leaked by a drag would already show when the drag returns.
+    [Fact]
+    public async Task DragToScrollDemo_DragFromTrackButtonDoesNotTrack() {
+        var example = await OpenDragScrollDemoAsync();
+
+        await DragAsync(example.GetByRole(AriaRole.Button, new() { Name = "Track" }).First, -150);
+
+        (await example.GetByLabel("Tracked shipment").TextContentAsync()).Should().Be("none");
+        _browserDiagnostics.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task DragToScrollDemo_DragFromCellDoesNotSelectTheRow() {
+        var example = await OpenDragScrollDemoAsync();
+
+        await DragAsync(example.GetByRole(AriaRole.Cell, new() { Name = "Ada Lovelace", Exact = true }), -150);
+
+        (await example.GetByLabel("Selected row").TextContentAsync()).Should().Be("none");
+        _browserDiagnostics.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task DragToScrollDemo_ClickingACellStillSelectsTheRow() {
+        var example = await OpenDragScrollDemoAsync();
+
+        await example.GetByRole(AriaRole.Cell, new() { Name = "Ada Lovelace", Exact = true }).ClickAsync();
+
+        await Assertions.Expect(example.GetByLabel("Selected row")).ToHaveTextAsync("SH-1001");
+        _browserDiagnostics.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task DragToScrollDemo_ClickingTrackStillTracks() {
+        var example = await OpenDragScrollDemoAsync();
+
+        await example.GetByRole(AriaRole.Button, new() { Name = "Track" }).First.ClickAsync();
+
+        await Assertions.Expect(example.GetByLabel("Tracked shipment")).ToHaveTextAsync("SH-1001");
+        _browserDiagnostics.Should().BeEmpty();
+    }
+
+    private async Task<ILocator> OpenDragScrollDemoAsync() {
+        await _page!.SetViewportSizeAsync(700, 800);
+        var example = await OpenExampleAsync("ntdatagrid", "DataGridDragScrollExample");
+        // The Track buttons enable once the demo is interactive.
+        await Assertions.Expect(example.GetByRole(AriaRole.Button, new() { Name = "Track" }).First).ToBeEnabledAsync();
+        var overflow = await example.Locator(".nt-data-grid-scroll").EvaluateAsync<double>("strip => strip.scrollWidth - strip.clientWidth");
+        overflow.Should().BeGreaterThan(150, "the demo's table must be wider than its grid for a drag to scroll it");
+        return example;
+    }
+
+    private async Task DragAsync(ILocator start, int deltaX) {
+        // Raw mouse input does not scroll, so bring the start point on screen first.
+        await start.ScrollIntoViewIfNeededAsync();
+        var box = (await start.BoundingBoxAsync())!;
+        var x = box.X + box.Width / 2;
+        var y = box.Y + box.Height / 2;
+        await _page!.Mouse.MoveAsync(x, y);
+        await _page.Mouse.DownAsync();
+        await _page.Mouse.MoveAsync(x + deltaX, y, new MouseMoveOptions { Steps = 10 });
+        await _page.Mouse.UpAsync();
+    }
+
+    [Fact]
     public async Task VirtualizeDemo_StartsAtTheTop_AndScrollingReachesTheLastItem() {
         var example = await OpenExampleAsync("ntvirtualize", "VirtualizeBasicExample");
         var scroller = example.Locator("div[style*='overflow']");
