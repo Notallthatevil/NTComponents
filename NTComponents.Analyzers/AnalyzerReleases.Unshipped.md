@@ -19,8 +19,6 @@ NTC1013 | Usage | Warning | NTSplitButton TextColor cannot be None or Transparen
 NTC1014 | Usage | Warning | NTSplitButton elevation must match the selected variant.
 NTC1015 | Usage | Warning | NTSplitButton menu colors cannot be None or Transparent.
 NTC1016 | Usage | Warning | NTSplitButton requires at least one actionable menu item.
-NTC1017 | Usage | Warning | NTSplitButton menu item Label cannot be empty.
-NTC1018 | Usage | Warning | NTSplitButtonAnchorItem Href cannot be empty.
 NTC1019 | Usage | Warning | NTButtonGroup text variant does not support selectable behavior.
 NTC1020 | Usage | Warning | NTButtonGroup text and outlined variants require a transparent background.
 NTC1021 | Usage | Warning | NTButtonGroup filled, tonal, and elevated variants require a visible container background.
@@ -90,3 +88,7 @@ NTC1103 | Usage | Info | Parameter value is adjusted at runtime.
 NTC1087 | Usage | Warning | Component must be rendered inside its required parent.
 NTC1088 | Usage | Warning | NTForm cannot be nested inside another NTForm.
 NTC1089 | Usage | Warning | NT component enum parameters must use a defined value.
+NTC1083 | Usage | Warning | NTNavLink text and outlined variants require a transparent background.
+NTC1084 | Usage | Warning | NTNavLink filled, tonal, and elevated variants require a visible container background.
+NTC1085 | Usage | Warning | NTNavLink content colors cannot be Transparent.
+NTC1086 | Usage | Warning | NTNavLink elevation must match the selected variant.

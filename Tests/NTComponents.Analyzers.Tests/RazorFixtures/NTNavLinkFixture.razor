@@ -1,0 +1,17 @@
+<NTNavLink Label="Home" href="/" />
+<NTNavLink Label="" href="/" /> @* NTC1056 *@
+<NTNavLink Label="Home" aria-current="page" /> @* NTC1057 *@
+<NTNavLink Label="Home" Disabled="true" tabindex="0" /> @* NTC1058 *@
+<NTNavLink Label="Home" Variant="NTNavLinkVariant.Text" BackgroundColor="NTColor.Primary" /> @* NTC1083 *@
+<NTNavLink Label="Home" BackgroundColor="NTColor.Transparent" /> @* NTC1084 *@
+<NTNavLink Label="Home" HoverTextColor="NTColor.Transparent" /> @* NTC1085 *@
+<NTNavLink Label="Home" Variant="NTNavLinkVariant.InlineText" VisitedTextColor="NTColor.Transparent" /> @* NTC1085 *@
+<NTNavLink Label="Home" Variant="NTNavLinkVariant.Filled" VisitedTextColor="NTColor.Transparent" />
+<NTNavLink Label="Home" Elevation="NTElevation.High" /> @* NTC1086 *@
+<NTNavLink Label="Home" Variant="NTNavLinkVariant.DefaultAnchor" BackgroundColor="NTColor.Primary" Elevation="NTElevation.High" />
+<NTNavLink Label="@_label" Variant="_variant" BackgroundColor="NTColor.Transparent" />
+
+@code {
+    private string _label = "Home";
+    private NTNavLinkVariant _variant = NTNavLinkVariant.Text;
+}

@@ -1,0 +1,16 @@
+<NTMenu AriaLabel="Actions"><NTMenuButtonItem Label="Save" /></NTMenu>
+<NTMenu AriaLabel="Actions"><NTMenuLabelItem Label="Heading" /><NTMenuDividerItem /></NTMenu> @* NTC1048 *@
+<NTMenu AriaLabel=""><NTMenuButtonItem Label="Save" /></NTMenu> @* NTC1047 *@
+<NTMenu AriaLabel="Actions" ContainerColor="NTColor.Transparent"><NTMenuButtonItem Label="Save" /></NTMenu> @* NTC1051 *@
+<NTMenu AriaLabel="Actions"><NTMenuButtonItem Label="" /></NTMenu> @* NTC1049 *@
+<NTMenu AriaLabel="Actions"><NTMenuAnchorItem Label="Home" Href="" /></NTMenu> @* NTC1050 *@
+<NTMenu AriaLabel="Actions"><NTMenuLabelItem Label="Heading" />@if (_show) {<NTMenuButtonItem Label="Save" />}</NTMenu>
+<NTMenu AriaLabel="Actions">@_items</NTMenu>
+<NTMenu AriaLabel="Actions"><NTMenuButtonItem Label="@_label" /></NTMenu>
+<NTContextMenu AriaLabel="Actions"><TargetContent><NTButton Label="Open" /></TargetContent><MenuContent><NTMenuDividerItem /></MenuContent></NTContextMenu> @* NTC1048 *@
+
+@code {
+    private bool _show = true;
+    private string _label = "Save";
+    private RenderFragment _items = builder => { };
+}
