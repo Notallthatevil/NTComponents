@@ -50,7 +50,8 @@ internal sealed class ComponentFrame {
 
     public bool Has(string name) => _attributes.ContainsKey(name);
 
-    public Location LocationOf(string name) => _attributes.TryGetValue(name, out var attribute) ? attribute.Location : Location;
+    /// <summary>The attribute's location when it maps to markup, otherwise the component's. Razor maps neither raw HTML attributes nor fragments.</summary>
+    public Location LocationOf(string name) => _attributes.TryGetValue(name, out var attribute) && SourceLocations.IsMapped(attribute.Location) ? attribute.Location : Location;
 
     public bool IsOrDerivesFrom(string metadataName) {
         for (var type = Type.OriginalDefinition; type is not null; type = type.BaseType?.OriginalDefinition) {

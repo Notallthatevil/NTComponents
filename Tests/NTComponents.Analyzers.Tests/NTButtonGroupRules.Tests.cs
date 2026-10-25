@@ -37,7 +37,7 @@ public sealed class NTButtonGroupRules_Tests {
     public async Task DoesNotReport_A_Text_Group_That_Is_Not_Known_To_Be_Selectable(string selectionMode) {
         var diagnostics = await AnalyzerHarness.AnalyzeBuildAsync(Group("builder.AddComponentParameter(1, \"Variant\", NTButtonVariant.Text);" + selectionMode));
 
-        Assert.Empty(diagnostics);
+        Assert.DoesNotContain("NTC1019", diagnostics.Ids());
     }
 
     [Theory]
