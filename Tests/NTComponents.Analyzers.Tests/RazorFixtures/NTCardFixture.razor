@@ -1,0 +1,11 @@
+<NTCard />
+<NTCard Variant="NTCardVariant.Outlined" BackgroundColor="NTColor.Transparent" />
+<NTCard BackgroundColor="NTColor.Transparent" /> @* NTC1001 *@
+<NTCard BackgroundColor="null" />
+<NTCard Elevation="NTElevation.None" /> @* NTC1002 *@
+<NTCard Variant="NTCardVariant.Elevated" Elevation="NTElevation.None" BackgroundColor="NTColor.Primary" />
+<NTCard Variant="_variant" BackgroundColor="NTColor.Transparent" Elevation="NTElevation.None" />
+
+@code {
+    private NTCardVariant _variant = NTCardVariant.Elevated;
+}

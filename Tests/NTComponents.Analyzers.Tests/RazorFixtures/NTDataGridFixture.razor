@@ -1,0 +1,22 @@
+<NTDataGrid TItem="string" Items="_items" />
+<NTDataGrid TItem="string" Items="_items" ItemsProvider="_provider" /> @* NTC1065 *@
+<NTDataGrid TItem="string" /> @* NTC1066 *@
+<NTDataGrid TItem="string" Items="_items" Virtualize="true" ShowPagination="true" /> @* NTC1067 *@
+<NTPropertyColumn TItem="Person" TValue="string" Property="person => person.FullName" /> @* NTC1068 *@
+<NTPropertyColumn TItem="Person" TValue="string" Property="person => person.First" />
+<NTDataGrid TItem="string" Items="_items" PersistenceKey="orders" /> @* NTC1075 *@
+<NTDataGrid TItem="string" Items="_items" PersistPrerenderedItems="true" /> @* NTC1076 *@
+<NTDataGrid TItem="string" Items="_items" PageSize="0" /> @* NTC1103 *@
+<NTDataGrid TItem="string" Items="_items" PageSize="_size" />
+
+@code {
+    private IQueryable<string> _items = Array.Empty<string>().AsQueryable();
+    private NTDataGridItemsProvider<string> _provider = default!;
+    private int _size = 0;
+
+    private sealed class Person {
+        public string First { get; set; } = "";
+        public string Last { get; set; } = "";
+        public string FullName => First + Last;
+    }
+}

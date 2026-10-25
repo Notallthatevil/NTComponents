@@ -87,3 +87,4 @@ NTC1081 | Usage | Warning | NTAnimation Repeat, Threshold, RootMargin, OnEntered
 NTC1082 | Usage | Warning | NTAnimation Threshold must be between 0 and 1.
 NTC1102 | Usage | Info | Parameter has no effect in this configuration.
 NTC1103 | Usage | Info | Parameter value is adjusted at runtime.
+NTC1110 | Accessibility | Warning | NTProgress and NTLoader need a non-empty AriaLabel or AriaLabelledBy to have an accessible name.

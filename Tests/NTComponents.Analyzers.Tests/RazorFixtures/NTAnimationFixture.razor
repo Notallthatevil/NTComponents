@@ -1,0 +1,10 @@
+<NTAnimation>Plain</NTAnimation>
+<NTAnimation Shown="true">Shown</NTAnimation> @* NTC1080 *@
+<NTAnimation Trigger="NTAnimationTrigger.Manual" Shown="false">Manual</NTAnimation>
+<NTAnimation Trigger="NTAnimationTrigger.Render" Repeat="NTAnimationRepeat.Replay">Render</NTAnimation> @* NTC1081 *@
+<NTAnimation Threshold="2">Threshold</NTAnimation> @* NTC1082 *@
+<NTAnimation Trigger="_trigger" Shown="true">Runtime</NTAnimation>
+
+@code {
+    private NTAnimationTrigger _trigger = NTAnimationTrigger.Render;
+}
