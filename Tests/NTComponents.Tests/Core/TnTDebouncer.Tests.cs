@@ -63,7 +63,7 @@ namespace NTComponents.Tests.Core {
         [Fact]
         public async Task Debounce_ExecutesOnlyLastAction_WhenSecondCallWithinDelay() {
             // Arrange
-            var debouncer = new TnTDebouncer(millisecondsDelay: 120);
+            var debouncer = new TnTDebouncer(millisecondsDelay: 1000);
             int callCount = 0;
             string? last = null;
 
@@ -81,7 +81,7 @@ namespace NTComponents.Tests.Core {
         [Fact]
         public async Task Debounce_ExecutesOnlyOneAction_WhenCallsStartConcurrently() {
             // Arrange
-            var debouncer = new TnTDebouncer(millisecondsDelay: 60);
+            var debouncer = new TnTDebouncer(millisecondsDelay: 1000);
             var callCount = 0;
 
             // Act

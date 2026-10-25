@@ -20,6 +20,9 @@ const mediaQuery = {
 global.ResizeObserver = ResizeObserverMock;
 window.matchMedia = jest.fn(() => mediaQuery);
 
+// Interaction transfer state is module-level and keyed by aria-label, so each carousel needs a unique label to stay isolated.
+let carouselCount = 0;
+
 describe('NTCarousel autoplay resilience', () => {
   beforeAll(() => {
     if (!customElements.get('nt-carousel')) {
@@ -62,9 +65,9 @@ describe('NTCarousel autoplay resilience', () => {
     return { cancel, flush, frames, request };
   }
 
-  function createCarousel({ count = 6, intervalSeconds = 1, snapping = true, width = 390 } = {}) {
+  function createCarousel({ count = 6, intervalSeconds = 1, snapping = true, width = 390, label = `Autoplay resilience carousel ${++carouselCount}` } = {}) {
     const carousel = document.createElement('nt-carousel');
-    carousel.setAttribute('aria-label', 'Autoplay resilience carousel');
+    carousel.setAttribute('aria-label', label);
     carousel.dataset.layout = 'multi-browse';
     carousel.dataset.allowDragging = 'true';
     carousel.dataset.snap = snapping ? 'true' : 'false';
@@ -365,7 +368,7 @@ describe('NTCarousel autoplay resilience', () => {
     original.viewport.dispatchEvent(new PointerEvent('pointermove', { clientX: 80, pointerId: 17, pointerType: 'mouse' }));
     original.carousel.remove();
 
-    const replacement = createCarousel({ count: 14 });
+    const replacement = createCarousel({ count: 14, label: original.carousel.getAttribute('aria-label') });
     replacement.carousel.restoreTransferredInteraction();
     const replacementAnimate = jest.spyOn(replacement.carousel, 'animateToIndex');
     jest.advanceTimersByTime(1500);

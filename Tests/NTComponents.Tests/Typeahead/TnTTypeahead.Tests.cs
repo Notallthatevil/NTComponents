@@ -71,8 +71,7 @@ public class TnTTypeahead_Tests : BunitContext {
         var input = cut.Find("input");
 
         // Perform search to show results with multiple items
-        input.Input("e");
-        await Task.Delay(400, Xunit.TestContext.Current.CancellationToken);
+        await SearchAsync(cut, "e");
 
         // Get fresh references to items after search
         var items = cut.FindAll(".tnt-typeahead-list-item");
@@ -99,8 +98,7 @@ public class TnTTypeahead_Tests : BunitContext {
         var input = cut.Find("input");
 
         // Perform search to show results
-        input.Input("e");
-        await Task.Delay(400, Xunit.TestContext.Current.CancellationToken);
+        await SearchAsync(cut, "e");
 
         var items = cut.FindAll(".tnt-typeahead-list-item");
         items.Should().HaveCountGreaterThan(1);
@@ -135,8 +133,7 @@ public class TnTTypeahead_Tests : BunitContext {
         var input = cut.Find("input");
 
         // Perform search to show results with multiple items
-        input.Input("e");
-        await Task.Delay(400, Xunit.TestContext.Current.CancellationToken);
+        await SearchAsync(cut, "e");
 
         var items = cut.FindAll(".tnt-typeahead-list-item");
         items.Should().HaveCountGreaterThan(1);
@@ -389,8 +386,7 @@ public class TnTTypeahead_Tests : BunitContext {
         var input = cut.Find("input");
 
         // Perform search to show results
-        input.Input("ap");
-        await Task.Delay(400, Xunit.TestContext.Current.CancellationToken);
+        await SearchAsync(cut, "ap");
 
         // Act
         await input.KeyUpAsync(new KeyboardEventArgs { Key = "Enter" });
@@ -408,8 +404,7 @@ public class TnTTypeahead_Tests : BunitContext {
         var input = cut.Find("input");
 
         // Perform search to show results with focused item
-        input.Input("ap");
-        await Task.Delay(400, Xunit.TestContext.Current.CancellationToken);
+        await SearchAsync(cut, "ap");
 
         // Verify that an item is focused
         var focusedItems = cut.FindAll(".tnt-typeahead-list-item.tnt-focused");
@@ -444,8 +439,7 @@ public class TnTTypeahead_Tests : BunitContext {
         var input = cut.Find("input");
 
         // Perform search to show results
-        input.Input("ap");
-        await Task.Delay(400, Xunit.TestContext.Current.CancellationToken);
+        await SearchAsync(cut, "ap");
         var items = cut.FindAll(".tnt-typeahead-list-item");
         items.Should().HaveCountGreaterThan(0);
 
@@ -464,8 +458,7 @@ public class TnTTypeahead_Tests : BunitContext {
         var input = cut.Find("input");
 
         // Perform search to show results
-        input.Input("ap");
-        await Task.Delay(400, Xunit.TestContext.Current.CancellationToken);
+        await SearchAsync(cut, "ap");
 
         // Act
         await input.KeyUpAsync(new KeyboardEventArgs { Key = "Escape" });
@@ -501,11 +494,9 @@ public class TnTTypeahead_Tests : BunitContext {
         var selectedItem = "";
         var cut = RenderTypeahead(SimpleSearchFunc, parameters => parameters
             .Add(p => p.ItemSelectedCallback, EventCallback.Factory.Create<string>(this, item => selectedItem = item)));
-        var input = cut.Find("input");
 
         // Perform search to show results
-        input.Input("ap");
-        await Task.Delay(400, Xunit.TestContext.Current.CancellationToken);
+        await SearchAsync(cut, "ap");
 
         // Act
         var firstItem = cut.Find(".tnt-typeahead-list-item");
@@ -519,11 +510,9 @@ public class TnTTypeahead_Tests : BunitContext {
     public async Task ItemSelection_ClearsSuggestionList() {
         // Arrange
         var cut = RenderTypeahead(SimpleSearchFunc);
-        var input = cut.Find("input");
 
         // Perform search to show results
-        input.Input("ap");
-        await Task.Delay(400, Xunit.TestContext.Current.CancellationToken);
+        await SearchAsync(cut, "ap");
         cut.FindAll(".tnt-typeahead-list-item").Should().HaveCountGreaterThan(0);
 
         // Act
@@ -541,11 +530,9 @@ public class TnTTypeahead_Tests : BunitContext {
         var cut = RenderTypeahead(SimpleSearchFunc, parameters => parameters
             .Add(p => p.ResetValueOnSelect, true)
             .Add(p => p.ValueChanged, EventCallback.Factory.Create<string>(this, value => currentValue = value)));
-        var input = cut.Find("input");
 
         // Perform search to show results
-        input.Input("ap");
-        await Task.Delay(400, Xunit.TestContext.Current.CancellationToken);
+        await SearchAsync(cut, "ap");
 
         // Act
         var firstItem = cut.Find(".tnt-typeahead-list-item");
@@ -562,11 +549,9 @@ public class TnTTypeahead_Tests : BunitContext {
         var cut = RenderTypeahead(SimpleSearchFunc, parameters => parameters
             .Add(p => p.ResetValueOnSelect, false)
             .Add(p => p.ValueChanged, EventCallback.Factory.Create<string>(this, value => currentValue = value)));
-        var input = cut.Find("input");
 
         // Perform search to show results
-        input.Input("ap");
-        await Task.Delay(400, Xunit.TestContext.Current.CancellationToken);
+        await SearchAsync(cut, "ap");
 
         // Act
         var firstItem = cut.Find(".tnt-typeahead-list-item");
@@ -602,8 +587,7 @@ public class TnTTypeahead_Tests : BunitContext {
         var input = cut.Find("input");
 
         // Perform search with no results
-        input.Input("xyz");
-        await Task.Delay(400, Xunit.TestContext.Current.CancellationToken);
+        await SearchAsync(cut, "xyz");
 
         cut.FindAll(".tnt-typeahead-list-item").Should().BeEmpty();
 
@@ -621,8 +605,7 @@ public class TnTTypeahead_Tests : BunitContext {
         var input = cut.Find("input");
 
         // Perform search to show single result
-        input.Input("test");
-        await Task.Delay(400, Xunit.TestContext.Current.CancellationToken);
+        await SearchAsync(cut, "test");
 
         var items = cut.FindAll(".tnt-typeahead-list-item");
         items.Should().HaveCount(1);
@@ -746,11 +729,9 @@ public class TnTTypeahead_Tests : BunitContext {
         // Arrange
         var cut = RenderTypeahead(SimpleSearchFunc, parameters => parameters
             .Add(p => p.RefocusAfterSelect, true));
-        var input = cut.Find("input");
 
         // Perform search to show results
-        input.Input("ap");
-        await Task.Delay(400, Xunit.TestContext.Current.CancellationToken);
+        await SearchAsync(cut, "ap");
 
         // Act
         var firstItem = cut.Find(".tnt-typeahead-list-item");
@@ -783,11 +764,9 @@ public class TnTTypeahead_Tests : BunitContext {
 
         var cut = RenderTypeahead<TestModel>(ModelSearchFunc, parameters => parameters
             .Add(p => p.ResultTemplate, customTemplate));
-        var input = cut.Find("input");
 
         // Act
-        input.Input("john");
-        await Task.Delay(400, Xunit.TestContext.Current.CancellationToken);
+        await SearchAsync(cut, "john");
 
         // Assert
         var customItem = cut.Find(".custom-item");
@@ -835,11 +814,9 @@ public class TnTTypeahead_Tests : BunitContext {
         }
 
         var cut = RenderTypeahead(TrackingSearchFunc);
-        var input = cut.Find("input");
 
         // Act
-        input.Input("ap");
-        await Task.Delay(400, Xunit.TestContext.Current.CancellationToken); // Wait for debounce
+        await SearchAsync(cut, "ap");
 
         // Assert
         searchCallCount.Should().BeGreaterThan(0);
@@ -847,31 +824,28 @@ public class TnTTypeahead_Tests : BunitContext {
     }
 
     [Fact]
-    public void Search_WithEmptyValue_ClearsResults() {
+    public async Task Search_WithEmptyValue_ClearsResults() {
         // Arrange
         var cut = RenderTypeahead(SimpleSearchFunc);
-        var input = cut.Find("input");
 
         // First, perform a search
-        input.Input("ap");
-        cut.WaitForAssertion(() => cut.FindAll(".tnt-typeahead-list-item").Should().HaveCountGreaterThan(0), TimeSpan.FromSeconds(3));
+        await SearchAsync(cut, "ap");
+        cut.FindAll(".tnt-typeahead-list-item").Should().NotBeEmpty();
 
-        // Act - Clear the input; the search re-rendered it, so find it again rather than reuse a stale event handler.
-        cut.Find("input").Input("");
+        // Act - Clear the input
+        await SearchAsync(cut, "");
 
         // Assert
-        cut.WaitForAssertion(() => cut.FindAll(".tnt-typeahead-content").Should().BeEmpty(), TimeSpan.FromSeconds(3));
+        cut.FindAll(".tnt-typeahead-content").Should().BeEmpty();
     }
 
     [Fact]
     public async Task Search_WithNoResults_ShowsNoResultsMessage() {
         // Arrange
         var cut = RenderTypeahead(EmptySearchFunc);
-        var input = cut.Find("input");
 
         // Act
-        input.Input("xyz");
-        await Task.Delay(400, Xunit.TestContext.Current.CancellationToken); // Wait for debounce and search
+        await SearchAsync(cut, "xyz");
 
         // Assert
         cut.Find(".tnt-typeahead-no-results").Should().NotBeNull();
@@ -882,11 +856,9 @@ public class TnTTypeahead_Tests : BunitContext {
     public async Task Search_WithResults_DisplaysSuggestionList() {
         // Arrange
         var cut = RenderTypeahead(SimpleSearchFunc);
-        var input = cut.Find("input");
 
         // Act
-        input.Input("ap");
-        await Task.Delay(400, Xunit.TestContext.Current.CancellationToken); // Wait for debounce and search
+        await SearchAsync(cut, "ap");
 
         // Assert
         cut.Find(".tnt-typeahead-content").Should().NotBeNull();
@@ -958,11 +930,9 @@ public class TnTTypeahead_Tests : BunitContext {
     public async Task WithoutResultTemplate_UsesToStringForDisplay() {
         // Arrange
         var cut = RenderTypeahead<TestModel>(ModelSearchFunc);
-        var input = cut.Find("input");
 
         // Act
-        input.Input("john");
-        await Task.Delay(400, Xunit.TestContext.Current.CancellationToken);
+        await SearchAsync(cut, "john");
 
         // Assert
         var item = cut.Find(".tnt-typeahead-list-item");
@@ -1018,6 +988,9 @@ public class TnTTypeahead_Tests : BunitContext {
         var results = new[] { "Single Result" };
         return Task.FromResult<IEnumerable<string>>(results);
     }
+
+    // Awaiting the input event waits for the debounced search and every render it triggers, so later lookups and events see a settled render tree.
+    private static Task SearchAsync<TItem>(IRenderedComponent<TnTTypeahead<TItem>> cut, string value) => cut.InvokeAsync(() => cut.Find("input").InputAsync(new ChangeEventArgs { Value = value }));
 
     private IRenderedComponent<TnTTypeahead<string>> RenderTypeahead(
         Func<string?, CancellationToken, Task<IEnumerable<string>>> itemsLookupFunc,

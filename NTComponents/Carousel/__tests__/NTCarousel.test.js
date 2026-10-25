@@ -15,6 +15,9 @@ const mediaQuery = {
 global.ResizeObserver = ResizeObserverMock;
 window.matchMedia = jest.fn(() => mediaQuery);
 
+// Interaction transfer state is module-level and keyed by aria-label, so each carousel needs a unique label to stay isolated.
+let carouselCount = 0;
+
 describe('NTCarousel', () => {
   beforeAll(() => {
     if (!customElements.get('nt-carousel')) {
@@ -33,9 +36,9 @@ describe('NTCarousel', () => {
     jest.restoreAllMocks();
   });
 
-  function createCarousel({ count = 6, height = 240, layout = 'multi-browse', rtl = false, snapping = true, width = 390, aspectRatios = [] } = {}) {
+  function createCarousel({ count = 6, height = 240, layout = 'multi-browse', rtl = false, snapping = true, width = 390, aspectRatios = [], label = `Test carousel ${++carouselCount}` } = {}) {
     const carousel = document.createElement('nt-carousel');
-    carousel.setAttribute('aria-label', 'Test carousel');
+    carousel.setAttribute('aria-label', label);
     carousel.dataset.layout = layout;
     carousel.dataset.allowDragging = 'true';
     carousel.dataset.snap = snapping ? 'true' : 'false';
@@ -303,7 +306,7 @@ describe('NTCarousel', () => {
     expect(original.viewport.scrollLeft).toBe(100);
 
     original.carousel.remove();
-    const replacement = createCarousel({ count: 14, snapping: false });
+    const replacement = createCarousel({ count: 14, snapping: false, label: original.carousel.getAttribute('aria-label') });
     replacement.carousel.restoreTransferredInteraction();
     expect(replacement.viewport.scrollLeft).toBe(100);
     expect(replacement.carousel.dragState?.pointerId).toBe(17);
@@ -391,7 +394,7 @@ describe('NTCarousel', () => {
     expect(originalControl.textContent).toBe('Start rotation');
 
     original.carousel.remove();
-    const replacement = createCarousel();
+    const replacement = createCarousel({ label: original.carousel.getAttribute('aria-label') });
     replacement.carousel.dataset.autoPlayInterval = '1';
     const replacementControl = document.createElement('button');
     replacementControl.dataset.autoplayControl = '';
