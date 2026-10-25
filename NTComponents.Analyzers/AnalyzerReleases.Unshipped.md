@@ -87,3 +87,6 @@ NTC1081 | Usage | Warning | NTAnimation Repeat, Threshold, RootMargin, OnEntered
 NTC1082 | Usage | Warning | NTAnimation Threshold must be between 0 and 1.
 NTC1102 | Usage | Info | Parameter has no effect in this configuration.
 NTC1103 | Usage | Info | Parameter value is adjusted at runtime.
+NTC1087 | Usage | Warning | Component must be rendered inside its required parent.
+NTC1088 | Usage | Warning | NTForm cannot be nested inside another NTForm.
+NTC1089 | Usage | Warning | NT component enum parameters must use a defined value.

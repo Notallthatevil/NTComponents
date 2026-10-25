@@ -12,7 +12,7 @@ namespace NTComponents.Analyzers;
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class NTComponentUsageAnalyzer : DiagnosticAnalyzer {
 
-    private static readonly ComponentRuleRegistry DefaultRegistry = ComponentRuleRegistry.Create(
+    internal static readonly ComponentRuleRegistry DefaultRegistry = ComponentRuleRegistry.Create(
         CommonRules.Register,
         NestingRules.Register,
         UndefinedEnumRules.Register,

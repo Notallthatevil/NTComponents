@@ -1,0 +1,17 @@
+@page "/analyzer-fixtures/nesting"
+<NTTab Label="Orphan" /> @* NTC1087 *@
+<NTTabView>
+    <NTTab Label="Inside" />
+</NTTabView>
+<NTInputRadioGroup TValue="int" @bind-Value="_number" Label="Number">
+    <NTInputRadio TValue="int" Value="1" Label="One" />
+</NTInputRadioGroup>
+<NTForm Model="_model">
+    <NTForm Model="_model" /> @* NTC1088 *@
+</NTForm>
+<NTButton Label="Size" ButtonSize="(NTSize)99" /> @* NTC1089 *@
+
+@code {
+    private int _number;
+    private readonly object _model = new();
+}

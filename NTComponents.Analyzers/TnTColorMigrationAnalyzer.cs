@@ -33,6 +33,11 @@ public sealed class TnTColorMigrationAnalyzer : DiagnosticAnalyzer {
 
             start.RegisterSyntaxNodeAction(nodeContext => {
                 var name = (IdentifierNameSyntax)nodeContext.Node;
+                // Razor repeats parameter types in hidden generated code (TypeCheck<TnTColor>); only user-written references need migrating.
+                if (!SourceLocations.IsMapped(name.GetLocation())) {
+                    return;
+                }
+
                 var symbolInfo = nodeContext.SemanticModel.GetSymbolInfo(name, nodeContext.CancellationToken);
                 var symbol = symbolInfo.Symbol;
                 if (symbol is IFieldSymbol field && SymbolEqualityComparer.Default.Equals(field.ContainingType, legacyType)
