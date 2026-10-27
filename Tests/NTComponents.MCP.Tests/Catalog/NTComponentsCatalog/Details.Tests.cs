@@ -102,6 +102,19 @@ public class Details_Tests {
         component.Parameters.Where(parameter => parameter.IsInherited).Should().OnlyContain(parameter => parameter.Category == "Inherited");
     }
 
+    /// <summary>Behavior source: NTDataGrid documents FullHeight so consumers can fill a page layout without restyling the grid.</summary>
+    [Fact]
+    public void GetComponent_DataGrid_DocumentsFullHeightLayout() {
+        var catalog = new NTComponentsCatalog();
+
+        var component = catalog.GetComponent("NTDataGrid");
+
+        component.Should().NotBeNull();
+        component!.Parameters.Should().ContainSingle(parameter => parameter.Name == "FullHeight" && parameter.Type == "bool" && parameter.Category == "Appearance"
+            && parameter.Summary.Contains("fills the block size of its parent", StringComparison.Ordinal));
+        component.Remarks.Should().Contain("FullHeight");
+    }
+
     /// <summary>Behavior source: generated basic usage promises composition-aware required inputs, including Razor expressions for non-text content parameters.</summary>
     [Fact]
     public void GetComponent_WithRequiredContent_GeneratesRazorExpressionPlaceholder() {

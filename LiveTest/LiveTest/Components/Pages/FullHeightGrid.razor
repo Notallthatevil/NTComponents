@@ -1,0 +1,27 @@
+@page "/fullHeightGrid"
+@using NTComponents
+@rendermode InteractiveServer
+
+<div id="full-height-host" style="display: flex; flex-direction: column; gap: 16px; box-sizing: border-box; block-size: 1100px; padding: 16px;">
+    <h1 style="margin: 0;">NTDataGrid FullHeight</h1>
+    <NTDataGrid TItem="DataGridItem" Items="Items" Caption="Full-height virtualized grid" Virtualize="true" FullHeight="true" RowKey="item => item.Id">
+        <NTPropertyColumn TItem="DataGridItem" TValue="int" Title="Id" Property="item => item.Id" />
+        <NTPropertyColumn TItem="DataGridItem" TValue="string" Title="Customer" Property="item => item.Customer" />
+    </NTDataGrid>
+</div>
+
+@* No bounded height: the grid must stop at the viewport height instead of loading every row. *@
+<div id="unbounded-host">
+    <NTDataGrid TItem="DataGridItem" Items="Items" Caption="Unbounded full-height grid" Virtualize="true" FullHeight="true" RowKey="item => item.Id" QueryParameterPrefix="unbounded">
+        <NTPropertyColumn TItem="DataGridItem" TValue="int" Title="Id" Property="item => item.Id" />
+        <NTPropertyColumn TItem="DataGridItem" TValue="string" Title="Customer" Property="item => item.Customer" />
+    </NTDataGrid>
+</div>
+
+@code {
+    private readonly IQueryable<DataGridItem> Items = Enumerable.Range(1, 1_000)
+        .Select(index => new DataGridItem(index, $"Customer {index:00000}"))
+        .AsQueryable();
+
+    public sealed record DataGridItem(int Id, string Customer);
+}

@@ -47,6 +47,11 @@ public enum NTDataGridAppearance {
 /// <summary>
 /// A Material 3 aligned data grid for direct, provider, paginated, and virtualized data.
 /// </summary>
+/// <remarks>
+/// A virtualized grid caps its scroll area at <see cref="VirtualizationInitialItemCount" /> rows by default. To fill a page
+/// layout instead, set <see cref="FullHeight" /> and place the grid in a parent with a bounded height, such as a flex column or
+/// a grid area; the rows then scroll inside the space the parent gives the grid.
+/// </remarks>
 [CascadingTypeParameter(nameof(TItem))]
 [NTDocumentation(
     RenderCompatibility = NTComponentRenderCompatibility.ProgressivelyEnhanced,
@@ -258,6 +263,17 @@ public partial class NTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessedM
     [Parameter]
     public bool Virtualize { get; set; }
 
+    /// <summary>
+    /// Gets or sets whether the grid fills the block size of its parent and scrolls its rows inside that space.
+    /// </summary>
+    /// <remarks>
+    /// The grid becomes a flex column that grows inside a flex parent and stretches inside a grid parent or a parent with a set
+    /// height, and a virtualized grid drops its default <see cref="VirtualizationInitialItemCount" />-row height cap. Give the
+    /// parent a bounded height. Without one, the grid stops at the viewport height.
+    /// </remarks>
+    [Parameter]
+    public bool FullHeight { get; set; }
+
     /// <summary>Measures ordinary row heights. Detail rows always enable measurement.</summary>
     [Parameter]
     public bool VirtualizationMeasureItemSize { get; set; }
@@ -460,10 +476,11 @@ public partial class NTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessedM
         .AddClass("nt-data-grid-striped", HasStripedRows)
         .AddClass("nt-data-grid-cell-dividers", ShowCellDividers)
         .AddClass("nt-data-grid-virtualized", Virtualize)
+        .AddClass("nt-data-grid-full-height", FullHeight)
         .AddClass(_class, !string.IsNullOrWhiteSpace(_class))
         .Build();
 
-    private string? ScrollStyle => Virtualize ? $"max-height: {Math.Max(1, VirtualizationInitialItemCount) * ResolvedVirtualizationItemSize}px;" : null;
+    private string? ScrollStyle => Virtualize && !FullHeight ? $"max-height: {Math.Max(1, VirtualizationInitialItemCount) * ResolvedVirtualizationItemSize}px;" : null;
 
     private string VirtualizedScrollRestorationKey => GetQueryName("scroll");
 
