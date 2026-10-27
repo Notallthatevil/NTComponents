@@ -1420,7 +1420,6 @@ public partial class NTDataGrid<[DynamicallyAccessedMembers(DynamicallyAccessedM
         builder.AddAttribute(9, "data-nt-virtualize-size", rowSize);
         builder.OpenElement(10, "div");
         builder.AddAttribute(11, "class", "nt-data-grid-row-skeleton");
-        builder.AddAttribute(12, "data-nt-virtualize-size", rowSize);
         builder.OpenComponent<NTSkeleton>(13);
         builder.AddAttribute(14, nameof(NTSkeleton.Shape), NTSkeletonShape.Rectangle);
         builder.CloseComponent();

@@ -1,0 +1,36 @@
+@page "/gridPlaceholderRows"
+@using NTComponents
+@rendermode InteractiveServer
+
+@* The first window loads at once; later windows wait, so placeholder rows stay next to loaded rows. *@
+<NTDataGrid TItem="DataGridItem" ItemsProvider="Provider" Caption="Placeholder row sizing" Virtualize="true" RowKey="item => item.Id"
+            Density="@(Density == "compact" ? NTDataGridDensity.Compact : NTDataGridDensity.Standard)"
+            VirtualizationItemSize="@(ItemSize ?? (Density == "compact" ? 28 : 36))"
+            RowDetailTemplate="@(Details ? DetailTemplate : null)">
+    <NTPropertyColumn TItem="DataGridItem" TValue="int" Title="Id" Property="item => item.Id" />
+    <NTPropertyColumn TItem="DataGridItem" TValue="string" Title="Customer" Property="item => item.Customer" />
+</NTDataGrid>
+
+@code {
+    private static readonly DataGridItem[] Items = Enumerable.Range(1, 1_000).Select(index => new DataGridItem(index, $"Customer {index:00000}")).ToArray();
+    private static readonly RenderFragment<DataGridItem> DetailTemplate = item => builder => builder.AddContent(0, $"Details for {item.Customer}");
+
+    [SupplyParameterFromQuery]
+    public string? Density { get; set; }
+
+    [SupplyParameterFromQuery]
+    public bool Details { get; set; }
+
+    [SupplyParameterFromQuery]
+    public float? ItemSize { get; set; }
+
+    private static async ValueTask<NTItemsProviderResult<DataGridItem>> Provider(NTDataGridItemsProviderRequest<DataGridItem> request) {
+        if (request.StartIndex > 0) {
+            await Task.Delay(Timeout.Infinite, request.CancellationToken);
+        }
+
+        return new NTItemsProviderResult<DataGridItem>(Items.Skip(request.StartIndex).Take(request.Count ?? 20).ToArray(), Items.Length);
+    }
+
+    public sealed record DataGridItem(int Id, string Customer);
+}

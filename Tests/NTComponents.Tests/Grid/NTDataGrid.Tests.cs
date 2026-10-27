@@ -1787,6 +1787,8 @@ public class NTDataGrid_Tests : BunitContext {
             var cell = placeholder.QuerySelector("td")!;
             cell.GetAttribute("colspan").Should().Be("3");
             cell.QuerySelector(".nt-data-grid-row-skeleton .nt-skeleton")!.GetAttribute("style").Should().NotContain("--nt-skeleton-height");
+            // A row-height inline size on the skeleton would overflow the cell's content box above its divider.
+            cell.QuerySelector(".nt-data-grid-row-skeleton")!.HasAttribute("data-nt-virtualize-size").Should().BeFalse();
         });
 
         pending.SetResult(new NTItemsProviderResult<TestGridItem>(items.Skip(10).Take(2).ToArray(), items.Length));
