@@ -1,0 +1,15 @@
+<div class="docs-fill" style="block-size: 24rem; display: flex; flex-direction: column; gap: 8px;">
+    <p class="nt-body-medium" style="margin: 0;">@Orders.Length orders</p>
+    <NTDataGrid TItem="Order" Items="Orders.AsQueryable()" Virtualize="true" FullHeight="true" Caption="Orders filling the remaining space" QueryParameterPrefix="docs-full-height">
+        <NTPropertyColumn TItem="Order" TValue="int" Title="Order" Property="order => order.Id" />
+        <NTPropertyColumn TItem="Order" TValue="decimal" Title="Total" Property="order => order.Total" Format="C" />
+    </NTDataGrid>
+</div>
+
+@code {
+    private static readonly Order[] Orders = Enumerable.Range(1, 500)
+        .Select(index => new Order(1000 + index, index * 9.99m))
+        .ToArray();
+
+    private sealed record Order(int Id, decimal Total);
+}

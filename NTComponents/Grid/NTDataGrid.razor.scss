@@ -88,6 +88,23 @@ $nt-data-grid-spacer-animation-duration: motion.$nt-motion-duration-extra_long_2
     }
 }
 
+// FullHeight: grow inside a flex parent, stretch inside a grid parent or a parent with a set height, and scroll the rows
+// in whatever space is left. The viewport cap keeps a virtualized grid in an unbounded parent from loading every row.
+.nt-data-grid-full-height {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    box-sizing: border-box;
+    block-size: 100%;
+    min-block-size: $nt-data-grid-zero;
+    max-block-size: 100dvh;
+
+    > .nt-data-grid-scroll {
+        flex: 1 1 auto;
+        min-block-size: $nt-data-grid-zero;
+    }
+}
+
 // Registered so the scroll-driven animations can interpolate the fade widths; they change with scroll position at runtime,
 // which SCSS variables cannot express.
 @property --nt-data-grid-fade-start {

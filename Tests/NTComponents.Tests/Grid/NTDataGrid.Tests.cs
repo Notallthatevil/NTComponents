@@ -1753,6 +1753,31 @@ public class NTDataGrid_Tests : BunitContext {
     }
 
     [Fact]
+    public void Virtualized_Grid_Caps_Scroll_Height_At_Initial_Item_Count_By_Default() {
+        var cut = Render<NTDataGrid<TestGridItem>>(parameters => parameters
+            .Add(grid => grid.ItemsProvider, _ => ValueTask.FromResult(new NTItemsProviderResult<TestGridItem>(_items.ToArray(), _items.Count())))
+            .Add(grid => grid.Virtualize, true)
+            .Add(grid => grid.ChildContent, DefaultColumns));
+
+        cut.Find(".nt-data-grid").ClassList.Should().NotContain("nt-data-grid-full-height");
+        cut.Find(".nt-data-grid-scroll").GetAttribute("style").Should().Be("max-height: 720px;");
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void FullHeight_Grid_Fills_Parent_Without_Scroll_Height_Cap(bool virtualize) {
+        var cut = Render<NTDataGrid<TestGridItem>>(parameters => parameters
+            .Add(grid => grid.ItemsProvider, _ => ValueTask.FromResult(new NTItemsProviderResult<TestGridItem>(_items.ToArray(), _items.Count())))
+            .Add(grid => grid.Virtualize, virtualize)
+            .Add(grid => grid.FullHeight, true)
+            .Add(grid => grid.ChildContent, DefaultColumns));
+
+        cut.Find(".nt-data-grid").ClassList.Should().Contain("nt-data-grid-full-height");
+        cut.Find(".nt-data-grid-scroll").HasAttribute("style").Should().BeFalse();
+    }
+
+    [Fact]
     public async Task Virtualized_Grid_Renders_Full_Row_Skeleton_Placeholder_While_Loading() {
         var items = Enumerable.Range(1, 25)
             .Select(index => new TestGridItem(index, $"Item {index}", new DateOnly(2026, 1, 1).AddDays(index), index))
@@ -1787,6 +1812,8 @@ public class NTDataGrid_Tests : BunitContext {
             var cell = placeholder.QuerySelector("td")!;
             cell.GetAttribute("colspan").Should().Be("3");
             cell.QuerySelector(".nt-data-grid-row-skeleton .nt-skeleton")!.GetAttribute("style").Should().NotContain("--nt-skeleton-height");
+            // A row-height inline size on the skeleton would overflow the cell's content box above its divider.
+            cell.QuerySelector(".nt-data-grid-row-skeleton")!.HasAttribute("data-nt-virtualize-size").Should().BeFalse();
         });
 
         pending.SetResult(new NTItemsProviderResult<TestGridItem>(items.Skip(10).Take(2).ToArray(), items.Length));

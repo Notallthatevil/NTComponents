@@ -805,6 +805,22 @@ describe('NTVirtualize.init', () => {
         expect(dotNetRef.invokeMethodAsync).toHaveBeenCalledWith('LoadItems', 0, 1560, 0, 22);
     });
 
+    test('fills an uncapped scroll container taller than the default grid cap', () => {
+        // NTDataGrid FullHeight removes max-height, so clientHeight alone sizes the visible window.
+        const { topSpacer, bottomSpacer, dotNetRef, scrollAncestor } = createVirtualizedElements('auto');
+        Object.defineProperty(scrollAncestor, 'clientHeight', { configurable: true, value: 1000 });
+
+        init(dotNetRef, topSpacer, bottomSpacer, 36, 3, 100);
+        updateRenderState(dotNetRef, 1000, 0, 0);
+
+        intersectionObservers[0].callback([
+            { target: bottomSpacer, isIntersecting: true },
+        ]);
+
+        // visibleItemCapacity = ceil(1000/36) + 2*3 = 34 rows, more than the 20-row (720px) default cap.
+        expect(dotNetRef.invokeMethodAsync).toHaveBeenCalledWith('LoadItems', 0, (1000 - 34) * 36, 0, 34);
+    });
+
     test('recalculates the bottom spacer when total count becomes available', () => {
         const { topSpacer, bottomSpacer, dotNetRef, scrollAncestor } = createVirtualizedElements('auto');
         scrollAncestor.style.maxHeight = '864px';
