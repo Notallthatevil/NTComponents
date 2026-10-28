@@ -1,0 +1,65 @@
+@page "/popout-tab"
+@rendermode InteractiveAuto
+@using NTComponents
+
+<h1>NTPopoutTab test</h1>
+
+<p data-testid="popout-status">Popped out: @PoppedOutLabels</p>
+<p>Message: <output data-testid="popout-message">@_message</output></p>
+<button type="button" @onclick="PopOutAll">Pop out all</button>
+<button type="button" @onclick="ReturnAll">Return all</button>
+
+<NTTabView Name="popout-tab-demo" AriaLabel="NTPopoutTab demo">
+    @for (var index = 0; index < Labels.Length; index++) {
+        var tabIndex = index;
+        <NTPopoutTab @key="tabIndex"
+                     Label="@Labels[tabIndex]"
+                     Value="@Labels[tabIndex].ToLowerInvariant()"
+                     @bind-PoppedOut="_poppedOut[tabIndex]"
+                     PopoutButtonPlacement="@PlacementFor(tabIndex)"
+                     HeaderContextMenu="@(tabIndex == 2 ? HelloMenu : null)">
+            <p>
+                <button type="button" @onclick="() => _counts[tabIndex]++">Count @_counts[tabIndex]</button>
+            </p>
+            <p>
+                <label>
+                    @Labels[tabIndex] text
+                    <input type="text" @bind="_texts[tabIndex]" />
+                </label>
+            </p>
+        </NTPopoutTab>
+    }
+</NTTabView>
+
+@if (RendererInfo.IsInteractive) {
+    <output data-testid="interactive-renderer">@RendererInfo.Name</output>
+}
+
+@code {
+    private static readonly string[] Labels = ["One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight"];
+    private readonly bool[] _poppedOut = new bool[8];
+    private readonly int[] _counts = new int[8];
+    private readonly string[] _texts = new string[8];
+    private string _message = "No message yet";
+
+    private string PoppedOutLabels {
+        get {
+            var labels = Labels.Where((_, index) => _poppedOut[index]).ToArray();
+            return labels.Length == 0 ? "none" : string.Join(", ", labels);
+        }
+    }
+
+    private RenderFragment HelloMenu => @<NTMenuButtonItem Label="Say hello" OnClickCallback="@(() => SayHello())" />;
+
+    private static NTPopoutTabButtonPlacement PlacementFor(int index) => index switch {
+        1 => NTPopoutTabButtonPlacement.BottomStart,
+        3 => NTPopoutTabButtonPlacement.None,
+        _ => NTPopoutTabButtonPlacement.TopEnd
+    };
+
+    private void PopOutAll() => Array.Fill(_poppedOut, true);
+
+    private void ReturnAll() => Array.Fill(_poppedOut, false);
+
+    private void SayHello() => _message = "Hello from tab Three";
+}

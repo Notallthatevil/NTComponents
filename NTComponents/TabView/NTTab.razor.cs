@@ -65,6 +65,14 @@ public partial class NTTab : INTBadgeable {
     public bool ShowBadge { get; set; }
 
     /// <summary>
+    ///     Gets or sets optional menu items, such as <see cref="NTMenuButtonItem" />, shown when the tab header receives a context-menu gesture (right click, long press,
+    ///     Shift+F10, or the context-menu key).
+    /// </summary>
+    /// <remarks>Context-menu invocation requires the browser module; the items run their callbacks only in interactive render modes.</remarks>
+    [Parameter]
+    public RenderFragment? HeaderContextMenu { get; set; }
+
+    /// <summary>
     ///     Gets or sets optional tooltip content for the tab header.
     /// </summary>
     [Parameter]
@@ -93,12 +101,24 @@ public partial class NTTab : INTBadgeable {
     public string? ElementName { get; set; }
 
     [CascadingParameter]
-    private NTTabView _context { get; set; } = default!;
+    private protected NTTabView _context { get; set; } = default!;
 
     // Same result as NTBadge.GetDescribedBy(null, ...), without building the badge id when no badge is shown.
     internal string? AriaDescribedBy => ShowBadge && ResolvedAriaLabel is not null ? BadgeId : null;
 
     internal string BadgeId => $"{ResolvedTabId}-badge";
+
+    /// <summary>
+    ///     Gets the menu content rendered by the tab header context menu.
+    /// </summary>
+    internal virtual RenderFragment? HeaderMenuContent => HeaderContextMenu;
+
+    /// <summary>
+    ///     Gets whether the tab is currently shown outside the tab view, which removes its header and excludes it from selection while keeping its order.
+    /// </summary>
+    internal virtual bool IsDetached => false;
+
+    internal bool IsSelectable => !Disabled && !IsDetached;
 
     internal bool IsInitiallySelected => _context.IsInitiallySelected(this);
 
@@ -140,7 +160,7 @@ public partial class NTTab : INTBadgeable {
         base.OnParametersSet();
         // Icon factories return mutable instances; compare their rendered values, not their identity.
         var iconMetadata = Icon is { } icon ? new IconMetadata(icon.Icon, icon.ElementClass, icon.ElementStyle, icon.ElementId, icon.ElementTitle, icon.Tooltip is not null) : (IconMetadata?)null;
-        var headerMetadata = new HeaderMetadata(Disabled, AccessibilityLabel, AriaLabel, HeaderTooltip is not null, iconMetadata, Label, Value, ElementName, ElementId, ShowBadge, BadgeContent, BadgeAriaLabel);
+        var headerMetadata = new HeaderMetadata(Disabled, AccessibilityLabel, AriaLabel, HeaderTooltip is not null, HeaderContextMenu is not null, IsDetached, iconMetadata, Label, Value, ElementName, ElementId, ShowBadge, BadgeContent, BadgeAriaLabel);
         var headerMetadataChanged = _headerMetadata is { } previousHeaderMetadata && previousHeaderMetadata != headerMetadata;
         _headerMetadata = headerMetadata;
         _context?.SetTabSequence(this, _context.GetNextRenderSequence(), headerMetadataChanged);
@@ -169,5 +189,5 @@ public partial class NTTab : INTBadgeable {
 
     private readonly record struct IconMetadata(string Icon, string? Class, string? Style, string? Id, string? Title, bool HasTooltip);
 
-    private readonly record struct HeaderMetadata(bool Disabled, string? AccessibilityLabel, string? AriaLabel, bool HasHeaderTooltip, IconMetadata? Icon, string Label, string? Value, string? ElementName, string? ElementId, bool ShowBadge, string? BadgeContent, string? BadgeAriaLabel);
+    private readonly record struct HeaderMetadata(bool Disabled, string? AccessibilityLabel, string? AriaLabel, bool HasHeaderTooltip, bool HasHeaderContextMenu, bool IsDetached, IconMetadata? Icon, string Label, string? Value, string? ElementName, string? ElementId, bool ShowBadge, string? BadgeContent, string? BadgeAriaLabel);
 }

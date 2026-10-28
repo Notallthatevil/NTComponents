@@ -1,0 +1,26 @@
+@namespace NTComponents
+@using NTComponents.Core
+@inherits NTTab
+
+@* NTWindow keeps ChildContent at one render-tree position whether docked or floating, so popping out does not recreate the content's components. *@
+<NTWindow @attributes="WindowAttributes"
+          ElementId="@ResolvedPanelId"
+          ElementLang="@ElementLang"
+          ElementTitle="@ElementTitle"
+          Title="@Label"
+          Open="true"
+          OpenChanged="HandleWindowOpenChanged"
+          Floating="@PoppedOut"
+          @bind-State="_windowState"
+          DockPosition="@WindowDockPosition">
+    <div class="nt-popout-tab-body">
+        @if (ShowPopoutButton) {
+            <span class="@PopoutButtonClass">
+                <NTIconButton Icon="MaterialIcon.OpenInNew" AriaLabel="@ResolvedPopoutButtonAriaLabel" OnClickCallback="PopOutAsync">
+                    <Tooltip>@ResolvedPopoutButtonAriaLabel</Tooltip>
+                </NTIconButton>
+            </span>
+        }
+        @ChildContent
+    </div>
+</NTWindow>

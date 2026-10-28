@@ -300,10 +300,9 @@ describe('NTTabView page-script module', () => {
     const overview = tabView.querySelector('[data-nt-tab-value="overview"]');
     const specs = tabView.querySelector('[data-nt-tab-value="specs"]');
 
-    overview.setAttribute('aria-selected', 'true');
-    overview.tabIndex = 0;
-    specs.setAttribute('aria-selected', 'false');
-    specs.tabIndex = -1;
+    overview.click();
+    // A re-render that reapplies the server's initial selection must not override the user's choice.
+    specs.setAttribute('aria-selected', 'true');
 
     onUpdate(tabView);
 
@@ -487,5 +486,64 @@ describe('NTTabView page-script module', () => {
 
     expect(state.resizeObserver.disconnect).toHaveBeenCalled();
     expect(tabView.__ntTabViewState).toBeUndefined();
+  });
+
+  function addHistoryTab(tabView) {
+    tabView.querySelector('[data-nt-tab-indicator]').insertAdjacentHTML('beforebegin', `
+      <button type="button" class="nt-tab-view-tab" id="tab-history" role="tab" aria-selected="false" aria-controls="panel-history" tabindex="-1" data-nt-tab-button="true" data-nt-tab-value="history">
+        <span class="nt-tab-view-content nt-tab-view-indicator-target">History</span>
+      </button>`);
+    tabView.querySelector('.nt-tab-view-panels').insertAdjacentHTML('beforeend',
+      '<section class="nt-tab-view-panel" id="panel-history" role="tabpanel" data-nt-tab-panel="true" data-nt-tab-value="history" hidden>History content</section>');
+  }
+
+  test('a detached tab keeps the user selection when the re-render marks another tab selected', async () => {
+    const tabView = createTabView();
+    addHistoryTab(tabView);
+    onLoad(tabView);
+    tabView.querySelector('#tab-specs').click();
+
+    // A popped-out overview tab loses its header while the re-render marks history as the initial selection.
+    tabView.querySelector('#tab-overview').remove();
+    tabView.querySelector('#tab-history').setAttribute('aria-selected', 'true');
+    tabView.querySelector('#panel-history').hidden = false;
+    await new Promise(resolve => queueMicrotask(resolve));
+
+    expect(tabView.querySelector('#tab-specs').getAttribute('aria-selected')).toBe('true');
+    expect(tabView.querySelector('#tab-history').getAttribute('aria-selected')).toBe('false');
+    expect(tabView.querySelector('#panel-specs').hidden).toBe(false);
+    expect(tabView.querySelector('#panel-history').hidden).toBe(true);
+  });
+
+  test('detaching the selected tab selects its neighbour and releases the detached element from hidden', async () => {
+    const tabView = createTabView();
+    addHistoryTab(tabView);
+    onLoad(tabView);
+    tabView.querySelector('#tab-specs').click();
+    const detached = tabView.querySelector('#panel-specs');
+
+    tabView.querySelector('#tab-specs').remove();
+    detached.removeAttribute('data-nt-tab-panel');
+    detached.setAttribute('data-nt-tab-detached', 'true');
+    detached.hidden = true;
+    await new Promise(resolve => queueMicrotask(resolve));
+
+    expect(tabView.querySelector('#tab-history').getAttribute('aria-selected')).toBe('true');
+    expect(tabView.querySelector('#panel-history').hidden).toBe(false);
+    expect(tabView.querySelector('#panel-overview').hidden).toBe(true);
+    expect(detached.hidden).toBe(false);
+  });
+
+  test('detaching the last selected tab selects the previous tab', async () => {
+    const tabView = createTabView();
+    addHistoryTab(tabView);
+    onLoad(tabView);
+    tabView.querySelector('#tab-history').click();
+
+    tabView.querySelector('#tab-history').remove();
+    await new Promise(resolve => queueMicrotask(resolve));
+
+    expect(tabView.querySelector('#tab-specs').getAttribute('aria-selected')).toBe('true');
+    expect(tabView.querySelector('#panel-specs').hidden).toBe(false);
   });
 });

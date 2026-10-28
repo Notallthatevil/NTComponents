@@ -23,7 +23,7 @@ internal static class NestingRules {
         isEnabledByDefault: true,
         helpLinkUri: RuleCategory.HelpUri + "#ntc1088");
 
-    private static readonly string[] MenuHosts = ["NTComponents.NTMenu", "NTComponents.NTContextMenu", "NTComponents.NTSplitButton", "NTComponents.NTMenuSubMenuItem", "NTComponents.NTChip"];
+    private static readonly string[] MenuHosts = ["NTComponents.NTMenu", "NTComponents.NTContextMenu", "NTComponents.NTSplitButton", "NTComponents.NTMenuSubMenuItem", "NTComponents.NTChip", "NTComponents.NTTab"];
 
     public static void Register(ComponentRuleRegistry registry) {
         registry.Describe(MissingParent, NestedForm);
@@ -37,7 +37,7 @@ internal static class NestingRules {
         RequireParent(registry, "NTComponents.Wizard.NTWizardStepBase", "NTWizard", sameTypeArgument: false, "NTComponents.NTWizard");
         RequireParent(registry, "NTComponents.NTAutocompleteOption", "NTAutocomplete", sameTypeArgument: false, "NTComponents.NTAutocomplete");
         foreach (var item in new[] { "NTMenuButtonItem", "NTMenuAnchorItem", "NTMenuDividerItem", "NTMenuLabelItem", "NTMenuSubMenuItem" }) {
-            RequireParent(registry, "NTComponents." + item, "NTMenu, NTContextMenu, NTSplitButton, NTMenuSubMenuItem, or NTChip menu content", sameTypeArgument: false, MenuHosts);
+            RequireParent(registry, "NTComponents." + item, "NTMenu, NTContextMenu, NTSplitButton, NTMenuSubMenuItem, NTChip menu content, or an NTTab HeaderContextMenu", sameTypeArgument: false, MenuHosts);
         }
 
         registry.Uses("NTComponents.NTWizardFormStep");

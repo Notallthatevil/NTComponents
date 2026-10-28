@@ -30,6 +30,7 @@ public sealed partial class DocumentationCatalog {
         ["NTNavigationRailItem"] = "NTNavigationRail",
         ["NTNavigationRailSectionHeader"] = "NTNavigationRail",
         ["NTPageScript"] = "NTHeadDependencies",
+        ["NTPopoutTab"] = "NTTabView",
         ["NTPropertyColumn"] = "NTDataGrid",
         ["NTTab"] = "NTTabView",
         ["NTTemplateColumn"] = "NTDataGrid",

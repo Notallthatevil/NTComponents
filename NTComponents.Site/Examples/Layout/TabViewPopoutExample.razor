@@ -1,0 +1,20 @@
+<NTTabView class="docs-fill" Id="docs-tabs-popout" AriaLabel="Project views" UpdateQueryString="false">
+    <NTPopoutTab Label="Overview">
+        <p>Project health is on track. Two milestones are due this month.</p>
+    </NTPopoutTab>
+    <NTPopoutTab Label="Board">
+        <HeaderContextMenu>
+            <NTMenuButtonItem Label="Mark as read" OnClickCallback="@(() => _read = true)" />
+        </HeaderContextMenu>
+        <ChildContent>
+            <p>Cards: 14 open, 6 in review. @(_read ? "Marked as read." : "Unread updates on the board.")</p>
+        </ChildContent>
+    </NTPopoutTab>
+    <NTPopoutTab Label="Activity">
+        <p>Last update from Priya yesterday at 4:20 PM.</p>
+    </NTPopoutTab>
+</NTTabView>
+
+@code {
+    private bool _read;
+}

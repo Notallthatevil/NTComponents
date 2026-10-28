@@ -224,6 +224,13 @@ public partial class NTTabView {
         }
     }
 
+    // Detached tabs stay registered, so their declaration order is kept and they return to the same position.
+    internal void NotifyTabDetachedChanged() {
+        if (_initialRegistrationComplete) {
+            _ = InvokeAsync(StateHasChanged);
+        }
+    }
+
     internal bool IsInitiallySelected(NTTab tab) => ReferenceEquals(tab, GetInitiallySelectedTab());
 
     internal Task WaitForInitialRegistrationAsync() => _registrationCompletionTask ??= InvokeAsync(CompleteInitialRegistrationWhenStableAsync);
@@ -231,10 +238,10 @@ public partial class NTTabView {
     // Resolved once per render pass so every tab header and panel shares one query-string parse; any structural change invalidates it.
     internal NTTab? GetInitiallySelectedTab() {
         if (!_selectedTabResolved) {
-            var firstEnabledTab = OrderedTabs.FirstOrDefault(candidate => !candidate.Disabled);
+            var firstEnabledTab = OrderedTabs.FirstOrDefault(candidate => candidate.IsSelectable);
             var selectedValue = firstEnabledTab is null ? null : GetInitialSelectedValue();
             _selectedTab = !string.IsNullOrWhiteSpace(selectedValue)
-                ? OrderedTabs.FirstOrDefault(tab => !tab.Disabled && string.Equals(tab.ResolvedValue, selectedValue, StringComparison.OrdinalIgnoreCase)) ?? firstEnabledTab
+                ? OrderedTabs.FirstOrDefault(tab => tab.IsSelectable && string.Equals(tab.ResolvedValue, selectedValue, StringComparison.OrdinalIgnoreCase)) ?? firstEnabledTab
                 : firstEnabledTab;
             _selectedTabResolved = true;
         }

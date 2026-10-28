@@ -1,0 +1,24 @@
+.nt-popout-tab-body {
+    position: relative;
+}
+
+// Top-end is the default corner; the modifier classes move it to the other corners.
+.nt-popout-tab-action {
+    position: absolute;
+    z-index: 1;
+    inset-block-start: 0;
+    inset-inline-end: 0;
+
+    &.nt-popout-tab-action-top-start {
+        inset-inline: 0 auto;
+    }
+
+    &.nt-popout-tab-action-bottom-end {
+        inset-block: auto 0;
+    }
+
+    &.nt-popout-tab-action-bottom-start {
+        inset-block: auto 0;
+        inset-inline: 0 auto;
+    }
+}

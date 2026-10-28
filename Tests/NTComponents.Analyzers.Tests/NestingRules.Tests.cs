@@ -109,6 +109,30 @@ public sealed class NestingRules_Tests {
     }
 
     [Fact]
+    public async Task PopoutTab_Needs_A_TabView_And_Its_Header_Menu_Accepts_Menu_Items() {
+        var diagnostics = await AnalyzerHarness.AnalyzeAsync(Page("""
+            builder.OpenComponent<NTTabView>(0);
+            builder.AddAttribute(1, "ChildContent", (RenderFragment)(tabs => {
+                tabs.OpenComponent<NTPopoutTab>(2);
+                tabs.AddComponentParameter(3, "Label", "Inside");
+                tabs.AddAttribute(4, "HeaderContextMenu", (RenderFragment)(items => {
+                    items.OpenComponent<NTMenuButtonItem>(5);
+                    items.AddComponentParameter(6, "Label", "Rename");
+                    items.CloseComponent();
+                }));
+                tabs.CloseComponent();
+            }));
+            builder.CloseComponent();
+            builder.OpenComponent<NTPopoutTab>(7);
+            builder.AddComponentParameter(8, "Label", "Orphan");
+            builder.CloseComponent();
+            """));
+
+        var diagnostic = Assert.Single(diagnostics);
+        Assert.Equal("NTPopoutTab must be rendered inside NTTabView", diagnostic.GetMessage());
+    }
+
+    [Fact]
     public async Task Derived_Wizard_Steps_Need_A_Wizard() {
         var diagnostics = await AnalyzerHarness.AnalyzeAsync(Page("""
             builder.OpenComponent<NTWizardStep>(0);

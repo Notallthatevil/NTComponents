@@ -10,6 +10,8 @@ interface TabViewState {
     onScroll?: () => void;
     onTabListClick?: (event: MouseEvent) => void;
     resizeObserver?: ResizeObserver;
+    selectedIndex?: number;
+    selectedValue?: string;
     tabList?: HTMLElement | null;
     updateFrame?: number;
 }
@@ -148,7 +150,14 @@ function selectTab(tabView: NTTabViewElement, selectedTab: HTMLButtonElement, up
         return;
     }
 
-    getTabs(tabView).forEach(tab => {
+    const tabs = getTabs(tabView);
+    const state = tabView.__ntTabViewState;
+    if (state) {
+        state.selectedIndex = tabs.indexOf(selectedTab);
+        state.selectedValue = selectedTab.dataset.ntTabValue;
+    }
+
+    tabs.forEach(tab => {
         const selected = tab === selectedTab;
         tab.classList.toggle('nt-tab-view-tab-selected', selected);
         tab.setAttribute('aria-selected', selected ? 'true' : 'false');
@@ -184,6 +193,29 @@ function selectInitialTab(tabView: NTTabViewElement, useQueryString: boolean): v
     const queryTab = findTabByValue(tabView, queryValue);
     const selectedTab = queryTab ?? getSelectedTab(tabView);
 
+    if (selectedTab) {
+        selectTab(tabView, selectedTab, false, false);
+    } else {
+        scheduleIndicatorUpdate(tabView);
+    }
+}
+
+// Tabs can detach (pop out) and return without a page load. Keep the user's selection, or its neighbour when the selected tab left,
+// rather than the server-rendered initial selection, and release detached panels from the hidden state this script applied.
+function restoreSelection(tabView: NTTabViewElement, state: TabViewState): void {
+    tabView.querySelectorAll<HTMLElement>(':scope > .nt-tab-view-panels > [data-nt-tab-detached="true"]').forEach(element => {
+        element.hidden = false;
+    });
+
+    if (state.selectedValue === undefined) {
+        selectInitialTab(tabView, false);
+        return;
+    }
+
+    const enabledTabs = getEnabledTabs(tabView);
+    const tabs = getTabs(tabView);
+    const neighbour = tabs[Math.min(state.selectedIndex ?? 0, tabs.length - 1)];
+    const selectedTab = findTabByValue(tabView, state.selectedValue) ?? (enabledTabs.includes(neighbour) ? neighbour : enabledTabs[0]);
     if (selectedTab) {
         selectTab(tabView, selectedTab, false, false);
     } else {
@@ -322,7 +354,7 @@ function observeTabViewMutations(tabView: NTTabViewElement, state: TabViewState)
     state.mutationObserver = new MutationObserver(() => {
         syncTabList(tabView, state);
         registerTabs(tabView, state);
-        selectInitialTab(tabView, false);
+        restoreSelection(tabView, state);
     });
     state.mutationObserver.observe(tabView, { childList: true });
 
@@ -373,7 +405,7 @@ function updateTabView(tabView: NTTabViewElement): void {
     if (existingState) {
         syncTabList(tabView, existingState);
         registerTabs(tabView, existingState);
-        selectInitialTab(tabView, false);
+        restoreSelection(tabView, existingState);
         return;
     }
 

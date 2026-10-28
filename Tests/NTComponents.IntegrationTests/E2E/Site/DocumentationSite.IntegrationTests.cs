@@ -18,7 +18,7 @@ namespace NTComponents.IntegrationTests.Site;
 ///     Browser-level coverage for every NTComponents.Site component page and its examples.
 /// </summary>
 public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
-    private const int ExpectedComponentTypeCount = 94;
+    private const int ExpectedComponentTypeCount = 95;
     private const int ExpectedRootRouteCount = 68;
     private const int ExpectedChartRootRouteCount = 11;
     // Chart components live in their own assembly; these are documented on the NTChart and NTRadarSeries pages.
@@ -45,6 +45,7 @@ public sealed class DocumentationSite_IntegrationTests : IAsyncLifetime {
         "NTNavigationRailItem",
         "NTNavigationRailSectionHeader",
         "NTPageScript",
+        "NTPopoutTab",
         "NTPropertyColumn",
         "NTTab",
         "NTTemplateColumn",

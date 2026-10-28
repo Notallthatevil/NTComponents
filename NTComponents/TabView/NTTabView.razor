@@ -24,12 +24,18 @@
                 <div class="nt-tab-view-tablist" role="tablist" aria-label="@AriaLabel">
                     @{
                         var selectedTab = GetInitiallySelectedTab();
+                        var index = 0;
                     }
-                    @for (var index = 0; index < OrderedTabs.Count; index++) {
-                        var tab = OrderedTabs[index];
+                    @foreach (var tab in OrderedTabs) {
+                        if (tab.IsDetached) {
+                            continue;
+                        }
+
                         var selected = ReferenceEquals(tab, selectedTab);
 
-                        <button type="button"
+                        @* Keyed so script-applied selection state stays with its tab when tabs detach or return. *@
+                        <button @key="tab"
+                                type="button"
                                 id="@tab.ResolvedTabId"
                                 class="@BuildTabClass(tab, selected)"
                                 role="tab"
@@ -42,7 +48,7 @@
                                 tabindex="@(selected && !tab.Disabled ? "0" : "-1")"
                                 data-nt-tab-button="true"
                                 data-nt-tab-value="@tab.ResolvedValue"
-                                data-nt-tab-index="@index">
+                                data-nt-tab-index="@(index++)">
                             <span class="nt-tab-view-state-layer" aria-hidden="true"></span>
                             @NTRipple.Render()
                             <span class="nt-tab-view-content nt-tab-view-indicator-target@(tab.Icon is null ? " nt-tab-view-text-only" : null)">
@@ -66,6 +72,11 @@
                         <span class="nt-tab-view-active-indicator-shape"></span>
                     </span>
                 </div>
+                @foreach (var tab in OrderedTabs) {
+                    if (!tab.IsDetached && tab.HeaderMenuContent is { } menuContent) {
+                        <NTContextMenu @key="tab" TargetElementId="@tab.ResolvedTabId" AriaLabel="@($"{tab.Label} options")" MenuContent="@menuContent" />
+                    }
+                }
                 <span data-nt-tab-view-header-complete hidden></span>
             </div>
         }
