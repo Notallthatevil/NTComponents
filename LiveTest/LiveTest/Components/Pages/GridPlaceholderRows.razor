@@ -11,6 +11,10 @@
     <NTPropertyColumn TItem="DataGridItem" TValue="string" Title="Customer" Property="item => item.Customer" />
 </NTDataGrid>
 
+@if (RendererInfo.IsInteractive) {
+    <output data-testid="interactive-renderer">@RendererInfo.Name</output>
+}
+
 @code {
     private static readonly DataGridItem[] Items = Enumerable.Range(1, 1_000).Select(index => new DataGridItem(index, $"Customer {index:00000}")).ToArray();
     private static readonly RenderFragment<DataGridItem> DetailTemplate = item => builder => builder.AddContent(0, $"Details for {item.Customer}");

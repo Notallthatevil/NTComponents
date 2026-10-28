@@ -63,6 +63,9 @@ public class NTDataGridPlaceholderRows_IntegrationTests : IAsyncLifetime {
     private async Task OpenAsync(IPage page, string density, bool details, double? itemSize = null) {
         var itemSizeQuery = itemSize is { } size ? $"&itemSize={size.ToString(System.Globalization.CultureInfo.InvariantCulture)}" : string.Empty;
         await page.GotoAsync($"{AppBaseUrl}/gridPlaceholderRows?density={density}&details={(details ? "true" : "false")}{itemSizeQuery}", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
+        // Measure only after the circuit is interactive and the icon font has loaded; prerendered rows can have other heights.
+        await page.GetByTestId("interactive-renderer").WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Attached, Timeout = 30000 });
+        await page.EvaluateAsync("() => document.fonts.ready");
         await WaitForRowsAsync(page, "tbody tr.nt-data-grid-row:not(.nt-data-grid-row-placeholder) .nt-data-grid-cell-content");
     }
 
