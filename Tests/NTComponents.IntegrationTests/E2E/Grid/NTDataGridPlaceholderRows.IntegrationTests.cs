@@ -52,6 +52,11 @@ public class NTDataGridPlaceholderRows_IntegrationTests : IAsyncLifetime {
         await OpenAsync(_page, density, details: true, itemSize: dataRowHeight);
         await _page.Locator(".nt-data-grid-scroll").EvaluateAsync("element => element.scrollTop = 4000");
         await WaitForRowsAsync(_page, "tbody tr.nt-data-grid-row-placeholder");
+        // Placeholders start at the density row height until the virtualizer script applies the configured item size.
+        await _page.WaitForFunctionAsync(
+            "() => Array.from(document.querySelectorAll('tbody tr.nt-data-grid-row-placeholder')).every(row => row.style.getPropertyValue('--nt-data-grid-placeholder-row-height') !== '')",
+            null,
+            new PageWaitForFunctionOptions { Timeout = 10000 });
 
         dataRowHeight.Should().BeGreaterThan(0);
         (await GetRowHeightsAsync(_page)).Placeholder.Should().NotBeEmpty().And.AllSatisfy(height => height.Should().BeApproximately(dataRowHeight, 0.01));
