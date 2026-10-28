@@ -8,7 +8,7 @@ namespace NTComponents;
 ///     Material 3 context menu wrapper that opens an <see cref="NTMenu" /> from pointer, keyboard, or long-press invocation.
 /// </summary>
 /// <remarks>
-///     Use <see cref="TargetContent" /> for the interactive region and <see cref="MenuContent" /> for standard <see cref="NTMenuButtonItem" />, <see cref="NTMenuAnchorItem" />,
+///     Use <see cref="TargetContent" /> for the interactive region (or <see cref="TargetElementId" /> to attach to an existing element) and <see cref="MenuContent" /> for standard <see cref="NTMenuButtonItem" />, <see cref="NTMenuAnchorItem" />,
 ///     <see cref="NTMenuLabelItem" />, <see cref="NTMenuDividerItem" />, and <see cref="NTMenuSubMenuItem" /> content.
 /// </remarks>
 [NTDocumentation(
@@ -106,10 +106,16 @@ public partial class NTContextMenu {
     public NTColor? SelectedTextColor { get; set; }
 
     /// <summary>
-    ///     Gets or sets the target content that receives context menu gestures.
+    ///     Gets or sets the id of an existing element elsewhere in the DOM that receives context menu gestures. When set,
+    ///     <see cref="TargetContent" /> is not rendered. The element is looked up by id each time the component updates.
     /// </summary>
     [Parameter]
-    [EditorRequired]
+    public string? TargetElementId { get; set; }
+
+    /// <summary>
+    ///     Gets or sets the target content that receives context menu gestures. Provide either this or <see cref="TargetElementId" />.
+    /// </summary>
+    [Parameter]
     public RenderFragment? TargetContent { get; set; }
 
     /// <summary>

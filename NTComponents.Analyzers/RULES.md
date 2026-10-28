@@ -112,6 +112,8 @@ Each diagnostic links here from its help link. Rules that predict a runtime exce
 | [NTC1108](#ntc1108) | Accessibility | Warning | NTFormSectionView with UseFieldset needs a Heading for the legend. |
 | [NTC1109](#ntc1109) | Usage | Warning | A raw attribute the component sets itself never reaches the DOM. |
 | [NTC1110](#ntc1110) | Accessibility | Warning | NTProgress and NTLoader need a non-empty AriaLabel or AriaLabelledBy to have an accessible name. |
+| [NTC1111](#ntc1111) | Usage | Warning | NTContextMenu needs either TargetContent or TargetElementId. |
+| [NTC1112](#ntc1112) | Usage | Warning | NTContextMenu TargetContent and TargetElementId are both set. |
 
 ## NTC1001
 
@@ -761,3 +763,14 @@ NTProgress and NTLoader need a non-empty AriaLabel or AriaLabelledBy to have an 
 
 Category: Accessibility. Default severity: Warning.
 
+## NTC1111
+
+NTContextMenu needs either TargetContent or TargetElementId.
+
+Category: Usage. Default severity: Warning.
+
+## NTC1112
+
+NTContextMenu TargetContent and TargetElementId are both set.
+
+Category: Usage. Default severity: Warning.

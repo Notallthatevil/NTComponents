@@ -111,3 +111,5 @@ NTC1105 | Usage | Warning | NTSelect does not support the multiple attribute.
 NTC1106 | Usage | Warning | Component does not support this type argument.
 NTC1107 | Accessibility | Info | Form field has no accessible name.
 NTC1108 | Accessibility | Warning | NTFormSectionView with UseFieldset needs a Heading for the legend.
+NTC1111 | Usage | Warning | NTContextMenu needs either TargetContent or TargetElementId.
+NTC1112 | Usage | Warning | NTContextMenu TargetContent and TargetElementId are both set.

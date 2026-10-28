@@ -308,4 +308,49 @@ describe('NTContextMenu custom element', () => {
       expect(childMenu.openAt).toHaveBeenCalledWith(42, 76, childTarget);
       expect(parentMenu.openAt).not.toHaveBeenCalled();
    });
+
+   describe('external target', () => {
+      function createExternal(targetId = 'external-a') {
+         const { contextMenu, menu } = createContextMenu();
+         contextMenu.querySelector('.nt-context-menu-target').remove();
+         const targets = ['external-a', 'external-b'].map(id => {
+            const element = document.createElement('button');
+            element.id = id;
+            element.getBoundingClientRect = jest.fn(() => rect({ bottom: 50, height: 20, left: 10, right: 60, top: 30, width: 50 }));
+            document.body.append(element);
+            return element;
+         });
+         contextMenu.dataset.targetId = targetId;
+         return { contextMenu, menu, a: targets[0], b: targets[1] };
+      }
+
+      test('opens on contextmenu and Shift+F10 from an element outside the component', () => {
+         const { menu, a } = createExternal();
+
+         a.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 15, clientY: 35 }));
+         expect(menu.openAt).toHaveBeenCalledWith(15, 35, a);
+
+         a.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'F10', shiftKey: true }));
+         expect(menu.openAt).toHaveBeenLastCalledWith(10, 50, a);
+      });
+
+      test('changing data-target-id moves the listeners to the new element', () => {
+         const { contextMenu, menu, a, b } = createExternal();
+
+         contextMenu.dataset.targetId = 'external-b';
+         a.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+         expect(menu.openAt).not.toHaveBeenCalled();
+
+         b.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+         expect(menu.openAt).toHaveBeenCalledTimes(1);
+      });
+
+      test('a missing target element results in no target and does not throw', () => {
+         const { contextMenu, menu, a } = createExternal();
+
+         expect(() => { contextMenu.dataset.targetId = 'missing'; }).not.toThrow();
+         a.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+         expect(menu.openAt).not.toHaveBeenCalled();
+      });
+   });
 });

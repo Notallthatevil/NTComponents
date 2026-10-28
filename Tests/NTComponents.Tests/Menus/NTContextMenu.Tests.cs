@@ -21,7 +21,6 @@ public class NTContextMenu_Tests : BunitContext {
     [Theory]
     [InlineData(nameof(NTContextMenu.AriaLabel))]
     [InlineData(nameof(NTContextMenu.MenuContent))]
-    [InlineData(nameof(NTContextMenu.TargetContent))]
     public void Required_Parameters_Have_EditorRequired_Attribute(string propertyName) {
         var property = typeof(NTContextMenu).GetProperty(propertyName, BindingFlags.Instance | BindingFlags.Public);
 
@@ -46,6 +45,32 @@ public class NTContextMenu_Tests : BunitContext {
             }));
 
         cut.Find("nt-context-menu > .nt-context-menu-target > #row-target").TextContent.Should().Be("Invoice 123");
+    }
+
+    [Fact]
+    public void Render_With_TargetElementId_Omits_Target_Wrapper_And_Renders_Data_Attribute() {
+        var cut = Render<NTContextMenu>(parameters => parameters
+            .Add(x => x.AriaLabel, "Tab actions")
+            .Add(x => x.TargetElementId, "tab-1")
+            .Add(x => x.MenuContent, builder => {
+                builder.OpenComponent<NTMenuButtonItem>(0);
+                builder.AddAttribute(1, nameof(NTMenuButtonItem.Label), "Close");
+                builder.CloseComponent();
+            }));
+
+        cut.FindAll(".nt-context-menu-target").Should().BeEmpty();
+        cut.Find("nt-context-menu").GetAttribute("data-target-id").Should().Be("tab-1");
+        cut.Find("nt-context-menu > nt-menu").Should().NotBeNull();
+    }
+
+    [Fact]
+    public void Render_Without_TargetElementId_Has_No_Data_Target_Id() {
+        var cut = Render<NTContextMenu>(parameters => parameters
+            .Add(x => x.AriaLabel, "Row actions")
+            .Add(x => x.TargetContent, builder => builder.AddContent(0, "Target")));
+
+        cut.Find("nt-context-menu").HasAttribute("data-target-id").Should().BeFalse();
+        cut.FindAll("nt-context-menu > .nt-context-menu-target").Should().HaveCount(1);
     }
 
     [Fact]

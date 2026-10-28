@@ -138,11 +138,11 @@ public sealed class NTMenuRules_Tests {
         Assert.Empty(diagnostics);
     }
 
-    private static string ContextMenu(string target, string menu, string extra = "") => $$"""
+    private static string ContextMenu(string? target, string menu, string extra = "") => $$"""
         builder.OpenComponent<NTContextMenu>(0);
         builder.AddComponentParameter(1, "AriaLabel", "Actions");
         {{extra}}
-        builder.AddComponentParameter(3, "TargetContent", (RenderFragment)(t => { {{target}} }));
+        {{(target is null ? string.Empty : $"builder.AddComponentParameter(3, \"TargetContent\", (RenderFragment)(t => {{ {target} }}));")}}
         {{menu}}
         builder.CloseComponent();
         """;
@@ -171,5 +171,17 @@ public sealed class NTMenuRules_Tests {
 
         Assert.Empty(await AnalyzerHarness.AnalyzeBuildAsync(inherit));
         Assert.Empty(await AnalyzerHarness.AnalyzeBuildAsync(unknown));
+    }
+
+    [Fact]
+    public async Task ContextMenu_Reports_Both_Or_Neither_Target() {
+        const string target = "t.OpenComponent<NTButton>(0); t.AddComponentParameter(1, \"Label\", \"Open\"); t.CloseComponent();";
+        const string menu = "builder.AddComponentParameter(4, \"MenuContent\", (RenderFragment)(b => { " + Button + " }));";
+        const string id = "builder.AddComponentParameter(2, \"TargetElementId\", \"tab-1\");";
+
+        Assert.Empty(await AnalyzerHarness.AnalyzeBuildAsync(ContextMenu(target, menu)));
+        Assert.Empty(await AnalyzerHarness.AnalyzeBuildAsync(ContextMenu(null, menu, id)));
+        Assert.Equal(["NTC1111"], (await AnalyzerHarness.AnalyzeBuildAsync(ContextMenu(null, menu))).Ids());
+        Assert.Equal(["NTC1112"], (await AnalyzerHarness.AnalyzeBuildAsync(ContextMenu(target, menu, id))).Ids());
     }
 }

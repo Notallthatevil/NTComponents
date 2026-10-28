@@ -24,6 +24,8 @@ export class NTContextMenu extends HTMLElement {
     private suppressNativeUntil = 0;
     private target: HTMLElement | null = null;
 
+    public static readonly observedAttributes = ['data-target-id'];
+
     private readonly onDocumentClick = (event: MouseEvent): void => {
         if (event.target instanceof Node && !this.menu?.contains(event.target)) {
             this.menu?.hidePopover();
@@ -82,6 +84,12 @@ export class NTContextMenu extends HTMLElement {
         this.update();
     }
 
+    public attributeChangedCallback(): void {
+        if (this.isConnected) {
+            this.update();
+        }
+    }
+
     public disconnectedCallback(): void {
         this.dispose();
     }
@@ -96,7 +104,10 @@ export class NTContextMenu extends HTMLElement {
     }
 
     public update(): void {
-        const target = this.querySelector<HTMLElement>(':scope > .nt-context-menu-target');
+        const targetId = this.dataset.targetId?.trim();
+        const target = targetId
+            ? document.getElementById(targetId)
+            : this.querySelector<HTMLElement>(':scope > .nt-context-menu-target');
         const menu = this.getMenu();
 
         if (target !== this.target) {

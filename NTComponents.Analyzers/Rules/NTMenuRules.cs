@@ -53,12 +53,31 @@ internal static class NTMenuRules {
         isEnabledByDefault: true,
         helpLinkUri: RuleCategory.HelpUri + "#ntc1051");
 
+    public static readonly DiagnosticDescriptor MissingContextMenuTarget = new(
+        "NTC1111",
+        "NTContextMenu needs a target",
+        "NTContextMenu requires either TargetContent or TargetElementId to receive context menu gestures",
+        RuleCategory.Usage,
+        DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        helpLinkUri: RuleCategory.HelpUri + "#ntc1111");
+
+    public static readonly DiagnosticDescriptor ConflictingContextMenuTarget = new(
+        "NTC1112",
+        "NTContextMenu target is ambiguous",
+        "NTContextMenu uses TargetElementId instead of TargetContent when both are set; provide only one",
+        RuleCategory.Usage,
+        DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        helpLinkUri: RuleCategory.HelpUri + "#ntc1112");
+
     public static void Register(ComponentRuleRegistry registry) {
-        registry.Describe(MissingAriaLabel, MissingActionableItem, EmptyItemLabel, EmptyItemHref, InvisibleColor);
+        registry.Describe(MissingAriaLabel, MissingActionableItem, EmptyItemLabel, EmptyItemHref, InvisibleColor, MissingContextMenuTarget, ConflictingContextMenuTarget);
         registry.Uses([.. ActionableItems, .. PassiveItems]);
         registry.On("NTComponents.NTMenu", context => AnalyzeMenu(context, "ChildContent", checkItems: true));
         // Inherited parent menu content can supply the actionable items, so only a context menu known not to inherit is checked.
         registry.On("NTComponents.NTContextMenu", context => AnalyzeMenu(context, "MenuContent", context.Frame.GetBool("InheritParentMenus") == false));
+        registry.On("NTComponents.NTContextMenu", AnalyzeContextMenuTarget);
         registry.On("NTComponents.NTMenuButtonItem", AnalyzeItemLabel);
         registry.On("NTComponents.NTMenuSubMenuItem", AnalyzeItemLabel);
         registry.On("NTComponents.NTMenuLabelItem", AnalyzeItemLabel);
@@ -103,6 +122,22 @@ internal static class NTMenuRules {
 
         if (checkItems) {
             RequireActionableItem(context, contentName, MissingActionableItem);
+        }
+    }
+
+    private static void AnalyzeContextMenuTarget(ComponentContext context) {
+        var frame = context.Frame;
+        if (frame.HasSplattedAttributes) {
+            return;
+        }
+
+        var hasContent = frame.HasNonNull("TargetContent");
+        var hasId = frame.HasNonNull("TargetElementId");
+        if (!hasContent && !hasId) {
+            context.Report(MissingContextMenuTarget, frame.Location);
+        }
+        else if (hasContent && hasId) {
+            context.Report(ConflictingContextMenuTarget, frame.LocationOf("TargetElementId"));
         }
     }
 

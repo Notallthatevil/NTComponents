@@ -11,11 +11,14 @@
                  data-disabled="@DisabledAttribute"
                  data-long-press-delay="@LongPressDelay"
                  data-menu-id="@MenuId"
+                 data-target-id="@TargetElementId"
                  @ref="Element">
     <CascadingValue Value="this" IsFixed="true">
-        <span class="nt-context-menu-target">
-            @TargetContent
-        </span>
+        @if (string.IsNullOrWhiteSpace(TargetElementId)) {
+            <span class="nt-context-menu-target">
+                @TargetContent
+            </span>
+        }
     </CascadingValue>
     <NTMenu ElementId="@MenuId"
             Popover="manual"
