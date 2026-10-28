@@ -4,55 +4,58 @@
 
 @if (Open) {
     <section @attributes="AdditionalAttributes"
+             role="@(Floating ? "dialog" : InlineAttribute("role"))"
+             aria-labelledby="@(Floating ? TitleId : InlineAttribute("aria-labelledby"))"
+             aria-modal="@(Floating ? "false" : null)"
+             tabindex="@(Floating ? "-1" : InlineAttribute("tabindex"))"
+             autofocus="@(Floating ? AutoFocus : null)"
              class="@ElementClass"
              style="@ElementStyle"
              id="@ElementId"
              lang="@ElementLang"
              title="@ElementTitle"
-             autofocus="@AutoFocus"
-             role="dialog"
-             aria-labelledby="@TitleId"
-             aria-modal="false"
-             tabindex="-1"
-             data-nt-window="true"
-             data-nt-window-dock-position="@DockPositionValue"
-             data-nt-window-draggable="@DraggableValue"
-             data-nt-window-state="@StateValue"
+             data-nt-window="@(Floating ? "true" : null)"
+             data-nt-window-dock-position="@(Floating ? DockPositionValue : null)"
+             data-nt-window-draggable="@(Floating ? DraggableValue : null)"
+             data-nt-window-state="@(Floating ? StateValue : null)"
              @ref="Element">
-        <header class="nt-window-header" data-nt-window-drag-handle="true">
-            <h2 class="nt-window-title" id="@TitleId">@Title</h2>
+        @if (Floating) {
+            <header class="nt-window-header" data-nt-window-drag-handle="true">
+                <h2 class="nt-window-title" id="@TitleId">@Title</h2>
 
-            <div class="nt-window-controls">
-                <button class="nt-window-control"
-                        type="button"
-                        data-nt-window-action="minimize"
-                        data-nt-window-aria-label="@MinimizeButtonAriaLabel"
-                        aria-label="@MinimizeAriaLabel"
-                        aria-controls="@ContentId"
-                        aria-expanded="@ContentExpanded"
-                        @onclick="ToggleMinimizedAsync">
-                    <span aria-hidden="true">@MinimizeIcon.Render()</span>
-                </button>
-                <button class="nt-window-control"
-                        type="button"
-                        data-nt-window-action="fullscreen"
-                        data-nt-window-aria-label="@FullscreenButtonAriaLabel"
-                        aria-label="@FullscreenAriaLabel"
-                        aria-pressed="@FullscreenPressed"
-                        @onclick="ToggleFullscreenAsync">
-                    <span aria-hidden="true">@FullscreenIcon.Render()</span>
-                </button>
-                <button class="nt-window-control"
-                        type="button"
-                        data-nt-window-action="close"
-                        aria-label="@CloseAriaLabel"
-                        @onclick="CloseAsync">
-                    <span aria-hidden="true">@MaterialIcon.Close.Render()</span>
-                </button>
-            </div>
-        </header>
+                <div class="nt-window-controls">
+                    <button class="nt-window-control"
+                            type="button"
+                            data-nt-window-action="minimize"
+                            data-nt-window-aria-label="@MinimizeButtonAriaLabel"
+                            aria-label="@MinimizeAriaLabel"
+                            aria-controls="@ContentId"
+                            aria-expanded="@ContentExpanded"
+                            @onclick="ToggleMinimizedAsync">
+                        <span aria-hidden="true">@MinimizeIcon.Render()</span>
+                    </button>
+                    <button class="nt-window-control"
+                            type="button"
+                            data-nt-window-action="fullscreen"
+                            data-nt-window-aria-label="@FullscreenButtonAriaLabel"
+                            aria-label="@FullscreenAriaLabel"
+                            aria-pressed="@FullscreenPressed"
+                            @onclick="ToggleFullscreenAsync">
+                        <span aria-hidden="true">@FullscreenIcon.Render()</span>
+                    </button>
+                    <button class="nt-window-control"
+                            type="button"
+                            data-nt-window-action="close"
+                            aria-label="@CloseAriaLabel"
+                            @onclick="CloseAsync">
+                        <span aria-hidden="true">@MaterialIcon.Close.Render()</span>
+                    </button>
+                </div>
+            </header>
+        }
 
-        <div class="nt-window-content-frame" id="@ContentId" aria-hidden="@ContentHidden">
+        @* The content stays at the same render-tree position in both modes so toggling Floating keeps child component state. *@
+        <div class="nt-window-content-frame" id="@ContentId" aria-hidden="@(Floating ? ContentHidden : null)">
             <div class="nt-window-content">
                 @ChildContent
             </div>
@@ -60,4 +63,6 @@
     </section>
 }
 
-<NTPageScript Src="@JsModulePathValue" />
+@if (Floating) {
+    <NTPageScript Src="@JsModulePathValue" />
+}

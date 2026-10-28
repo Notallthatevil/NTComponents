@@ -35,6 +35,8 @@ declare global {
     }
 }
 
+const cascadeMargin = 24;
+const cascadeStep = 24;
 const closeAnimationDuration = 200;
 const dockedWindowGap = 8;
 const minimizedWindowHeight = 48;
@@ -180,6 +182,49 @@ function clearPosition(element: NTWindowElement): void {
     element.style.translate = '';
 }
 
+function readCascadeOffset(element: NTWindowElement, axis: 'x' | 'y'): number {
+    return Number.parseFloat(element.style.getPropertyValue(`--nt-window-cascade-offset-${axis}`)) || 0;
+}
+
+// Offsets a freshly opened, never dragged window from the centred position by whole steps so it does not sit on another window's top-left corner.
+// Windows not yet initialized are ignored: they are still centred but will be placed in turn, in document order.
+function cascadeWindow(element: NTWindowElement): void {
+    if (element.hidden || getVisualState(element) !== 'normal' || element.style.left || element.style.top) {
+        return;
+    }
+
+    const direction = window.getComputedStyle(element).direction === 'rtl' ? -1 : 1;
+    const bounds = element.getBoundingClientRect();
+    const baseLeft = bounds.left - readCascadeOffset(element, 'x');
+    const baseTop = bounds.top - readCascadeOffset(element, 'y');
+    const viewportWidth = window.visualViewport?.width ?? window.innerWidth;
+    const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+    const fits = (k: number): boolean => {
+        const left = baseLeft + direction * k * cascadeStep;
+        const top = baseTop + k * cascadeStep;
+        return left >= cascadeMargin && left + bounds.width <= viewportWidth - cascadeMargin && top >= cascadeMargin && top + bounds.height <= viewportHeight - cascadeMargin;
+    };
+
+    let slots = 1;
+    while (fits(slots)) {
+        slots++;
+    }
+
+    const corners = getWindows()
+        .filter(other => other !== element && other.__ntWindowRuntimeState && !other.hidden && !other.classList.contains('nt-window-closing') && getVisualState(other) === 'normal')
+        .map(other => other.getBoundingClientRect());
+    const occupied = (k: number): boolean => corners.some(corner => Math.abs(corner.left - (baseLeft + direction * k * cascadeStep)) < cascadeStep / 2
+        && Math.abs(corner.top - (baseTop + k * cascadeStep)) < cascadeStep / 2);
+    let slot = 0;
+    while (slot < slots && occupied(slot)) {
+        slot++;
+    }
+
+    slot = slot < slots ? slot : corners.length % slots;
+    element.style.setProperty('--nt-window-cascade-offset-x', `${direction * slot * cascadeStep}px`);
+    element.style.setProperty('--nt-window-cascade-offset-y', `${slot * cascadeStep}px`);
+}
+
 function layoutDockedWindows(excludedElement?: NTWindowElement): void {
     const indexes = new Map<string, number>();
     for (const element of getWindows()) {
@@ -239,6 +284,7 @@ function openWindow(target: WindowTarget): boolean {
     }
 
     syncTopWindowZIndex(getWindows());
+    const wasHidden = element.hidden;
     initializeWindow(element);
     const runtimeState = getRuntimeState(element);
     if (runtimeState.closeTimeout !== null) {
@@ -248,6 +294,10 @@ function openWindow(target: WindowTarget): boolean {
 
     element.hidden = false;
     element.classList.remove('nt-window-closing');
+    if (wasHidden) {
+        cascadeWindow(element);
+    }
+
     bringToFront(element);
     layoutDockedWindows();
     element.focus({ preventScroll: true });
@@ -267,9 +317,13 @@ function closeWindow(target: WindowTarget): boolean {
 
     element.classList.add('nt-window-closing');
     runtimeState.closeTimeout = window.setTimeout(() => {
+        runtimeState.closeTimeout = null;
+        if (!element.matches(windowSelector)) {
+            return;
+        }
+
         element.hidden = true;
         element.classList.remove('nt-window-closing');
-        runtimeState.closeTimeout = null;
         layoutDockedWindows();
         element.dispatchEvent(new CustomEvent('ntwindowclose'));
     }, closeAnimationDuration);
@@ -363,10 +417,22 @@ function initializeWindow(element: NTWindowElement): boolean {
     const signal = runtimeState.abortController.signal;
     element.addEventListener('click', event => handleClick(element, event), { signal });
     updateControlState(element, visualState);
+    cascadeWindow(element);
     return true;
 }
 
 function disposeWindow(element: NTWindowElement): void {
+    if (!element.matches(windowSelector)) {
+        // Blazor turned the window back into inline content, so drop everything the script positioned.
+        clearPosition(element);
+        element.style.zIndex = '';
+        for (const property of ['--nt-window-dock-offset', '--nt-window-cascade-offset-x', '--nt-window-cascade-offset-y']) {
+            element.style.removeProperty(property);
+        }
+
+        delete element.dataset.ntWindowDragging;
+    }
+
     const runtimeState = element.__ntWindowRuntimeState;
     if (!runtimeState) {
         return;

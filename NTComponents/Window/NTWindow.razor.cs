@@ -56,15 +56,26 @@ public partial class NTWindow : NTComponentBase {
     /// <inheritdoc />
     public override string? ElementClass => CssClassBuilder.Create()
         .AddFromAdditionalAttributes(AdditionalAttributes)
-        .AddClass("nt-window")
-        .AddClass("nt-window-minimized", State == NTWindowState.Minimized)
-        .AddClass("nt-window-fullscreen", State == NTWindowState.Fullscreen)
+        .AddClass("nt-window", Floating)
+        .AddClass("nt-window-minimized", Floating && State == NTWindowState.Minimized)
+        .AddClass("nt-window-fullscreen", Floating && State == NTWindowState.Fullscreen)
         .Build();
 
     /// <inheritdoc />
     public override string? ElementStyle => CssStyleBuilder.Create()
         .AddFromAdditionalAttributes(AdditionalAttributes)
         .Build();
+
+    /// <summary>
+    ///     Gets or sets whether the window floats above the page. When <see langword="false" />, the content renders inline in its normal document position without the window
+    ///     surface, header, or controls.
+    /// </summary>
+    /// <remarks>
+    ///     The content keeps the same render-tree position in both modes, so toggling this value moves the content between inline and floating presentation without recreating
+    ///     child components or losing their state. Inline mode omits the dialog role and focus attributes; a role, aria-labelledby, or tabindex passed through additional attributes applies inline.
+    /// </remarks>
+    [Parameter]
+    public bool Floating { get; set; } = true;
 
     /// <summary>
     ///     Gets or sets the accessible label for the fullscreen toggle. A state-specific label is used by default.
@@ -142,6 +153,10 @@ public partial class NTWindow : NTComponentBase {
         _ => "fullscreen"
     };
     private string TitleId => _titleId ??= $"{ComponentIdentifier}-title";
+
+    // Each attribute keeps one render-tree position in both modes: Blazor diffs attributes by sequence, so moving a name between the splat
+    // and an explicit attribute when Floating changes would remove it. Inline mode therefore re-emits the consumer's value here.
+    private object? InlineAttribute(string name) => AdditionalAttributes?.GetValueOrDefault(name);
 
     /// <inheritdoc />
     protected override void OnParametersSet() {

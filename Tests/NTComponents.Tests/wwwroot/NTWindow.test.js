@@ -363,4 +363,211 @@ describe('NTWindow module', () => {
       expect(element.dataset.ntWindowState).toBe('normal');
    });
 
+   // jsdom has no layout, so each window reports a centred box that moves with its cascade offset, like the real translate does.
+   function layOut(element, { left = 300, top = 200, width = 300, height = 200 } = {}) {
+      element.getBoundingClientRect = () => {
+         const x = left + (Number.parseFloat(element.style.getPropertyValue('--nt-window-cascade-offset-x')) || 0);
+         const y = top + (Number.parseFloat(element.style.getPropertyValue('--nt-window-cascade-offset-y')) || 0);
+         return { bottom: y + height, height, left: x, right: x + width, toJSON: () => ({}), top: y, width, x, y };
+      };
+   }
+
+   function addWindow(id, layout, { first = false } = {}) {
+      const element = document.querySelector('[data-nt-window]').cloneNode(true);
+      element.id = id;
+      element.removeAttribute('style');
+      if (first) {
+         document.body.prepend(element);
+      } else {
+         document.body.insertBefore(element, document.querySelector('tnt-page-script'));
+      }
+      layOut(element, layout);
+      return element;
+   }
+
+   function offset(element) {
+      return [element.style.getPropertyValue('--nt-window-cascade-offset-x'), element.style.getPropertyValue('--nt-window-cascade-offset-y')];
+   }
+
+   function setViewport(width, height) {
+      Object.defineProperty(window, 'innerWidth', { configurable: true, value: width });
+      Object.defineProperty(window, 'innerHeight', { configurable: true, value: height });
+   }
+
+   test('windows initialized together cascade sequentially', () => {
+      const { element } = createWindow({ initialize: false });
+      setViewport(1200, 900);
+      layOut(element);
+      const second = addWindow('second');
+      const third = addWindow('third');
+
+      onLoad(document.body);
+
+      expect(offset(element)).toEqual(['0px', '0px']);
+      expect(offset(second)).toEqual(['24px', '24px']);
+      expect(offset(third)).toEqual(['48px', '48px']);
+   });
+
+   test('a slot taken by a dragged window is skipped', () => {
+      const { element } = createWindow({ initialize: false });
+      setViewport(1200, 900);
+      layOut(element);
+      const dragged = addWindow('dragged', undefined, { first: true });
+      dragged.style.left = '300px';
+      dragged.style.top = '200px';
+      const other = addWindow('other', { left: 324, top: 224 }, { first: true });
+      other.style.left = '324px';
+      other.style.top = '224px';
+
+      onLoad(document.body);
+
+      expect(offset(dragged)).toEqual(['', '']);
+      expect(offset(other)).toEqual(['', '']);
+      expect(offset(element)).toEqual(['48px', '48px']);
+   });
+
+   test('a slot is reused after its window closes', () => {
+      createWindow({ initialize: false });
+      setViewport(1200, 900);
+      layOut(document.querySelector('[data-nt-window]'));
+      const second = addWindow('second');
+      const third = addWindow('third');
+      onLoad(document.body);
+      expect(offset(second)).toEqual(['24px', '24px']);
+      expect(offset(third)).toEqual(['48px', '48px']);
+
+      window.NTWindow.closeWindow(second);
+      jest.advanceTimersByTime(200);
+      expect(second.hidden).toBe(true);
+      window.NTWindow.openWindow(second);
+
+      expect(offset(second)).toEqual(['24px', '24px']);
+      expect(offset(third)).toEqual(['48px', '48px']);
+   });
+
+   test('a cascade that would leave the viewport wraps back to the first slot', () => {
+      const { element } = createWindow({ initialize: false });
+      setViewport(1000, 450);
+      layOut(element);
+      // Height 200 at top 200: slots 0 and 1 fit (bottom 400 and 424 <= 426), slot 2 does not.
+      const windows = [element, addWindow('w2'), addWindow('w3'), addWindow('w4')];
+
+      onLoad(document.body);
+
+      expect(windows.map(offset)).toEqual([['0px', '0px'], ['24px', '24px'], ['0px', '0px'], ['24px', '24px']]);
+   });
+
+   test('right-to-left windows cascade toward the inline end', () => {
+      const { element } = createWindow({ initialize: false });
+      setViewport(1200, 900);
+      layOut(element);
+      const second = addWindow('second');
+      element.style.direction = 'rtl';
+      second.style.direction = 'rtl';
+
+      onLoad(document.body);
+
+      expect(offset(element)).toEqual(['0px', '0px']);
+      expect(offset(second)).toEqual(['-24px', '24px']);
+   });
+
+   test('a dragged, minimized, or fullscreen window is not cascaded', () => {
+      const { element } = createWindow({ initialize: false });
+      setViewport(1200, 900);
+      layOut(element);
+      const dragged = addWindow('dragged');
+      dragged.style.left = '10px';
+      dragged.style.top = '10px';
+      const minimized = addWindow('minimized');
+      minimized.dataset.ntWindowState = 'minimized';
+      const fullscreen = addWindow('fullscreen');
+      fullscreen.dataset.ntWindowState = 'fullscreen';
+
+      onLoad(document.body);
+
+      expect(offset(dragged)).toEqual(['', '']);
+      expect(offset(minimized)).toEqual(['', '']);
+      expect(offset(fullscreen)).toEqual(['', '']);
+   });
+
+   test('a window already initialized is not re-cascaded by later loads', () => {
+      createWindow({ initialize: false });
+      setViewport(1200, 900);
+      layOut(document.querySelector('[data-nt-window]'));
+      const second = addWindow('second');
+      onLoad(document.body);
+      const placed = offset(second);
+
+      onLoad(document.body);
+      onLoad(document.body);
+
+      expect(offset(second)).toEqual(placed);
+   });
+
+   test('a window that stops being floating clears its inline position and styles', () => {
+      const { element, pageScript } = createWindow();
+      element.style.inset = 'auto';
+      element.style.left = '120px';
+      element.style.top = '80px';
+      element.style.translate = 'none';
+      element.style.zIndex = '1500';
+      element.style.setProperty('--nt-window-dock-offset', '56px');
+      element.style.setProperty('--nt-window-cascade-offset-x', '24px');
+      element.style.setProperty('--nt-window-cascade-offset-y', '24px');
+      element.dataset.ntWindowDragging = 'true';
+      element.removeAttribute('data-nt-window');
+      pageScript.remove();
+
+      onDispose(pageScript);
+
+      expect(element.getAttribute('style') ?? '').toBe('');
+      expect(element.dataset.ntWindowDragging).toBeUndefined();
+   });
+
+   test('a still-floating window keeps its inline styles when its page script is disposed', () => {
+      const { element, pageScript } = createWindow();
+      element.style.left = '120px';
+
+      onDispose(pageScript);
+
+      expect(element.style.left).toBe('120px');
+   });
+
+   test('the close timeout leaves a window that is no longer a window alone', () => {
+      const { element, pageScript } = createWindow();
+      const closeHandler = jest.fn();
+      element.addEventListener('ntwindowclose', closeHandler);
+
+      window.NTWindow.closeWindow(element);
+      element.removeAttribute('data-nt-window');
+      pageScript.remove();
+      onDispose(pageScript);
+      jest.advanceTimersByTime(200);
+
+      expect(element.hidden).toBe(false);
+      expect(closeHandler).not.toHaveBeenCalled();
+   });
+
+   test('a window that becomes floating again initializes fresh and cascades', () => {
+      const { element, pageScript } = createWindow();
+      setViewport(1200, 900);
+      layOut(element);
+      const other = addWindow('other');
+      onLoad(document.body);
+      expect(offset(other)).toEqual(['24px', '24px']);
+      element.removeAttribute('data-nt-window');
+      pageScript.remove();
+      onDispose(pageScript);
+
+      element.setAttribute('data-nt-window', 'true');
+      const newPageScript = document.createElement('tnt-page-script');
+      element.after(newPageScript);
+      onLoad(newPageScript);
+
+      // Cleanup freed slot 0, so the returning window cascades from scratch into it.
+      expect(offset(element)).toEqual(['0px', '0px']);
+      element.querySelector('[data-nt-window-action="minimize"]').click();
+      expect(element.dataset.ntWindowState).toBe('minimized');
+   });
+
 });

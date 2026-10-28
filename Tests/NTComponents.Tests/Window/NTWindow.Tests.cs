@@ -32,6 +32,48 @@ public class NTWindow_Tests : BunitContext {
     }
 
     [Fact]
+    public void Floating_False_RendersInlineContentWithoutWindowContract() {
+        var cut = Render<NTWindow>(parameters => parameters
+            .Add(component => component.Title, "Report")
+            .Add(component => component.Floating, false)
+            .Add(component => component.State, NTWindowState.Minimized)
+            .AddUnmatched("role", "region")
+            .AddUnmatched("tabindex", "0")
+            .AddChildContent("<p>Quarterly results</p>"));
+
+        var section = cut.Find("section");
+
+        section.GetAttribute("role").Should().Be("region");
+        section.GetAttribute("tabindex").Should().Be("0");
+        section.ClassList.Should().NotContain("nt-window").And.NotContain("nt-window-minimized");
+        section.HasAttribute("data-nt-window").Should().BeFalse();
+        section.HasAttribute("data-nt-window-state").Should().BeFalse();
+        section.HasAttribute("aria-modal").Should().BeFalse();
+        cut.FindAll(".nt-window-header").Should().BeEmpty();
+        cut.Find(".nt-window-content-frame").HasAttribute("aria-hidden").Should().BeFalse();
+        cut.Find(".nt-window-content").InnerHtml.Should().Contain("Quarterly results");
+        cut.FindAll("tnt-page-script").Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Floating_Toggled_KeepsContentComponentInstance() {
+        var cut = Render<NTWindow>(parameters => parameters
+            .Add(component => component.Title, "Report")
+            .Add(component => component.Floating, false)
+            .Add(component => component.ChildContent, (RenderFragment)(builder => {
+                builder.OpenComponent<NTWindow>(0);
+                builder.AddComponentParameter(1, nameof(NTWindow.Title), "Inner");
+                builder.CloseComponent();
+            })));
+        var inner = cut.FindComponents<NTWindow>().Single(window => window.Instance.Title == "Inner").Instance;
+
+        cut.Render(parameters => parameters.Add(component => component.Floating, true));
+
+        cut.Find("section.nt-window[role='dialog']").GetAttribute("data-nt-window").Should().Be("true");
+        cut.FindComponents<NTWindow>().Single(window => window.Instance.Title == "Inner").Instance.Should().BeSameAs(inner);
+    }
+
+    [Fact]
     public void Render_WithDockPosition_EmitsStaticDockingContract() {
         var cut = Render<NTWindow>(parameters => parameters
             .Add(component => component.Title, "Report")

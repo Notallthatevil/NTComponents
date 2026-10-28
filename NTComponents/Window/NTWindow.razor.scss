@@ -35,7 +35,7 @@ $nt-window-minimized-inline-size: 360px;
     position: fixed;
     resize: both;
     transition: border-radius $nt-window-expand-transition, box-shadow $nt-window-state-transition;
-    translate: -50% -50%;
+    translate: calc(-50% + var(--nt-window-cascade-offset-x, 0px)) calc(-50% + var(--nt-window-cascade-offset-y, 0px));
     z-index: 1001;
 
     &[hidden] {
