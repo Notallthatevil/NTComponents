@@ -36,6 +36,7 @@ $nt-data-grid-disabled-container-opacity: 12%;
 $nt-data-grid-row-background-transition: motion.$nt-motion-duration-short_2 motion.$nt-motion-easing-standard;
 $nt-data-grid-focus-outline-offset: 2px;
 $nt-data-grid-spacer-border-offset: 1px;
+$nt-data-grid-placeholder-content-size: calc(var(--nt-data-grid-placeholder-row-height, var(--nt-data-grid-row-size)) - #{$nt-data-grid-border-size});
 $nt-data-grid-zero: 0;
 $nt-data-grid-percent-zero: 0%;
 $nt-data-grid-full-size: 100%;
@@ -407,17 +408,17 @@ $nt-data-grid-spacer-animation-duration: motion.$nt-motion-duration-extra_long_2
     block-size: var(--nt-data-grid-placeholder-row-height, var(--nt-data-grid-row-size));
 }
 
+// The placeholder cell is a border-box row height with the same bottom divider as data cells, so the skeleton fills only
+// the content box left above that divider. Sizing it to the full row height would grow the row by the divider width.
 .nt-data-grid ::deep .nt-data-grid-row-skeleton {
     display: block;
-    block-size: var(--nt-data-grid-placeholder-row-height, var(--nt-data-grid-row-size));
-    min-block-size: var(--nt-data-grid-placeholder-row-height, var(--nt-data-grid-row-size));
+    block-size: $nt-data-grid-placeholder-content-size;
     inline-size: $nt-data-grid-full-size;
 }
 
 .nt-data-grid ::deep .nt-data-grid-row-skeleton .nt-skeleton {
     display: block;
-    block-size: var(--nt-data-grid-placeholder-row-height, var(--nt-data-grid-row-size));
-    min-block-size: var(--nt-data-grid-placeholder-row-height, var(--nt-data-grid-row-size));
+    block-size: $nt-data-grid-placeholder-content-size;
 }
 
 .nt-data-grid-virtualized ::deep .nt-virtualize-spacer {
