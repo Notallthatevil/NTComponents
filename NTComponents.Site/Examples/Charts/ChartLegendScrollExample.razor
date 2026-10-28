@@ -1,0 +1,30 @@
+@using NTComponents.Charts
+@using NTComponents.Charts.Core
+
+<div class="docs-actions">
+    @foreach (var position in _positions) {
+        <NTButton Label="@position.ToString()" Variant="@(position == _position ? NTButtonVariant.Filled : NTButtonVariant.Outlined)" OnClickCallback="@(() => _position = position)" />
+    }
+</div>
+
+<div class="docs-fill" style="height: 400px">
+    <NTChart TData="Injury" TitleOptions="@(new NTTitleOptions("Injuries by body part"))">
+        <NTLegend TData="Injury" Position="_position" MaxRows="2" />
+        <NTPieSeries TData="Injury" Data="_injuries" XValue="@(injury => injury.BodyPart)" ValueSelector="@(injury => injury.Count)" />
+    </NTChart>
+</div>
+
+@code {
+    private static readonly LegendPosition[] _positions = [LegendPosition.Top, LegendPosition.Bottom, LegendPosition.Left, LegendPosition.Right, LegendPosition.Floating];
+    private LegendPosition _position = LegendPosition.Bottom;
+
+    private readonly Injury[] _injuries = [
+        new("Head", 42), new("Face", 31), new("Eye", 18), new("Ear", 6), new("Neck", 27), new("Shoulder", 64),
+        new("Upper arm", 22), new("Elbow", 19), new("Forearm", 15), new("Wrist", 38), new("Hand", 71), new("Finger", 88),
+        new("Thumb", 24), new("Chest", 29), new("Abdomen", 12), new("Upper back", 33), new("Lower back", 97), new("Hip", 26),
+        new("Thigh", 17), new("Knee", 58), new("Lower leg", 21), new("Ankle", 47), new("Foot", 36), new("Toe", 14),
+        new("Multiple body parts", 52), new("Internal organs", 9), new("Lumbar and sacral vertebrae", 23), new("Body systems", 7)
+    ];
+
+    private sealed record Injury(string BodyPart, decimal Count);
+}

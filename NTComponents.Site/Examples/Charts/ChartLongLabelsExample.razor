@@ -1,0 +1,36 @@
+@using NTComponents.Charts
+@using NTComponents.Charts.Core
+@using NTComponents.Charts.Core.Axes
+
+<div class="docs-actions">
+    <NTButton Label="6 categories" Variant="@(_count == 6 ? NTButtonVariant.Filled : NTButtonVariant.Outlined)" OnClickCallback="@(() => _count = 6)" />
+    <NTButton Label="20 categories" Variant="@(_count == 20 ? NTButtonVariant.Filled : NTButtonVariant.Outlined)" OnClickCallback="@(() => _count = 20)" />
+</div>
+
+<NTChart TData="Claim" style="height: 360px">
+    <NTXAxisOptions TData="Claim" TAxisType="string" ValueSelector="@(claim => claim.Cause)" MaxLabelWidth="120" />
+    <NTYAxisOptions TData="Claim" TAxisValue="decimal" ValueSelector="@(claim => claim.Count)" Title="Claims" />
+    <NTBarSeries Data="@(_count == 6 ? _few : _claims)" XValue="@(claim => claim.Cause)" YValueSelector="@(claim => claim.Count)" />
+    <NTComponents.Charts.Core.NTTooltip TData="Claim" />
+</NTChart>
+
+@code {
+    private int _count = 6;
+
+    private static readonly Claim[] _claims = [
+        new("Struck by or against moving equipment", 84), new("Slip, trip or fall on the same level", 132),
+        new("Fall from ladder, scaffold or elevation", 47), new("Lifting, pushing or pulling heavy objects", 118),
+        new("Repetitive motion and cumulative trauma", 66), new("Insufficient info to properly identify (unclassified)", 21),
+        new("Caught in, under or between objects", 39), new("Cut, puncture or scrape by hand tool", 73),
+        new("Exposure to temperature extremes", 18), new("Contact with electric current", 9),
+        new("Motor vehicle collision on a public road", 31), new("Absorption, ingestion or inhalation of chemicals", 14),
+        new("Burn or scald from hot liquids", 26), new("Strain from holding or carrying", 58),
+        new("Animal or insect bite or sting", 11), new("Foreign body in the eye", 22),
+        new("Workplace violence by another person", 8), new("Overexertion while using wheelchairs or patients", 35),
+        new("Noise exposure causing hearing loss", 12), new("Collapse of a structure or materials", 5)
+    ];
+
+    private static readonly Claim[] _few = _claims[..6];
+
+    private sealed record Claim(string Cause, decimal Count);
+}
