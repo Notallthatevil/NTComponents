@@ -141,9 +141,12 @@ code {
     }
 }
 
+// Docs grids use minmax(0, 1fr) columns so wide content, such as long code lines, scrolls inside its box instead of
+// widening the page past its container.
 .docs-page {
     display: grid;
     gap: 1.5rem;
+    grid-template-columns: minmax(0, 1fr);
 }
 
 .docs-hero,
@@ -151,6 +154,7 @@ code {
 .docs-section {
     display: grid;
     gap: 0.75rem;
+    grid-template-columns: minmax(0, 1fr);
 }
 
 .docs-page-header-featured {
@@ -450,6 +454,7 @@ code {
 .docs-examples {
     display: grid;
     gap: 1.5rem;
+    grid-template-columns: minmax(0, 1fr);
 }
 
 .docs-example {
@@ -457,6 +462,7 @@ code {
     border-radius: corner.$nt-corner-radius-large;
     display: grid;
     gap: 0.75rem;
+    grid-template-columns: minmax(0, 1fr);
     padding: 1rem;
 
     > h3 {
