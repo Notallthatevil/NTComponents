@@ -1,0 +1,43 @@
+@using NTComponents.Charts
+@using NTComponents.Charts.Core
+
+<div class="docs-actions">
+    @foreach (var position in Enum.GetValues<LegendPosition>()) {
+        <NTButton Label="@position.ToString()" Variant="@(position == _position ? NTButtonVariant.Filled : NTButtonVariant.Outlined)" OnClickCallback="@(() => _position = position)" />
+    }
+</div>
+
+<div class="docs-fill" style="height: 420px">
+    <NTChart TData="Claim" TitleOptions="@(new NTTitleOptions("Claim count by body part"))">
+        <NTLegend TData="Claim" Position="_position" MaxRows="3" />
+        <NTTooltip TData="Claim" />
+        <NTPieSeries TData="Claim"
+                     Data="_claims"
+                     XValue="@(claim => claim.BodyPart)"
+                     ValueSelector="@(claim => claim.Count)" />
+    </NTChart>
+</div>
+
+@code {
+    private LegendPosition _position = LegendPosition.Right;
+
+    private readonly Claim[] _claims = [
+        new("<Body Part Unknown>", 14), new("Abdomen", 12), new("Ankle", 47), new("Body Systems and Multiple Body Systems", 7), new("Brain", 5),
+        new("Buttocks", 9), new("Chest", 29), new("Disc", 16), new("Ear(s)", 6), new("Elbow", 19), new("Eye(s)", 18), new("Face", 31),
+        new("Facial Bones", 8), new("Finger(s)", 88), new("Foot", 36), new("Forearm", 15), new("Great Toe", 11), new("Hand", 71),
+        new("Head", 42), new("Heart", 3), new("Hip", 26), new("Insufficient Info to Properly Identify", 10), new("Internal Organs", 9),
+        new("Jaw", 4), new("Knee", 58), new("Larynx", 2), new("Lower Arm", 13), new("Lower Back Area", 97), new("Lower Leg", 21),
+        new("Lumbar and/or Sacral Vertebrae", 23), new("Lungs", 6), new("Mouth", 5), new("Multiple Body Parts", 52), new("Multiple Head Injury", 4),
+        new("Multiple Lower Extremities", 17), new("Multiple Neck Injury", 3), new("Multiple Trunk", 8), new("Multiple Upper Extremities", 20),
+        new("Neck", 27), new("Nose", 7), new("No Physical Injury", 12), new("Pelvis", 6), new("Sacrum and Coccyx", 5), new("Shoulder(s)", 64),
+        new("Skull", 3), new("Spinal Cord", 2), new("Teeth", 4), new("Thumb", 24), new("Toes", 14), new("Trachea", 1), new("Upper Arm", 22),
+        new("Upper Back Area", 33), new("Wrist", 38),
+        new("Multiple body parts including the lower back, both knees, the right shoulder, and the cervical spine, reported together as one cumulative trauma claim", 15),
+        new("Psychological injuries arising from a workplace incident, including post-traumatic stress, anxiety, and depression diagnosed by the treating physician", 6),
+        new("Occupational disease affecting multiple body systems, such as respiratory illness from prolonged exposure to dust, fumes, or chemicals at the worksite", 4),
+        new("Repetitive motion injury to the wrists, hands, and fingers of both upper extremities, including carpal tunnel syndrome, and tendonitis of the forearms", 11),
+        new("Hearing loss in one or both ears attributed to sustained exposure to loud machinery and equipment over many years, without adequate hearing protection", 5)
+    ];
+
+    private sealed record Claim(string BodyPart, decimal Count);
+}
