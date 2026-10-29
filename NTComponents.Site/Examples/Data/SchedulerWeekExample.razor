@@ -1,6 +1,13 @@
 @using NTComponents.Scheduler
 
-<NTScheduler TEventType="TnTEvent" Events="_events" View="NTSchedulerView.Week" StartViewOn="DayOfWeek.Monday" HourRowHeight="48" AriaLabel="Team calendar" class="docs-fill" style="block-size: 36rem;" />
+<NTScheduler TEventType="TnTEvent"
+             Events="_events"
+             View="NTSchedulerView.Week"
+             StartViewOn="DayOfWeek.Monday"
+             HourRowHeight="48"
+             AriaLabel="Team calendar"
+             class="docs-fill"
+             style="block-size: 36rem;" />
 
 @code {
     private readonly List<TnTEvent> _events = CreateEvents();

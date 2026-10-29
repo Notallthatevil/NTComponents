@@ -8,8 +8,14 @@
 </div>
 
 <NTChart TData="Claim" style="height: 360px">
-    <NTXAxisOptions TData="Claim" TAxisType="string" ValueSelector="@(claim => claim.Cause)" MaxLabelWidth="120" />
-    <NTYAxisOptions TData="Claim" TAxisValue="decimal" ValueSelector="@(claim => claim.Count)" Title="Claims" />
+    <NTXAxisOptions TData="Claim"
+                    TAxisType="string"
+                    ValueSelector="@(claim => claim.Cause)"
+                    MaxLabelWidth="120" />
+    <NTYAxisOptions TData="Claim"
+                    TAxisValue="decimal"
+                    ValueSelector="@(claim => claim.Count)"
+                    Title="Claims" />
     <NTBarSeries Data="@(_count == 6 ? _few : _claims)" XValue="@(claim => claim.Cause)" YValueSelector="@(claim => claim.Count)" />
     <NTComponents.Charts.Core.NTTooltip TData="Claim" />
 </NTChart>

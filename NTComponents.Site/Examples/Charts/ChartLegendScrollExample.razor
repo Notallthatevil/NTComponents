@@ -10,7 +10,10 @@
 <div class="docs-fill" style="height: 400px">
     <NTChart TData="Injury" TitleOptions="@(new NTTitleOptions("Injuries by body part"))">
         <NTLegend TData="Injury" Position="_position" MaxRows="2" />
-        <NTPieSeries TData="Injury" Data="_injuries" XValue="@(injury => injury.BodyPart)" ValueSelector="@(injury => injury.Count)" />
+        <NTPieSeries TData="Injury"
+                     Data="_injuries"
+                     XValue="@(injury => injury.BodyPart)"
+                     ValueSelector="@(injury => injury.Count)" />
     </NTChart>
 </div>
 

@@ -1,5 +1,10 @@
 <div class="docs-row">
-    <NTFabButton Icon="MaterialIcon.Notifications" AriaLabel="Open notifications" ShowBadge="true" BadgeContent="@_unread.ToString()" BadgeAriaLabel="@($"{_unread} unread notifications")" OnClickCallback="HandleClick" />
+    <NTFabButton Icon="MaterialIcon.Notifications"
+                 AriaLabel="Open notifications"
+                 ShowBadge="true"
+                 BadgeContent="@_unread.ToString()"
+                 BadgeAriaLabel="@($"{_unread} unread notifications")"
+                 OnClickCallback="HandleClick" />
 </div>
 <p>Unread notifications: <output>@_unread</output></p>
 

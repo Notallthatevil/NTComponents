@@ -1,4 +1,10 @@
-<NTTypeahead TItem="Customer" @bind-Value="_customer" ItemsLookupFunc="SearchAsync" ItemTextSelector="@(c => c.Name)" Label="Customer" Placeholder="Search customers" SupportingText="Type at least one character." />
+<NTTypeahead TItem="Customer"
+             @bind-Value="_customer"
+             ItemsLookupFunc="SearchAsync"
+             ItemTextSelector="@(c => c.Name)"
+             Label="Customer"
+             Placeholder="Search customers"
+             SupportingText="Type at least one character." />
 <p>Selected: <output>@(_customer?.Name ?? "none")</output></p>
 
 @code {

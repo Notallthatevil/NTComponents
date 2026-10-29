@@ -7,7 +7,10 @@
 </div>
 <p>Appearance: <output>@_appearance</output>, density: <output>@_density</output></p>
 
-<NTForm Model="_address" Appearance="_appearance" Density="_density" class="docs-fill">
+<NTForm Model="_address"
+        Appearance="_appearance"
+        Density="_density"
+        class="docs-fill">
     <NTFormFieldGridView MaxColumns="2">
         <NTInputText Label="Recipient" @bind-Value="_address.Recipient" />
         <NTInputText Label="Street" @bind-Value="_address.Street" />

@@ -3,7 +3,15 @@
 
 <p>Last click: <output>@_clicked</output></p>
 <p>Last move: <output>@_moved</output></p>
-<NTScheduler TEventType="TnTEvent" Events="_events" View="NTSchedulerView.Week" EventClicked="OnEventClicked" EventDropped="OnEventDropped" DragSnapMinutes="30" AriaLabel="Room bookings" class="docs-fill" style="block-size: 36rem;" />
+<NTScheduler TEventType="TnTEvent"
+             Events="_events"
+             View="NTSchedulerView.Week"
+             EventClicked="OnEventClicked"
+             EventDropped="OnEventDropped"
+             DragSnapMinutes="30"
+             AriaLabel="Room bookings"
+             class="docs-fill"
+             style="block-size: 36rem;" />
 
 @code {
     private string _clicked = "none";

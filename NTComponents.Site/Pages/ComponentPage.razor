@@ -19,7 +19,10 @@ else {
                 <Badges>
                     <CompatibilityTag Type="@_component.Type" />
                     @if (_component.Type.IsObsolete) {
-                        <NTTag Label="Obsolete" BackgroundColor="NTColor.ErrorContainer" TextColor="NTColor.OnErrorContainer" Elevation="0" />
+                        <NTTag Label="Obsolete"
+                               BackgroundColor="NTColor.ErrorContainer"
+                               TextColor="NTColor.OnErrorContainer"
+                               Elevation="0" />
                     }
                 </Badges>
                 <Actions>
@@ -31,8 +34,14 @@ else {
                 <h2>Overview</h2>
                 <div class="docs-overview">
                     <div class="docs-overview-copy">
-                        <DocumentationText XmlDocumentation="@_component.Type.XmlDocumentation" ElementName="summary" Fallback="@_component.Type.Summary" CssClass="docs-overview-summary" />
-                        <DocumentationText XmlDocumentation="@_component.Type.XmlDocumentation" ElementName="remarks" Fallback="@_component.Type.Remarks" CssClass="docs-overview-remarks" />
+                        <DocumentationText XmlDocumentation="@_component.Type.XmlDocumentation"
+                                           ElementName="summary"
+                                           Fallback="@_component.Type.Summary"
+                                           CssClass="docs-overview-summary" />
+                        <DocumentationText XmlDocumentation="@_component.Type.XmlDocumentation"
+                                           ElementName="remarks"
+                                           Fallback="@_component.Type.Remarks"
+                                           CssClass="docs-overview-remarks" />
                     </div>
                     @if (!string.IsNullOrWhiteSpace(_component.Type.CompatibilitySummary) || _component.Type.IsObsolete || _component.DependentComponents.Count > 0) {
                         <div class="docs-overview-asides">
@@ -104,14 +113,23 @@ else {
                                 <h3 data-nt-nav-exclude>@child.Type.Name</h3>
                                 <CompatibilityTag Type="@child.Type" />
                                 @if (child.Type.IsObsolete) {
-                                    <NTTag Label="Obsolete" BackgroundColor="NTColor.ErrorContainer" TextColor="NTColor.OnErrorContainer" Elevation="0" />
+                                    <NTTag Label="Obsolete"
+                                           BackgroundColor="NTColor.ErrorContainer"
+                                           TextColor="NTColor.OnErrorContainer"
+                                           Elevation="0" />
                                 }
                             </div>
 
                             <div class="docs-overview">
                                 <div class="docs-overview-copy">
-                                    <DocumentationText XmlDocumentation="@child.Type.XmlDocumentation" ElementName="summary" Fallback="@child.Type.Summary" CssClass="docs-overview-summary" />
-                                    <DocumentationText XmlDocumentation="@child.Type.XmlDocumentation" ElementName="remarks" Fallback="@child.Type.Remarks" CssClass="docs-overview-remarks" />
+                                    <DocumentationText XmlDocumentation="@child.Type.XmlDocumentation"
+                                                       ElementName="summary"
+                                                       Fallback="@child.Type.Summary"
+                                                       CssClass="docs-overview-summary" />
+                                    <DocumentationText XmlDocumentation="@child.Type.XmlDocumentation"
+                                                       ElementName="remarks"
+                                                       Fallback="@child.Type.Remarks"
+                                                       CssClass="docs-overview-remarks" />
                                 </div>
                             </div>
 

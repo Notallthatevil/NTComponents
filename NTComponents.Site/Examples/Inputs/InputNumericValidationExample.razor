@@ -1,7 +1,10 @@
 <NTForm Model="_model" OnValidSubmit="Submit" class="docs-fill">
     <DataAnnotationsValidator />
     <NTFormSectionView MaxColumns="1">
-        <NTInputNumeric TNumber="int" Label="Seats" SupportingText="Between 1 and 50." @bind-Value="_model.Seats" />
+        <NTInputNumeric TNumber="int"
+                        Label="Seats"
+                        SupportingText="Between 1 and 50."
+                        @bind-Value="_model.Seats" />
         <div class="docs-row">
             <NTButton Type="ButtonType.Submit" Label="Reserve seats" />
         </div>

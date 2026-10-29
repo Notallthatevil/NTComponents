@@ -1,8 +1,28 @@
-<NTDataGrid TItem="Order" Items="_orders" Caption="Recent orders" class="docs-fill">
-    <NTPropertyColumn TItem="Order" TValue="int" Title="Order" Property="order => order.Id" InitialSortDirection="SortDirection.Ascending" />
-    <NTPropertyColumn TItem="Order" TValue="string" Title="Customer" Property="order => order.Customer" />
-    <NTPropertyColumn TItem="Order" TValue="DateTime" Title="Placed" Property="order => order.Placed" Format="MMM d, yyyy" />
-    <NTPropertyColumn TItem="Order" TValue="decimal" Title="Total" Property="order => order.Total" Format="C" TextAlign="TextAlign.Right" HeaderTextAlign="TextAlign.Right" />
+<NTDataGrid TItem="Order"
+            Items="_orders"
+            Caption="Recent orders"
+            class="docs-fill">
+    <NTPropertyColumn TItem="Order"
+                      TValue="int"
+                      Title="Order"
+                      Property="order => order.Id"
+                      InitialSortDirection="SortDirection.Ascending" />
+    <NTPropertyColumn TItem="Order"
+                      TValue="string"
+                      Title="Customer"
+                      Property="order => order.Customer" />
+    <NTPropertyColumn TItem="Order"
+                      TValue="DateTime"
+                      Title="Placed"
+                      Property="order => order.Placed"
+                      Format="MMM d, yyyy" />
+    <NTPropertyColumn TItem="Order"
+                      TValue="decimal"
+                      Title="Total"
+                      Property="order => order.Total"
+                      Format="C"
+                      TextAlign="TextAlign.Right"
+                      HeaderTextAlign="TextAlign.Right" />
 </NTDataGrid>
 
 @code {

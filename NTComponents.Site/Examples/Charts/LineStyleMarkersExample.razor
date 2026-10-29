@@ -3,8 +3,20 @@
 @using NTComponents.Charts.Core.Series
 
 <NTChart TData="Sale" style="height: 320px">
-    <NTLineSeries Data="_sales" Title="Actual" PointShape="PointShape.Circle" XValue="@(sale => sale.Month)" YValueSelector="@(sale => sale.Actual)" />
-    <NTLineSeries Data="_sales" Title="Forecast" LineStyle="LineStyle.Dashed" StrokeWidth="3" PointStyle="PointStyle.Outlined" PointShape="PointShape.Diamond" PointSize="10" XValue="@(sale => sale.Month)" YValueSelector="@(sale => sale.Forecast)" />
+    <NTLineSeries Data="_sales"
+                  Title="Actual"
+                  PointShape="PointShape.Circle"
+                  XValue="@(sale => sale.Month)"
+                  YValueSelector="@(sale => sale.Actual)" />
+    <NTLineSeries Data="_sales"
+                  Title="Forecast"
+                  LineStyle="LineStyle.Dashed"
+                  StrokeWidth="3"
+                  PointStyle="PointStyle.Outlined"
+                  PointShape="PointShape.Diamond"
+                  PointSize="10"
+                  XValue="@(sale => sale.Month)"
+                  YValueSelector="@(sale => sale.Forecast)" />
     <NTLegend TData="Sale" />
     <NTComponents.Charts.Core.NTTooltip TData="Sale" />
 </NTChart>

@@ -4,10 +4,24 @@
 
 <NTChart TData="Sale" style="height: 320px">
     <NTXAxisOptions TData="Sale" TAxisType="string" ValueSelector="@(sale => sale.Month)" />
-    <NTYAxisOptions TData="Sale" TAxisValue="decimal" ValueSelector="@(sale => sale.Units)" Title="Units" />
-    <NTYAxisOptions TData="Sale" TAxisValue="decimal" ValueSelector="@(sale => sale.Revenue)" Title="Revenue ($)" ShowGridLines="false" />
-    <NTBarSeries Data="_sales" Title="Units" XValue="@(sale => sale.Month)" YValueSelector="@(sale => sale.Units)" />
-    <NTLineSeries Data="_sales" Title="Revenue" UseSecondaryYAxis="true" XValue="@(sale => sale.Month)" YValueSelector="@(sale => sale.Revenue)" />
+    <NTYAxisOptions TData="Sale"
+                    TAxisValue="decimal"
+                    ValueSelector="@(sale => sale.Units)"
+                    Title="Units" />
+    <NTYAxisOptions TData="Sale"
+                    TAxisValue="decimal"
+                    ValueSelector="@(sale => sale.Revenue)"
+                    Title="Revenue ($)"
+                    ShowGridLines="false" />
+    <NTBarSeries Data="_sales"
+                 Title="Units"
+                 XValue="@(sale => sale.Month)"
+                 YValueSelector="@(sale => sale.Units)" />
+    <NTLineSeries Data="_sales"
+                  Title="Revenue"
+                  UseSecondaryYAxis="true"
+                  XValue="@(sale => sale.Month)"
+                  YValueSelector="@(sale => sale.Revenue)" />
     <NTLegend TData="Sale" />
     <NTComponents.Charts.Core.NTTooltip TData="Sale" />
 </NTChart>

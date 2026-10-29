@@ -1,5 +1,15 @@
-<NTCombobox TValue="string" @bind-Value="_countries" Items="_options" Label="Countries" Searchable="true" EmptyText="No matching countries" SelectedTextSeparator=" / " />
-<NTCombobox TValue="string" @bind-Value="_sizes" Items="_sizeOptions" Label="Sizes" Searchable="false" />
+<NTCombobox TValue="string"
+            @bind-Value="_countries"
+            Items="_options"
+            Label="Countries"
+            Searchable="true"
+            EmptyText="No matching countries"
+            SelectedTextSeparator=" / " />
+<NTCombobox TValue="string"
+            @bind-Value="_sizes"
+            Items="_sizeOptions"
+            Label="Sizes"
+            Searchable="false" />
 <p>Countries: <output>@string.Join(", ", _countries)</output></p>
 
 @code {

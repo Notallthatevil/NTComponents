@@ -1,7 +1,25 @@
-<NTDataGrid TItem="Order" Items="_orders" Caption="All orders" ShowPagination="true" PageSize="5" PageSizeOptions="_pageSizes" QueryParameterPrefix="docs-orders" class="docs-fill">
-    <NTPropertyColumn TItem="Order" TValue="int" Title="Order" Property="order => order.Id" InitialSortDirection="SortDirection.Ascending" />
-    <NTPropertyColumn TItem="Order" TValue="string" Title="Customer" Property="order => order.Customer" />
-    <NTPropertyColumn TItem="Order" TValue="decimal" Title="Total" Property="order => order.Total" Format="C" />
+<NTDataGrid TItem="Order"
+            Items="_orders"
+            Caption="All orders"
+            ShowPagination="true"
+            PageSize="5"
+            PageSizeOptions="_pageSizes"
+            QueryParameterPrefix="docs-orders"
+            class="docs-fill">
+    <NTPropertyColumn TItem="Order"
+                      TValue="int"
+                      Title="Order"
+                      Property="order => order.Id"
+                      InitialSortDirection="SortDirection.Ascending" />
+    <NTPropertyColumn TItem="Order"
+                      TValue="string"
+                      Title="Customer"
+                      Property="order => order.Customer" />
+    <NTPropertyColumn TItem="Order"
+                      TValue="decimal"
+                      Title="Total"
+                      Property="order => order.Total"
+                      Format="C" />
 </NTDataGrid>
 
 @code {

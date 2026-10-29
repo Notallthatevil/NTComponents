@@ -4,7 +4,10 @@
 </div>
 <p>Disabled: <output>@_disabled</output>, read-only: <output>@_readOnly</output></p>
 
-<NTForm Model="_account" Disabled="_disabled" ReadOnly="_readOnly" class="docs-fill">
+<NTForm Model="_account"
+        Disabled="_disabled"
+        ReadOnly="_readOnly"
+        class="docs-fill">
     <NTFormFieldGridView MaxColumns="2">
         <NTInputText Label="Account name" @bind-Value="_account.Name" />
         <NTInputText Label="Billing email" InputType="TextInputType.Email" @bind-Value="_account.BillingEmail" />

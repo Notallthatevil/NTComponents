@@ -4,11 +4,33 @@
 @using NTComponents.Charts.Core.Series
 
 <NTChart TData="Plant" style="height: 320px">
-    <NTXAxisOptions TData="Plant" TAxisType="double" ValueSelector="@(plant => plant.Height)" Title="Height (cm)" />
-    <NTYAxisOptions TData="Plant" TAxisValue="decimal" ValueSelector="@(plant => plant.Yield)" Title="Yield (kg)" />
-    <NTPointSeries Data="_tomatoes" Title="Tomato" PointShape="PointShape.Circle" PointSize="10" XValue="@(plant => plant.Height)" YValueSelector="@(plant => plant.Yield)" />
-    <NTPointSeries Data="_peppers" Title="Pepper" PointShape="PointShape.Triangle" PointStyle="PointStyle.Outlined" PointSize="12" XValue="@(plant => plant.Height)" YValueSelector="@(plant => plant.Yield)" />
-    <NTPointSeries Data="_beans" Title="Bean" PointShape="PointShape.Square" PointSize="8" XValue="@(plant => plant.Height)" YValueSelector="@(plant => plant.Yield)" />
+    <NTXAxisOptions TData="Plant"
+                    TAxisType="double"
+                    ValueSelector="@(plant => plant.Height)"
+                    Title="Height (cm)" />
+    <NTYAxisOptions TData="Plant"
+                    TAxisValue="decimal"
+                    ValueSelector="@(plant => plant.Yield)"
+                    Title="Yield (kg)" />
+    <NTPointSeries Data="_tomatoes"
+                   Title="Tomato"
+                   PointShape="PointShape.Circle"
+                   PointSize="10"
+                   XValue="@(plant => plant.Height)"
+                   YValueSelector="@(plant => plant.Yield)" />
+    <NTPointSeries Data="_peppers"
+                   Title="Pepper"
+                   PointShape="PointShape.Triangle"
+                   PointStyle="PointStyle.Outlined"
+                   PointSize="12"
+                   XValue="@(plant => plant.Height)"
+                   YValueSelector="@(plant => plant.Yield)" />
+    <NTPointSeries Data="_beans"
+                   Title="Bean"
+                   PointShape="PointShape.Square"
+                   PointSize="8"
+                   XValue="@(plant => plant.Height)"
+                   YValueSelector="@(plant => plant.Yield)" />
     <NTLegend TData="Plant" />
     <NTComponents.Charts.Core.NTTooltip TData="Plant" />
 </NTChart>

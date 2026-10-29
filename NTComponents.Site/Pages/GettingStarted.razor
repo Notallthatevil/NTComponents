@@ -32,7 +32,10 @@
         <section id="host" class="docs-section">
             <h2>3. Add the head dependencies</h2>
             <p><code>NTHeadDependencies</code> loads the shared theme, fonts, measurements, and scripts. Render it once in the document head, after your app's scoped stylesheet. Choose your hosting model:</p>
-            <NTTabView Id="getting-started-hosting" AriaLabel="Hosting model" UpdateQueryString="false" class="docs-guide-tabs">
+            <NTTabView Id="getting-started-hosting"
+                       AriaLabel="Hosting model"
+                       UpdateQueryString="false"
+                       class="docs-guide-tabs">
                 <NTTab Label="Blazor Web App">
                     <p>In <code>Components/App.razor</code>, keep the template's head content and add the dependencies after the scoped stylesheet. Replace <code>YourApp</code> with your assembly name.</p>
                     <DocsCode Title="Components/App.razor" Code="@_webAppHead" />

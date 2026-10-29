@@ -3,7 +3,13 @@
 
 <div class="docs-fill" style="height: 360px">
     <NTChart TData="Account">
-        <NTTreeMapSeries TData="Account" Data="_accounts" XValue="@(a => a.Name)" ValueSelector="@(a => a.Balance)" GroupSelector="@(a => a.Kind)" ColorSelector="PickColor" ShowValuesInLabels="false" />
+        <NTTreeMapSeries TData="Account"
+                         Data="_accounts"
+                         XValue="@(a => a.Name)"
+                         ValueSelector="@(a => a.Balance)"
+                         GroupSelector="@(a => a.Kind)"
+                         ColorSelector="PickColor"
+                         ShowValuesInLabels="false" />
     </NTChart>
 </div>
 

@@ -9,7 +9,10 @@
 </div>
 
 <NTChart TData="Reading" style="height: 320px">
-    <NTLineSeries Data="_readings" Interpolation="_interpolation" XValue="@(reading => reading.Month)" YValueSelector="@(reading => reading.Value)" />
+    <NTLineSeries Data="_readings"
+                  Interpolation="_interpolation"
+                  XValue="@(reading => reading.Month)"
+                  YValueSelector="@(reading => reading.Value)" />
     <NTComponents.Charts.Core.NTTooltip TData="Reading" />
 </NTChart>
 

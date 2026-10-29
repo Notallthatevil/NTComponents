@@ -1,5 +1,8 @@
 <NTFormFieldGridView class="docs-fill" MaxColumns="1">
-    <NTTextArea Label="Notes" Placeholder="Add anything the team should know" BindOnInput="true" @bind-Value="_notes" />
+    <NTTextArea Label="Notes"
+                Placeholder="Add anything the team should know"
+                BindOnInput="true"
+                @bind-Value="_notes" />
 </NTFormFieldGridView>
 <p>Characters: <output>@(_notes?.Length ?? 0)</output></p>
 <p>Notes: <output>@_notes</output></p>

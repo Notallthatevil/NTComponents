@@ -1,6 +1,23 @@
-<NTInputSlider TNumber="double" @bind-Value="_opacity" Label="Opacity" Min="0" Max="1" Step="0.05" ShowValueIndicator="true" BindAfter="OnChanged" />
-<NTInputSlider TNumber="int" @bind-Value="_disabledLevel" Label="Disabled" Min="0" Max="100" Disabled="true" />
-<NTInputSlider TNumber="int" @bind-Value="_readOnlyLevel" Label="Read-only" Min="0" Max="100" ReadOnly="true" />
+<NTInputSlider TNumber="double"
+               @bind-Value="_opacity"
+               Label="Opacity"
+               Min="0"
+               Max="1"
+               Step="0.05"
+               ShowValueIndicator="true"
+               BindAfter="OnChanged" />
+<NTInputSlider TNumber="int"
+               @bind-Value="_disabledLevel"
+               Label="Disabled"
+               Min="0"
+               Max="100"
+               Disabled="true" />
+<NTInputSlider TNumber="int"
+               @bind-Value="_readOnlyLevel"
+               Label="Read-only"
+               Min="0"
+               Max="100"
+               ReadOnly="true" />
 <p>Opacity: <output>@_opacity.ToString("0.00")</output>, changes: <output>@_changes</output></p>
 
 @code {

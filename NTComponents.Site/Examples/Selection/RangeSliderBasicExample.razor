@@ -1,4 +1,12 @@
-<NTInputRangeSlider TNumber="int" @bind-Value="_budget" Label="Budget" Min="0" Max="1000" Step="50" ShowValueIndicator="true" StartHandleLabel="Minimum budget" EndHandleLabel="Maximum budget" />
+<NTInputRangeSlider TNumber="int"
+                    @bind-Value="_budget"
+                    Label="Budget"
+                    Min="0"
+                    Max="1000"
+                    Step="50"
+                    ShowValueIndicator="true"
+                    StartHandleLabel="Minimum budget"
+                    EndHandleLabel="Maximum budget" />
 <p>Budget: <output>@_budget.Start - @_budget.End</output></p>
 
 @code {

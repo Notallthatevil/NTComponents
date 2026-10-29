@@ -4,7 +4,10 @@
 </div>
 <p>Active step: <output>@(_step + 1)</output></p>
 
-<NTWizard @bind-ActiveStepIndex="_step" NavigationMode="NTWizardNavigationMode.Free" LayoutDirection="LayoutDirection.Horizontal" class="docs-fill">
+<NTWizard @bind-ActiveStepIndex="_step"
+          NavigationMode="NTWizardNavigationMode.Free"
+          LayoutDirection="LayoutDirection.Horizontal"
+          class="docs-fill">
     <NTWizardStep Title="Cart">
         <p>3 items, $42.50.</p>
     </NTWizardStep>

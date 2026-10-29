@@ -1,7 +1,17 @@
-<NTDataGrid TItem="Order" Items="_orders" Caption="Orders with line items" RowKey="order => order.Id" class="docs-fill">
+<NTDataGrid TItem="Order"
+            Items="_orders"
+            Caption="Orders with line items"
+            RowKey="order => order.Id"
+            class="docs-fill">
     <ChildContent>
-        <NTPropertyColumn TItem="Order" TValue="int" Title="Order" Property="order => order.Id" />
-        <NTPropertyColumn TItem="Order" TValue="string" Title="Customer" Property="order => order.Customer" />
+        <NTPropertyColumn TItem="Order"
+                          TValue="int"
+                          Title="Order"
+                          Property="order => order.Id" />
+        <NTPropertyColumn TItem="Order"
+                          TValue="string"
+                          Title="Customer"
+                          Property="order => order.Customer" />
     </ChildContent>
     <RowDetailTemplate Context="order">
         <ul>

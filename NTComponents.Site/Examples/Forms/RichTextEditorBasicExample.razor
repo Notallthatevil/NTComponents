@@ -1,4 +1,8 @@
-<NTRichTextEditor @bind-Value="_notes" Label="Meeting notes" Placeholder="Type some formatted text" BindOnInput="true" class="docs-fill" />
+<NTRichTextEditor @bind-Value="_notes"
+                  Label="Meeting notes"
+                  Placeholder="Type some formatted text"
+                  BindOnInput="true"
+                  class="docs-fill" />
 <p>Length: <output>@(_notes?.Length ?? 0)</output> characters of HTML</p>
 
 @code {

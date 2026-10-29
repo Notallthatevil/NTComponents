@@ -1,6 +1,12 @@
 <NTFormFieldGridView class="docs-fill" MaxColumns="2">
-    <NTTextArea Label="Auto-grow (2 to 6 lines)" MinVisibleLines="2" MaxVisibleLines="6" @bind-Value="_grow" />
-    <NTTextArea Label="Fixed height" AutoGrow="false" MinVisibleLines="4" @bind-Value="_fixed" />
+    <NTTextArea Label="Auto-grow (2 to 6 lines)"
+                MinVisibleLines="2"
+                MaxVisibleLines="6"
+                @bind-Value="_grow" />
+    <NTTextArea Label="Fixed height"
+                AutoGrow="false"
+                MinVisibleLines="4"
+                @bind-Value="_fixed" />
 </NTFormFieldGridView>
 
 @code {

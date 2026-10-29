@@ -1,7 +1,14 @@
 @using NTComponents.Scheduler
 
 <p>Showing <output>@_view</output> for <output>@_date.ToString("MMM d, yyyy")</output></p>
-<NTScheduler TEventType="TnTEvent" Events="_events" @bind-View="_view" @bind-Date="_date" ShowDescription="true" AriaLabel="Clinic appointments" class="docs-fill" style="block-size: 36rem;" />
+<NTScheduler TEventType="TnTEvent"
+             Events="_events"
+             @bind-View="_view"
+             @bind-Date="_date"
+             ShowDescription="true"
+             AriaLabel="Clinic appointments"
+             class="docs-fill"
+             style="block-size: 36rem;" />
 
 @code {
     private NTSchedulerView _view = NTSchedulerView.Month;

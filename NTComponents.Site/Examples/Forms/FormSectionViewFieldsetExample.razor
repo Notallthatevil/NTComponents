@@ -1,5 +1,8 @@
 <NTForm Model="_prefs" class="docs-fill">
-    <NTFormSectionView Heading="Notification preferences" Description="Choose where we reach you." UseFieldset="true" MaxColumns="2">
+    <NTFormSectionView Heading="Notification preferences"
+                       Description="Choose where we reach you."
+                       UseFieldset="true"
+                       MaxColumns="2">
         <NTInputText Label="Notification email" InputType="TextInputType.Email" @bind-Value="_prefs.Email" />
         <NTInputText Label="Digest frequency" @bind-Value="_prefs.Frequency" />
     </NTFormSectionView>

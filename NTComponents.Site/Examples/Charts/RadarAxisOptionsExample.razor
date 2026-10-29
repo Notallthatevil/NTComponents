@@ -4,8 +4,16 @@
 
 <div class="docs-fill" style="height: 400px">
     <NTChart TData="Metric">
-        <NTRadialAxisOptions TData="Metric" Levels="4" Shape="RadialAxisShape.Circle" Labels="_labels" />
-        <NTRadarSeries TData="Metric" Data="_metrics" XValue="@(m => m.Key)" ValueSelector="@(m => m.Value)" MaxValue="100m" Title="Team" />
+        <NTRadialAxisOptions TData="Metric"
+                             Levels="4"
+                             Shape="RadialAxisShape.Circle"
+                             Labels="_labels" />
+        <NTRadarSeries TData="Metric"
+                       Data="_metrics"
+                       XValue="@(m => m.Key)"
+                       ValueSelector="@(m => m.Value)"
+                       MaxValue="100m"
+                       Title="Team" />
     </NTChart>
 </div>
 

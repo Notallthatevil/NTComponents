@@ -1,4 +1,8 @@
-<NTSelect TValue="Priority" @bind-Value="_priority" Label="Priority" LeadingIcon="MaterialIcon.Label" SupportingText="TValue can be an enum or any value type.">
+<NTSelect TValue="Priority"
+          @bind-Value="_priority"
+          Label="Priority"
+          LeadingIcon="MaterialIcon.Label"
+          SupportingText="TValue can be an enum or any value type.">
     @foreach (var priority in Enum.GetValues<Priority>()) {
         <option value="@priority">@priority</option>
     }

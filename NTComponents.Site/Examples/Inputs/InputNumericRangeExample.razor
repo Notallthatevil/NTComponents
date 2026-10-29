@@ -1,6 +1,17 @@
 <NTFormFieldGridView class="docs-fill" MaxColumns="1">
-    <NTInputNumeric TNumber="int" Label="Guests" min="1" max="12" step="1" SupportingText="Between 1 and 12." @bind-Value="_guests" />
-    <NTInputNumeric TNumber="decimal" Label="Rating" min="0" max="5" step="0.5" @bind-Value="_rating" />
+    <NTInputNumeric TNumber="int"
+                    Label="Guests"
+                    min="1"
+                    max="12"
+                    step="1"
+                    SupportingText="Between 1 and 12."
+                    @bind-Value="_guests" />
+    <NTInputNumeric TNumber="decimal"
+                    Label="Rating"
+                    min="0"
+                    max="5"
+                    step="0.5"
+                    @bind-Value="_rating" />
 </NTFormFieldGridView>
 <p>Guests: <output>@_guests</output>, rating: <output>@_rating</output></p>
 

@@ -3,7 +3,11 @@
 
 <div class="docs-fill" style="height: 400px">
     <NTChart TData="Package">
-        <NTBubblePackSeries TData="Package" Data="_packages" XValue="@(p => p.Name)" ValueSelector="@(p => p.Downloads)" Interactions="ChartInteractions.ZoomAll" />
+        <NTBubblePackSeries TData="Package"
+                            Data="_packages"
+                            XValue="@(p => p.Name)"
+                            ValueSelector="@(p => p.Downloads)"
+                            Interactions="ChartInteractions.ZoomAll" />
     </NTChart>
 </div>
 

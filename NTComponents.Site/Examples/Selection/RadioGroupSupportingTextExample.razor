@@ -1,7 +1,21 @@
-<NTInputRadioGroup TValue="string" @bind-Value="_plan" Label="Plan" SupportingText="You can change plans at any time.">
-    <NTInputRadio TValue="string" Value="@("free")" Label="Free" SupportingText="Up to 3 projects" />
-    <NTInputRadio TValue="string" Value="@("team")" Label="Team" SupportingText="Unlimited projects, shared workspaces" LeadingIcon="MaterialIcon.Label" />
-    <NTInputRadio TValue="string" Value="@("enterprise")" Label="Enterprise" SupportingText="Contact sales" Disabled="true" />
+<NTInputRadioGroup TValue="string"
+                   @bind-Value="_plan"
+                   Label="Plan"
+                   SupportingText="You can change plans at any time.">
+    <NTInputRadio TValue="string"
+                  Value="@("free")"
+                  Label="Free"
+                  SupportingText="Up to 3 projects" />
+    <NTInputRadio TValue="string"
+                  Value="@("team")"
+                  Label="Team"
+                  SupportingText="Unlimited projects, shared workspaces"
+                  LeadingIcon="MaterialIcon.Label" />
+    <NTInputRadio TValue="string"
+                  Value="@("enterprise")"
+                  Label="Enterprise"
+                  SupportingText="Contact sales"
+                  Disabled="true" />
 </NTInputRadioGroup>
 <p>Plan: <output>@_plan</output></p>
 

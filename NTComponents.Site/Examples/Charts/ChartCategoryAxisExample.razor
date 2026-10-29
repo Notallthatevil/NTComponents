@@ -3,8 +3,15 @@
 @using NTComponents.Charts.Core.Axes
 
 <NTChart TData="Sale" style="height: 320px">
-    <NTXAxisOptions TData="Sale" TAxisType="string" ValueSelector="@(sale => sale.Month)" Title="Month" />
-    <NTYAxisOptions TData="Sale" TAxisValue="decimal" ValueSelector="@(sale => sale.Units)" Title="Units sold" LabelFormat="{0:0} u" />
+    <NTXAxisOptions TData="Sale"
+                    TAxisType="string"
+                    ValueSelector="@(sale => sale.Month)"
+                    Title="Month" />
+    <NTYAxisOptions TData="Sale"
+                    TAxisValue="decimal"
+                    ValueSelector="@(sale => sale.Units)"
+                    Title="Units sold"
+                    LabelFormat="{0:0} u" />
     <NTBarSeries Data="_sales" XValue="@(sale => sale.Month)" YValueSelector="@(sale => sale.Units)" />
     <NTComponents.Charts.Core.NTTooltip TData="Sale" />
 </NTChart>

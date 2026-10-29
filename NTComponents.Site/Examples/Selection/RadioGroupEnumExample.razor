@@ -1,4 +1,7 @@
-<NTInputRadioGroup TValue="Size" @bind-Value="_size" Label="T-shirt size" BindAfter="OnChanged">
+<NTInputRadioGroup TValue="Size"
+                   @bind-Value="_size"
+                   Label="T-shirt size"
+                   BindAfter="OnChanged">
     @foreach (var size in Enum.GetValues<Size>()) {
         <NTInputRadio TValue="Size" Value="size" Label="@size.ToString()" />
     }

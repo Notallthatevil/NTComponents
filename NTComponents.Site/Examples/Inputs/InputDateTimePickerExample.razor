@@ -1,6 +1,12 @@
 <NTFormFieldGridView class="docs-fill" MaxColumns="2">
-    <NTInputDateTime DateTimeType="DateOnly?" Label="Check-in" EnableCustomPicker="true" @bind-Value="_checkIn" />
-    <NTInputDateTime DateTimeType="DateTime?" Label="Meeting" EnableCustomPicker="true" @bind-Value="_meeting" />
+    <NTInputDateTime DateTimeType="DateOnly?"
+                     Label="Check-in"
+                     EnableCustomPicker="true"
+                     @bind-Value="_checkIn" />
+    <NTInputDateTime DateTimeType="DateTime?"
+                     Label="Meeting"
+                     EnableCustomPicker="true"
+                     @bind-Value="_meeting" />
 </NTFormFieldGridView>
 <p>Check-in: <output>@_checkIn</output></p>
 

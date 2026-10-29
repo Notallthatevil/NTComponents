@@ -4,7 +4,10 @@
 <div class="docs-fill" style="height: 360px">
     <NTChart TData="Browser" TitleOptions="@(new NTTitleOptions("Browser share"))">
         <NTLegend TData="Browser" />
-        <NTPieSeries TData="Browser" Data="_browsers" XValue="@(b => b.Name)" ValueSelector="@(b => b.Share)" />
+        <NTPieSeries TData="Browser"
+                     Data="_browsers"
+                     XValue="@(b => b.Name)"
+                     ValueSelector="@(b => b.Share)" />
     </NTChart>
 </div>
 

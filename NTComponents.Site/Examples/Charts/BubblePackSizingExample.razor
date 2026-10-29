@@ -3,7 +3,15 @@
 
 <div class="docs-fill" style="height: 400px">
     <NTChart TData="City">
-        <NTBubblePackSeries TData="City" Data="_cities" XValue="@(c => c.Name)" ValueSelector="@(c => c.Population)" MinBubbleRadius="24f" MaxBubbleRadius="90f" TargetFillRatio="0.45f" DataLabelFormat="{0:N1}M" ShowValuesInLabels="true" />
+        <NTBubblePackSeries TData="City"
+                            Data="_cities"
+                            XValue="@(c => c.Name)"
+                            ValueSelector="@(c => c.Population)"
+                            MinBubbleRadius="24f"
+                            MaxBubbleRadius="90f"
+                            TargetFillRatio="0.45f"
+                            DataLabelFormat="{0:N1}M"
+                            ShowValuesInLabels="true" />
     </NTChart>
 </div>
 

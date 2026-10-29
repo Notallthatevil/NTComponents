@@ -3,7 +3,10 @@
 @using NTComponents.Charts.Core.Axes
 
 <NTChart TData="Signup" style="height: 320px">
-    <NTXAxisOptions TData="Signup" TAxisType="DateTime" ValueSelector="@(signup => signup.Month)" Title="2025" />
+    <NTXAxisOptions TData="Signup"
+                    TAxisType="DateTime"
+                    ValueSelector="@(signup => signup.Month)"
+                    Title="2025" />
     <NTLineSeries Data="_signups" XValue="@(signup => signup.Month)" YValueSelector="@(signup => signup.Count)" />
     <NTComponents.Charts.Core.NTTooltip TData="Signup" />
 </NTChart>

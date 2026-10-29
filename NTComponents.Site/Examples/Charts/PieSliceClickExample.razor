@@ -4,7 +4,11 @@
 
 <div class="docs-fill" style="height: 360px">
     <NTChart TData="Fruit">
-        <NTPieSeries TData="Fruit" Data="_fruits" XValue="@(f => f.Name)" ValueSelector="@(f => f.Crates)" OnClick="OnSliceClicked" />
+        <NTPieSeries TData="Fruit"
+                     Data="_fruits"
+                     XValue="@(f => f.Name)"
+                     ValueSelector="@(f => f.Crates)"
+                     OnClick="OnSliceClicked" />
     </NTChart>
 </div>
 <p>@_message</p>

@@ -1,5 +1,9 @@
 <p>Choose a file to read it locally and see its byte count.</p>
-<NTFileUpload @bind-Value="_files" Label="Attachment" ChooseButtonText="Choose file" OnUploadFile="ReadFileAsync" class="docs-fill" />
+<NTFileUpload @bind-Value="_files"
+              Label="Attachment"
+              ChooseButtonText="Choose file"
+              OnUploadFile="ReadFileAsync"
+              class="docs-fill" />
 <output aria-label="Upload result">@_result</output>
 
 @code {

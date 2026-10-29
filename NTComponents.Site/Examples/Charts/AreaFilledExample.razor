@@ -2,7 +2,10 @@
 @using NTComponents.Charts.Core
 
 <NTChart TData="Visit" style="height: 320px">
-    <NTAreaSeries Data="_visits" AreaOpacity="0.4f" XValue="@(visit => visit.Month)" YValueSelector="@(visit => visit.Count)" />
+    <NTAreaSeries Data="_visits"
+                  AreaOpacity="0.4f"
+                  XValue="@(visit => visit.Month)"
+                  YValueSelector="@(visit => visit.Count)" />
     <NTComponents.Charts.Core.NTTooltip TData="Visit" />
 </NTChart>
 

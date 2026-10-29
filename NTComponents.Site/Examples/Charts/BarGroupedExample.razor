@@ -2,8 +2,14 @@
 @using NTComponents.Charts.Core
 
 <NTChart TData="Sale" style="height: 320px">
-    <NTBarSeries Data="_sales" Title="Online" XValue="@(sale => sale.Quarter)" YValueSelector="@(sale => sale.Online)" />
-    <NTBarSeries Data="_sales" Title="In store" XValue="@(sale => sale.Quarter)" YValueSelector="@(sale => sale.InStore)" />
+    <NTBarSeries Data="_sales"
+                 Title="Online"
+                 XValue="@(sale => sale.Quarter)"
+                 YValueSelector="@(sale => sale.Online)" />
+    <NTBarSeries Data="_sales"
+                 Title="In store"
+                 XValue="@(sale => sale.Quarter)"
+                 YValueSelector="@(sale => sale.InStore)" />
     <NTLegend TData="Sale" />
     <NTComponents.Charts.Core.NTTooltip TData="Sale" />
 </NTChart>

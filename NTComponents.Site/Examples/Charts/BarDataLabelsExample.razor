@@ -2,7 +2,11 @@
 @using NTComponents.Charts.Core
 
 <NTChart TData="Sale" style="height: 320px">
-    <NTBarSeries Data="_sales" ShowDataLabels="true" DataLabelFormat="{0:0}" XValue="@(sale => sale.Month)" YValueSelector="@(sale => sale.Total)" />
+    <NTBarSeries Data="_sales"
+                 ShowDataLabels="true"
+                 DataLabelFormat="{0:0}"
+                 XValue="@(sale => sale.Month)"
+                 YValueSelector="@(sale => sale.Total)" />
 </NTChart>
 
 @code {

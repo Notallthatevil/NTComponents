@@ -16,7 +16,10 @@
     <NTMenuButtonItem Label="Date modified" Selected="@(_sort == "Date modified")" OnClickCallback='_ => _sort = "Date modified"' />
     <NTMenuButtonItem Label="Size" Disabled="true" />
     <NTMenuDividerItem Inset="true" />
-    <NTMenuButtonItem Label="Shared with me" ShowBadge="true" BadgeContent="3" BadgeAriaLabel="3 new items" />
+    <NTMenuButtonItem Label="Shared with me"
+                      ShowBadge="true"
+                      BadgeContent="3"
+                      BadgeAriaLabel="3 new items" />
 </NTMenu>
 
 @code {

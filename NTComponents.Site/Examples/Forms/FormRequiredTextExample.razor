@@ -1,6 +1,9 @@
 @using System.ComponentModel.DataAnnotations
 
-<NTForm Model="_signup" ShowRequiredSupportingText="true" RequiredSupportingText="Required to create your account" class="docs-fill">
+<NTForm Model="_signup"
+        ShowRequiredSupportingText="true"
+        RequiredSupportingText="Required to create your account"
+        class="docs-fill">
     <DataAnnotationsValidator />
     <NTFormFieldGridView MaxColumns="2">
         <NTInputText Label="Full name" @bind-Value="_signup.FullName" />

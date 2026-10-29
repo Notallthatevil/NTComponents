@@ -1,7 +1,10 @@
 <div class="docs-row">
     <NTChip Label="Unread" Variant="NTChipVariant.Filter" @bind-Selected="_unread" />
     <NTChip Label="Starred" Variant="NTChipVariant.Filter" @bind-Selected="_starred" />
-    <NTChip Label="Has attachments" Variant="NTChipVariant.Filter" LeadingIcon="MaterialIcon.Attachment" @bind-Selected="_attachments" />
+    <NTChip Label="Has attachments"
+            Variant="NTChipVariant.Filter"
+            LeadingIcon="MaterialIcon.Attachment"
+            @bind-Selected="_attachments" />
 </div>
 <p>Active filters: <output>@Summary</output></p>
 

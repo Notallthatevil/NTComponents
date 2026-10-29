@@ -1,6 +1,14 @@
 <div class="docs-row">
-    <NTIconButton Icon="MaterialIcon.Bookmark" AriaLabel="Bookmark article" Variant="NTButtonVariant.Tonal" IsToggleButton="true" @bind-Selected="_bookmarked" />
-    <NTIconButton Icon="MaterialIcon.Star" AriaLabel="Star article" Variant="NTButtonVariant.Outlined" IsToggleButton="true" @bind-Selected="_starred" />
+    <NTIconButton Icon="MaterialIcon.Bookmark"
+                  AriaLabel="Bookmark article"
+                  Variant="NTButtonVariant.Tonal"
+                  IsToggleButton="true"
+                  @bind-Selected="_bookmarked" />
+    <NTIconButton Icon="MaterialIcon.Star"
+                  AriaLabel="Star article"
+                  Variant="NTButtonVariant.Outlined"
+                  IsToggleButton="true"
+                  @bind-Selected="_starred" />
 </div>
 <p>Bookmarked: <output>@(_bookmarked ? "yes" : "no")</output>, starred: <output>@(_starred ? "yes" : "no")</output></p>
 

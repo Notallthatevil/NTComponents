@@ -1,4 +1,9 @@
-<NTCombobox TValue="string" @bind-Value="_roles" Items="_options" Label="Roles" Placeholder="Choose roles" SupportingText="Select one or more roles." />
+<NTCombobox TValue="string"
+            @bind-Value="_roles"
+            Items="_options"
+            Label="Roles"
+            Placeholder="Choose roles"
+            SupportingText="Select one or more roles." />
 <p>Roles: <output>@string.Join(", ", _roles)</output></p>
 
 @code {

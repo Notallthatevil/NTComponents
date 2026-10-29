@@ -1,6 +1,12 @@
 <div class="docs-row">
-    <NTButton Label="Favorite" LeadingIcon="MaterialIcon.Favorite" IsToggleButton="true" @bind-Selected="_favorite" />
-    <NTButton Label="Notifications" Variant="NTButtonVariant.Outlined" IsToggleButton="true" @bind-Selected="_notifications" />
+    <NTButton Label="Favorite"
+              LeadingIcon="MaterialIcon.Favorite"
+              IsToggleButton="true"
+              @bind-Selected="_favorite" />
+    <NTButton Label="Notifications"
+              Variant="NTButtonVariant.Outlined"
+              IsToggleButton="true"
+              @bind-Selected="_notifications" />
 </div>
 <p>Favorite: <output>@(_favorite ? "on" : "off")</output>, notifications: <output>@(_notifications ? "on" : "off")</output></p>
 

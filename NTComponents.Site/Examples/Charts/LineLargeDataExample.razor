@@ -3,7 +3,11 @@
 @using NTComponents.Charts.Core.Series
 
 <NTChart TData="Sample" style="height: 320px">
-    <NTLineSeries Data="_samples" Interactions="ChartInteractions.All" PointStyle="PointStyle.None" XValue="@(sample => sample.Index)" YValueSelector="@(sample => sample.Value)" />
+    <NTLineSeries Data="_samples"
+                  Interactions="ChartInteractions.All"
+                  PointStyle="PointStyle.None"
+                  XValue="@(sample => sample.Index)"
+                  YValueSelector="@(sample => sample.Value)" />
     <NTComponents.Charts.Core.NTTooltip TData="Sample" />
 </NTChart>
 

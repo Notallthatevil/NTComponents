@@ -1,4 +1,7 @@
-<NTSplitButton Label="Reply" LeadingIcon="MaterialIcon.Reply" Variant="NTButtonVariant.Tonal" @bind-Expanded="_expanded">
+<NTSplitButton Label="Reply"
+               LeadingIcon="MaterialIcon.Reply"
+               Variant="NTButtonVariant.Tonal"
+               @bind-Expanded="_expanded">
     <NTMenuButtonItem Label="Reply all" OnClickCallback="@(() => _choice = "Reply all")" />
     <NTMenuButtonItem Label="Forward" OnClickCallback="@(() => _choice = "Forward")" />
     <NTMenuAnchorItem Label="Open in inbox" Href="/components" />

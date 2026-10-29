@@ -3,11 +3,23 @@
 
 <NTLayout>
     <NTNavigationRail AriaLabel="Documentation navigation" OpenByDefault="true" >
-        <NTNavigationRailItem Label="Home" Href="/" Match="NavLinkMatch.All" Icon="MaterialIcon.Home" />
-        <NTNavigationRailItem Label="Getting started" Href="/getting-started" Match="NavLinkMatch.All" Icon="MaterialIcon.RocketLaunch" />
-        <NTNavigationRailItem Label="Theme creator" Href="/tools/material-theme" Match="NavLinkMatch.All" Icon="MaterialIcon.Palette" />
+        <NTNavigationRailItem Label="Home"
+                              Href="/"
+                              Match="NavLinkMatch.All"
+                              Icon="MaterialIcon.Home" />
+        <NTNavigationRailItem Label="Getting started"
+                              Href="/getting-started"
+                              Match="NavLinkMatch.All"
+                              Icon="MaterialIcon.RocketLaunch" />
+        <NTNavigationRailItem Label="Theme creator"
+                              Href="/tools/material-theme"
+                              Match="NavLinkMatch.All"
+                              Icon="MaterialIcon.Palette" />
         <NTNavigationRailGroup Label="Components" Icon="MaterialIcon.Widgets">
-            <NTNavigationRailItem Label="All components" Href="/components" Match="NavLinkMatch.All" Icon="MaterialIcon.GridView" />
+            <NTNavigationRailItem Label="All components"
+                                  Href="/components"
+                                  Match="NavLinkMatch.All"
+                                  Icon="MaterialIcon.GridView" />
             @foreach (var group in Catalog.ComponentGroups) {
                 var components = group.ToArray();
                 if (components.Length == 1) {
@@ -24,7 +36,10 @@
             }
         </NTNavigationRailGroup>
         <NTNavigationRailGroup Label="Enums" Icon="MaterialIcon.DataObject">
-            <NTNavigationRailItem Label="All enums" Href="/reference/enums" Match="NavLinkMatch.All" Icon="MaterialIcon.ViewList" />
+            <NTNavigationRailItem Label="All enums"
+                                  Href="/reference/enums"
+                                  Match="NavLinkMatch.All"
+                                  Icon="MaterialIcon.ViewList" />
             @foreach (var group in Catalog.EnumGroups) {
                 var references = group.ToArray();
                 if (references.Length == 1) {
@@ -41,7 +56,10 @@
             }
         </NTNavigationRailGroup>
         <NTNavigationRailGroup Label="Constants" Icon="MaterialIcon.Tag">
-            <NTNavigationRailItem Label="All constants" Href="/reference/constants" Match="NavLinkMatch.All" Icon="MaterialIcon.List" />
+            <NTNavigationRailItem Label="All constants"
+                                  Href="/reference/constants"
+                                  Match="NavLinkMatch.All"
+                                  Icon="MaterialIcon.List" />
             @foreach (var group in Catalog.ConstantGroups) {
                 var references = group.ToArray();
                 if (references.Length == 1) {

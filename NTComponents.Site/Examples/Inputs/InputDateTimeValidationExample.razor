@@ -1,7 +1,10 @@
 <NTForm Model="_model" OnValidSubmit="Submit" class="docs-fill">
     <DataAnnotationsValidator />
     <NTFormSectionView MaxColumns="1">
-        <NTInputDateTime DateTimeType="DateTime?" Label="Delivery time" SupportingText="Required." @bind-Value="_model.DeliveryTime" />
+        <NTInputDateTime DateTimeType="DateTime?"
+                         Label="Delivery time"
+                         SupportingText="Required."
+                         @bind-Value="_model.DeliveryTime" />
         <div class="docs-row">
             <NTButton Type="ButtonType.Submit" Label="Schedule delivery" />
         </div>

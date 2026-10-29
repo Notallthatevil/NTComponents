@@ -4,7 +4,11 @@
 <div class="docs-fill" style="height: 360px">
     <NTChart TData="Expense" TitleOptions="@(new NTTitleOptions("Monthly budget"))">
         <NTLegend TData="Expense" Position="LegendPosition.Right" />
-        <NTPieSeries TData="Expense" Data="_expenses" XValue="@(e => e.Category)" ValueSelector="@(e => e.Amount)" InnerRadiusRatio="0.6f" />
+        <NTPieSeries TData="Expense"
+                     Data="_expenses"
+                     XValue="@(e => e.Category)"
+                     ValueSelector="@(e => e.Amount)"
+                     InnerRadiusRatio="0.6f" />
     </NTChart>
 </div>
 

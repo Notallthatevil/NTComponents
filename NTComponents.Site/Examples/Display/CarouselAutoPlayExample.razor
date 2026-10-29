@@ -1,4 +1,9 @@
-<NTCarousel class="docs-fill" AriaLabel="Promotions" Appearance="CarouselAppearance.Hero" AutoPlayInterval="4" ItemHeight="180" OnIndexChanged="@(index => _index = index)">
+<NTCarousel class="docs-fill"
+            AriaLabel="Promotions"
+            Appearance="CarouselAppearance.Hero"
+            AutoPlayInterval="4"
+            ItemHeight="180"
+            OnIndexChanged="@(index => _index = index)">
     @for (var i = 0; i < _promos.Length; i++) {
         var promo = _promos[i];
         var role = _roles[i % _roles.Length];

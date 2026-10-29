@@ -2,9 +2,21 @@
 @using NTComponents.Charts.Core
 
 <NTChart TData="Visit" style="height: 320px">
-    <NTAreaSeries Data="_visits" Title="Social" AreaOpacity="0.9f" XValue="@(visit => visit.Month)" YValueSelector="@(visit => visit.Search + visit.Direct + visit.Social)" />
-    <NTAreaSeries Data="_visits" Title="Direct" AreaOpacity="0.9f" XValue="@(visit => visit.Month)" YValueSelector="@(visit => visit.Search + visit.Direct)" />
-    <NTAreaSeries Data="_visits" Title="Search" AreaOpacity="0.9f" XValue="@(visit => visit.Month)" YValueSelector="@(visit => visit.Search)" />
+    <NTAreaSeries Data="_visits"
+                  Title="Social"
+                  AreaOpacity="0.9f"
+                  XValue="@(visit => visit.Month)"
+                  YValueSelector="@(visit => visit.Search + visit.Direct + visit.Social)" />
+    <NTAreaSeries Data="_visits"
+                  Title="Direct"
+                  AreaOpacity="0.9f"
+                  XValue="@(visit => visit.Month)"
+                  YValueSelector="@(visit => visit.Search + visit.Direct)" />
+    <NTAreaSeries Data="_visits"
+                  Title="Search"
+                  AreaOpacity="0.9f"
+                  XValue="@(visit => visit.Month)"
+                  YValueSelector="@(visit => visit.Search)" />
     <NTLegend TData="Visit" />
     <NTComponents.Charts.Core.NTTooltip TData="Visit" />
 </NTChart>

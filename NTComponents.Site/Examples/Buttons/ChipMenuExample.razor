@@ -1,5 +1,8 @@
 <div class="docs-row">
-    <NTChip Label="@_sort" Variant="NTChipVariant.Filter" LeadingIcon="MaterialIcon.Tune" MenuAriaLabel="Sort order">
+    <NTChip Label="@_sort"
+            Variant="NTChipVariant.Filter"
+            LeadingIcon="MaterialIcon.Tune"
+            MenuAriaLabel="Sort order">
         <MenuContent>
             <NTMenuButtonItem Label="Newest first" OnClickCallback="@(() => _sort = "Newest first")" />
             <NTMenuButtonItem Label="Oldest first" OnClickCallback="@(() => _sort = "Oldest first")" />

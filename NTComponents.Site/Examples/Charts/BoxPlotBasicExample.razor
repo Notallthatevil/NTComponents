@@ -3,7 +3,10 @@
 @using NTComponents.Charts.Core.Series
 
 <NTChart TData="Batch" style="height: 320px">
-    <NTBoxPlotSeries Data="_batches" XValue="@(batch => batch.Name)" YValueSelector="@(batch => batch.Times.Median)" BoXValue="@(batch => batch.Times)" />
+    <NTBoxPlotSeries Data="_batches"
+                     XValue="@(batch => batch.Name)"
+                     YValueSelector="@(batch => batch.Times.Median)"
+                     BoXValue="@(batch => batch.Times)" />
     <NTComponents.Charts.Core.NTTooltip TData="Batch" />
 </NTChart>
 

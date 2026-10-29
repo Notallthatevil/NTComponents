@@ -1,10 +1,39 @@
-<NTDataGrid TItem="Order" Items="_orders" Caption="Orders by region" RowKey="order => order.Id" ShowPagination="true" PageSize="5" PageSizeOptions="_pageSizes" QueryParameterPrefix="docs-responsive" class="docs-fill">
+<NTDataGrid TItem="Order"
+            Items="_orders"
+            Caption="Orders by region"
+            RowKey="order => order.Id"
+            ShowPagination="true"
+            PageSize="5"
+            PageSizeOptions="_pageSizes"
+            QueryParameterPrefix="docs-responsive"
+            class="docs-fill">
     <ChildContent>
-        <NTPropertyColumn TItem="Order" TValue="int" Title="Order" Property="order => order.Id" InitialSortDirection="SortDirection.Ascending" />
-        <NTPropertyColumn TItem="Order" TValue="string" Title="Customer" Property="order => order.Customer" />
-        <NTPropertyColumn TItem="Order" TValue="string" Title="Region" Property="order => order.Region" HideBelow="NTBreakpoint.Medium" />
-        <NTPropertyColumn TItem="Order" TValue="DateOnly" Title="Placed" Property="order => order.Placed" Format="d" HideBelow="NTBreakpoint.Small" />
-        <NTPropertyColumn TItem="Order" TValue="decimal" Title="Total" Property="order => order.Total" Format="C" TextAlign="TextAlign.Right" />
+        <NTPropertyColumn TItem="Order"
+                          TValue="int"
+                          Title="Order"
+                          Property="order => order.Id"
+                          InitialSortDirection="SortDirection.Ascending" />
+        <NTPropertyColumn TItem="Order"
+                          TValue="string"
+                          Title="Customer"
+                          Property="order => order.Customer" />
+        <NTPropertyColumn TItem="Order"
+                          TValue="string"
+                          Title="Region"
+                          Property="order => order.Region"
+                          HideBelow="NTBreakpoint.Medium" />
+        <NTPropertyColumn TItem="Order"
+                          TValue="DateOnly"
+                          Title="Placed"
+                          Property="order => order.Placed"
+                          Format="d"
+                          HideBelow="NTBreakpoint.Small" />
+        <NTPropertyColumn TItem="Order"
+                          TValue="decimal"
+                          Title="Total"
+                          Property="order => order.Total"
+                          Format="C"
+                          TextAlign="TextAlign.Right" />
     </ChildContent>
     <RowDetailTemplate Context="order">
         <dl class="docs-row">

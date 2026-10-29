@@ -5,7 +5,12 @@
 <div class="docs-fill" style="height: 400px">
     <NTChart TData="Skill">
         <NTRadialAxisOptions TData="Skill" />
-        <NTRadarSeries TData="Skill" Data="_skills" XValue="@(s => s.Name)" ValueSelector="@(s => s.Score)" MaxValue="10m" Title="Candidate" />
+        <NTRadarSeries TData="Skill"
+                       Data="_skills"
+                       XValue="@(s => s.Name)"
+                       ValueSelector="@(s => s.Score)"
+                       MaxValue="10m"
+                       Title="Candidate" />
     </NTChart>
 </div>
 

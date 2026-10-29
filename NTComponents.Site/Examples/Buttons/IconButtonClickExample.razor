@@ -1,6 +1,13 @@
 <div class="docs-row">
-    <NTIconButton Icon="MaterialIcon.Delete" AriaLabel="Delete draft" Variant="NTButtonVariant.Outlined" OnClickCallback="@(() => _drafts = Math.Max(0, _drafts - 1))" />
-    <NTIconButton Icon="MaterialIcon.Mail" AriaLabel="Open inbox" ShowBadge="true" BadgeContent="12" BadgeAriaLabel="12 unread messages" />
+    <NTIconButton Icon="MaterialIcon.Delete"
+                  AriaLabel="Delete draft"
+                  Variant="NTButtonVariant.Outlined"
+                  OnClickCallback="@(() => _drafts = Math.Max(0, _drafts - 1))" />
+    <NTIconButton Icon="MaterialIcon.Mail"
+                  AriaLabel="Open inbox"
+                  ShowBadge="true"
+                  BadgeContent="12"
+                  BadgeAriaLabel="12 unread messages" />
     <NTIconButton Icon="MaterialIcon.Download" AriaLabel="Download report" Disabled="true" />
 </div>
 <p>Drafts remaining: <output>@_drafts</output></p>

@@ -1,13 +1,42 @@
-<NTDataGrid TItem="Shipment" Items="_shipments" Caption="Shipments in transit" OnRowClicked="Select" class="docs-fill">
-    <NTPropertyColumn TItem="Shipment" TValue="string" Title="Shipment" Property="shipment => shipment.Id" Width="140px" />
+<NTDataGrid TItem="Shipment"
+            Items="_shipments"
+            Caption="Shipments in transit"
+            OnRowClicked="Select"
+            class="docs-fill">
+    <NTPropertyColumn TItem="Shipment"
+                      TValue="string"
+                      Title="Shipment"
+                      Property="shipment => shipment.Id"
+                      Width="140px" />
     <NTTemplateColumn TItem="Shipment" Title="Action" Width="120px">
         <NTButton Label="Track" Variant="NTButtonVariant.Text" OnClickCallback="@(() => Track(context))" />
     </NTTemplateColumn>
-    <NTPropertyColumn TItem="Shipment" TValue="string" Title="Customer" Property="shipment => shipment.Customer" Width="160px" />
-    <NTPropertyColumn TItem="Shipment" TValue="string" Title="Origin" Property="shipment => shipment.Origin" Width="140px" />
-    <NTPropertyColumn TItem="Shipment" TValue="string" Title="Destination" Property="shipment => shipment.Destination" Width="140px" />
-    <NTPropertyColumn TItem="Shipment" TValue="string" Title="Carrier" Property="shipment => shipment.Carrier" Width="140px" />
-    <NTPropertyColumn TItem="Shipment" TValue="decimal" Title="Weight (kg)" Property="shipment => shipment.Weight" TextAlign="TextAlign.Right" Width="120px" />
+    <NTPropertyColumn TItem="Shipment"
+                      TValue="string"
+                      Title="Customer"
+                      Property="shipment => shipment.Customer"
+                      Width="160px" />
+    <NTPropertyColumn TItem="Shipment"
+                      TValue="string"
+                      Title="Origin"
+                      Property="shipment => shipment.Origin"
+                      Width="140px" />
+    <NTPropertyColumn TItem="Shipment"
+                      TValue="string"
+                      Title="Destination"
+                      Property="shipment => shipment.Destination"
+                      Width="140px" />
+    <NTPropertyColumn TItem="Shipment"
+                      TValue="string"
+                      Title="Carrier"
+                      Property="shipment => shipment.Carrier"
+                      Width="140px" />
+    <NTPropertyColumn TItem="Shipment"
+                      TValue="decimal"
+                      Title="Weight (kg)"
+                      Property="shipment => shipment.Weight"
+                      TextAlign="TextAlign.Right"
+                      Width="120px" />
 </NTDataGrid>
 <p>Selected row: <output aria-label="Selected row">@(_selected?.Id ?? "none")</output></p>
 <p>Tracked: <output aria-label="Tracked shipment">@(_tracked?.Id ?? "none")</output></p>

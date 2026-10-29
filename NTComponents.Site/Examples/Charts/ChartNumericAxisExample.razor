@@ -3,8 +3,14 @@
 @using NTComponents.Charts.Core.Axes
 
 <NTChart TData="Reading" style="height: 320px">
-    <NTXAxisOptions TData="Reading" TAxisType="double" ValueSelector="@(reading => reading.Hour)" Title="Hour of day" />
-    <NTYAxisOptions TData="Reading" TAxisValue="decimal" ValueSelector="@(reading => reading.Temperature)" Title="Temperature (C)" />
+    <NTXAxisOptions TData="Reading"
+                    TAxisType="double"
+                    ValueSelector="@(reading => reading.Hour)"
+                    Title="Hour of day" />
+    <NTYAxisOptions TData="Reading"
+                    TAxisValue="decimal"
+                    ValueSelector="@(reading => reading.Temperature)"
+                    Title="Temperature (C)" />
     <NTLineSeries Data="_readings" XValue="@(reading => reading.Hour)" YValueSelector="@(reading => reading.Temperature)" />
     <NTComponents.Charts.Core.NTTooltip TData="Reading" />
 </NTChart>

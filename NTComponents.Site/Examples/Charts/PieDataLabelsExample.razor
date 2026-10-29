@@ -3,7 +3,13 @@
 
 <div class="docs-fill" style="height: 360px">
     <NTChart TData="Region">
-        <NTPieSeries TData="Region" Data="_regions" XValue="@(r => r.Name)" ValueSelector="@(r => r.Sales)" DataLabelFormat="{0:N1}M" DataLabelSize="14" ExplodeOnHover="false" />
+        <NTPieSeries TData="Region"
+                     Data="_regions"
+                     XValue="@(r => r.Name)"
+                     ValueSelector="@(r => r.Sales)"
+                     DataLabelFormat="{0:N1}M"
+                     DataLabelSize="14"
+                     ExplodeOnHover="false" />
     </NTChart>
 </div>
 

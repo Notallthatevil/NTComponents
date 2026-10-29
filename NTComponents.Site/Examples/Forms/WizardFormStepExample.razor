@@ -1,6 +1,9 @@
 @using System.ComponentModel.DataAnnotations
 
-<NTWizard Title="Create account" OnSubmitCallback="Finish" class="docs-fill" style="block-size: 24rem;">
+<NTWizard Title="Create account"
+          OnSubmitCallback="Finish"
+          class="docs-fill"
+          style="block-size: 24rem;">
     <NTWizardFormStep Title="Account" Model="_account">
         <ChildContent Context="editContext">
             <NTFormFieldGridView MaxColumns="2">

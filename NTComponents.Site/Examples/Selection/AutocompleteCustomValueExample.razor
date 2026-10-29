@@ -1,9 +1,15 @@
-<NTAutocomplete @bind-Value="_free" Label="Job title (free text)" AllowCustomValue="true" CustomValueOptionFormat="Use &quot;{0}&quot; as title">
+<NTAutocomplete @bind-Value="_free"
+                Label="Job title (free text)"
+                AllowCustomValue="true"
+                CustomValueOptionFormat="Use &quot;{0}&quot; as title">
     <NTAutocompleteOption Value="Product Designer" />
     <NTAutocompleteOption Value="Software Engineer" />
     <NTAutocompleteOption Value="Engineering Manager" />
 </NTAutocomplete>
-<NTAutocomplete @bind-Value="_strict" Label="Department" AllowCustomValue="false" EmptyText="No such department">
+<NTAutocomplete @bind-Value="_strict"
+                Label="Department"
+                AllowCustomValue="false"
+                EmptyText="No such department">
     <NTAutocompleteOption Value="Design" />
     <NTAutocompleteOption Value="Engineering" />
     <NTAutocompleteOption Value="Finance" />

@@ -1,4 +1,8 @@
-<NTCombobox TValue="int" @bind-Value="_teamIds" Items="_teams" Label="Assign teams" BindAfter="OnChanged" />
+<NTCombobox TValue="int"
+            @bind-Value="_teamIds"
+            Items="_teams"
+            Label="Assign teams"
+            BindAfter="OnChanged" />
 <p>Team ids: <output>@string.Join(", ", _teamIds)</output>, changes: <output>@_changes</output></p>
 
 @code {

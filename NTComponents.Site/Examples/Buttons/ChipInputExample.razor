@@ -1,6 +1,11 @@
 <div class="docs-row">
     @foreach (var recipient in _recipients) {
-        <NTChip @key="recipient" Label="@recipient" Variant="NTChipVariant.Input" Removable="true" RemoveAriaLabel="@($"Remove {recipient}")" OnRemoveCallback="@(() => _recipients.Remove(recipient))" />
+        <NTChip @key="recipient"
+                Label="@recipient"
+                Variant="NTChipVariant.Input"
+                Removable="true"
+                RemoveAriaLabel="@($"Remove {recipient}")"
+                OnRemoveCallback="@(() => _recipients.Remove(recipient))" />
     }
 </div>
 <p>Recipients: <output>@_recipients.Count</output></p>

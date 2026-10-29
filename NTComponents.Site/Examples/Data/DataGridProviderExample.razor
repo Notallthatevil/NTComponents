@@ -1,6 +1,19 @@
-<NTDataGrid TItem="Order" ItemsProvider="LoadOrdersAsync" Caption="Orders loaded on demand" ShowPagination="true" PageSize="5" QueryParameterPrefix="docs-provider" class="docs-fill">
-    <NTPropertyColumn TItem="Order" TValue="int" Title="Order" Property="order => order.Id" />
-    <NTPropertyColumn TItem="Order" TValue="decimal" Title="Total" Property="order => order.Total" Format="C" />
+<NTDataGrid TItem="Order"
+            ItemsProvider="LoadOrdersAsync"
+            Caption="Orders loaded on demand"
+            ShowPagination="true"
+            PageSize="5"
+            QueryParameterPrefix="docs-provider"
+            class="docs-fill">
+    <NTPropertyColumn TItem="Order"
+                      TValue="int"
+                      Title="Order"
+                      Property="order => order.Id" />
+    <NTPropertyColumn TItem="Order"
+                      TValue="decimal"
+                      Title="Total"
+                      Property="order => order.Total"
+                      Format="C" />
 </NTDataGrid>
 
 @code {

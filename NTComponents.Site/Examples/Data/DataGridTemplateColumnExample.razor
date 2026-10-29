@@ -1,6 +1,17 @@
-<NTDataGrid TItem="Order" Items="_orders" Caption="Orders awaiting review" OnRowClicked="Select" class="docs-fill">
-    <NTPropertyColumn TItem="Order" TValue="string" Title="Customer" Property="order => order.Customer" />
-    <NTPropertyColumn TItem="Order" TValue="decimal" Title="Total" Property="order => order.Total" Format="C" />
+<NTDataGrid TItem="Order"
+            Items="_orders"
+            Caption="Orders awaiting review"
+            OnRowClicked="Select"
+            class="docs-fill">
+    <NTPropertyColumn TItem="Order"
+                      TValue="string"
+                      Title="Customer"
+                      Property="order => order.Customer" />
+    <NTPropertyColumn TItem="Order"
+                      TValue="decimal"
+                      Title="Total"
+                      Property="order => order.Total"
+                      Format="C" />
     <NTTemplateColumn TItem="Order" Title="Status">
         <NTTag Label="@(context.Paid ? "Paid" : "Unpaid")" />
     </NTTemplateColumn>

@@ -6,8 +6,20 @@
     <NTChart TData="Rating">
         <NTLegend TData="Rating" />
         <NTRadialAxisOptions TData="Rating" />
-        <NTRadarSeries TData="Rating" Data="_phoneA" XValue="@(r => r.Feature)" ValueSelector="@(r => r.Score)" MaxValue="10m" Title="Phone A" AreaOpacity="0.25f" />
-        <NTRadarSeries TData="Rating" Data="_phoneB" XValue="@(r => r.Feature)" ValueSelector="@(r => r.Score)" MaxValue="10m" Title="Phone B" AreaOpacity="0.25f" />
+        <NTRadarSeries TData="Rating"
+                       Data="_phoneA"
+                       XValue="@(r => r.Feature)"
+                       ValueSelector="@(r => r.Score)"
+                       MaxValue="10m"
+                       Title="Phone A"
+                       AreaOpacity="0.25f" />
+        <NTRadarSeries TData="Rating"
+                       Data="_phoneB"
+                       XValue="@(r => r.Feature)"
+                       ValueSelector="@(r => r.Score)"
+                       MaxValue="10m"
+                       Title="Phone B"
+                       AreaOpacity="0.25f" />
     </NTChart>
 </div>
 

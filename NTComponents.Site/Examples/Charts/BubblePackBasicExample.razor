@@ -3,7 +3,10 @@
 
 <div class="docs-fill" style="height: 400px">
     <NTChart TData="Language">
-        <NTBubblePackSeries TData="Language" Data="_languages" XValue="@(l => l.Name)" ValueSelector="@(l => l.Developers)" />
+        <NTBubblePackSeries TData="Language"
+                            Data="_languages"
+                            XValue="@(l => l.Name)"
+                            ValueSelector="@(l => l.Developers)" />
     </NTChart>
 </div>
 

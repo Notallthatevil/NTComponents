@@ -3,7 +3,11 @@
 
 <div class="docs-fill" style="height: 360px">
     <NTChart TData="Folder">
-        <NTTreeMapSeries TData="Folder" Data="_folders" XValue="@(f => f.Name)" ValueSelector="@(f => f.SizeMb)" DataLabelFormat="{0:N0} MB" />
+        <NTTreeMapSeries TData="Folder"
+                         Data="_folders"
+                         XValue="@(f => f.Name)"
+                         ValueSelector="@(f => f.SizeMb)"
+                         DataLabelFormat="{0:N0} MB" />
     </NTChart>
 </div>
 

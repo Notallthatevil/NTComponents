@@ -1,7 +1,14 @@
-<NTButtonGroup TObjectType="string" AriaLabel="Document actions" SelectionMode="NTButtonGroupSelectionMode.None" Variant="NTButtonVariant.Outlined" OnSelectionChanged="HandleAction">
+<NTButtonGroup TObjectType="string"
+               AriaLabel="Document actions"
+               SelectionMode="NTButtonGroupSelectionMode.None"
+               Variant="NTButtonVariant.Outlined"
+               OnSelectionChanged="HandleAction">
     <NTButtonGroupItem Key="@("save")" Label="Save" Icon="MaterialIcon.Save" />
     <NTButtonGroupItem Key="@("print")" Label="Print" Icon="MaterialIcon.Print" />
-    <NTButtonGroupItem Key="@("share")" Label="Share" Icon="MaterialIcon.Share" Disabled="true" />
+    <NTButtonGroupItem Key="@("share")"
+                       Label="Share"
+                       Icon="MaterialIcon.Share"
+                       Disabled="true" />
 </NTButtonGroup>
 <p>Last action: <output>@_lastAction</output></p>
 

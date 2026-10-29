@@ -1,4 +1,9 @@
-<NTCombobox TValue="string" @bind-Value="_tags" Items="_options" Label="Tags" Placeholder="Filter tags" LeadingIcon="MaterialIcon.Label" />
+<NTCombobox TValue="string"
+            @bind-Value="_tags"
+            Items="_options"
+            Label="Tags"
+            Placeholder="Filter tags"
+            LeadingIcon="MaterialIcon.Label" />
 <p>Tags: <output>@(_tags.Count == 0 ? "none" : string.Join(", ", _tags))</output></p>
 
 @code {

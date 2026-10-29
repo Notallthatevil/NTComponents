@@ -8,8 +8,14 @@
 </div>
 
 <NTChart TData="Sale" style="height: 320px">
-    <NTLineSeries Data="_sales" Title="Online" XValue="@(sale => sale.Month)" YValueSelector="@(sale => sale.Online)" />
-    <NTLineSeries Data="_sales" Title="In store" XValue="@(sale => sale.Month)" YValueSelector="@(sale => sale.InStore)" />
+    <NTLineSeries Data="_sales"
+                  Title="Online"
+                  XValue="@(sale => sale.Month)"
+                  YValueSelector="@(sale => sale.Online)" />
+    <NTLineSeries Data="_sales"
+                  Title="In store"
+                  XValue="@(sale => sale.Month)"
+                  YValueSelector="@(sale => sale.InStore)" />
     <NTLegend TData="Sale" Position="_position" />
 </NTChart>
 

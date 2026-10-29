@@ -1,12 +1,21 @@
-<NTInputRadioGroup TValue="string" @bind-Value="_disabledBilling" Label="Billing (disabled)" Disabled="true">
+<NTInputRadioGroup TValue="string"
+                   @bind-Value="_disabledBilling"
+                   Label="Billing (disabled)"
+                   Disabled="true">
     <NTInputRadio TValue="string" Value="@("monthly")" Label="Monthly" />
     <NTInputRadio TValue="string" Value="@("yearly")" Label="Yearly" />
 </NTInputRadioGroup>
-<NTInputRadioGroup TValue="string" @bind-Value="_readOnlyBilling" Label="Billing (read-only)" ReadOnly="true">
+<NTInputRadioGroup TValue="string"
+                   @bind-Value="_readOnlyBilling"
+                   Label="Billing (read-only)"
+                   ReadOnly="true">
     <NTInputRadio TValue="string" Value="@("monthly")" Label="Monthly" />
     <NTInputRadio TValue="string" Value="@("yearly")" Label="Yearly" />
 </NTInputRadioGroup>
-<NTInputRadioGroup TValue="string" @bind-Value="_requiredBilling" Label="Billing (error)" ErrorText="Select a billing period.">
+<NTInputRadioGroup TValue="string"
+                   @bind-Value="_requiredBilling"
+                   Label="Billing (error)"
+                   ErrorText="Select a billing period.">
     <NTInputRadio TValue="string" Value="@("monthly")" Label="Monthly" />
     <NTInputRadio TValue="string" Value="@("yearly")" Label="Yearly" />
 </NTInputRadioGroup>

@@ -1,4 +1,8 @@
-<NTInputCheckbox Label="Select all toppings" Indeterminate="@(_pepperoni != _mushrooms)" Value="AllSelected" ValueChanged="SetAll" ValueExpression="() => AllSelected" />
+<NTInputCheckbox Label="Select all toppings"
+                 Indeterminate="@(_pepperoni != _mushrooms)"
+                 Value="AllSelected"
+                 ValueChanged="SetAll"
+                 ValueExpression="() => AllSelected" />
 <div class="docs-row" style="padding-inline-start: 32px">
     <NTInputCheckbox Label="Pepperoni" @bind-Value="_pepperoni" />
     <NTInputCheckbox Label="Mushrooms" @bind-Value="_mushrooms" />

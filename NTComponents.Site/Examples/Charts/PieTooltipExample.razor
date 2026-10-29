@@ -5,7 +5,11 @@
 <div class="docs-fill" style="height: 360px">
     <NTChart TData="Ticket">
         <NTComponents.Charts.Core.NTTooltip TData="Ticket" />
-        <NTPieSeries TData="Ticket" Data="_tickets" XValue="@(t => t.Status)" ValueSelector="@(t => t.Count)" TooltipInfoSelector="DescribeTicket" />
+        <NTPieSeries TData="Ticket"
+                     Data="_tickets"
+                     XValue="@(t => t.Status)"
+                     ValueSelector="@(t => t.Count)"
+                     TooltipInfoSelector="DescribeTicket" />
     </NTChart>
 </div>
 

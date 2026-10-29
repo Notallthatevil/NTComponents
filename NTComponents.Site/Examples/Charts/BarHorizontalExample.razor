@@ -2,7 +2,10 @@
 @using NTComponents.Charts.Core
 
 <NTChart TData="Language" style="height: 320px">
-    <NTBarSeries Data="_languages" Orientation="NTChartOrientation.Horizontal" XValue="@(language => language.Name)" YValueSelector="@(language => language.Users)" />
+    <NTBarSeries Data="_languages"
+                 Orientation="NTChartOrientation.Horizontal"
+                 XValue="@(language => language.Name)"
+                 YValueSelector="@(language => language.Users)" />
     <NTComponents.Charts.Core.NTTooltip TData="Language" />
 </NTChart>
 
