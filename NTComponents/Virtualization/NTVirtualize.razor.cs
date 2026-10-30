@@ -156,6 +156,7 @@ public partial class NTVirtualize<TItem>() : NTPageScriptComponent<NTVirtualize<
     public string SpacerElement { get; set; } = "div";
 
     private ElementReference _afterPlaceholder;
+    private bool _countChangeReloaded;
     private int _itemCount;
     private int _itemsBefore;
     private float _itemSize;
@@ -459,8 +460,9 @@ public partial class NTVirtualize<TItem>() : NTPageScriptComponent<NTVirtualize<
         builder.CloseComponent();
     };
 
-    private async ValueTask RefreshDataCoreAsync(bool renderOnSuccess, bool forceRefresh = false, CancellationToken cancellationToken = default) {
+    private async ValueTask RefreshDataCoreAsync(bool renderOnSuccess, bool forceRefresh = false, CancellationToken cancellationToken = default, bool countChangeReload = false) {
         CancelAndDispose(ref _refreshCts);
+        _countChangeReloaded = countChangeReload;
 
         // Fetch only the missing part of the active range. Cached rows keep rendering while the missing rows remain placeholders.
         var startIndex = _itemsBefore;
@@ -572,7 +574,8 @@ public partial class NTVirtualize<TItem>() : NTPageScriptComponent<NTVirtualize<
             cancellationToken.ThrowIfCancellationRequested();
         }
         catch (Exception e) {
-            if (refreshToken.IsCancellationRequested || DisposalStarted) {
+            // A reload started by background work stays opportunistic: cached rows remain and the next foreground load surfaces the failure.
+            if (refreshToken.IsCancellationRequested || DisposalStarted || countChangeReload) {
                 return;
             }
             // Cache this exception so the renderer can throw it.
@@ -634,6 +637,10 @@ public partial class NTVirtualize<TItem>() : NTPageScriptComponent<NTVirtualize<
             });
 
             if (!cancellationToken.IsCancellationRequested) {
+                if (await ReloadIfItemCountChangedAsync(result.TotalItemCount)) {
+                    return;
+                }
+
                 SetItemCount(result.TotalItemCount);
                 UpdateSpacerAfterSizeFromItemCount();
                 StoreItems(startIndex, result.Items);
@@ -646,6 +653,18 @@ public partial class NTVirtualize<TItem>() : NTPageScriptComponent<NTVirtualize<
         catch {
             // Background preloads are opportunistic. The foreground load path will surface provider failures when the range is actually requested.
         }
+    }
+
+    // A different total means rows were inserted, removed, or filtered, so no cached row can be trusted. Reload the active window like
+    // RefreshDataAsync: cached rows stay visible until the replacement arrives. Only one reload runs per foreground load, so a total
+    // that changes on every request adopts the new count instead of chaining reloads.
+    private async Task<bool> ReloadIfItemCountChangedAsync(int totalItemCount) {
+        if (totalItemCount == _itemCount || _countChangeReloaded) {
+            return false;
+        }
+
+        await RefreshDataCoreAsync(renderOnSuccess: true, forceRefresh: true, countChangeReload: true);
+        return true;
     }
 
     private void StartBackgroundRevalidation(int startIndex, int count) {
@@ -679,6 +698,10 @@ public partial class NTVirtualize<TItem>() : NTPageScriptComponent<NTVirtualize<
             });
 
             if (!cancellationToken.IsCancellationRequested) {
+                if (await ReloadIfItemCountChangedAsync(result.TotalItemCount)) {
+                    return;
+                }
+
                 SetItemCount(result.TotalItemCount);
                 UpdateSpacerAfterSizeFromItemCount();
                 StoreItems(startIndex, result.Items);

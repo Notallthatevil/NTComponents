@@ -879,6 +879,179 @@ public class NTVirtualize_Tests : BunitContext {
         cut.Markup.Should().NotContain("[updated 0]").And.NotContain("[original 11]");
     }
 
+    [Fact]
+    public async Task BackgroundPreloadFromDifferentDataSet_ReplacesStaleCachedRows() {
+        // Arrange: row 0 is cached from data set A while the preload of rows 5+ waits.
+        var filtered = false;
+        var preloadGate = new TaskCompletionSource();
+        NTVirtualizeItemsProvider<string> provider = async request => {
+            if (request.StartIndex >= 5) {
+                await preloadGate.Task;
+            }
+
+            var items = filtered ? ["B 0"] : Enumerable.Range(0, 100).Select(index => $"A {index}").ToArray();
+            return new TnTItemsProviderResult<string>(items.Skip(request.StartIndex).Take(request.Count ?? items.Length).ToList(), items.Length);
+        };
+        var cut = Render<NTVirtualize<string>>(parameters => parameters
+            .Add(component => component.ItemsProvider, provider)
+            .Add(component => component.PlaceholderPreloadWindowCount, 0)
+            .Add(component => component.BackgroundPreloadWindowCount, 1)
+            .Add(component => component.ItemTemplate, item => builder => builder.AddContent(0, $"-{item}-")));
+        await cut.InvokeAsync(() => cut.Instance.LoadItems(0, 4750, 0, 5));
+        cut.WaitForAssertion(() => cut.Markup.Should().Contain("-A 0-"));
+
+        // Act: the data set changes under the cache, then the preload returns its count of 1.
+        filtered = true;
+        preloadGate.SetResult();
+
+        // Assert
+        cut.WaitForAssertion(() => cut.Markup.Should().Contain("-B 0-").And.NotContain("-A 0-"));
+    }
+
+    [Fact]
+    public async Task BackgroundRevalidationFromDifferentDataSet_ReplacesStaleCachedRows() {
+        // Arrange: rows 0-9 are cached from data set A, and revalidating the window at row 5 waits.
+        var filtered = false;
+        var revalidationGate = new TaskCompletionSource();
+        var firstWindowGate = new TaskCompletionSource();
+        var secondWindowRequests = 0;
+        NTVirtualizeItemsProvider<string> provider = async request => {
+            if (request.StartIndex == 5 && ++secondWindowRequests == 2) {
+                await revalidationGate.Task;
+            }
+
+            if (request.StartIndex == 0 && filtered) {
+                await firstWindowGate.Task;
+            }
+
+            var items = filtered ? Enumerable.Range(0, 8).Select(index => $"B {index}").ToArray() : Enumerable.Range(0, 100).Select(index => $"A {index}").ToArray();
+            return new TnTItemsProviderResult<string>(items.Skip(request.StartIndex).Take(request.Count ?? items.Length).ToList(), items.Length);
+        };
+        var cut = Render<NTVirtualize<string>>(parameters => parameters
+            .Add(component => component.ItemsProvider, provider)
+            .Add(component => component.PlaceholderPreloadWindowCount, 0)
+            .Add(component => component.BackgroundPreloadWindowCount, 0)
+            .Add(component => component.RevalidateCachedItems, true)
+            .Add(component => component.ItemTemplate, item => builder => builder.AddContent(0, $"-{item}-")));
+        await cut.InvokeAsync(() => cut.Instance.LoadItems(250, 4500, 5, 5));
+        await cut.InvokeAsync(() => cut.Instance.LoadItems(0, 4750, 0, 5));
+        await cut.InvokeAsync(() => cut.Instance.LoadItems(250, 4500, 5, 5));
+        cut.WaitForAssertion(() => secondWindowRequests.Should().Be(2));
+
+        // Act: the data set changes to 8 rows, the revalidation returns, and the user scrolls back to row 0 while it loads.
+        filtered = true;
+        revalidationGate.SetResult();
+        cut.WaitForAssertion(() => cut.Markup.Should().Contain("-B 5-"));
+        await cut.InvokeAsync(() => cut.Instance.LoadItems(0, 400, 0, 5));
+
+        // Assert
+        cut.WaitForAssertion(() => {
+            cut.FindAll(".nt-virtualize-spacer")[0].GetAttribute("data-nt-virtualize-start").Should().Be("0");
+            cut.Markup.Should().NotContain("-A ", "rows from the previous data set must not render with the new count");
+        });
+        firstWindowGate.SetResult();
+        cut.WaitForAssertion(() => cut.Markup.Should().Contain("-B 0-"));
+    }
+
+    [Fact]
+    public async Task BackgroundPreloadWithAppendedItems_KeepsWindowAndAdoptsNewCount() {
+        // Arrange: the window starts at row 5 and the preload of rows 10+ waits.
+        var items = Enumerable.Range(0, 20).Select(index => $"Item {index}").ToList();
+        var preloadGate = new TaskCompletionSource();
+        NTVirtualizeItemsProvider<string> provider = async request => {
+            if (request.StartIndex >= 10) {
+                await preloadGate.Task;
+            }
+
+            return new TnTItemsProviderResult<string>(items.Skip(request.StartIndex).Take(request.Count ?? items.Count).ToList(), items.Count);
+        };
+        var cut = Render<NTVirtualize<string>>(parameters => parameters
+            .Add(component => component.ItemsProvider, provider)
+            .Add(component => component.PlaceholderPreloadWindowCount, 0)
+            .Add(component => component.BackgroundPreloadWindowCount, 1)
+            .Add(component => component.ItemTemplate, item => builder => builder.AddContent(0, $"-{item}-")));
+        await cut.InvokeAsync(() => cut.Instance.LoadItems(250, 500, 5, 5));
+        cut.WaitForAssertion(() => cut.Markup.Should().Contain("-Item 5-").And.Contain("-Item 9-"));
+
+        // Act: rows are appended to the same data set before the preload returns.
+        items.AddRange(Enumerable.Range(20, 5).Select(index => $"Item {index}"));
+        preloadGate.SetResult();
+
+        // Assert
+        cut.WaitForAssertion(() => {
+            var update = _module.Invocations.Last(invocation => invocation.Identifier == "updateRenderState");
+            update.Arguments[1].Should().Be(25);
+            var topSpacer = cut.FindAll(".nt-virtualize-spacer")[0];
+            topSpacer.GetAttribute("data-nt-virtualize-start").Should().Be("5");
+            topSpacer.GetAttribute("data-nt-virtualize-size").Should().Be("250");
+            cut.Markup.Should().Contain("-Item 5-").And.Contain("-Item 9-").And.NotContain("-Item 4-");
+        });
+    }
+
+    [Fact]
+    public async Task BackgroundPreloadWithTotalChangingOnEveryRequest_ReloadsOnceThenAdoptsCount() {
+        // Arrange: every request reports a larger total, like a live feed that grows faster than a round trip.
+        var requests = 0;
+        NTVirtualizeItemsProvider<string> provider = async request => {
+            var total = 100 + Interlocked.Increment(ref requests);
+            await Task.Yield();
+            var items = Enumerable.Range(request.StartIndex, Math.Min(request.Count ?? total, total - request.StartIndex)).Select(index => $"Item {index}").ToList();
+            return new TnTItemsProviderResult<string>(items, total);
+        };
+        var cut = Render<NTVirtualize<string>>(parameters => parameters
+            .Add(component => component.ItemsProvider, provider)
+            .Add(component => component.PlaceholderPreloadWindowCount, 0)
+            .Add(component => component.BackgroundPreloadWindowCount, 1)
+            .Add(component => component.ItemTemplate, item => builder => builder.AddContent(0, $"-{item}-")));
+
+        // Act: load, preload (count changed: reload), reload, preload (count changed again: adopt).
+        await cut.InvokeAsync(() => cut.Instance.LoadItems(0, 4750, 0, 5));
+        await Task.Delay(300, Xunit.TestContext.Current.CancellationToken);
+
+        // Assert
+        requests.Should().Be(4, "a second count change in the same background chain must not start another reload");
+        cut.Render();
+        cut.WaitForAssertion(() => _module.Invocations.Last(invocation => invocation.Identifier == "updateRenderState").Arguments[1].Should().Be(104));
+        cut.Markup.Should().Contain("-Item 0-");
+    }
+
+    [Fact]
+    public async Task BackgroundCountChangeReloadFailure_KeepsCachedRowsWithoutThrowing() {
+        // Arrange: rows 0-4 are cached and the preload of rows 5+ waits.
+        var changed = false;
+        var reloadAttempts = 0;
+        var preloadGate = new TaskCompletionSource();
+        NTVirtualizeItemsProvider<string> provider = async request => {
+            if (request.StartIndex >= 5) {
+                await preloadGate.Task;
+            }
+
+            if (changed && request.StartIndex < 5) {
+                Interlocked.Increment(ref reloadAttempts);
+                throw new InvalidOperationException("reload failed");
+            }
+
+            var total = changed ? 50 : 100;
+            return new TnTItemsProviderResult<string>(Enumerable.Range(request.StartIndex, request.Count ?? total).Select(index => $"Item {index}").ToList(), total);
+        };
+        var cut = Render<NTVirtualize<string>>(parameters => parameters
+            .Add(component => component.ItemsProvider, provider)
+            .Add(component => component.PlaceholderPreloadWindowCount, 0)
+            .Add(component => component.BackgroundPreloadWindowCount, 1)
+            .Add(component => component.ItemTemplate, item => builder => builder.AddContent(0, $"-{item}-")));
+        await cut.InvokeAsync(() => cut.Instance.LoadItems(0, 4750, 0, 5));
+        cut.WaitForAssertion(() => cut.Markup.Should().Contain("-Item 0-"));
+
+        // Act: the preload reports a new total, and the reload it starts fails.
+        changed = true;
+        preloadGate.SetResult();
+        cut.WaitForAssertion(() => reloadAttempts.Should().Be(1));
+        cut.Render();
+
+        // Assert
+        cut.Markup.Should().Contain("-Item 0-");
+    }
+
     private sealed class TestVirtualize<TItem> : NTVirtualize<TItem> {
         public Task InvokeOnAfterRenderAsync(bool firstRender) => base.OnAfterRenderAsync(firstRender);
     }
