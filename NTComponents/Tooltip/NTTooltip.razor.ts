@@ -3,6 +3,7 @@ class NTTooltip extends HTMLElement {
         super();
         this.showTimeoutId = null;
         this.hideTimeoutId = null;
+        this.fadeTimeoutId = null;
         this.isVisible = false;
         this.lastPointerX = null;
         this.lastPointerY = null;
@@ -79,6 +80,8 @@ class NTTooltip extends HTMLElement {
         this.detachVisibleListeners();
         this.clearTimeouts();
         this.removeDescribedBy();
+        clearTimeout(this.fadeTimeoutId);
+        this.setPopoverOpen(false);
         this.anchorElement = null;
     }
 
@@ -234,6 +237,9 @@ class NTTooltip extends HTMLElement {
     show() {
         if (this.isVisible) return;
 
+        clearTimeout(this.fadeTimeoutId);
+        // Open in the top layer first so measuring and fixed positioning use the viewport, not a masked or transformed ancestor.
+        this.setPopoverOpen(true);
         this.updatePosition();
         this.isVisible = true;
         this.setAttribute('aria-hidden', 'false');
@@ -247,9 +253,32 @@ class NTTooltip extends HTMLElement {
         this.isVisible = false;
         this.setAttribute('aria-hidden', 'true');
         this.classList.remove('nt-tooltip-visible');
+        this.detachVisibleListeners();
+
+        // Stay in place and in the top layer until the opacity fade-out ends.
+        const fadeMs = parseFloat(getComputedStyle(this).transitionDuration) * 1000 || 0;
+        this.fadeTimeoutId = setTimeout(() => this.finishHide(), fadeMs);
+    }
+
+    finishHide() {
+        this.fadeTimeoutId = null;
         this.style.left = '-9999px';
         this.style.top = '-9999px';
-        this.detachVisibleListeners();
+        this.setPopoverOpen(false);
+    }
+
+    setPopoverOpen(open) {
+        if (typeof this.showPopover !== 'function' || !this.hasAttribute('popover') || this.matches(':popover-open') === open) return;
+
+        try {
+            if (open) {
+                this.showPopover();
+            } else {
+                this.hidePopover();
+            }
+        } catch (error) {
+            if (error?.name !== 'InvalidStateError') throw error;
+        }
     }
 
     attachVisibleListeners() {

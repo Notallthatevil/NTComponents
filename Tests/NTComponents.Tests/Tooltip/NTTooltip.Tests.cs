@@ -201,6 +201,30 @@ public class NTTooltip_Tests : BunitContext {
         cut.Find(".nt-tooltip").HasAttribute("data-permanent").Should().BeTrue();
     }
 
+    [Theory]
+    [InlineData(NTTooltipVariant.Plain)]
+    [InlineData(NTTooltipVariant.Rich)]
+    public void PopoverAttribute_IsManual(NTTooltipVariant variant) {
+        // Arrange & Act
+        var cut = RenderTooltip(parameters => parameters
+            .Add(p => p.Variant, variant));
+
+        // Assert
+        cut.Find("nt-tooltip").GetAttribute("popover").Should().Be("manual");
+    }
+
+    [Fact]
+    public void PopoverAttribute_SurvivesRerender() {
+        // Arrange
+        var cut = RenderTooltip();
+
+        // Act
+        cut.Render(parameters => parameters.Add(p => p.Variant, NTTooltipVariant.Rich));
+
+        // Assert
+        cut.Find("nt-tooltip").GetAttribute("popover").Should().Be("manual");
+    }
+
     [Fact]
     public void RichVariant_UsesMaterialRichClassAndTokenDefaults() {
         // Arrange & Act

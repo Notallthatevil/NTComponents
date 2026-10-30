@@ -215,6 +215,7 @@ describe('NTTooltip custom HTML element', () => {
       const windowResizeSpy = jest.spyOn(window, 'removeEventListener');
 
       tooltip.hide();
+      jest.runOnlyPendingTimers();
 
       expect(tooltip.isVisible).toBe(false);
       expect(tooltip.getAttribute('aria-hidden')).toBe('true');
@@ -233,6 +234,162 @@ describe('NTTooltip custom HTML element', () => {
       tooltip.onKeyDown(new KeyboardEvent('keydown', { key: 'Escape' }));
 
       expect(tooltip.isVisible).toBe(false);
+    });
+  });
+
+  describe('Popover top layer', () => {
+    function mockPopover(tooltip) {
+      let open = false;
+      const calls = [];
+      tooltip.setAttribute('popover', 'manual');
+      tooltip.showPopover = jest.fn(() => { calls.push('showPopover'); open = true; });
+      tooltip.hidePopover = jest.fn(() => { calls.push('hidePopover'); open = false; });
+      const matches = tooltip.matches.bind(tooltip);
+      jest.spyOn(tooltip, 'matches').mockImplementation((selector) => selector === ':popover-open' ? open : matches(selector));
+      jest.spyOn(tooltip, 'getBoundingClientRect').mockImplementation(() => {
+        calls.push(open ? 'measure-open' : 'measure-closed');
+        return { width: 100, height: 40, top: 0, left: 0, right: 100, bottom: 40 };
+      });
+      jest.spyOn(global, 'getComputedStyle').mockReturnValue(createMockComputedStyle());
+      return { calls, isOpen: () => open };
+    }
+
+    test('show opens the popover before measuring and positions it', () => {
+      const { parent, tooltip } = createTooltipSetup();
+      const popover = mockPopover(tooltip);
+      jest.spyOn(parent, 'getBoundingClientRect').mockReturnValue({ width: 80, height: 32, top: 200, left: 160, right: 240, bottom: 232 });
+      Object.defineProperty(window, 'innerWidth', { value: 1024, writable: true });
+      Object.defineProperty(window, 'innerHeight', { value: 768, writable: true });
+
+      tooltip.show();
+
+      expect(popover.calls).toEqual(['showPopover', 'measure-open']);
+      expect(tooltip.style.left).toBe('150px');
+      expect(tooltip.style.top).toBe('152px');
+      expect(tooltip.isVisible).toBe(true);
+    });
+
+    test('hide closes the popover', () => {
+      const { tooltip } = createTooltipSetup();
+      const popover = mockPopover(tooltip);
+      tooltip.show();
+
+      tooltip.hide();
+      jest.runOnlyPendingTimers();
+
+      expect(tooltip.hidePopover).toHaveBeenCalledTimes(1);
+      expect(popover.isOpen()).toBe(false);
+      expect(tooltip.style.left).toBe('-9999px');
+    });
+
+    test('hide fades out in place and closes the popover when the transition ends', () => {
+      const { tooltip } = createTooltipSetup();
+      const popover = mockPopover(tooltip);
+      tooltip.show();
+      const shownLeft = tooltip.style.left;
+      getComputedStyle.mockReturnValue({ ...createMockComputedStyle(), transitionDuration: '0.1s, 0s' });
+
+      tooltip.hide();
+
+      expect(tooltip.classList.contains('nt-tooltip-visible')).toBe(false);
+      expect(popover.isOpen()).toBe(true);
+      expect(tooltip.style.left).toBe(shownLeft);
+
+      jest.advanceTimersByTime(99);
+      expect(popover.isOpen()).toBe(true);
+
+      jest.advanceTimersByTime(1);
+      expect(popover.isOpen()).toBe(false);
+      expect(tooltip.style.left).toBe('-9999px');
+    });
+
+    test('show during fade-out cancels the pending close', () => {
+      const { tooltip } = createTooltipSetup();
+      const popover = mockPopover(tooltip);
+      tooltip.show();
+      getComputedStyle.mockReturnValue({ ...createMockComputedStyle(), transitionDuration: '0.1s, 0s' });
+      tooltip.hide();
+
+      tooltip.show();
+      jest.runOnlyPendingTimers();
+
+      expect(popover.isOpen()).toBe(true);
+      expect(tooltip.hidePopover).not.toHaveBeenCalled();
+      expect(tooltip.classList.contains('nt-tooltip-visible')).toBe(true);
+      expect(tooltip.style.left).not.toBe('-9999px');
+    });
+
+    test('a queued show and hide do not cancel the fade-out close', () => {
+      const { tooltip } = createTooltipSetup();
+      const popover = mockPopover(tooltip);
+      tooltip.show();
+      tooltip.hide();
+
+      tooltip.queueShow();
+      tooltip.queueHide();
+      jest.runOnlyPendingTimers();
+
+      expect(popover.isOpen()).toBe(false);
+    });
+
+    test('dispose during fade-out closes the popover and cancels the pending close', () => {
+      const { tooltip } = createTooltipSetup();
+      const popover = mockPopover(tooltip);
+      tooltip.show();
+      tooltip.hide();
+
+      tooltip.dispose();
+      jest.runOnlyPendingTimers();
+
+      expect(popover.isOpen()).toBe(false);
+      expect(tooltip.hidePopover).toHaveBeenCalledTimes(1);
+    });
+
+    test('show and hide fall back to fixed positioning without the Popover API', () => {
+      const { tooltip } = createTooltipSetup();
+      tooltip.setAttribute('popover', 'manual');
+      expect(tooltip.showPopover).toBeUndefined();
+      jest.spyOn(global, 'getComputedStyle').mockReturnValue(createMockComputedStyle());
+
+      expect(() => tooltip.show()).not.toThrow();
+      expect(tooltip.isVisible).toBe(true);
+      expect(tooltip.classList.contains('nt-tooltip-visible')).toBe(true);
+      expect(tooltip.style.left).not.toBe('-9999px');
+
+      expect(() => tooltip.hide()).not.toThrow();
+      jest.runOnlyPendingTimers();
+      expect(tooltip.isVisible).toBe(false);
+      expect(tooltip.style.left).toBe('-9999px');
+    });
+
+    test('InvalidStateError from showPopover keeps fixed positioning', () => {
+      const { tooltip } = createTooltipSetup();
+      mockPopover(tooltip);
+      tooltip.showPopover.mockImplementation(() => { throw new DOMException('not connected', 'InvalidStateError'); });
+
+      expect(() => tooltip.show()).not.toThrow();
+      expect(tooltip.isVisible).toBe(true);
+      expect(tooltip.style.left).not.toBe('-9999px');
+    });
+
+    test('dispose while visible closes the popover', () => {
+      const { tooltip } = createTooltipSetup();
+      const popover = mockPopover(tooltip);
+      tooltip.show();
+
+      tooltip.dispose();
+
+      expect(tooltip.hidePopover).toHaveBeenCalledTimes(1);
+      expect(popover.isOpen()).toBe(false);
+    });
+
+    test('dispose while hidden does not call hidePopover', () => {
+      const { tooltip } = createTooltipSetup();
+      mockPopover(tooltip);
+
+      tooltip.dispose();
+
+      expect(tooltip.hidePopover).not.toHaveBeenCalled();
     });
   });
 

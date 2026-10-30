@@ -34,7 +34,13 @@ $tooltip-border-color: var(--nt-tooltip-border-color, transparent);
 $tooltip-border-width: var(--nt-tooltip-border-width, 0px);
 
 .nt-tooltip {
+    // Reset the UA [popover] defaults (inset: 0, margin: auto, fit-content size, overflow: auto) so JS left/top place it as before.
     position: fixed;
+    inset: auto;
+    margin: 0;
+    width: auto;
+    height: auto;
+    overflow: visible;
     display: flex;
     align-items: center;
     justify-content: center;
